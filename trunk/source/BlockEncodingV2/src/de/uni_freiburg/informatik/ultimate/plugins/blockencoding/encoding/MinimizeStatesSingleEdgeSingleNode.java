@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  * Least aggressive minimization (besides no attempt). Tries to remove states that have only one incoming and one
@@ -94,7 +95,10 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		succEdge.disconnectTarget();
 		mRemovedEdges += 2;
 		
-		getEdgeBuilder().constructSequentialComposition(pred, succ, (CodeBlock) predEdge, (CodeBlock) succEdge);
+		final SequentialComposition seqComp =
+				getEdgeBuilder().constructSequentialComposition(pred, succ, (CodeBlock) predEdge, (CodeBlock) succEdge);
+		rememberEdgeMapping(seqComp, predEdge);
+		rememberEdgeMapping(seqComp, succEdge);
 		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed 2, added 2 edges");

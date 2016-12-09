@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
@@ -46,9 +47,9 @@ public final class DefaultSymbolTableAdapter implements ISymbolTableAdapter {
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mBoogieVarTable;
 	
-	public DefaultSymbolTableAdapter(final BoogieSymbolTable symbolTable, final Boogie2SmtSymbolTable boogieVarTable) {
+	public DefaultSymbolTableAdapter(final BoogieSymbolTable symbolTable, final IIcfgSymbolTable boogieVarTable) {
 		mSymbolTable = symbolTable;
-		mBoogieVarTable = boogieVarTable;
+		mBoogieVarTable = (Boogie2SmtSymbolTable) boogieVarTable;
 	}
 	
 	@Override

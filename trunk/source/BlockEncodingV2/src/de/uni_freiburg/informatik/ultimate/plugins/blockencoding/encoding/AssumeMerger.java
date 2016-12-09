@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
@@ -64,18 +63,16 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 	private final boolean mUseSBE;
 	
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	private final BlockEncodingBacktranslator mBacktranslator;
 	
 	public AssumeMerger(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator) {
-		super(services);
+		super(services, backtranslator);
 		mAssumesMerged = 0;
 		mRewriteNotEquals = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_SBE);
 		mEdgeBuilder = edgeBuilder;
-		mBacktranslator = backtranslator;
 	}
 	
 	@Override
@@ -93,14 +90,14 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 			closed.add(current);
 			edges.addAll(current.getTarget().getOutgoingEdges());
 			if (current instanceof CodeBlock) {
-				mergeEdge(root, (CodeBlock) current);
+				mergeEdge((CodeBlock) current);
 			}
 		}
 		mLogger.info("Merged " + mAssumesMerged + " AssumeStatements");
 		return root;
 	}
 	
-	private void mergeEdge(final IIcfg<?> root, final CodeBlock current) {
+	private void mergeEdge(final CodeBlock current) {
 		final List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
@@ -133,7 +130,7 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 		
 		if (!collectionsEqual(stmts, newStmts)) {
 			// there were optimizations, replace the edge with new edge(s)
-			createNewEdges(root, current, newStmts);
+			createNewEdges(current, newStmts);
 			// remove old edge
 			current.disconnectSource();
 			current.disconnectTarget();
@@ -141,7 +138,7 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 		
 	}
 	
-	private void createNewEdges(final IIcfg<?> root, final CodeBlock current, final List<Statement> newStmts) {
+	private void createNewEdges(final CodeBlock current, final List<Statement> newStmts) {
 		boolean allAssumes = true;
 		for (final Statement stmt : newStmts) {
 			if (!(stmt instanceof AssumeStatement)) {
@@ -164,9 +161,10 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (final Expression disjunct : disjuncts) {
-					mEdgeBuilder.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
-							(BoogieIcfgLocation) current.getTarget(),
+					final StatementSequence ss = mEdgeBuilder.constructStatementSequence(
+							(BoogieIcfgLocation) current.getSource(), (BoogieIcfgLocation) current.getTarget(),
 							new AssumeStatement(stmt.getLocation(), disjunct));
+					rememberEdgeMapping(ss, current);
 				}
 				return;
 			}
@@ -174,6 +172,7 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 		}
 		final StatementSequence ss = mEdgeBuilder.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
 				(BoogieIcfgLocation) current.getTarget(), newStmts);
+		rememberEdgeMapping(ss, current);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Replacing first with second:");
 			mLogger.debug(current);

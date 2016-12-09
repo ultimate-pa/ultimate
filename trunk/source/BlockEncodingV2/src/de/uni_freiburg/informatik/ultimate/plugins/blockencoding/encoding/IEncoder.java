@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
+ * @param <LOC>
  */
 public interface IEncoder<LOC extends IcfgLocation> {
 	

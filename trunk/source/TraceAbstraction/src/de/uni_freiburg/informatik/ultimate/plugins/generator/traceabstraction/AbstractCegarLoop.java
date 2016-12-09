@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
@@ -101,7 +101,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
-	protected final BoogieIcfgContainer mIcfgContainer;
+	protected final IIcfg<BoogieIcfgLocation> mIcfgContainer;
 	
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
@@ -171,14 +171,14 @@ public abstract class AbstractCegarLoop {
 	
 	protected Dumper mDumper;
 	/**
-	 * only != null if analysis result is UNKNOWN
-	 * Textual explanation why result is unknown.
+	 * only != null if analysis result is UNKNOWN Textual explanation why result is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final String name, final IIcfg<BoogieIcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<BoogieIcfgLocation> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
@@ -224,8 +224,9 @@ public abstract class AbstractCegarLoop {
 	 *
 	 * @throws AutomataOperationCanceledException
 	 * 
-	 * TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and constructInterpolantAutomaton()
-	 *      after {@link TreeAutomizerCEGAR} does not depend on this class anymore.
+	 *             TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and
+	 *             constructInterpolantAutomaton() after {@link TreeAutomizerCEGAR} does not depend on this class
+	 *             anymore.
 	 */
 	protected abstract LBool isCounterexampleFeasible() throws AutomataOperationCanceledException;
 	
@@ -408,7 +409,7 @@ public abstract class AbstractCegarLoop {
 			final boolean newMaximumReached =
 					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-				final String filename = mIcfgContainer.getFilename();
+				final String filename = mIcfgContainer.getIdentifier();
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 			
@@ -442,10 +443,9 @@ public abstract class AbstractCegarLoop {
 		sb.append(s);
 		return sb.toString();
 	}
-
+	
 	public UnprovabilityReason getReasonUnknown() {
 		return mReasonUnknown;
 	}
-	
 	
 }

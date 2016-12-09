@@ -263,7 +263,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getFilename() + "_Iteration" + mIteration;
+				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + mIteration;
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
@@ -302,7 +302,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		
 		// TODO do we need this?
 		final TermTransferrer tt = new TermTransferrer(solver);
-		for (final Term axiom : prefs.getIcfgContainer().getBoogie2SMT().getAxioms()) {
+		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
 		}
 		

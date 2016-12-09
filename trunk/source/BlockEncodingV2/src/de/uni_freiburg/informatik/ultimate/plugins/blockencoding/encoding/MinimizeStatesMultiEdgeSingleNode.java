@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  * Moderately aggressive minimization. Tries to remove states that have exactly one predecessor and one successor state
@@ -127,7 +128,10 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 					}
 					continue;
 				}
-				getEdgeBuilder().constructSequentialComposition(pred, succ, predCB, succCB);
+				final SequentialComposition seqComp =
+						getEdgeBuilder().constructSequentialComposition(pred, succ, predCB, succCB);
+				rememberEdgeMapping(seqComp, predCB);
+				rememberEdgeMapping(seqComp, succCB);
 				newEdges++;
 			}
 		}

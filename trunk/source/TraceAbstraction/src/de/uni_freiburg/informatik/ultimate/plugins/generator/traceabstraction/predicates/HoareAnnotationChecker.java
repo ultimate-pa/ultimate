@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -49,27 +50,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 
 /**
  * Check inductivity of a CFG's Hoare annotation.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class HoareAnnotationChecker {
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IHoareTripleChecker mHoareTripleChecker;
-	private final BoogieIcfgContainer mRootNode;
+	private final IIcfg<BoogieIcfgLocation> mRootNode;
 	private final boolean mIsInductive;
 	
-	
-
-	public HoareAnnotationChecker(final IUltimateServiceProvider services, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit) {
+	public HoareAnnotationChecker(final IUltimateServiceProvider services, final IIcfg<BoogieIcfgLocation> rootNode,
+			final CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -77,8 +77,8 @@ public class HoareAnnotationChecker {
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 		mIsInductive = cfgInductive(mRootNode);
 	}
-
-	private boolean cfgInductive(final BoogieIcfgContainer rootNode) {
+	
+	private boolean cfgInductive(final IIcfg<BoogieIcfgLocation> rootNode) {
 		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
@@ -89,12 +89,12 @@ public class HoareAnnotationChecker {
 		// yield[3] is the number of edges whose inductiveness could be
 		// neither proven nor refuted because there were no interpolants
 		final int[] yield = new int[4];
-
+		
 		final List<IcfgLocation> initialNodes = new ArrayList<>(rootNode.getProcedureEntryNodes().values());
-		final Set<BoogieIcfgLocation> visited = new HashSet<BoogieIcfgLocation>();
-		final List<BoogieIcfgLocation> worklist = new LinkedList<BoogieIcfgLocation>();
-
-		if (initialNodes != null) {
+		final Set<BoogieIcfgLocation> visited = new HashSet<>();
+		final List<BoogieIcfgLocation> worklist = new LinkedList<>();
+		
+		if (initialNodes.isEmpty()) {
 			for (final IcfgLocation initINode : initialNodes) {
 				final BoogieIcfgLocation initNode = (BoogieIcfgLocation) initINode;
 				visited.add(initNode);
@@ -106,30 +106,30 @@ public class HoareAnnotationChecker {
 		while (!worklist.isEmpty()) {
 			final BoogieIcfgLocation locNode = worklist.remove(0);
 			for (final IcfgEdge iEdge : locNode.getOutgoingEdges()) {
-
+				
 				final IcfgLocation iSuccLoc = iEdge.getTarget();
 				final BoogieIcfgLocation succLoc = (BoogieIcfgLocation) iSuccLoc;
 				if (!visited.contains(succLoc)) {
 					visited.add(succLoc);
 					worklist.add(succLoc);
 				}
-
+				
 				final IPredicate sf1 = HoareAnnotation.getAnnotation(locNode);
 				if (sf1 == null) {
 					mLogger.warn(locNode + " has no Hoare annotation");
 					continue;
 				}
-
+				
 				final IPredicate sf2 = HoareAnnotation.getAnnotation(succLoc);
 				if (sf2 == null) {
 					mLogger.warn(succLoc + " has no Hoare annotation");
 					continue;
 				}
-
+				
 				final Validity inductivity;
 				final IAction action;
 				if (iEdge instanceof ICallAction) {
-					action = ((ICallAction) iEdge);
+					action = (ICallAction) iEdge;
 					inductivity = mHoareTripleChecker.checkCall(sf1, (ICallAction) action, sf2);
 				} else if (iEdge instanceof Return) {
 					final BoogieIcfgLocation callerNode = ((Return) iEdge).getCallerProgramPoint();
@@ -138,22 +138,21 @@ public class HoareAnnotationChecker {
 						mLogger.warn(callerNode + " has no Hoare annotation");
 						continue;
 					}
-					action = ((IReturnAction) iEdge);
+					action = (IReturnAction) iEdge;
 					inductivity = mHoareTripleChecker.checkReturn(sf1, sfk, (IReturnAction) action, sf2);
 				} else if (iEdge instanceof Summary) {
-					action = ((Summary) iEdge);
+					action = (Summary) iEdge;
 					if (((Summary) action).calledProcedureHasImplementation()) {
 						continue;
-					} else {
-						inductivity = mHoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
 					}
+					inductivity = mHoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
 				} else if (iEdge instanceof CodeBlock) {
-					action = ((CodeBlock) iEdge);
+					action = (CodeBlock) iEdge;
 					inductivity = mHoareTripleChecker.checkInternal(sf1, (IInternalAction) action, sf2);
 				} else {
 					continue;
 				}
-
+				
 				switch (inductivity) {
 				case VALID: {
 					yield[0]++;
@@ -161,8 +160,7 @@ public class HoareAnnotationChecker {
 				}
 				case INVALID: {
 					yield[1]++;
-					mLogger.warn("Transition   " + action + "   from   " + sf1 + "   to   " + sf2
-							+ "   not inductive");
+					mLogger.warn("Transition   " + action + "   from   " + sf1 + "   to   " + sf2 + "   not inductive");
 					result = false;
 					break;
 				}
@@ -181,7 +179,7 @@ public class HoareAnnotationChecker {
 				+ " weak to decide inductivity. " + yield[3] + " times interpolants" + " missing.");
 		return result;
 	}
-
+	
 	public boolean isInductive() {
 		return mIsInductive;
 	}

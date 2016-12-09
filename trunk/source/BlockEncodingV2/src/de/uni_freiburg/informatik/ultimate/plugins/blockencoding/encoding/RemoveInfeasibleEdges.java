@@ -37,14 +37,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 	
-	public RemoveInfeasibleEdges(final IUltimateServiceProvider services) {
-		super(services);
+	public RemoveInfeasibleEdges(final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 	}
 	
 	@Override

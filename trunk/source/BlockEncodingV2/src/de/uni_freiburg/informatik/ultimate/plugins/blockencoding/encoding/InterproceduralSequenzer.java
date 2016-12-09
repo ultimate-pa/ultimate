@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -55,8 +56,9 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 	
 	private final IcfgEdgeBuilder mEdgeBuilder;
 	
-	public InterproceduralSequenzer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services) {
-		super(services);
+	public InterproceduralSequenzer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}
 	
@@ -129,14 +131,17 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 		summaries.forEach(this::disconnect);
 		
 		final SequentialComposition ss =
-				createInterproceduralSequentialComposition(callCb, intermediateCb, optionalReturn);
+				createInterproceduralSequentialComposition(callCb, intermediateCb, optionalReturn.get());
+		
+		rememberEdgeMapping(ss, callCb);
+		rememberEdgeMapping(ss, intermediateCb);
+		rememberEdgeMapping(ss, optionalReturn.get());
 		
 		return ss.getTarget();
 	}
 	
 	private SequentialComposition createInterproceduralSequentialComposition(final Call callCb,
-			final IcfgEdge intermediateCb, final Optional<Return> optionalReturn) {
-		final Return returnCb = optionalReturn.get();
+			final IcfgEdge intermediateCb, final Return returnCb) {
 		final List<CodeBlock> codeblocks = new ArrayList<>(3);
 		codeblocks.add(callCb);
 		codeblocks.add((CodeBlock) intermediateCb);

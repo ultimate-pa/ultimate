@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -175,7 +175,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 			return false;
 		}
 		final LOC removedLoc = name2loc.remove(loc.getDebugIdentifier());
-		if (!name2loc.equals(removedLoc)) {
+		if (!loc.equals(removedLoc)) {
 			assert removedLoc == null : "Multiple nodes with identical debug identifier!";
 			return false;
 		}

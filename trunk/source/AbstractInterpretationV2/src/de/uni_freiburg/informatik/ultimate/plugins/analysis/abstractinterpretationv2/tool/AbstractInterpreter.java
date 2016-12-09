@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -116,8 +115,8 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
-			runOnPathProgram(final BoogieIcfgContainer root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> runOnPathProgram(
+					final IIcfg<BoogieIcfgLocation> root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
 					final NestedRun<CodeBlock, ?> counterexample, final Set<CodeBlock> pathProgramProjection,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
@@ -131,9 +130,7 @@ public final class AbstractInterpreter {
 			final NWAPathProgramTransitionProvider transProvider =
 					new NWAPathProgramTransitionProvider(counterexample, pathProgramProjection, services, root);
 			final CodeBlock initial = counterexample.getSymbol(0);
-			final BoogieIcfgContainer rootAnnot = root;
-			final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-			final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
+			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 			final FixpointEngineParameterFactory domFac =
 					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> params =
@@ -141,7 +138,7 @@ public final class AbstractInterpreter {
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
 			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-					fxpe.run(initial, script, bpl2smt);
+					fxpe.run(initial, script);
 			if (!result.hasReachedError()) {
 				logger.info("NWA was safe (error state unreachable)");
 			} else {

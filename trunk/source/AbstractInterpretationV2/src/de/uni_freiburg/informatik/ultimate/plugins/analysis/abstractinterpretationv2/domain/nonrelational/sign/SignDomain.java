@@ -36,8 +36,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -50,18 +51,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar> {
 	
 	private final IUltimateServiceProvider mServices;
-	private final BoogieIcfgContainer mRootAnnotation;
 	private final ILogger mLogger;
 	
 	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
+	private final Boogie2SmtSymbolTable mIcfgSymbolTable;
 	
-	public SignDomain(final IUltimateServiceProvider services, final BoogieIcfgContainer rootAnnotation,
+	public SignDomain(final IUltimateServiceProvider services, final IIcfg<BoogieIcfgLocation> rootAnnotation,
 			final BoogieSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mRootAnnotation = rootAnnotation;
 		mSymbolTable = symbolTable;
+		mIcfgSymbolTable = (Boogie2SmtSymbolTable) rootAnnotation.getSymboltable();
 	}
 	
 	@Override
@@ -82,10 +83,9 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	@Override
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			final Boogie2SmtSymbolTable bpl2smtTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final int maxParallelStates = 2;
 			final SignDomainStatementProcessor stmtProcessor =
-					new SignDomainStatementProcessor(mLogger, mSymbolTable, bpl2smtTable, maxParallelStates);
+					new SignDomainStatementProcessor(mLogger, mSymbolTable, mIcfgSymbolTable, maxParallelStates);
 			mPostOperator = new SignPostOperator(mLogger, stmtProcessor);
 		}
 		return mPostOperator;

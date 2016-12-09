@@ -39,13 +39,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -70,7 +71,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
-	private final BoogieIcfgContainer mRootAnnot;
+	private final IIcfg<BoogieIcfgLocation> mIcfg;
 	private final CegarAbsIntRunner mAbsIntRunner;
 	private final CegarLoopStatisticsGenerator mBenchmark;
 	
@@ -83,7 +84,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final IBuilderFunction mBuilderFunction;
 	
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predFac, final BoogieIcfgContainer RootAnnot,
+			final PredicateFactoryForInterpolantAutomata predFac, final IIcfg<BoogieIcfgLocation> icfg,
 			final CegarAbsIntRunner abstractInterpretationRunner, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolation,
 			final InterpolantAutomaton interpolantAutomatonConstructionProcedure,
@@ -92,7 +93,7 @@ public class InterpolantAutomatonBuilderFactory {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predFac;
-		mRootAnnot = RootAnnot;
+		mIcfg = icfg;
 		mAbsIntRunner = abstractInterpretationRunner;
 		mBenchmark = benchmark;
 		
@@ -123,17 +124,17 @@ public class InterpolantAutomatonBuilderFactory {
 	
 	private IBuilderFunction determineBuilder(final InterpolantAutomaton interpolAutomatonStyle) {
 		switch (interpolAutomatonStyle) {
-			case CANONICAL:
-				return this::createBuilderCanonical;
-			case SINGLETRACE:
-				return this::createBuilderSingleTrace;
-			case TOTALINTERPOLATION2:
-				return this::createBuilderTotalInterpolation2;
-			case TWOTRACK:
-				return this::createBuilderTwoTrack;
-			case TOTALINTERPOLATION:
-			default:
-				throw new IllegalArgumentException("Setting " + interpolAutomatonStyle + " is unsupported");
+		case CANONICAL:
+			return this::createBuilderCanonical;
+		case SINGLETRACE:
+			return this::createBuilderSingleTrace;
+		case TOTALINTERPOLATION2:
+			return this::createBuilderTotalInterpolation2;
+		case TWOTRACK:
+			return this::createBuilderTwoTrack;
+		case TOTALINTERPOLATION:
+		default:
+			throw new IllegalArgumentException("Setting " + interpolAutomatonStyle + " is unsupported");
 		}
 	}
 	
@@ -181,16 +182,16 @@ public class InterpolantAutomatonBuilderFactory {
 						interpolGenerator.getPredicateUnifier(), (NestedWord<CodeBlock>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
-		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
-				mServices, ipp, counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
+		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, ipp,
+				counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
 	}
 	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderSingleTrace(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			@SuppressWarnings("unused") final IRun<CodeBlock, IPredicate, ?> counterexample,
-			@SuppressWarnings("unused") final List<InterpolantsPreconditionPostcondition> ipps) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final List<InterpolantsPreconditionPostcondition> ipps) {
 		final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(mServices,
 				new InCaReAlphabet<>(abstraction), interpolGenerator, mPredicateFactory);
 		return iab;
@@ -198,8 +199,7 @@ public class InterpolantAutomatonBuilderFactory {
 	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTotalInterpolation2(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample,
-			@SuppressWarnings("unused") final List<InterpolantsPreconditionPostcondition> ipps)
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final List<InterpolantsPreconditionPostcondition> ipps)
 			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<CodeBlock, IPredicate> castedAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
@@ -208,13 +208,11 @@ public class InterpolantAutomatonBuilderFactory {
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
 				castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
 				mCsToolkit.getModifiableGlobalsTable(), mInterpolationTechnique, mServices, mHoareTripleChecks,
-				mSimplificationTechnique, mXnfConversionTechnique,
-				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+				mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getSymboltable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
 	}
 	
-	@SuppressWarnings("unused")
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTwoTrack(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final List<InterpolantsPreconditionPostcondition> ipps)

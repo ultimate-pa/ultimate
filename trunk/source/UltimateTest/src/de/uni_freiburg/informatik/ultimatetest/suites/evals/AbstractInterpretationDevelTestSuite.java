@@ -55,12 +55,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			
+	
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
@@ -107,6 +109,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf"),
+			new Triple<>("AutomizerC.xml", C, "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
+			
 
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
@@ -122,7 +126,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	};
 
 	private static final String[] INPUT = new String[] {
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i"
+			//			"examples/programs/abstractInterpretation/regression",
 //			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 //			"examples/rers2016/Problem10.c",
 //			"examples/programs/abstractInterpretation/CountTillBound-Loop-2.bpl",
@@ -148,7 +153,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/all/logicimplies-test.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/logiciff.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/procedure-statesplit-logiciff.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
 
@@ -166,32 +171,33 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/loops/invert_string_false-unreach-call.i",
 //			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
 			
-			"examples/svcomp/ssh-simplified/s3_srvr_7_true-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c",
-			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_2_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_3_true-unreach-call.cil.c",
-			"examples/svcomp/ssh/s3_srvr.blast.11_false-unreach-call.i.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_2_false-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_4_true-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_12_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_4_true-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_8_true-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_1_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_14_false-unreach-call.cil.c",
-			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_3_true-unreach-call.cil.c",
-			"examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_1_true-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_2_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_6_true-unreach-call.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_4_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_clnt_3_false-unreach-call.cil.c",
-			"examples/svcomp/ssh-simplified/s3_srvr_2_true-unreach-call.cil.c",
+//			"examples/svcomp/ldv-consumption/32_7a_cilled_false-unreach-call_linux-3.8-rc1-drivers--media--rc--rc-core.ko-main.cil.out.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_7_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_2_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_3_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.11_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_2_false-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_4_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_12_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_4_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_8_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_1_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_14_false-unreach-call.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_3_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_1_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_2_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_6_true-unreach-call.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_4_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_clnt_3_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_2_true-unreach-call.cil.c",
 	};
 	// @formatter:on
 	

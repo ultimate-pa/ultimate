@@ -143,9 +143,9 @@ public class IcfgEdgeBuilder {
 			final CodeBlock oldEdge) {
 		final CodeBlock newEdge;
 		if (oldEdge instanceof Call) {
-			newEdge = mCbf.constructCall(source, target, ((Call) oldEdge).getCallStatement());
+			newEdge = mCbf.copyCodeBlock(oldEdge, source, target);
 		} else if (oldEdge instanceof Return) {
-			newEdge = mCbf.constructReturn(source, target, ((Return) oldEdge).getCorrespondingCall());
+			newEdge = mCbf.copyCodeBlock(oldEdge, source, target);
 		} else if (oldEdge instanceof SequentialComposition) {
 			final SequentialComposition seqComp = (SequentialComposition) oldEdge;
 			final List<CodeBlock> duplicatedCodeblocks = seqComp.getCodeBlocks().stream()
@@ -170,7 +170,8 @@ public class IcfgEdgeBuilder {
 		} else {
 			throw new UnsupportedOperationException("Copy of " + oldEdge.getClass().getSimpleName() + " unsupported");
 		}
-		
+		assert newEdge.getTransitionFormula() != null : "copy failed: no transformula for "
+				+ newEdge.getClass().getSimpleName();
 		return newEdge;
 	}
 }

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 
 /**
  *
@@ -49,9 +50,9 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 	
 	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 	
-	public RemoveSinkStates(final IUltimateServiceProvider services,
-			final Predicate<IcfgLocation> funHasToBePreserved) {
-		super(services);
+	public RemoveSinkStates(final IUltimateServiceProvider services, final Predicate<IcfgLocation> funHasToBePreserved,
+			final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 		mFunHasToBePreserved = funHasToBePreserved;
 	}
 	

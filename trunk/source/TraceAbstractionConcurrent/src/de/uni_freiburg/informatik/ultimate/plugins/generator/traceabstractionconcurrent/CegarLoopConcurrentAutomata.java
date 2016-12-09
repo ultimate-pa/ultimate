@@ -75,12 +75,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
-	public CegarLoopConcurrentAutomata(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+	public CegarLoopConcurrentAutomata(final String name, final BoogieIcfgContainer rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
 			final Collection<BoogieIcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
-		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
-				services, storage);
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
+				InterpolationTechnique.Craig_TreeInterpolation, false, services, storage);
 		// mContentFactory = new TaConcurContentFactory(
 		// rootNode.getRootAnnot().getLocNodes(),
 		// this,
@@ -91,10 +92,11 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
 	@Override
 	protected void getInitialAbstraction() {
-		final IStateFactory<IPredicate> predicateFactory =
-				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
-		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mIcfgContainer, predicateFactory, mCsToolkit, mPredicateFactory, mServices,
-				mXnfConversionTechnique, mSimplificationTechnique);
+		final IStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
+				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
+		final CFG2Automaton cFG2NestedWordAutomaton =
+				new Cfg2Nwa((BoogieIcfgContainer) mIcfgContainer, predicateFactory, mCsToolkit, mPredicateFactory,
+						mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 		
 		if (mIteration <= mPref.watchIteration()
@@ -106,34 +108,35 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	private static <E> Set<E> asHashSet(final E[] array) {
 		return new HashSet<>(Arrays.asList(array));
 	}
-
+	
 	@Override
 	protected void minimizeAbstraction(final PredicateFactoryForInterpolantAutomata predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		if (mPref.dumpAutomata()) {
-			final String filename = mIcfgContainer.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+			final String filename =
+					mIcfgContainer.getIdentifier() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		final Function<IMLPredicate, Set<BoogieIcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
 		AutomataMinimization<Set<BoogieIcfgLocation>, IMLPredicate> am;
 		try {
-			am = new AutomataMinimization<>(mServices,
-					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
-					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
-					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
+			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
+					minimization, mComputeHoareAnnotation, mIteration, predicateFactoryRefinement,
+					MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata, mInterpolAutomaton,
+					MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, false);
 		} catch (final AutomataMinimizationTimeout e) {
 			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
 			throw e.getAutomataOperationCanceledException();
 		}
 		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
-
+		
 		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
-
+		
 		if (newAutomatonWasBuilt) {
 			// postprocessing after minimization
 			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
-
+			
 			// extract Hoare annotation
 			if (mComputeHoareAnnotation) {
 				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
@@ -142,15 +145,15 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				}
 				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 			}
-
+			
 			// statistics
 			final int oldSize = mAbstraction.size();
 			final int newSize = newAbstraction.size();
 			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
-
+			
 			// use result
 			mAbstraction = newAbstraction;
-
+			
 		}
 	}
 	
@@ -169,16 +172,16 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		final Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		final Map<IPredicate, IPredicate> context2entry = null;
-		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-				mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
+		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
+				mPref.getHoareTripleChecks(), mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 		
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 		
 		final DeterministicInterpolantAutomaton determinized =
-				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, mInterpolAutomaton, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
-						mLogger, false, false);
+				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, mInterpolAutomaton,
+						mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
@@ -194,8 +197,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit))
-						.getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 		

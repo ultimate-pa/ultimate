@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -129,8 +130,8 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	public TraceCheckerConstructor(final TraceCheckerConstructor other, final ManagedScript managedScript,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
 			final CegarLoopStatisticsGenerator benchmark) {
-		this(other.mPrefs, managedScript, other.mServices, other.mPredicateUnifier, other.mCounterexample,
-				assertOrder, interpolationTechnique, other.mIteration, benchmark);
+		this(other.mPrefs, managedScript, other.mServices, other.mPredicateUnifier, other.mCounterexample, assertOrder,
+				interpolationTechnique, other.mIteration, benchmark);
 	}
 	
 	/**
@@ -158,8 +159,8 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
-			final InterpolationTechnique interpolationTechnique,
-			final int cegarIteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
+			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mPrefs = prefs;
 		mManagedScript = managedScript;
 		mServices = services;
@@ -178,20 +179,20 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 			traceChecker = constructDefault();
 		} else {
 			switch (mInterpolationTechnique) {
-				case Craig_NestedInterpolation:
-				case Craig_TreeInterpolation:
-					traceChecker = constructCraig();
-					break;
-				case ForwardPredicates:
-				case BackwardPredicates:
-				case FPandBP:
-					traceChecker = constructForwardBackward();
-					break;
-				case PathInvariants:
-					traceChecker = constructPathInvariants();
-					break;
-				default:
-					throw new UnsupportedOperationException("unsupported interpolation");
+			case Craig_NestedInterpolation:
+			case Craig_TreeInterpolation:
+				traceChecker = constructCraig();
+				break;
+			case ForwardPredicates:
+			case BackwardPredicates:
+			case FPandBP:
+				traceChecker = constructForwardBackward();
+				break;
+			case PathInvariants:
+				traceChecker = constructPathInvariants();
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupported interpolation");
 			}
 		}
 		mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
@@ -223,11 +224,11 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		
 		final TraceChecker traceChecker;
-		traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
-				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
-				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, true, mPredicateUnifier, mInterpolationTechnique,
-				mManagedScript, true, xnfConversionTechnique, simplificationTechnique,
-				mCounterexample.getStateSequence(), false);
+		traceChecker =
+				new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+						NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
+						mServices, true, mPredicateUnifier, mInterpolationTechnique, mManagedScript, true,
+						xnfConversionTechnique, simplificationTechnique, mCounterexample.getStateSequence(), false);
 		return traceChecker;
 	}
 	
@@ -253,12 +254,12 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		
-		final BoogieIcfgContainer icfgContainer = mPrefs.getIcfgContainer();
+		final IIcfg<BoogieIcfgLocation> icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getFilename() + "_Iteration" + mIteration;
+		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getIdentifier() + "_Iteration" + mIteration;
 		final String solverCommand;
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";

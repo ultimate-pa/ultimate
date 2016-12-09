@@ -21,42 +21,44 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
-
+	
 	private final StatisticsData mCegarLoopBenchmarkData;
 	private final int mProcedures;
 	private final int mLocations;
 	private final int mErrorLocations;
-
-	public TraceAbstractionBenchmarks(BoogieIcfgContainer rootAnnot) {
+	
+	public TraceAbstractionBenchmarks(final IIcfg<?> rootAnnot) {
 		mProcedures = rootAnnot.getProcedureEntryNodes().size();
-		mLocations = rootAnnot.getNumberOfProgramPoints();
-		mErrorLocations = rootAnnot.getNumberOfErrorNodes();
+		mLocations = (int) rootAnnot.getProgramPoints().entrySet().stream()
+				.flatMap(a -> a.getValue().entrySet().stream()).count();
+		mErrorLocations = (int) rootAnnot.getProcedureErrorNodes().entrySet().stream()
+				.flatMap(a -> a.getValue().stream()).count();
 		mCegarLoopBenchmarkData = new StatisticsData();
 	}
-
-	public void aggregateBenchmarkData(CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator) {
+	
+	public void aggregateBenchmarkData(final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator) {
 		mCegarLoopBenchmarkData.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 	}
-
-	public static String prettyprintNanoseconds(long time) {
+	
+	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
-		final long tenthDigit = (time / 100000000) % 10;
+		final long tenthDigit = time / 100000000 % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -70,10 +72,10 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		sb.append(mCegarLoopBenchmarkData.toString());
 		return sb.toString();
 	}
-
+	
 	@Override
 	public ICsvProvider<Object> createCsvProvider() {
 		return mCegarLoopBenchmarkData.createCvsProvider();
 	}
-
+	
 }

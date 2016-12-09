@@ -178,7 +178,11 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		}
 		
 		private SequentialComposition constructSequentialComposition() {
-			return getEdgeBuilder().constructSequentialComposition(mSource, mTarget, mFirst, mSecond);
+			final SequentialComposition newEdge =
+					getEdgeBuilder().constructSequentialComposition(mSource, mTarget, mFirst, mSecond);
+			rememberEdgeMapping(newEdge, mFirst);
+			rememberEdgeMapping(newEdge, mSecond);
+			return newEdge;
 		}
 	}
 }

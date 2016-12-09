@@ -60,21 +60,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public abstract class CFG2Automaton {
-
+	
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-
+	
 	private final BoogieIcfgContainer mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IStateFactory<IPredicate> mContentFactory;
 	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
-
+	
 	private CodeBlock mSharedVarsInit;
 	private static final String mInitProcedure = "~init";
-
+	
 	public CFG2Automaton(final BoogieIcfgContainer rootAnnot, final IStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
@@ -88,21 +88,21 @@ public abstract class CFG2Automaton {
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 	}
-
+	
 	public abstract Object getResult();
-
+	
 	protected void constructProcedureAutomata() {
 		final CodeBlockSize codeBlockSize = RcfgPreferenceInitializer.getPreferences(mServices)
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, RcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.SingleStatement) {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");
 		}
-
+		
 		if (!mIcfg.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure)) {
 			throw new IllegalArgumentException(
 					"Concurrent program needs procedure " + mInitProcedure + " to initialize shared variables");
 		}
-
+		
 		int numberOfProcedures;
 		if (mIcfg.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure)) {
 			numberOfProcedures = mIcfg.getBoogieDeclarations().getProcImplementation().size() - 1;
@@ -112,11 +112,11 @@ public abstract class CFG2Automaton {
 			mLogger.debug("No procedure to initialize shared variables");
 		}
 		mLogger.debug("Found " + numberOfProcedures + "Procedures");
-
+		
 		mAutomata = new ArrayList<>(numberOfProcedures);
-
+		
 		mSharedVarsInit = extractPrecondition();
-
+		
 		for (final String proc : mIcfg.getBoogieDeclarations().getProcImplementation().keySet()) {
 			if (proc.equals(mInitProcedure)) {
 				continue;
@@ -124,16 +124,16 @@ public abstract class CFG2Automaton {
 			final BoogieIcfgLocation entry = mIcfg.getProcedureEntryNodes().get(proc);
 			mAutomata.add(getNestedWordAutomaton(entry));
 		}
-		assert (mAutomata.size() == numberOfProcedures);
-
+		assert mAutomata.size() == numberOfProcedures;
+		
 	}
-
+	
 	private CodeBlock extractPrecondition() {
-		assert (mIcfg.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure));
+		assert mIcfg.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure);
 		final BoogieIcfgLocation entry = mIcfg.getProcedureEntryNodes().get(mInitProcedure);
 		final BoogieIcfgLocation exit = mIcfg.getProcedureExitNodes().get(mInitProcedure);
 		final List<CodeBlock> codeBlocks = new ArrayList<>();
-
+		
 		BoogieIcfgLocation current = entry;
 		while (current != exit) {
 			assert current.getOutgoingEdges().size() == 1;
@@ -146,23 +146,23 @@ public abstract class CFG2Automaton {
 		return mIcfg.getCodeBlockFactory().constructSequentialComposition(entry, exit, true, false, codeBlocks,
 				mXnfConversionTechnique, mSimplificationTechnique);
 	}
-
+	
 	/**
 	 * Build NestedWordAutomaton for all code reachable from initial Node which is in the same procedure as initial
 	 * Node. Initial Node does not have to be the enty Node of a procedure.
 	 */
 	private INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final BoogieIcfgLocation initialNode) {
-
+		
 		mLogger.debug("Step: Collect all LocNodes corresponding to" + " this procedure");
-
+		
 		final LinkedList<BoogieIcfgLocation> queue = new LinkedList<>();
 		final Set<BoogieIcfgLocation> allNodes = new HashSet<>();
 		queue.add(initialNode);
 		allNodes.add(initialNode);
-
+		
 		while (!queue.isEmpty()) {
 			final BoogieIcfgLocation currentNode = queue.removeFirst();
-
+			
 			if (currentNode.getOutgoingNodes() != null) {
 				for (final IcfgLocation node : currentNode.getOutgoingNodes()) {
 					final BoogieIcfgLocation nextNode = (BoogieIcfgLocation) node;
@@ -173,16 +173,16 @@ public abstract class CFG2Automaton {
 				}
 			}
 		}
-
+		
 		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<>();
 		final Set<CodeBlock> callAlphabet = new HashSet<>(0);
 		final Set<CodeBlock> returnAlphabet = new HashSet<>(0);
-
+		
 		// add transAnnot from sharedVars initialization
 		internalAlphabet.add(mSharedVarsInit);
-
+		
 		for (final BoogieIcfgLocation locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
@@ -203,15 +203,15 @@ public abstract class CFG2Automaton {
 				}
 			}
 		}
-
+		
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
 						returnAlphabet, mContentFactory);
-
+		
 		IPredicate procedureInitialState = null;
-
+		
 		mLogger.debug("Step: add states");
 		final Map<BoogieIcfgLocation, IPredicate> nodes2States = new HashMap<>();
 		// add states
@@ -222,12 +222,12 @@ public abstract class CFG2Automaton {
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
-				assert (procedureInitialState == null) : "Procedure must have" + "only one initial state";
+				assert procedureInitialState == null : "Procedure must have" + "only one initial state";
 				procedureInitialState = automatonState;
 			}
-
+			
 		}
-
+		
 		mLogger.debug("Step: add transitions");
 		// add transitions
 		for (final BoogieIcfgLocation locNode : allNodes) {
@@ -245,7 +245,7 @@ public abstract class CFG2Automaton {
 				}
 			}
 		}
-
+		
 		mLogger.debug("Step: SharedVarsInit part");
 		final BoogieIcfgLocation entryOfInitProc = (BoogieIcfgLocation) mSharedVarsInit.getSource();
 		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
@@ -254,8 +254,8 @@ public abstract class CFG2Automaton {
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;
 		nwa.addInternalTransition(initialContent, mSharedVarsInit, automatonSuccState);
-
+		
 		return nwa;
 	}
-
+	
 }

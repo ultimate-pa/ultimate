@@ -174,11 +174,12 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		
 		if (ups.getBoolean(PreferenceInitializer.POST_USE_PARALLEL_COMPOSITION)) {
-			mIterationResult = new ParallelComposer(edgeBuilder, mServices).getResult(mIterationResult);
+			mIterationResult =
+					new ParallelComposer(edgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
 		}
 		
 		if (ups.getBoolean(PreferenceInitializer.POST_SIMPLIFY_CODEBLOCKS)) {
-			mIterationResult = new Simplifier(edgeBuilder, mServices).getResult(mIterationResult);
+			mIterationResult = new Simplifier(edgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
 		}
 		
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
@@ -227,12 +228,12 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		// note that the order is important
 		
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_INFEASIBLE_EDGES)) {
-			rtr.add(() -> new RemoveInfeasibleEdges(mServices));
+			rtr.add(() -> new RemoveInfeasibleEdges(mServices, mBacktranslator));
 		}
 		
 		if (ups.getBoolean(PreferenceInitializer.FXP_MAXIMIZE_FINAL_STATES)) {
 			rtr.add(() -> new MaximizeFinalStates(mServices, BlockEncodingObserver::markBuchiProgramAccepting,
-					BlockEncodingObserver::isBuchiProgramAccepting));
+					BlockEncodingObserver::isBuchiProgramAccepting, mBacktranslator));
 		}
 		
 		final MinimizeStates minimizeStates =
@@ -261,10 +262,10 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
-			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved));
+			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved, mBacktranslator));
 		}
 		
-		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices));
+		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices, mBacktranslator));
 		
 		return rtr;
 	}

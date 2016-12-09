@@ -40,13 +40,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
@@ -63,26 +64,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class CegarAbsIntRunner {
-
+	
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-
+	
 	private final CfgSmtToolkit mCsToolkit;
-	private final BoogieIcfgContainer mRoot;
-
+	private final IIcfg<BoogieIcfgLocation> mRoot;
+	
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
 	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
-
+	
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-
+	
 	private boolean mSkipIteration;
-
+	
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
-			final BoogieIcfgContainer root, final SimplificationTechnique simplificationTechnique,
+			final IIcfg<BoogieIcfgLocation> root, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
@@ -94,14 +95,14 @@ public class CegarAbsIntRunner {
 		mSkipIteration = false;
 		mKnownPathPrograms = new HashSet<>();
 		mCsToolkit = csToolkit;
-
+		
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
 		mMode = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE,
 				AbstractInterpretationMode.class);
 		checkSettings();
 	}
-
+	
 	private void checkSettings() {
 		if (mMode == AbstractInterpretationMode.USE_PATH_PROGRAM && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
@@ -117,7 +118,7 @@ public class CegarAbsIntRunner {
 					+ TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE + "\"=true");
 		}
 	}
-
+	
 	/**
 	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
 	 * current abstraction.
@@ -135,13 +136,13 @@ public class CegarAbsIntRunner {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return;
 		}
-
+		
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mAbsIntResult = null;
-
+			
 			final Set<CodeBlock> pathProgramSet = convertCex2Set(currentCex);
-
+			
 			if (!mKnownPathPrograms.add(pathProgramSet)) {
 				mSkipIteration = true;
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
@@ -152,10 +153,10 @@ public class CegarAbsIntRunner {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
 				return;
 			}
-
+			
 			mSkipIteration = false;
 			mCegarLoopBenchmark.announceNextAbsIntIteration();
-
+			
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
@@ -179,12 +180,12 @@ public class CegarAbsIntRunner {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
-
+	
 	private static boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
 		final Set<IcfgLocation> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
-
+	
 	/**
 	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
@@ -192,11 +193,11 @@ public class CegarAbsIntRunner {
 	public boolean hasShownInfeasibility() {
 		return mMode != AbstractInterpretationMode.NONE && mAbsIntResult != null && !mAbsIntResult.hasReachedError();
 	}
-
+	
 	public boolean isDisabled() {
 		return mMode == AbstractInterpretationMode.NONE;
 	}
-
+	
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
 			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final IRun<CodeBlock, IPredicate, ?> currentCex) {
@@ -210,7 +211,7 @@ public class CegarAbsIntRunner {
 			mLogger.warn("Cannot construct AI interpolant automaton without calculating fixpoint first");
 			return null;
 		}
-
+		
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton with mode " + mMode);
@@ -219,23 +220,21 @@ public class CegarAbsIntRunner {
 			case NONE:
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
-				aiInterpolAutomatonBuilder =
-						new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction, predicateUnifier,
-								mCsToolkit.getManagedScript(), mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-								currentCex, mSimplificationTechnique, mXnfConversionTechnique);
+				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
+						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getSymboltable(), currentCex,
+						mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
 						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mSimplificationTechnique,
-						mXnfConversionTechnique, mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mXnfConversionTechnique, mRoot.getSymboltable());
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex,
-						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mRoot.getSymboltable());
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
@@ -245,7 +244,7 @@ public class CegarAbsIntRunner {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
-
+	
 	private static Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<>();
 		// words count their states, so 0 is first state, length is last state

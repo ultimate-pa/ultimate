@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 
 /**
  *
@@ -55,17 +56,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEncoder<LOC> {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
+	private final BlockEncodingBacktranslator mBacktranslator;
 	
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
 	private BasicIcfg<LOC> mResult;
 	
-	public BaseBlockEncoder(final IUltimateServiceProvider services) {
+	public BaseBlockEncoder(final IUltimateServiceProvider services, final BlockEncodingBacktranslator backtranslator) {
 		assert services != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
+		mBacktranslator = backtranslator;
 	}
 	
 	@Override
@@ -117,6 +120,10 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 	protected void removeDisconnectedLocation(final BasicIcfg<LOC> root, final IcfgLocation toRemove) {
 		root.removeLocation(toRemove);
 		mRemovedLocations++;
+	}
+	
+	protected void rememberEdgeMapping(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
+		mBacktranslator.mapEdges(newEdge, originalEdge);
 	}
 	
 	private static class DequeCollector<T> implements Collector<T, Deque<T>, Deque<T>> {

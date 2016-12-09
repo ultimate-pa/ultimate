@@ -58,15 +58,13 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 	private final boolean mIgnoreBlowup;
 	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	private final BlockEncodingBacktranslator mBacktranslator;
 	
 	public BaseMinimizeStates(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funHasToBePreserved) {
-		super(services);
+		super(services, backtranslator);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
 		mFunHasToBePreserved = funHasToBePreserved;
-		mBacktranslator = backtranslator;
 		mEdgeBuilder = edgeBuilder;
 	}
 	
@@ -122,11 +120,8 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 			return false;
 		}
 		
-		final boolean rtr = predEdges.stream().map(pred -> (Predicate<IcfgEdge>) a -> isCombinableEdgePair(pred, a))
+		return predEdges.stream().map(pred -> (Predicate<IcfgEdge>) a -> isCombinableEdgePair(pred, a))
 				.allMatch(a -> succEdges.stream().allMatch(a));
-		assert rtr == neverTrustMyLambda(predEdges,
-				succEdges) : "I am not sure that this does what it should, so I build this assert";
-		return rtr;
 	}
 	
 	/**
@@ -136,16 +131,6 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		final int predEdgesSize = predEdges.size();
 		final int succEdgesSize = succEdges.size();
 		return predEdgesSize + succEdgesSize < predEdgesSize * succEdgesSize;
-	}
-	
-	private boolean neverTrustMyLambda(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
-		for (final IcfgEdge predEdge : predEdges) {
-			final Predicate<IcfgEdge> predicate = a -> isCombinableEdgePair(predEdge, a);
-			if (!succEdges.stream().allMatch(predicate)) {
-				return false;
-			}
-		}
-		return true;
 	}
 	
 	protected boolean isCombinableEdgePair(final IcfgEdge predEdge, final IcfgEdge succEdge) {
@@ -187,10 +172,6 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 	
 	protected IcfgEdgeBuilder getEdgeBuilder() {
 		return mEdgeBuilder;
-	}
-	
-	protected BlockEncodingBacktranslator getBacktranslator() {
-		return mBacktranslator;
 	}
 	
 	private void checkForTimeoutOrCancellation() {

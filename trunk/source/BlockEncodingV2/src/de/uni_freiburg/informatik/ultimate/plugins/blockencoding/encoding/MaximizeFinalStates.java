@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 
 /**
  *
@@ -50,8 +51,8 @@ public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
 	private final Predicate<IcfgLocation> mFunIsAccepting;
 	
 	public MaximizeFinalStates(final IUltimateServiceProvider services, final Consumer<IcfgLocation> funMarkAsAccepting,
-			final Predicate<IcfgLocation> funIsAccepting) {
-		super(services);
+			final Predicate<IcfgLocation> funIsAccepting, final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 		mNewAcceptingStates = 0;
 		mFunMarkAsAccepting = funMarkAsAccepting;
 		mFunIsAccepting = funIsAccepting;

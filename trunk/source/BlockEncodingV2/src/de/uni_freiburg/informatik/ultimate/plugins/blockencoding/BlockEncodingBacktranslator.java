@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -49,12 +50,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
 public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
 	
 	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
+	private final ILogger mLogger;
 	
-	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType) {
+	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
+			final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
+		mLogger = logger;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public IProgramExecution<IcfgEdge, Term>
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
@@ -75,6 +80,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 			final IcfgEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
 				// skip this, its not worth it.
+				mLogger.info("Skipped ATE [" + currentATE.getTraceElement().hashCode() + "] "
+						+ currentATE.getTraceElement());
 				continue;
 			}
 			newTrace.add(mappedEdge);
@@ -93,16 +100,6 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		newValues.put(i, programState);
 	}
 	
-	@Override
-	public List<IcfgEdge> translateTrace(final List<IcfgEdge> trace) {
-		return super.translateTrace(trace);
-	}
-	
-	@Override
-	public Term translateExpression(final Term expression) {
-		return super.translateExpression(expression);
-	}
-	
 	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
 		final IcfgEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
@@ -112,5 +109,7 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		} else {
 			mEdgeMapping.put(newEdge, originalEdge);
 		}
+		mLogger.info("Mapped [" + newEdge.hashCode() + "] " + newEdge);
+		mLogger.info("To     [" + mEdgeMapping.get(newEdge).hashCode() + "] " + mEdgeMapping.get(newEdge));
 	}
 }

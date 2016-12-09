@@ -30,10 +30,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -57,10 +58,10 @@ public class TaCheckAndRefinementPreferences {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final BoogieIcfgContainer mIcfgContainer;
+	private final IIcfg<BoogieIcfgLocation> mIcfgContainer;
 	private final IToolchainStorage mToolchainStorage;
 	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
-
+	
 	// fields that can be read from the TAPreferences
 	private final RefinementStrategy mRefinementStrategy;
 	private final boolean mUseSeparateSolverForTracechecks;
@@ -71,7 +72,7 @@ public class TaCheckAndRefinementPreferences {
 	private final String mPathOfDumpedScript;
 	private final String mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
-
+	
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private final UnsatCores mUnsatCores;
@@ -79,7 +80,7 @@ public class TaCheckAndRefinementPreferences {
 	private final boolean mUseInterpolantConsolidation;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCore;
-
+	
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
 	 *
@@ -107,7 +108,7 @@ public class TaCheckAndRefinementPreferences {
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
+			final PredicateFactory predicateFactory, final IIcfg<BoogieIcfgLocation> icfgContainer,
 			final IToolchainStorage toolchainStorage,
 			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory) {
 		mInterpolationTechnique = interpolationTechnique;
@@ -118,7 +119,7 @@ public class TaCheckAndRefinementPreferences {
 		mIcfgContainer = icfgContainer;
 		mToolchainStorage = toolchainStorage;
 		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
-
+		
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
@@ -128,7 +129,7 @@ public class TaCheckAndRefinementPreferences {
 		mPathOfDumpedScript = taPrefs.pathOfDumpedScript();
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
-
+		
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlocksOrder =
 				ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
@@ -142,95 +143,95 @@ public class TaCheckAndRefinementPreferences {
 		mUseVarsFromUnsatCore =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
 	}
-
+	
 	public RefinementStrategy getRefinementStrategy() {
 		return mRefinementStrategy;
 	}
-
+	
 	public boolean getUseSeparateSolverForTracechecks() {
 		return mUseSeparateSolverForTracechecks;
 	}
-
+	
 	public SolverMode getSolverMode() {
 		return mSolverMode;
 	}
-
+	
 	public boolean getFakeNonIncrementalSolver() {
 		return mFakeNonIncrementalSolver;
 	}
-
+	
 	public String getCommandExternalSolver() {
 		return mCommandExternalSolver;
 	}
-
+	
 	public boolean getDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
-
+	
 	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
-
+	
 	public String getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
-
+	
 	public InterpolationTechnique getInterpolationTechnique() {
 		return mInterpolationTechnique;
 	}
-
+	
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
 	}
-
+	
 	public XnfConversionTechnique getXnfConversionTechnique() {
 		return mXnfConversionTechnique;
 	}
-
+	
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-
+	
 	public PredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
 	}
-
-	public BoogieIcfgContainer getIcfgContainer() {
+	
+	public IIcfg<BoogieIcfgLocation> getIcfgContainer() {
 		return mIcfgContainer;
 	}
-
+	
 	public IToolchainStorage getToolchainStorage() {
 		return mToolchainStorage;
 	}
-
+	
 	public InterpolantAutomatonBuilderFactory getInterpolantAutomatonBuilderFactory() {
 		return mInterpolantAutomatonBuilderFactory;
 	}
-
+	
 	public AssertCodeBlockOrder getAssertCodeBlocksOrder() {
 		return mAssertCodeBlocksOrder;
 	}
-
+	
 	public UnsatCores getUnsatCores() {
 		return mUnsatCores;
 	}
-
+	
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
 	}
-
+	
 	public boolean getUseInterpolantConsolidation() {
 		return mUseInterpolantConsolidation;
 	}
-
+	
 	public boolean getUseNonlinearConstraints() {
 		return mUseNonlinearConstraints;
 	}
-
+	
 	public boolean getUseVarsFromUnsatCore() {
 		return mUseVarsFromUnsatCore;
 	}
-
+	
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return mExceptionBlacklist;
 	}

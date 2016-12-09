@@ -35,10 +35,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  *
@@ -49,8 +51,9 @@ public final class Simplifier extends BaseBlockEncoder<IcfgLocation> {
 	
 	private final IcfgEdgeBuilder mEdgeBuilder;
 	
-	public Simplifier(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services) {
-		super(services);
+	public Simplifier(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}
 	
@@ -71,8 +74,10 @@ public final class Simplifier extends BaseBlockEncoder<IcfgLocation> {
 				continue;
 			}
 			edges.addAll(current.getTarget().getOutgoingEdges());
-			mEdgeBuilder.constructSimplifiedSequentialComposition((BoogieIcfgLocation) current.getSource(),
-					(BoogieIcfgLocation) current.getTarget(), (CodeBlock) current);
+			final SequentialComposition seqComp =
+					mEdgeBuilder.constructSimplifiedSequentialComposition((BoogieIcfgLocation) current.getSource(),
+							(BoogieIcfgLocation) current.getTarget(), (CodeBlock) current);
+			rememberEdgeMapping(seqComp, current);
 			current.disconnectSource();
 			current.disconnectTarget();
 		}

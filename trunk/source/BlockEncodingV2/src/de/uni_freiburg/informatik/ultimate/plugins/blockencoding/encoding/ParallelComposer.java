@@ -40,8 +40,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 
 /**
  *
@@ -53,8 +55,9 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 	private int mEdgesRemoved;
 	private final IcfgEdgeBuilder mEdgeBuilder;
 	
-	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services) {
-		super(services);
+	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator) {
+		super(services, backtranslator);
 		mEdgesRemoved = 0;
 		mEdgeBuilder = edgeBuilder;
 	}
@@ -84,9 +87,10 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 				final List<CodeBlock> edges = partition.getValue();
 				final int edgeSize = edges.size();
 				if (edgeSize > 1) {
-					mEdgeBuilder.constructParallelComposition((BoogieIcfgLocation) current, (BoogieIcfgLocation) target,
-							edges);
+					final ParallelComposition parComp = mEdgeBuilder.constructParallelComposition(
+							(BoogieIcfgLocation) current, (BoogieIcfgLocation) target, edges);
 					edges.stream().forEach(ParallelComposer::disconnect);
+					edges.stream().forEach(a -> rememberEdgeMapping(parComp, a));
 					mEdgesRemoved += edgeSize;
 				}
 			}

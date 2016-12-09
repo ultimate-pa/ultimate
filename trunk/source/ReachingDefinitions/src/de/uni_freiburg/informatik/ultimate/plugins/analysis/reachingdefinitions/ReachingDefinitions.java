@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions;
@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -52,53 +53,54 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class ReachingDefinitions implements IAnalysis {
-
+	
 	private ModelType mCurrentGraphType;
 	private IUltimateServiceProvider mServices;
-
+	
 	@Override
 	public ModelType getOutputDefinition() {
 		return mCurrentGraphType;
 	}
-
+	
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-
+	
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
-
+	
 	@Override
 	public List<String> getDesiredToolID() {
 		return null;
 	}
-
+	
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		mCurrentGraphType = graphType;
 	}
-
+	
 	@Override
 	public List<IObserver> getObservers() {
-		if (mCurrentGraphType.getCreator().equals(
-				de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID)) {
-			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefGraphAnnotationProvider<>(null);
-			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefGraphAnnotationProvider<>(null);
+		if (mCurrentGraphType.getCreator()
+				.equals(de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID)) {
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider =
+					new ReachDefGraphAnnotationProvider<>(null);
+			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider =
+					new ReachDefGraphAnnotationProvider<>(null);
 			final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
+			
 			final AssumeFinder finder = new AssumeFinder(logger);
-
+			
 			final List<IObserver> rtr = new ArrayList<>();
 			rtr.add(new ReachDefRCFG(logger, stmtProvider, edgeProvider));
 			rtr.add(finder);
-//			 rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
-//					 edgeProvider, finder.getEdgesWithAssumes()));
+			// rtr.add(new DataflowDAGGenerator(logger, stmtProvider,
+			// edgeProvider, finder.getEdgesWithAssumes()));
 			
 			if (mServices.getPreferenceProvider(getPluginID())
 					.getBoolean(ReachingDefinitionsPreferenceInitializer.LABEL_COMPUTE_PARRALLEL_DFG)) {
@@ -109,31 +111,31 @@ public class ReachingDefinitions implements IAnalysis {
 		}
 		return Collections.emptyList();
 	}
-
+	
 	@Override
 	public void init() {
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new ReachingDefinitionsPreferenceInitializer();
 	}
-
+	
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(final List<CodeBlock> trace, final ILogger logger,
-			final BoogieIcfgContainer rootNode) throws Throwable {
+			final IElement rootNode) throws Throwable {
 		return computeRDForTrace(trace, logger, PreprocessorAnnotation.getAnnotation(rootNode).getSymbolTable());
 	}
-
+	
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(final List<CodeBlock> trace, final ILogger logger,
 			final BoogieSymbolTable symbolTable) throws Throwable {
 		final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
@@ -141,21 +143,21 @@ public class ReachingDefinitions implements IAnalysis {
 		final ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
 		return rdt.process(trace);
 	}
-
+	
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
-
+		
 	}
-
+	
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-
+	
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-
+		
 	}
-
+	
 }
