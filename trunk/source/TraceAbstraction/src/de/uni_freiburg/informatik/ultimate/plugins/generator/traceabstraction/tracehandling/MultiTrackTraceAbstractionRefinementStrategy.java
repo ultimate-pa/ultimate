@@ -85,6 +85,10 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		 */
 		Z3_SPBP,
 		/**
+		 * Z3 with Craig interpolation
+		 */
+		Z3_NESTED_INTERPOLANTS,
+		/**
 		 * CVC4 with forward and backward predicates.
 		 */
 		CVC4_SPBP
@@ -240,6 +244,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
 			break;
+		case Z3_NESTED_INTERPOLANTS:
+			interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
+			break;
 		case Z3_SPBP:
 		case CVC4_SPBP:
 			interpolationTechnique = InterpolationTechnique.FPandBP;
@@ -265,6 +272,13 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 					pathOfDumpedScript, baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
 			logicForExternalSolver = null;
+			break;
+		case Z3_NESTED_INTERPOLANTS:
+			solverSettings = new Settings(false, true, Z3_COMMAND, 0, /*TODO: Add external interpolator */ 
+					null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_Z3InterpolationMode;
+			logicForExternalSolver = LOGIC_Z3;
 			break;
 		case Z3_SPBP:
 			solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,

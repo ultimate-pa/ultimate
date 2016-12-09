@@ -91,11 +91,11 @@ public class RefinementStrategyFactory {
 		case FIXED_PREFERENCES:
 			return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
 					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
-		case AUTOMIZER_DEFAULT:
+		case PENGUIN:
 			return new AutomizerDefaultRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, counterexample,
 					abstraction, mPrefsConsolidation, iteration, benchmark);
-		case AUTOMIZER_BITVECTORS:
-			return new AutomizerBitvectorRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+		case WALRUS:
+			return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
 					counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
@@ -112,8 +112,8 @@ public class RefinementStrategyFactory {
 		final ManagedScript managedScript;
 
 		switch (prefs.getRefinementStrategy()) {
-		case AUTOMIZER_DEFAULT:
-		case AUTOMIZER_BITVECTORS:
+		case PENGUIN:
+		case WALRUS:
 		case TAIPAN:
 			managedScript = null;
 			break;

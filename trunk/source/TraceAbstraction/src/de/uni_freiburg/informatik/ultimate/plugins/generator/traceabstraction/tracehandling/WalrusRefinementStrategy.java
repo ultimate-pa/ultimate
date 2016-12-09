@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class AutomizerBitvectorRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
+public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
 	private static final String LOGIC_CVC4_BV = "AUFBV";
 
-	public AutomizerBitvectorRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
@@ -67,8 +67,8 @@ public class AutomizerBitvectorRefinementStrategy extends MultiTrackTraceAbstrac
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.CVC4_SPBP);
-		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_SPBP);
+		list.add(Track.Z3_NESTED_INTERPOLANTS);
 		return list.iterator();
 	}
 
