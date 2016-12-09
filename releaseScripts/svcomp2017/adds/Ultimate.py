@@ -173,8 +173,8 @@ def createUltimateCall(call, arguments):
             call = call + [arg]
     return call    
 
-def createWitnessPassthroughArgumentsList(witnessMode, propFile, architecture, cFile):
-    if witnessMode:
+def createWitnessPassthroughArgumentsList(printWitness, propFile, architecture, cFile):
+    if not printWitness:
         return []
     ret = []
     ret.append('--witnessprinter.graph.data.specification')
@@ -317,12 +317,12 @@ def main():
     memDeref = False
     memDerefMemtrack = False
     terminationMode = False
-    witnessMode = False
+    validateWitness = False
     overflowMode = False
     
     ultimateBin = getBinary()
     
-    propertyFileName, architecture, cFile, verbose, witnessMode = parseArgs()
+    propertyFileName, architecture, cFile, verbose, validateWitness = parseArgs()
     
     propFile = open(propertyFileName, 'r')
     for line in propFile:
@@ -337,10 +337,12 @@ def main():
             
     propFileStr = propFile.read()
 
-    toolchain = createToolchainString(terminationMode, witnessMode)
+    toolchain = createToolchainString(terminationMode, validateWitness)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
-    witnessPassthroughArguments = createWitnessPassthroughArgumentsList(witnessMode, propFileStr, architecture, cFile)
+    witnessPassthroughArguments = createWitnessPassthroughArgumentsList(
+                                    not validateWitness or not terminationMode,
+                                    propFileStr, architecture, cFile)
 
     # execute ultimate
     print('Version ' + version)
