@@ -62,6 +62,7 @@ public class RefinementStrategyFactory {
 	private final IIcfg<?> mInitialIcfg;
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
+	private final AssertionOrderModulation mAssertionOrderModulation;
 
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
@@ -75,6 +76,7 @@ public class RefinementStrategyFactory {
 		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
+		mAssertionOrderModulation = new AssertionOrderModulation();
 	}
 
 	public IRefinementStrategy createStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
@@ -99,7 +101,7 @@ public class RefinementStrategyFactory {
 					counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
-					counterexample, abstraction, iteration, benchmark);
+					mAssertionOrderModulation, counterexample, abstraction, iteration, benchmark);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
