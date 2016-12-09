@@ -82,6 +82,7 @@ public final class TraceAbstractionRefinementEngine
 		mLogger = logger;
 		mExceptionBlacklist = strategy.getExceptionBlacklist();
 		mPredicateUnifier = strategy.getPredicateUnifier();
+		mLogger.info("Using refinement strategy " + strategy.getClass().getSimpleName());
 		mFeasibility = executeStrategy(strategy);
 	}
 	
@@ -128,21 +129,16 @@ public final class TraceAbstractionRefinementEngine
 	private LBool executeStrategy(final IRefinementStrategy strategy) {
 		List<InterpolantsPreconditionPostcondition> interpolantSequences = new LinkedList<>();
 		boolean perfectInterpolantsFound = false;
-		outer: do {
+		while (true) {
 			// check feasibility using the strategy
 			// note: do not convert to method reference!
-			LBool feasibility = handleExceptions(() -> strategy.getTraceChecker().isCorrect());
-			if (feasibility == null) {
-				feasibility = LBool.UNKNOWN;
-			}
-			
-			if (feasibility == LBool.UNKNOWN && strategy.hasNext(RefinementStrategyAdvance.TRACE_CHECKER)) {
-				// feasibility check failed, try next combination in the strategy
-				strategy.next(RefinementStrategyAdvance.TRACE_CHECKER);
-				continue outer;
-			}
+			LBool feasibility = checkFeasibility(strategy);
 			
 			switch (feasibility) {
+			case SAT:
+				// feasible counterexample, nothing more to do here
+				mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+				return feasibility;
 			case UNKNOWN:
 				if (!interpolantSequences.isEmpty()) {
 					// construct the interpolant automaton from the sequences we have found previously
@@ -159,7 +155,7 @@ public final class TraceAbstractionRefinementEngine
 					// NOTE: This can crash as well, but such a crash is intended.
 					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 				}
-				break;
+				return feasibility;
 			case UNSAT:
 				final IInterpolantGenerator interpolantGenerator = handleExceptions(strategy::getInterpolantGenerator);
 				
@@ -209,7 +205,7 @@ public final class TraceAbstractionRefinementEngine
 							if (mLogger.isInfoEnabled()) {
 								mLogger.info("Found a perfect sequence of interpolants.");
 							}
-							break;
+							return feasibility;
 						}
 						interpolantSequences.add(interpolants);
 					}
@@ -221,25 +217,38 @@ public final class TraceAbstractionRefinementEngine
 							mLogger.info("The current sequence of interpolants is not perfect, trying the next one.");
 						}
 						strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
-						continue outer;
-					} else if (mLogger.isInfoEnabled()) {
+						continue;
+					}
+					if (mLogger.isInfoEnabled()) {
 						mLogger.info("No perfect sequence of interpolants found, combining those we have.");
 					}
+					// construct the interpolant automaton from the sequences
+					mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
+					return feasibility;
 				}
-				
-				// construct the interpolant automaton from the sequences
-				mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
-				break;
-			case SAT:
-				// feasible counterexample, nothing more to do here
-				mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
+		}
+	}
+	
+	private LBool checkFeasibility(final IRefinementStrategy strategy) {
+		while (true) {
+			final Supplier<LBool> tc = () -> strategy.getTraceChecker().isCorrect();
+			LBool feasibility = handleExceptions(tc);
+			if (feasibility == null) {
+				feasibility = LBool.UNKNOWN;
+			}
 			
-			return feasibility;
-		} while (true);
+			if (feasibility == LBool.UNKNOWN && strategy.hasNext(RefinementStrategyAdvance.TRACE_CHECKER)) {
+				// feasibility check failed, try next combination in the strategy
+				mLogger.info("Advancing trace checker");
+				strategy.next(RefinementStrategyAdvance.TRACE_CHECKER);
+			} else {
+				return feasibility;
+			}
+		}
 	}
 	
 	/**
