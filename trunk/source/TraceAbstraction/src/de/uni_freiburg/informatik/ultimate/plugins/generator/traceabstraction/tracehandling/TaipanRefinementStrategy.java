@@ -278,7 +278,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
 					interpolationTechnique, mIteration, mCegarLoopBenchmark);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique);
+			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique,
+					mCegarLoopBenchmark);
 		}
 		
 		return result;

@@ -160,32 +160,32 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	@Override
 	public boolean hasNext(final RefinementStrategyAdvance advance) {
 		switch (advance) {
-			case TRACE_CHECKER:
-			case INTERPOLANT_GENERATOR:
-				return mInterpolationTechniques.hasNext();
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
+		case TRACE_CHECKER:
+		case INTERPOLANT_GENERATOR:
+			return mInterpolationTechniques.hasNext();
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
 	
 	@Override
 	public void next(final RefinementStrategyAdvance advance) {
 		switch (advance) {
-			case TRACE_CHECKER:
-			case INTERPOLANT_GENERATOR:
-				if (mNextTechnique != null) {
-					throw new UnsupportedOperationException("Try the existing combination before advancing.");
-				}
-				mNextTechnique = mInterpolationTechniques.next();
-				
-				// reset trace checker, interpolant generator, and constructor
-				mTraceChecker = null;
-				mInterpolantGenerator = null;
-				mPrevTcConstructor = mTcConstructor;
-				mTcConstructor = null;
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
+		case TRACE_CHECKER:
+		case INTERPOLANT_GENERATOR:
+			if (mNextTechnique != null) {
+				throw new UnsupportedOperationException("Try the existing combination before advancing.");
+			}
+			mNextTechnique = mInterpolationTechniques.next();
+			
+			// reset trace checker, interpolant generator, and constructor
+			mTraceChecker = null;
+			mInterpolantGenerator = null;
+			mPrevTcConstructor = mTcConstructor;
+			mTcConstructor = null;
+			break;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
 	
@@ -232,7 +232,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
 					interpolationTechnique, mIteration, mCegarLoopsBenchmark);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique);
+			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique,
+					mCegarLoopsBenchmark);
 		}
 		
 		return result;
@@ -241,18 +242,18 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private static InterpolationTechnique getInterpolationTechnique(final Track mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
-			case SMTINTERPOL_TREE_INTERPOLANTS:
-				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
-				break;
-			case Z3_NESTED_INTERPOLANTS:
-				interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
-				break;
-			case Z3_FPBP:
-			case CVC4_FPBP:
-				interpolationTechnique = InterpolationTechnique.FPandBP;
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case SMTINTERPOL_TREE_INTERPOLANTS:
+			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
+			break;
+		case Z3_NESTED_INTERPOLANTS:
+			interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
+			break;
+		case Z3_FPBP:
+		case CVC4_FPBP:
+			interpolationTechnique = InterpolationTechnique.FPandBP;
+			break;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
 	}
@@ -267,34 +268,33 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
 		switch (mode) {
-			case SMTINTERPOL_TREE_INTERPOLANTS:
-				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
-						pathOfDumpedScript, baseNameOfDumpedScript);
-				solverMode = SolverMode.Internal_SMTInterpol;
-				logicForExternalSolver = null;
-				break;
-			case Z3_NESTED_INTERPOLANTS:
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, /*TODO: Add external interpolator */
-						null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-				solverMode = SolverMode.External_Z3InterpolationMode;
-				logicForExternalSolver = LOGIC_Z3;
-				break;
-			case Z3_FPBP:
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-						baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_Z3;
-				break;
-			case CVC4_FPBP:
-				solverSettings =
-						new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-								baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = getCvc4Logic();
-				break;
-			default:
-				throw new IllegalArgumentException(
-						"Managed script construction not supported for interpolation technique: " + mode);
+		case SMTINTERPOL_TREE_INTERPOLANTS:
+			solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
+					pathOfDumpedScript, baseNameOfDumpedScript);
+			solverMode = SolverMode.Internal_SMTInterpol;
+			logicForExternalSolver = null;
+			break;
+		case Z3_NESTED_INTERPOLANTS:
+			solverSettings = new Settings(false, true, Z3_COMMAND, 0, /* TODO: Add external interpolator */
+					null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+			solverMode = SolverMode.External_Z3InterpolationMode;
+			logicForExternalSolver = LOGIC_Z3;
+			break;
+		case Z3_FPBP:
+			solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = LOGIC_Z3;
+			break;
+		case CVC4_FPBP:
+			solverSettings = new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = getCvc4Logic();
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"Managed script construction not supported for interpolation technique: " + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mIteration);
