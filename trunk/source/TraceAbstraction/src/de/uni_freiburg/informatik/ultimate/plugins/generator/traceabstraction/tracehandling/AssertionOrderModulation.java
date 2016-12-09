@@ -49,16 +49,26 @@ public class AssertionOrderModulation {
 	private final List<HistogramOfIterable<CodeBlock>> mHistograms;
 	private int mCurrentIndex;
 	
+	/**
+	 * Constructor.
+	 */
 	public AssertionOrderModulation() {
 		mHistograms = new ArrayList<>();
-		// TODO Currently we start with the first element in the array.
-		mCurrentIndex = 0;
 	}
 	
+	/**
+	 * A user reports a new counterexample and receives as answer the assertion order to use.
+	 * 
+	 * @param counterexample
+	 *            counterexample
+	 * @return which assertion order to use
+	 */
 	public AssertCodeBlockOrder reportAndGet(final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
 		
-		if (histogramRepeats(traceHistogram)) {
+		if (mHistograms.isEmpty()) {
+			mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
+		} else if (histogramRepeats(traceHistogram)) {
 			mCurrentIndex = getNextAssertionOrderIndex();
 		}
 		mHistograms.add(traceHistogram);
@@ -66,15 +76,39 @@ public class AssertionOrderModulation {
 		return ASSERTION_ORDERS[mCurrentIndex];
 	}
 	
-	private boolean histogramRepeats(final HistogramOfIterable<CodeBlock> traceHistogram) {
-		// TODO Auto-generated method stub
-		return false;
+	private static int getInitialAssertionOrderIndex(final HistogramOfIterable<CodeBlock> traceHistogram) {
+		// Current policy: We start with the first element in the array.
+		return 0;
 	}
 	
-	/**
-	 * TODO Currently the assertion order is just advanced.
-	 */
+	private boolean histogramRepeats(final HistogramOfIterable<CodeBlock> traceHistogram) {
+		assert !mHistograms.isEmpty();
+		/*
+		 * Current policy: The histogram repeats if the number of entries that occur more than once has increased wrt.
+		 * the previous iteration.
+		 */
+		final int numberOfPreviousRepeatingEntries = getEntriesGreaterThanOne(mHistograms.get(mHistograms.size() - 1));
+		final int numberOfCurrentRepeatingEntries = getEntriesGreaterThanOne(traceHistogram);
+		
+		return numberOfPreviousRepeatingEntries < numberOfCurrentRepeatingEntries;
+	}
+	
+	private static int getEntriesGreaterThanOne(final HistogramOfIterable<CodeBlock> histogram) {
+		int result = 0;
+		for (final int value : histogram.getVisualizationArray()) {
+			if (value > 1) {
+				++result;
+			} else {
+				break;
+			}
+		}
+		return result;
+	}
+	
 	private int getNextAssertionOrderIndex() {
+		/*
+		 * Current policy: The assertion order is just advanced.
+		 */
 		return (mCurrentIndex + 1) % ASSERTION_ORDERS.length;
 	}
 }
