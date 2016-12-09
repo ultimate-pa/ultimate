@@ -273,7 +273,7 @@ public class VPStateFactory {
 	 */
 	public VPState havoc(final EqNode node, final VPState originalState) {
 		VPStateBuilder builder = copy(originalState);
-		final EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
+		EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
 		
 		// TODO: determine if state becomes top through the havoc!
 
@@ -327,6 +327,9 @@ public class VPStateFactory {
 			}
 		}
 		
+		builder = copy(resultState);
+		graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
+		
 		/*
 		 *  Handling the node itself
 		 */
@@ -343,6 +346,7 @@ public class VPStateFactory {
 		if (node instanceof EqFunctionNode) {
 			builder.restorePropagation((EqFunctionNode) node);
 		}
+		resultState = builder.build();
 		
 		// also havoc the function nodes which index had been havoc.
 		if (!graphNode.getInitCcpar().isEmpty()) {
