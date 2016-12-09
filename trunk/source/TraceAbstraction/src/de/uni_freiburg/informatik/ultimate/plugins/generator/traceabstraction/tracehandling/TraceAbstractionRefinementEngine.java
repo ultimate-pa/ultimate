@@ -59,17 +59,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public final class TraceAbstractionRefinementEngine
 		implements IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> {
-
+	
 	private final ILogger mLogger;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
-
+	
 	/* outputs */
 	private final PredicateUnifier mPredicateUnifier;
 	private final LBool mFeasibility;
 	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
 	private RcfgProgramExecution mRcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
-
+	
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -84,32 +84,32 @@ public final class TraceAbstractionRefinementEngine
 		mPredicateUnifier = strategy.getPredicateUnifier();
 		mFeasibility = executeStrategy(strategy);
 	}
-
+	
 	@Override
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
-
+	
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		return mRcfgProgramExecution;
 	}
-
+	
 	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
 		return mInterpolantAutomaton;
 	}
-
+	
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-
+	
 	@Override
 	public CachingHoareTripleChecker getHoareTripleChecker() {
 		return mHoareTripleChecker;
 	}
-
+	
 	/**
 	 * This method is the heart of the refinement engine.<br>
 	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
@@ -130,17 +130,18 @@ public final class TraceAbstractionRefinementEngine
 		boolean perfectInterpolantsFound = false;
 		outer: do {
 			// check feasibility using the strategy
-			LBool feasibility = handleExceptions(strategy.getTraceChecker()::isCorrect);
+			// note: do not convert to method reference!
+			LBool feasibility = handleExceptions(() -> strategy.getTraceChecker().isCorrect());
 			if (feasibility == null) {
 				feasibility = LBool.UNKNOWN;
 			}
-
+			
 			if (feasibility == LBool.UNKNOWN && strategy.hasNext(RefinementStrategyAdvance.TRACE_CHECKER)) {
 				// feasibility check failed, try next combination in the strategy
 				strategy.next(RefinementStrategyAdvance.TRACE_CHECKER);
 				continue outer;
 			}
-
+			
 			switch (feasibility) {
 			case UNKNOWN:
 				if (!interpolantSequences.isEmpty()) {
@@ -160,15 +161,14 @@ public final class TraceAbstractionRefinementEngine
 				}
 				break;
 			case UNSAT:
-				final IInterpolantGenerator interpolantGenerator =
-						handleExceptions(strategy::getInterpolantGenerator);
-
+				final IInterpolantGenerator interpolantGenerator = handleExceptions(strategy::getInterpolantGenerator);
+				
 				if (interpolantGenerator != null) {
 					if (interpolantGenerator instanceof InterpolantConsolidation) {
 						// set Hoare triple checker
 						mHoareTripleChecker = ((InterpolantConsolidation) interpolantGenerator).getHoareTripleChecker();
 					}
-
+					
 					InterpolantsPreconditionPostcondition interpolants;
 					int numberOfInterpolantSequencesAvailable;
 					if (interpolantGenerator instanceof TraceCheckerSpWp) {
@@ -189,7 +189,7 @@ public final class TraceAbstractionRefinementEngine
 						interpolants = interpolantGenerator.getIpp();
 						numberOfInterpolantSequencesAvailable = 1;
 					}
-
+					
 					for (int i = 1; i <= numberOfInterpolantSequencesAvailable; ++i) {
 						if (i == 2) {
 							interpolants = ((TraceCheckerSpWp) interpolantGenerator).getBackwardIpp();
@@ -226,7 +226,7 @@ public final class TraceAbstractionRefinementEngine
 						mLogger.info("No perfect sequence of interpolants found, combining those we have.");
 					}
 				}
-
+				
 				// construct the interpolant automaton from the sequences
 				mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 				break;
@@ -237,11 +237,11 @@ public final class TraceAbstractionRefinementEngine
 			default:
 				throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
-
+			
 			return feasibility;
 		} while (true);
 	}
-
+	
 	/**
 	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
 	 */
@@ -285,9 +285,9 @@ public final class TraceAbstractionRefinementEngine
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
 		}
-
+		
 		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
-
+		
 		switch (exceptionCategory) {
 		case KNOWN_IGNORE:
 		case KNOWN_DEPENDING:
@@ -304,17 +304,17 @@ public final class TraceAbstractionRefinementEngine
 		default:
 			throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
-
+		
 		if (throwException) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Global settings require throwing the exception.");
 			}
 			throw new AssertionError(exception);
 		}
-
+		
 		return null;
 	}
-
+	
 	public enum ExceptionHandlingCategory {
 		/**
 		 * The exception is known and we always want to ignore it.
@@ -332,7 +332,7 @@ public final class TraceAbstractionRefinementEngine
 		 * The exception is unknown and we usually want it to be thrown.
 		 */
 		UNKNOWN;
-
+		
 		/**
 		 * @param throwSpecification
 		 *            Specifies which exception categories should be thrown.
