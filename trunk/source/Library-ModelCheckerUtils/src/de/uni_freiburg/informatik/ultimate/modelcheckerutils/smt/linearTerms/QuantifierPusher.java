@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -318,4 +319,21 @@ public class QuantifierPusher extends TermTransformer {
 		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
 		return update;
 	}
+
+	@Override
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+		// apply local simplifications if term is "and", "or"
+		// helps that we do not get terms like, e.g., ("and" true true)
+		if (appTerm.getFunction().getApplicationString().equals("and")) {
+			setResult(Util.and(mScript, newArgs));
+		} else if (appTerm.getFunction().getApplicationString().equals("or")) {
+			setResult(Util.or(mScript, newArgs));
+		} else {
+			super.convertApplicationTerm(appTerm, newArgs);
+		}
+	}
+	
+	
+	
+	
 }
