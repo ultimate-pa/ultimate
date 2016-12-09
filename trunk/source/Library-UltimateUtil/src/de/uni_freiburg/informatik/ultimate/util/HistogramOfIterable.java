@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util;
@@ -38,26 +38,27 @@ import java.util.Map;
  * The array has one entry for each different (compared via .equals) element of
  * the Iterable.
  * The array counts how often the entry occurs in the Iterable.
- * The array is sorted wrt. to a descending order. 
+ * The array is sorted wrt. a descending order.
+ * 
  * @author Matthias Heizmann
- *
- * @param <E> element type
+ * @param <E>
+ *            element type
  */
 public class HistogramOfIterable<E> {
 	private final Iterable<E> mIterable;
 	private final Map<E, Integer> mHistogramMap;
 	private final Integer[] mVisualizationArray;
 	
-	
 	/**
-	 * @param iterable iterable
+	 * @param iterable
+	 *            iterable
 	 */
 	public HistogramOfIterable(final Iterable<E> iterable) {
 		mIterable = iterable;
 		mHistogramMap = generateHistogramMap(mIterable);
 		mVisualizationArray = generateVisualizationArray(mHistogramMap);
 	}
-
+	
 	private Integer[] generateVisualizationArray(final Map<E, Integer> histogramMap) {
 		final Integer[] result =
 				histogramMap.values().toArray(new Integer[histogramMap.size()]);
@@ -69,7 +70,7 @@ public class HistogramOfIterable<E> {
 	public String toString() {
 		return Arrays.toString(mVisualizationArray);
 	}
-
+	
 	public Integer[] getVisualizationArray() {
 		return mVisualizationArray;
 	}
@@ -80,25 +81,20 @@ public class HistogramOfIterable<E> {
 	public int getMax() {
 		if (getVisualizationArray().length == 0) {
 			return 0;
-		} else {
-			return getVisualizationArray()[0];
 		}
+		return getVisualizationArray()[0];
 	}
-
+	
 	public static <E> Map<E, Integer> generateHistogramMap(
 			final Iterable<E> iterable) {
-		final Map<E, Integer> result = new HashMap<E, Integer>();
+		final Map<E, Integer> result = new HashMap<>();
 		for (final E e : iterable) {
 			if (result.containsKey(e)) {
-				result.put(e, Integer.valueOf(result.get(e).intValue()+1));
+				result.put(e, Integer.valueOf(result.get(e).intValue() + 1));
 			} else {
 				result.put(e, 1);
 			}
 		}
 		return result;
 	}
-	
-	
-	
-
 }
