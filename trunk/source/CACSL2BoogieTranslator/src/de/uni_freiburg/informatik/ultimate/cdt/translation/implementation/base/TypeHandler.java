@@ -419,11 +419,11 @@ public class TypeHandler implements ITypeHandler {
         if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
         	name = "STRUCT~" + cId;
         	cvar = new CStruct(fNames.toArray(new String[fNames.size()]),
-                    fTypes.toArray(new CType[fTypes.size()]));
+                    fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
         } else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
         	name = "UNION~" + cId;
         	cvar = new CUnion(fNames.toArray(new String[fNames.size()]),
-                    fTypes.toArray(new CType[fTypes.size()]));
+                    fTypes.toArray(new CType[fTypes.size()]), bitFieldWidths);
         } else {
         	throw new UnsupportedOperationException();
         }

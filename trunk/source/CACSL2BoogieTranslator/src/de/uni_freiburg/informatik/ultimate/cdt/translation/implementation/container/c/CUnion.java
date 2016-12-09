@@ -27,13 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.List;
+
 public class CUnion extends CStruct {
 
-	public CUnion(String[] fNames, CType[] fTypes) {
-		super(fNames, fTypes);
+	public CUnion(final String[] fNames, final CType[] fTypes, final List<Integer> bitFieldWidths) {
+		super(fNames, fTypes, bitFieldWidths);
 	}
 
-	public CUnion(String incompleteName) {
+	public CUnion(final String incompleteName) {
 //	public CUnion(boolean isIncomplete) {
 		super(incompleteName);
 	}

@@ -33,6 +33,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -49,7 +51,7 @@ public class CStruct extends CType {
     /**
      * Field types.
      */
-    private  CType[] fTypes;
+    private CType[] fTypes;
     
     /**
      * Indicates if this represents an incomplete type.
@@ -60,6 +62,7 @@ public class CStruct extends CType {
     private String incompleteName = "";
     
     private String toStringCached = null;
+	private List<Integer> mBitFieldWidths;
 
     //@Override
     @Override
@@ -80,25 +83,28 @@ public class CStruct extends CType {
      *            field names.
      * @param fTypes
      *            field types.
+	 * @param bitFieldWidths 
      * @param cDeclSpec
      *            the C declaration used.
      */
-    public CStruct(String[] fNames,
-            CType[] fTypes) {
+    public CStruct(final String[] fNames,
+            final CType[] fTypes, final List<Integer> bitFieldWidths) {
         super(false, false, false, false); //FIXME: integrate those flags
         this.fNames = fNames;
         this.fTypes = fTypes;
+        this.mBitFieldWidths = bitFieldWidths;
 //        this.isIncomplete = false;
         incompleteName = "";
     }
     
-    public CStruct(String name) { //boolean isIncomplete) {
+    public CStruct(final String name) { //boolean isIncomplete) {
         super(false, false, false, false); //FIXME: integrate those flags
 //        if (!isIncomplete) {
 //        	throw new AssertionError("use different constructor for non-incomplete types");
 //        }
         fNames = new String[0];
         fTypes = new CType[0];
+        mBitFieldWidths = Collections.emptyList();
 //        this.isIncomplete = isIncomplete;
         incompleteName = name;
     }
@@ -119,13 +125,20 @@ public class CStruct extends CType {
      *            the fields id.
      * @return the field type.
      */
-    public CType getFieldType(String id) {
+    public CType getFieldType(final String id) {
     	assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
         final int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id
                     + "' not in struct!");
         }
+//        if (mBitFieldWidths.get(idx) != -1) {
+//        	throw new UnsupportedOperationException("Access to bitfields not yet supported: " 
+//        			+ "index " + idx 
+//        			+ " bitsize " + mBitFieldWidths.get(idx) 
+//        			+ " type " + fTypes[idx] 
+//        			+ " " + this.toString());
+//        }
         return fTypes[idx];
     }
 
@@ -172,7 +185,7 @@ public class CStruct extends CType {
     }
     
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
     	if (super.equals(o)) {
 			return true;
 		}
@@ -208,7 +221,7 @@ public class CStruct extends CType {
      * 
      * @param cvar
      */
-	public void complete(CStruct cvar) {
+	public void complete(final CStruct cvar) {
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
@@ -216,10 +229,11 @@ public class CStruct extends CType {
 		incompleteName = "";
 		fNames = cvar.fNames;
 		fTypes = cvar.fTypes;
+		mBitFieldWidths = cvar.getBitFieldWidths();
 	}
 
 	@Override
-	public boolean isCompatibleWith(CType o) {
+	public boolean isCompatibleWith(final CType o) {
 		if (o instanceof CPrimitive &&
 				((CPrimitive) o).getType() == CPrimitives.VOID) {
 			return true;
@@ -261,4 +275,10 @@ public class CStruct extends CType {
 	public int hashCode() {
 		return HashUtils.hashJenkins(31, fNames, fTypes, incompleteName);
 	}
+
+	public List<Integer> getBitFieldWidths() {
+		return mBitFieldWidths;
+	}
+	
+	
 }

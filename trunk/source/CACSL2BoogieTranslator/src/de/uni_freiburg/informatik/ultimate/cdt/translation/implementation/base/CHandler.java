@@ -1037,12 +1037,12 @@ public class CHandler implements ICHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
 		}
-		Integer bitfieldSize;
+		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
 			final IASTExpression expr = ((IASTFieldDeclarator) node).getBitFieldSize();
-			bitfieldSize = Integer.valueOf(Integer.parseInt(expr.getRawSignature()));
+			bitfieldSize = Integer.parseInt(expr.getRawSignature());
 		} else {
-			bitfieldSize = null;
+			bitfieldSize = -1;
 		}
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(newResType);

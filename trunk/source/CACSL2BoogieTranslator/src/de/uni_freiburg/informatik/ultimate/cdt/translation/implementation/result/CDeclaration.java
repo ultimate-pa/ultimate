@@ -43,9 +43,10 @@ public class CDeclaration {
 	boolean mIsInitializerTranslated;
 	private CStorageClass mstorageClass;
 	/**
-	 * Integer that represents width in case this is a bit-field, null otherwise.
+	 * Int that represents width in case this is a bit-field,
+	 * we use -1 to indicate that this is not a bit-field
 	 */
-	private final Integer mBitfieldSize;
+	private final int mBitfieldSize;
 
 //	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
 //		mType = type;
@@ -66,7 +67,7 @@ public class CDeclaration {
 	 * @param bitfieldSize 
 	 */
 	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
-			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass, final Integer bitfieldSize) {
+			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass, final int bitfieldSize) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -87,11 +88,11 @@ public class CDeclaration {
 //    }
 
 	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
-		this(type, name, null, null, false, storageClass, null);
+		this(type, name, null, null, false, storageClass, -1);
 	}
 	
 	public CDeclaration(final CType type, final String name) {
-		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED, null);
+		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED, -1);
 	}
 
 	public CType getType() {
