@@ -166,7 +166,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 						break;
 					case Z3_NO_IG:
 						mCurrentMode = Mode.CVC4_NO_IG;
-						mZ3TraceCheckUnsuccessful = false;
+						mZ3TraceCheckUnsuccessful = true;
 						break;
 					case CVC4_NO_IG:
 					case ABSTRACT_INTERPRETATION:
