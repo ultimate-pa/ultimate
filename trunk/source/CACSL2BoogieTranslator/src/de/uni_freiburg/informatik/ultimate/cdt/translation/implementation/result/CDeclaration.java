@@ -37,10 +37,15 @@ public class CDeclaration {
 	String mName;
 	ExpressionResult mInitializer;
 	IASTInitializer mCAstInitializer;
+	
 
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
 	private CStorageClass mstorageClass;
+	/**
+	 * Integer that represents width in case this is a bit-field, null otherwise.
+	 */
+	private final Integer mBitfieldSize;
 
 //	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
 //		mType = type;
@@ -58,9 +63,10 @@ public class CDeclaration {
 	 * @param cAstInitializer
 	 * @param initializer
 	 * @param onHeap
+	 * @param bitfieldSize 
 	 */
 	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
-			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass) {
+			final ExpressionResult initializer, final boolean onHeap, final CStorageClass storageClass, final Integer bitfieldSize) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -69,6 +75,7 @@ public class CDeclaration {
 		mIsOnHeap = onHeap;//TODO actually make use of this flag
 		mIsInitializerTranslated = false;
 		mstorageClass = storageClass;
+		mBitfieldSize = bitfieldSize;
 	}
 	
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
@@ -80,11 +87,11 @@ public class CDeclaration {
 //    }
 
 	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
-		this(type, name, null, null, false, storageClass);
+		this(type, name, null, null, false, storageClass, null);
 	}
 	
 	public CDeclaration(final CType type, final String name) {
-		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED);
+		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED, null);
 	}
 
 	public CType getType() {
@@ -144,4 +151,10 @@ public class CDeclaration {
 	public void setStorageClass(final CStorageClass storageClass) {
 		mstorageClass = storageClass;
 	}
+
+	public Integer getBitfieldSize() {
+		return mBitfieldSize;
+	}
+	
+	
 }

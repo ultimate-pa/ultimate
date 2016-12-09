@@ -72,10 +72,10 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -108,7 +108,6 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
@@ -1024,9 +1023,9 @@ public class CHandler implements ICHandler {
 			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length :
 				"implicit int declarations are forbidden from C99 on, this is one, right?";
 			
-			CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
+			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
-				DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
+				final DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
 				assert paramDeclRes.getDeclarations().size() == 1;
 				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
 			}
@@ -1038,6 +1037,13 @@ public class CHandler implements ICHandler {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
 		}
+		Integer bitfieldSize;
+		if (node instanceof IASTFieldDeclarator) {
+			final IASTExpression expr = ((IASTFieldDeclarator) node).getBitFieldSize();
+			bitfieldSize = Integer.valueOf(Integer.parseInt(expr.getRawSignature()));
+		} else {
+			bitfieldSize = null;
+		}
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(newResType);
 			DeclaratorResult result = (DeclaratorResult) main.dispatch(node.getNestedDeclarator());
@@ -1045,13 +1051,13 @@ public class CHandler implements ICHandler {
 			if (node.getInitializer() != null) {
 				final CDeclaration cdec = result.getDeclaration();
 				result = new DeclaratorResult(new CDeclaration(cdec.getType(), cdec.getName(), node.getInitializer(),
-						variableLengthArrayAuxVarInitializer, cdec.isOnHeap(), CStorageClass.UNSPECIFIED));
+						variableLengthArrayAuxVarInitializer, cdec.isOnHeap(), CStorageClass.UNSPECIFIED, bitfieldSize));
 			}
 			return result;
 		} else {
 			final DeclaratorResult result = new DeclaratorResult(
 					new CDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
-							variableLengthArrayAuxVarInitializer, newResType.isOnHeap, CStorageClass.UNSPECIFIED));
+							variableLengthArrayAuxVarInitializer, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 			return result;
 		}
 	}

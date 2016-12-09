@@ -386,10 +386,12 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(final Dispatcher main, final IASTCompositeTypeSpecifier node) {
         final ILocation loc = LocationFactory.createCLocation(node);
+        @Deprecated // 2016-12-08 Matthias: it seems like field is never used.
         final ArrayList<VarList> fields = new ArrayList<VarList>();
         // TODO : include inactives? what are inactives?
         final ArrayList<String> fNames = new ArrayList<String>();
         final ArrayList<CType> fTypes = new ArrayList<CType>();
+        final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
         structCounter++;
         for (final IASTDeclaration dec : node.getDeclarations(false)) {
             final Result r = main.dispatch(dec);
@@ -400,6 +402,7 @@ public class TypeHandler implements ITypeHandler {
             		fTypes.add(declaration.getType());
             		fields.add(new VarList(loc, new String[] {declaration.getName()},
             				ctype2asttype(loc, declaration.getType())));
+            		bitFieldWidths.add(declaration.getBitfieldSize());
             	}
             } else if (r instanceof SkipResult) { // skip ;)
             } else {
