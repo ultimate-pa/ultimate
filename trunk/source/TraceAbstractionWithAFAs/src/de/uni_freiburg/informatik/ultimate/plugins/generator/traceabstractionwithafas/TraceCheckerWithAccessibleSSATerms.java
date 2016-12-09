@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	
-	Script mscript;
+	Script mScript;
 
 	public TraceCheckerWithAccessibleSSATerms(final IPredicate precondition,
 			final IPredicate postcondition,
@@ -57,7 +57,7 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 			final InterpolationTechnique interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, 
 				services, computeRcfgProgramExecution);
-		mscript = csToolkit.getManagedScript().getScript();
+		mScript = csToolkit.getManagedScript().getScript();
 	}
 	
 	public void traceCheckFinished() {
