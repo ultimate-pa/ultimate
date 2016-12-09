@@ -76,7 +76,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CONSTRUCT_TERMCOMP_PROOF = "Construct termination proof for TermComp";
 	public static final String LABEL_SIMPLIFY = "Try to simplify termination arguments";
 	public static final String LABEL_AUTOMATA_MINIMIZATION = "Automata minimization";
-	private static final Minimization DEF_AUTOMATA_MINIMIZATION = Minimization.NONE;
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION = Minimization.MINIMIZE_SEVPA;
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
