@@ -341,7 +341,7 @@ def main():
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
     witnessPassthroughArguments = createWitnessPassthroughArgumentsList(
-                                    not validateWitness or not terminationMode,
+                                    not validateWitness and not terminationMode,
                                     propFileStr, architecture, cFile)
 
     # execute ultimate
