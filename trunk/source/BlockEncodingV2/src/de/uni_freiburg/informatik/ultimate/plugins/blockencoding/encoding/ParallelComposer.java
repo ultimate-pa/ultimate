@@ -37,10 +37,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -49,45 +48,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class ParallelComposer extends BaseBlockEncoder {
-
+public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
+	
 	private int mEdgesRemoved;
-	private final RcfgEdgeBuilder mEdgeBuilder;
-
-	public ParallelComposer(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		super(product, services);
+	private final IcfgEdgeBuilder mEdgeBuilder;
+	
+	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services) {
+		super(services);
 		mEdgesRemoved = 0;
-		mEdgeBuilder = new RcfgEdgeBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
+		mEdgeBuilder = edgeBuilder;
 	}
-
+	
 	@Override
-	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		mLogger.info("Creating parallel compositions");
-
-		final Deque<BoogieIcfgLocation> nodes = new ArrayDeque<>();
-		final Set<BoogieIcfgLocation> closed = new HashSet<>();
-
-		nodes.addAll(icfg.getProcedureEntryNodes().values());
-
+		
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		final Set<IcfgLocation> closed = new HashSet<>();
+		
+		nodes.addAll(icfg.getInitialNodes());
+		
 		while (!nodes.isEmpty()) {
-			final BoogieIcfgLocation current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (!closed.add(current)) {
 				continue;
 			}
-
+			
 			final List<IcfgEdge> outEdges = current.getOutgoingEdges();
-			final Map<BoogieIcfgLocation, List<CodeBlock>> map = new HashMap<>();
+			final Map<IcfgLocation, List<CodeBlock>> map = new HashMap<>();
 			outEdges.stream().forEach(a -> acc(map, a));
-
-			for (final Entry<BoogieIcfgLocation, List<CodeBlock>> partition : map.entrySet()) {
-				final BoogieIcfgLocation target = partition.getKey();
+			
+			for (final Entry<IcfgLocation, List<CodeBlock>> partition : map.entrySet()) {
+				final IcfgLocation target = partition.getKey();
 				nodes.add(target);
 				final List<CodeBlock> edges = partition.getValue();
 				final int edgeSize = edges.size();
 				if (edgeSize > 1) {
-					mEdgeBuilder.constructParallelComposition(current, target, edges);
+					mEdgeBuilder.constructParallelComposition((BoogieIcfgLocation) current, (BoogieIcfgLocation) target,
+							edges);
 					edges.stream().forEach(ParallelComposer::disconnect);
 					mEdgesRemoved += edgeSize;
 				}
@@ -95,8 +93,8 @@ public final class ParallelComposer extends BaseBlockEncoder {
 		}
 		return icfg;
 	}
-
-	private static Map<BoogieIcfgLocation, List<CodeBlock>> acc(final Map<BoogieIcfgLocation, List<CodeBlock>> map,
+	
+	private static Map<IcfgLocation, List<CodeBlock>> acc(final Map<IcfgLocation, List<CodeBlock>> map,
 			final IcfgEdge e) {
 		final BoogieIcfgLocation target = (BoogieIcfgLocation) e.getTarget();
 		final List<CodeBlock> set = map.get(target);
@@ -109,12 +107,12 @@ public final class ParallelComposer extends BaseBlockEncoder {
 		}
 		return map;
 	}
-
+	
 	private static void disconnect(final IcfgEdge edge) {
 		edge.disconnectSource();
 		edge.disconnectTarget();
 	}
-
+	
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mEdgesRemoved > 0;

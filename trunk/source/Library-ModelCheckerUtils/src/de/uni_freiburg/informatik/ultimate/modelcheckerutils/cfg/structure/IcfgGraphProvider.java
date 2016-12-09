@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- *
- * This file is part of the ULTIMATE RCFGBuilder plug-in.
- *
- * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
+ * 
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ * 
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
+ * 
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- *
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  *
  */
 public final class IcfgGraphProvider {
-
+	
 	public static <LOC extends IcfgLocation> VisualizationNode getVisualizationGraph(final IIcfg<LOC> cont) {
 		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode> artificialRoot =
 				getVirtualRoot(cont);
 		return new VisualizationNode(artificialRoot);
 	}
-
+	
 	public static <LOC extends IcfgLocation>
 			IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode>
 			getVirtualRoot(final IIcfg<LOC> cont) {
@@ -59,20 +59,20 @@ public final class IcfgGraphProvider {
 		}
 		return artificialRoot;
 	}
-
+	
 	private static final class IcfgVirtualRoot extends IcfgLocation {
-
+		
 		private static final long serialVersionUID = 7322581913329216222L;
-
+		
 		protected IcfgVirtualRoot() {
 			super("ARTIFICIAL-ROOT", "");
 		}
 	}
-
+	
 	private static final class IcfgVirtualRootEdge extends IcfgEdge {
-
+		
 		private static final long serialVersionUID = 7322581913329216222L;
-
+		
 		protected IcfgVirtualRootEdge(final IcfgLocation source, final IcfgLocation target) {
 			super(source, target, null);
 		}

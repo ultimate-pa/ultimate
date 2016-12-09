@@ -35,30 +35,30 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class MaximizeFinalStates extends BaseBlockEncoder {
+public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
 	
 	private int mNewAcceptingStates;
 	private final Consumer<IcfgLocation> mFunMarkAsAccepting;
 	private final Predicate<IcfgLocation> mFunIsAccepting;
 	
-	public MaximizeFinalStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
-			final Consumer<IcfgLocation> funMarkAsAccepting, final Predicate<IcfgLocation> funIsAccepting) {
-		super(product, services);
+	public MaximizeFinalStates(final IUltimateServiceProvider services, final Consumer<IcfgLocation> funMarkAsAccepting,
+			final Predicate<IcfgLocation> funIsAccepting) {
+		super(services);
 		mNewAcceptingStates = 0;
 		mFunMarkAsAccepting = funMarkAsAccepting;
 		mFunIsAccepting = funIsAccepting;
 	}
 	
 	@Override
-	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		int lastRun = processInternal(icfg);
 		mNewAcceptingStates += lastRun;
 		while (lastRun > 0) {
@@ -69,12 +69,12 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 		return icfg;
 	}
 	
-	private int processInternal(final BoogieIcfgContainer icfg) {
+	private int processInternal(final BasicIcfg<IcfgLocation> icfg) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 		int newAcceptingStates = 0;
 		
-		nodes.addAll(icfg.getProcedureEntryNodes().values());
+		nodes.addAll(icfg.getInitialNodes());
 		
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();

@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,45 +42,43 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class BaseBlockEncoder implements IEncoder {
+public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEncoder<LOC> {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-
+	
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
-	private BoogieIcfgContainer mResult;
-
-	public BaseBlockEncoder(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services) {
+	private BasicIcfg<LOC> mResult;
+	
+	public BaseBlockEncoder(final IUltimateServiceProvider services) {
 		assert services != null;
-		assert icfg != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
 	}
-
+	
 	@Override
-	public BoogieIcfgContainer getResult(final BoogieIcfgContainer icfg) {
+	public BasicIcfg<LOC> getResult(final BasicIcfg<LOC> icfg) {
 		if (mResult == null) {
 			mResult = createResult(icfg);
 			assert mResult != null;
 		}
 		return mResult;
 	}
-
-	protected abstract BoogieIcfgContainer createResult(BoogieIcfgContainer icfg);
-
+	
+	protected abstract BasicIcfg<LOC> createResult(BasicIcfg<LOC> icfg);
+	
 	protected List<IcfgLocation> getSuccessors(final IcfgLocation point) {
 		final List<IcfgLocation> rtr = new ArrayList<>();
 		for (final IcfgEdge edge : point.getOutgoingEdges()) {
@@ -89,22 +86,22 @@ public abstract class BaseBlockEncoder implements IEncoder {
 		}
 		return rtr;
 	}
-
-	protected void removeDisconnectedLocations(final BoogieIcfgContainer root) {
+	
+	protected void removeDisconnectedLocations(final BasicIcfg<LOC> root) {
 		// check all locations without incoming edges that are not initial or which are initial sinks
-		final Set<BoogieIcfgLocation> initial =
+		final Set<IcfgLocation> initial =
 				root.getProcedureEntryNodes().entrySet().stream().map(a -> a.getValue()).collect(Collectors.toSet());
-		final Predicate<BoogieIcfgLocation> filter =
+		final Predicate<IcfgLocation> filter =
 				a -> (!initial.contains(a) || a.getOutgoingEdges().isEmpty()) && a.getIncomingEdges().isEmpty();
-		final Deque<BoogieIcfgLocation> locationsWithoutInEdge =
+		final Deque<IcfgLocation> locationsWithoutInEdge =
 				root.getProgramPoints().entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
 						.map(a -> a.getValue()).filter(filter).collect(new DequeCollector<>());
-
+		
 		while (!locationsWithoutInEdge.isEmpty()) {
-			final BoogieIcfgLocation current = locationsWithoutInEdge.removeFirst();
+			final IcfgLocation current = locationsWithoutInEdge.removeFirst();
 			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
 			for (final IcfgEdge out : outEdges) {
-				final BoogieIcfgLocation target = (BoogieIcfgLocation) out.getTarget();
+				final IcfgLocation target = out.getTarget();
 				if (target.getIncomingEdges().size() == 1) {
 					// we will remove the only inEdge of target
 					locationsWithoutInEdge.addLast(target);
@@ -116,64 +113,42 @@ public abstract class BaseBlockEncoder implements IEncoder {
 			removeDisconnectedLocation(root, current);
 		}
 	}
-
-	protected void removeDisconnectedLocation(final BoogieIcfgContainer root, final IcfgLocation toRemove) {
-		final String procName = toRemove.getProcedure();
-		final String debugIdentifier = toRemove.getDebugIdentifier();
-
-		final IcfgLocation removedPP = root.getProgramPoints().get(procName).remove(debugIdentifier);
-
-		final BoogieIcfgLocation procExit = root.getProcedureExitNodes().get(procName);
-		if (toRemove.equals(procExit)) {
-			root.getProcedureExitNodes().remove(procName);
-		}
-
-		final BoogieIcfgLocation procEntry = root.getProcedureEntryNodes().get(procName);
-		if (toRemove.equals(procEntry)) {
-			root.getProcedureEntryNodes().remove(procName);
-		}
-
-		root.getLoopLocations().remove(toRemove);
-		root.getPotentialCycleProgramPoints().remove(toRemove);
-		final Collection<BoogieIcfgLocation> errorsInProc = root.getProcedureErrorNodes().get(procName);
-		if (errorsInProc != null) {
-			errorsInProc.remove(toRemove);
-		}
-
-		assert toRemove.equals(removedPP);
+	
+	protected void removeDisconnectedLocation(final BasicIcfg<LOC> root, final IcfgLocation toRemove) {
+		root.removeLocation(toRemove);
 		mRemovedLocations++;
 	}
-
+	
 	private static class DequeCollector<T> implements Collector<T, Deque<T>, Deque<T>> {
-
+		
 		private static final Set<Collector.Characteristics> CHARACTERISTICS =
 				EnumSet.of(Characteristics.IDENTITY_FINISH);
-
+		
 		@Override
 		public Supplier<Deque<T>> supplier() {
 			return ArrayDeque::new;
 		}
-
+		
 		@Override
 		public BiConsumer<Deque<T>, T> accumulator() {
 			return (a, b) -> a.addFirst(b);
 		}
-
+		
 		@Override
 		public BinaryOperator<Deque<T>> combiner() {
 			return this::combiner;
 		}
-
+		
 		@Override
 		public Function<Deque<T>, Deque<T>> finisher() {
 			return a -> a;
 		}
-
+		
 		@Override
 		public Set<Collector.Characteristics> characteristics() {
 			return CHARACTERISTICS;
 		}
-
+		
 		private Deque<T> combiner(final Deque<T> a, final Deque<T> b) {
 			final Deque<T> rtr = new ArrayDeque<>(a.size() + b.size() + 1);
 			rtr.addAll(a);

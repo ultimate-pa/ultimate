@@ -30,11 +30,12 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
 
 /**
@@ -43,42 +44,43 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
  *
  */
 public class IcfgSizeBenchmark {
-
+	
 	private final GraphSizeCsvProvider mCsvProvider;
-
-	public IcfgSizeBenchmark(final BoogieIcfgContainer root, final String label) {
+	
+	public IcfgSizeBenchmark(final IIcfg<?> root, final String label) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closedE = new HashSet<>();
 		final Set<IcfgLocation> closedV = new HashSet<>();
-
-		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
+		
+		edges.addAll(root.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream())
+				.collect(Collectors.toSet()));
 		edges.stream().forEach(e -> closedV.add(e.getSource()));
-
+		
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
 			closedE.add(current);
-
+			
 			if (current.getTarget() == null) {
 				throw new AssertionError("Target may not be null");
 			}
-
+			
 			closedV.add(current.getTarget());
 			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}
-
+		
 		mCsvProvider = new GraphSizeCsvProvider(closedE.size(), closedV.size(), label);
 	}
-
+	
 	@Override
 	public String toString() {
 		return mCsvProvider.toString();
 	}
-
+	
 	public void reportBenchmarkResult(final IResultService resultService, final String pluginId, final String message) {
 		resultService.reportResult(pluginId, new de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult<>(
 				pluginId, message, mCsvProvider));

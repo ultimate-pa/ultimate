@@ -47,30 +47,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
  *
  */
 public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
-
+	
 	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
-
+	
 	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	@Override
 	public IProgramExecution<IcfgEdge, Term>
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
-
+		
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof RcfgProgramExecution) {
 			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
 		}
-
-		final ArrayList<IcfgEdge> newTrace = new ArrayList<>();
+		
+		final List<IcfgEdge> newTrace = new ArrayList<>();
 		final Map<Integer, ProgramState<Term>> newValues = new HashMap<>();
-		final ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
-
+		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
+		
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
-
+		
 		for (int i = 0; i < programExecution.getLength(); ++i) {
 			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
 			final IcfgEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
@@ -84,26 +83,26 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
-
+		
 		return new RcfgProgramExecution(newTrace, newValues,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
 	}
-
+	
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,
 			final ProgramState<Term> programState) {
 		newValues.put(i, programState);
 	}
-
+	
 	@Override
 	public List<IcfgEdge> translateTrace(final List<IcfgEdge> trace) {
 		return super.translateTrace(trace);
 	}
-
+	
 	@Override
 	public Term translateExpression(final Term expression) {
 		return super.translateExpression(expression);
 	}
-
+	
 	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
 		final IcfgEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {

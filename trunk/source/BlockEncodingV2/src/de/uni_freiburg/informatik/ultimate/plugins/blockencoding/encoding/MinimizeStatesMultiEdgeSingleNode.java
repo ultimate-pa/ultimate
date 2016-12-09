@@ -34,13 +34,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -53,15 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 	
-	public MinimizeStatesMultiEdgeSingleNode(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+	public MinimizeStatesMultiEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funIsAccepting) {
-		super(product, services, backtranslator, simplificationTechnique, xnfConversionTechnique, funIsAccepting);
+		super(edgeBuilder, services, backtranslator, funIsAccepting);
 	}
 	
 	@Override
-	protected Collection<? extends IcfgLocation> processCandidate(final BoogieIcfgContainer icfg,
-			final IcfgLocation target, final Set<IcfgLocation> closed) {
+	protected Collection<? extends IcfgLocation> processCandidate(final IIcfg<?> icfg, final IcfgLocation target,
+			final Set<IcfgLocation> closed) {
 		
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {

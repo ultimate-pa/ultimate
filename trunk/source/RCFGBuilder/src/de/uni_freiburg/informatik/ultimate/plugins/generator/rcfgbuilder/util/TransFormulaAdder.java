@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
@@ -50,42 +50,39 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
- * Provides methods to add TransitionsFormulas to the edges of a
- * recursive control flow graph.
+ * Provides methods to add TransitionsFormulas to the edges of a recursive control flow graph.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
 public class TransFormulaAdder {
-
+	
 	// We use Boogie2SMT to translate boogie Statements to SMT formulas
 	private final Boogie2SMT mBoogie2smt;
 	private final boolean mSimplifyCodeBlocks;
-
+	
 	private final IUltimateServiceProvider mServices;
-
+	
 	public TransFormulaAdder(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
-		mSimplifyCodeBlocks = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
-
+	
 	/**
-	 * Add TransitionFormulas to an edge in the recursive control flow graph. If
-	 * the edge is a CallEdge or ReturnEdge two formulas are added. One that
-	 * represents the local variable assignments one that represents the global
-	 * variable assignments. If the edge is an InternalEdge one
-	 * TransitionFormula is added. This TransitionFormula represents the effect
-	 * of all Assignment, Assume and Havoc Statements of this edge. If the edge
-	 * is a GotoEdge or a SummaryEdge no TransitionFormula is added.
+	 * Add TransitionFormulas to an edge in the recursive control flow graph. If the edge is a CallEdge or ReturnEdge
+	 * two formulas are added. One that represents the local variable assignments one that represents the global
+	 * variable assignments. If the edge is an InternalEdge one TransitionFormula is added. This TransitionFormula
+	 * represents the effect of all Assignment, Assume and Havoc Statements of this edge. If the edge is a GotoEdge or a
+	 * SummaryEdge no TransitionFormula is added.
 	 * 
 	 * @param cb
-	 *            An IEdge that has to be a CallEdge, InternalEdge, ReturnEdge,
-	 *            GotoEdge or SummaryEdge.
+	 *            An IEdge that has to be a CallEdge, InternalEdge, ReturnEdge, GotoEdge or SummaryEdge.
 	 */
-	public void addTransitionFormulas(final CodeBlock cb, final String procId, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
+	public void addTransitionFormulas(final CodeBlock cb, final String procId,
+			final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) {
 		List<Statement> statements;
 		if (cb instanceof StatementSequence) {
 			statements = ((StatementSequence) cb).getStatements();
@@ -94,12 +91,14 @@ public class TransFormulaAdder {
 		} else if (cb instanceof GotoEdge) {
 			statements = Collections.emptyList();
 		} else {
-			throw new AssertionError();
+			throw new AssertionError(
+					"Cannot add transition formula to CodeBlock of type " + cb.getClass().getSimpleName());
 		}
-
+		
 		TranslationResult tlres = null;
 		try {
-			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks, simplificationTechnique, procId, statements);
+			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks,
+					simplificationTechnique, procId, statements);
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());
@@ -112,7 +111,7 @@ public class TransFormulaAdder {
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}
-
+	
 	void reportUnsupportedSyntax(final CodeBlock cb, final String longDescription) {
 		final ILocation loc = cb.getPayload().getLocation();
 		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, longDescription);

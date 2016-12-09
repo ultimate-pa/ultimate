@@ -26,15 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IEncoder {
-
+public interface IEncoder<LOC extends IcfgLocation> {
+	
 	/**
 	 * Used to decide whether the optimization should continue or not. If all encoders say false, the optimization
 	 * stops.
@@ -44,6 +45,6 @@ public interface IEncoder {
 	 * @return true iff there are more/less edges or nodes in the graph
 	 */
 	boolean isGraphStructureChanged();
-
-	BoogieIcfgContainer getResult(final BoogieIcfgContainer boogieIcfgContainer);
+	
+	BasicIcfg<LOC> getResult(final BasicIcfg<LOC> boogieIcfgContainer);
 }

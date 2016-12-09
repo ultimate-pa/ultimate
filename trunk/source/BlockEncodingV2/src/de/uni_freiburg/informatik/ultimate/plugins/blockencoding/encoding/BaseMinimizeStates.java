@@ -36,14 +36,13 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -54,34 +53,33 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class BaseMinimizeStates extends BaseBlockEncoder {
-
+public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> {
+	
 	private final boolean mIgnoreBlowup;
 	private final Predicate<IcfgLocation> mFunHasToBePreserved;
-	private final RcfgEdgeBuilder mTransFormulaBuilder;
+	private final IcfgEdgeBuilder mEdgeBuilder;
 	private final BlockEncodingBacktranslator mBacktranslator;
-
-	public BaseMinimizeStates(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final Predicate<IcfgLocation> funHasToBePreserved) {
-		super(icfg, services);
+	
+	public BaseMinimizeStates(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funHasToBePreserved) {
+		super(services);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
 		mFunHasToBePreserved = funHasToBePreserved;
 		mBacktranslator = backtranslator;
-		mTransFormulaBuilder = new RcfgEdgeBuilder(icfg, services, simplificationTechnique, xnfConversionTechnique);
+		mEdgeBuilder = edgeBuilder;
 	}
-
+	
 	@Override
-	protected final BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+	protected final BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
-
-		nodes.addAll(icfg.getProcedureEntryNodes().values());
-
+		
+		nodes.addAll(icfg.getInitialNodes());
+		
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();
-
+			
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
@@ -99,7 +97,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 				"Removed " + mRemovedEdges + " edges and " + mRemovedLocations + " locations by large block encoding");
 		return icfg;
 	}
-
+	
 	/**
 	 * Process the state "target" and return a set of nodes that should be processed next. Processing means adding and
 	 * removing edges. The caller will take care that this method is called only once per target node.
@@ -114,23 +112,23 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 	 * @return A set of nodes that should be processed. May not be null. Nodes already in the closed set will not be
 	 *         processed again.
 	 */
-	protected abstract Collection<? extends IcfgLocation> processCandidate(BoogieIcfgContainer icfg,
-			IcfgLocation target, Set<IcfgLocation> closed);
-
+	protected abstract Collection<? extends IcfgLocation> processCandidate(IIcfg<?> icfg, IcfgLocation target,
+			Set<IcfgLocation> closed);
+	
 	protected boolean areCombinableEdgePairs(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		if (!mIgnoreBlowup && isLarge(predEdges, succEdges)) {
 			// we would introduce more edges than we remove, we do not want
 			// that
 			return false;
 		}
-
+		
 		final boolean rtr = predEdges.stream().map(pred -> (Predicate<IcfgEdge>) a -> isCombinableEdgePair(pred, a))
 				.allMatch(a -> succEdges.stream().allMatch(a));
 		assert rtr == neverTrustMyLambda(predEdges,
 				succEdges) : "I am not sure that this does what it should, so I build this assert";
 		return rtr;
 	}
-
+	
 	/**
 	 * @return true iff the cross-product is larger than the sum of elements.
 	 */
@@ -139,7 +137,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 		final int succEdgesSize = succEdges.size();
 		return predEdgesSize + succEdgesSize < predEdgesSize * succEdgesSize;
 	}
-
+	
 	private boolean neverTrustMyLambda(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		for (final IcfgEdge predEdge : predEdges) {
 			final Predicate<IcfgEdge> predicate = a -> isCombinableEdgePair(predEdge, a);
@@ -149,14 +147,14 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 		}
 		return true;
 	}
-
+	
 	protected boolean isCombinableEdgePair(final IcfgEdge predEdge, final IcfgEdge succEdge) {
 		if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
 			// if one of the edges is no codeblock, it is a root edge,
 			// and we cannot apply the rule
 			return false;
 		}
-
+		
 		if (predEdge instanceof Call && succEdge instanceof Return) {
 			// this is allowed, continue
 		} else if (predEdge instanceof Return || predEdge instanceof Call || succEdge instanceof Return
@@ -166,35 +164,35 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 			// Return.
 			return false;
 		}
-
+		
 		// if one of the edges is a self loop, we cannot use it
 		return predEdge.getTarget() != predEdge.getSource() && succEdge.getTarget() != succEdge.getSource();
 	}
-
+	
 	protected boolean areAllNecessary(final List<IcfgLocation> nodes) {
 		return nodes.stream().allMatch(mFunHasToBePreserved);
 	}
-
+	
 	protected boolean isNecessary(final IcfgLocation target) {
 		return mFunHasToBePreserved.test(target);
 	}
-
+	
 	protected boolean isNotNecessary(final IcfgLocation target) {
 		return mFunHasToBePreserved.negate().test(target);
 	}
-
+	
 	protected boolean isOneNecessary(final IcfgLocation pred, final IcfgLocation succ) {
 		return mFunHasToBePreserved.test(pred) || mFunHasToBePreserved.test(succ);
 	}
-
-	protected RcfgEdgeBuilder getEdgeBuilder() {
-		return mTransFormulaBuilder;
+	
+	protected IcfgEdgeBuilder getEdgeBuilder() {
+		return mEdgeBuilder;
 	}
-
+	
 	protected BlockEncodingBacktranslator getBacktranslator() {
 		return mBacktranslator;
 	}
-
+	
 	private void checkForTimeoutOrCancellation() {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			mLogger.info("Stopping block encoding due to timeout after removing " + mRemovedEdges + " edges and "
@@ -202,7 +200,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 			throw new ToolchainCanceledException(getClass());
 		}
 	}
-
+	
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mRemovedLocations > 0 || mRemovedEdges > 0;

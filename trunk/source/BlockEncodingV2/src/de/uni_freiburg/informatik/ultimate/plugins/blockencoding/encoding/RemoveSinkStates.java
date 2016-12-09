@@ -35,27 +35,28 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class RemoveSinkStates extends BaseBlockEncoder {
+public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 	
 	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 	
-	public RemoveSinkStates(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
+	public RemoveSinkStates(final IUltimateServiceProvider services,
 			final Predicate<IcfgLocation> funHasToBePreserved) {
-		super(icfg, services);
+		super(services);
 		mFunHasToBePreserved = funHasToBePreserved;
 	}
 	
 	@Override
-	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final List<IcfgLocation> sinks = collectSinks(icfg);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
@@ -67,7 +68,7 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 		return icfg;
 	}
 	
-	private List<IcfgLocation> collectSinks(final BoogieIcfgContainer icfg) {
+	private List<IcfgLocation> collectSinks(final IIcfg<?> icfg) {
 		final List<IcfgLocation> rtr = new ArrayList<>();
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();

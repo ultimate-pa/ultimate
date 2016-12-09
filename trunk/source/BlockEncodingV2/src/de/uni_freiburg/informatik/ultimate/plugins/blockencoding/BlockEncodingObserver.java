@@ -28,20 +28,30 @@
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.InterproceduralSequenzer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MaximizeFinalStates;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MinimizeStatesMultiEdgeMultiNode;
@@ -64,17 +74,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
  *
  */
 public class BlockEncodingObserver implements IUnmanagedObserver {
-
+	
 	private static final BuchiProgramAcceptingStateAnnotation BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION =
 			new BuchiProgramAcceptingStateAnnotation();
-
+	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private BoogieIcfgContainer mIterationResult;
-
+	
+	private BasicIcfg<IcfgLocation> mIterationResult;
+	
 	public BlockEncodingObserver(final ILogger logger, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplTech,
 			final XnfConversionTechnique xnfConvTech) {
@@ -85,26 +96,26 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		mSimplificationTechnique = simplTech;
 		mXnfConversionTechnique = xnfConvTech;
 	}
-
+	
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// no initialisation needed
 	}
-
+	
 	@Override
 	public void finish() throws Throwable {
 		// not needed
 	}
-
+	
 	@Override
 	public boolean performedChanges() {
 		return false;
 	}
-
+	
 	public IElement getModel() {
 		return mIterationResult;
 	}
-
+	
 	@Override
 	public boolean process(final IElement root) throws Exception {
 		if (root instanceof BoogieIcfgContainer) {
@@ -113,41 +124,43 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
-
+	
 	private void processIcfg(final BoogieIcfgContainer node) {
 		// measure size of rcfg
 		reportSizeBenchmark("Initial Icfg", node);
-
+		
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		int maxIters = ups.getInt(PreferenceInitializer.FXP_MAX_ITERATIONS) - 1;
 		if (maxIters < 0) {
 			maxIters = -1;
 		}
-
-		final List<IEncoderProvider> encoderProviders = getEncoderProviders(ups);
+		
+		final IcfgEdgeBuilder edgeBuilder =
+				new IcfgEdgeBuilder(node, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final List<Supplier<IEncoder<IcfgLocation>>> encoderProviders = getEncoderProviders(ups, edgeBuilder);
 		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.FXP_UNTIL_FIXPOINT);
 		int i = 1;
-		mIterationResult = node;
+		mIterationResult = createIcfgCopy(edgeBuilder, node);
 		while (true) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("==== BE Pass #" + i + "====");
 			}
 			++i;
 			EncodingResult currentResult = new EncodingResult(mIterationResult, false);
-
-			for (final IEncoderProvider provider : encoderProviders) {
-				final IEncoder encoder = provider.createEncoder(currentResult.getIcfg());
+			
+			for (final Supplier<IEncoder<IcfgLocation>> provider : encoderProviders) {
+				final IEncoder<IcfgLocation> encoder = provider.get();
 				currentResult = applyEncoder(currentResult, encoder);
 			}
-
+			
 			mIterationResult = currentResult.getIcfg();
-
+			
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new TimeoutResult(Activator.PLUGIN_ID, "Timeout during block encoding"));
 				return;
 			}
-
+			
 			if (!optimizeUntilFixpoint || !currentResult.isChanged() || maxIters == 0) {
 				break;
 			}
@@ -155,87 +168,119 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 				maxIters--;
 			}
 		}
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("==== BE Post Processing ====");
 		}
-
+		
 		if (ups.getBoolean(PreferenceInitializer.POST_USE_PARALLEL_COMPOSITION)) {
-			mIterationResult =
-					new ParallelComposer(mIterationResult, mServices, mSimplificationTechnique, mXnfConversionTechnique)
-							.getResult(mIterationResult);
+			mIterationResult = new ParallelComposer(edgeBuilder, mServices).getResult(mIterationResult);
 		}
-
+		
 		if (ups.getBoolean(PreferenceInitializer.POST_SIMPLIFY_CODEBLOCKS)) {
-			mIterationResult =
-					new Simplifier(mIterationResult, mServices, mSimplificationTechnique, mXnfConversionTechnique)
-							.getResult(mIterationResult);
+			mIterationResult = new Simplifier(edgeBuilder, mServices).getResult(mIterationResult);
 		}
-
+		
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
 	}
-
-	private List<IEncoderProvider> getEncoderProviders(final IPreferenceProvider ups) {
-		final List<IEncoderProvider> rtr = new ArrayList<>();
-
-		// note that the order is important
-
-		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_INFEASIBLE_EDGES)) {
-			rtr.add((node) -> new RemoveInfeasibleEdges(node, mServices));
+	
+	private BasicIcfg<IcfgLocation> createIcfgCopy(final IcfgEdgeBuilder edgeBuilder, final BoogieIcfgContainer icfg) {
+		final BasicIcfg<IcfgLocation> duplicate =
+				new BasicIcfg<>(icfg.getIdentifier() + "_BEv2", icfg.getCfgSmtToolkit());
+		ModelUtils.copyAnnotations(icfg, duplicate);
+		
+		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
+		final IcfgLocationIterator<BoogieIcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+		while (iter.hasNext()) {
+			final BoogieIcfgLocation current = iter.next();
+			final String proc = current.getProcedure();
+			final IcfgLocation currentDuplicate = new BoogieIcfgLocation(current.getDebugIdentifier(), proc,
+					current.isErrorLocation(), current.getBoogieASTNode());
+			ModelUtils.copyAnnotations(current, currentDuplicate);
+			
+			final boolean isError = icfg.getProcedureErrorNodes().get(proc) != null
+					&& icfg.getProcedureErrorNodes().get(proc).contains(current);
+			duplicate.addLocation(currentDuplicate, icfg.getInitialNodes().contains(current), isError,
+					current.equals(icfg.getProcedureEntryNodes().get(proc)),
+					current.equals(icfg.getProcedureExitNodes().get(proc)), icfg.getLoopLocations().contains(current));
+			old2new.put(current, currentDuplicate);
 		}
-
+		
+		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
+			final IcfgLocation source = nodePair.getValue();
+			for (final IcfgEdge outEdge : nodePair.getKey().getOutgoingEdges()) {
+				final IcfgLocation target = old2new.get(outEdge.getTarget());
+				final IcfgEdge newEdge = edgeBuilder.constructCopy(source, target, outEdge);
+				newEdge.setSource(source);
+				newEdge.setTarget(target);
+				mBacktranslator.mapEdges(newEdge, outEdge);
+			}
+		}
+		
+		return duplicate;
+	}
+	
+	private List<Supplier<IEncoder<IcfgLocation>>> getEncoderProviders(final IPreferenceProvider ups,
+			final IcfgEdgeBuilder edgeBuilder) {
+		final List<Supplier<IEncoder<IcfgLocation>>> rtr = new ArrayList<>();
+		
+		// note that the order is important
+		
+		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_INFEASIBLE_EDGES)) {
+			rtr.add(() -> new RemoveInfeasibleEdges(mServices));
+		}
+		
 		if (ups.getBoolean(PreferenceInitializer.FXP_MAXIMIZE_FINAL_STATES)) {
-			rtr.add((node) -> new MaximizeFinalStates(node, mServices, BlockEncodingObserver::markBuchiProgramAccepting,
+			rtr.add(() -> new MaximizeFinalStates(mServices, BlockEncodingObserver::markBuchiProgramAccepting,
 					BlockEncodingObserver::isBuchiProgramAccepting));
 		}
-
+		
 		final MinimizeStates minimizeStates =
 				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
-				rtr.add((node) -> new MinimizeStatesSingleEdgeSingleNode(node, mServices, mSimplificationTechnique,
-						mXnfConversionTechnique, mBacktranslator, BlockEncodingObserver::hasToBePreserved));
+				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
-				rtr.add((node) -> new MinimizeStatesMultiEdgeSingleNode(node, mServices, mSimplificationTechnique,
-						mXnfConversionTechnique, mBacktranslator, BlockEncodingObserver::hasToBePreserved));
+				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case MULTI:
-				rtr.add((node) -> new MinimizeStatesMultiEdgeMultiNode(node, mServices, mSimplificationTechnique,
-						mXnfConversionTechnique, mBacktranslator, BlockEncodingObserver::hasToBePreserved));
+				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(edgeBuilder, mServices, mBacktranslator,
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
 			}
 		}
-
+		
 		if (ups.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES)) {
-			rtr.add((node) -> new AssumeMerger(node, mServices, mSimplificationTechnique, mXnfConversionTechnique,
-					mBacktranslator));
+			rtr.add(() -> new AssumeMerger(edgeBuilder, mServices, mBacktranslator));
 		}
-
+		
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
-			rtr.add((node) -> new RemoveSinkStates(node, mServices, BlockEncodingObserver::hasToBePreserved));
+			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved));
 		}
-
-		rtr.add((node) -> new InterproceduralSequenzer(node, mServices, mSimplificationTechnique,
-				mXnfConversionTechnique));
-
+		
+		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices));
+		
 		return rtr;
 	}
-
-	private static EncodingResult applyEncoder(final EncodingResult previousResult, final IEncoder encoder) {
-		final BoogieIcfgContainer result = encoder.getResult(previousResult.getIcfg());
+	
+	private static EncodingResult applyEncoder(final EncodingResult previousResult,
+			final IEncoder<IcfgLocation> encoder) {
+		final BasicIcfg<IcfgLocation> result = encoder.getResult(previousResult.getIcfg());
 		return new EncodingResult(result, previousResult.isChanged() || encoder.isGraphStructureChanged());
 	}
-
-	private void reportSizeBenchmark(final String message, final BoogieIcfgContainer root) {
+	
+	private void reportSizeBenchmark(final String message, final IIcfg<?> root) {
 		final IcfgSizeBenchmark bench = new IcfgSizeBenchmark(root, message);
 		mLogger.info(message + " " + bench);
 		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
 	}
-
+	
 	private static boolean hasToBePreserved(final IcfgLocation node) {
 		if (node instanceof BoogieIcfgLocation) {
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
@@ -243,34 +288,29 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		return false;
 	}
-
+	
 	private static boolean isBuchiProgramAccepting(final IcfgLocation node) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(node) != null;
 	}
-
+	
 	private static void markBuchiProgramAccepting(final IcfgLocation node) {
 		BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION.annotate(node);
 	}
-
-	@FunctionalInterface
-	private static interface IEncoderProvider {
-		IEncoder createEncoder(final BoogieIcfgContainer boogieIcfgContainer);
-	}
-
+	
 	private static class EncodingResult {
-		private final BoogieIcfgContainer mNode;
+		private final BasicIcfg<IcfgLocation> mNode;
 		private final boolean mIsChanged;
-
-		private EncodingResult(final BoogieIcfgContainer node, final boolean isChanged) {
+		
+		private EncodingResult(final BasicIcfg<IcfgLocation> node, final boolean isChanged) {
 			mNode = node;
 			mIsChanged = isChanged;
 		}
-
+		
 		private boolean isChanged() {
 			return mIsChanged;
 		}
-
-		private BoogieIcfgContainer getIcfg() {
+		
+		private BasicIcfg<IcfgLocation> getIcfg() {
 			return mNode;
 		}
 	}

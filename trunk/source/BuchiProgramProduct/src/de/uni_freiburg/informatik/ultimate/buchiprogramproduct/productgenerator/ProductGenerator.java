@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -67,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeIterator;
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
@@ -124,7 +124,7 @@ public final class ProductGenerator {
 		mHelperProductStates = new HashSet<>();
 		mNameGenerator = new ProductLocationNameGenerator(nwa);
 
-		mEverythingIsAStep = new RCFGEdgeIterator(BoogieIcfgContainer.extractStartEdges(mRcfgRoot)).asStream()
+		mEverythingIsAStep = new IcfgEdgeIterator(BoogieIcfgContainer.extractStartEdges(mRcfgRoot)).asStream()
 				.allMatch(a -> LTLStepAnnotation.getAnnotation(a) == null);
 		if (mEverythingIsAStep) {
 			mLogger.info("The program has no step specification, so we assume maximum atomicity");

@@ -32,10 +32,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -46,25 +45,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class Simplifier extends BaseBlockEncoder {
-
-	private final RcfgEdgeBuilder mEdgeBuilder;
-
-	public Simplifier(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		super(product, services);
-		mEdgeBuilder = new RcfgEdgeBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
+public final class Simplifier extends BaseBlockEncoder<IcfgLocation> {
+	
+	private final IcfgEdgeBuilder mEdgeBuilder;
+	
+	public Simplifier(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services) {
+		super(services);
+		mEdgeBuilder = edgeBuilder;
 	}
-
+	
 	@Override
-	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		mLogger.info("Simplifying codeblocks");
-
+		
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
 		icfg.getProcedureEntryNodes().values().stream().forEach(a -> edges.addAll(a.getOutgoingEdges()));
-
+		
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (!closed.add(current)) {
@@ -81,7 +78,7 @@ public final class Simplifier extends BaseBlockEncoder {
 		}
 		return icfg;
 	}
-
+	
 	@Override
 	public boolean isGraphStructureChanged() {
 		return false;
