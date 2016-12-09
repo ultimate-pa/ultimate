@@ -92,7 +92,7 @@ public class RefinementStrategyFactory {
 			return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
 					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case PENGUIN:
-			return new AutomizerDefaultRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, counterexample,
+			return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, counterexample,
 					abstraction, mPrefsConsolidation, iteration, benchmark);
 		case WALRUS:
 			return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,

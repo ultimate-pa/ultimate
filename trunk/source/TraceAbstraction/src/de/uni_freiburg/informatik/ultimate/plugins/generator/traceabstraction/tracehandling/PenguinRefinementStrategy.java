@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class AutomizerDefaultRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
+public class PenguinRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
 	private static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-
-	public AutomizerDefaultRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+	
+	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
@@ -62,16 +62,16 @@ public class AutomizerDefaultRefinementStrategy extends MultiTrackTraceAbstracti
 		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
-
+	
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
-		list.add(Track.Z3_SPBP);
-		list.add(Track.CVC4_SPBP);
+		list.add(Track.Z3_FPBP);
+		list.add(Track.CVC4_FPBP);
 		return list.iterator();
 	}
-
+	
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_DEFAULT;

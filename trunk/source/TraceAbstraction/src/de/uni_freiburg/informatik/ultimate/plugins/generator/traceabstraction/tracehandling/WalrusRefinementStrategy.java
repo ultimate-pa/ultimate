@@ -49,11 +49,10 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
 	private static final String LOGIC_CVC4_BV = "AUFBV";
-
+	
 	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
@@ -62,19 +61,18 @@ public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefineme
 		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
-
+	
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		list.add(Track.CVC4_SPBP);
-		list.add(Track.Z3_SPBP);
+		list.add(Track.CVC4_FPBP);
+		list.add(Track.Z3_FPBP);
 		list.add(Track.Z3_NESTED_INTERPOLANTS);
 		return list.iterator();
 	}
-
+	
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_BV;
 	}
-
 }
