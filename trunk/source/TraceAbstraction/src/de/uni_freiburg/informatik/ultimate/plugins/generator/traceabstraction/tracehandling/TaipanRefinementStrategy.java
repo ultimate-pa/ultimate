@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -79,6 +80,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	private static final String CVC4_COMMAND = "cvc4 --tear-down-incremental --print-success --lang smt";
+	
+	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS = { AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
+			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+			AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1, AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2,
+			AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST};
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -273,18 +279,20 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mCurrentMode, mIteration);
 		
+		final AssertCodeBlockOrder assertionOrder = getAssertionOrder();
+		
 		TraceCheckerConstructor result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					interpolationTechnique, mIteration, mCegarLoopBenchmark);
+					assertionOrder, interpolationTechnique, mIteration, mCegarLoopBenchmark);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique,
-					mCegarLoopBenchmark);
+			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
+					interpolationTechnique, mCegarLoopBenchmark);
 		}
 		
 		return result;
 	}
-	
+
 	private static InterpolationTechnique getInterpolationTechnique(final Mode mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
@@ -352,6 +360,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		
 		return result;
+	}
+	
+	private AssertCodeBlockOrder getAssertionOrder() {
+		return ASSERTION_ORDERS[mIteration % ASSERTION_ORDERS.length];
 	}
 	
 	private IInterpolantGenerator constructInterpolantGenerator(final Mode mode) {
