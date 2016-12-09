@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
- * Changes the assertion order based on the trace histogram to detect and reduce loop unrollings.
+ * Changes the assertion order based on the trace histogram to detect and reduce loop unwindings.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -51,6 +51,7 @@ public class AssertionOrderModulation {
 	
 	public AssertionOrderModulation() {
 		mHistograms = new ArrayList<>();
+		// TODO Currently we start with the first element in the array.
 		mCurrentIndex = 0;
 	}
 	
@@ -62,7 +63,6 @@ public class AssertionOrderModulation {
 		}
 		mHistograms.add(traceHistogram);
 		
-		// TODO change
 		return ASSERTION_ORDERS[mCurrentIndex];
 	}
 	
