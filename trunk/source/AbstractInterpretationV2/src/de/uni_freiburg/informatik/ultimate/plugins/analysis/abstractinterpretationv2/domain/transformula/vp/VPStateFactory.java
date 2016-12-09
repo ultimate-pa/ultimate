@@ -273,12 +273,13 @@ public class VPStateFactory {
 	 */
 	public VPState havoc(final EqNode node, final VPState originalState) {
 		VPStateBuilder builder = copy(originalState);
-		EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
+		final EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
 		
 		// TODO: determine if state becomes top through the havoc!
 
 		// Handling the outgoing edge chain
-		EqGraphNode nextRepresentative = graphNode.getRepresentative();
+		final EqGraphNode firstRepresentative = graphNode.getRepresentative();
+		EqGraphNode nextRepresentative = firstRepresentative;
 		nextRepresentative.getReverseRepresentative().remove(graphNode);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
@@ -296,12 +297,39 @@ public class VPStateFactory {
 			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 		}
 
-		// Handling the incoming edges
+		/*
+		 *  Handling the incoming edges (reverseRepresentative).
+		 *  Point nodes in reverseRepresentative to the representative of the node that is being havoc.
+		 *  For example, y -> x -> z. Havoc x, then we have y -> z
+		 *  But if the node that is being havoc is its own representative, 
+		 *  then point nodes in reverseRepresentative to one of them.
+		 *  For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
+		 */
+		EqGraphNode firstReserveRepresentativeNode = null;
+		if (!graphNode.getReverseRepresentative().isEmpty()) {
+			firstReserveRepresentativeNode = graphNode.getReverseRepresentative().iterator().next();
+		}
 		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
+			// first reset the representative of all the reverseRepresentative nodes.
 			reverseNode.setRepresentative(reverseNode);
 		}
-
-		// Handling the node itself
+		
+		VPState resultState = builder.build();
+		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
+			// case y -> x <- z
+			if (firstRepresentative.equals(graphNode)) {
+				if (graphNode.getReverseRepresentative().size() > 1) {
+					assert firstReserveRepresentativeNode != null;
+					resultState = disjoinAll(addEquality(reverseNode.eqNode, firstReserveRepresentativeNode.eqNode, resultState));
+				} 
+			} else { // case y -> x -> z
+				resultState = disjoinAll(addEquality(reverseNode.eqNode, firstRepresentative.eqNode, resultState));
+			}
+		}
+		
+		/*
+		 *  Handling the node itself
+		 */
 		if (graphNode.getRepresentative().equals(graphNode)) {
 			Set<VPDomainSymmetricPair<EqNode>> newSet = 
 					builder.getDisEqualitySet().stream()
@@ -316,8 +344,6 @@ public class VPStateFactory {
 			builder.restorePropagation((EqFunctionNode) node);
 		}
 		
-		VPState resultState = builder.build();
-
 		// also havoc the function nodes which index had been havoc.
 		if (!graphNode.getInitCcpar().isEmpty()) {
 			for (final EqGraphNode initCcpar : graphNode.getInitCcpar()) {
