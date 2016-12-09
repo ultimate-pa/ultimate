@@ -205,6 +205,8 @@ public final class TraceAbstractionRefinementEngine
 							if (mLogger.isInfoEnabled()) {
 								mLogger.info("Found a perfect sequence of interpolants.");
 							}
+							mInterpolantAutomaton =
+									strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 							return feasibility;
 						}
 						interpolantSequences.add(interpolants);
