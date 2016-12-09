@@ -73,7 +73,7 @@ public class TaCheckAndRefinementPreferences {
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
 
 	// fields that can be read from the IUltimateServiceProvider
-	private final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
+	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private final UnsatCores mUnsatCores;
 	private final boolean mUseLiveVariables;
 	private final boolean mUseInterpolantConsolidation;
@@ -130,7 +130,7 @@ public class TaCheckAndRefinementPreferences {
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		mAssertCodeBlocksIncrementally =
+		mAssertCodeBlocksOrder =
 				ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 						AssertCodeBlockOrder.class);
 		mUnsatCores = ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
@@ -207,8 +207,8 @@ public class TaCheckAndRefinementPreferences {
 		return mInterpolantAutomatonBuilderFactory;
 	}
 
-	public AssertCodeBlockOrder getAssertCodeBlocksIncrementally() {
-		return mAssertCodeBlocksIncrementally;
+	public AssertCodeBlockOrder getAssertCodeBlocksOrder() {
+		return mAssertCodeBlocksOrder;
 	}
 
 	public UnsatCores getUnsatCores() {
