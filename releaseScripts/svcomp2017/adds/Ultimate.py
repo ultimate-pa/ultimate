@@ -108,6 +108,15 @@ def runUltimate(ultimateCall, terminationMode):
     errorPath = ''
     while True:
         line = ultimateProcess.stdout.readline().decode('utf-8', 'ignore')
+        
+        ultimateProcess.poll()
+        if (ultimateProcess.returncode != None and not line):
+            if (ultimateProcess.returncode == 0):
+                print('\nExecution finished normally')
+            else: 
+                print('\nExecution finished with exit code ' + str(ultimateProcess.returncode)) 
+            break
+        
         if readingErrorPath:
             errorPath += line
         ultimateOutput += line
@@ -152,15 +161,7 @@ def runUltimate(ultimateCall, terminationMode):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
                 readingErrorPath = False
-    
-        ultimateProcess.poll()
-        if (ultimateProcess.returncode != None):
-            if (ultimateProcess.returncode == 0):
-                print('\nExecution finished normally')
-            else: 
-                print('\nExecution finished with exit code ' + str(ultimateProcess.returncode)) 
-            break
-    
+
     return safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath
 
 
@@ -173,12 +174,12 @@ def createUltimateCall(call, arguments):
             call = call + [arg]
     return call    
 
-def createWitnessPassthroughArgumentsList(printWitness, propFile, architecture, cFile):
+def createWitnessPassthroughArgumentsList(printWitness, prop, architecture, cFile):
     if not printWitness:
         return []
     ret = []
     ret.append('--witnessprinter.graph.data.specification')
-    ret.append(propFile)
+    ret.append(prop)
     ret.append('--witnessprinter.graph.data.producer')
     ret.append(toolname)
     ret.append('--witnessprinter.graph.data.architecture')
@@ -335,7 +336,7 @@ def main():
         if line.find('overflow') != -1:
             overflowMode = True
             
-    propFileStr = propFile.read()
+    propFileStr = open(propertyFileName, 'r').read()
 
     toolchain = createToolchainString(terminationMode, validateWitness)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
@@ -365,13 +366,11 @@ def main():
         print('Writing output log to file {}'.format(outputFileName))
         outputFile = open(outputFileName, 'wb')
         outputFile.write(ultimateOutput.encode('utf-8'))
-    
+
     if safetyResult.startswith('FALSE'):
         print('Writing human readable error path to file {}'.format(errorPathFileName))
         errOutputFile = open(errorPathFileName, 'wb')
         errOutputFile.write(errorPath.encode('utf-8'))
-    
-    if safetyResult.startswith('FALSE'):
         if memDeref:
             result = 'FALSE({})'.format(memResult)
         elif overflow: 
