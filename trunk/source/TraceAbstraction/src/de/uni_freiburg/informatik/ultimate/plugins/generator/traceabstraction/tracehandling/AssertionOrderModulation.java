@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
@@ -61,9 +62,27 @@ public class AssertionOrderModulation {
 	 * 
 	 * @param counterexample
 	 *            counterexample
+	 * @param interpolationTechnique
+	 *            interpolation technique
 	 * @return which assertion order to use
 	 */
-	public AssertCodeBlockOrder reportAndGet(final IRun<CodeBlock, IPredicate, ?> counterexample) {
+	public AssertCodeBlockOrder reportAndGet(final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final InterpolationTechnique interpolationTechnique) {
+		// for some interpolation techniques only one result is working at the moment
+		switch (interpolationTechnique) {
+			case Craig_NestedInterpolation:
+			case Craig_TreeInterpolation:
+				return AssertCodeBlockOrder.NOT_INCREMENTALLY;
+			case ForwardPredicates:
+			case BackwardPredicates:
+			case FPandBP:
+			case PathInvariants:
+				// result is determined below
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
+		}
+		
 		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
 		
 		if (mHistograms.isEmpty()) {

@@ -229,7 +229,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique);
 		
-		final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.reportAndGet(mCounterexample);
+		final AssertCodeBlockOrder assertionOrder =
+				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
 		
 		mNextTechnique = null;
 		
