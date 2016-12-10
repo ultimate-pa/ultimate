@@ -76,7 +76,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	private final IIcfgSymbolTable mSymboltable;
 	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore =
 			new NestedMap2<>();
-	private final Map<IProgramVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
+	private final Map<IProgramVarOrConst, EqAtomicBaseNode> mEqBaseNodeStore = new HashMap<>();
 	private final Set<ApplicationTerm> mEquations = new HashSet<>();
 	private final Set<ApplicationTerm> mSelectTerms = new HashSet<>();
 	private final VPDomainPreanalysisSettings mSettings;
@@ -179,7 +179,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		}
 
 		IProgramVarOrConst arrayId;
-		if (!isArrayOrConst(mds.getArray())) {
+		if (!isAtomicTerm(mds.getArray())) {
 			// if mds.getArray ist not a constant or variable, it must be a select, right?
 			final MultiDimensionalSelect innerSelect = new MultiDimensionalSelect(mds.getArray());
 			final EqFunctionNode innerSelectNode = (EqFunctionNode) constructEqNode(innerSelect);
@@ -215,7 +215,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		}
 
 		IProgramVarOrConst arrayId;
-		if (!isArrayOrConst(mds.getArray())) {
+		if (!isAtomicTerm(mds.getArray())) {
 			// if mds.getArray ist not a constant or variable, it must be a store, right?
 			final MultiDimensionalStore innerStore = new MultiDimensionalStore(mds.getArray());
 			final EqFunctionNode innerStoreNode = (EqFunctionNode) constructEqNode(innerStore);
@@ -243,7 +243,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		return result;
 	}
 
-	private static boolean isArrayOrConst(final Term t) {
+	private static boolean isAtomicTerm(final Term t) {
 		return t instanceof TermVariable || t instanceof ConstantTerm
 				|| (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0);
 	}
@@ -254,9 +254,8 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 			return result;
 		}
 		// we need to construct a fresh EqNode
-		if (isArrayOrConst(t)) {
-			result = getOrConstructEqBaseNode(getOrConstructBoogieVarOrConst(t));
-			mTermToEqNode.put(t, result);
+		if (isAtomicTerm(t)) {
+			result = getOrConstructEqBaseNode(t);
 			return result;
 		}
 		// we need to construct an EqFunctionNode
@@ -270,11 +269,27 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 			return constructEqNode(mds);
 		} else {
 			/*
-			 * Right now, we don't track "non-atomic" array-indices (e.g. arithmetic expressions).
-			 * In the future we may want to track them, but this also means changes to the VPPostOperator..
+			 * We have a non-atomic array index (like i + 5).
 			 */
-			return null;
+			return getOrConstructNonAtomicEqBaseNode(t);
 		}
+	}
+
+	private EqNode getOrConstructNonAtomicEqBaseNode(Term t) {
+
+		Set<EqAtomicBaseNode> constituentNodes = new HashSet<>();
+		boolean global = true;
+		for (TermVariable fv : t.getFreeVars()) {
+			EqAtomicBaseNode node = getOrConstructEqBaseNode(fv);
+			global &= node.isGlobal();
+			constituentNodes.add(node);
+		}
+		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global);
+		for (EqAtomicBaseNode node : constituentNodes) {
+			node.addDependentNonAtomicBaseNode(result);
+		}
+		mTermToEqNode.put(t, result);
+		return result;
 	}
 
 	/**
@@ -317,14 +332,15 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	 * @param tv
 	 * @return
 	 */
-	private EqBaseNode getOrConstructEqBaseNode(final IProgramVarOrConst bv) {
-
-		EqBaseNode result = mEqBaseNodeStore.get(bv);
+	private EqAtomicBaseNode getOrConstructEqBaseNode(final Term t) {
+		IProgramVarOrConst bv = getOrConstructBoogieVarOrConst(t);
+		EqAtomicBaseNode result = mEqBaseNodeStore.get(bv);
 
 		if (result == null) {
-			result = new EqBaseNode(bv);
+			result = new EqAtomicBaseNode(bv);
 			mEqBaseNodeStore.put(bv, result);
 		}
+		mTermToEqNode.put(t, result);
 		return result;
 	}
 
@@ -500,6 +516,10 @@ class VPDomainPreanalysisSettings {
 		mArrayNames.add(SFO.VALID);
 		mArrayNames.add(SFO.MEMORY_INT);
 		mArrayNames.add(SFO.MEMORY_POINTER);
+		
+		
+		//TODO restore svcomp settings
+		mArrayNames.add("f_a");
 		
 		Set<String> oldArrayNames = new HashSet<>();
 		for (String an : mArrayNames) {

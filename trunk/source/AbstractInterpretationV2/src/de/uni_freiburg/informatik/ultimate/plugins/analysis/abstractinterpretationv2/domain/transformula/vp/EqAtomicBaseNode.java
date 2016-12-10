@@ -27,6 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -37,12 +41,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
-public class EqBaseNode extends EqNode {
+public class EqAtomicBaseNode extends EqNode {
 	
 	private final IProgramVarOrConst mVarOrConst;
 	private final boolean mIsLiteral;
+	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	public EqBaseNode(IProgramVarOrConst bv) {
+	public EqAtomicBaseNode(IProgramVarOrConst bv) {
 		super(bv.isGlobal());
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
@@ -65,11 +70,13 @@ public class EqBaseNode extends EqNode {
 	@Override
 	public boolean equals(Object other) {
 		return other == this;
-//		if (!(other instanceof EqBaseNode)) {
-//			return false;
-//		}
-//		EqBaseNode ebn = (EqBaseNode) other;
-//		
-//		return ebn.mBoogieVarOrConst.equals(this.mBoogieVarOrConst);
+	}
+
+	public void addDependentNonAtomicBaseNode(EqNonAtomicBaseNode node) {
+		mDependentNonAtomicNodes.add(node);
+	}
+
+	public Set<EqNonAtomicBaseNode> getDependentNonAtomicBaseNodes() {
+		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
 }

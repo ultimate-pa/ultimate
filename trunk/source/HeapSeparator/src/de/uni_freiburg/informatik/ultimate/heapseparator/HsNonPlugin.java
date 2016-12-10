@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -197,7 +198,13 @@ public class HsNonPlugin {
 				}
 				statesForCurrentEc.addAll(statesAtLoc);
 			}
-			VPState disjoinedState = vpDomain.getVpStateFactory().disjoinAll(statesForCurrentEc);
+
+			VPState disjoinedState;
+			if (statesForCurrentEc.isEmpty()) {
+				disjoinedState = vpDomain.getVpStateFactory().getTopState(Collections.emptySet());
+			} else {
+				disjoinedState = vpDomain.getVpStateFactory().disjoinAll(statesForCurrentEc);
+			}
 			arrayGroupToVPState.put(ec, disjoinedState);
 		}
 

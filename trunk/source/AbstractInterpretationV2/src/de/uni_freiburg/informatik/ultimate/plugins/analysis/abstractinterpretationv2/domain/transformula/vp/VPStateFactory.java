@@ -99,6 +99,10 @@ public class VPStateFactory {
 		}
 		return result;
 	}
+	
+	public VPState getTopState(Set<IProgramVar> vars) {
+		return createEmptyStateBuilder().setVars(vars).build();
+	}
 
 	public VPStateBuilder copy(VPState originalState) {
 		if (originalState.isBottom()) {
@@ -366,6 +370,17 @@ public class VPStateFactory {
 				resultState = havoc(initCcpar.eqNode, resultState);
 			}
 		}
+		
+		
+		/*
+		 * havoc all the non-atomic EqNodes which depend on this one
+		 */
+		if (node instanceof EqAtomicBaseNode) {
+			for (EqNonAtomicBaseNode  dependentNode : ((EqAtomicBaseNode) node).getDependentNonAtomicBaseNodes()) {
+				resultState = havoc(dependentNode, resultState);
+			}
+		}
+		
 		return resultState;
 	}
 	
