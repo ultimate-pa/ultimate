@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Tran
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 public class HybridAutomaton {
+	
 	private final String mName;
 	private final Set<String> mGlobalParameters;
 	private final Set<String> mLocalParameters;
@@ -50,7 +51,6 @@ public class HybridAutomaton {
 	private final Set<String> mLabels;
 	private final Map<Integer, Location> mLocations;
 	private final List<Transition> mTransitions;
-
 	private final ILogger mLogger;
 
 	protected HybridAutomaton(ComponentType automaton, ILogger logger) {
@@ -58,7 +58,7 @@ public class HybridAutomaton {
 			throw new UnsupportedOperationException(
 			        "The input automaton must be a hybrid automaton, not a system template.");
 		}
-
+		
 		mName = automaton.getId();
 		mLocations = new HashMap<>();
 		mTransitions = new ArrayList<>();
@@ -67,7 +67,6 @@ public class HybridAutomaton {
 		mGlobalConstants = new HashSet<>();
 		mLocalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
-
 		mLogger = logger;
 
 		for (final ParamType param : automaton.getParam()) {
@@ -82,8 +81,23 @@ public class HybridAutomaton {
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
+		
 	}
-
+	
+	protected HybridAutomaton(String name,Map<Integer, Location> locations,List<Transition> transitions,
+			                  Set<String> localParameters, Set<String> localConstants, Set<String> globalParameters,
+			                  Set<String> globalConstants,Set<String> labels,ILogger logger){
+		mName = name;
+		mLocations = locations;
+		mTransitions = transitions;
+		mGlobalParameters = globalParameters;
+		mLocalParameters = localParameters;
+		mGlobalConstants = globalConstants;
+		mLocalConstants = localConstants;
+		mLabels = labels;
+		mLogger = logger;
+	}
+	
 	private void addLocation(LocationType location) {
 		if (mLocations.containsKey(location.getId())) {
 			throw new IllegalArgumentException(
@@ -97,7 +111,7 @@ public class HybridAutomaton {
 		mLocations.put(newLoc.getId(), newLoc);
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("[" + mName + "]: Added location: " + newLoc);
+			mLogger.debug("[" + mName + "]: Added location: " + newLoc); 
 		}
 	}
 
@@ -121,9 +135,17 @@ public class HybridAutomaton {
 			mLogger.debug("[" + mName + "]: Added transition: " + newTrans);
 		}
 	}
-
+	
 	public String getName() {
 		return mName;
+	}
+	
+	public Map<Integer, Location> getLocations(){
+		return mLocations;
+	}
+	
+	public List<Transition> getTransitions(){
+		return mTransitions;
 	}
 	
 	public Set<String> getGlobalParameters() {
@@ -134,6 +156,14 @@ public class HybridAutomaton {
 		return mGlobalConstants;
 	}
 	
+	public Set<String> getLocalConstants() {
+		return mLocalConstants;
+	}
+	
+	public Set<String> getLocalParameters() {
+		return mLocalParameters;
+	}
+	
 	public Set<String> getLabels() {
 		return mLabels;
 	}
@@ -141,12 +171,13 @@ public class HybridAutomaton {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
-		sb.append(mName).append(": ").append(mGlobalParameters.size() + mLocalParameters.size()).append(" parameters, ")
-		        .append(mGlobalConstants.size() + mLocalConstants.size()).append(" constants, ").append(mLabels.size())
-		        .append(" labels, ").append(mLocations.size()).append(" locataions, ").append(mTransitions.size())
-		        .append(" transitions");
-
+		String indent = "    ";
+		sb.append(mName).append(":\n ")
+		.append(indent).append("parameters: ").append(mGlobalParameters.toString() + mLocalParameters.toString() +"\n")
+		.append(indent).append("constants: ").append(mGlobalConstants.toString() + mLocalConstants.toString() +"\n")
+		.append(indent).append("labels: ").append(mLabels.toString()+"\n")
+		.append(indent).append("locations: ").append(mLocations.toString()+"\n")
+		.append(indent).append("transitions: ").append(mTransitions.toString());
 		return sb.toString();
 	}
 }

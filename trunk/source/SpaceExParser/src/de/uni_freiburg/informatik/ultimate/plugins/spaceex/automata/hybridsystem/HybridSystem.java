@@ -97,6 +97,7 @@ public class HybridSystem {
 		            .collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
 			mBinds.put(comp, binds);
 		});
+		
 	}
 
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
@@ -113,16 +114,21 @@ public class HybridSystem {
 		mGlobalConstants = globalConstants;
 		mLabels = labels;
 		mBinds = binds;
-
 		// TODO Add bind.
+	}
+	
+	public Map<String, HybridAutomaton> getAutomata(){
+		return mAutomata;
+	}
+	
+	public String getName(){
+		return mName;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
 		final String indent = "   ";
-
 		sb.append("System ").append(mName).append(":\n");
 		sb.append(indent).append("Parameters (global):\n");
 		mGlobalParameters.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
@@ -134,15 +140,15 @@ public class HybridSystem {
 		mLocalConstants.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
 		sb.append(indent).append("Labels:\n");
 		mLabels.forEach(p -> sb.append(indent).append(indent).append("* ").append(p).append("\n"));
-
 		sb.append(indent).append("Automata:\n");
 		mAutomata.forEach((name, aut) -> sb.append(indent).append("Automaton ").append(name).append(":\n")
-		        .append(indent).append(indent).append(aut).append("\n"));
-
+				.append(indent).append(indent).append(aut).append("\n"));
 		sb.append(indent).append("Subsystems:\n");
-		mSubSystems.forEach((name, sys) -> sb.append(indent).append("System ").append(name).append(":\n").append(indent)
-		        .append(indent).append(sys).append("\n"));
-
+		mSubSystems.forEach((name, sys) -> sb.append(indent).append(indent).append("* System ").append(name + "\n"));		
+		sb.append(indent).append("binds:\n");
+		mBinds.forEach((k,v)->{
+			sb.append(indent + "automata: " + k + " bind: " + v + "\n");
+		});
 		return sb.toString();
 	}
 }

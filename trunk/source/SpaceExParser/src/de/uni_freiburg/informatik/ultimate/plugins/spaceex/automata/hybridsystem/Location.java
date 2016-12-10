@@ -64,11 +64,11 @@ public class Location {
 		mYPos = ((mId * 140) + 60);
 	}
 	
-	protected int getId() {
+	public int getId() {
 		return mId;
 	}
 
-	protected String getName() {
+	public String getName() {
 		return mName;
 	}
 
@@ -80,11 +80,11 @@ public class Location {
 		mFlow = flow;
 	}
 
-	protected String getInvariant() {
+	public String getInvariant() {
 		return mInvariant;
 	}
 
-	protected String getFlow() {
+	public String getFlow() {
 		return mFlow;
 	}
 
@@ -95,6 +95,14 @@ public class Location {
 	protected void addIncomingTransition(final Transition t) {
 		mIncomingTransitions.add(t);
 	}
+	
+	protected List<Transition> getOutgoingTransitions(){
+		return mOutgoingTransitions;
+	}
+	protected List<Transition> getIncomingTransitions(){
+		return mIncomingTransitions;
+	}
+	
 	
 	protected double getXPos() {
 		return mXPos;

@@ -78,5 +78,5 @@ public final class HybridSystemFactory {
 		return new HybridSystem(name, globalVariables, localVariables, globalConstants, localConstants, labels,
 		        automata, subsystems, binds, logger);
 	}
-
+	
 }

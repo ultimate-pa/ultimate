@@ -164,29 +164,17 @@ public class SpaceExParser implements ISource {
 	@Override
 	public IElement parseAST(File file) throws Exception {
 		mFileNames.add(file.getName());
-
 		final FileInputStream fis = new FileInputStream(file);
-
 		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
-
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
-
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
-
 //		final Marshaller marshaller = jaxContext.createMarshaller();
-
 //		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-
 //		final StringWriter streamWriter = new StringWriter();
-
 //		marshaller.marshal(spaceEx, streamWriter);
-
 //		mLogger.debug(streamWriter.toString());
-
 		fis.close();
-		
-		final HybridModel system = new HybridModel(spaceEx, mLogger);
-		
+		final HybridModel system = new HybridModel(spaceEx, mLogger);		
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 
@@ -211,5 +199,4 @@ public class SpaceExParser implements ISource {
 		// TODO Auto-generated method stub
 
 	}
-
 }

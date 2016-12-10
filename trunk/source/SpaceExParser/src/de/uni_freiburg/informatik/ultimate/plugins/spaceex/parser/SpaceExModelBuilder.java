@@ -13,13 +13,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 public class SpaceExModelBuilder {
 
 	private final ILogger mLogger;
-
 	private final SpaceExRootNode mModel;
 
 	public SpaceExModelBuilder(HybridModel system, ILogger logger) {
 		mLogger = logger;
-
-		mModel = null;
+		mModel = null;		
+		// get the systems from the hybridmodel.
+		// send each/all automata to the CFG generator.
+		// return the model.		
 	}
 
 	public SpaceExRootNode getModel() {
