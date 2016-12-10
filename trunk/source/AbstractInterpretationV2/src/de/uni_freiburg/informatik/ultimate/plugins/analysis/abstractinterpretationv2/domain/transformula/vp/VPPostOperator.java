@@ -205,7 +205,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					if (!aus.isEmpty()) {
 						assert aus.size() == 1 : "?";
 						if (!mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getNewArray(), tvToPvMap)
-								|| mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tvToPvMap)){
+								|| !mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tvToPvMap)){
 							return Collections.singletonList(preStateWithHavoccedAssignedVars);
 						}
 
