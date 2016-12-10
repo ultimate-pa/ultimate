@@ -48,7 +48,7 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 	
 	@Override
@@ -72,7 +72,7 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 //		Termination-Sequentialized.set
 		//@formatter:on
 
-//		rtr.addAll(getForAll("Termination-Main", 9999));
+		rtr.addAll(getForAll("Termination-Main", 9999));
 		rtr.addAll(getForAll("Termination-ControlFlow", 9999));
 		rtr.addAll(getForAll("Termination-Loops", 9999));
 		rtr.addAll(getForAll("Termination-ProductLines", 30));
