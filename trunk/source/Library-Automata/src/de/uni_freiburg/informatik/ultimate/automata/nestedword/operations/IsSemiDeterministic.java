@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -190,6 +191,25 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		return succs;
 	}
 	
+	
+	public static <LETTER, STATE> boolean isNondeterministic(
+			final STATE up, final STATE down,
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
+		final boolean isNondeterministicInternal = isNondeterministicInternal(up, nwa);
+		if (isNondeterministicInternal) {
+			return true;
+		}
+		final boolean isNondeterministicCall = isNondeterministicCall(up, nwa);
+		if (isNondeterministicCall) {
+			return true;
+		}
+		final boolean isNondeterministicReturn = isNondeterministicReturnGivenHier(up, down, nwa);
+		if (isNondeterministicReturn) {
+			return true;
+		}
+		return false;
+	}
+	
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
@@ -232,9 +252,9 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
 					nwa.callSuccessors(state, letter).iterator(); iterator.hasNext();) {
 				numberOfSuccs++;
-			}
-			if (numberOfSuccs > 1) {
-				return true;
+				if (numberOfSuccs > 1) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -250,9 +270,9 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
 					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext();) {
 				numberOfSuccs++;
-			}
-			if (numberOfSuccs > 1) {
-				return true;
+				if (numberOfSuccs > 1) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -269,9 +289,9 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 				for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
 						nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext();) {
 					numberOfSuccs++;
-				}
-				if (numberOfSuccs > 1) {
-					return true;
+					if (numberOfSuccs > 1) {
+						return true;
+					}
 				}
 			}
 		}
