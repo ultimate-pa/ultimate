@@ -115,12 +115,6 @@ public final class TraceAbstractionRefinementEngine
 	 * This method is the heart of the refinement engine.<br>
 	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
 	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.
-	 * <p>
-	 * There is a huge hack for supporting the special {@link TraceCheckerSpWp} architecture because
-	 * <ol>
-	 * <li>we need a different getter for the interpolant sequence and</li>
-	 * <li>there are two sequences of interpolants.</li>
-	 * </ol>
 	 *
 	 * @param strategy
 	 *            refinement strategy
@@ -161,9 +155,11 @@ public final class TraceAbstractionRefinementEngine
 					final IInterpolantGenerator interpolantGenerator =
 							handleExceptions(strategy::getInterpolantGenerator);
 					
-					final boolean wasPerfect =
-							handleInterpolantsCase(strategy, interpolantSequences, feasibility, interpolantGenerator);
-					if (wasPerfect) {
+					final InterpolantsPreconditionPostcondition perfectInterpolants =
+							handleInterpolantsCase(strategy, interpolantSequences, interpolantGenerator);
+					if (perfectInterpolants != null) {
+						// construct interpolant automaton using the perfect sequence
+						constructAutomatonFromPerfectSequence(strategy, perfectInterpolants, feasibility);
 						return LBool.UNSAT;
 					}
 					if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
@@ -181,16 +177,6 @@ public final class TraceAbstractionRefinementEngine
 					throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
 		}
-	}
-	
-	private LBool handlePerfectInterpolantsCase(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences, final LBool feasibility) {
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Found a perfect sequence of interpolants.");
-		}
-		mInterpolantAutomaton =
-				strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
-		return feasibility;
 	}
 	
 	private LBool checkFeasibility(final IRefinementStrategy strategy) {
@@ -216,8 +202,17 @@ public final class TraceAbstractionRefinementEngine
 		mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 	}
 	
-	private boolean handleInterpolantsCase(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences, final LBool feasibility,
+	/**
+	 * There is a huge hack for supporting the special {@link TraceCheckerSpWp} architecture because
+	 * <ol>
+	 * <li>we need a different getter for the interpolant sequence and</li>
+	 * <li>there are two sequences of interpolants.</li>
+	 * </ol>
+	 * 
+	 * @return perfect interpolant sequence or {@code null}
+	 */
+	private InterpolantsPreconditionPostcondition handleInterpolantsCase(final IRefinementStrategy strategy,
+			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
 			final IInterpolantGenerator interpolantGenerator) {
 		if (interpolantGenerator != null) {
 			if (interpolantGenerator instanceof InterpolantConsolidation) {
@@ -263,14 +258,22 @@ public final class TraceAbstractionRefinementEngine
 					perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
 				}
 				if (perfectInterpolantsFound) {
-					// construct interpolant automaton using only this (perfect) sequence
-					handlePerfectInterpolantsCase(strategy, Collections.singletonList(interpolants), feasibility);
-					return true;
+					return interpolants;
 				}
 				interpolantSequences.add(interpolants);
 			}
 		}
-		return false;
+		return null;
+	}
+	
+	private LBool constructAutomatonFromPerfectSequence(final IRefinementStrategy strategy,
+			final InterpolantsPreconditionPostcondition interpolants, final LBool feasibility) {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Found a perfect sequence of interpolants.");
+		}
+		mInterpolantAutomaton =
+				strategy.getInterpolantAutomatonBuilder(Collections.singletonList(interpolants)).getResult();
+		return feasibility;
 	}
 	
 	private void constructAutomatonFromImperfectSequences(final IRefinementStrategy strategy,
