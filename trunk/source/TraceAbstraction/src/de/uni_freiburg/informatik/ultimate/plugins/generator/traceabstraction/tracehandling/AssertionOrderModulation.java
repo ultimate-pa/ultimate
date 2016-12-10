@@ -87,17 +87,18 @@ public class AssertionOrderModulation {
 		 * Current policy: The histogram repeats if the number of entries that occur more than once has increased wrt.
 		 * the previous iteration.
 		 */
-		final int numberOfPreviousRepeatingEntries = getEntriesGreaterThanOne(mHistograms.get(mHistograms.size() - 1));
-		final int numberOfCurrentRepeatingEntries = getEntriesGreaterThanOne(traceHistogram);
+		final int sumOfPreviousRepeatingEntries =
+				getSumOfEntriesGreaterThanOne(mHistograms.get(mHistograms.size() - 1));
+		final int sumOfCurrentRepeatingEntries = getSumOfEntriesGreaterThanOne(traceHistogram);
 		
-		return numberOfPreviousRepeatingEntries < numberOfCurrentRepeatingEntries;
+		return sumOfPreviousRepeatingEntries < sumOfCurrentRepeatingEntries;
 	}
 	
-	private static int getEntriesGreaterThanOne(final HistogramOfIterable<CodeBlock> histogram) {
+	private static int getSumOfEntriesGreaterThanOne(final HistogramOfIterable<CodeBlock> histogram) {
 		int result = 0;
 		for (final int value : histogram.getVisualizationArray()) {
 			if (value > 1) {
-				++result;
+				result += value;
 			} else {
 				break;
 			}
