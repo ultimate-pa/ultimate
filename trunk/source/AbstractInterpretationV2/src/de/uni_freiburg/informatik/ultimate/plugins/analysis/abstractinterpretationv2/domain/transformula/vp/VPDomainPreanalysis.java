@@ -40,6 +40,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -66,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
-public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
+public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
@@ -78,19 +79,25 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	private final Map<IProgramVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
 	private final Set<ApplicationTerm> mEquations = new HashSet<>();
 	private final Set<ApplicationTerm> mSelectTerms = new HashSet<>();
-
+	private final VPDomainPreanalysisSettings mSettings;
 	/**
 	 * Stores for each array, which Terms(EqNodes) are used to access it.
 	 */
 	private final HashRelation<IProgramVarOrConst, EqNode> mArrayToAccessingEqNodes = new HashRelation<>();
+	private final ILogger mLogger;
 
-	public RCFGArrayIndexCollector(final IIcfg<?> root) {
+	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
+		mLogger = logger;
 		mSymboltable = root.getSymboltable();
+		mSettings = new VPDomainPreanalysisSettings();
 		process(RcfgUtils.getInitialEdges(root));
 	}
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
+		mLogger.info("started VPDomainPreAnalysis");
+		
+
 		final Deque<IcfgEdge> worklist = new ArrayDeque<>();
 		final Set<IcfgEdge> finished = new HashSet<>();
 
@@ -113,22 +120,35 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
 		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(tf.getFormula());
+		
 
 		/*
 		 * handle selects in the formula
 		 */
-		final List<MultiDimensionalSelect> mdSelects =
+		final List<MultiDimensionalSelect> mdSelectsAll =
 				MultiDimensionalSelect.extractSelectShallow(formulaWithNormalizedVariables, false);
-		for (final MultiDimensionalSelect mds : mdSelects) {
+		final List<MultiDimensionalSelect> mdSelectsFiltered =
+				mSettings.trackAllArrays() ?
+						mdSelectsAll :
+							mdSelectsAll.stream()
+							.filter(mds -> mSettings.getArraysToTrack().contains(mds.getArray().toString()))
+							.collect(Collectors.toList());
+		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
 			constructEqNode(mds);
 		}
 
 		/*
 		 * handle stores in the formula
 		 */
-		final List<MultiDimensionalStore> mdStores =
+		final List<MultiDimensionalStore> mdStoresAll =
 				MultiDimensionalStore.extractArrayStoresShallow(formulaWithNormalizedVariables);
-		for (final MultiDimensionalStore mds : mdStores) {
+		final List<MultiDimensionalStore> mdStoresFiltered =
+				mSettings.trackAllArrays() ?
+						mdStoresAll :
+							mdStoresAll.stream()
+							.filter(mds -> mSettings.getArraysToTrack().contains(mds.getArray().toString()))
+							.collect(Collectors.toList());
+		for (final MultiDimensionalStore mds : mdStoresFiltered) {
 			constructEqNode(mds);
 		}
 
@@ -143,7 +163,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 				.findMatchingSubterms(formulaWithNormalizedVariables);
 		mEquations.addAll(equations);
 		final Set<ApplicationTerm> selectTerms =
-				mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
+				mdSelectsFiltered.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
 		mSelectTerms.addAll(selectTerms);
 
 	}
@@ -337,7 +357,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			final Map<TermVariable, IProgramVar> tvToPvMap) {
 		if (term instanceof TermVariable) {
 			final IProgramVar pv = tvToPvMap.get(term);
-			assert mTermToProgramVarOrConst.get(pv.getTerm()) == pv : "right?...";
+//			assert mTermToProgramVarOrConst.get(pv.getTerm()) == pv : "right?...";
 			return pv;
 		}
 		return mTermToProgramVarOrConst.get(term);
@@ -419,6 +439,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		for (final Term t : closure) {
 			getOrConstructEqNode(t);
 		}
+		
+		mLogger.info("VPDomainPreanalysis finished.");
+		mLogger.info("tracked arrays: " + mArrayIdToFnNodes.getDomain());
+		mLogger.info("total number of nodes in congruence graph: " + mTermToEqNode.values().size());
 	}
 
 	/**
@@ -434,4 +458,77 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		final EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
 		return result;
 	}
+	
+	
+	public VPDomainPreanalysisSettings getSettings() {
+		return mSettings;
+	}
+
+	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
+		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
+		String normalizedName = arrayid.toString();
+		if (tvToPvMap.containsKey(arrayid)) {
+			normalizedName = tvToPvMap.get(arrayid).toString();
+		}
+		return mSettings.getArraysToTrack().contains(normalizedName);
+	}
+}
+
+class VPDomainPreanalysisSettings {
+	private final Set<String> mArrayNames;
+
+	VPDomainPreanalysisSettings() {
+		mArrayNames = new HashSet<>();
+		mArrayNames.add(SFO.LENGTH);
+		mArrayNames.add(SFO.VALID);
+		mArrayNames.add(SFO.MEMORY_INT);
+		mArrayNames.add(SFO.MEMORY_POINTER);
+		
+		Set<String> oldArrayNames = new HashSet<>();
+		for (String an : mArrayNames) {
+			oldArrayNames.add("old(" + an + ")");
+		}
+		mArrayNames.addAll(oldArrayNames);
+	}
+	
+	public boolean trackAllArrays() {
+		return false;
+	}
+	
+	public Set<String> getArraysToTrack() {
+			return mArrayNames;
+	}
+}
+
+class SFO { //copied from translation TODO: perhaps move it to utils or so..
+	/**
+	 * The "#length" array identifier.
+	 */
+	public static final String LENGTH = "#length";
+	/**
+	 * The "#valid" array identifier.
+	 */
+	public static final String VALID = "#valid";
+	/**
+	 * The "#memory" array identifier.
+	 */
+	public static final String MEMORY = "#memory";
+	
+	/**
+	 * String holding "int".
+	 */
+	public static final String INT = "int";
+
+	/**
+	 * The "$Pointer$" type identifier.
+	 */
+	public static final String POINTER = "$Pointer$";	
+
+	/**
+	 * combined SFOs for memory arrays:
+	 */
+	public static final String MEMORY_INT = MEMORY + "_" + INT;
+//	public static final String MEMORY_REAL = MEMORY + "_" + REAL;
+	public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
+	
 }

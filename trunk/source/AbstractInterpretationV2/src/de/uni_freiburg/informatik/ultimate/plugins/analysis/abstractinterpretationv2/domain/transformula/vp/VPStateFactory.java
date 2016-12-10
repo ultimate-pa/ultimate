@@ -549,10 +549,34 @@ public class VPStateFactory {
 					.getImage(
 							secondArray)) {
 				if (resultState.congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
-					resultStates.addAll(addEquality(fnNode1, fnNode2, resultState));
+					resultStates = conjoinAll(resultStates, addEquality(fnNode1, fnNode2, resultState));
 				}
 			}
 		}
+		if (resultStates.isEmpty()) {
+			resultStates.add(resultState);
+		}
+		return resultStates;
+	}
+
+	/**
+	 * Conjoins two sets of states (which are implicit disjunctions), and returns a set of states.
+	 * Example {A, B, C} , {D, E} becomes {(A /\ D), (A /\ E), (B /\ D), (B /\ E), ...}.
+	 * 
+	 * @param resultStates
+	 * @param addEquality
+	 * @return
+	 */
+	private Set<VPState> conjoinAll(Set<VPState> set1, Set<VPState> set2) {
+		Set<VPState> resultStates = new HashSet<>();
+		
+		for (VPState state1 : set1) {
+			for (VPState state2 : set2) {
+				// (the result of conjoin is again a disjunction -- that's ok)
+				resultStates.addAll(conjoin(state1, state2));
+			}
+		}
+		
 		return resultStates;
 	}
 

@@ -156,6 +156,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						result.clear();
 					}
 				}
+				assert !result.isEmpty();
 				return result;
 			} else if (applicationName == "or") {
 				assert !negated : "we transformed to nnf before, right?";
@@ -164,28 +165,64 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (final Term t : appTerm.getParameters()) {
 					orList.addAll(handleTransition(preStateWithHavoccedAssignedVars, oldstate, t, tvToPvMap, assignedVars, inVars, outVars, false));
 				}
+				assert !orList.isEmpty();
 				return orList;
 			} else if (applicationName == "=") {
 				/*
 				 * case "ArrayEquality"
 				 */
-				final List<ArrayEquality> aeqs =
-						new ArrayEqualityExtractor(new Term[] { appTerm }).getArrayEqualities();
-				if (!aeqs.isEmpty()) {
-					assert aeqs.size() == 1 : "?";
-					// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-					return new ArrayList<>(handleArrayEqualityTransition(preStateWithHavoccedAssignedVars, oldstate, tvToPvMap, inVars, outVars, negated, aeqs.get(0)));
+				{
+					final List<ArrayEquality> aeqs =
+							new ArrayEqualityExtractor(new Term[] { appTerm }).getArrayEqualities();
+					if (!aeqs.isEmpty()) {
+						assert aeqs.size() == 1 : "?";
+						if (!mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getLhs(), tvToPvMap)
+								|| !mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getRhs(), tvToPvMap)){
+							return Collections.singletonList(preStateWithHavoccedAssignedVars);
+						}
+
+						// we have an array equality (i.e. something like (= a b) where a,b are arrays)
+						List<VPState> result = new ArrayList<>(
+								handleArrayEqualityTransition(
+										preStateWithHavoccedAssignedVars, 
+										oldstate, 
+										tvToPvMap, 
+										inVars, 
+										outVars, 
+										negated, 
+										aeqs.get(0)));
+						assert !result.isEmpty();
+						return result;
+					}
 				}
 
 				/*
 				 * case "ArrayUpdate"
 				 */
-				final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
-				
-				if (!aus.isEmpty()) {
-					assert aus.size() == 1 : "?";
-					// we have an array update
-					return new ArrayList<>(handleArrayUpdateTransition(preStateWithHavoccedAssignedVars, oldstate, tvToPvMap, inVars, outVars, negated, aus.get(0)));
+				{
+					final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
+
+					if (!aus.isEmpty()) {
+						assert aus.size() == 1 : "?";
+						if (!mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getNewArray(), tvToPvMap)
+								|| mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tvToPvMap)){
+							return Collections.singletonList(preStateWithHavoccedAssignedVars);
+						}
+
+
+						// we have an array update
+						List<VPState> result = new ArrayList<>(
+								handleArrayUpdateTransition(
+										preStateWithHavoccedAssignedVars, 
+										oldstate, 
+										tvToPvMap, 
+										inVars, 
+										outVars, 
+										negated, 
+										aus.get(0)));
+						assert !result.isEmpty();
+						return result;
+					}
 				}
 
 				/*
@@ -220,6 +257,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					// --> replace the occurrences on the other side by something equal in the oldstate if possible
 					
 					final EqNode otherOccurrenceEqNode = mDomain.getPreAnalysis().getEqNode(inVars.get(p1Pv), tvToPvMap);
+
+					if (otherOccurrenceEqNode == null) { //
+						return Collections.singletonList(preStateWithHavoccedAssignedVars);
+					}
 					
 					Set<EqNode> equivalentNodes = oldstate.getEquivalentEqNodes(otherOccurrenceEqNode);
 					
@@ -262,10 +303,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					if (!negated) {
 						final Set<VPState> resultStates =
 								mDomain.getVpStateFactory().addEquality(node1, node2, preStateWithHavoccedAssignedVars);
+						assert !resultStates.isEmpty();
 						return new ArrayList<>(resultStates);
 					} else {
 						final Set<VPState> resultStates =
 								mDomain.getVpStateFactory().addDisEquality(node1, node2, preStateWithHavoccedAssignedVars);
+						assert !resultStates.isEmpty();
 						return new ArrayList<>(resultStates);
 					}
 				}
@@ -276,7 +319,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				return Collections.singletonList(preStateWithHavoccedAssignedVars);
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
-				return handleTransition(preStateWithHavoccedAssignedVars, oldstate, appTerm.getParameters()[0], tvToPvMap, assignedVars, inVars, outVars, !negated);
+				List<VPState> result = handleTransition(preStateWithHavoccedAssignedVars, oldstate, appTerm.getParameters()[0], tvToPvMap, assignedVars, inVars, outVars, !negated);
+				assert !result.isEmpty();
+				return result;
 			} else if (applicationName == "distinct") {
 				
 				mScript.lock(this);
@@ -284,7 +329,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						mScript.term(this, "=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
 				mScript.unlock(this);
 
-				return handleTransition(preStateWithHavoccedAssignedVars, oldstate, equality, tvToPvMap, assignedVars, inVars, outVars, !negated);
+				List<VPState> result = handleTransition(preStateWithHavoccedAssignedVars, oldstate, equality, tvToPvMap, assignedVars, inVars, outVars, !negated);
+				assert !result.isEmpty();
+				return result;
 			}
 			
 		} else if (term instanceof QuantifiedFormula) {
@@ -292,7 +339,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			assert false : "we currently cannot deal with quantifiers";
 			return null;
 		} else if (term instanceof AnnotatedTerm) {
-			return handleTransition(preStateWithHavoccedAssignedVars, oldstate, ((AnnotatedTerm) term).getSubterm(), tvToPvMap, assignedVars, inVars, outVars, negated);
+			List<VPState> result = handleTransition(preStateWithHavoccedAssignedVars, oldstate, ((AnnotatedTerm) term).getSubterm(), tvToPvMap, assignedVars, inVars, outVars, negated);
+			assert !result.isEmpty();
+			return result;
 		}
 		/*
 		 * no part of the TransFormula influences the state --> return a copy
@@ -319,6 +368,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
 		if (!negated) {
 			final Set<VPState> resultStates = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
+			assert !resultStates.isEmpty();
 			return resultStates;
 		} else {
 			/*

@@ -191,6 +191,11 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
 			}
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(mds.getArray(), 
+					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
+				continue;
+			}
+
 			//TODO: we can't work on the normalized TermVariables like this, I think..
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
@@ -212,6 +217,11 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
 			}
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(mds.getArray(), 
+					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
+				continue;
+			}
+
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							mds.getArray(), 
@@ -237,26 +247,29 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula);
 		for (ArrayUpdate au : arrayUpdates) {
+			
 
-			IProgramVarOrConst updateLhs = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							au.getNewArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			
-			IProgramVarOrConst updateRhsArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							au.getOldArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			
 			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
 
-			IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(updateLhs, pointers);
-
-			IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(updateRhsArray, pointers);
-
-			updateMappingsForSubstitution(updateLhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
-
-			updateMappingsForSubstitution(updateRhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
+			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getNewArray(), 
+					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
+				IProgramVarOrConst lhs = 
+						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+								au.getNewArray(), 
+								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+				IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(lhs, pointers);
+				updateMappingsForSubstitution(lhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
+			}
+			
+			if (mVpDomain.getPreAnalysis().isArrayTracked(au.getOldArray(), 
+					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
+				IProgramVarOrConst rhsArray = 
+						mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+								au.getOldArray(), 
+								VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+				IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(rhsArray, pointers);
+				updateMappingsForSubstitution(rhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
+			}
 		}
 		
 		Term newTerm = new Substitution(mScript, substitutionMapPvoc).transform(formula);
@@ -268,8 +281,9 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars, ArrayIndex index) {
 		List<EqNode> pointers = index.stream()
-				.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(
-						VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars).get(indexTerm).getTerm()))
+				.map(indexTerm -> mVpDomain.getPreAnalysis().getEqNode(
+						indexTerm, 
+						VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars)))
 				.collect(Collectors.toList());
 		return pointers;
 	}
@@ -285,21 +299,30 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		for (ArrayEquality ae : arrayEqualities) {
 			/*
 			 * plan:
-			 *  - check compatibility (assert)
+			 *  (- check compatibility --> should be guaranteed by NewArrayIdProvider)
 			 *  - make an assignment between all the partitions
 			 */
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(ae.getLhs(), 
+					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))
+					|| !mVpDomain.getPreAnalysis().isArrayTracked(ae.getRhs(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
+				continue;
+			}
+			
+			
+			List<Term> newEqualities = new ArrayList<>();
 			
 			IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							ae.getLhs(), 
 							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+
 			IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							ae.getRhs(), 
 							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
-			
-			List<Term> newEqualities = new ArrayList<>();
-			
-			List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
 			List<IProgramVarOrConst> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
+			
+			
 			assert newLhss.size() == newRhss.size();
 			for (int i = 0; i < newLhss.size(); i++) {
 				IProgramVarOrConst newLhs = newLhss.get(i);

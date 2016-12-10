@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class NewArrayIdProvider {
 	
@@ -85,8 +86,7 @@ public class NewArrayIdProvider {
 	}
 
 	public List<IProgramVarOrConst> getAllNewArrayIds(IProgramVarOrConst oldLhs) {
-		// TODO Auto-generated method stub
-		return null;
+		return mArrayToPartitionInformation.get(oldLhs).getNewArrayIds();
 	}
 }
 
@@ -114,6 +114,8 @@ class PartitionInformation {
 	int versionCounter = 0;
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 	private final Set<IndexPartition> indexPartitions;
+	
+	private final List<IProgramVarOrConst> mNewArrayIds = new ArrayList<>();
 	
 	final Map<IndexPartition, IProgramVarOrConst> indexPartitionToNewArrayId = new HashMap<>();
 	
@@ -144,7 +146,7 @@ class PartitionInformation {
 	private IProgramVarOrConst getNewArrayIdForIndexPartitionVector(final List<IndexPartition> partitionVector) {
 		IProgramVarOrConst result = partitionVectorToNewArrayId.get(partitionVector);
 		if (result == null) {
-			result = obtainFreshProgramVar(arrayId);
+			result = obtainFreshProgramVar();
 			partitionVectorToNewArrayId.put(partitionVector, result);
 		}
 		return result;
@@ -162,15 +164,15 @@ class PartitionInformation {
 		return versionCounter++;
 	}
 
-	private IProgramVarOrConst obtainFreshProgramVar(final IProgramVarOrConst originalArrayId) {
+	private IProgramVarOrConst obtainFreshProgramVar() {
 		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
 		
 		IProgramVarOrConst freshVar = null;
 		
 		mManagedScript.lock(this);
 		
-		if (originalArrayId instanceof LocalBoogieVar) {
-			final LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
+		if (arrayId instanceof LocalBoogieVar) {
+			final LocalBoogieVar lbv = (LocalBoogieVar) arrayId;
 			final String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
 			final TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
 
@@ -189,13 +191,45 @@ class PartitionInformation {
 					newTv, 
 					newConst, 
 					newPrimedConst);
-		} else if (originalArrayId instanceof BoogieNonOldVar) {
+		} else if (arrayId instanceof BoogieNonOldVar) {
+			final BoogieNonOldVar bnov = (BoogieNonOldVar) arrayId;
+		
+//			freshVar = new BoogieOldVar(identifier, iType, tv, defaultConstant, primedContant)
+		
+			final String newId = bnov.getIdentifier() + "_part_" + getFreshVersionIndex();
+			final TermVariable newTv = mManagedScript.constructFreshCopy(bnov.getTermVariable());
+			final TermVariable newTvOld = mManagedScript.constructFreshCopy(bnov.getOldVar().getTermVariable());
+
+			String constString = newId + "_const";
+			mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
+			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.term(this, constString);
+			mManagedScript.getScript().declareFun(constString + "_old", new Sort[0], newTv.getSort());
+			final ApplicationTerm newConstOld = (ApplicationTerm) mManagedScript.term(this, constString + "_old");
+			
+			String constPrimedString = newId + "_const_primed";
+			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
+			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
+			mManagedScript.getScript().declareFun(constPrimedString + "_old", new Sort[0], newTv.getSort());
+			final ApplicationTerm newPrimedConstOld = (ApplicationTerm) mManagedScript.term(this, constPrimedString + "_old");
+			
+			final BoogieOldVar bov = new BoogieOldVar(newId + "_old", 
+					null, 
+					newTvOld, 
+					newConstOld, 
+					newPrimedConstOld);
+
+			freshVar = new BoogieNonOldVar(
+					newId, 
+					null, 
+					newTv, 
+					newConst, 
+					newPrimedConst,
+					bov);
+		} else if (arrayId instanceof BoogieOldVar) {
 			assert false : "TODO: implement";
-		} else if (originalArrayId instanceof BoogieOldVar) {
+		} else if (arrayId instanceof IntraproceduralReplacementVar) {
 			assert false : "TODO: implement";
-		} else if (originalArrayId instanceof IntraproceduralReplacementVar) {
-			assert false : "TODO: implement";
-		} else if (originalArrayId instanceof BoogieConst) {
+		} else if (arrayId instanceof BoogieConst) {
 			assert false : "TODO: implement";
 		} else {
 			assert false : "case missing --> add it?";
@@ -205,6 +239,10 @@ class PartitionInformation {
 		mManagedScript.unlock(this);
 		
 		mNewSymbolTable.add(freshVar);
+		
+		 
+		mNewArrayIds.add(freshVar);
+		
 		return freshVar;
 	}
 	
@@ -220,5 +258,9 @@ class PartitionInformation {
 		sb.append(indexPartitions);
 		
 		return sb.toString();
+	}
+	
+	List<IProgramVarOrConst> getNewArrayIds() {
+		return mNewArrayIds;
 	}
 }

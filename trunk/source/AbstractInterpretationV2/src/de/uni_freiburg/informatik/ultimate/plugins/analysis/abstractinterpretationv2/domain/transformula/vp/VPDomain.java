@@ -61,12 +61,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mManagedScript;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
-	private final RCFGArrayIndexCollector mPreAnalysis;
+	private final VPDomainPreanalysis mPreAnalysis;
 	private final VPStateFactory mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
 	
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable, final RCFGArrayIndexCollector preAnalysis) {
+			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
 		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
@@ -134,7 +134,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mLogger;
 	}
 	
-	public RCFGArrayIndexCollector getPreAnalysis() {
+	public VPDomainPreanalysis getPreAnalysis() {
 		return mPreAnalysis;
 	}
 	

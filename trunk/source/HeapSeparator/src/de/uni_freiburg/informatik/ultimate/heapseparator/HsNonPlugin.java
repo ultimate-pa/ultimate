@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPState;
@@ -161,6 +161,12 @@ public class HsNonPlugin {
 			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
 		}
 		for (VPDomainSymmetricPair<IProgramVarOrConst> pair : hspav.getArrayEqualities()) {
+			if (arrayGroupingUf.find(pair.getFirst()) == null) {
+				continue;
+			}
+			if (arrayGroupingUf.find(pair.getSecond()) == null) {
+				continue;
+			}
 			arrayGroupingUf.union(pair.getFirst(), pair.getSecond());
 		}
 		arrayGroupingUf.getAllEquivalenceClasses();
@@ -205,10 +211,10 @@ public class HsNonPlugin {
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
-		final RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
+		final VPDomainPreanalysis vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
 		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
 //		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
-		for (Entry<Set<IProgramVarOrConst>, VPState>en : arrayGroupToVPState.entrySet()) {
+		for (Entry<Set<IProgramVarOrConst>, VPState> en : arrayGroupToVPState.entrySet()) {
 //			final IProgramVarOrConst currentArray = en.getKey();
 			final Set<IProgramVarOrConst> arrayGroup = en.getKey();
 			final VPState state = en.getValue();

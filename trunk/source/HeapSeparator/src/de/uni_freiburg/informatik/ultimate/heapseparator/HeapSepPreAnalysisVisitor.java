@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.ConstOrLiteral;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -80,7 +81,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 	private final ManagedScript mScript;
 
-	private RCFGArrayIndexCollector mVpDomainPreAnalysis;
+	private VPDomainPreanalysis mVpDomainPreAnalysis;
 
 	/**
 	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
@@ -128,12 +129,18 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
 			}
+			if (!mVpDomainPreAnalysis.isArrayTracked(pv.getTerm(), Collections.emptyMap())) {
+				continue;
+			}
 			// we have an array variable --> store that it occurs after the source location of the edge
 			result.addPair(pv, edge.getSource());
 		}
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getOutVars().entrySet()) {
 			IProgramVar pv = en.getKey();
 			if (!pv.getTermVariable().getSort().isArraySort()) {
+				continue;
+			}
+			if (!mVpDomainPreAnalysis.isArrayTracked(pv.getTerm(), Collections.emptyMap())) {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
