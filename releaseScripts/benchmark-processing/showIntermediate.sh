@@ -14,7 +14,10 @@ do
                 UNKNOWN=`ack "with UNKNOWN" "$FILE" | grep "$SETTING.*$TOOLCHAIN" | wc -l`
                 TOTAL=$((SUCCESS+FAILURE+UNKNOWN))
                 if [ $TOTAL -gt "0" ]; then
-                        RTR="${RTR}S: $SUCCESS F: $FAILURE U: $UNKNOWN T: $TOTAL $SETTING\n"
+                     RTR="${RTR}S: $SUCCESS F: $FAILURE U: $UNKNOWN T: $TOTAL $SETTING\n"
+					 echo "Exceptions for $SETTING"
+					 ack "with FAIL" "$FILE" | grep "$SETTING.*$TOOLCHAIN" | grep -oPh "EXCEPTION_OR_ERROR.*" | sort | uniq -c
+					 echo 
                 fi
         done
         echo -e "$RTR" | column -t
