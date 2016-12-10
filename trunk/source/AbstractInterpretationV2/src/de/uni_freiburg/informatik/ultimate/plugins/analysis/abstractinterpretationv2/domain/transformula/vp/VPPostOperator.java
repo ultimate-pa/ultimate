@@ -498,6 +498,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				final EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
 				final EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
 				
+				if (arrayAtIndexNode == null || valueNode == null) {
+					return Collections.singleton(preState);
+				}
+				
 				/*
 				 * treat essentially like an ArrayEquality (except for that one point)
 				 * for all points p except (i_1, .., i_n), we add 
@@ -522,7 +526,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						}
 					}
 				}
-			
+				
 				return resultStates;
 			} else {
 				/*
