@@ -103,7 +103,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	
 	private final IFlag mTimeout;
 	private boolean mConstructionInterrupted;
-
+	
 	private final boolean mInitialPartitionSeparatesFinalsAndNonfinals;
 	
 	/* EXPERIMENTAL END */
@@ -148,7 +148,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag(),
 				initialPartitionSeparatesFinalsAndNonfinals);
 	}
@@ -251,22 +251,43 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final boolean addMapping)
 			throws AutomataOperationCanceledException {
 		
+		assert (mPartition == null);
 		if (equivalenceClasses == null) {
 			// creation of the initial partition (if not passed in the constructor)
-			assert (mPartition == null);
 			mPartition = createInitialPartition(states);
 		} else {
-			// construct initial partition using collections from constructor
-			assert (mPartition == null
-					&& assertStatesSeparation(equivalenceClasses)) :
-						"initial partition does not separate final/non-final states";
 			mPartition = new Partition(mOperand, states.size());
-			
-			for (final Set<STATE> ecSet : equivalenceClasses) {
-				assert !ecSet.isEmpty();
-				mPartition.addEquivalenceClass(
-						new EquivalenceClass(ecSet,
-								mOperand.isFinal(ecSet.iterator().next())));
+			if (mInitialPartitionSeparatesFinalsAndNonfinals) {
+				// predefined modules are already split with respect to final states
+				assert (assertStatesSeparation(
+						equivalenceClasses)) : "initial partition does not separate final/non-final states";
+				
+				for (final Set<STATE> ecSet : equivalenceClasses) {
+					assert !ecSet.isEmpty();
+					mPartition.addEquivalenceClass(
+							new EquivalenceClass(ecSet,
+									mOperand.isFinal(ecSet.iterator().next())));
+				}
+			} else {
+				HashSet<STATE> finals = new HashSet<>();
+				HashSet<STATE> nonfinals = new HashSet<>();
+				for (final Set<STATE> module : equivalenceClasses) {
+					for (final STATE state : module) {
+						if (mOperand.isFinal(state)) {
+							finals.add(state);
+						} else {
+							nonfinals.add(state);
+						}
+					}
+					if (!finals.isEmpty()) {
+						mPartition.addEquivalenceClass(new EquivalenceClass(finals, true));
+						finals = new HashSet<>();
+					}
+					if (!nonfinals.isEmpty()) {
+						mPartition.addEquivalenceClass(new EquivalenceClass(nonfinals, false));
+						nonfinals = new HashSet<>();
+					}
+				}
 			}
 		}
 		
