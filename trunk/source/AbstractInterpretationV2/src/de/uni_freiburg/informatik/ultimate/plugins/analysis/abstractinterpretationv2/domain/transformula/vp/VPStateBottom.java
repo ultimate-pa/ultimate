@@ -51,7 +51,7 @@ public class VPStateBottom extends VPState {
 
 	@Override
 	public String toLogString() {
-		return "Bottom reached.";
+		return "VPStateBottom, Vars: " + getVariables();
 	}
 
 	@Override

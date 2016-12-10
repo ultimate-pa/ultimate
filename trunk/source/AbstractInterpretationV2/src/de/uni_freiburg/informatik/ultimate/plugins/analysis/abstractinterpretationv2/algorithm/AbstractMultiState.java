@@ -355,8 +355,11 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 			iter.remove();
 			final STATE second = iter.next();
 			iter.remove();
-			reducibleSet.add(mergeOp.apply(first, second));
-			--numberOfMerges;
+			if (reducibleSet.add(mergeOp.apply(first, second))) {
+				--numberOfMerges;
+			} else {
+				numberOfMerges -= 2;
+			}
 		}
 		assert reducibleSet.size() <= mMaxSize;
 		return reducibleSet;
