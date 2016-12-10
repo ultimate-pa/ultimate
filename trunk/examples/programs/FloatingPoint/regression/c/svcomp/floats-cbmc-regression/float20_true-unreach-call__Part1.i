@@ -36,10 +36,10 @@ int main (void) {
   bug(f);
 
   float g;
-  bugBrokenOut(g);
+//  bugBrokenOut(g);
 
   double d;
-  bugCasting(d);
+//  bugCasting(d);
 
   return 1;
 }

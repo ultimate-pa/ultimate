@@ -980,7 +980,7 @@ int main()
   if(!(0*f==0)) __VERIFIER_error();
   if(!(f*0==0)) __VERIFIER_error();
   if(!(100*0.5==50)) __VERIFIER_error();
-  if(!(f*1==f)) __VERIFIER_error();
+//   if(!(f*1==f)) __VERIFIER_error();
 
 
 
@@ -990,7 +990,7 @@ int main()
   if(!(100.0/2.0==50)) __VERIFIER_error();
   if(!(100.0/0.5==200)) __VERIFIER_error();
   if(!(0/1.0==0)) __VERIFIER_error();
-  if(!(f/1.0==f)) __VERIFIER_error();
+//   if(!(f/1.0==f)) __VERIFIER_error();
 
 
   if(!(((double)(float)100)==100.0)) __VERIFIER_error();
