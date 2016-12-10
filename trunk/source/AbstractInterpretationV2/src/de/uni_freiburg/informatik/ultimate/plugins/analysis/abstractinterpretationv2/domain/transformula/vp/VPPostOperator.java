@@ -92,8 +92,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			return Collections.singletonList(oldstate);
 		}
 
-		if (oldstate instanceof VPStateBottom) {
-			return Collections.singletonList(mDomain.getVpStateFactory().getBottomState());
+		if (oldstate.isBottom()) {
+			return Collections.singletonList(oldstate);
 		}
 
 		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(tf.getFormula());

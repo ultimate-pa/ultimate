@@ -255,7 +255,8 @@ class PartitionInformation {
 		
 		sb.append(" array: " + arrayId);
 		
-		sb.append(indexPartitions);
+		sb.append(" partitions: " + indexPartitions);
+		sb.append("\n");
 		
 		return sb.toString();
 	}

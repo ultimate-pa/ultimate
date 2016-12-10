@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,11 +44,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPStateFactory {
 	
 	private final VPDomain mDomain;
-	private final VPStateBottom mBottomState;
+//	private final VPStateBottom mBottomState;
+	private final Map<Set<IProgramVar>, VPStateBottom> mBottomStates = new HashMap<>();
 
 	public VPStateFactory(VPDomain vpdomain) {
 		mDomain = vpdomain;
-		mBottomState = new VPStateBottom(vpdomain);
+//		mBottomState = new VPStateBottom(vpdomain);
 	}
 	
 	VPStateBuilder createEmptyStateBuilder() {
@@ -86,8 +89,15 @@ public class VPStateFactory {
 		return builder;
 	}
 	
-	public VPStateBottom getBottomState() {
-		return mBottomState;
+	public VPStateBottom getBottomState(Set<IProgramVar> set) {
+		VPStateBottom result = mBottomStates.get(set);
+		if (result == null) {
+			VPStateBottomBuilder builder = new VPStateBottomBuilder(mDomain);
+			builder.addVariables(set);
+			result = builder.build();
+			mBottomStates.put(set, result);
+		}
+		return result;
 	}
 
 	public VPStateBuilder copy(VPState originalState) {
@@ -143,7 +153,9 @@ public class VPStateFactory {
 		builder.setIsTop(false);
 		boolean contradiction = builder.checkContradiction();
 		if (contradiction) {
-			return Collections.singleton(this.getBottomState());
+			return Collections.singleton(
+					new VPStateBottomBuilder(mDomain)
+						.setVariables(originalState.getVariables()).build());
 		}
 		
 		VPState resultState = builder.build();
@@ -203,7 +215,7 @@ public class VPStateFactory {
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
 		if (gn1Find.equals(gn2Find)) {
-			return Collections.singleton(getBottomState());
+			return Collections.singleton(getBottomState(originalState.getVariables()));
 		}
 		
 		/*
@@ -413,10 +425,12 @@ public class VPStateFactory {
 			return Collections.singleton(first);
 		}
 
-		if (first.isBottom() || second.isBottom()) {
-			return Collections.singleton(this.getBottomState());
+		if (first.isBottom()) {
+			return Collections.singleton(first);
 		}
-
+		if (second.isBottom()) {
+			return Collections.singleton(second);
+		}
 		if (first.isTop()) {
 			return Collections.singleton(second);
 		} else if (second.isTop()) {

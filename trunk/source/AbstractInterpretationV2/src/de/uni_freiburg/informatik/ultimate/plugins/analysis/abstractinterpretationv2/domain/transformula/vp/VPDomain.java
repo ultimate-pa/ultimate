@@ -58,7 +58,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
 	
-	private final VPStateBottom mBottomState;
 	private final ManagedScript mManagedScript;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -72,7 +71,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mPreAnalysis = preAnalysis;
 		mManagedScript = script;
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
-		mBottomState = new VPStateBottom(this);
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
