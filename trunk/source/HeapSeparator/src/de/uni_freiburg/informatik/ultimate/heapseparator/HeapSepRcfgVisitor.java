@@ -325,12 +325,14 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			
 			IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							ae.getLhs(), 
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
 			List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
 
 			IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							ae.getRhs(), 
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
 			List<IProgramVarOrConst> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
 			
 			

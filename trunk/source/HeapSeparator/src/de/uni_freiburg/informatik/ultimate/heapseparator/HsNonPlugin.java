@@ -231,10 +231,7 @@ public class HsNonPlugin {
 				}
 			}
 			for (final Set<EqNode> ec : uf.getAllEquivalenceClasses()) {
-				// TODO: room for optimization..?
-				for(IProgramVarOrConst array : arrayGroup) {
-					newArrayIdProvider.registerEquivalenceClass(array, ec);
-				}
+				newArrayIdProvider.registerEquivalenceClass(arrayGroup, ec);
 			}
 		}
 
