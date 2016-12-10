@@ -129,7 +129,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
 			}
-			if (!mVpDomainPreAnalysis.isArrayTracked(pv.getTerm(), Collections.emptyMap())) {
+			if (!mVpDomainPreAnalysis.isArrayTracked(pv)) {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge
@@ -140,7 +140,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
 			}
-			if (!mVpDomainPreAnalysis.isArrayTracked(pv.getTerm(), Collections.emptyMap())) {
+			if (!mVpDomainPreAnalysis.isArrayTracked(pv)) {
 				continue;
 			}
 			// we have an array variable --> store that it occurs after the source location of the edge

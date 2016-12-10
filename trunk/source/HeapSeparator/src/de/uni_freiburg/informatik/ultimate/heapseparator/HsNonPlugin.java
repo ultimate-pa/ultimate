@@ -189,23 +189,16 @@ public class HsNonPlugin {
 		 */
 		final Map<Set<IProgramVarOrConst>, VPState> arrayGroupToVPState = new HashMap<>();
 		for (Set<IProgramVarOrConst> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-			VPState disjoinedState = vpDomain.getVpStateFactory().getBottomState();
-//			for (final IProgramVarOrConst array : ec) {
-//				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
+			Set<VPState> statesForCurrentEc = new HashSet<>();
 			for (IcfgLocation loc : arrayGroupToAccessLocations.getImage(ec)) {
 				final Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
 				if (statesAtLoc == null) {
-					// TODO: this probably should not happen once we support procedures
 					continue;
 				}
-				for (final VPState state : statesAtLoc) {
-					disjoinedState = vpDomain.getVpStateFactory().disjoin(disjoinedState, state);
-					assert disjoinedState != null;
-				}
-
+				statesForCurrentEc.addAll(statesAtLoc);
 			}
+			VPState disjoinedState = vpDomain.getVpStateFactory().disjoinAll(statesForCurrentEc);
 			arrayGroupToVPState.put(ec, disjoinedState);
-//			arrayToVPState.put(array, disjoinedState);
 		}
 
 		/*
@@ -213,9 +206,7 @@ public class HsNonPlugin {
 		 */
 		final VPDomainPreanalysis vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
 		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
-//		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
 		for (Entry<Set<IProgramVarOrConst>, VPState> en : arrayGroupToVPState.entrySet()) {
-//			final IProgramVarOrConst currentArray = en.getKey();
 			final Set<IProgramVarOrConst> arrayGroup = en.getKey();
 			final VPState state = en.getValue();
 			

@@ -45,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -67,8 +69,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
 	
 	private final VPDomain mDomain;
-	private final Script mScript;
+	private final ManagedScript mScript;
 	private final boolean mIsTop;
+	private Term mTerm;
 	
 	/**
 	 * Constructor for bottom state only.
@@ -89,9 +92,11 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
-		mScript = mDomain.getManagedScript().getScript();
+		mScript = mDomain.getManagedScript();
 		mIsTop = isTop;
 		
+		constructTerm();
+
 		assert sanityCheck();
 	}
 
@@ -294,24 +299,29 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	@Override
 	public boolean isEqualTo(final VPState other) {
 		
-		final Script script = mDomain.getManagedScript().getScript();
+		if (!mVars.equals(other.mVars)) {
+			return false;
+		}
 		
+		mScript.lock(this);
 		final TermVarsProc tvpThis =
-				TermVarsProc.computeTermVarsProc(getTerm(mScript), mScript, mDomain.getSymbolTable());
+				TermVarsProc.computeTermVarsProc(getTerm(mScript.getScript()), mScript.getScript(), mDomain.getSymbolTable());
 		final TermVarsProc tvpOther =
-				TermVarsProc.computeTermVarsProc(other.getTerm(mScript), mScript, mDomain.getSymbolTable());
+				TermVarsProc.computeTermVarsProc(other.getTerm(mScript.getScript()), mScript.getScript(), mDomain.getSymbolTable());
 		
 		/*
 		 * build a term that says (not (this.getTerm() <--> other.getTerm))
 		 */
-		final Term equiv = script.term(TERM_FUNC_NAME_DISTINCT,
+		final Term equiv = mScript.term(this, TERM_FUNC_NAME_DISTINCT,
 				new Term[] { tvpThis.getClosedFormula(), tvpOther.getClosedFormula() });
 		
-		script.echo(new QuotedObject("VPState.isEqualTo()"));
-		script.push(1);
-		script.assertTerm(equiv);
-		final LBool res = script.checkSat();
-		script.pop(1);
+		mScript.echo(this, new QuotedObject("VPState.isEqualTo()"));
+		mScript.push(this, 1);
+		mScript.assertTerm(this, equiv);
+		final LBool res = mScript.checkSat(this);
+		mScript.pop(this, 1);
+
+		mScript.unlock(this);
 		
 		return res == LBool.UNSAT;
 		
@@ -359,11 +369,11 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return toLogString();
 	}
 	
-	// @Override
-	// public int hashCode() {
-	// //TODO: overwrite sensibly
-	// return mId;
-	// }
+	 @Override
+	 public int hashCode() {
+		 
+		 return HashUtils.hashHsieh(31, mVars, getTerm(mScript.getScript()));
+	 }
 	
 	@Override
 	public boolean equals(final Object obj) {
@@ -375,9 +385,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 
 		final VPState other = (VPState) obj;
-		// if (mId == other.mId) {
-		// return true;
-		// } else
+
 		if (isEqualTo(other)) {
 			// TODO: Note that computing isEqualTo can be quite expensive!
 			return true;
@@ -386,7 +394,12 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 	
 	@Override
-	public Term getTerm(final Script script) {
+	public Term getTerm(Script s) {
+		assert mTerm != null;
+		return mTerm;
+	}	
+
+	private void constructTerm() {
 		
 		final Term trueTerm = mDomain.getManagedScript().getScript().term(TERM_TRUE);
 		
@@ -396,19 +409,21 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		Term disEquality;
 		
 		for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			disEqualityFirst = pair.getFirst().getTerm(mScript);
-			disEqualitySecond = pair.getSecond().getTerm(mScript);
+			disEqualityFirst = pair.getFirst().getTerm(mScript.getScript());
+			disEqualitySecond = pair.getSecond().getTerm(mScript.getScript());
 			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
 					disEqualitySecond));
 		}
 		
+		mScript.lock(this);
+		
 		if (distinctTermSet.isEmpty()) {
 			disEquality = trueTerm;
 		} else if (distinctTermSet.size() == 1) {
-			disEquality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND,
+			disEquality = mScript.term(this, TERM_FUNC_NAME_AND,
 					distinctTermSet.iterator().next(), trueTerm);
 		} else {
-			disEquality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND,
+			disEquality = mScript.term(this, TERM_FUNC_NAME_AND,
 					distinctTermSet.toArray(new Term[distinctTermSet.size()]));
 		}
 		
@@ -419,8 +434,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.eqNode.getTerm(mScript);
-				equalitySecond = graphNode.getRepresentative().eqNode.getTerm(mScript);
+				equalityFirst = graphNode.eqNode.getTerm(mScript.getScript());
+				equalitySecond = graphNode.getRepresentative().eqNode.getTerm(mScript.getScript());
 				equalityTermSet.add(mDomain.getManagedScript().getScript().term("=", equalityFirst, equalitySecond));
 			}
 		}
@@ -435,7 +450,10 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 					equalityTermSet.toArray(new Term[equalityTermSet.size()]));
 		}
 		
-		return mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, disEquality, equality);
+		mTerm = mScript.term(this, TERM_FUNC_NAME_AND, disEquality, equality);
+		mScript.unlock(this);
+
+//		return mTerm;
 	}
 	
 	public Set<EqNode> getEquivalenceRepresentatives() {

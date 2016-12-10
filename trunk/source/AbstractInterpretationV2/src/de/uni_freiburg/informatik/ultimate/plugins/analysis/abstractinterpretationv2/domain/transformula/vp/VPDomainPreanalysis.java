@@ -121,6 +121,8 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
 		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(tf.getFormula());
 		
+		Map<TermVariable, IProgramVar> tvToPvMap = VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
+		
 
 		/*
 		 * handle selects in the formula
@@ -131,7 +133,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 				mSettings.trackAllArrays() ?
 						mdSelectsAll :
 							mdSelectsAll.stream()
-							.filter(mds -> mSettings.getArraysToTrack().contains(mds.getArray().toString()))
+							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(mds.getArray())))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
 			constructEqNode(mds);
@@ -146,7 +148,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 				mSettings.trackAllArrays() ?
 						mdStoresAll :
 							mdStoresAll.stream()
-							.filter(mds -> mSettings.getArraysToTrack().contains(mds.getArray().toString()))
+							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(mds.getArray())))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalStore mds : mdStoresFiltered) {
 			constructEqNode(mds);
@@ -275,6 +277,14 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		}
 	}
 
+	/**
+	 * either gets the symbol table entry for a given (atomic) term, or constructs a ConstOrLiteral.
+	 * 
+	 * NOTE that this method may only be called on Terms where the TermVariables have been normalized,
+	 *  i.e., replaced with their ProgramVariable's TermVariable
+	 * @param t
+	 * @return
+	 */
 	private IProgramVarOrConst getOrConstructBoogieVarOrConst(final Term t) {
 		IProgramVarOrConst result = mTermToProgramVarOrConst.get(t);
 		if (result != null) {
@@ -465,12 +475,19 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	}
 
 	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
+		IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
+	    return isArrayTracked(pvoc);
+	}
+
+//	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
+	public boolean isArrayTracked(IProgramVarOrConst pvoc) {
 		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
-		String normalizedName = arrayid.toString();
-		if (tvToPvMap.containsKey(arrayid)) {
-			normalizedName = tvToPvMap.get(arrayid).toString();
-		}
-		return mSettings.getArraysToTrack().contains(normalizedName);
+//		String normalizedName = arrayid.toString();
+//		if (tvToPvMap.containsKey(arrayid)) {
+//			normalizedName = tvToPvMap.get(arrayid).toString();
+//		}
+//		return mSettings.getArraysToTrack().contains(normalizedName);
+		return mSettings.getArraysToTrack().contains(pvoc.toString());
 	}
 }
 

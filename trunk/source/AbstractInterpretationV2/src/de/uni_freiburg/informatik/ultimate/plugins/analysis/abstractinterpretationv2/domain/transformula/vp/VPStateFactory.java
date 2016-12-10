@@ -408,6 +408,10 @@ public class VPStateFactory {
 	 * @return conjoinedState
 	 */
 	public Set<VPState> conjoin(VPState first, VPState second) {
+		
+		if (first.equals(second)) {
+			return Collections.singleton(first);
+		}
 
 		if (first.isBottom() || second.isBottom()) {
 			return Collections.singleton(this.getBottomState());
