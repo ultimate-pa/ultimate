@@ -68,31 +68,32 @@ public class AssertionOrderModulation {
 	 */
 	public AssertCodeBlockOrder reportAndGet(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
-		// for some interpolation techniques only one result is working at the moment
+		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
+		
+		final AssertCodeBlockOrder result;
 		switch (interpolationTechnique) {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
-				return AssertCodeBlockOrder.NOT_INCREMENTALLY;
+				// for Craig interpolation only one result is working at the moment
+				result = AssertCodeBlockOrder.NOT_INCREMENTALLY;
+				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
 			case PathInvariants:
-				// result is determined below
+				if (mHistograms.isEmpty()) {
+					mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
+				} else if (histogramRepeats(traceHistogram)) {
+					mCurrentIndex = getNextAssertionOrderIndex();
+				}
+				result = ASSERTION_ORDERS[mCurrentIndex];
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
 		}
 		
-		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
-		
-		if (mHistograms.isEmpty()) {
-			mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
-		} else if (histogramRepeats(traceHistogram)) {
-			mCurrentIndex = getNextAssertionOrderIndex();
-		}
 		mHistograms.add(traceHistogram);
-		
-		return ASSERTION_ORDERS[mCurrentIndex];
+		return result;
 	}
 	
 	private static int getInitialAssertionOrderIndex(final HistogramOfIterable<CodeBlock> traceHistogram) {
