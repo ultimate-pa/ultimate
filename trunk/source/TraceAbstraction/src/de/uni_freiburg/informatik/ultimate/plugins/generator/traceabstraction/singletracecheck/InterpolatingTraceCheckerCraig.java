@@ -92,6 +92,9 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique,
 				xnfConversionTechnique, controlLocationSequence);
+		if ((assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY)) {
+			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
+		}
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
