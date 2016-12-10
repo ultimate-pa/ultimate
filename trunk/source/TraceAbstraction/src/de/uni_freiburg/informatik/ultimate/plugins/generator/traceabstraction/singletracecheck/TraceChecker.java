@@ -205,6 +205,7 @@ public class TraceChecker implements ITraceChecker {
 			isSafe = checkTrace();
 			if (isSafe == LBool.UNSAT) {
 				if (unlockSmtSolverAlsoIfUnsat) {
+					mTraceCheckFinished = true;
 					unlockSmtManager();
 				}
 			} else {
@@ -428,7 +429,7 @@ public class TraceChecker implements ITraceChecker {
 		return mRcfgProgramExecution;
 	}
 	
-	protected void unlockSmtManager() {
+	protected final void unlockSmtManager() {
 		endTraceCheck();
 	}
 	

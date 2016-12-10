@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.Objects;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
@@ -36,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -211,8 +208,8 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 		
 		final TraceChecker traceChecker;
-		traceChecker = new DefaultTraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices,
+		traceChecker = new TraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(), 
+				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, 
 				true);
 		return traceChecker;
 	}
@@ -281,25 +278,4 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				simplificationTechnique, icfgContainer);
 	}
 	
-	/**
-	 * Default trace checker that sets the flag {@code mTraceCheckFinished} to true when unlocking the SMT manager.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private static class DefaultTraceChecker extends TraceChecker {
-		public DefaultTraceChecker(final IPredicate precondition, final IPredicate postcondition,
-				final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
-				final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-				final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
-			super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally,
-					services,
-					computeRcfgProgramExecution);
-		}
-		
-		@Override
-		protected void unlockSmtManager() {
-			mTraceCheckFinished = true;
-			super.unlockSmtManager();
-		}
-	}
 }
