@@ -159,8 +159,7 @@ public class TypeSortTranslator {
 	 */
 	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode astNode) {
 		try {
-			final Sort result = constructSort(boogieType, mScript, mType2Attributes::get);
-			cacheSort(boogieType, result);
+			final Sort result = constructSort(boogieType, mType2Attributes::get);
 			return result;
 		} catch (final SMTLIBException e) {
 			if ("Sort Array not declared".equals(e.getMessage())) {
@@ -171,62 +170,64 @@ public class TypeSortTranslator {
 		}
 	}
 
-	public static Sort constructSort(final IBoogieType boogieType, final Script script) {
-		return constructSort(boogieType, script, a -> null);
-	}
 
 	/**
 	 * Construct the SMT sort for a Boogie type. Does not use any caching and, depending on your funAttributeCache, may
 	 * create many sorts.
 	 */
-	public static Sort constructSort(final IBoogieType boogieType, final Script script,
+	public Sort constructSort(final IBoogieType boogieType,
 			final Function<String, Map<String, Expression[]>> funAttributeCache) {
+		final Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(BoogieType.TYPE_BOOL)) {
-				return script.sort("Bool");
+				result = mScript.sort("Bool");
 			} else if (boogieType.equals(BoogieType.TYPE_INT)) {
-				return script.sort("Int");
+				result = mScript.sort("Int");
 			} else if (boogieType.equals(BoogieType.TYPE_REAL)) {
-				return script.sort("Real");
+				result = mScript.sort("Real");
 			} else if (boogieType.equals(BoogieType.TYPE_ERROR)) {
 				throw new IllegalArgumentException("BoogieAST contains type "
 						+ "errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
 				final int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
 				final BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
-				return script.sort("BitVec", sortIndices);
+				result = mScript.sort("BitVec", sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
 		} else if (boogieType instanceof ArrayType) {
 			final ArrayType arrayType = (ArrayType) boogieType;
-			Sort rangeSort = constructSort(arrayType.getValueType(), script, funAttributeCache);
+			Sort rangeSort = constructSort(arrayType.getValueType(), funAttributeCache);
 
 			for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
-				final Sort sorti = constructSort(arrayType.getIndexType(i), script, funAttributeCache);
-				rangeSort = script.sort("Array", sorti, rangeSort);
+				final Sort sorti = constructSort(arrayType.getIndexType(i), funAttributeCache);
+				rangeSort = mScript.sort("Array", sorti, rangeSort);
 			}
-			final Sort domainSort = constructSort(arrayType.getIndexType(0), script, funAttributeCache);
-			return script.sort("Array", domainSort, rangeSort);
+			final Sort domainSort = constructSort(arrayType.getIndexType(0), funAttributeCache);
+			result = mScript.sort("Array", domainSort, rangeSort);
 		} else if (boogieType instanceof ConstructedType) {
 			final ConstructedType constructedType = (ConstructedType) boogieType;
 			final String name = constructedType.getConstr().getName();
 			final Map<String, Expression[]> attributes = funAttributeCache.apply(name);
 			if (attributes == null) {
-				return script.sort(name);
+				result = mScript.sort(name);
+			} else {
+				final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
+						.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.ID_BUILTIN);
+				if (attributeDefinedIdentifier == null) {
+					result = mScript.sort(name);
+				} else {
+					// use SMT identifier that was defined by our "builtin"
+					// attribute
+					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+					result = mScript.sort(attributeDefinedIdentifier, indices);
+				}
 			}
-			final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
-					.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.ID_BUILTIN);
-			if (attributeDefinedIdentifier == null) {
-				return script.sort(name);
-			}
-			// use SMT identifier that was defined by our "builtin"
-			// attribute
-			final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-			return script.sort(attributeDefinedIdentifier, indices);
 		} else {
 			throw new IllegalArgumentException("Unsupported type " + boogieType);
 		}
+		cacheSort(boogieType, result);
+		return result;
 	}
 
 	private void cacheSort(final IBoogieType boogieType, final Sort result) {

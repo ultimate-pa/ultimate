@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
+import java.util.Collections;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -53,7 +55,7 @@ public final class TemporaryBoogieVar implements IBoogieVar {
 	public TemporaryBoogieVar(final IBoogieType type, final String identifier) {
 		mType = type;
 		mId = identifier;
-		mSort = TypeSortTranslator.constructSort(type, SCRIPT_MOCK);
+		mSort = new TypeSortTranslator(Collections.emptyList(), SCRIPT_MOCK, null).constructSort(type, a -> null);
 	}
 
 	@Override
