@@ -152,11 +152,8 @@ public final class TraceAbstractionRefinementEngine
 					handleFeasibleOrUnknownCase(strategy);
 					return LBool.UNKNOWN;
 				case UNSAT:
-					final IInterpolantGenerator interpolantGenerator =
-							handleExceptions(strategy::getInterpolantGenerator);
-					
 					final InterpolantsPreconditionPostcondition perfectInterpolants =
-							handleInterpolantsCase(strategy, interpolantSequences, interpolantGenerator);
+							handleInterpolantsCase(strategy, interpolantSequences);
 					if (perfectInterpolants != null) {
 						// construct interpolant automaton using the perfect sequence
 						constructAutomatonFromPerfectSequence(strategy, perfectInterpolants, feasibility);
@@ -212,8 +209,8 @@ public final class TraceAbstractionRefinementEngine
 	 * @return perfect interpolant sequence or {@code null}
 	 */
 	private InterpolantsPreconditionPostcondition handleInterpolantsCase(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
-			final IInterpolantGenerator interpolantGenerator) {
+			final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
+		final IInterpolantGenerator interpolantGenerator = handleExceptions(strategy::getInterpolantGenerator);
 		if (interpolantGenerator != null) {
 			if (interpolantGenerator instanceof InterpolantConsolidation) {
 				// set Hoare triple checker
