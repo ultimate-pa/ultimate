@@ -55,10 +55,11 @@ public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefineme
 	
 	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
+			final AssertionOrderModulation assertionOrderModulation,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
+		super(logger, prefs, services, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
 	

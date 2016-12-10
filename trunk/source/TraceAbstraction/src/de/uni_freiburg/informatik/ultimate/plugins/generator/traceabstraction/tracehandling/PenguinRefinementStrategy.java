@@ -56,10 +56,11 @@ public class PenguinRefinementStrategy extends MultiTrackTraceAbstractionRefinem
 	
 	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
+			final AssertionOrderModulation assertionOrderModulation,
+			final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+		super(logger, prefs, services, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
 	

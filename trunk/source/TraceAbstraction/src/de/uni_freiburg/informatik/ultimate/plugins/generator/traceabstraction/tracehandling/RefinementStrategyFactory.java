@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class RefinementStrategyFactory {
-
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefsConsolidation;
 	private final TaCheckAndRefinementPreferences mPrefs;
@@ -94,10 +93,10 @@ public class RefinementStrategyFactory {
 			return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
 					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case PENGUIN:
-			return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, counterexample,
-					abstraction, mPrefsConsolidation, iteration, benchmark);
+			return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+					mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case WALRUS:
-			return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+			return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, mAssertionOrderModulation,
 					counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
@@ -154,5 +153,4 @@ public class RefinementStrategyFactory {
 		}
 		return mgdScriptTc;
 	}
-
 }
