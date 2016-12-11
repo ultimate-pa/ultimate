@@ -91,6 +91,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	// if the first Z3 trace check was unsuccessful, we can skip it the second time
 	private boolean mZ3TraceCheckUnsuccessful;
 	
+	// store if the trace has already been shown to be infeasible in a previous attempt
+	private boolean mHasShownInfeasibilityBefore;
+	
 	private TraceCheckerConstructor mTcConstructor;
 	private TraceCheckerConstructor mPrevTcConstructor;
 	
@@ -245,6 +248,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	@Override
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
 			getInterpolantAutomatonBuilder(final List<InterpolantsPreconditionPostcondition> ipps) {
+		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(ipps, mCurrentMode);
 		}
@@ -271,7 +275,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		
-		final boolean useTimeout = false; // FIXME
+		final boolean useTimeout = mHasShownInfeasibilityBefore;
 		final ManagedScript managedScript =
 				constructManagedScript(mServices, mPrefs, mCurrentMode, useTimeout, mIteration);
 		

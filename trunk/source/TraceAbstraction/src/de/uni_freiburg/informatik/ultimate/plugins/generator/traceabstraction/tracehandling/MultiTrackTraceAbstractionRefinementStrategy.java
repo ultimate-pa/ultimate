@@ -115,6 +115,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private TraceCheckerConstructor mPrevTcConstructor;
 	private Track mNextTechnique;
 	
+	// store if the trace has already been shown to be infeasible in a previous attempt
+	private boolean mHasShownInfeasibilityBefore;
+	
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
@@ -202,6 +205,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
+		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = constructInterpolantGenerator(getTraceChecker());
 		}
@@ -223,7 +227,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
 		
-		final boolean useTimeout = false; // FIXME
+		final boolean useTimeout = mHasShownInfeasibilityBefore;
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
 		
 		final AssertCodeBlockOrder assertionOrder =
