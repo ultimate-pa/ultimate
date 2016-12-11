@@ -353,14 +353,16 @@ public class VPStateFactory {
 			reverseNode.setRepresentative(reverseNode);
 		}
 		
+		boolean havocNodeIsItsRepresentative = false;
 		VPState resultState = builder.build();
 		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
 			// case y -> x <- z
 			if (firstRepresentative.equals(graphNode)) {
+				havocNodeIsItsRepresentative = true;
 				if (graphNode.getReverseRepresentative().size() > 1) {
 					assert firstReserveRepresentativeNode != null;
 					resultState = disjoinAll(addEquality(reverseNode.eqNode, firstReserveRepresentativeNode.eqNode, resultState));
-				} 
+				}
 			} else { // case y -> x -> z
 				resultState = disjoinAll(addEquality(reverseNode.eqNode, firstRepresentative.eqNode, resultState));
 			}
@@ -370,16 +372,31 @@ public class VPStateFactory {
 		graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
 		
 		/*
-		 *  Handling the node itself
+		 * Handling the node itself:
+		 * First update disequality set.
+		 * Then set havoc node to initial.
 		 */
-		if (graphNode.getRepresentative().equals(graphNode)) {
-			Set<VPDomainSymmetricPair<EqNode>> newSet = 
-					builder.getDisEqualitySet().stream()
-					.filter(pair -> !pair.contains(node))
-					.collect(Collectors.toSet());
-			builder.setDisEqualites(newSet);
+		if (havocNodeIsItsRepresentative) {
+			Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>();
+			for (VPDomainSymmetricPair<EqNode> pair : builder.getDisEqualitySet()) {
+				if (pair.contains(graphNode.eqNode)) {
+					newDisEqualitySet.add(
+							new VPDomainSymmetricPair<EqNode>(pair.getOther(graphNode.eqNode), resultState.find(firstReserveRepresentativeNode).eqNode));
+				} else {
+					newDisEqualitySet.add(pair);
+				}
+			}
+			builder.setDisEqualites(newDisEqualitySet);
+		} else {
+			// do nothing: no need to update disequality set, because if x is not representative, then x should not be in disequality set.
 		}
-
+//		if (graphNode.getRepresentative().equals(graphNode)) {
+//			Set<VPDomainSymmetricPair<EqNode>> newSet = 
+//					builder.getDisEqualitySet().stream()
+//					.filter(pair -> !pair.contains(node))
+//					.collect(Collectors.toSet());
+//			builder.setDisEqualites(newSet);
+//		}
 		graphNode.setNodeToInitial();
 
 		if (node instanceof EqFunctionNode) {
@@ -393,7 +410,6 @@ public class VPStateFactory {
 				resultState = havoc(initCcpar.eqNode, resultState);
 			}
 		}
-		
 		
 		/*
 		 * havoc all the non-atomic EqNodes which depend on this one

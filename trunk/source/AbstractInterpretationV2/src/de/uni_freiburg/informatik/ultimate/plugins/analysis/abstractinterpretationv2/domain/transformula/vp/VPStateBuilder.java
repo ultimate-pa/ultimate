@@ -122,14 +122,25 @@ public class VPStateBuilder {
 	 */
 	void restorePropagation(final EqFunctionNode functionNode) {
 
+		EqNode firstIndex = functionNode.getArgs().get(0);
+		EqGraphNode firstIndexGN = getEqNodeToEqGraphNodeMap().get(firstIndex);
+		
 		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
-		for (final EqFunctionNode fnNode1 : fnNodeSet) {
-			for (final EqFunctionNode fnNode2 : fnNodeSet) {
-				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
-					merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
+		for (final EqFunctionNode fnNode : fnNodeSet) {
+			if (find(getEqNodeToEqGraphNodeMap().get(fnNode.getArgs().get(0))).equals(find(firstIndexGN))) {
+				if (mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode))) {
+					merge(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode));
 				}
 			}
 		}
+		
+//		for (final EqFunctionNode fnNode1 : fnNodeSet) {
+//			for (final EqFunctionNode fnNode2 : fnNodeSet) {
+//				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
+//					merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
+//				}
+//			}
+//		}
 	}
 	
 	public void addVariable(IProgramVar pv) {
