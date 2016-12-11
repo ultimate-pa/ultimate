@@ -314,7 +314,7 @@ public final class TraceAbstractionRefinementEngine
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
 			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
 				// wrong usage of external solver, tell the user
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 			} else if (message.contains("Received EOF on stdin. stderr output:")) {
 				// wrong usage of external solver, tell the user
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
