@@ -427,19 +427,17 @@ public class VPStateFactory {
 	 */
 	public VPState havocVariables(final Set<IProgramVar> assignmentVars, VPState originalState) {
 		VPState resultState = copy(originalState).build();
-		TermVariable tv;
-
 		for (final IProgramVar var : assignmentVars) {
 
-			tv = var.getTermVariable();
-			if (tv.getSort().isArraySort()) {
+			if (var.getTerm().getSort().isArraySort()) {
 				// assigned to arrays get special treatment..
 				continue;
 			}
 
-			if (mDomain.getTermToEqNodeMap().containsKey(tv)) {
-				assert resultState.getEqNodeToEqGraphNodeMap().containsKey(mDomain.getTermToEqNodeMap().get(tv));
-				resultState = havoc(mDomain.getTermToEqNodeMap().get(tv), resultState);
+			EqNode node = mDomain.getPreAnalysis().getEqNode(var.getTerm(), Collections.emptyMap());
+			
+			if (node != null) {
+				resultState = havoc(node, resultState);
 			}
 		}
 		return resultState;

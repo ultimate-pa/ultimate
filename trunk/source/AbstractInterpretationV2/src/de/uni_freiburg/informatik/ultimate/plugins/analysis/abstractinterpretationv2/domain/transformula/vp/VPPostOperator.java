@@ -427,6 +427,25 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				List<VPState> result = handleTransition(prestate, equality, tvToPvMap, assignedVars, inVars, outVars, !negated);
 				assert !result.isEmpty();
 				return result;
+			} else if (applicationName == "true") {
+				if (!negated) {
+					VPState result = mVpStateFactory.havocVariables(assignedVars, prestate);
+					return Collections.singletonList(result);
+				} else {
+					VPState result = mVpStateFactory.getBottomState(prestate.getVariables());
+					return Collections.singletonList(result);
+				}
+			} else if (applicationName == "false") {
+				if (!negated) {
+					VPState result = mVpStateFactory.getBottomState(prestate.getVariables());
+					return Collections.singletonList(result);
+				} else {
+					VPState result = mVpStateFactory.havocVariables(assignedVars, prestate);
+					return Collections.singletonList(result);
+				}
+			} else {
+				VPState result = mVpStateFactory.havocVariables(assignedVars, prestate);
+				return Collections.singletonList(result);
 			}
 			
 		} else if (term instanceof QuantifiedFormula) {
