@@ -96,11 +96,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	}
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	private static final String LOGIC_Z3 = "ALL";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
-	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
-	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	private static final String CVC4_COMMAND = "cvc4 --tear-down-incremental --print-success --lang smt";
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -227,7 +223,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
 		
-		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique);
+		final boolean useTimeout = false; // FIXME
+		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
 		
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
@@ -266,7 +263,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	}
 	
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final Track mode) {
+			final TaCheckAndRefinementPreferences prefs, final Track mode, final boolean useTimeout) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
@@ -274,6 +271,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
+		final String command;
 		switch (mode) {
 			case SMTINTERPOL_TREE_INTERPOLANTS:
 				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
@@ -282,20 +280,23 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				logicForExternalSolver = null;
 				break;
 			case Z3_NESTED_INTERPOLANTS:
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, /* TODO: Add external interpolator */
+				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, /* TODO: Add external interpolator */
 						null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_Z3InterpolationMode;
 				logicForExternalSolver = LOGIC_Z3;
 				break;
 			case Z3_FPBP:
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 				logicForExternalSolver = LOGIC_Z3;
 				break;
 			case CVC4_FPBP:
+				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
 				solverSettings =
-						new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 								baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 				logicForExternalSolver = getCvc4Logic();

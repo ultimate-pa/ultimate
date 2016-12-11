@@ -74,12 +74,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
-	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
-	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
-	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	private static final String CVC4_COMMAND = "cvc4 --tear-down-incremental --print-success --lang smt";
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -118,8 +114,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
 		mIteration = iteration;
-		mCurrentMode = Mode.SMTINTERPOL;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
+		
+		mCurrentMode = Mode.SMTINTERPOL;
 	}
 	
 	@Override
@@ -274,7 +271,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		
-		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mCurrentMode, mIteration);
+		final boolean useTimeout = false; // FIXME
+		final ManagedScript managedScript =
+				constructManagedScript(mServices, mPrefs, mCurrentMode, useTimeout, mIteration);
 		
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
@@ -313,7 +312,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final Mode mode, final int iteration) {
+			final TaCheckAndRefinementPreferences prefs, final Mode mode, final boolean useTimeout,
+			final int iteration) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
@@ -321,6 +321,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
+		final String command;
 		switch (mode) {
 			case SMTINTERPOL:
 				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
@@ -330,17 +331,19 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				break;
 			case Z3_IG:
 			case Z3_NO_IG:
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
+				logicForExternalSolver = LOGIC_Z3;
 				break;
 			case CVC4_IG:
 			case CVC4_NO_IG:
-				solverSettings = new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile,
+				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
+				logicForExternalSolver = getLogicForCvc4();
 				break;
 			case ABSTRACT_INTERPRETATION:
 				return null;
@@ -395,6 +398,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.NONE;
+	}
+	
+	protected static String getLogicForCvc4() {
+		// FIXME make this changeable
+		return LOGIC_CVC4_DEFAULT;
 	}
 	
 	private class AiRunnerWrapper implements IInterpolantGenerator {

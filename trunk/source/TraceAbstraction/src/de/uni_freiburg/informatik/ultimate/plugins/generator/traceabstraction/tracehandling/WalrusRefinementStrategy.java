@@ -51,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
-	private static final String LOGIC_CVC4_BV = "AUFBV";
-	
 	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation assertionOrderModulation,
@@ -74,6 +72,6 @@ public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefineme
 	
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_BV;
+		return LOGIC_CVC4_BITVECTORS;
 	}
 }

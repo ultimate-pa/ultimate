@@ -47,14 +47,23 @@ public interface IRefinementStrategy {
 		 */
 		INTERPOLANT_GENERATOR,
 	}
-
+	
+	String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
+	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt";
+	String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
+	
+	String LOGIC_Z3 = "ALL";
+	String LOGIC_CVC4_DEFAULT = "AUFLIRA";
+	String LOGIC_CVC4_BITVECTORS = "AUFBV";
+	
 	/**
 	 * @param advance
 	 *            How to advance.
 	 * @return {@code true} iff there are more combinations available.
 	 */
 	boolean hasNext(RefinementStrategyAdvance advance);
-
+	
 	/**
 	 * Changes the combination.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next combination; use {@link #hasNext()} to check this.
@@ -63,19 +72,19 @@ public interface IRefinementStrategy {
 	 *            how to advance
 	 */
 	void next(final RefinementStrategyAdvance advance);
-
+	
 	/**
 	 * @return The trace checker strategy of the current combination.
 	 */
 	TraceChecker getTraceChecker();
-
+	
 	/**
 	 * This method must only be called if the {@link TraceChecker} returns {@code UNSAT}.
 	 *
 	 * @return The interpolant generator of the current combination.
 	 */
 	IInterpolantGenerator getInterpolantGenerator();
-
+	
 	/**
 	 * @param ipps
 	 *            Sequences of interpolants.
@@ -83,8 +92,14 @@ public interface IRefinementStrategy {
 	 */
 	IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
 			getInterpolantAutomatonBuilder(List<InterpolantsPreconditionPostcondition> ipps);
-
+	
+	/**
+	 * @return Predicate unifier.
+	 */
 	PredicateUnifier getPredicateUnifier();
-
+	
+	/**
+	 * @return Object that encapsulates which exceptions are blacklisted.
+	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
 }

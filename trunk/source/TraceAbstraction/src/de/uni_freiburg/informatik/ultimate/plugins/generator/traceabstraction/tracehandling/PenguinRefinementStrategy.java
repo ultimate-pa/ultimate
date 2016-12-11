@@ -52,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class PenguinRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
-	private static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-	
 	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation assertionOrderModulation,
