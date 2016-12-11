@@ -285,9 +285,10 @@ public final class TraceAbstractionRefinementEngine
 	/**
 	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
 	 */
+	@SuppressWarnings("squid:S1871")
 	private <T> T handleExceptions(final Supplier<T> supp) {
-		Exception exception = null;
-		ExceptionHandlingCategory exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+		Exception exception;
+		ExceptionHandlingCategory exceptionCategory;
 		try {
 			return supp.get();
 		} catch (final UnsupportedOperationException e) {
@@ -326,8 +327,6 @@ public final class TraceAbstractionRefinementEngine
 			}
 		}
 		
-		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
-		
 		switch (exceptionCategory) {
 			case KNOWN_IGNORE:
 			case KNOWN_DEPENDING:
@@ -345,6 +344,7 @@ public final class TraceAbstractionRefinementEngine
 				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
 		
+		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
 		if (throwException) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Global settings require throwing the exception.");
@@ -355,6 +355,11 @@ public final class TraceAbstractionRefinementEngine
 		return null;
 	}
 	
+	/**
+	 * Categories for exception handling.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	public enum ExceptionHandlingCategory {
 		/**
 		 * The exception is known and we always want to ignore it.
