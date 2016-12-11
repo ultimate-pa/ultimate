@@ -48,9 +48,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
- *
+ * Factory for obtaining an {@link IRefinementStrategy}.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class RefinementStrategyFactory {
 	private final IUltimateServiceProvider mServices;
@@ -62,7 +63,25 @@ public class RefinementStrategyFactory {
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation mAssertionOrderModulation;
-
+	
+	/**
+	 * @param logger
+	 *            Logger.
+	 * @param services
+	 *            Ultimate services
+	 * @param storage
+	 *            toolchain storage
+	 * @param taPrefsForInterpolantConsolidation
+	 *            TODO Matthias wants to get rid of this
+	 * @param prefs
+	 *            preferences
+	 * @param absIntRunner
+	 *            abstract interpretation runner
+	 * @param initialIcfg
+	 *            initial ICFG
+	 * @param predicateFactory
+	 *            predicate factory
+	 */
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences prefs, final CegarAbsIntRunner absIntRunner,
@@ -77,57 +96,51 @@ public class RefinementStrategyFactory {
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation();
 	}
-
+	
+	/**
+	 * Creates a strategy, e.g., in a new CEGAR loop iteration.
+	 * 
+	 * @param counterexample
+	 *            counterexample
+	 * @param abstraction
+	 *            abstraction
+	 * @param iteration
+	 *            current iteration
+	 * @param benchmark
+	 *            benchmark
+	 * @return refinement strategy
+	 */
 	public IRefinementStrategy createStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final int iteration,
 			final CegarLoopStatisticsGenerator benchmark) {
-
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices,
 				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory, mInitialIcfg.getSymboltable(),
 				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
-		final ManagedScript managedScript =
-				setupManagedScriptInternal(mServices, mPrefs, mInitialIcfg, mStorage, iteration);
-
+		
 		switch (mPrefs.getRefinementStrategy()) {
-		case FIXED_PREFERENCES:
-			return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
-					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
-		case PENGUIN:
-			return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
-					mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
-		case WALRUS:
-			return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier, mAssertionOrderModulation,
-					counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
-		case TAIPAN:
-			return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
-					mAssertionOrderModulation, counterexample, abstraction, iteration, benchmark);
-		default:
-			throw new IllegalArgumentException(
-					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
+			case FIXED_PREFERENCES:
+				final ManagedScript managedScript =
+						setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
+				return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
+						predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
+			case PENGUIN:
+				return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+						mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration,
+						benchmark);
+			case WALRUS:
+				return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+						mAssertionOrderModulation,
+						counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
+			case TAIPAN:
+				return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
+						mAssertionOrderModulation, counterexample, abstraction, iteration, benchmark);
+			default:
+				throw new IllegalArgumentException(
+						"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
 		}
 	}
-
-	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final IIcfg<?> icfgContainer,
-			final IToolchainStorage toolchainStorage, final int iteration) throws AssertionError {
-		final ManagedScript managedScript;
-
-		switch (prefs.getRefinementStrategy()) {
-		case PENGUIN:
-		case WALRUS:
-		case TAIPAN:
-			managedScript = null;
-			break;
-		case FIXED_PREFERENCES:
-			managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration, prefs);
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown mode: " + prefs.getRefinementStrategy());
-		}
-		return managedScript;
-	}
-
-	private static ManagedScript setupManagedScript(final IUltimateServiceProvider services,
+	
+	private static ManagedScript setupManagedScriptFromPreferences(final IUltimateServiceProvider services,
 			final IIcfg<?> icfgContainer, final IToolchainStorage toolchainStorage, final int iteration,
 			final TaCheckAndRefinementPreferences prefs) throws AssertionError {
 		final ManagedScript mgdScriptTc;
