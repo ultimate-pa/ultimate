@@ -154,7 +154,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
-
+	
 	private boolean hasNextTraceChecker() {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
@@ -169,7 +169,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 	}
-
+	
 	private boolean hasNextInterpolantGenerator() {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
@@ -454,7 +454,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		
 		@Override
 		public IPredicate[] getInterpolants() {
-			// return a fake sequence of interpolants
 			return new IPredicate[0];
 		}
 		
@@ -486,6 +485,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		@Override
 		public PredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier;
+		}
+		
+		@Override
+		public boolean imperfectSequencesUsable() {
+			return false;
 		}
 		
 		@Override

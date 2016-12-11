@@ -32,6 +32,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -42,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <li>a trace (which is a word of CodeBlocks) cb_0 cb_1 ... cb_{n-1},
  * </ul>
  * a sequence of interpolants is a sequence of predicates φ_1,...,φ_{n-1} such that the inclusion post(φ_i, cb_i}) ⊆
- * φ_{i+1} holds for 0⩽i<n.
- * A sequence of interpolants can be seen as a Hoare annotation for the program that corresponds to the trace.
+ * φ_{i+1} holds for 0⩽i<n. A sequence of interpolants can be seen as a Hoare annotation for the program that
+ * corresponds to the trace.
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public interface IInterpolantGenerator {
 	
@@ -76,4 +77,13 @@ public interface IInterpolantGenerator {
 	 * @return {@code true} iff the interpolant sequence is perfect.
 	 */
 	boolean isPerfectSequence();
+	
+	/**
+	 * @return {@code true} iff the {@link IInterpolantGenerator} returns a usable interpolant sequence even if it is
+	 *         imperfect. Certain interpolant generators (e.g. {@link CegarAbsIntRunner}) can only deliver perfect
+	 *         sequences.
+	 */
+	default boolean imperfectSequencesUsable() {
+		return true;
+	}
 }
