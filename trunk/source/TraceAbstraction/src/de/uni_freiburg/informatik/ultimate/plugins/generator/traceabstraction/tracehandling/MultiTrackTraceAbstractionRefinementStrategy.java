@@ -161,7 +161,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		mInterpolationTechniques = initializeInterpolationTechniquesList();
+		final boolean traceContainsFloats = false; // FIXME replace with actual analysis
+		mInterpolationTechniques = initializeInterpolationTechniquesList(traceContainsFloats);
 		mNextTechnique = mInterpolationTechniques.next();
 	}
 	
@@ -227,7 +228,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		return mInterpolantAutomatonBuilder;
 	}
 	
-	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
+	/**
+	 * @param traceContainsFloats
+	 *            {@code true} iff the counterexample trace contains floats.
+	 * @return iterator of different combinations
+	 */
+	protected abstract Iterator<Track> initializeInterpolationTechniquesList(final boolean traceContainsFloats);
 	
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
