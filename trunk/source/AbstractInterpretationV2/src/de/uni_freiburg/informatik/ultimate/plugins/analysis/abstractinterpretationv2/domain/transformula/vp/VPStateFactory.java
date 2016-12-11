@@ -150,6 +150,9 @@ public class VPStateFactory {
 	 * @return true if contradiction is met.
 	 */
 	public Set<VPState> addEquality(final EqNode eqNode1, final EqNode eqNode2, final VPState originalState) {
+		if (originalState.isBottom()) {
+			return Collections.singleton(originalState);
+		}
 		VPStateBuilder builder = copy(originalState);
 		EqGraphNode gn1 = builder.getEqNodeToEqGraphNodeMap().get(eqNode1);
 		EqGraphNode gn2 = builder.getEqNodeToEqGraphNodeMap().get(eqNode2);
@@ -207,6 +210,11 @@ public class VPStateFactory {
 	}
 
 	public Set<VPState> addDisEquality(EqNode n1, EqNode n2, VPState originalState) {
+		if (originalState.isBottom()) {
+			return Collections.singleton(originalState);
+		}
+		
+		
 		VPStateBuilder builder = copy(originalState);
 		
 		EqGraphNode gn1 = builder.getEqNodeToEqGraphNodeMap().get(n1);
@@ -256,6 +264,7 @@ public class VPStateFactory {
 //				&& representative2.getRepresentative() == representative2;
 //		assert !representative1.equals(representative2);
 		Set<VPState> result = new HashSet<>();
+		result.add(originalStateCopy);
 		
 		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(representative1);
 		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalStateCopy.ccchild(representative2);
@@ -263,10 +272,16 @@ public class VPStateFactory {
 		for (IProgramVarOrConst arrayId : ccchild1.getDomain()) {
 			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
 				for (List<EqGraphNode> list2 : ccchild2.getImage(arrayId)) {
+					Set<VPState> intermediateResult = new HashSet<>(result);
+					result = new HashSet<>();
 					for (int i = 0; i < list1.size(); i++) {
 						EqGraphNode c1 = list1.get(i);
 						EqGraphNode c2 = list2.get(i);
-						result.addAll(addDisEquality(c1.eqNode, c2.eqNode, originalStateCopy));
+						if (originalStateCopy.getDisEqualitySet().contains(
+								new VPDomainSymmetricPair<EqNode>(c1.find().eqNode, c2.find().eqNode))){
+							continue;
+						}
+						result.addAll(addDisEquality(c1.eqNode, c2.eqNode, intermediateResult));
 					}
 				}
 			}
@@ -288,6 +303,11 @@ public class VPStateFactory {
 	 *            to be havoc
 	 */
 	public VPState havoc(final EqNode node, final VPState originalState) {
+		if (originalState.isBottom()) {
+			return originalState;
+		}
+		
+		
 		VPStateBuilder builder = copy(originalState);
 		EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
 		
@@ -615,5 +635,13 @@ public class VPStateFactory {
 
 	public VPState disjoinAll(Set<VPState> resultStates) {
 		return resultStates.stream().reduce((s1, s2) -> disjoin(s1,s2)).get();
+	}
+
+	public Set<VPState> havoc(EqNode node, Set<VPState> states) {
+		Set<VPState> result = new HashSet<>();
+		for (VPState state : states) {
+			result.add(havoc(node, state));
+		}
+		return result;
 	}
 }

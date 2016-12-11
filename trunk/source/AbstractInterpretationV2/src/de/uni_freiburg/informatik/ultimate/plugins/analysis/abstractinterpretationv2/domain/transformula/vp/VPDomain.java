@@ -72,9 +72,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mManagedScript = script;
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
-		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mVpStateFactory = new VPStateFactory(this);
+		mPost = new VPPostOperator(script, services, this);
 		mSymboltable = symbolTable;
 	}
 	
