@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -281,7 +282,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		final IRefinementStrategy strategy = mRefinementStrategyFactory.createStrategy(mCounterexample, mAbstraction,
 				getIteration(), getCegarLoopBenchmark());
-		mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine(mLogger, strategy);
+		try {
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine(mLogger, strategy);
+		} catch (final ToolchainCanceledException tce) {
+			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
+			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength() 
+				+ " with TraceHistMax " + traceHistogramMax;
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
+		}
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementEngine.getCounterexampleFeasibility();
