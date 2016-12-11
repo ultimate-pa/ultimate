@@ -96,7 +96,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	}
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -139,6 +138,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
 	 *            temporary argument, should be removed
+	 * @param assertionOrderModulation
+	 *            assertion order modulation
+	 * @param iteration
+	 *            current CEGAR loop iteration
+	 * @param cegarLoopBenchmarks
+	 *            benchmark
 	 */
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
@@ -278,7 +283,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final String command;
 		switch (mode) {
 			case SMTINTERPOL_TREE_INTERPOLANTS:
-				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
+				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+				solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.Internal_SMTInterpol;
 				logicForExternalSolver = null;

@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -103,6 +102,28 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	
+	/**
+	 * @param logger
+	 *            Logger.
+	 * @param services
+	 *            Ultimate services
+	 * @param prefs
+	 *            preferences
+	 * @param predicateUnifier
+	 *            predicate unifier
+	 * @param absIntRunner
+	 *            abstract interpretation runner
+	 * @param assertionOrderModulation
+	 *            assertion order modulation
+	 * @param counterexample
+	 *            counterexample
+	 * @param abstraction
+	 *            abstraction
+	 * @param iteration
+	 *            current CEGAR loop iteration
+	 * @param cegarLoopBenchmark
+	 *            benchmark
+	 */
 	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner absIntRunner, final AssertionOrderModulation assertionOrderModulation,
@@ -328,7 +349,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		final String command;
 		switch (mode) {
 			case SMTINTERPOL:
-				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
+				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+				solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.Internal_SMTInterpol;
 				logicForExternalSolver = null;
@@ -382,7 +404,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			case ABSTRACT_INTERPRETATION:
 				mAbsIntRunner.generateFixpoints(mCounterexample,
 						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction);
-				return new AiRunnerWrapper(mAbsIntRunner);
+				return new AiRunnerWrapper();
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
@@ -410,10 +432,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	private class AiRunnerWrapper implements IInterpolantGenerator {
-		private final CegarAbsIntRunner mRunner;
-		
-		public AiRunnerWrapper(final CegarAbsIntRunner runner) {
-			mRunner = runner;
+		public AiRunnerWrapper() {
+			// default constructor
 		}
 		
 		@Override
@@ -424,11 +444,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		
 		@Override
 		public boolean isPerfectSequence() {
-			return mRunner.hasShownInfeasibility();
+			return mAbsIntRunner.hasShownInfeasibility();
 		}
 		
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
-			return mRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
+			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
 		}
 		
