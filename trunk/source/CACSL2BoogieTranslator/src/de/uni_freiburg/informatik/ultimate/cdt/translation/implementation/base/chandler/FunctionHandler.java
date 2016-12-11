@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -46,7 +45,6 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
@@ -55,7 +53,6 @@ import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -72,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
@@ -81,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -96,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -941,9 +937,9 @@ public class FunctionHandler {
              * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
              * NULL or a pointer into the area where the argument pointer is valid.
 			 */
-			List<Declaration> decl = new ArrayList<>();
-			List<Statement> stmt = new ArrayList<>();
-			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			final List<Declaration> decl = new ArrayList<>();
+			final List<Statement> stmt = new ArrayList<>();
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 			
 			// dispatch first argument
 			assert arguments.length == 2 : "wrong number of arguments";
@@ -1006,9 +1002,9 @@ public class FunctionHandler {
 
 			stmt.add(assume);
 
-			RValue lrVal = new RValue(tmpExpr, resultType);
+			final RValue lrVal = new RValue(tmpExpr, resultType);
 			
-			List<Overapprox> overapprox = new ArrayList<>();
+			final List<Overapprox> overapprox = new ArrayList<>();
 			overapprox.add(new Overapprox("builtin_strchr", loc));
 
 			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
@@ -1039,9 +1035,9 @@ public class FunctionHandler {
              * 
              * Current solution: replace call by a havocced aux variable.
 			 */
-			List<Declaration> decl = new ArrayList<>();
-			List<Statement> stmt = new ArrayList<>();
-			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			final List<Declaration> decl = new ArrayList<>();
+			final List<Statement> stmt = new ArrayList<>();
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 	
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
@@ -1051,15 +1047,18 @@ public class FunctionHandler {
 			decl.add(tmpVarDecl);
 			auxVars.put(tmpVarDecl, loc);
 
-			RValue lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+			final RValue lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
 			
-			List<Overapprox> overapprox = new ArrayList<>();
+			final List<Overapprox> overapprox = new ArrayList<>();
 			overapprox.add(new Overapprox("builtin_return_address", loc));
 
 			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
+				if (!FloatSupportInUltimate.getSupportedFloatOperations().contains(methodName)) {
+					throw new AssertionError("inconsistent information about supported float operations");
+				}
 				assert arguments.length == 1;
 				final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
 						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
@@ -1071,6 +1070,9 @@ public class FunctionHandler {
 				final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
 				result.lrVal = rvalue;
 				return result;
+			} else if (FloatSupportInUltimate.getUnsupportedFloatOperations().contains(methodName)) {
+				final String msg = "Float math.h operation not supported " + methodName;
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 			return null;
 		}
@@ -1600,7 +1602,7 @@ public class FunctionHandler {
 		return Collections.unmodifiableMap(mModifiedGlobals);
 	}
 	
-	public void addModifiedGlobal(String procedureName, String globVarName) {
+	public void addModifiedGlobal(final String procedureName, final String globVarName) {
 		LinkedHashSet<String> set = mModifiedGlobals.get(procedureName);
 		if (set == null) {
 			set = new LinkedHashSet<>();
@@ -1614,7 +1616,7 @@ public class FunctionHandler {
 	 * Introduces an empty entry for a procedure in mModifiedGlobals.
 	 * @param procedureName
 	 */
-	public void addModifiedGlobalEntry(String procedureName) {
+	public void addModifiedGlobalEntry(final String procedureName) {
 		LinkedHashSet<String> set = mModifiedGlobals.get(procedureName);
 		if (set == null) {
 			set = new LinkedHashSet<>();
@@ -1644,7 +1646,7 @@ public class FunctionHandler {
 		return mCurrentProcedure == null;
 	}
 
-	public void addCallGraphEdge(String source, String target) {
+	public void addCallGraphEdge(final String source, final String target) {
 		Set<String> set = mCallGraph.get(source);
 		if (set == null) {
 			set = new LinkedHashSet<>();
@@ -1653,7 +1655,7 @@ public class FunctionHandler {
 		set.add(target);
 	}
 	
-	public void addCallGraphNode(String node) {
+	public void addCallGraphNode(final String node) {
 		Set<String> set = mCallGraph.get(node);
 		if (set == null) {
 			set = new LinkedHashSet<>();
