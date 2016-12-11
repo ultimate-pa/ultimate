@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -165,6 +166,50 @@ public class AffineExpression {
 		return new AffineExpression(mCoefficients, BigDecimal.ZERO);
 	}
 
+	/**
+	 * Divides this AffineExpression by a constant such that all coefficients are 1 or -1 if possible.
+	 * All coefficients keep their sign.
+	 * <p>
+	 * Division of the constant may require rounding. Example: Unit coefficient form  of (3x + 1) is (1x + 1/3),
+	 * which cannot be expressed by a {@link BigDecimal}.
+	 * 
+	 * @param roundingMode Mode for rounding the division of the constant.
+	 * 
+	 * @return Unit coefficient form or {@code null}
+	 */
+	public AffineExpression unitCoefficientForm(final RoundingMode roundingMode) {
+		if (mCoefficients.size() == 0) {
+			return this;
+		} else if (absCoefficientsAreEqual()) {
+			// compute unit coefficients (recall: coefficients in AffineExpression are always != 0)
+			final Map<IBoogieVar, BigDecimal> unitCoefficients = new HashMap<>();
+			mCoefficients.forEach(
+					(var, coeff) -> unitCoefficients.put(var, coeff.signum() > 0 ? BigDecimal.ONE : NumUtil.MINUS_ONE));
+			// compute constant
+			final BigDecimal absCoefficient = mCoefficients.values().iterator().next().abs();
+			final BigDecimal newConstant = mConstant.divide(absCoefficient, roundingMode);
+			//
+			return new AffineExpression(unitCoefficients, newConstant);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return All coefficients in this AffineExpression have the same absolute value.
+	 */
+	private boolean absCoefficientsAreEqual() {
+		BigDecimal lastCoefficient = null;
+		for (BigDecimal curCoefficient : mCoefficients.values()) {
+			curCoefficient = curCoefficient.abs();
+			if (lastCoefficient != null && curCoefficient.compareTo(lastCoefficient) != 0) {
+				return false;
+			}
+			lastCoefficient = curCoefficient;
+		}
+		return true;
+	}
+	
 	/**
 	 * Constructs an equivalent {@link OneVarForm} of this affine expression if possible. OneVarForm is an affine
 	 * expression of the form {@code +/- x + c} where {@code x} is a variable and {@code c} is a constant.

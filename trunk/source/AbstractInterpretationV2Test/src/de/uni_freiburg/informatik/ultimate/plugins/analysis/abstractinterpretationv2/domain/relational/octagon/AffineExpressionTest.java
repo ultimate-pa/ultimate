@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -145,6 +146,22 @@ public class AffineExpressionTest {
 	}
 
 	@Test
+	public void testUniCoefficientForm() {
+		assertUnitCoefficientForm("1x", "1x");
+		assertUnitCoefficientForm("-1x", "-1x");
+		assertUnitCoefficientForm("3x", "1x");
+		assertUnitCoefficientForm("2.9x", "1.0x");
+
+		assertUnitCoefficientForm("1x + 1y", "1x + 1y");
+		assertUnitCoefficientForm("-1x + 1y", "-1x + 1y");
+		assertUnitCoefficientForm("1x + -1y", "1x + -1y");
+		assertUnitCoefficientForm("3x + -3.00y", "1x + -1y");
+
+		assertUnitCoefficientForm("3x + 1y", null);
+		assertUnitCoefficientForm("4x + 4y + 4.001z", null);
+	}
+	
+	@Test
 	public void testTwoVar() {
 		AffineExpression.TwoVarForm tvf;
 
@@ -169,6 +186,10 @@ public class AffineExpressionTest {
 		Assert.assertNull(ae("x + 2y").getTwoVarForm());
 	}
 
+	private void assertUnitCoefficientForm(final String normalForm, final String unitCoefficientForm) {
+		Assert.assertEquals(ae(unitCoefficientForm), ae(normalForm).unitCoefficientForm(RoundingMode.UNNECESSARY));
+	}
+	
 	private void assertDivReal(final String a, final String b, final String expected) {
 		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), false));
 	}
@@ -181,7 +202,9 @@ public class AffineExpressionTest {
 		Assert.assertEquals(ae(rExpected), ae(a).modulo(ae(b)));
 	}
 
-	// Variable names with 'e' or 'E' are not allowed
+	// Variable names with 'e' or 'E' are not allowed because floats can be written as 0.1e2.
+	// IBoogieType of generated variables can be int or real, depending on the given coefficients
+	// ("3e0" and "3.0" are floats, "3" is an integer. Default coefficient "" (1) is an integer).
 	private AffineExpression ae(String expr) {
 		if (expr == null) {
 			return null;
@@ -192,9 +215,20 @@ public class AffineExpressionTest {
 		expr = expr.replace(" ", "");
 		Matcher m = sCoeffVarRegex.matcher(expr);
 		while (m.find()) {
-			final String coeffStr = m.group(sNumGroup);
-			final BigDecimal coeff = (coeffStr == null) ? BigDecimal.ONE : new BigDecimal(coeffStr);
-			final IBoogieType type = isInteger(coeff) ? BoogieType.TYPE_INT : BoogieType.TYPE_REAL;
+			final BigDecimal coeff;
+			final IBoogieType type;
+			final String floatCoeffStr = m.group(sFloatNumGroup);
+			final String intCoeffStr = m.group(sIntNumGroup);
+			if (floatCoeffStr != null) {
+				type = BoogieType.TYPE_REAL;
+				coeff = new BigDecimal(floatCoeffStr);
+			} else if (intCoeffStr != null) {
+				type = BoogieType.TYPE_INT;
+				coeff = new BigDecimal(intCoeffStr);
+			} else {
+				type = BoogieType.TYPE_INT;
+				coeff = BigDecimal.ONE;
+			}
 			final IBoogieVar var = getVar(m.group(sVarGroup), type);
 			final BigDecimal old = coefficients.put(var, coeff);
 			if (old != null) {
@@ -207,18 +241,6 @@ public class AffineExpressionTest {
 			constant = new BigDecimal(expr);
 		}
 		return new AffineExpression(coefficients, constant);
-	}
-
-	private static boolean isInteger(final BigDecimal value) {
-		if (value.scale() <= 0) {
-			return true;
-		}
-		try {
-			value.toBigIntegerExact();
-			return true;
-		} catch (final ArithmeticException ex) {
-			return false;
-		}
 	}
 
 	private IBoogieVar getVar(final String name, final IBoogieType type) {
@@ -236,10 +258,13 @@ public class AffineExpressionTest {
 		return var;
 	}
 
-	private static final String sNumGroup = "num";
+	private static final String sFloatNumGroup = "floatNum";
+	private static final String sIntNumGroup = "intNum";
 	private static final String sVarGroup = "var";
-	private static final String sNumRegex = "(?<" + sNumGroup + ">[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)";
+	private static final String sFloatNumRegex = "(?<" + sFloatNumGroup + ">[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)";
+	private static final String sIntNumRegex = "(?<" + sIntNumGroup + ">[-+]?[0-9]+)";
 	private static final String sVarRegex = "(?<" + sVarGroup + ">[a-df-zA-DF-Z]+)";
-	private static final Pattern sCoeffVarRegex = Pattern.compile("^(" + sNumRegex + "\\*?)?" + sVarRegex + "(\\+|$)");
+	private static final Pattern sCoeffVarRegex = Pattern
+			.compile("^(" + sFloatNumRegex + "|" + sIntNumRegex + "\\*?)?" + sVarRegex + "(\\+|$)");
 
 }

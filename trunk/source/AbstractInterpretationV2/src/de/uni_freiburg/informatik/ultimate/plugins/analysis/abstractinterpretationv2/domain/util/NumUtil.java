@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class NumUtil {
 
+	public static final BigDecimal MINUS_ONE = BigDecimal.ONE.negate();
 	public static final BigDecimal TWO = new BigDecimal(2);
 
 	private NumUtil() {
