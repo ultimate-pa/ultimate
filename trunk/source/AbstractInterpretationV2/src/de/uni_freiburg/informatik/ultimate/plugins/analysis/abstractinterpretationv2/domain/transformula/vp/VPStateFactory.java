@@ -618,7 +618,7 @@ public class VPStateFactory {
 	 * @param addEquality
 	 * @return
 	 */
-	private Set<VPState> conjoinAll(Set<VPState> set1, Set<VPState> set2) {
+	public Set<VPState> conjoinAll(Set<VPState> set1, Set<VPState> set2) {
 		Set<VPState> resultStates = new HashSet<>();
 		
 		for (VPState state1 : set1) {

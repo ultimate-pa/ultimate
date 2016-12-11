@@ -226,6 +226,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		 *    where at least one of the related variables does not occur in dominator's variables
 		 *    TODO: is this correct??
 		 */
+		
+		if (this.isBottom() || dominator.isBottom()) {
+			Set<IProgramVar> newVars = new HashSet<>(this.mVars);
+			newVars.addAll(dominator.mVars);
+			VPState resultState = new VPStateBottomBuilder(mDomain).setVariables(newVars).build();
+			return resultState;
+		}
 
 		VPStateBuilder builder = mDomain.getVpStateFactory().copy(dominator);
 		
