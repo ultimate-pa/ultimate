@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -171,23 +170,27 @@ public class AffineExpression {
 	 * All coefficients keep their sign.
 	 * <p>
 	 * Division of the constant may require rounding. Example: Unit coefficient form  of (3x + 1) is (1x + 1/3),
-	 * which cannot be expressed by a {@link BigDecimal}.
+	 * which cannot be expressed by a {@link BigDecimal}. In case rounding is required, {@code null} is returned.
 	 * 
-	 * @param roundingMode Mode for rounding the division of the constant.
-	 * 
+	 *
 	 * @return Unit coefficient form or {@code null}
 	 */
-	public AffineExpression unitCoefficientForm(final RoundingMode roundingMode) {
+	public AffineExpression unitCoefficientForm() {
 		if (mCoefficients.size() == 0) {
 			return this;
 		} else if (absCoefficientsAreEqual()) {
+			// compute constant
+			final BigDecimal absCoefficient = mCoefficients.values().iterator().next().abs();
+			final BigDecimal newConstant;
+			try {
+				newConstant = mConstant.divide(absCoefficient);
+			} catch (ArithmeticException arithException) {
+				return null; // TODO switch from BigDecimal to rational numbers
+			}
 			// compute unit coefficients (recall: coefficients in AffineExpression are always != 0)
 			final Map<IBoogieVar, BigDecimal> unitCoefficients = new HashMap<>();
 			mCoefficients.forEach(
 					(var, coeff) -> unitCoefficients.put(var, coeff.signum() > 0 ? BigDecimal.ONE : NumUtil.MINUS_ONE));
-			// compute constant
-			final BigDecimal absCoefficient = mCoefficients.values().iterator().next().abs();
-			final BigDecimal newConstant = mConstant.divide(absCoefficient, roundingMode);
 			//
 			return new AffineExpression(unitCoefficients, newConstant);
 		} else {

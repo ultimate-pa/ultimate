@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -187,7 +186,7 @@ public class AffineExpressionTest {
 	}
 
 	private void assertUnitCoefficientForm(final String normalForm, final String unitCoefficientForm) {
-		Assert.assertEquals(ae(unitCoefficientForm), ae(normalForm).unitCoefficientForm(RoundingMode.UNNECESSARY));
+		Assert.assertEquals(ae(unitCoefficientForm), ae(normalForm).unitCoefficientForm());
 	}
 	
 	private void assertDivReal(final String a, final String b, final String expected) {
