@@ -106,7 +106,7 @@ public class VPStateFactory {
 
 	public VPStateBuilder copy(VPState originalState) {
 		if (originalState.isBottom()) {
-			return new VPStateBottomBuilder(mDomain);
+			return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
 		}
 		
 		final VPStateBuilder builder = createEmptyStateBuilder();
@@ -128,6 +128,7 @@ public class VPStateFactory {
 		
 		builder.setIsTop(originalState.isTop());
 
+		assert builder.mVars.equals(originalState.getVariables());
 		return builder;
 	}
 	
@@ -162,7 +163,7 @@ public class VPStateFactory {
 		if (contradiction) {
 			return Collections.singleton(
 					new VPStateBottomBuilder(mDomain)
-						.setVariables(originalState.getVariables()).build());
+						.setVars(originalState.getVariables()).build());
 		}
 		
 		VPState resultState = builder.build();
@@ -185,7 +186,8 @@ public class VPStateFactory {
 		if (resultStates.isEmpty()) {
 			return Collections.singleton(resultState);
 		}
-		
+
+		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		return resultStates;
 	}
 
@@ -243,6 +245,7 @@ public class VPStateFactory {
 		 */
 		Set<VPState> result = propagateDisEqualites(builder.build(), gn1Find, gn2Find);
 
+		assert VPDomainHelpers.allStatesHaveSameVariables(result);
 		return result;
 	}
 
@@ -489,6 +492,7 @@ public class VPStateFactory {
 				resultStates.addAll(addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState));
 			}
 		}
+		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		return resultStates;
 	}
 	

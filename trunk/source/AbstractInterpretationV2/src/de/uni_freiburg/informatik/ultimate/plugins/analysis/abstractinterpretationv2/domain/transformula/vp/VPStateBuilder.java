@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 public class VPStateBuilder {
 
-	private Set<IProgramVar> mVars;
+	protected Set<IProgramVar> mVars;
 	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
 	protected final VPDomain mDomain;
 	private boolean mIsTop;
@@ -25,10 +25,11 @@ public class VPStateBuilder {
 		mDomain = domain;
 		mEqGraph = new EqGraph();
 		createEqGraphNodes();
+		mVars = new HashSet<>();
 	}
 	
 	public VPStateBuilder setVars(Set<IProgramVar> vars) { 
-		mVars = vars;
+		mVars = new HashSet<>(vars);
 		return this;
 	}
 
@@ -136,7 +137,7 @@ public class VPStateBuilder {
 	}
 
 	public void removeVariable(IProgramVar pv) {
-		mVars.add(pv);
+		mVars.remove(pv);
 	}
 
 	private class EqGraph {

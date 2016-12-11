@@ -118,6 +118,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultStates);
 
 		assert VPDomainHelpers.containsNoNullElement(resultStates);
+		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		return resultStates;
 	}
 	
@@ -151,6 +152,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					resultStates = mVpStateFactory.conjoinAll(andList.get(i), resultStates);
 				}
 				assert !resultStates.isEmpty();
+				assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 				return new ArrayList<>(resultStates);
 
 //				assert andList.size() > 1;
@@ -180,6 +182,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					orList.addAll(handleTransition(prestate, t, tvToPvMap, assignedVars, inVars, outVars, false));
 				}
 				assert !orList.isEmpty();
+				assert VPDomainHelpers.allStatesHaveSameVariables(orList);
 				return orList;
 			} else if (applicationName == "=") {
 				/*
@@ -206,6 +209,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 										negated, 
 										aeqs.get(0)));
 						assert !result.isEmpty();
+						assert VPDomainHelpers.allStatesHaveSameVariables(result);
 						return result;
 					}
 				}
@@ -235,6 +239,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 										negated, 
 										aus.get(0)));
 						assert !result.isEmpty();
+						assert VPDomainHelpers.allStatesHaveSameVariables(result);
 						return result;
 					}
 				}
@@ -242,12 +247,15 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				/*
 				 * case "two terms we track are equated"
 				 */
-				return handleBasicEquality(prestate, tvToPvMap, assignedVars, inVars, outVars, negated, appTerm);
+				List<VPState> resultStates = handleBasicEquality(prestate, tvToPvMap, assignedVars, inVars, outVars, negated, appTerm);
+				assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
+				return resultStates;
 
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
 				List<VPState> result = handleTransition(prestate, appTerm.getParameters()[0], tvToPvMap, assignedVars, inVars, outVars, !negated);
 				assert !result.isEmpty();
+				assert VPDomainHelpers.allStatesHaveSameVariables(result);
 				return result;
 			} else if (applicationName == "distinct") {
 				
@@ -258,6 +266,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 				List<VPState> result = handleTransition(prestate, equality, tvToPvMap, assignedVars, inVars, outVars, !negated);
 				assert !result.isEmpty();
+				assert VPDomainHelpers.allStatesHaveSameVariables(result);
 				return result;
 			} else if (applicationName == "true") {
 				if (!negated) {
@@ -292,6 +301,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		/*
 		 * no part of the TransFormula influences the state --> return a copy
 		 */
+		assert false : "does this happen? should we treat invars/outvars then?";
 
 //		VPState resultState = prestate;//mDomain.getVpStateFactory().copy(preState).build();
 		return Collections.singletonList(prestate);
@@ -732,14 +742,17 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		if (transition instanceof Call) {
 			List<VPState> result = applyContextSwitch(stateBeforeLeaving, stateAfterLeaving, ((Call) transition).getLocalVarsAssignment());
 			assert VPDomainHelpers.containsNoNullElement(result);
+			assert VPDomainHelpers.allStatesHaveSameVariables(result);
 			return result;
 		} else if (transition instanceof Return) {
 			List<VPState> result = applyContextSwitch(stateBeforeLeaving, stateAfterLeaving, ((Return) transition).getAssignmentOfReturn());
 			assert VPDomainHelpers.containsNoNullElement(result);
+			assert VPDomainHelpers.allStatesHaveSameVariables(result);
 			return result;
 		} else if (transition instanceof Summary) {
 			List<VPState> result = applyContextSwitch(stateBeforeLeaving, stateAfterLeaving, ((Summary) transition).getTransformula());
 			assert VPDomainHelpers.containsNoNullElement(result);
+			assert VPDomainHelpers.allStatesHaveSameVariables(result);
 			return result;
 		} else {
 			assert false : "unexpected..";

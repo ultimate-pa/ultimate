@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -70,5 +71,17 @@ public class VPDomainHelpers {
 			}
 		}
 		return true;
+	}
+
+	public static boolean allStatesHaveSameVariables(Collection<VPState> resultStates) {
+		if (resultStates.isEmpty()) {
+			return true;
+		}
+		boolean result = true;
+		Set<IProgramVar> sample = resultStates.iterator().next().getVariables();
+		for (VPState rs : resultStates) {
+			result &= sample.equals(rs.getVariables());
+		}
+		return result;
 	}
 }

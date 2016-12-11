@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 */
 public class VPStateBottom extends VPState {
 	
-	VPStateBottom(VPDomain domain) {
-		super(domain);
+	VPStateBottom(VPDomain domain, final Set<IProgramVar> vars) {
+		super(domain, vars);
 	}
 	
 	@Override
@@ -54,37 +54,37 @@ public class VPStateBottom extends VPState {
 		return "VPStateBottom, Vars: " + getVariables();
 	}
 
-	@Override
-	public VPState addVariable(IProgramVar variable) {
-		return this;
-	}
+//	@Override
+//	public VPState addVariable(IProgramVar variable) {
+//		return this;
+//	}
+//
+//	@Override
+//	public VPState removeVariable(IProgramVar variable) {
+//		return this;
+//	}
+//
+//	@Override
+//	public VPState addVariables(Collection<IProgramVar> variables) {
+//		return this;
+//	}
+//
+//	@Override
+//	public VPState removeVariables(Collection<IProgramVar> variables) {
+//		return this;
+//	}
 
-	@Override
-	public VPState removeVariable(IProgramVar variable) {
-		return this;
-	}
+//	@Override
+//	public Set<IProgramVar> getVariables() {
+//		// TODO Auto-generated method stub
+//		return super.getVariables();
+//	}
 
-	@Override
-	public VPState addVariables(Collection<IProgramVar> variables) {
-		return this;
-	}
-
-	@Override
-	public VPState removeVariables(Collection<IProgramVar> variables) {
-		return this;
-	}
-
-	@Override
-	public Set<IProgramVar> getVariables() {
-		// TODO Auto-generated method stub
-		return super.getVariables();
-	}
-
-	@Override
-	public VPState patch(VPState dominator) {
-		// TODO Auto-generated method stub
-		return super.patch(dominator);
-	}
+//	@Override
+//	public VPState patch(VPState dominator) {
+//		// TODO Auto-generated method stub
+//		return super.patch(dominator);
+//	}
 
 	@Override
 	public boolean isTop() {

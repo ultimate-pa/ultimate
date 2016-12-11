@@ -78,8 +78,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 *
 	 * @param domain
 	 */
-	VPState(final VPDomain domain) {
-		this(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), domain, false);
+	VPState(final VPDomain domain, final Set<IProgramVar> vars) {
+		this(Collections.emptyMap(), Collections.emptySet(), vars, domain, false);
 	}
 	
 	/*
@@ -88,7 +88,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	VPState(final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVar> vars, final VPDomain domain,
 			final boolean isTop) {
-		mVars = vars;
+		mVars = Collections.unmodifiableSet(vars);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
@@ -230,7 +230,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (this.isBottom() || dominator.isBottom()) {
 			Set<IProgramVar> newVars = new HashSet<>(this.mVars);
 			newVars.addAll(dominator.mVars);
-			VPState resultState = new VPStateBottomBuilder(mDomain).setVariables(newVars).build();
+			VPState resultState = new VPStateBottomBuilder(mDomain).setVars(newVars).build();
 			return resultState;
 		}
 
