@@ -141,7 +141,7 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 		}
 
 		@Override
-		protected boolean doOneIteration(final IPredicate strengthenedPre) {
+		protected boolean doOneIterationStep(final IPredicate strengthenedPre) {
 			final Validity validity = new SuccIterator(mWeakerThenSucc, 
 					mPre2Succ2Validity.get(strengthenedPre), mResultEvaluator).iterate();
 			mResult = mResultEvaluator.evaluateResult(validity);
@@ -211,7 +211,7 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 		}
 
 		@Override
-		protected boolean doOneIteration(final IPredicate weakerThanSucc) {
+		protected boolean doOneIterationStep(final IPredicate weakerThanSucc) {
 			final Validity validity = mSucc2Validity.get(weakerThanSucc);
 			mResult = mResultEvaluator.evaluateResult(validity);
 			return (mResult != null && mResult != Validity.UNKNOWN);
@@ -250,12 +250,12 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 			}
 
 		}
-		protected abstract boolean doOneIteration(E e);
+		protected abstract boolean doOneIterationStep(E e);
 		
 		protected final R iterate() {
 			for (final E e : mSmallerSet) {
 				if (mLargerSet.contains(e)) {
-					final boolean stop = doOneIteration(e);
+					final boolean stop = doOneIterationStep(e);
 					if (stop) {
 						return mResult;
 					}
