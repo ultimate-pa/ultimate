@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
@@ -84,24 +84,24 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private final AssertionOrderModulation mAssertionOrderModulation;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
-	
+
 	private Mode mCurrentMode;
-	
+
 	// if the first Z3 trace check was unsuccessful, we can skip it the second time
 	private boolean mZ3TraceCheckUnsuccessful;
-	
+
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
-	
+
 	private TraceCheckerConstructor mTcConstructor;
 	private TraceCheckerConstructor mPrevTcConstructor;
-	
+
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -139,10 +139,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		mAbstraction = abstraction;
 		mIteration = iteration;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
-		
+
 		mCurrentMode = Mode.SMTINTERPOL;
 	}
-	
+
 	@Override
 	public boolean hasNext(final RefinementStrategyAdvance advance) {
 		switch (advance) {
@@ -154,7 +154,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
-	
+
 	private boolean hasNextTraceChecker() {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
@@ -169,7 +169,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 	}
-	
+
 	private boolean hasNextInterpolantGenerator() {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
@@ -184,7 +184,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 	}
-	
+
 	@Override
 	public void next(final RefinementStrategyAdvance advance) {
 		switch (advance) {
@@ -198,7 +198,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
-	
+
 	private void nextInterpolantGenerator(final RefinementStrategyAdvance advance) {
 		final boolean resetTraceChecker;
 		switch (mCurrentMode) {
@@ -226,7 +226,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
-		
+
 		// reset interpolant generator
 		mInterpolantGenerator = null;
 		if (resetTraceChecker) {
@@ -237,7 +237,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
 	}
-	
+
 	private void nextTraceChecker(final RefinementStrategyAdvance advance) {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
@@ -256,15 +256,14 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
-		
+
 		// reset trace checker, interpolant generator, and constructor
 		mTraceChecker = null;
 		mInterpolantGenerator = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
-		mLogger.info("Switched to TraceChecker mode " + mCurrentMode);
 	}
-	
+
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
@@ -275,7 +274,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mTraceChecker;
 	}
-	
+
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
@@ -283,7 +282,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mInterpolantGenerator;
 	}
-	
+
 	@Override
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
 			getInterpolantAutomatonBuilder(final List<InterpolantsPreconditionPostcondition> ipps) {
@@ -293,7 +292,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mInterpolantAutomatonBuilder;
 	}
-	
+
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> constructInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> ipps, final Mode mode) {
 		switch (mode) {
@@ -310,17 +309,19 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 	}
-	
+
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
-		
+
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 		final ManagedScript managedScript =
 				constructManagedScript(mServices, mPrefs, mCurrentMode, useTimeout, mIteration);
-		
+
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
-		
+
+		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
+				+ " (IT: " + interpolationTechnique + ")");
 		TraceCheckerConstructor result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
@@ -329,10 +330,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);
 		}
-		
+
 		return result;
 	}
-	
+
 	private static InterpolationTechnique getInterpolationTechnique(final Mode mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
@@ -353,7 +354,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return interpolationTechnique;
 	}
-	
+
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Mode mode, final boolean useTimeout,
 			final int iteration) {
@@ -397,16 +398,16 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
 		final ManagedScript result = new ManagedScript(services, solver);
-		
+
 		// TODO do we need this?
 		final TermTransferrer tt = new TermTransferrer(solver);
 		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
 		}
-		
+
 		return result;
 	}
-	
+
 	private IInterpolantGenerator constructInterpolantGenerator(final Mode mode) {
 		switch (mode) {
 		case SMTINTERPOL:
@@ -427,79 +428,79 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 	}
-	
+
 	private IInterpolantGenerator castTraceChecker() {
 		final TraceChecker traceChecker = getTraceChecker();
 		assert traceChecker != null && traceChecker instanceof InterpolatingTraceChecker;
 		return (InterpolatingTraceChecker) traceChecker;
 	}
-	
+
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-	
+
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.NONE;
 	}
-	
+
 	protected static String getLogicForCvc4() {
 		// FIXME make this changeable
 		return LOGIC_CVC4_DEFAULT;
 	}
-	
+
 	private class AiRunnerWrapper implements IInterpolantGenerator {
 		public AiRunnerWrapper() {
 			// default constructor
 		}
-		
+
 		@Override
 		public IPredicate[] getInterpolants() {
 			return new IPredicate[0];
 		}
-		
+
 		@Override
 		public boolean isPerfectSequence() {
 			return mAbsIntRunner.hasShownInfeasibility();
 		}
-		
+
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
 			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
 		}
-		
+
 		@Override
 		public IPredicate getPrecondition() {
 			return mPredicateUnifier.getTruePredicate();
 		}
-		
+
 		@Override
 		public IPredicate getPostcondition() {
 			return mPredicateUnifier.getFalsePredicate();
 		}
-		
+
 		@Override
 		public Map<Integer, IPredicate> getPendingContexts() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public PredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier;
 		}
-		
+
 		@Override
 		public boolean imperfectSequencesUsable() {
 			return false;
 		}
-		
+
 		@Override
 		public Word<? extends IAction> getTrace() {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	/**
 	 * Current mode in this strategy.
 	 *
@@ -531,5 +532,5 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		 */
 		CVC4_IG,
 	}
-	
+
 }
