@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -47,12 +47,12 @@ public class TypeManager {
 
 	private final ILogger mLogger;
 
-	private final HashMap<String, TypeConstructor> typeConstructors = new HashMap<String, TypeConstructor>();
-	private final HashMap<String, TypeDeclaration> declarations = new HashMap<String, TypeDeclaration>();
-	private final Stack<String> visiting = new Stack<String>();
-	private final Stack<TypeParameters> typeParamScopes = new Stack<TypeParameters>();
+	private final HashMap<String, TypeConstructor> typeConstructors = new HashMap<>();
+	private final HashMap<String, TypeDeclaration> declarations = new HashMap<>();
+	private final Stack<String> visiting = new Stack<>();
+	private final Stack<TypeParameters> typeParamScopes = new Stack<>();
 
-	public TypeManager(Declaration[] decls, ILogger logger) {
+	public TypeManager(final Declaration[] decls, final ILogger logger) {
 		mLogger = logger;
 		for (final Declaration d : decls) {
 			if (d instanceof TypeDeclaration) {
@@ -62,7 +62,7 @@ public class TypeManager {
 		}
 	}
 
-	public void pushTypeScope(TypeParameters typeParams) {
+	public void pushTypeScope(final TypeParameters typeParams) {
 		typeParamScopes.push(typeParams);
 	}
 
@@ -70,7 +70,7 @@ public class TypeManager {
 		typeParamScopes.pop();
 	}
 
-	public BoogieType getPrimitiveType(String typeName) {
+	public BoogieType getPrimitiveType(final String typeName) {
 		if (typeName.equals("int")) {
 			return BoogieType.TYPE_INT;
 		} else if (typeName == "real") {
@@ -86,7 +86,7 @@ public class TypeManager {
 		}
 	}
 
-	public BoogieType resolveNamedType(NamedType type, boolean markUsed) {
+	public BoogieType resolveNamedType(final NamedType type, final boolean markUsed) {
 		final String name = type.getName();
 		final int numParam = type.getTypeArgs().length;
 
@@ -128,8 +128,8 @@ public class TypeManager {
 		}
 		for (int i = 0; i < numParam; i++) {
 			/*
-			 * Resolve the other type arguments without marking place holders as
-			 * used. Place holders are actually instantiated as tError.
+			 * Resolve the other type arguments without marking place holders as used. Place holders are actually
+			 * instantiated as tError.
 			 */
 			if (typeArgs[i] == null) {
 				typeArgs[i] = resolveType(type.getTypeArgs()[i], false);
@@ -138,7 +138,7 @@ public class TypeManager {
 		return BoogieType.createConstructedType(tc, typeArgs);
 	}
 
-	public BoogieType resolveArrayType(ArrayType type, boolean markUsed) {
+	public BoogieType resolveArrayType(final ArrayType type, final boolean markUsed) {
 		final TypeParameters typeParams = new TypeParameters(type.getTypeParams());
 		pushTypeScope(typeParams);
 		final int numIndices = type.getIndexTypes().length;
@@ -155,9 +155,9 @@ public class TypeManager {
 		return BoogieType.createArrayType(type.getTypeParams().length, indexTypes, resultType);
 	}
 
-	private BoogieType resolveStructType(StructType type, boolean markUsed) {
-		final ArrayList<String> names = new ArrayList<String>(type.getFields().length);
-		final ArrayList<BoogieType> types = new ArrayList<BoogieType>(type.getFields().length);
+	private BoogieType resolveStructType(final StructType type, final boolean markUsed) {
+		final ArrayList<String> names = new ArrayList<>(type.getFields().length);
+		final ArrayList<BoogieType> types = new ArrayList<>(type.getFields().length);
 
 		for (int i = 0; i < type.getFields().length; i++) {
 			final BoogieType fieldType = resolveType(type.getFields()[i].getType(), markUsed);
@@ -171,11 +171,11 @@ public class TypeManager {
 		return BoogieType.createStructType(fNames, fTypes);
 	}
 
-	public BoogieType resolveType(ASTType type, boolean markUsed) {
+	public BoogieType resolveType(final ASTType type, final boolean markUsed) {
 		if (type == null) {
 			throw new IllegalArgumentException("ASTType is null - cannot resolve type.");
 		}
-		
+
 		BoogieType boogieType;
 		if (type instanceof PrimitiveType) {
 			boogieType = getPrimitiveType(((PrimitiveType) type).getName());
@@ -193,11 +193,11 @@ public class TypeManager {
 		return boogieType;
 	}
 
-	public BoogieType resolveType(ASTType type) {
+	public BoogieType resolveType(final ASTType type) {
 		return resolveType(type, true);
 	}
 
-	public void resolve(TypeDeclaration td) {
+	public void resolve(final TypeDeclaration td) {
 		if (visiting.contains(td.getIdentifier())) {
 			mLogger.fatal("Cyclic type definition: " + visiting);
 			typeConstructors.put(td.getIdentifier(), null);
