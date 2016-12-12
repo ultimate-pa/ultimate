@@ -172,6 +172,10 @@ public class TypeManager {
 	}
 
 	public BoogieType resolveType(ASTType type, boolean markUsed) {
+		if (type == null) {
+			throw new IllegalArgumentException("ASTType is null - cannot resolve type.");
+		}
+		
 		BoogieType boogieType;
 		if (type instanceof PrimitiveType) {
 			boogieType = getPrimitiveType(((PrimitiveType) type).getName());
