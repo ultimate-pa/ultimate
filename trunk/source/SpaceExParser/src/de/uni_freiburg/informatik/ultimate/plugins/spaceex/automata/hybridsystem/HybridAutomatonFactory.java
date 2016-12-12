@@ -189,8 +189,10 @@ public class HybridAutomatonFactory {
 	 * Helper function to merge two strings into a string of the form "str1 && str2"
 	 * Used for intersecting guards and updates of transitions in this class.
 	 */
-	private String intersectStrings(String string1, String string2){
+	private String intersectStrings(String str1, String str2){
 		String intersection;
+		String string1 = (str1 == null) ? "" : str1;
+		String string2 = (str2 == null) ? "" : str2;
 		if(string1.equals(string2) || (!"".equals(string1) && "".equals(string2))){
 			intersection = string1;
 		} else if(!"".equals(string1) && !"".equals(string2)){

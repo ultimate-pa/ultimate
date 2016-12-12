@@ -87,6 +87,7 @@ public class HybridModel {
 
 		if (systems.isEmpty()) {
 			HybridSystem hybsys = createDefaultSystem(automata);
+			mLogger.info("hybridsystem created:\n" + hybsys.toString());
 			mSystems.add(hybsys);
 		} else {
 			// create the systems
@@ -96,11 +97,12 @@ public class HybridModel {
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 			});
+			
 			/*
 			HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
 			HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
 			mHybridAutomatonFactory.computeParallelComposition(automaton1, automaton2);
-			*/		
+			*/	
 		}
 	}
 
