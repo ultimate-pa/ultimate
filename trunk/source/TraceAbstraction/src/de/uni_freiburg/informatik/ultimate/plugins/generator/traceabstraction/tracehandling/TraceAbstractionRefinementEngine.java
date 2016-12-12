@@ -228,7 +228,9 @@ public final class TraceAbstractionRefinementEngine
 		if (perfectInterpolantsFound) {
 			return Collections.singletonList(interpolants);
 		}
-		interpolantSequences.add(interpolants);
+		if (interpolantGenerator.imperfectSequencesUsable()) {
+			interpolantSequences.add(interpolants);
+		}
 		return Collections.emptyList();
 	}
 	
