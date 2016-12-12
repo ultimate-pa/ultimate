@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,6 +119,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
  */
 public class MemoryHandler {
 
+	private static final boolean SUPPORT_FLOATS_ON_HEAP = false;
+	private static final String FLOAT_ON_HEAP_UNSOUND_MESSAGE = 
+			"Analysis for floating types on heap by default disabled (soundness first).";
+	
 	/**
 	 * The "~size" variable identifier.
 	 */
@@ -1526,6 +1529,9 @@ public class MemoryHandler {
 
 			if (ut instanceof CPrimitive) {
 				final CPrimitive cp = (CPrimitive) ut;
+				if (!SUPPORT_FLOATS_ON_HEAP && cp.isFloatingType()) {
+					throw new UnsupportedSyntaxException(loc, FLOAT_ON_HEAP_UNSOUND_MESSAGE);
+				}
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 				readCallProcedureName = mMemoryModel.getReadProcedureName(cp.getType());
 			} else if (ut instanceof CPointer) {
@@ -1630,6 +1636,9 @@ public class MemoryHandler {
 
 		if (valueType instanceof CPrimitive) {
 			final CPrimitive cp = (CPrimitive) valueType;
+			if (!SUPPORT_FLOATS_ON_HEAP && cp.isFloatingType()) {
+				throw new UnsupportedSyntaxException(loc, FLOAT_ON_HEAP_UNSOUND_MESSAGE);
+			}
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(cp.getType());
 			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(cp.getType());
