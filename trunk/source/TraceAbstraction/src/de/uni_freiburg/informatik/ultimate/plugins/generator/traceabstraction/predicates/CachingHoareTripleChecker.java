@@ -76,7 +76,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		Validity result = getFromInternalCache(pre, act, succ);
 		if (result == null) {
-			result = extendedCacheCheckInternal(pre, act, succ, mInternalCache);
+			result = extendedBinaryCacheCheck(pre, act, succ, mInternalCache);
 			if (result == null) {
 				result = mComputingHoareTripleChecker.checkInternal(pre, act, succ);
 			}
@@ -94,8 +94,6 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 		mInternalCache.put(act, pre, succ, result);
 	}
 
-	protected abstract Validity extendedCacheCheckInternal(final IPredicate pre, final IAction act, final IPredicate succ, 
-			NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache);
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
@@ -108,7 +106,12 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 		return mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 	}
 	
+
 	
+	
+	
+	protected abstract Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ, 
+			NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache);
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {

@@ -59,7 +59,7 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 
 
 	@Override
-	protected Validity extendedCacheCheckInternal(final IPredicate pre, final IAction act, final IPredicate succ,
+	protected Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ,
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
 		boolean someResultWasUnknown = false;
 		final NestedMap2<IPredicate, IPredicate, Validity> pred2succ = binaryCache.get(act);

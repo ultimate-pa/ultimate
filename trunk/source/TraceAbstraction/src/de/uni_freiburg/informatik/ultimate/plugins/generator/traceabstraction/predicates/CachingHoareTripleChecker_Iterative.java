@@ -53,7 +53,7 @@ public class CachingHoareTripleChecker_Iterative extends CachingHoareTripleCheck
 
 
 	@Override
-	protected Validity extendedCacheCheckInternal(final IPredicate pre, final IAction act, final IPredicate succ,
+	protected Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ,
 			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
 		boolean someResultWasUnknown = false;
 		{
