@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -305,20 +306,20 @@ public class OctAssumeProcessor {
 		}
 		assert left.getType().equals(right.getType());
 		final boolean intRelation = TypeUtils.isNumericInt(left.getType());
-		boolean strictRelInt = false;
+		boolean strictRelation = false;
 		switch (relOp) {
 		case COMPEQ:
 			return processAffineEqZero(affLeft.subtract(affRight), intRelation, oldStates);
 		case COMPNEQ:
 			return processAffineNeZero(affLeft.subtract(affRight), intRelation, oldStates);
 		case COMPLT:
-			strictRelInt = intRelation;
+			strictRelation = true;
 		case COMPLEQ:
-			return processAffineLtZero(affLeft.subtract(affRight), strictRelInt, oldStates);
+			return processAffineLtZero(affLeft.subtract(affRight), intRelation, strictRelation, oldStates);
 		case COMPGT:
-			strictRelInt = intRelation;
+			strictRelation = true;
 		case COMPGEQ:
-			return processAffineLtZero(affRight.subtract(affLeft), strictRelInt, oldStates);
+			return processAffineLtZero(affRight.subtract(affLeft), intRelation, strictRelation, oldStates);
 		default:
 			throw new IllegalArgumentException("Not a relation on numbers: " + relOp);
 		}
@@ -347,15 +348,23 @@ public class OctAssumeProcessor {
 			return oldStates;
 		}
 
+		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
+			return oldStates;
+		}
+
 		// from now on handle (affExpr - c != 0) as (affExpr <= c) or (affExpr >= c) ----------------
-		BigDecimal leC; // (affExpr \in [-\inf, leC]) ...
-		BigDecimal geC; // ... or (affExpr \in [geC, \inf])
+		BigDecimal leC; //        affExpr \in [-\inf,  leC] ...
+		BigDecimal geC; // ... or affExpr \in [  geC, \inf]
 		leC = geC = affExpr.getConstant().negate();
 		if (intRelation) {
 			// in case of integers: (affExpr - c != 0) as (affExpr <= c-1) or (affExpr >= c+1)
-			assert NumUtil.isIntegral(leC);
-			leC = leC.subtract(BigDecimal.ONE);
-			geC = geC.add(BigDecimal.ONE);
+			if (NumUtil.isIntegral(leC)) {
+				leC = leC.subtract(BigDecimal.ONE);
+				geC = geC.add(BigDecimal.ONE);
+			} else {
+				// Integers are always not equal to any non-integer number (intVar != 1.5)
+				return oldStates;
+			}
 		}
 		affExpr = affExpr.withoutConstant();
 
@@ -370,9 +379,8 @@ public class OctAssumeProcessor {
 				geCOct = new OctValue(geC);
 				leCOct = new OctValue(leC);
 			}
-			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.var, geCOct, OctValue.INFINITY), // v >
-																													// c
-					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leCOct) // v < c
+			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.var, geCOct, OctValue.INFINITY), // v>c
+					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leCOct) // v<c
 			);
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue leCOct = new OctValue(leC);
@@ -411,8 +419,16 @@ public class OctAssumeProcessor {
 
 		}
 
+		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
+			return oldStates;
+		}
+
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------
 		final BigDecimal c = affExpr.getConstant().negate();
+		if (intRelation && !NumUtil.isIntegral(c)) {
+			// (assume intVar == 1.5) is equivalent to (assume false).
+			return new ArrayList<>();
+		}
 		affExpr = affExpr.withoutConstant();
 
 		AffineExpression.OneVarForm ovf;
@@ -443,20 +459,31 @@ public class OctAssumeProcessor {
 	 * @param affExpr
 	 *            Expression to be assumed to be less than zero.
 	 * @param intRelation
-	 *            The operands/variables are integers and the relation is "<".
+	 *            The operands/variables are integers.
+	 * @param strictRelation
+	 *            The relation is strict, that is "<" instead of "<=".
 	 * @param oldStates
 	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
-	private static List<OctDomainState> processAffineLtZero(AffineExpression affExpr, final boolean strictRelInt,
-			final List<OctDomainState> oldStates) {
+	private static List<OctDomainState> processAffineLtZero(AffineExpression affExpr,
+			final boolean intRelation, final boolean strictRelation, final List<OctDomainState> oldStates) {
+
+		if (affExpr.getCoefficients().size() > 2 || (affExpr = affExpr.unitCoefficientForm()) == null) {
+			return oldStates;
+		}
 
 		// from now on handle (affExpr - c <= 0) as (affExpr <= c) ----------------
 		BigDecimal c = affExpr.getConstant().negate();
-		if (strictRelInt) {
-			// in case of integers: (affExpr - c < 0) as (affExpr <= c - 1)"
-			assert NumUtil.isIntegral(c);
-			c = c.subtract(BigDecimal.ONE);
+		if (intRelation) {
+			if (!NumUtil.isIntegral(c)) {
+				// int <= 1.5   ==>   int <= 1
+				// int <  1.5   ==>   int <= 1
+				c = c.setScale(0, RoundingMode.FLOOR);
+			} else if (strictRelation) { // && c is int
+				// int < 2   ==>   int <= 1
+				c = c.subtract(BigDecimal.ONE);
+			}
 		}
 		affExpr = affExpr.withoutConstant();
 

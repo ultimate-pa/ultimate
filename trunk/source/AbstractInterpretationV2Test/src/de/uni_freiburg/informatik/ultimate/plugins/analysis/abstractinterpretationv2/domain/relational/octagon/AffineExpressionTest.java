@@ -145,7 +145,7 @@ public class AffineExpressionTest {
 	}
 
 	@Test
-	public void testUniCoefficientForm() {
+	public void testUnitCoefficientForm() {
 		assertUnitCoefficientForm("1x", "1x");
 		assertUnitCoefficientForm("-1x", "-1x");
 		assertUnitCoefficientForm("3x", "1x");
