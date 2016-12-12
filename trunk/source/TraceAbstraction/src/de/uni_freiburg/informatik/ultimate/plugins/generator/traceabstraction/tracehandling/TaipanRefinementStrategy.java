@@ -235,6 +235,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			mPrevTcConstructor = mTcConstructor;
 			mTcConstructor = null;
 		}
+		mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
 	}
 	
 	private void nextTraceChecker(final RefinementStrategyAdvance advance) {
@@ -261,6 +262,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		mInterpolantGenerator = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
+		mLogger.info("Switched to TraceChecker mode " + mCurrentMode);
 	}
 	
 	@Override
