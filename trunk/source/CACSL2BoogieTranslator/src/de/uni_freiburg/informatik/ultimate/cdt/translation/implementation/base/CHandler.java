@@ -1022,10 +1022,9 @@ public class CHandler implements ICHandler {
 
 			final CFunction funcType = new CFunction(newResType.cType, paramsParsed, false);
 			newResType.cType = funcType;
-		} else if (node instanceof IASTDeclarator) {
-			/* nothing */
 		} else {
-			throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
+			// DD 2016-12-12: was effectively disabled, is now explicitly disabled
+			// throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
 		}
 		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
@@ -1323,7 +1322,7 @@ public class CHandler implements ICHandler {
 	/**
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
-	private Result handleAddressOfOperator(final Dispatcher main, final ExpressionResult er, final ILocation loc)
+	private static Result handleAddressOfOperator(final Dispatcher main, final ExpressionResult er, final ILocation loc)
 			throws AssertionError {
 		final RValue ad;
 		if (er.lrVal instanceof HeapLValue) {
@@ -2396,7 +2395,8 @@ public class CHandler implements ICHandler {
 		return handleLoops(main, node, bodyResult, condResult, loopLabel, witnessInvariant);
 	}
 
-	private LoopInvariantSpecification fetchWitnessInvariantAtLoop(final Dispatcher main, final IASTStatement node) {
+	private static LoopInvariantSpecification fetchWitnessInvariantAtLoop(final Dispatcher main,
+			final IASTStatement node) {
 		final LoopInvariantSpecification witnessInvariant;
 		if (main instanceof MainDispatcher) {
 			witnessInvariant = ((MainDispatcher) main).fetchInvariantAtLoop(node);
@@ -2868,6 +2868,7 @@ public class CHandler implements ICHandler {
 
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
 		final ASTType tmpType = mTypeHandler.cType2AstType(loc, opPositive.lrVal.getCType());
+		assert tmpType != null : "";
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
 		decl.add(tmpVar);
@@ -3591,7 +3592,6 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public boolean isHeapVar(final String boogieId) {
-		final CStorageClass c;
 		return mBoogieIdsOfHeapVars.contains(boogieId);
 	}
 
@@ -3889,7 +3889,7 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	private void convertToVoid(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+	private static void convertToVoid(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
 		assert (rexp.lrVal instanceof RValue) : "has to be converted to RValue";
 		final CType oldType = rexp.lrVal.getCType().getUnderlyingType();
 		if (oldType instanceof CPrimitive) {
@@ -3942,7 +3942,8 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	private void convertPointerToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType) {
+	private static void convertPointerToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
 		// TODO: check if types are compatible
 		assert (rexp.lrVal instanceof RValue) : "has to be converted to RValue";
 		final RValue oldRvalue = (RValue) rexp.lrVal;
