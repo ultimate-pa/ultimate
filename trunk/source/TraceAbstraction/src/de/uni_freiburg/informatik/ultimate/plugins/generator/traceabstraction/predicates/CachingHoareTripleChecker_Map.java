@@ -48,9 +48,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker implements IHoareTripleChecker {
 	
-	private final NestedMap3<IInternalAction, IPredicate, IPredicate, Validity> mInternalCache =
-			new NestedMap3<>();
-	
 	public CachingHoareTripleChecker_Map(
 			final IUltimateServiceProvider services, final IHoareTripleChecker protectedHoareTripleChecker,
 			final PredicateUnifier predicateUnifer) {

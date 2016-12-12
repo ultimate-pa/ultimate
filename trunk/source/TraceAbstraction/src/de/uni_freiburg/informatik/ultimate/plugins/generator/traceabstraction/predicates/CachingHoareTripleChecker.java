@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -37,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * IHoareTripleChecker that caches already computed results.
@@ -54,12 +57,17 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	protected final PredicateUnifier mPredicateUnifer;
 	protected final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 	
+	private final InCaReCounter mResultFromSolver = new InCaReCounter();
+	private final InCaReCounter mResultFromCache = new InCaReCounter();
+	private final InCaReCounter mResultFromExtendedCacheCheck = new InCaReCounter();
+	
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache =
 			new NestedMap3<>();
 	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache =
 			new NestedMap3<>();
-	private final NestedMap4<IPredicate, IAction, IPredicate, IPredicate, Validity> mReturnCache =
-			new NestedMap4<>();
+	private final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> mReturnCache = 
+			new HashMap<>();
+
 
 	
 	public CachingHoareTripleChecker(
@@ -79,8 +87,13 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 			result = extendedBinaryCacheCheck(pre, act, succ, mInternalCache);
 			if (result == null) {
 				result = mComputingHoareTripleChecker.checkInternal(pre, act, succ);
+				mResultFromSolver.incIn();
+			} else {
+				mResultFromExtendedCacheCheck.incIn();
 			}
 			addToInternalCache(pre, act, succ, result);
+		} else {
+			mResultFromCache.incIn();
 		}
 		return result;
 	}
@@ -97,16 +110,75 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		return mComputingHoareTripleChecker.checkCall(pre, act, succ);
+		Validity result = getFromCallCache(pre, act, succ);
+		if (result == null) {
+			result = extendedBinaryCacheCheck(pre, act, succ, mCallCache);
+			if (result == null) {
+				result = mComputingHoareTripleChecker.checkCall(pre, act, succ);
+				mResultFromSolver.incCa();
+			} else {
+				mResultFromExtendedCacheCheck.incCa();
+			}
+			addToCallCache(pre, act, succ, result);
+		} else {
+			mResultFromCache.incCa();
+		}
+		return result;
 	}
 
-	@Override
-	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
-			final IReturnAction act, final IPredicate succ) {
-		return mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+	private Validity getFromCallCache(final IPredicate pre, final ICallAction act, final IPredicate succ) {
+		return mCallCache.get(act, pre, succ);
+	}
+
+	private final void addToCallCache(final IPredicate pre, final ICallAction act, final IPredicate succ,
+			final Validity result) {
+		mCallCache.put(act, pre, succ, result);
 	}
 	
+	
+	
 
+	@Override
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act, final IPredicate succ) {
+		Validity result = getFromReturnCache(preLin, preHier, act, succ);
+		if (result == null) {
+			if (!mReturnCache.containsKey(preHier)) {
+				mReturnCache.put(preHier, new NestedMap3<>());
+			}
+			result = extendedBinaryCacheCheck(preLin, act, succ, mReturnCache.get(preHier));
+			if (result == null) {
+				result = mComputingHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
+				mResultFromSolver.incRe();
+			} else {
+				mResultFromExtendedCacheCheck.incRe();
+			}
+			addToReturnCache(preLin, preHier, act, succ, result);
+		} else {
+			mResultFromCache.incRe();
+		}
+		return result;
+	}
+
+	private Validity getFromReturnCache(final IPredicate preLin, final IPredicate preHier, final IReturnAction act, final IPredicate succ) {
+		final NestedMap3<IAction, IPredicate, IPredicate, Validity> map = mReturnCache.get(preHier);
+		if (map == null) {
+			return null;
+		} else {
+			return map.get(act, preLin, succ);
+		}
+		
+		
+	}
+
+	private final void addToReturnCache(final IPredicate preLin, final IPredicate preHier, final IReturnAction act, final IPredicate succ,
+			final Validity result) {
+		NestedMap3<IAction, IPredicate, IPredicate, Validity> map = mReturnCache.get(preHier);
+		if (map == null) {
+			map = new NestedMap3<>();
+			mReturnCache.put(preHier, map);
+		}
+		map.put(act, preLin, succ, result);
+	}
 	
 	
 	
