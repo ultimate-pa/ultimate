@@ -184,11 +184,11 @@ public class ExpressionResult extends Result {
 	 * one it is not used any more.
 	 */
 	public static ExpressionResult copyStmtDeclAuxvarOverapprox(final ExpressionResult... resExprs) {
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
-		Map<StructLHS, CType> unionFieldIdToCType = new LinkedHashMap<StructLHS, CType>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final List<Overapprox> overappr = new ArrayList<>();
+		Map<StructLHS, CType> unionFieldIdToCType = new LinkedHashMap<>();
 		for (final ExpressionResult resExpr : resExprs) {
 			stmt.addAll(resExpr.stmt);
 			decl.addAll(resExpr.decl);
@@ -325,16 +325,16 @@ public class ExpressionResult extends Result {
 		}
 
 		// everything for the new Result
-		final ArrayList<Statement> newStmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		final ArrayList<Statement> newStmt = new ArrayList<>();
+		final ArrayList<Declaration> newDecl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<>();
 
 		final String[] fieldIds = structType.getFieldIds();
 		final CType[] fieldTypes = structType.getFieldTypes();
 
 		// the new Arrays for the StructConstructor
-		final ArrayList<String> fieldIdentifiers = new ArrayList<String>();
-		final ArrayList<Expression> fieldValues = new ArrayList<Expression>();
+		final ArrayList<String> fieldIdentifiers = new ArrayList<>();
+		final ArrayList<Expression> fieldValues = new ArrayList<>();
 
 		for (int i = 0; i < fieldIds.length; i++) {
 			fieldIdentifiers.add(fieldIds[i]);
