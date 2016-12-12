@@ -32,7 +32,7 @@ public class AffineExpressionTest {
 		Assert.assertEquals(ae("1.41"), ae("1.41"));
 		Assert.assertEquals(ae("x + y"), ae("y + x"));
 		Assert.assertEquals(ae("4x + 3.14y + -3"), ae("4x + 3.14y + -3"));
-		Assert.assertEquals(ae("3x + 10.000"), ae("3.00x + 10.0"));
+		Assert.assertEquals(ae("3e0x + 10.000"), ae("3.00x + 10.0"));
 		Assert.assertEquals(ae("0x + y"), ae("y"));
 
 		Assert.assertNotEquals(ae("x + y"), ae("x + y + 1"));
@@ -154,10 +154,14 @@ public class AffineExpressionTest {
 		assertUnitCoefficientForm("1x + 1y", "1x + 1y");
 		assertUnitCoefficientForm("-1x + 1y", "-1x + 1y");
 		assertUnitCoefficientForm("1x + -1y", "1x + -1y");
-		assertUnitCoefficientForm("3x + -3.00y", "1x + -1y");
+		assertUnitCoefficientForm("3x + -3.00y", "1x + -1.0y");
 
 		assertUnitCoefficientForm("3x + 1y", null);
 		assertUnitCoefficientForm("4x + 4y + 4.001z", null);
+
+		assertUnitCoefficientForm("5.2", "5.2");
+		assertUnitCoefficientForm("2.9x + 29.0", "1.0x + 10.0");
+		assertUnitCoefficientForm("2x + -2y + 7.0", "x + -1y + 3.5");
 	}
 	
 	@Test
@@ -204,6 +208,7 @@ public class AffineExpressionTest {
 	// Variable names with 'e' or 'E' are not allowed because floats can be written as 0.1e2.
 	// IBoogieType of generated variables can be int or real, depending on the given coefficients
 	// ("3e0" and "3.0" are floats, "3" is an integer. Default coefficient "" (1) is an integer).
+	// Summands have to be separated by "+".
 	private AffineExpression ae(String expr) {
 		if (expr == null) {
 			return null;
@@ -260,7 +265,8 @@ public class AffineExpressionTest {
 	private static final String sFloatNumGroup = "floatNum";
 	private static final String sIntNumGroup = "intNum";
 	private static final String sVarGroup = "var";
-	private static final String sFloatNumRegex = "(?<" + sFloatNumGroup + ">[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)";
+	private static final String sFloatNumRegex = "(?<" + sFloatNumGroup
+			+ ">[-+]?[0-9]*\\.[0-9]+([eE][-+]?[0-9]+)?|[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+))";
 	private static final String sIntNumRegex = "(?<" + sIntNumGroup + ">[-+]?[0-9]+)";
 	private static final String sVarRegex = "(?<" + sVarGroup + ">[a-df-zA-DF-Z]+)";
 	private static final Pattern sCoeffVarRegex = Pattern
