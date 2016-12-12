@@ -4,22 +4,22 @@
  * Copyright (C) 2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -123,7 +123,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 /**
  * Class that handles translation of functions.
- * 
+ *
  * @author Markus Lindenmann
  * @date 12.10.2012
  * @author Alexander Nutz
@@ -146,10 +146,10 @@ public class FunctionHandler {
 	 * A map from method name to all called methods of the specified one.
 	 */
 	private final Map<String, Set<String>> mCallGraph;
-//	/**
-//	 * Whether the current procedure is declared to return void.
-//	 */
-//	private boolean mCurrentProcedureIsVoid;
+	// /**
+	// * Whether the current procedure is declared to return void.
+	// */
+	// private boolean mCurrentProcedureIsVoid;
 	/**
 	 * Modified global variables of the current function.
 	 */
@@ -173,7 +173,7 @@ public class FunctionHandler {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param expressionTranslation
 	 * @param typeSizeComputer
 	 * @param checkMemoryLeakAtEndOfMain
@@ -182,30 +182,31 @@ public class FunctionHandler {
 			final TypeSizeAndOffsetComputer typeSizeComputer) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizeComputer = typeSizeComputer;
-		mCallGraph = new LinkedHashMap<String, Set<String>>();
-//		mCurrentProcedureIsVoid = false;
-		mModifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
-		mMethodsCalledBeforeDeclared = new LinkedHashSet<String>();
-		mProcedures = new LinkedHashMap<String, Procedure>();
+		mCallGraph = new LinkedHashMap<>();
+		// mCurrentProcedureIsVoid = false;
+		mModifiedGlobals = new LinkedHashMap<>();
+		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
+		mProcedures = new LinkedHashMap<>();
 		mProcedureToCFunctionType = new LinkedHashMap<>();
-		mModifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
+		mModifiedGlobalsIsUserDefined = new LinkedHashSet<>();
 		mFunctionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
 	/**
 	 * This is called from SimpleDeclaration and handles a C function declaration.
-	 * 
+	 *
 	 * The effects are: - the declaration is stored to FunctionHandler.procedures (which stores all Boogie procedure
 	 * declarations - procedureTo(Return/Param)CType memebers are updated
-	 * 
+	 *
 	 * The returned result is empty (ResultSkip).
-	 * 
+	 *
 	 * @param cDec
 	 *            the CDeclaration of the function that was computed by visit SimpleDeclaration
 	 * @param loc
 	 *            the location of the FunctionDeclarator
 	 */
-	public Result handleFunctionDeclarator(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract, final CDeclaration cDec) {
+	public Result handleFunctionDeclarator(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract,
+			final CDeclaration cDec) {
 		final String methodName = cDec.getName();
 		final CFunction funcType = (CFunction) cDec.getType();
 
@@ -216,13 +217,13 @@ public class FunctionHandler {
 
 	/**
 	 * Handles translation of IASTFunctionDefinition.
-	 * 
+	 *
 	 * Note that a C function definition may have an ACSL specification while a Boogie procedure implementation does not
 	 * have a specification (right?). Therefore we have to add any ACSL specs to the procedures member where the
 	 * (Boogie) function declarations are stored.
-	 * 
+	 *
 	 * The Result contains the Boogie procedure implementation.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param node
@@ -230,8 +231,8 @@ public class FunctionHandler {
 	 * @param contract
 	 * @return the translation result.
 	 */
-	public Result handleFunctionDefinition(final Dispatcher main, final MemoryHandler memoryHandler, final IASTFunctionDefinition node,
-			final CDeclaration cDec, final List<ACSLNode> contract) {
+	public Result handleFunctionDefinition(final Dispatcher main, final MemoryHandler memoryHandler,
+			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract) {
 		main.mCHandler.beginScope();
 
 		final ILocation loc = LocationFactory.createCLocation(node);
@@ -251,7 +252,7 @@ public class FunctionHandler {
 		if (returnTypeIsVoid) { // void, so there are no out vars
 			out = new VarList[0];
 		} else if (mMethodsCalledBeforeDeclared.contains(methodName)) {
-			// defaulting to int, when a method is called that is only declared later 
+			// defaulting to int, when a method is called that is only declared later
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
 		} else { // "normal case"
@@ -310,7 +311,7 @@ public class FunctionHandler {
 			// combine the specification from the definition with the one from
 			// the declaration
 			final List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
-			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDec);
 			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 
@@ -321,7 +322,7 @@ public class FunctionHandler {
 		final Procedure declWithCorrectlyNamedInParams = new Procedure(proc.getLocation(), proc.getAttributes(),
 				proc.getIdentifier(), proc.getTypeParams(), in, proc.getOutParams(), proc.getSpecification(), null);
 		mCurrentProcedure = declWithCorrectlyNamedInParams;
-//		mCurrentProcedureIsVoid = returnTypeIsVoid;
+		// mCurrentProcedureIsVoid = returnTypeIsVoid;
 		final String procId = mCurrentProcedure.getIdentifier();
 
 		addModifiedGlobalEntry(procId);
@@ -331,8 +332,8 @@ public class FunctionHandler {
 		 * The structure is as follows: 1) Preprocessing of the method body: - add new variables for parameters - havoc
 		 * them - etc. 2) dispatch body 3) handle mallocs 4) add statements and declarations to new body
 		 */
-		ArrayList<Statement> stmts = new ArrayList<Statement>();
-		final ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		ArrayList<Statement> stmts = new ArrayList<>();
+		final ArrayList<Declaration> decls = new ArrayList<>();
 		// 1)
 		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
 		// 2)
@@ -357,14 +358,14 @@ public class FunctionHandler {
 		final Procedure impl = new Procedure(loc, proc.getAttributes(), methodName, proc.getTypeParams(), in,
 				proc.getOutParams(), null, body);
 		mCurrentProcedure = null;
-//		mCurrentProcedureIsVoid = false;
+		// mCurrentProcedureIsVoid = false;
 		main.mCHandler.endScope();
 		return new Result(impl);
 	}
 
 	/**
 	 * Handles translation of IASTFunctionCallExpression.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param memoryHandler
@@ -390,25 +391,25 @@ public class FunctionHandler {
 
 	/**
 	 * Handles translation of return statements.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param node
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleReturnStatement(final Dispatcher main, final MemoryHandler memoryHandler, final StructHandler structHandler,
-			final IASTReturnStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+	public Result handleReturnStatement(final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final IASTReturnStatement node) {
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ArrayList<Overapprox> overApp = new ArrayList<>();
 		// The ReturnValue could be empty!
 		final ILocation loc = LocationFactory.createCLocation(node);
 		final VarList[] outParams = mCurrentProcedure.getOutParams();
 		final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
-//		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
-		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) 
+		// if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
+		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier())
 				&& mCurrentProcedure.getOutParams().length == 0) {
 			// void method that was assumed to be returning int! -> return int
 			final String id = outParams[0].getIdentifiers()[0];
@@ -471,45 +472,43 @@ public class FunctionHandler {
 	/**
 	 * Calculates transitive modifies clauses for all procedure declarations linear in time to (|procedures| +
 	 * |procedure calls|).
-	 * 
+	 *
 	 * addition (alex, may 2014): for every modifies clause: if one memory-array is included, all active memory arrays
 	 * have to be included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @return procedure declarations
 	 */
-	public ArrayList<Declaration> calculateTransitiveModifiesClause(final Dispatcher main, final MemoryHandler memoryHandler) {
+	public ArrayList<Declaration> calculateTransitiveModifiesClause(final Dispatcher main,
+			final MemoryHandler memoryHandler) {
 		assert isEveryCalledProcedureDeclared() == null : "a function that is called in the program "
 				+ "is not declared in the program:" + isEveryCalledProcedureDeclared();
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
 		final Set<Set<String>> sccs = new TarjanSCC().getSCCs(mCallGraph);
-		final Map<String, Set<String>> functionNameToScc =
-				new LinkedHashMap<String, Set<String>>();
+		final Map<String, Set<String>> functionNameToScc = new LinkedHashMap<>();
 		for (final Set<String> scc : sccs) { // O(|proc|)
 			for (final String s : scc) {
 				functionNameToScc.put(s, scc);
 			}
 		}
 		// counts how many incoming edges an scc has in the updateGraph
-		final Map<Set<String>, Integer> incomingEdges =
-				new LinkedHashMap<Set<String>, Integer>();
+		final Map<Set<String>, Integer> incomingEdges = new LinkedHashMap<>();
 		for (final Set<String> scc : sccs) {
 			incomingEdges.put(scc, 0);
 		}
 		// calculate the SCC update graph without loops and dead ends
-		final Queue<Set<String>> deadEnds = new LinkedList<Set<String>>();
+		final Queue<Set<String>> deadEnds = new LinkedList<>();
 		deadEnds.addAll(sccs);
 
 		// updateGraph maps a calleeSCC to many callerSCCs
 		// This graph might not be complete! It is i.e. missing all procedures,
 		// that do not have incoming or outgoing edges!
 		// But: They don't need an update anyway!
-		final Map<Set<String>, Set<Set<String>>> updateGraph =
-				new LinkedHashMap<Set<String>, Set<Set<String>>>();
+		final Map<Set<String>, Set<Set<String>>> updateGraph = new LinkedHashMap<>();
 		for (final String caller : mCallGraph.keySet()) { // O(|calls|)
 			for (final String callee : mCallGraph.get(caller)) { // foreach s : succ(p)
 				final Set<String> sccCaller = functionNameToScc.get(caller);
@@ -520,7 +519,7 @@ public class FunctionHandler {
 				if (updateGraph.containsKey(sccCallee)) {
 					updateGraph.get(sccCallee).add(sccCaller);
 				} else {
-					final Set<Set<String>> predSCCs = new LinkedHashSet<Set<String>>();
+					final Set<Set<String>> predSCCs = new LinkedHashSet<>();
 					predSCCs.add(sccCaller);
 					updateGraph.put(sccCallee, predSCCs);
 				}
@@ -537,8 +536,7 @@ public class FunctionHandler {
 		}
 
 		// calculate transitive modifies clause
-		final Map<Set<String>, Set<String>> sccToModifiedGlobals =
-				new LinkedHashMap<Set<String>, Set<String>>();
+		final Map<Set<String>, Set<String>> sccToModifiedGlobals = new LinkedHashMap<>();
 		while (!deadEnds.isEmpty()) {
 			// O (|proc| + |edges in updateGraph|), where
 			// |edges in updateGraph| <= |calls|
@@ -547,7 +545,7 @@ public class FunctionHandler {
 			// the modified globals of the scc is the union of the modified globals of all its functions
 			for (final String func : deadEnd) {
 				if (!sccToModifiedGlobals.containsKey(deadEnd)) {
-					sccToModifiedGlobals.put(deadEnd, new LinkedHashSet<String>(mModifiedGlobals.get(func)));
+					sccToModifiedGlobals.put(deadEnd, new LinkedHashSet<>(mModifiedGlobals.get(func)));
 				} else {
 					sccToModifiedGlobals.get(deadEnd).addAll(mModifiedGlobals.get(func));
 				}
@@ -562,7 +560,7 @@ public class FunctionHandler {
 			// been processed
 			for (final Set<String> caller : updateGraph.get(deadEnd)) {
 				if (!sccToModifiedGlobals.containsKey(caller)) {
-					final Set<String> n = new LinkedHashSet<String>();
+					final Set<String> n = new LinkedHashSet<>();
 					n.addAll(sccToModifiedGlobals.get(deadEnd));
 					sccToModifiedGlobals.put(caller, n);
 				} else {
@@ -576,7 +574,7 @@ public class FunctionHandler {
 			}
 		}
 		// update the modifies clauses!
-		final ArrayList<Declaration> declarations = new ArrayList<Declaration>();
+		final ArrayList<Declaration> declarations = new ArrayList<>();
 		for (final Procedure procDecl : mProcedures.values()) { // O(|proc|)
 			final String mId = procDecl.getIdentifier();
 			Specification[] spec = procDecl.getSpecification();
@@ -600,7 +598,7 @@ public class FunctionHandler {
 					 * add missing heap arrays If the procedure modifies one heap array, we add all heap arrays. This is
 					 * a workaround. We cannot add all procedures immediately, because we do not know all heap arrays in
 					 * advance since they are added lazily on demand.
-					 * 
+					 *
 					 */
 					final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryModel()
 							.getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
@@ -620,8 +618,8 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() &&
-					(main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
+					&& (main.getCheckedMethod() == SFO.EMPTY || main.getCheckedMethod().equals(mId))) {
 				if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN)) {
 					// add a specification to check for memory leaks
 					final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
@@ -652,12 +650,13 @@ public class FunctionHandler {
 	}
 
 	private Result handleFunctionCallGivenNameAndArguments(final Dispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final ILocation loc, final String methodName, final IASTInitializerClause[] arguments) {
+			final StructHandler structHandler, final ILocation loc, final String methodName,
+			final IASTInitializerClause[] arguments) {
 
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		final ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final ArrayList<Overapprox> overappr = new ArrayList<>();
 
 		mCallGraph.get(mCurrentProcedure.getIdentifier()).add(methodName);
 
@@ -698,7 +697,7 @@ public class FunctionHandler {
 		}
 
 		// dispatch the inparams
-		final ArrayList<Expression> args = new ArrayList<Expression>();
+		final ArrayList<Expression> args = new ArrayList<>();
 		for (int i = 0; i < inParams.length; i++) {
 			final IASTInitializerClause inParam = inParams[i];
 			ExpressionResult in = ((ExpressionResult) main.dispatch(inParam));
@@ -782,7 +781,7 @@ public class FunctionHandler {
 	/**
 	 * Checks if the methodname is a function where we have our own specification or implementation and returns that in
 	 * case. (This is typically the case for functions defined in the C standard.)
-	 * 
+	 *
 	 * @param main
 	 * @param memoryHandler
 	 * @param structHandler
@@ -791,14 +790,9 @@ public class FunctionHandler {
 	 * @param arguments
 	 * @return
 	 */
-	public Result handleStandardFunctions(
-			final Dispatcher main, 
-			final MemoryHandler memoryHandler, 
-			final StructHandler structHandler,
-			final AExpressionTranslation expressionTranslation,
-			final ILocation loc, 
-			final String methodName, 
-			final IASTInitializerClause[] arguments) {
+	public Result handleStandardFunctions(final Dispatcher main, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final AExpressionTranslation expressionTranslation, final ILocation loc,
+			final String methodName, final IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
 			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
@@ -890,8 +884,8 @@ public class FunctionHandler {
 			result.addAll(arg_c);
 			result.addAll(arg_n);
 
-			final String tId =
-					main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(CPrimitives.VOID)));
+			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES,
+					new CPointer(new CPrimitive(CPrimitives.VOID)));
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
 					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
 			result.decl.add(tVarDecl);
@@ -906,46 +900,45 @@ public class FunctionHandler {
 			mCallGraph.get(mCurrentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
 
 			return result;
-//		} else if (methodName.equals("sqrt") || Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
-//			assert arguments.length == 1;
-//			final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
-//					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-//			if (Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
-//				final CPrimitive expectedType = BitvectorTranslation.getParamTypeForFpClassification(methodName);
-//				if (expectedType != null) {
-//					mExpressionTranslation.convertFloatToFloat(loc, arg, expectedType);
-//				}
-//			}
-//			final RValue rvalue = mExpressionTranslation.constructOtherUnaryFloatOperation(loc, methodName, (RValue) arg.lrVal);
-//			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
-//			result.lrVal = rvalue;
-//			return result;
+			// } else if (methodName.equals("sqrt") ||
+			// Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
+			// assert arguments.length == 1;
+			// final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
+			// .switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			// if (Arrays.asList(SFO.FLOAT_CLASSIFICATION_FUNCTION).contains(methodName)) {
+			// final CPrimitive expectedType = BitvectorTranslation.getParamTypeForFpClassification(methodName);
+			// if (expectedType != null) {
+			// mExpressionTranslation.convertFloatToFloat(loc, arg, expectedType);
+			// }
+			// }
+			// final RValue rvalue = mExpressionTranslation.constructOtherUnaryFloatOperation(loc, methodName, (RValue)
+			// arg.lrVal);
+			// final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
+			// result.lrVal = rvalue;
+			// return result;
 		} else if (methodName.equals("__builtin_huge_val")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inf");
 		} else if (methodName.equals("__builtin_huge_valf")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
 		} else if (methodName.equals("__builtin_strchr")) {
 			/*
-			 * C11, 7.21.5.2 says: 
-			 * "#include <string.h> char *strchr(const char *s, int c);
- 		     * Description: The strchr function locates the first occurrence of c (converted to a char) in the
-             * string pointed to by s. The terminating null character is considered to be part of the
-             * string.
-             * Returns : The strchr function returns a pointer to the located character, or a null pointer if the
-             * character does not occur in the string."
-             * 
-             * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
-             * NULL or a pointer into the area where the argument pointer is valid.
+			 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c); Description: The strchr
+			 * function locates the first occurrence of c (converted to a char) in the string pointed to by s. The
+			 * terminating null character is considered to be part of the string. Returns : The strchr function returns
+			 * a pointer to the located character, or a null pointer if the character does not occur in the string."
+			 * 
+			 * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
+			 * NULL or a pointer into the area where the argument pointer is valid.
 			 */
 			final List<Declaration> decl = new ArrayList<>();
 			final List<Statement> stmt = new ArrayList<>();
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			
+
 			// dispatch first argument
 			assert arguments.length == 2 : "wrong number of arguments";
 			final ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0]))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			
+
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
@@ -953,92 +946,86 @@ public class FunctionHandler {
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
 			decl.add(tmpVarDecl);
 			auxVars.put(tmpVarDecl, loc);
-			
 
-			
 			final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
 			final Expression nullExpr = expressionTranslation.constructNullPointer(loc);
 			// res.base == 0 && res.offset == 0
-			final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
-					IASTBinaryExpression.op_equals,
-					MemoryHandler.getPointerBaseAddress(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerBaseAddress(nullExpr, loc), expressionTranslation.getCTypeOfPointerComponents());
-			final Expression offsetEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
-					IASTBinaryExpression.op_equals,
-					MemoryHandler.getPointerOffset(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerOffset(nullExpr, loc), expressionTranslation.getCTypeOfPointerComponents());
-			final BinaryExpression equalsNull  = new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
-			//old solution did not work quickly..
-//			final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc, 
-//					new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
-			// res.base == arg_s.base
-			final Expression baseEquals = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
-					IASTBinaryExpression.op_equals,
-					MemoryHandler.getPointerBaseAddress(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc), expressionTranslation.getCTypeOfPointerComponents()); 
-			// res.offset >= 0
-			final Expression offsetNonNegative = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
-					IASTBinaryExpression.op_lessEqual,
-					expressionTranslation.constructLiteralForIntegerType(loc, expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
+			final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+					IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
 					expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerOffset(tmpExpr, loc), 
+					MemoryHandler.getPointerBaseAddress(nullExpr, loc),
+					expressionTranslation.getCTypeOfPointerComponents());
+			final Expression offsetEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+					IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc),
+					expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(nullExpr, loc),
+					expressionTranslation.getCTypeOfPointerComponents());
+			final BinaryExpression equalsNull =
+					new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
+			// old solution did not work quickly..
+			// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
+			// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
+			// res.base == arg_s.base
+			final Expression baseEquals = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+					IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
+					expressionTranslation.getCTypeOfPointerComponents(),
+					MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc),
+					expressionTranslation.getCTypeOfPointerComponents());
+			// res.offset >= 0
+			final Expression offsetNonNegative = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+					IASTBinaryExpression.op_lessEqual,
+					expressionTranslation.constructLiteralForIntegerType(loc,
+							expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
+					expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(tmpExpr, loc),
 					expressionTranslation.getCTypeOfPointerComponents());
 			// res.offset < length(arg_s.base)
-			final Expression offsetSmallerLength = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
-					IASTBinaryExpression.op_lessEqual,
-					MemoryHandler.getPointerOffset(tmpExpr, loc), 
-					expressionTranslation.getCTypeOfPointerComponents(),
-					new ArrayAccessExpression(loc,
-							memoryHandler.getLengthArray(loc),
-							new Expression[] { MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) } ), 
-					expressionTranslation.getCTypeOfPointerComponents());
+			final Expression offsetSmallerLength =
+					expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+							IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
+							expressionTranslation.getCTypeOfPointerComponents(),
+							new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+									new Expression[] {
+											MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
+							expressionTranslation.getCTypeOfPointerComponents());
 			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 			final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
-					new BinaryExpression(loc, Operator.LOGICAND,
-							offsetNonNegative, offsetSmallerLength));
+					new BinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
 			// assume equalsNull or inRange
-			final AssumeStatement assume = new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR,
-					equalsNull, inRange));
+			final AssumeStatement assume =
+					new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
 
 			stmt.add(assume);
 
 			final RValue lrVal = new RValue(tmpExpr, resultType);
-			
+
 			final List<Overapprox> overapprox = new ArrayList<>();
 			overapprox.add(new Overapprox("builtin_strchr", loc));
 
 			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
 		} else if (methodName.equals("__builtin_return_address")) {
 			/*
-			 * The GNU C online documentation 
-			 *  at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html
-			 *   on 09 Nov 2016 says:
-			 * "— Built-in Function: void * __builtin_return_address (unsigned int level)
-             * This function returns the return address of the current function, or of one of its callers. 
-             * The level argument is number of frames to scan up the call stack. A value of 0 yields the 
-             * return address of the current function, a value of 1 yields the return address of the 
-             * caller of the current function, and so forth. When inlining the expected behavior is 
-             * that the function returns the address of the function that is returned to. 
-             * To work around this behavior use the noinline function attribute.
-             * 
-             * The level argument must be a constant integer.
-             * On some machines it may be impossible to determine the return address of any function 
-             * other than the current one; in such cases, or when the top of the stack has been reached, 
-             * this function returns 0 or a random value. In addition, __builtin_frame_address may be used 
-             * to determine if the top of the stack has been reached.
-             * Additional post-processing of the returned value may be needed, see 
-             * __builtin_extract_return_addr.
-             * Calling this function with a nonzero argument can have unpredictable effects, 
-             * including crashing the calling program. As a result, calls that are considered unsafe 
-             * are diagnosed when the -Wframe-address option is in effect. Such calls should only be 
-             * made in debugging situations."
-             * 
-             * Current solution: replace call by a havocced aux variable.
+			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
+			 * says: "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns
+			 * the return address of the current function, or of one of its callers. The level argument is number of
+			 * frames to scan up the call stack. A value of 0 yields the return address of the current function, a value
+			 * of 1 yields the return address of the caller of the current function, and so forth. When inlining the
+			 * expected behavior is that the function returns the address of the function that is returned to. To work
+			 * around this behavior use the noinline function attribute.
+			 * 
+			 * The level argument must be a constant integer. On some machines it may be impossible to determine the
+			 * return address of any function other than the current one; in such cases, or when the top of the stack
+			 * has been reached, this function returns 0 or a random value. In addition, __builtin_frame_address may be
+			 * used to determine if the top of the stack has been reached. Additional post-processing of the returned
+			 * value may be needed, see __builtin_extract_return_addr. Calling this function with a nonzero argument can
+			 * have unpredictable effects, including crashing the calling program. As a result, calls that are
+			 * considered unsafe are diagnosed when the -Wframe-address option is in effect. Such calls should only be
+			 * made in debugging situations."
+			 * 
+			 * Current solution: replace call by a havocced aux variable.
 			 */
 			final List<Declaration> decl = new ArrayList<>();
 			final List<Statement> stmt = new ArrayList<>();
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-	
+
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
@@ -1048,7 +1035,7 @@ public class FunctionHandler {
 			auxVars.put(tmpVarDecl, loc);
 
 			final RValue lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
-			
+
 			final List<Overapprox> overapprox = new ArrayList<>();
 			overapprox.add(new Overapprox("builtin_return_address", loc));
 
@@ -1066,7 +1053,8 @@ public class FunctionHandler {
 				if (typeDeterminedByName != null) {
 					mExpressionTranslation.convertFloatToFloat(loc, arg, typeDeterminedByName);
 				}
-				final RValue rvalue = mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.lrVal);
+				final RValue rvalue = mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction,
+						(RValue) arg.lrVal);
 				final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(arg);
 				result.lrVal = rvalue;
 				return result;
@@ -1079,7 +1067,7 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * 
+	 *
 	 * The plan for function pointers: - every function f, that is used as a pointer in the C code gets a number #f - a
 	 * pointer variable that points to a function then has the value {base: -1, offset: #f} - for every function f, that
 	 * is used as a pointer, and that has a signature s, we introduce a "dispatch-procedure" in Boogie for s - the
@@ -1093,7 +1081,7 @@ public class FunctionHandler {
 	 * treatment as any pointer can be used as a void-pointer The special method CType.isCompatibleWith() is used for
 	 * this. --> the names of the different dispatch function have to match exactly the classification done by
 	 * isCompatibleWith.
-	 * 
+	 *
 	 * @param loc
 	 * @param main
 	 * @param memoryHandler
@@ -1102,8 +1090,9 @@ public class FunctionHandler {
 	 * @param arguments
 	 * @return
 	 */
-	private Result handleFunctionPointerCall(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final IASTExpression functionName, final IASTInitializerClause[] arguments) {
+	private Result handleFunctionPointerCall(final ILocation loc, final Dispatcher main,
+			final MemoryHandler memoryHandler, final StructHandler structHandler, final IASTExpression functionName,
+			final IASTInitializerClause[] arguments) {
 
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
@@ -1159,7 +1148,7 @@ public class FunctionHandler {
 	/**
 	 * takes the contract (we got from CHandler) and translates it into an array of Boogie specifications (this needs to
 	 * be called after the procedure parameters have been added to the symboltable)
-	 * 
+	 *
 	 * @param main
 	 * @param contract
 	 * @param methodName
@@ -1171,7 +1160,7 @@ public class FunctionHandler {
 		if (contract == null) {
 			spec = new Specification[0];
 		} else {
-			final List<Specification> specList = new ArrayList<Specification>();
+			final List<Specification> specList = new ArrayList<>();
 			for (int i = 0; i < contract.size(); i++) {
 				// retranslate ACSL specification needed e.g., in cases
 				// where ids of function parameters differ from is in ACSL
@@ -1186,7 +1175,7 @@ public class FunctionHandler {
 				if (spec[i] instanceof ModifiesSpecification) {
 					mModifiedGlobalsIsUserDefined.add(methodName);
 					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
+					final LinkedHashSet<String> modifiedSet = new LinkedHashSet<>();
 					for (final VariableLHS var : ms.getIdentifiers()) {
 						modifiedSet.add(var.getIdentifier());
 					}
@@ -1203,10 +1192,11 @@ public class FunctionHandler {
 	/**
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
-	 * 
+	 *
 	 * @return
 	 */
-	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun, final String methodName) {
+	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun,
+			final String methodName) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -1233,7 +1223,7 @@ public class FunctionHandler {
 
 	/**
 	 * Creates local variables for in parameters.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param loc
@@ -1247,20 +1237,20 @@ public class FunctionHandler {
 	private void handleFunctionsInParams(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
 			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt, final IASTFunctionDefinition parent) {
 		final VarList[] varListArray = mCurrentProcedure.getInParams();
-//		IASTParameterDeclaration[] paramDecs;
+		// IASTParameterDeclaration[] paramDecs;
 		IASTNode[] paramDecs;
 		if (varListArray.length == 0) {
 			/*
-			 * In C it is possible to write func(void) { ... } This results in the empty name. 
-			 * (alex: what is an empty name??)
+			 * In C it is possible to write func(void) { ... } This results in the empty name. (alex: what is an empty
+			 * name??)
 			 */
 			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
 				assert ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 0
 						|| (((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 1
-						&& ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters()[0].getDeclarator()
-						.getName().toString().equals(""));
+								&& ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters()[0]
+										.getDeclarator().getName().toString().equals(""));
 
-			} 
+			}
 			paramDecs = new IASTParameterDeclaration[0];
 		} else {
 			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
@@ -1276,7 +1266,7 @@ public class FunctionHandler {
 		assert varListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final VarList varList = varListArray[i];
-//			final IASTParameterDeclaration paramDec = paramDecs[i];
+			// final IASTParameterDeclaration paramDec = paramDecs[i];
 			final IASTNode paramDec = paramDecs[i];
 			for (final String bId : varList.getIdentifiers()) {
 				final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
@@ -1379,8 +1369,8 @@ public class FunctionHandler {
 	/**
 	 * Add a procedure to procedures according to a given CFunction. I.e. do a procedure declaration.
 	 */
-	private void addAProcedure(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract, final String methodName,
-			final CFunction funcType) {
+	private void addAProcedure(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract,
+			final String methodName, final CFunction funcType) {
 		// begin new scope for retranslation of ACSL specification
 		main.mCHandler.beginScope();
 
@@ -1420,7 +1410,7 @@ public class FunctionHandler {
 			// combine the specification from the definition with the one from
 			// the declaration
 			final List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
-			final ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(spec));
 			newSpecs.addAll(specFromDef);
 			spec = newSpecs.toArray(new Specification[newSpecs.size()]);
 			// TODO something else to take over for a declaration after the
@@ -1437,10 +1427,10 @@ public class FunctionHandler {
 	/**
 	 * Adds searchString to modifiedGlobals iff searchString is a global variable and the user has not defined a
 	 * modifies clause.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
-	 * 
+	 *
 	 * @param searchString
 	 *            = boogieVarName!
 	 * @param errLoc
@@ -1482,7 +1472,7 @@ public class FunctionHandler {
 
 	/**
 	 * Checks, whether all procedures that are being called in C, were eventually declared within the C program.
-	 * 
+	 *
 	 * @return null if all called procedures were declared, otherwise the identifier of one procedure that was called
 	 *         but not declared.
 	 */
@@ -1515,16 +1505,17 @@ public class FunctionHandler {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
 		}
 		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp"); // FIXME
-																												// string
-																												// to
-																												// SFO..?
+																													// string
+																													// to
+																													// SFO..?
 		final CFunction cFuncWithFP = new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
 		return cFuncWithFP;
 	}
 
 	public Result makeTheFunctionCallItself(final Dispatcher main, final ILocation loc, final String methodName,
-			final ArrayList<Statement> stmt, final ArrayList<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
-			final ArrayList<Overapprox> overappr, final ArrayList<Expression> args) {
+			final ArrayList<Statement> stmt, final ArrayList<Declaration> decl,
+			final Map<VariableDeclaration, ILocation> auxVars, final ArrayList<Overapprox> overappr,
+			final ArrayList<Expression> args) {
 		Expression expr = null;
 		Statement call;
 		if (mProcedures.containsKey(methodName)) {
@@ -1579,7 +1570,7 @@ public class FunctionHandler {
 
 	/**
 	 * Checks a VarList for a specific pattern, that represents "void".
-	 * 
+	 *
 	 * @param in
 	 *            the methods in-parameter list.
 	 * @return true iff in represents void.
@@ -1595,13 +1586,13 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Getter for modified globals. Returns an unmodifiable map -- if you want to 
-	 * add something to the map, use the addModifiedGlobal(..) method
+	 * Getter for modified globals. Returns an unmodifiable map -- if you want to add something to the map, use the
+	 * addModifiedGlobal(..) method
 	 */
 	public Map<String, LinkedHashSet<String>> getModifiedGlobals() {
 		return Collections.unmodifiableMap(mModifiedGlobals);
 	}
-	
+
 	public void addModifiedGlobal(final String procedureName, final String globVarName) {
 		LinkedHashSet<String> set = mModifiedGlobals.get(procedureName);
 		if (set == null) {
@@ -1610,10 +1601,10 @@ public class FunctionHandler {
 		}
 		set.add(globVarName);
 	}
-	
-	
+
 	/**
 	 * Introduces an empty entry for a procedure in mModifiedGlobals.
+	 * 
 	 * @param procedureName
 	 */
 	public void addModifiedGlobalEntry(final String procedureName) {
@@ -1654,7 +1645,7 @@ public class FunctionHandler {
 		}
 		set.add(target);
 	}
-	
+
 	public void addCallGraphNode(final String node) {
 		Set<String> set = mCallGraph.get(node);
 		if (set == null) {
