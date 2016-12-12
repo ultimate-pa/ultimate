@@ -63,21 +63,14 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 		//@formatter:off
 
 		// available sets:
-//		Termination-Concurrency.set
-//		Termination-ControlFlow.set
-//		Termination-Loops.set
-//		Termination-Main.set
-//		Termination-ProductLines.set
-//		Termination-Recursive.set
-//		Termination-Sequentialized.set
+//		Termination-MainControlFlow.set
+//		Termination-MainHeap.set
+//		Termination-Other.set
 		//@formatter:on
 
-		rtr.addAll(getForAll("Termination-Main", 9999));
-		rtr.addAll(getForAll("Termination-ControlFlow", 9999));
-		rtr.addAll(getForAll("Termination-Loops", 9999));
-		rtr.addAll(getForAll("Termination-ProductLines", 30));
-		rtr.addAll(getForAll("Termination-Recursive", 9999));
-		rtr.addAll(getForAll("Termination-Sequentialized", 9999));
+		rtr.addAll(getForAll("Termination-MainControlFlow", 9999));
+		rtr.addAll(getForAll("Termination-MainHeap", 9999));
+		rtr.addAll(getForAll("Termination-Other", 9999));
 		return rtr;
 	}
 	
@@ -91,7 +84,7 @@ public class Svcomp17AutomizerTerminationTestSuite extends AbstractSVCOMPTestSui
 	
 	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
-		rtr.add(getTestDefinitionFromExamples(set, "BuchiAutomizerC.xml", "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf",
+		rtr.add(getTestDefinitionFromExamples(set, "BuchiAutomizerCInline.xml", "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf",
 				timeout, limit));
 		return rtr;
 	}
