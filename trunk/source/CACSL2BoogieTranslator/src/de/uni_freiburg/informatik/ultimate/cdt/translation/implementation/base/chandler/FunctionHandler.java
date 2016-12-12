@@ -918,6 +918,11 @@ public class FunctionHandler {
 			// return result;
 		} else if (methodName.equals("__builtin_huge_val")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inf");
+		} else if (methodName.equals("__builtin_unreachable")) {
+			// TODO: Add option that allows us to check for builtin_unreachable by adding assert
+			// return new ExpressionResult(Collections.singletonList(new AssertStatement(loc,
+			// new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(loc, false))), null);
+			return new SkipResult();
 		} else if (methodName.equals("__builtin_huge_valf")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
 		} else if (methodName.equals("__builtin_strchr")) {
@@ -926,7 +931,7 @@ public class FunctionHandler {
 			 * function locates the first occurrence of c (converted to a char) in the string pointed to by s. The
 			 * terminating null character is considered to be part of the string. Returns : The strchr function returns
 			 * a pointer to the located character, or a null pointer if the character does not occur in the string."
-			 * 
+			 *
 			 * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
 			 * NULL or a pointer into the area where the argument pointer is valid.
 			 */
@@ -1010,7 +1015,7 @@ public class FunctionHandler {
 			 * of 1 yields the return address of the caller of the current function, and so forth. When inlining the
 			 * expected behavior is that the function returns the address of the function that is returned to. To work
 			 * around this behavior use the noinline function attribute.
-			 * 
+			 *
 			 * The level argument must be a constant integer. On some machines it may be impossible to determine the
 			 * return address of any function other than the current one; in such cases, or when the top of the stack
 			 * has been reached, this function returns 0 or a random value. In addition, __builtin_frame_address may be
@@ -1019,7 +1024,7 @@ public class FunctionHandler {
 			 * have unpredictable effects, including crashing the calling program. As a result, calls that are
 			 * considered unsafe are diagnosed when the -Wframe-address option is in effect. Such calls should only be
 			 * made in debugging situations."
-			 * 
+			 *
 			 * Current solution: replace call by a havocced aux variable.
 			 */
 			final List<Declaration> decl = new ArrayList<>();
@@ -1604,7 +1609,7 @@ public class FunctionHandler {
 
 	/**
 	 * Introduces an empty entry for a procedure in mModifiedGlobals.
-	 * 
+	 *
 	 * @param procedureName
 	 */
 	public void addModifiedGlobalEntry(final String procedureName) {
