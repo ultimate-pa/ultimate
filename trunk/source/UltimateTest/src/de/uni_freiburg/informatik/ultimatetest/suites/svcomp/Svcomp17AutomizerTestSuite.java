@@ -48,7 +48,7 @@ public class Svcomp17AutomizerTestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 	
 	@Override
@@ -63,35 +63,25 @@ public class Svcomp17AutomizerTestSuite extends AbstractSVCOMPTestSuite {
 		//@formatter:off
 
 		// available sets:
-		//Arrays
-		//BitVectors.set
-		//Concurrency.set
-		//ControlFlowInteger.set
-		//DeviceDriversLinux64.set
-		//DriverChallenges.set
-		//ECA.set
-		//Floats.set
-		//HeapManipulation.set
-		//Loops.set
-		//MemorySafety.set
-		//ProductLines.set
-		//Recursive.set
-		//Sequentialized.set
-		//Simple.set
-		//Stateful.set
-		//Termination-crafted.set
-		//Termination-ext.set
+//		ReachSafety-Arrays.set
+//		ReachSafety-BitVectors.set
+//		ReachSafety-ControlFlow.set
+//		ReachSafety-ECA.set
+//		ReachSafety-Floats.set
+//		ReachSafety-Heap.set
+//		ReachSafety-Loops.set
+//		ReachSafety-ProductLines.set
+//		ReachSafety-Recursive.set
+//		ReachSafety-Sequentialized.set
+//		Systems_DeviceDriversLinux64_Safety.set
 		//@formatter:on
 		
-//		rtr.addAll(getForAll("ControlFlow", 40));
-//		rtr.addAll(getForAll("ECA", 20));
-		 rtr.addAll(getForAll("DeviceDriversLinux64", 100));
-//		rtr.addAll(getForAll("Loops", 40));
-//		rtr.addAll(getForAll("Recursive", 30));
-//		rtr.addAll(getForAll("ArraysReach", 20));
-//		rtr.addAll(getForAll("ProductLines", 20));
-//		rtr.addAll(getForAll("Sequentialized", 20));
-//		rtr.addAll(getForAll("Floats", 10));
+		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
+		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
+		rtr.addAll(getForAll("ReachSafety-Loops", 40));
+		rtr.addAll(getForAll("ReachSafety-ProductLines", 20));
+		rtr.addAll(getForAll("ReachSafety-Sequentialized", 20));
+		rtr.addAll(getForAll("ReachSafety-BitVectors", 20));
 		
 		return rtr;
 	}

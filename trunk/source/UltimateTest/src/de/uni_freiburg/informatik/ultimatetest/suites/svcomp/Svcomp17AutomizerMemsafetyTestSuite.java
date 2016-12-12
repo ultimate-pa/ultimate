@@ -48,7 +48,7 @@ public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 	
 	@Override
@@ -63,13 +63,18 @@ public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite
 		//@formatter:off
 
 		// available sets:
-		//ArraysMemSafety.set
-		//HeapMemSafety.set
+		//MemSafety-Arrays
+		//MemSafety-Heap
+		//MemSafety-LinkedLists
+		//MemSafety-Other
+		//Systems_BusyBox_MemSafety
 		//@formatter:on
 		
-		rtr.addAll(getForAll("ArraysMemSafety", 9999));
-		rtr.addAll(getForAll("HeapMemSafety", 9999));
-		
+		rtr.addAll(getForAll("MemSafety-Arrays", 9999));
+		rtr.addAll(getForAll("MemSafety-Heap", 9999));
+		rtr.addAll(getForAll("MemSafety-LinkedLists", 9999));
+		rtr.addAll(getForAll("MemSafety-Other", 9999));
+//		rtr.addAll(getForAll("Systems_BusyBox_MemSafety", 9999));
 		return rtr;
 	}
 	
