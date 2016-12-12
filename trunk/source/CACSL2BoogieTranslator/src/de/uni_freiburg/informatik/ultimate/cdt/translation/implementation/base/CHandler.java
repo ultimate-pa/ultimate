@@ -2868,7 +2868,7 @@ public class CHandler implements ICHandler {
 
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
 		final ASTType tmpType = mTypeHandler.cType2AstType(loc, opPositive.lrVal.getCType());
-		assert tmpType != null : "";
+		assert tmpType != null : "Could not find ASTType for CType " + opPositive.lrVal.getCType();
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
 		decl.add(tmpVar);
