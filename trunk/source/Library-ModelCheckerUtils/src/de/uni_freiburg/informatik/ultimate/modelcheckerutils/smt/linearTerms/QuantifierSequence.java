@@ -68,18 +68,25 @@ public class QuantifierSequence {
 		while(innerTerm instanceof QuantifiedFormula) {
 			final QuantifiedFormula qf = (QuantifiedFormula) innerTerm;
 			final Set<TermVariable> variables = SmtUtils.filterToVarsThatOccurFreelyInTerm(
-					Arrays.asList(qf.getVariables()), qf.getSubformula()); 
-			final int quantifier = qf.getQuantifier();
-			if (mQuantifierBlocks.isEmpty() || mQuantifierBlocks.get(mQuantifierBlocks.size()-1).getQuantifier() != quantifier) {
-				final QuantifiedVariables qv = new QuantifiedVariables(qf.getQuantifier(), variables);
-				mQuantifierBlocks.add(qv);
-			} else {
-				final QuantifiedVariables last = mQuantifierBlocks.remove(mQuantifierBlocks.size()-1);
-				final Set<TermVariable> newQuantifiedVariables = new HashSet<>(last.getVariables());
-				newQuantifiedVariables.addAll(variables);
-				mQuantifierBlocks.add(new QuantifiedVariables(quantifier, newQuantifiedVariables));
+					Arrays.asList(qf.getVariables()), qf.getSubformula());
+			if (!variables.isEmpty()) {
+				final int quantifier = qf.getQuantifier();
+				if (mQuantifierBlocks.isEmpty() || mQuantifierBlocks.get(mQuantifierBlocks.size()-1).getQuantifier() != quantifier) {
+					final QuantifiedVariables qv = new QuantifiedVariables(qf.getQuantifier(), variables);
+					mQuantifierBlocks.add(qv);
+				} else {
+					final QuantifiedVariables last = mQuantifierBlocks.remove(mQuantifierBlocks.size()-1);
+					final Set<TermVariable> newQuantifiedVariables = new HashSet<>(last.getVariables());
+					newQuantifiedVariables.addAll(variables);
+					mQuantifierBlocks.add(new QuantifiedVariables(quantifier, newQuantifiedVariables));
+				}
 			}
 			innerTerm = qf.getSubformula();
+		}
+		for (final QuantifiedVariables qb : mQuantifierBlocks) {
+			if (qb.getVariables().isEmpty()) {
+				throw new IllegalArgumentException("empty set not allowed");
+			}
 		}
 		mInnerTerm = innerTerm;
 	}
@@ -152,6 +159,11 @@ public class QuantifierSequence {
 			innerTerms[i] = quantifierSequences[i].getInnerTerm();
 			if (quantifierSequences[i].getNumberOfQuantifierBlocks() > 0) {
 				integrateQuantifierBlocks(resultQuantifierBlocks, quantifierSequences[i].getQuantifierBlocks());
+			}
+		}
+		for (final QuantifiedVariables qb : resultQuantifierBlocks) {
+			if (qb.getVariables().isEmpty()) {
+				throw new IllegalArgumentException("empty set not allowed");
 			}
 		}
 		final Term resultInnerTerm;
