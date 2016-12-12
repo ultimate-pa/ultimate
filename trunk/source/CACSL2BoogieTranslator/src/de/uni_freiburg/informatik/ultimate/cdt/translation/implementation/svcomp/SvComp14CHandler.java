@@ -257,7 +257,7 @@ public class SvComp14CHandler extends CHandler {
 				default:
 					throw new AssertionError("unknown type " + t);
 				}
-				final ASTType type = mTypeHandler.ctype2asttype(loc, cType);
+				final ASTType type = mTypeHandler.cType2AstType(loc, cType);
 				final String tmpName = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 				final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
@@ -279,7 +279,7 @@ public class SvComp14CHandler extends CHandler {
 			}
 			// 2015-11-05 Matthias: TODO check if int is reasonable here
 			final CType returnType = new CPrimitive(CPrimitives.INT);
-			final ASTType tempType = mTypeHandler.ctype2asttype(loc, returnType);
+			final ASTType tempType = mTypeHandler.cType2AstType(loc, returnType);
 			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { tId }, tempType) });

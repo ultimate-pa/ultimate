@@ -247,14 +247,14 @@ public class FunctionHandler {
 
 		// There is only one return parameter in C, so this array always has size 1.
 		VarList[] out = new VarList[1];
-		final ASTType type = main.mTypeHandler.ctype2asttype(loc, returnCType);
+		final ASTType type = main.mTypeHandler.cType2AstType(loc, returnCType);
 
 		if (returnTypeIsVoid) { // void, so there are no out vars
 			out = new VarList[0];
 		} else if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			// defaulting to int, when a method is called that is only declared later
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
+			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
 		} else { // "normal case"
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
@@ -765,7 +765,7 @@ public class FunctionHandler {
 						new VarList(loc,
 								new String[] {
 										mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() },
-								((TypeHandler) main.mTypeHandler).ctype2asttype(loc,
+								((TypeHandler) main.mTypeHandler).cType2AstType(loc,
 										mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
 			}
 			final Procedure currentProc = mProcedures.get(methodName);
@@ -1214,7 +1214,7 @@ public class FunctionHandler {
 														// Boogie
 				type = main.mTypeHandler.constructPointerType(loc);
 			} else {
-				type = main.mTypeHandler.ctype2asttype(loc, paramDec.getType());
+				type = main.mTypeHandler.cType2AstType(loc, paramDec.getType());
 			}
 
 			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
@@ -1400,7 +1400,7 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-			final ASTType type = main.mTypeHandler.ctype2asttype(loc, funcType.getResultType());
+			final ASTType type = main.mTypeHandler.cType2AstType(loc, funcType.getResultType());
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
 		if (!mModifiedGlobals.containsKey(methodName)) {
@@ -1556,7 +1556,7 @@ public class FunctionHandler {
 			// we we INT
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			final VarList tempVar =
-					new VarList(loc, new String[] { ident }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
+					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
 			final VariableDeclaration tmpVar =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);

@@ -444,8 +444,8 @@ public abstract class AExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
-			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
+			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
+			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
@@ -459,7 +459,7 @@ public abstract class AExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType paramAstType = mTypeHandler.ctype2asttype(loc, type);
+			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
 			final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType, paramAstType);
 		}
@@ -472,7 +472,7 @@ public abstract class AExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 		}
 		return prefixedFunctionName;
@@ -484,7 +484,7 @@ public abstract class AExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 		}
 		return prefixedFunctionName;
@@ -628,7 +628,7 @@ public abstract class AExpressionTranslation {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
 					new Expression[] { new StringLiteral(loc, functionName) });
 			final Attribute[] attributes = new Attribute[] { attribute };
-			final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
 		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] {});

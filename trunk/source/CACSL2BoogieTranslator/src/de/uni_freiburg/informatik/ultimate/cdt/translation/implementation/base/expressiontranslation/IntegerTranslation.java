@@ -675,7 +675,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
-				final ASTType paramAstType = mTypeHandler.ctype2asttype(loc, type1);
+				final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type1);
 				final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
 						paramAstType);
@@ -720,7 +720,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
-				final ASTType astType = mTypeHandler.ctype2asttype(loc, type);
+				final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp });
@@ -739,7 +739,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER,
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
-				final ASTType astType = mTypeHandler.ctype2asttype(loc, type1);
+				final ASTType astType = mTypeHandler.cType2AstType(loc, type1);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 			}
 			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
@@ -853,7 +853,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			
 			final Attribute[] attributes;
-			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
+			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
 			if (newType.isFloatingType()) {
 				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_real", null);
 			} else if (newType.isIntegerType()) {
@@ -862,7 +862,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				throw new AssertionError("unhandled case");
 			}
 			final ASTType[] params = new ASTType[]{paramASTType};
-			final ASTType resultASTType = mTypeHandler.ctype2asttype(loc, newType);
+			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
 			
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, params);
 		}

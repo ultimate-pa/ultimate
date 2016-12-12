@@ -455,9 +455,9 @@ public class ExpressionResult extends Result {
 			final VarList newArrayVl =
 					new VarList(loc, new String[] { newArrayId },
 							new ArrayType(loc, new String[0],
-									new ASTType[] { main.mTypeHandler.ctype2asttype(loc,
+									new ASTType[] { main.mTypeHandler.cType2AstType(loc,
 											arrayType.getDimensions()[0].getCType()) },
-									main.mTypeHandler.ctype2asttype(loc, arrayType.getValueType())));
+									main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 			final VariableDeclaration newArrayDec =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType);

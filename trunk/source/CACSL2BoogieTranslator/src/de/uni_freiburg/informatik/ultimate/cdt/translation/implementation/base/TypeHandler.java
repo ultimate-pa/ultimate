@@ -239,10 +239,10 @@ public class TypeHandler implements ITypeHandler {
     		final Result opRes = main.dispatch(node.getDeclTypeExpression());
     		if (opRes instanceof ExpressionResult) {
     			final CType cType = ((ExpressionResult) opRes).lrVal.getCType();
-    			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
+    			return new TypesResult(cType2AstType(loc,  cType), node.isConst(), false, cType);
     		} else if (opRes instanceof DeclaratorResult) {
     			final CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
-    			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
+    			return new TypesResult(cType2AstType(loc,  cType), node.isConst(), false, cType);
     		}
     	}
     	default:
@@ -401,7 +401,7 @@ public class TypeHandler implements ITypeHandler {
             		fNames.add(declaration.getName());
             		fTypes.add(declaration.getType());
             		fields.add(new VarList(loc, new String[] {declaration.getName()},
-            				ctype2asttype(loc, declaration.getType())));
+            				cType2AstType(loc, declaration.getType())));
             		bitFieldWidths.add(declaration.getBitfieldSize());
             	}
             } else if (r instanceof SkipResult) { // skip ;)
@@ -509,7 +509,7 @@ public class TypeHandler implements ITypeHandler {
         assert sT.containsBoogieSymbol(leftMostId);
         final String cId = sT.getCID4BoogieID(leftMostId, loc);
         assert sT.containsKey(cId);
-        final ASTType t = ctype2asttype(loc, sT.get(cId, loc).getCVariable());
+        final ASTType t = cType2AstType(loc, sT.get(cId, loc).getCVariable());
         return traverseForType(loc, t, flat, 1);
     }
 
@@ -567,7 +567,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-	public ASTType ctype2asttype(final ILocation loc, final CType cType) {
+	public ASTType cType2AstType(final ILocation loc, final CType cType) {
 		if (cType instanceof CPrimitive) {
 			return cPrimitive2asttype(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
@@ -577,9 +577,9 @@ public class TypeHandler implements ITypeHandler {
 			final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
 			final String[] typeParams = new String[0]; //new String[cart.getDimensions().length];
 			for (int i = 0; i < cart.getDimensions().length; i++) {
-				indexTypes[i] = ctype2asttype(loc, cart.getDimensions()[i].getCType());
+				indexTypes[i] = cType2AstType(loc, cart.getDimensions()[i].getCType());
 			}
-			return new ArrayType(loc, typeParams, indexTypes, ctype2asttype(loc, cart.getValueType()));
+			return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
 		} else if (cType instanceof CStruct) {
 			final CStruct cstruct = (CStruct) cType;
 			if (cstruct.isIncomplete()) {
@@ -589,7 +589,7 @@ public class TypeHandler implements ITypeHandler {
 			for (int i = 0; i < cstruct.getFieldCount(); i++) {
 				fields[i] = new VarList(loc,
 						new String[] {cstruct.getFieldIds()[i]},
-						ctype2asttype(loc, cstruct.getFieldTypes()[i]));
+						cType2AstType(loc, cstruct.getFieldTypes()[i]));
 			}
 			return new StructType(loc, fields);
 		} else if (cType instanceof CNamed) {
@@ -678,9 +678,9 @@ public class TypeHandler implements ITypeHandler {
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		if (mPointerTypeNeeded) {
 			final VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
-					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
+					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET },
-					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
+					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			final VarList[] fields = new VarList[] { fBase, fOffset };
 			final ASTType pointerType = new StructType(tuLoc, fields);
 			// Pointer is non-finite, right? (ZxZ)..

@@ -791,7 +791,7 @@ public class CHandler implements ICHandler {
 				if (onHeap) {
 					translatedType = mTypeHandler.constructPointerType(loc);
 				} else {
-					translatedType = mTypeHandler.ctype2asttype(loc, cDec.getType());
+					translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
 				}
 
 				if (storageClass == CStorageClass.TYPEDEF) {
@@ -1194,7 +1194,7 @@ public class CHandler implements ICHandler {
 
 		// In this case we need a temporary variable for the new value
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD, exprRes.lrVal.getCType());
-		final ASTType tmpIType = mTypeHandler.ctype2asttype(loc, exprRes.lrVal.getCType());
+		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
 		result.auxVars.put(tmpVar, loc);
 		result.decl.add(tmpVar);
@@ -1246,7 +1246,7 @@ public class CHandler implements ICHandler {
 
 		// In this case we need a temporary variable for the old value
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD, exprRes.lrVal.getCType());
-		final ASTType tmpIType = mTypeHandler.ctype2asttype(loc, exprRes.lrVal.getCType());
+		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
 		result.auxVars.put(tmpVar, loc);
 		result.decl.add(tmpVar);
@@ -2867,7 +2867,7 @@ public class CHandler implements ICHandler {
 		overappr.addAll(opCondition.overappr);
 
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
-		final ASTType tmpType = mTypeHandler.ctype2asttype(loc, opPositive.lrVal.getCType());
+		final ASTType tmpType = mTypeHandler.cType2AstType(loc, opPositive.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
 		decl.add(tmpVar);
@@ -3204,7 +3204,7 @@ public class CHandler implements ICHandler {
 						final String tmpId = mNameHandler.getTempVarUID(SFO.AUXVAR.UNION, en.getValue());
 						final VariableDeclaration tVarDec =
 								new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
-										new String[] { tmpId }, mTypeHandler.ctype2asttype(loc, en.getValue())) });
+										new String[] { tmpId }, mTypeHandler.cType2AstType(loc, en.getValue())) });
 						decl.add(tVarDec);
 						auxVars.put(tVarDec, loc); // ensures that the variable will be havoced (necessary only when we
 													// are inside a loop)
@@ -3633,7 +3633,7 @@ public class CHandler implements ICHandler {
 		final CEnum cEnum = (CEnum) rt.cType;
 		final ILocation loc = LocationFactory.createCLocation(node);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		final ASTType at = mTypeHandler.ctype2asttype(loc, intType);
+		final ASTType at = mTypeHandler.cType2AstType(loc, intType);
 		final String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
 		final Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
@@ -3734,7 +3734,7 @@ public class CHandler implements ICHandler {
 				oldCDec = en.getValue();
 				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
 						oldDec.getIdentifier(), oldDec.getTypeParams(),
-						mTypeHandler.ctype2asttype(oldDec.getLocation(), cvar));
+						mTypeHandler.cType2AstType(oldDec.getLocation(), cvar));
 				break; // the if should be entered only once, anyway
 			}
 		}

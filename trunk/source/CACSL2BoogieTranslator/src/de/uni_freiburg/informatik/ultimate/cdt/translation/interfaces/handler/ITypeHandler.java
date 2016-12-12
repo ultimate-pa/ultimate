@@ -204,7 +204,7 @@ public interface ITypeHandler extends IHandler {
      * @param cType
      * @return
      */
-	public ASTType ctype2asttype(ILocation loc, CType cType);
+	public ASTType cType2AstType(ILocation loc, CType cType);
 	
 	/**
 	 * Begin a scope for all Scoped Maps and Sets. (Types are scoped, too..)
