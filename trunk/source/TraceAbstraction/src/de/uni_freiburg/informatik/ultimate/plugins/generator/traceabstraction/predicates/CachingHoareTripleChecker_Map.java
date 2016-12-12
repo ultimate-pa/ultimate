@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -56,21 +57,12 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 		super(services, protectedHoareTripleChecker, predicateUnifer);
 	}
 
-	@Override
-	public Validity getFromInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		return mInternalCache.get(act, pre, succ);
-	}
 
 	@Override
-	public void addToInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ,
-			final Validity result) {
-		mInternalCache.put(act, pre, succ, result);
-	}
-
-	@Override
-	protected Validity extendedCacheCheckInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+	protected Validity extendedCacheCheckInternal(final IPredicate pre, final IAction act, final IPredicate succ,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
 		boolean someResultWasUnknown = false;
-		final NestedMap2<IPredicate, IPredicate, Validity> pred2succ = mInternalCache.get(act);
+		final NestedMap2<IPredicate, IPredicate, Validity> pred2succ = binaryCache.get(act);
 		if (pred2succ == null) {
 			// cannot get any information from cache
 			return null;

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -36,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * IHoareTripleChecker that caches already computed results.
@@ -50,6 +53,13 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	protected final IHoareTripleChecker mComputingHoareTripleChecker;
 	protected final PredicateUnifier mPredicateUnifer;
 	protected final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
+	
+	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache =
+			new NestedMap3<>();
+	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache =
+			new NestedMap3<>();
+	private final NestedMap4<IPredicate, IAction, IPredicate, IPredicate, Validity> mReturnCache =
+			new NestedMap4<>();
 
 	
 	public CachingHoareTripleChecker(
@@ -66,7 +76,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		Validity result = getFromInternalCache(pre, act, succ);
 		if (result == null) {
-			result = extendedCacheCheckInternal(pre,act,succ);
+			result = extendedCacheCheckInternal(pre, act, succ, mInternalCache);
 			if (result == null) {
 				result = mComputingHoareTripleChecker.checkInternal(pre, act, succ);
 			}
@@ -75,12 +85,17 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	protected abstract Validity getFromInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ);
+	private Validity getFromInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		return mInternalCache.get(act, pre, succ);
+	}
 
-	protected abstract void addToInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ,
-			final Validity result);
+	private final void addToInternalCache(final IPredicate pre, final IInternalAction act, final IPredicate succ,
+			final Validity result) {
+		mInternalCache.put(act, pre, succ, result);
+	}
 
-	protected abstract Validity extendedCacheCheckInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ);
+	protected abstract Validity extendedCacheCheckInternal(final IPredicate pre, final IAction act, final IPredicate succ, 
+			NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache);
 
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
