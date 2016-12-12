@@ -350,15 +350,15 @@ public class CHandler implements ICHandler {
 
 		mSymbolTable = new SymbolTable(main);
 
-		mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
-		mAxioms = new LinkedHashSet<Axiom>();
+		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
+		mAxioms = new LinkedHashSet<>();
 		mBacktranslator = backtranslator;
-		mContract = new ArrayList<ACSLNode>();
+		mContract = new ArrayList<>();
 		mErrorLabelWarning = errorLabelWarning;
-		mInnerMostLoopLabel = new Stack<String>();
+		mInnerMostLoopLabel = new Stack<>();
 
-		mBoogieIdsOfHeapVars = new LinkedHashSet<String>();
-		mCurrentDeclaredTypes = new ArrayDeque<TypesResult>();
+		mBoogieIdsOfHeapVars = new LinkedHashSet<>();
+		mCurrentDeclaredTypes = new ArrayDeque<>();
 
 		mGlobAcslExtractors = new ArrayList<>();
 
@@ -428,7 +428,7 @@ public class CHandler implements ICHandler {
 			final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 			main.unsupportedSyntax(loc, msg);
 		}
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
@@ -519,8 +519,7 @@ public class CHandler implements ICHandler {
 
 		// annotate the Unit with LTLPropertyChecks if applicable
 		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
-			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions =
-					new LinkedHashMap<String, LTLPropertyCheck.CheckableExpression>();
+			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
 
 			for (final Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex
 					.getAP2SubExpressionMap().entrySet()) {
@@ -578,8 +577,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTCompoundStatement node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		ArrayList<Statement> stmt = new ArrayList<>();
 		LRValue expr = null;
 		final IASTNode parent = node.getParent();
 
@@ -659,37 +658,29 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
-
-		/*
-		 * 
-		 */
 		final ILocation loc = LocationFactory.createCLocation(node);
 
 		/*
 		 * skip this declaration if we have inferred that it is not reachable
 		 */
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		if (reachableDecs != null) {
-			if (node.getParent() instanceof IASTTranslationUnit) {
-				if (!reachableDecs.contains(node)) {
-					boolean skip = true;
-					for (final IASTDeclarator d : node.getDeclarators()) {
-						if (reachableDecs.contains(d)) {
-							skip = false;
-						}
-					}
-					if (reachableDecs.contains(node.getDeclSpecifier())) {
-						skip = false;
-					}
-					if (skip) {
-						return new SkipResult();
-					}
+		if (reachableDecs != null && node.getParent() instanceof IASTTranslationUnit && !reachableDecs.contains(node)) {
+			boolean skip = true;
+			for (final IASTDeclarator d : node.getDeclarators()) {
+				if (reachableDecs.contains(d)) {
+					skip = false;
 				}
+			}
+			if (reachableDecs.contains(node.getDeclSpecifier())) {
+				skip = false;
+			}
+			if (skip) {
+				return new SkipResult();
 			}
 		}
 
 		/*
-		 * not sure what it means when the declspecifier is null .. 
+		 * not sure what it means when the declspecifier is null ..
 		 */
 		if (node.getDeclSpecifier() == null) {
 			final String msg = "This statement can be removed!";
@@ -937,9 +928,7 @@ public class CHandler implements ICHandler {
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
 		newResType.isOnHeap |=
-				main instanceof MainDispatcher ? 
-						((MainDispatcher) main).getVariablesForHeap().contains(node) : 
-							false; 
+				main instanceof MainDispatcher ? ((MainDispatcher) main).getVariablesForHeap().contains(node) : false;
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		for (int i = 0; i < pointerOps.length; i++) {
@@ -950,9 +939,9 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
-			final ArrayList<RValue> size = new ArrayList<RValue>();
+			final ArrayList<RValue> size = new ArrayList<>();
 			// expression results of from array modifiers
-			final ArrayList<ExpressionResult> expressionResults = new ArrayList<ExpressionResult>();
+			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
 
 			for (final IASTArrayModifier am : arrDecl.getArrayModifiers()) {
 				final RValue sizeFactor;
@@ -1019,13 +1008,14 @@ public class CHandler implements ICHandler {
 			newResType.cType = funcType;
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
-			
-			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length :
-				"implicit int declarations are forbidden from C99 on, this is one, right?";
-			
+
+			assert funcDecl.getParameterDeclarations().length == funcDecl
+					.getParameterNames().length : "implicit int declarations are forbidden from C99 on, this is one, right?";
+
 			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
-				final DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
+				final DeclarationResult paramDeclRes =
+						(DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
 				assert paramDeclRes.getDeclarations().size() == 1;
 				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
 			}
@@ -1051,15 +1041,15 @@ public class CHandler implements ICHandler {
 			if (node.getInitializer() != null) {
 				final CDeclaration cdec = result.getDeclaration();
 				result = new DeclaratorResult(new CDeclaration(cdec.getType(), cdec.getName(), node.getInitializer(),
-						variableLengthArrayAuxVarInitializer, cdec.isOnHeap(), CStorageClass.UNSPECIFIED, bitfieldSize));
+						variableLengthArrayAuxVarInitializer, cdec.isOnHeap(), CStorageClass.UNSPECIFIED,
+						bitfieldSize));
 			}
 			return result;
-		} else {
-			final DeclaratorResult result = new DeclaratorResult(
-					new CDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
-							variableLengthArrayAuxVarInitializer, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
-			return result;
 		}
+		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(newResType.cType,
+				node.getName().toString(), node.getInitializer(), variableLengthArrayAuxVarInitializer,
+				newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
+		return result;
 	}
 
 	@Override
@@ -1088,9 +1078,9 @@ public class CHandler implements ICHandler {
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
 			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), cType);
-			final ArrayList<Declaration> decls = new ArrayList<Declaration>();
+			final ArrayList<Declaration> decls = new ArrayList<>();
 			decls.add(tVarDecl);
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 			auxVars.put(tVarDecl, loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
@@ -1167,8 +1157,7 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return o;
 		case IASTUnaryExpression.op_sizeof:
-			final Map<VariableDeclaration, ILocation> emptyAuxVars =
-					new LinkedHashMap<VariableDeclaration, ILocation>(0);
+			final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 			return new ExpressionResult(
 					new RValue(mMemoryHandler.calculateSizeOf(loc, oType), new CPrimitive(CPrimitives.INT)),
 					emptyAuxVars);
@@ -1466,11 +1455,11 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTBinaryExpression node) {
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ILocation loc = LocationFactory.createCLocation(node);
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final List<Overapprox> overappr = new ArrayList<>();
 
 		final ExpressionResult l = (ExpressionResult) main.dispatch(node.getOperand1());
 		final ExpressionResult r = (ExpressionResult) main.dispatch(node.getOperand2());
@@ -1504,15 +1493,14 @@ public class CHandler implements ICHandler {
 					address = new RValue(r.lrVal.getValue(), new CPointer(((CArray) rType).getValueType()));
 				}
 				return makeAssignment(loc, stmt, l.lrVal, address, decl, auxVars, overappr);
-			} else {
-				stmt.addAll(rr.stmt);
-				decl.addAll(rr.decl);
-				auxVars.putAll(rr.auxVars);
-				overappr.addAll(rr.overappr);
-				rr.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-				return makeAssignment(loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
-						l.unionFieldIdToCType);
 			}
+			stmt.addAll(rr.stmt);
+			decl.addAll(rr.decl);
+			auxVars.putAll(rr.auxVars);
+			overappr.addAll(rr.overappr);
+			rr.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+			return makeAssignment(loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
+					l.unionFieldIdToCType);
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
@@ -1572,7 +1560,7 @@ public class CHandler implements ICHandler {
 			}
 			stmt.add(aStat);
 			// if (#t~AND~UID) {#t~AND~UID = right;}
-			final ArrayList<Statement> outerThenPart = new ArrayList<Statement>();
+			final ArrayList<Statement> outerThenPart = new ArrayList<>();
 			outerThenPart.addAll(rr.stmt);
 
 			outerThenPart.add(
@@ -1629,7 +1617,7 @@ public class CHandler implements ICHandler {
 			}
 			stmt.add(aStat);
 			// if (#t~OR~UID) {} else {#t~OR~UID = right;}
-			final ArrayList<Statement> outerElsePart = new ArrayList<Statement>();
+			final ArrayList<Statement> outerElsePart = new ArrayList<>();
 			outerElsePart.addAll(rr.stmt);
 
 			outerElsePart.add(
@@ -2291,14 +2279,13 @@ public class CHandler implements ICHandler {
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult rExp = (ExpressionResult) r;
 			// if (!rExp.stmt.isEmpty()) {
-			final ArrayList<Statement> stmt = new ArrayList<Statement>(rExp.stmt);
-			final ArrayList<Declaration> decl = new ArrayList<Declaration>(rExp.decl);
-			final List<Overapprox> overappr = new ArrayList<Overapprox>();
+			final ArrayList<Statement> stmt = new ArrayList<>(rExp.stmt);
+			final ArrayList<Declaration> decl = new ArrayList<>(rExp.decl);
+			final List<Overapprox> overappr = new ArrayList<>();
 			// assert (isAuxVarMapcomplete(main, rExp.decl, rExp.auxVars));
 			stmt.addAll(createHavocsForAuxVars(rExp.auxVars));
 			overappr.addAll(rExp.overappr);
-			final Map<VariableDeclaration, ILocation> emptyAuxVars =
-					new LinkedHashMap<VariableDeclaration, ILocation>(0);
+			final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 			return new ExpressionResult(stmt, rExp.lrVal, decl, emptyAuxVars, overappr);
 			// } else {
 			// String msg = "This statement has no effect and will be dropped: " + node.getRawSignature();
@@ -2306,11 +2293,10 @@ public class CHandler implements ICHandler {
 			// return new SkipResult();
 			// }
 		} else if (r instanceof ExpressionListResult) {
-			final ArrayList<Statement> stmt = new ArrayList<Statement>();
-			final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-			final List<Overapprox> overappr = new ArrayList<Overapprox>();
-			final Map<VariableDeclaration, ILocation> emptyAuxVars =
-					new LinkedHashMap<VariableDeclaration, ILocation>(0);
+			final ArrayList<Statement> stmt = new ArrayList<>();
+			final ArrayList<Declaration> decl = new ArrayList<>();
+			final List<Overapprox> overappr = new ArrayList<>();
+			final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 			for (final ExpressionResult res : ((ExpressionListResult) r).list) {
 				if (!res.stmt.isEmpty()) {
 					stmt.addAll(res.stmt);
@@ -2333,10 +2319,10 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTIfStatement node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
-		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final List<Overapprox> overappr = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>();
 
 		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
@@ -2348,13 +2334,13 @@ public class CHandler implements ICHandler {
 		final List<HavocStatement> havocs = createHavocsForAuxVars(condResult.auxVars);
 
 		final Result thenResult = main.dispatch(node.getThenClause());
-		final List<Statement> thenStmt = new ArrayList<Statement>();
+		final List<Statement> thenStmt = new ArrayList<>();
 		thenStmt.addAll(havocs);
 		if (thenResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) thenResult;
 			decl.addAll(re.decl);
 			thenStmt.addAll(re.stmt);
-		} else if (thenResult instanceof Result) {
+		} else if (thenResult != null) {
 			if (thenResult.node instanceof Body) {
 				final Body thenPart = (Body) (thenResult.node);
 				thenStmt.addAll(Arrays.asList(thenPart.getBlock()));
@@ -2367,7 +2353,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		final List<Statement> elseStmt = new ArrayList<Statement>();
+		final List<Statement> elseStmt = new ArrayList<>();
 		elseStmt.addAll(havocs);
 		if (node.getElseClause() != null) {
 			final Result elseResult = main.dispatch(node.getElseClause());
@@ -2375,7 +2361,7 @@ public class CHandler implements ICHandler {
 				final ExpressionResult re = (ExpressionResult) elseResult;
 				decl.addAll(re.decl);
 				elseStmt.addAll(re.stmt);
-			} else if (elseResult instanceof Result) {
+			} else if (elseResult != null) {
 				if (elseResult.node instanceof Body) {
 					final Body elsePart = (Body) (elseResult.node);
 					elseStmt.addAll(Arrays.asList(elsePart.getBlock()));
@@ -2441,7 +2427,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTContinueStatement cs) {
 		final ILocation loc = LocationFactory.createCLocation(cs);
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
 		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
 		final ExpressionResult contResult = new ExpressionResult(stmt, null);
 		return contResult;
@@ -2495,7 +2481,8 @@ public class CHandler implements ICHandler {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
 			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
-					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(), node.getArguments());
+					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(),
+					node.getArguments());
 			if (standardFunction != null) {
 				return standardFunction;
 			}
@@ -2506,7 +2493,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTBreakStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
 		stmt.add(new BreakStatement(LocationFactory.createCLocation(node)));
 		return new ExpressionResult(stmt, null);
 	}
@@ -2522,10 +2509,10 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTSwitchStatement node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		final List<Overapprox> overappr = new ArrayList<>();
 
 		// dispatch the controlling expression, convert it to int
 		final Result switchParam = main.dispatch(node.getControllerExpression());
@@ -2558,7 +2545,7 @@ public class CHandler implements ICHandler {
 		Expression cond = null;
 		ILocation locC = null;
 
-		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
+		ArrayList<Statement> ifBlock = new ArrayList<>();
 		beginScope();
 		for (final IASTNode child : node.getBody().getChildren()) {
 			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement)) {
@@ -2598,7 +2585,7 @@ public class CHandler implements ICHandler {
 					stmt.add(ifStmt);
 				}
 
-				ifBlock = new ArrayList<Statement>();
+				ifBlock = new ArrayList<>();
 				locC = LocationFactory.createCLocation(child);
 
 				if (child instanceof IASTCaseStatement) {
@@ -2698,10 +2685,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTDefaultStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
+		final List<Overapprox> overappr = new ArrayList<>();
 		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true),
 				new CPrimitive(CPrimitives.INT)), decl, emptyAuxVars, overappr);
 	}
@@ -2709,10 +2696,10 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTLabelStatement node) {
 		final ILocation loc = LocationFactory.createCLocation(node);
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
+		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		if (mErrorLabelWarning && label.equals("ERROR")) {
 			final String longDescription =
@@ -2752,7 +2739,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTGotoStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
 		if (main instanceof MainDispatcher) {
 			final AssertStatement assertWitnessInvariant = ((MainDispatcher) main).fetchInvariantAtGoto(node);
 			if (assertWitnessInvariant != null) {
@@ -2869,10 +2856,10 @@ public class CHandler implements ICHandler {
 					(CPointer) opNegative.lrVal.getCType().getUnderlyingType());
 		}
 
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>(0);
+		final List<Overapprox> overappr = new ArrayList<>();
 
 		decl.addAll(opCondition.decl);
 		auxVars.putAll(opCondition.auxVars);
@@ -2886,7 +2873,7 @@ public class CHandler implements ICHandler {
 		decl.add(tmpVar);
 		auxVars.put(tmpVar, loc);
 
-		final List<Statement> ifStatements = new ArrayList<Statement>();
+		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.stmt);
 			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
@@ -2905,7 +2892,7 @@ public class CHandler implements ICHandler {
 			overappr.addAll(opPositive.overappr);
 		}
 
-		final List<Statement> elseStatements = new ArrayList<Statement>();
+		final List<Statement> elseStatements = new ArrayList<>();
 		{
 			elseStatements.addAll(opNegative.stmt);
 			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
@@ -3067,7 +3054,7 @@ public class CHandler implements ICHandler {
 		// allAuxVars.put(e.getKey(), e.getValue());
 		// }
 
-		final ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
+		final ArrayList<HavocStatement> result = new ArrayList<>();
 		for (final VariableDeclaration varDecl : allAuxVars.keySet()) {
 			final VarList[] varLists = varDecl.getVariables();
 			for (final VarList varList : varLists) {
@@ -3224,7 +3211,7 @@ public class CHandler implements ICHandler {
 
 						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
 								new Expression[] { new IdentifierExpression(loc, tmpId) }));
-						
+
 						overappr.add(new Overapprox("union field of non-heap union updated "
 								+ "--> havoccing other fields (CHandler.makeAssignment(..))", loc));
 					}
@@ -3429,10 +3416,10 @@ public class CHandler implements ICHandler {
 
 		final ILocation loc = LocationFactory.createCLocation(node);
 
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
-		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final List<Overapprox> overappr = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 
 		Result iterator = null;
 		if (node instanceof IASTForStatement) {
@@ -3477,13 +3464,13 @@ public class CHandler implements ICHandler {
 		}
 		assert (isAuxVarMapcomplete(mNameHandler, condResult.decl, condResult.auxVars));
 
-		ArrayList<Statement> bodyBlock = new ArrayList<Statement>();
+		ArrayList<Statement> bodyBlock = new ArrayList<>();
 		if (bodyResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) bodyResult;
 			decl.addAll(re.decl);
 			overappr.addAll(re.overappr);
 			bodyBlock.addAll(re.stmt);
-		} else if (bodyResult instanceof Result) {
+		} else if (bodyResult != null) {
 			if (bodyResult.node instanceof Body) {
 				final Body body = (Body) (bodyResult.node);
 				bodyBlock.addAll(Arrays.asList(body.getBlock()));
@@ -3534,7 +3521,7 @@ public class CHandler implements ICHandler {
 		{
 			final Expression cond =
 					ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, condRVal.getValue());
-			final ArrayList<Statement> thenStmt = new ArrayList<Statement>(createHavocsForAuxVars(condResult.auxVars));
+			final ArrayList<Statement> thenStmt = new ArrayList<>(createHavocsForAuxVars(condResult.auxVars));
 			thenStmt.add(new BreakStatement(loc));
 			final Statement[] elseStmt = createHavocsForAuxVars(condResult.auxVars).toArray(new Statement[0]);
 			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
@@ -3556,7 +3543,7 @@ public class CHandler implements ICHandler {
 		if (mContract == null) {
 			spec = new LoopInvariantSpecification[0];
 		} else {
-			final List<LoopInvariantSpecification> specList = new ArrayList<LoopInvariantSpecification>();
+			final List<LoopInvariantSpecification> specList = new ArrayList<>();
 			if (witnessInvariant != null) {
 				specList.add(witnessInvariant);
 			}
@@ -3692,10 +3679,10 @@ public class CHandler implements ICHandler {
 
 	public Result handleLabelCommonCode(final Dispatcher main, final IASTLabelStatement node, final ILocation loc) {
 
-		final ArrayList<Statement> stmt = new ArrayList<Statement>();
-		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<Declaration> decl = new ArrayList<>();
+		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
+		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
