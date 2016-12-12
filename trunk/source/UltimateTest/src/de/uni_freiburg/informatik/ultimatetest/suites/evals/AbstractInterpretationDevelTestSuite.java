@@ -94,10 +94,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 
 			//### C
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
 			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
@@ -126,7 +126,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	};
 
 	private static final String[] INPUT = new String[] {
-			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i"
+//			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
+			"examples/svcomp/loop-invgen/nested9_true-unreach-call_true-termination.i",
+			"examples/svcomp/loops/insertion_sort_false-unreach-call_true-termination.i",
+			"examples/svcomp/loop-acceleration/array_true-unreach-call4_true-termination.i",
+			"examples/svcomp/loop-industry-pattern/aiob_1_true-unreach-call.c",
+			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
+			
+			
 			//			"examples/programs/abstractInterpretation/regression",
 //			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 //			"examples/rers2016/Problem10.c",
@@ -204,9 +211,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		// return 90 * 1000;
+		return 90 * 1000;
 		// return 30 * 1000;
-		return 15 * 60 * 1000;
+		// return 15 * 60 * 1000;
 	}
 	
 	@Override
