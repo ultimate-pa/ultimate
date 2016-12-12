@@ -442,7 +442,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return RefinementStrategyExceptionBlacklist.NONE;
+		return RefinementStrategyExceptionBlacklist.UNKNOWN;
 	}
 
 	protected static String getLogicForCvc4() {
