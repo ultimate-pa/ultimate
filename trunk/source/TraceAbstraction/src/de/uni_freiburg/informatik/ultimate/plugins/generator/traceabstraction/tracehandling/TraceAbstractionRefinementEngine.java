@@ -337,6 +337,9 @@ public final class TraceAbstractionRefinementEngine
 			} else if (message.startsWith("Timeout exceeded")) {
 				// timeout
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+			} else if (message.startsWith("A non-linear fact")) {
+				// CVC4 complains about non-linear arithmetic although logic was set to linear arithmetic
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 			} else {
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
