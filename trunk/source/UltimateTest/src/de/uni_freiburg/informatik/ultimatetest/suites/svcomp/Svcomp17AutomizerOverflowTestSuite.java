@@ -31,24 +31,24 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResultDecider;
 
 /**
  *
  * @author dietsch@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite {
+public class Svcomp17AutomizerOverflowTestSuite extends AbstractSVCOMPTestSuite {
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompMemsafetyTestResultDecider(urd, false);
+		return new SvcompOverflowTestResultDecider(urd, false);
 	}
 	
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 60 * 1000;
+		return 120 * 1000;
 	}
 	
 	@Override
@@ -63,18 +63,12 @@ public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite
 		//@formatter:off
 
 		// available sets:
-		//MemSafety-Arrays
-		//MemSafety-Heap
-		//MemSafety-LinkedLists
-		//MemSafety-Other
-		//Systems_BusyBox_MemSafety
+//		Overflows-BitVectors.set
+//		Overflows-Other.set	
 		//@formatter:on
 		
-		rtr.addAll(getForAll("MemSafety-Arrays", 9999));
-		rtr.addAll(getForAll("MemSafety-Heap", 9999));
-		rtr.addAll(getForAll("MemSafety-LinkedLists", 9999));
-		rtr.addAll(getForAll("MemSafety-Other", 9999));
-//		rtr.addAll(getForAll("Systems_BusyBox_MemSafety", 9999));
+		rtr.addAll(getForAll("Overflows-BitVectors", 9999));
+		rtr.addAll(getForAll("Overflows-Other", 9999));
 		return rtr;
 	}
 	
@@ -88,9 +82,9 @@ public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite
 	
 	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf",
 				timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf",
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "svcomp2017/automizer/svcomp-Overflow-64bit-Automizer_Default.epf",
 				timeout, limit));
 		return rtr;
 	}
