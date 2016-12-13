@@ -401,7 +401,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							interpolantAutomaton, psd, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
+				final String taskDescription = "constructing difference of abstraction (" + oldAbstraction.size() + 
+						"states) and interpolant automaton (currently " + interpolantAutomaton.size() + " states, " + 
+						inputInterpolantAutomaton.size() + " states before enhancement)"; 
+				aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw aoce;
+			} catch (final ToolchainCanceledException tce) {
+				final String taskDescription = "constructing difference of abstraction (" + oldAbstraction.size() + 
+						"states) and interpolant automaton (currently " + interpolantAutomaton.size() + " states, " + 
+						inputInterpolantAutomaton.size() + " states before enhancement)"; 
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
 					assert interpolantAutomaton instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
