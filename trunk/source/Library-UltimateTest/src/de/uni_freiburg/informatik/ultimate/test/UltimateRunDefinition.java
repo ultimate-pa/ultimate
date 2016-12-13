@@ -87,11 +87,10 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	public String getSettingsName() {
 		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getName();
 	}
-	
+
 	public String getSettingsAbsolutePath() {
 		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getAbsolutePath();
 	}
-
 
 	/**
 	 * This method tries to find the "primary" input file. This method is a hack to retain compatibility with the times
@@ -100,15 +99,14 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	public File selectPrimaryInputFile() {
 		if (mInput.length == 1) {
 			return mInput[0];
-		} else {
-			// DD: If we see multiple files here, we just select the first that ends in .i or .c. This is quite hacky,
-			// but I do not see another option.
-			final Optional<File> first = Arrays.stream(mInput)
-					.filter(a -> Arrays.stream(PRIMARY_ENDINGS).anyMatch(ending -> a.getName().endsWith(ending)))
-					.findFirst();
-			if (first.isPresent()) {
-				return first.get();
-			}
+		}
+		// DD: If we see multiple files here, we just select the first that ends in .i or .c. This is quite hacky,
+		// but I do not see another option.
+		final Optional<File> first = Arrays.stream(mInput)
+				.filter(a -> Arrays.stream(PRIMARY_ENDINGS).anyMatch(ending -> a.getName().endsWith(ending)))
+				.findFirst();
+		if (first.isPresent()) {
+			return first.get();
 		}
 		return null;
 	}
@@ -186,23 +184,22 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		return sb.toString();
 	}
 
-	public String removeTrunkExamplesPrefix(final String path) {
+	public static String removeTrunkExamplesPrefix(final String path) {
 		final String trunk = TestUtil.getPathFromTrunk("");
 		final String examples = trunk + File.separator + "examples" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
 			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
-		} else {
-			return path;
 		}
+		return path;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mInput == null) ? 0 : mInput.hashCode());
+		result = prime * result + ((mInput == null) ? 0 : Arrays.hashCode(mInput));
 		result = prime * result + ((mSettings == null) ? 0 : mSettings.hashCode());
 		result = prime * result + ((mToolchain == null) ? 0 : mToolchain.hashCode());
 		return result;
@@ -224,7 +221,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 			if (other.mInput != null) {
 				return false;
 			}
-		} else if (!mInput.equals(other.mInput)) {
+		} else if (!Arrays.equals(mInput, other.mInput)) {
 			return false;
 		}
 		if (mSettings == null) {
