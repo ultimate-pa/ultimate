@@ -1,15 +1,14 @@
 syntax = "proto3";
+
 package de.uni_freiburg.informatik.ultimate.graphvr;
 
 //option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "TraceAbstractionProtos";
 
-
 // TODO: integrate in build process
 // ~/src/ultimate/trunk/source/Library-GraphVR$ protoc --java_out=src traceabstraction.proto
-
 message ToolchainInfo {
-	// ToDo: implement
+// ToDo: implement
 }
 
 message TAPreferences {
@@ -29,7 +28,6 @@ message TAPreferences {
 	HoareTripleChecks mHoareTripleChecks = 14;
 	//IPreferenceProvider mPrefs = 15;
 	HoareAnnotationPositions mHoareAnnotationPositions = 16;
-
 	enum InterpolationTechnique {
 		Craig_NestedInterpolation = 0;
 		Craig_TreeInterpolation = 1;
@@ -82,7 +80,7 @@ message TAPreferences {
 
 	enum Concurrency {
 		FINITE_AUTOMATA = 0;
-		 PETRI_NET = 1;
+		PETRI_NET = 1;
 	}
 
 	enum Format {
@@ -106,13 +104,6 @@ message TAPreferences {
 		All = 0;
 		LoopsAndPotentialCycles = 1;
 	}
-
-  //message PhoneNumber {
-  //  string number = 1;
-  //  PhoneType type = 2 [default = HOME];
-  //}
-
-  //repeated PhoneNumber phone = 4;
 }
 
 enum Result {
@@ -122,47 +113,38 @@ enum Result {
 	UNKNOWN = 3;
 }
 
-
 message NestedWordAutomaton {
 	Alphabet internal = 1;
 	Alphabet call = 2;
 	Alphabet return = 3;
-	Predicate emptyStack = 4;
-	StateSet initial = 5;
-	StateSet final = 6;
-	transition internalIn = 7;
-	transition internalOut = 8;
-	transition callIn = 9;
-	transition callOut = 10;
-	transition returnIn = 11;
-	transition returnOut = 12;
-
+	repeated Predicate states = 4; // references to states encoded as int32
+	int32 emptyStack = 5;
+	repeated int32 initial = 6;
+	repeated int32 final = 7;
+	repeated transition internalEdges = 8;
+	repeated transition callEdges = 9;
+	repeated transition returnEdges = 10;
 	message transition {
-		// number of codeblock in alphabet
-		map<int32 , map2> relation = 1;
-
-		message map2 {
-			map<int32, int32> m = 1;
-		}
+	// references to letters and states encoded as int32
+		int32 originState = 1;
+		int32 letter = 2;
+		int32 successorState = 3;
 	}
+
 }
 
 message IterationInfo {
 	NestedRun run = 1;
 	int32 iteration = 2;
-
 	message NestedRun {
 		repeated CodeBlock nestedWord = 1;
 		repeated Predicate stateSequence = 2;
 	}
+
 }
 
 message Alphabet {
 	repeated CodeBlock letter = 1;
-}
-
-message StateSet {
-	repeated Predicate state = 1;
 }
 
 message CodeBlock {
@@ -174,10 +156,7 @@ message CodeBlock {
 message Predicate {
 	string label = 1;
 	// pretty printed formula
-}
-
-
-/*
+} /*
 toolchain:
 TODO
 

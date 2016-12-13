@@ -136,7 +136,8 @@ public final class TraceAbstractionProtos {
   }
   /**
    * <pre>
-   * ToDo: implement
+   * TODO: integrate in build process
+   * ~/src/ultimate/trunk/source/Library-GraphVR$ protoc --java_out=src traceabstraction.proto
    * </pre>
    *
    * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.ToolchainInfo}
@@ -328,7 +329,8 @@ public final class TraceAbstractionProtos {
     }
     /**
      * <pre>
-     * ToDo: implement
+     * TODO: integrate in build process
+     * ~/src/ultimate/trunk/source/Library-GraphVR$ protoc --java_out=src traceabstraction.proto
      * </pre>
      *
      * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.ToolchainInfo}
@@ -3402,121 +3404,151 @@ public final class TraceAbstractionProtos {
     de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.AlphabetOrBuilder getReturnOrBuilder();
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    boolean hasEmptyStack();
+    java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> 
+        getStatesList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getEmptyStack();
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getStates(int index);
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getEmptyStackOrBuilder();
+    int getStatesCount();
+    /**
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+     */
+    java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
+        getStatesOrBuilderList();
+    /**
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStatesOrBuilder(
+        int index);
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+     * <code>optional int32 emptyStack = 5;</code>
      */
-    boolean hasInitial();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getInitial();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getInitialOrBuilder();
+    int getEmptyStack();
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    boolean hasFinal();
+    java.util.List<java.lang.Integer> getInitialList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getFinal();
+    int getInitialCount();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getFinalOrBuilder();
+    int getInitial(int index);
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+     * <code>repeated int32 final = 7;</code>
      */
-    boolean hasInternalIn();
+    java.util.List<java.lang.Integer> getFinalList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+     * <code>repeated int32 final = 7;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalIn();
+    int getFinalCount();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+     * <code>repeated int32 final = 7;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalInOrBuilder();
+    int getFinal(int index);
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
      */
-    boolean hasInternalOut();
+    java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> 
+        getInternalEdgesList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalOut();
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalEdges(int index);
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalOutOrBuilder();
+    int getInternalEdgesCount();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getInternalEdgesOrBuilderList();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalEdgesOrBuilder(
+        int index);
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    boolean hasCallIn();
+    java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> 
+        getCallEdgesList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallIn();
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallEdges(int index);
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallInOrBuilder();
+    int getCallEdgesCount();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+     */
+    java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getCallEdgesOrBuilderList();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallEdgesOrBuilder(
+        int index);
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    boolean hasCallOut();
+    java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> 
+        getReturnEdgesList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallOut();
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnEdges(int index);
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallOutOrBuilder();
-
+    int getReturnEdgesCount();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    boolean hasReturnIn();
+    java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getReturnEdgesOrBuilderList();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnIn();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnInOrBuilder();
-
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-     */
-    boolean hasReturnOut();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnOut();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnOutOrBuilder();
+    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnEdgesOrBuilder(
+        int index);
   }
   /**
    * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton}
@@ -3530,6 +3562,13 @@ public final class TraceAbstractionProtos {
       super(builder);
     }
     private NestedWordAutomaton() {
+      states_ = java.util.Collections.emptyList();
+      emptyStack_ = 0;
+      initial_ = java.util.Collections.emptyList();
+      final_ = java.util.Collections.emptyList();
+      internalEdges_ = java.util.Collections.emptyList();
+      callEdges_ = java.util.Collections.emptyList();
+      returnEdges_ = java.util.Collections.emptyList();
     }
 
     @java.lang.Override
@@ -3597,120 +3636,86 @@ public final class TraceAbstractionProtos {
               break;
             }
             case 34: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder subBuilder = null;
-              if (emptyStack_ != null) {
-                subBuilder = emptyStack_.toBuilder();
+              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+                states_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate>();
+                mutable_bitField0_ |= 0x00000008;
               }
-              emptyStack_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(emptyStack_);
-                emptyStack_ = subBuilder.buildPartial();
-              }
-
+              states_.add(
+                  input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.parser(), extensionRegistry));
               break;
             }
-            case 42: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder subBuilder = null;
-              if (initial_ != null) {
-                subBuilder = initial_.toBuilder();
-              }
-              initial_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(initial_);
-                initial_ = subBuilder.buildPartial();
-              }
+            case 40: {
 
+              emptyStack_ = input.readInt32();
+              break;
+            }
+            case 48: {
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+                initial_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00000020;
+              }
+              initial_.add(input.readInt32());
               break;
             }
             case 50: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder subBuilder = null;
-              if (final_ != null) {
-                subBuilder = final_.toBuilder();
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020) && input.getBytesUntilLimit() > 0) {
+                initial_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00000020;
               }
-              final_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(final_);
-                final_ = subBuilder.buildPartial();
+              while (input.getBytesUntilLimit() > 0) {
+                initial_.add(input.readInt32());
               }
-
+              input.popLimit(limit);
+              break;
+            }
+            case 56: {
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+                final_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00000040;
+              }
+              final_.add(input.readInt32());
               break;
             }
             case 58: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (internalIn_ != null) {
-                subBuilder = internalIn_.toBuilder();
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00000040) == 0x00000040) && input.getBytesUntilLimit() > 0) {
+                final_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00000040;
               }
-              internalIn_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(internalIn_);
-                internalIn_ = subBuilder.buildPartial();
+              while (input.getBytesUntilLimit() > 0) {
+                final_.add(input.readInt32());
               }
-
+              input.popLimit(limit);
               break;
             }
             case 66: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (internalOut_ != null) {
-                subBuilder = internalOut_.toBuilder();
+              if (!((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+                internalEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>();
+                mutable_bitField0_ |= 0x00000080;
               }
-              internalOut_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(internalOut_);
-                internalOut_ = subBuilder.buildPartial();
-              }
-
+              internalEdges_.add(
+                  input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry));
               break;
             }
             case 74: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (callIn_ != null) {
-                subBuilder = callIn_.toBuilder();
+              if (!((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
+                callEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>();
+                mutable_bitField0_ |= 0x00000100;
               }
-              callIn_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(callIn_);
-                callIn_ = subBuilder.buildPartial();
-              }
-
+              callEdges_.add(
+                  input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry));
               break;
             }
             case 82: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (callOut_ != null) {
-                subBuilder = callOut_.toBuilder();
+              if (!((mutable_bitField0_ & 0x00000200) == 0x00000200)) {
+                returnEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>();
+                mutable_bitField0_ |= 0x00000200;
               }
-              callOut_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(callOut_);
-                callOut_ = subBuilder.buildPartial();
-              }
-
-              break;
-            }
-            case 90: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (returnIn_ != null) {
-                subBuilder = returnIn_.toBuilder();
-              }
-              returnIn_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(returnIn_);
-                returnIn_ = subBuilder.buildPartial();
-              }
-
-              break;
-            }
-            case 98: {
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder subBuilder = null;
-              if (returnOut_ != null) {
-                subBuilder = returnOut_.toBuilder();
-              }
-              returnOut_ = input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(returnOut_);
-                returnOut_ = subBuilder.buildPartial();
-              }
-
+              returnEdges_.add(
+                  input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.parser(), extensionRegistry));
               break;
             }
           }
@@ -3721,6 +3726,24 @@ public final class TraceAbstractionProtos {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
+          states_ = java.util.Collections.unmodifiableList(states_);
+        }
+        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+          initial_ = java.util.Collections.unmodifiableList(initial_);
+        }
+        if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+          final_ = java.util.Collections.unmodifiableList(final_);
+        }
+        if (((mutable_bitField0_ & 0x00000080) == 0x00000080)) {
+          internalEdges_ = java.util.Collections.unmodifiableList(internalEdges_);
+        }
+        if (((mutable_bitField0_ & 0x00000100) == 0x00000100)) {
+          callEdges_ = java.util.Collections.unmodifiableList(callEdges_);
+        }
+        if (((mutable_bitField0_ & 0x00000200) == 0x00000200)) {
+          returnEdges_ = java.util.Collections.unmodifiableList(returnEdges_);
+        }
         makeExtensionsImmutable();
       }
     }
@@ -3742,57 +3765,22 @@ public final class TraceAbstractionProtos {
 
       /**
        * <pre>
-       * number of codeblock in alphabet
+       * references to letters and states encoded as int32
        * </pre>
        *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+       * <code>optional int32 originState = 1;</code>
        */
-      int getRelationCount();
-      /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-       */
-      boolean containsRelation(
-          int key);
-      /**
-       * Use {@link #getRelationMap()} instead.
-       */
-      @java.lang.Deprecated
-      java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-      getRelation();
-      /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-       */
-      java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-      getRelationMap();
-      /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-       */
+      int getOriginState();
 
-      de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrDefault(
-          int key,
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 defaultValue);
       /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+       * <code>optional int32 letter = 2;</code>
        */
+      int getLetter();
 
-      de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrThrow(
-          int key);
+      /**
+       * <code>optional int32 successorState = 3;</code>
+       */
+      int getSuccessorState();
     }
     /**
      * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition}
@@ -3806,6 +3794,9 @@ public final class TraceAbstractionProtos {
         super(builder);
       }
       private transition() {
+        originState_ = 0;
+        letter_ = 0;
+        successorState_ = 0;
       }
 
       @java.lang.Override
@@ -3833,16 +3824,19 @@ public final class TraceAbstractionProtos {
                 }
                 break;
               }
-              case 10: {
-                if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                  relation_ = com.google.protobuf.MapField.newMapField(
-                      RelationDefaultEntryHolder.defaultEntry);
-                  mutable_bitField0_ |= 0x00000001;
-                }
-                com.google.protobuf.MapEntry<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-                relation = input.readMessage(
-                    RelationDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-                relation_.getMutableMap().put(relation.getKey(), relation.getValue());
+              case 8: {
+
+                originState_ = input.readInt32();
+                break;
+              }
+              case 16: {
+
+                letter_ = input.readInt32();
+                break;
+              }
+              case 24: {
+
+                successorState_ = input.readInt32();
                 break;
               }
             }
@@ -3861,17 +3855,6 @@ public final class TraceAbstractionProtos {
         return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor;
       }
 
-      @SuppressWarnings({"rawtypes"})
-      protected com.google.protobuf.MapField internalGetMapField(
-          int number) {
-        switch (number) {
-          case 1:
-            return internalGetRelation();
-          default:
-            throw new RuntimeException(
-                "Invalid map field number: " + number);
-        }
-      }
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_fieldAccessorTable
@@ -3879,768 +3862,35 @@ public final class TraceAbstractionProtos {
                 de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.class, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder.class);
       }
 
-      public interface map2OrBuilder extends
-          // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2)
-          com.google.protobuf.MessageOrBuilder {
-
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-        int getMCount();
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-        boolean containsM(
-            int key);
-        /**
-         * Use {@link #getMMap()} instead.
-         */
-        @java.lang.Deprecated
-        java.util.Map<java.lang.Integer, java.lang.Integer>
-        getM();
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-        java.util.Map<java.lang.Integer, java.lang.Integer>
-        getMMap();
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        int getMOrDefault(
-            int key,
-            int defaultValue);
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        int getMOrThrow(
-            int key);
-      }
-      /**
-       * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2}
-       */
-      public  static final class map2 extends
-          com.google.protobuf.GeneratedMessageV3 implements
-          // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2)
-          map2OrBuilder {
-        // Use map2.newBuilder() to construct.
-        private map2(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-          super(builder);
-        }
-        private map2() {
-        }
-
-        @java.lang.Override
-        public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-          return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
-        }
-        private map2(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          this();
-          int mutable_bitField0_ = 0;
-          try {
-            boolean done = false;
-            while (!done) {
-              int tag = input.readTag();
-              switch (tag) {
-                case 0:
-                  done = true;
-                  break;
-                default: {
-                  if (!input.skipField(tag)) {
-                    done = true;
-                  }
-                  break;
-                }
-                case 10: {
-                  if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                    m_ = com.google.protobuf.MapField.newMapField(
-                        MDefaultEntryHolder.defaultEntry);
-                    mutable_bitField0_ |= 0x00000001;
-                  }
-                  com.google.protobuf.MapEntry<java.lang.Integer, java.lang.Integer>
-                  m = input.readMessage(
-                      MDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-                  m_.getMutableMap().put(m.getKey(), m.getValue());
-                  break;
-                }
-              }
-            }
-          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            throw e.setUnfinishedMessage(this);
-          } catch (java.io.IOException e) {
-            throw new com.google.protobuf.InvalidProtocolBufferException(
-                e).setUnfinishedMessage(this);
-          } finally {
-            makeExtensionsImmutable();
-          }
-        }
-        public static final com.google.protobuf.Descriptors.Descriptor
-            getDescriptor() {
-          return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor;
-        }
-
-        @SuppressWarnings({"rawtypes"})
-        protected com.google.protobuf.MapField internalGetMapField(
-            int number) {
-          switch (number) {
-            case 1:
-              return internalGetM();
-            default:
-              throw new RuntimeException(
-                  "Invalid map field number: " + number);
-          }
-        }
-        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-            internalGetFieldAccessorTable() {
-          return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_fieldAccessorTable
-              .ensureFieldAccessorsInitialized(
-                  de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.class, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.Builder.class);
-        }
-
-        public static final int M_FIELD_NUMBER = 1;
-        private static final class MDefaultEntryHolder {
-          static final com.google.protobuf.MapEntry<
-              java.lang.Integer, java.lang.Integer> defaultEntry =
-                  com.google.protobuf.MapEntry
-                  .<java.lang.Integer, java.lang.Integer>newDefaultInstance(
-                      de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_descriptor, 
-                      com.google.protobuf.WireFormat.FieldType.INT32,
-                      0,
-                      com.google.protobuf.WireFormat.FieldType.INT32,
-                      0);
-        }
-        private com.google.protobuf.MapField<
-            java.lang.Integer, java.lang.Integer> m_;
-        private com.google.protobuf.MapField<java.lang.Integer, java.lang.Integer>
-        internalGetM() {
-          if (m_ == null) {
-            return com.google.protobuf.MapField.emptyMapField(
-                MDefaultEntryHolder.defaultEntry);
-          }
-          return m_;
-        }
-
-        public int getMCount() {
-          return internalGetM().getMap().size();
-        }
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        public boolean containsM(
-            int key) {
-          
-          return internalGetM().getMap().containsKey(key);
-        }
-        /**
-         * Use {@link #getMMap()} instead.
-         */
-        @java.lang.Deprecated
-        public java.util.Map<java.lang.Integer, java.lang.Integer> getM() {
-          return getMMap();
-        }
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        public java.util.Map<java.lang.Integer, java.lang.Integer> getMMap() {
-          return internalGetM().getMap();
-        }
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        public int getMOrDefault(
-            int key,
-            int defaultValue) {
-          
-          java.util.Map<java.lang.Integer, java.lang.Integer> map =
-              internalGetM().getMap();
-          return map.containsKey(key) ? map.get(key) : defaultValue;
-        }
-        /**
-         * <code>map&lt;int32, int32&gt; m = 1;</code>
-         */
-
-        public int getMOrThrow(
-            int key) {
-          
-          java.util.Map<java.lang.Integer, java.lang.Integer> map =
-              internalGetM().getMap();
-          if (!map.containsKey(key)) {
-            throw new java.lang.IllegalArgumentException();
-          }
-          return map.get(key);
-        }
-
-        private byte memoizedIsInitialized = -1;
-        public final boolean isInitialized() {
-          byte isInitialized = memoizedIsInitialized;
-          if (isInitialized == 1) return true;
-          if (isInitialized == 0) return false;
-
-          memoizedIsInitialized = 1;
-          return true;
-        }
-
-        public void writeTo(com.google.protobuf.CodedOutputStream output)
-                            throws java.io.IOException {
-          for (java.util.Map.Entry<java.lang.Integer, java.lang.Integer> entry
-               : internalGetM().getMap().entrySet()) {
-            com.google.protobuf.MapEntry<java.lang.Integer, java.lang.Integer>
-            m = MDefaultEntryHolder.defaultEntry.newBuilderForType()
-                .setKey(entry.getKey())
-                .setValue(entry.getValue())
-                .build();
-            output.writeMessage(1, m);
-          }
-        }
-
-        public int getSerializedSize() {
-          int size = memoizedSize;
-          if (size != -1) return size;
-
-          size = 0;
-          for (java.util.Map.Entry<java.lang.Integer, java.lang.Integer> entry
-               : internalGetM().getMap().entrySet()) {
-            com.google.protobuf.MapEntry<java.lang.Integer, java.lang.Integer>
-            m = MDefaultEntryHolder.defaultEntry.newBuilderForType()
-                .setKey(entry.getKey())
-                .setValue(entry.getValue())
-                .build();
-            size += com.google.protobuf.CodedOutputStream
-                .computeMessageSize(1, m);
-          }
-          memoizedSize = size;
-          return size;
-        }
-
-        private static final long serialVersionUID = 0L;
-        @java.lang.Override
-        public boolean equals(final java.lang.Object obj) {
-          if (obj == this) {
-           return true;
-          }
-          if (!(obj instanceof de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2)) {
-            return super.equals(obj);
-          }
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 other = (de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2) obj;
-
-          boolean result = true;
-          result = result && internalGetM().equals(
-              other.internalGetM());
-          return result;
-        }
-
-        @java.lang.Override
-        public int hashCode() {
-          if (memoizedHashCode != 0) {
-            return memoizedHashCode;
-          }
-          int hash = 41;
-          hash = (19 * hash) + getDescriptorForType().hashCode();
-          if (!internalGetM().getMap().isEmpty()) {
-            hash = (37 * hash) + M_FIELD_NUMBER;
-            hash = (53 * hash) + internalGetM().hashCode();
-          }
-          hash = (29 * hash) + unknownFields.hashCode();
-          memoizedHashCode = hash;
-          return hash;
-        }
-
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            com.google.protobuf.ByteString data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return PARSER.parseFrom(data);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            com.google.protobuf.ByteString data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return PARSER.parseFrom(data, extensionRegistry);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(byte[] data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return PARSER.parseFrom(data);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            byte[] data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return PARSER.parseFrom(data, extensionRegistry);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseWithIOException(PARSER, input);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseWithIOException(PARSER, input, extensionRegistry);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseDelimitedFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseDelimitedWithIOException(PARSER, input);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseDelimitedFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            com.google.protobuf.CodedInputStream input)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseWithIOException(PARSER, input);
-        }
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parseFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageV3
-              .parseWithIOException(PARSER, input, extensionRegistry);
-        }
-
-        public Builder newBuilderForType() { return newBuilder(); }
-        public static Builder newBuilder() {
-          return DEFAULT_INSTANCE.toBuilder();
-        }
-        public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 prototype) {
-          return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-        }
-        public Builder toBuilder() {
-          return this == DEFAULT_INSTANCE
-              ? new Builder() : new Builder().mergeFrom(this);
-        }
-
-        @java.lang.Override
-        protected Builder newBuilderForType(
-            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-          Builder builder = new Builder(parent);
-          return builder;
-        }
-        /**
-         * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2}
-         */
-        public static final class Builder extends
-            com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-            // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2)
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2OrBuilder {
-          public static final com.google.protobuf.Descriptors.Descriptor
-              getDescriptor() {
-            return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor;
-          }
-
-          @SuppressWarnings({"rawtypes"})
-          protected com.google.protobuf.MapField internalGetMapField(
-              int number) {
-            switch (number) {
-              case 1:
-                return internalGetM();
-              default:
-                throw new RuntimeException(
-                    "Invalid map field number: " + number);
-            }
-          }
-          @SuppressWarnings({"rawtypes"})
-          protected com.google.protobuf.MapField internalGetMutableMapField(
-              int number) {
-            switch (number) {
-              case 1:
-                return internalGetMutableM();
-              default:
-                throw new RuntimeException(
-                    "Invalid map field number: " + number);
-            }
-          }
-          protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-              internalGetFieldAccessorTable() {
-            return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_fieldAccessorTable
-                .ensureFieldAccessorsInitialized(
-                    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.class, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.Builder.class);
-          }
-
-          // Construct using de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.newBuilder()
-          private Builder() {
-            maybeForceBuilderInitialization();
-          }
-
-          private Builder(
-              com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-            super(parent);
-            maybeForceBuilderInitialization();
-          }
-          private void maybeForceBuilderInitialization() {
-            if (com.google.protobuf.GeneratedMessageV3
-                    .alwaysUseFieldBuilders) {
-            }
-          }
-          public Builder clear() {
-            super.clear();
-            internalGetMutableM().clear();
-            return this;
-          }
-
-          public com.google.protobuf.Descriptors.Descriptor
-              getDescriptorForType() {
-            return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor;
-          }
-
-          public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getDefaultInstanceForType() {
-            return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.getDefaultInstance();
-          }
-
-          public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 build() {
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 result = buildPartial();
-            if (!result.isInitialized()) {
-              throw newUninitializedMessageException(result);
-            }
-            return result;
-          }
-
-          public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 buildPartial() {
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 result = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2(this);
-            int from_bitField0_ = bitField0_;
-            result.m_ = internalGetM();
-            result.m_.makeImmutable();
-            onBuilt();
-            return result;
-          }
-
-          public Builder clone() {
-            return (Builder) super.clone();
-          }
-          public Builder setField(
-              com.google.protobuf.Descriptors.FieldDescriptor field,
-              Object value) {
-            return (Builder) super.setField(field, value);
-          }
-          public Builder clearField(
-              com.google.protobuf.Descriptors.FieldDescriptor field) {
-            return (Builder) super.clearField(field);
-          }
-          public Builder clearOneof(
-              com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-            return (Builder) super.clearOneof(oneof);
-          }
-          public Builder setRepeatedField(
-              com.google.protobuf.Descriptors.FieldDescriptor field,
-              int index, Object value) {
-            return (Builder) super.setRepeatedField(field, index, value);
-          }
-          public Builder addRepeatedField(
-              com.google.protobuf.Descriptors.FieldDescriptor field,
-              Object value) {
-            return (Builder) super.addRepeatedField(field, value);
-          }
-          public Builder mergeFrom(com.google.protobuf.Message other) {
-            if (other instanceof de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2) {
-              return mergeFrom((de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2)other);
-            } else {
-              super.mergeFrom(other);
-              return this;
-            }
-          }
-
-          public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 other) {
-            if (other == de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.getDefaultInstance()) return this;
-            internalGetMutableM().mergeFrom(
-                other.internalGetM());
-            onChanged();
-            return this;
-          }
-
-          public final boolean isInitialized() {
-            return true;
-          }
-
-          public Builder mergeFrom(
-              com.google.protobuf.CodedInputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws java.io.IOException {
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 parsedMessage = null;
-            try {
-              parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-              parsedMessage = (de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2) e.getUnfinishedMessage();
-              throw e.unwrapIOException();
-            } finally {
-              if (parsedMessage != null) {
-                mergeFrom(parsedMessage);
-              }
-            }
-            return this;
-          }
-          private int bitField0_;
-
-          private com.google.protobuf.MapField<
-              java.lang.Integer, java.lang.Integer> m_;
-          private com.google.protobuf.MapField<java.lang.Integer, java.lang.Integer>
-          internalGetM() {
-            if (m_ == null) {
-              return com.google.protobuf.MapField.emptyMapField(
-                  MDefaultEntryHolder.defaultEntry);
-            }
-            return m_;
-          }
-          private com.google.protobuf.MapField<java.lang.Integer, java.lang.Integer>
-          internalGetMutableM() {
-            onChanged();;
-            if (m_ == null) {
-              m_ = com.google.protobuf.MapField.newMapField(
-                  MDefaultEntryHolder.defaultEntry);
-            }
-            if (!m_.isMutable()) {
-              m_ = m_.copy();
-            }
-            return m_;
-          }
-
-          public int getMCount() {
-            return internalGetM().getMap().size();
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public boolean containsM(
-              int key) {
-            
-            return internalGetM().getMap().containsKey(key);
-          }
-          /**
-           * Use {@link #getMMap()} instead.
-           */
-          @java.lang.Deprecated
-          public java.util.Map<java.lang.Integer, java.lang.Integer> getM() {
-            return getMMap();
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public java.util.Map<java.lang.Integer, java.lang.Integer> getMMap() {
-            return internalGetM().getMap();
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public int getMOrDefault(
-              int key,
-              int defaultValue) {
-            
-            java.util.Map<java.lang.Integer, java.lang.Integer> map =
-                internalGetM().getMap();
-            return map.containsKey(key) ? map.get(key) : defaultValue;
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public int getMOrThrow(
-              int key) {
-            
-            java.util.Map<java.lang.Integer, java.lang.Integer> map =
-                internalGetM().getMap();
-            if (!map.containsKey(key)) {
-              throw new java.lang.IllegalArgumentException();
-            }
-            return map.get(key);
-          }
-
-          public Builder clearM() {
-            getMutableM().clear();
-            return this;
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public Builder removeM(
-              int key) {
-            
-            getMutableM().remove(key);
-            return this;
-          }
-          /**
-           * Use alternate mutation accessors instead.
-           */
-          @java.lang.Deprecated
-          public java.util.Map<java.lang.Integer, java.lang.Integer>
-          getMutableM() {
-            return internalGetMutableM().getMutableMap();
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-          public Builder putM(
-              int key,
-              int value) {
-            
-            
-            getMutableM().put(key, value);
-            return this;
-          }
-          /**
-           * <code>map&lt;int32, int32&gt; m = 1;</code>
-           */
-
-          public Builder putAllM(
-              java.util.Map<java.lang.Integer, java.lang.Integer> values) {
-            getMutableM().putAll(values);
-            return this;
-          }
-          public final Builder setUnknownFields(
-              final com.google.protobuf.UnknownFieldSet unknownFields) {
-            return this;
-          }
-
-          public final Builder mergeUnknownFields(
-              final com.google.protobuf.UnknownFieldSet unknownFields) {
-            return this;
-          }
-
-
-          // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2)
-        }
-
-        // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2)
-        private static final de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 DEFAULT_INSTANCE;
-        static {
-          DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2();
-        }
-
-        public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getDefaultInstance() {
-          return DEFAULT_INSTANCE;
-        }
-
-        private static final com.google.protobuf.Parser<map2>
-            PARSER = new com.google.protobuf.AbstractParser<map2>() {
-          public map2 parsePartialFrom(
-              com.google.protobuf.CodedInputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.protobuf.InvalidProtocolBufferException {
-              return new map2(input, extensionRegistry);
-          }
-        };
-
-        public static com.google.protobuf.Parser<map2> parser() {
-          return PARSER;
-        }
-
-        @java.lang.Override
-        public com.google.protobuf.Parser<map2> getParserForType() {
-          return PARSER;
-        }
-
-        public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getDefaultInstanceForType() {
-          return DEFAULT_INSTANCE;
-        }
-
-      }
-
-      public static final int RELATION_FIELD_NUMBER = 1;
-      private static final class RelationDefaultEntryHolder {
-        static final com.google.protobuf.MapEntry<
-            java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> defaultEntry =
-                com.google.protobuf.MapEntry
-                .<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>newDefaultInstance(
-                    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_descriptor, 
-                    com.google.protobuf.WireFormat.FieldType.INT32,
-                    0,
-                    com.google.protobuf.WireFormat.FieldType.MESSAGE,
-                    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2.getDefaultInstance());
-      }
-      private com.google.protobuf.MapField<
-          java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> relation_;
-      private com.google.protobuf.MapField<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-      internalGetRelation() {
-        if (relation_ == null) {
-          return com.google.protobuf.MapField.emptyMapField(
-              RelationDefaultEntryHolder.defaultEntry);
-        }
-        return relation_;
-      }
-
-      public int getRelationCount() {
-        return internalGetRelation().getMap().size();
-      }
+      public static final int ORIGINSTATE_FIELD_NUMBER = 1;
+      private int originState_;
       /**
        * <pre>
-       * number of codeblock in alphabet
+       * references to letters and states encoded as int32
        * </pre>
        *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+       * <code>optional int32 originState = 1;</code>
        */
-
-      public boolean containsRelation(
-          int key) {
-        
-        return internalGetRelation().getMap().containsKey(key);
+      public int getOriginState() {
+        return originState_;
       }
-      /**
-       * Use {@link #getRelationMap()} instead.
-       */
-      @java.lang.Deprecated
-      public java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> getRelation() {
-        return getRelationMap();
-      }
-      /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-       */
 
-      public java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> getRelationMap() {
-        return internalGetRelation().getMap();
-      }
+      public static final int LETTER_FIELD_NUMBER = 2;
+      private int letter_;
       /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+       * <code>optional int32 letter = 2;</code>
        */
-
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrDefault(
-          int key,
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 defaultValue) {
-        
-        java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> map =
-            internalGetRelation().getMap();
-        return map.containsKey(key) ? map.get(key) : defaultValue;
+      public int getLetter() {
+        return letter_;
       }
-      /**
-       * <pre>
-       * number of codeblock in alphabet
-       * </pre>
-       *
-       * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-       */
 
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrThrow(
-          int key) {
-        
-        java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> map =
-            internalGetRelation().getMap();
-        if (!map.containsKey(key)) {
-          throw new java.lang.IllegalArgumentException();
-        }
-        return map.get(key);
+      public static final int SUCCESSORSTATE_FIELD_NUMBER = 3;
+      private int successorState_;
+      /**
+       * <code>optional int32 successorState = 3;</code>
+       */
+      public int getSuccessorState() {
+        return successorState_;
       }
 
       private byte memoizedIsInitialized = -1;
@@ -4655,14 +3905,14 @@ public final class TraceAbstractionProtos {
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        for (java.util.Map.Entry<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> entry
-             : internalGetRelation().getMap().entrySet()) {
-          com.google.protobuf.MapEntry<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-          relation = RelationDefaultEntryHolder.defaultEntry.newBuilderForType()
-              .setKey(entry.getKey())
-              .setValue(entry.getValue())
-              .build();
-          output.writeMessage(1, relation);
+        if (originState_ != 0) {
+          output.writeInt32(1, originState_);
+        }
+        if (letter_ != 0) {
+          output.writeInt32(2, letter_);
+        }
+        if (successorState_ != 0) {
+          output.writeInt32(3, successorState_);
         }
       }
 
@@ -4671,15 +3921,17 @@ public final class TraceAbstractionProtos {
         if (size != -1) return size;
 
         size = 0;
-        for (java.util.Map.Entry<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> entry
-             : internalGetRelation().getMap().entrySet()) {
-          com.google.protobuf.MapEntry<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-          relation = RelationDefaultEntryHolder.defaultEntry.newBuilderForType()
-              .setKey(entry.getKey())
-              .setValue(entry.getValue())
-              .build();
+        if (originState_ != 0) {
           size += com.google.protobuf.CodedOutputStream
-              .computeMessageSize(1, relation);
+            .computeInt32Size(1, originState_);
+        }
+        if (letter_ != 0) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt32Size(2, letter_);
+        }
+        if (successorState_ != 0) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt32Size(3, successorState_);
         }
         memoizedSize = size;
         return size;
@@ -4697,8 +3949,12 @@ public final class TraceAbstractionProtos {
         de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition other = (de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition) obj;
 
         boolean result = true;
-        result = result && internalGetRelation().equals(
-            other.internalGetRelation());
+        result = result && (getOriginState()
+            == other.getOriginState());
+        result = result && (getLetter()
+            == other.getLetter());
+        result = result && (getSuccessorState()
+            == other.getSuccessorState());
         return result;
       }
 
@@ -4709,10 +3965,12 @@ public final class TraceAbstractionProtos {
         }
         int hash = 41;
         hash = (19 * hash) + getDescriptorForType().hashCode();
-        if (!internalGetRelation().getMap().isEmpty()) {
-          hash = (37 * hash) + RELATION_FIELD_NUMBER;
-          hash = (53 * hash) + internalGetRelation().hashCode();
-        }
+        hash = (37 * hash) + ORIGINSTATE_FIELD_NUMBER;
+        hash = (53 * hash) + getOriginState();
+        hash = (37 * hash) + LETTER_FIELD_NUMBER;
+        hash = (53 * hash) + getLetter();
+        hash = (37 * hash) + SUCCESSORSTATE_FIELD_NUMBER;
+        hash = (53 * hash) + getSuccessorState();
         hash = (29 * hash) + unknownFields.hashCode();
         memoizedHashCode = hash;
         return hash;
@@ -4807,28 +4065,6 @@ public final class TraceAbstractionProtos {
           return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor;
         }
 
-        @SuppressWarnings({"rawtypes"})
-        protected com.google.protobuf.MapField internalGetMapField(
-            int number) {
-          switch (number) {
-            case 1:
-              return internalGetRelation();
-            default:
-              throw new RuntimeException(
-                  "Invalid map field number: " + number);
-          }
-        }
-        @SuppressWarnings({"rawtypes"})
-        protected com.google.protobuf.MapField internalGetMutableMapField(
-            int number) {
-          switch (number) {
-            case 1:
-              return internalGetMutableRelation();
-            default:
-              throw new RuntimeException(
-                  "Invalid map field number: " + number);
-          }
-        }
         protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_fieldAccessorTable
@@ -4853,7 +4089,12 @@ public final class TraceAbstractionProtos {
         }
         public Builder clear() {
           super.clear();
-          internalGetMutableRelation().clear();
+          originState_ = 0;
+
+          letter_ = 0;
+
+          successorState_ = 0;
+
           return this;
         }
 
@@ -4876,9 +4117,9 @@ public final class TraceAbstractionProtos {
 
         public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition buildPartial() {
           de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition result = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition(this);
-          int from_bitField0_ = bitField0_;
-          result.relation_ = internalGetRelation();
-          result.relation_.makeImmutable();
+          result.originState_ = originState_;
+          result.letter_ = letter_;
+          result.successorState_ = successorState_;
           onBuilt();
           return result;
         }
@@ -4920,8 +4161,15 @@ public final class TraceAbstractionProtos {
 
         public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition other) {
           if (other == de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance()) return this;
-          internalGetMutableRelation().mergeFrom(
-              other.internalGetRelation());
+          if (other.getOriginState() != 0) {
+            setOriginState(other.getOriginState());
+          }
+          if (other.getLetter() != 0) {
+            setLetter(other.getLetter());
+          }
+          if (other.getSuccessorState() != 0) {
+            setSuccessorState(other.getSuccessorState());
+          }
           onChanged();
           return this;
         }
@@ -4947,152 +4195,94 @@ public final class TraceAbstractionProtos {
           }
           return this;
         }
-        private int bitField0_;
 
-        private com.google.protobuf.MapField<
-            java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> relation_;
-        private com.google.protobuf.MapField<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-        internalGetRelation() {
-          if (relation_ == null) {
-            return com.google.protobuf.MapField.emptyMapField(
-                RelationDefaultEntryHolder.defaultEntry);
-          }
-          return relation_;
-        }
-        private com.google.protobuf.MapField<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-        internalGetMutableRelation() {
-          onChanged();;
-          if (relation_ == null) {
-            relation_ = com.google.protobuf.MapField.newMapField(
-                RelationDefaultEntryHolder.defaultEntry);
-          }
-          if (!relation_.isMutable()) {
-            relation_ = relation_.copy();
-          }
-          return relation_;
-        }
-
-        public int getRelationCount() {
-          return internalGetRelation().getMap().size();
+        private int originState_ ;
+        /**
+         * <pre>
+         * references to letters and states encoded as int32
+         * </pre>
+         *
+         * <code>optional int32 originState = 1;</code>
+         */
+        public int getOriginState() {
+          return originState_;
         }
         /**
          * <pre>
-         * number of codeblock in alphabet
+         * references to letters and states encoded as int32
          * </pre>
          *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+         * <code>optional int32 originState = 1;</code>
          */
-
-        public boolean containsRelation(
-            int key) {
+        public Builder setOriginState(int value) {
           
-          return internalGetRelation().getMap().containsKey(key);
-        }
-        /**
-         * Use {@link #getRelationMap()} instead.
-         */
-        @java.lang.Deprecated
-        public java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> getRelation() {
-          return getRelationMap();
-        }
-        /**
-         * <pre>
-         * number of codeblock in alphabet
-         * </pre>
-         *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-         */
-
-        public java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> getRelationMap() {
-          return internalGetRelation().getMap();
-        }
-        /**
-         * <pre>
-         * number of codeblock in alphabet
-         * </pre>
-         *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-         */
-
-        public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrDefault(
-            int key,
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 defaultValue) {
-          
-          java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> map =
-              internalGetRelation().getMap();
-          return map.containsKey(key) ? map.get(key) : defaultValue;
-        }
-        /**
-         * <pre>
-         * number of codeblock in alphabet
-         * </pre>
-         *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
-         */
-
-        public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 getRelationOrThrow(
-            int key) {
-          
-          java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> map =
-              internalGetRelation().getMap();
-          if (!map.containsKey(key)) {
-            throw new java.lang.IllegalArgumentException();
-          }
-          return map.get(key);
-        }
-
-        public Builder clearRelation() {
-          getMutableRelation().clear();
+          originState_ = value;
+          onChanged();
           return this;
         }
         /**
          * <pre>
-         * number of codeblock in alphabet
+         * references to letters and states encoded as int32
          * </pre>
          *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+         * <code>optional int32 originState = 1;</code>
          */
-
-        public Builder removeRelation(
-            int key) {
+        public Builder clearOriginState() {
           
-          getMutableRelation().remove(key);
+          originState_ = 0;
+          onChanged();
+          return this;
+        }
+
+        private int letter_ ;
+        /**
+         * <code>optional int32 letter = 2;</code>
+         */
+        public int getLetter() {
+          return letter_;
+        }
+        /**
+         * <code>optional int32 letter = 2;</code>
+         */
+        public Builder setLetter(int value) {
+          
+          letter_ = value;
+          onChanged();
           return this;
         }
         /**
-         * Use alternate mutation accessors instead.
+         * <code>optional int32 letter = 2;</code>
          */
-        @java.lang.Deprecated
-        public java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2>
-        getMutableRelation() {
-          return internalGetMutableRelation().getMutableMap();
+        public Builder clearLetter() {
+          
+          letter_ = 0;
+          onChanged();
+          return this;
+        }
+
+        private int successorState_ ;
+        /**
+         * <code>optional int32 successorState = 3;</code>
+         */
+        public int getSuccessorState() {
+          return successorState_;
         }
         /**
-         * <pre>
-         * number of codeblock in alphabet
-         * </pre>
-         *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+         * <code>optional int32 successorState = 3;</code>
          */
-        public Builder putRelation(
-            int key,
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2 value) {
+        public Builder setSuccessorState(int value) {
           
-          if (value == null) { throw new java.lang.NullPointerException(); }
-          getMutableRelation().put(key, value);
+          successorState_ = value;
+          onChanged();
           return this;
         }
         /**
-         * <pre>
-         * number of codeblock in alphabet
-         * </pre>
-         *
-         * <code>map&lt;int32, .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition.map2&gt; relation = 1;</code>
+         * <code>optional int32 successorState = 3;</code>
          */
-
-        public Builder putAllRelation(
-            java.util.Map<java.lang.Integer, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.map2> values) {
-          getMutableRelation().putAll(values);
+        public Builder clearSuccessorState() {
+          
+          successorState_ = 0;
+          onChanged();
           return this;
         }
         public final Builder setUnknownFields(
@@ -5144,6 +4334,7 @@ public final class TraceAbstractionProtos {
 
     }
 
+    private int bitField0_;
     public static final int INTERNAL_FIELD_NUMBER = 1;
     private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Alphabet internal_;
     /**
@@ -5207,193 +4398,219 @@ public final class TraceAbstractionProtos {
       return getReturn();
     }
 
-    public static final int EMPTYSTACK_FIELD_NUMBER = 4;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate emptyStack_;
+    public static final int STATES_FIELD_NUMBER = 4;
+    private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> states_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    public boolean hasEmptyStack() {
-      return emptyStack_ != null;
+    public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> getStatesList() {
+      return states_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getEmptyStack() {
-      return emptyStack_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance() : emptyStack_;
+    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
+        getStatesOrBuilderList() {
+      return states_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getEmptyStackOrBuilder() {
-      return getEmptyStack();
-    }
-
-    public static final int INITIAL_FIELD_NUMBER = 5;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet initial_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-     */
-    public boolean hasInitial() {
-      return initial_ != null;
+    public int getStatesCount() {
+      return states_.size();
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getInitial() {
-      return initial_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : initial_;
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getStates(int index) {
+      return states_.get(index);
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+     * <pre>
+     * references to states encoded as int32
+     * </pre>
+     *
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getInitialOrBuilder() {
-      return getInitial();
-    }
-
-    public static final int FINAL_FIELD_NUMBER = 6;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet final_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-     */
-    public boolean hasFinal() {
-      return final_ != null;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getFinal() {
-      return final_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : final_;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getFinalOrBuilder() {
-      return getFinal();
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStatesOrBuilder(
+        int index) {
+      return states_.get(index);
     }
 
-    public static final int INTERNALIN_FIELD_NUMBER = 7;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition internalIn_;
+    public static final int EMPTYSTACK_FIELD_NUMBER = 5;
+    private int emptyStack_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+     * <code>optional int32 emptyStack = 5;</code>
      */
-    public boolean hasInternalIn() {
-      return internalIn_ != null;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalIn() {
-      return internalIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalIn_;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalInOrBuilder() {
-      return getInternalIn();
+    public int getEmptyStack() {
+      return emptyStack_;
     }
 
-    public static final int INTERNALOUT_FIELD_NUMBER = 8;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition internalOut_;
+    public static final int INITIAL_FIELD_NUMBER = 6;
+    private java.util.List<java.lang.Integer> initial_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    public boolean hasInternalOut() {
-      return internalOut_ != null;
+    public java.util.List<java.lang.Integer>
+        getInitialList() {
+      return initial_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalOut() {
-      return internalOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalOut_;
+    public int getInitialCount() {
+      return initial_.size();
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+     * <code>repeated int32 initial = 6;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalOutOrBuilder() {
-      return getInternalOut();
+    public int getInitial(int index) {
+      return initial_.get(index);
+    }
+    private int initialMemoizedSerializedSize = -1;
+
+    public static final int FINAL_FIELD_NUMBER = 7;
+    private java.util.List<java.lang.Integer> final_;
+    /**
+     * <code>repeated int32 final = 7;</code>
+     */
+    public java.util.List<java.lang.Integer>
+        getFinalList() {
+      return final_;
+    }
+    /**
+     * <code>repeated int32 final = 7;</code>
+     */
+    public int getFinalCount() {
+      return final_.size();
+    }
+    /**
+     * <code>repeated int32 final = 7;</code>
+     */
+    public int getFinal(int index) {
+      return final_.get(index);
+    }
+    private int finalMemoizedSerializedSize = -1;
+
+    public static final int INTERNALEDGES_FIELD_NUMBER = 8;
+    private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> internalEdges_;
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getInternalEdgesList() {
+      return internalEdges_;
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getInternalEdgesOrBuilderList() {
+      return internalEdges_;
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    public int getInternalEdgesCount() {
+      return internalEdges_.size();
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalEdges(int index) {
+      return internalEdges_.get(index);
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalEdgesOrBuilder(
+        int index) {
+      return internalEdges_.get(index);
     }
 
-    public static final int CALLIN_FIELD_NUMBER = 9;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition callIn_;
+    public static final int CALLEDGES_FIELD_NUMBER = 9;
+    private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> callEdges_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    public boolean hasCallIn() {
-      return callIn_ != null;
+    public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getCallEdgesList() {
+      return callEdges_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallIn() {
-      return callIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callIn_;
+    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getCallEdgesOrBuilderList() {
+      return callEdges_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallInOrBuilder() {
-      return getCallIn();
-    }
-
-    public static final int CALLOUT_FIELD_NUMBER = 10;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition callOut_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-     */
-    public boolean hasCallOut() {
-      return callOut_ != null;
+    public int getCallEdgesCount() {
+      return callEdges_.size();
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallOut() {
-      return callOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callOut_;
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallEdges(int index) {
+      return callEdges_.get(index);
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallOutOrBuilder() {
-      return getCallOut();
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallEdgesOrBuilder(
+        int index) {
+      return callEdges_.get(index);
     }
 
-    public static final int RETURNIN_FIELD_NUMBER = 11;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition returnIn_;
+    public static final int RETURNEDGES_FIELD_NUMBER = 10;
+    private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> returnEdges_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    public boolean hasReturnIn() {
-      return returnIn_ != null;
+    public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getReturnEdgesList() {
+      return returnEdges_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnIn() {
-      return returnIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnIn_;
+    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+        getReturnEdgesOrBuilderList() {
+      return returnEdges_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnInOrBuilder() {
-      return getReturnIn();
-    }
-
-    public static final int RETURNOUT_FIELD_NUMBER = 12;
-    private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition returnOut_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-     */
-    public boolean hasReturnOut() {
-      return returnOut_ != null;
+    public int getReturnEdgesCount() {
+      return returnEdges_.size();
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnOut() {
-      return returnOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnOut_;
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnEdges(int index) {
+      return returnEdges_.get(index);
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnOutOrBuilder() {
-      return getReturnOut();
+    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnEdgesOrBuilder(
+        int index) {
+      return returnEdges_.get(index);
     }
 
     private byte memoizedIsInitialized = -1;
@@ -5408,6 +4625,7 @@ public final class TraceAbstractionProtos {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (internal_ != null) {
         output.writeMessage(1, getInternal());
       }
@@ -5417,32 +4635,34 @@ public final class TraceAbstractionProtos {
       if (return_ != null) {
         output.writeMessage(3, getReturn());
       }
-      if (emptyStack_ != null) {
-        output.writeMessage(4, getEmptyStack());
+      for (int i = 0; i < states_.size(); i++) {
+        output.writeMessage(4, states_.get(i));
       }
-      if (initial_ != null) {
-        output.writeMessage(5, getInitial());
+      if (emptyStack_ != 0) {
+        output.writeInt32(5, emptyStack_);
       }
-      if (final_ != null) {
-        output.writeMessage(6, getFinal());
+      if (getInitialList().size() > 0) {
+        output.writeUInt32NoTag(50);
+        output.writeUInt32NoTag(initialMemoizedSerializedSize);
       }
-      if (internalIn_ != null) {
-        output.writeMessage(7, getInternalIn());
+      for (int i = 0; i < initial_.size(); i++) {
+        output.writeInt32NoTag(initial_.get(i));
       }
-      if (internalOut_ != null) {
-        output.writeMessage(8, getInternalOut());
+      if (getFinalList().size() > 0) {
+        output.writeUInt32NoTag(58);
+        output.writeUInt32NoTag(finalMemoizedSerializedSize);
       }
-      if (callIn_ != null) {
-        output.writeMessage(9, getCallIn());
+      for (int i = 0; i < final_.size(); i++) {
+        output.writeInt32NoTag(final_.get(i));
       }
-      if (callOut_ != null) {
-        output.writeMessage(10, getCallOut());
+      for (int i = 0; i < internalEdges_.size(); i++) {
+        output.writeMessage(8, internalEdges_.get(i));
       }
-      if (returnIn_ != null) {
-        output.writeMessage(11, getReturnIn());
+      for (int i = 0; i < callEdges_.size(); i++) {
+        output.writeMessage(9, callEdges_.get(i));
       }
-      if (returnOut_ != null) {
-        output.writeMessage(12, getReturnOut());
+      for (int i = 0; i < returnEdges_.size(); i++) {
+        output.writeMessage(10, returnEdges_.get(i));
       }
     }
 
@@ -5463,41 +4683,53 @@ public final class TraceAbstractionProtos {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, getReturn());
       }
-      if (emptyStack_ != null) {
+      for (int i = 0; i < states_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, getEmptyStack());
+          .computeMessageSize(4, states_.get(i));
       }
-      if (initial_ != null) {
+      if (emptyStack_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, getInitial());
+          .computeInt32Size(5, emptyStack_);
       }
-      if (final_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, getFinal());
+      {
+        int dataSize = 0;
+        for (int i = 0; i < initial_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(initial_.get(i));
+        }
+        size += dataSize;
+        if (!getInitialList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        initialMemoizedSerializedSize = dataSize;
       }
-      if (internalIn_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, getInternalIn());
+      {
+        int dataSize = 0;
+        for (int i = 0; i < final_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(final_.get(i));
+        }
+        size += dataSize;
+        if (!getFinalList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        finalMemoizedSerializedSize = dataSize;
       }
-      if (internalOut_ != null) {
+      for (int i = 0; i < internalEdges_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(8, getInternalOut());
+          .computeMessageSize(8, internalEdges_.get(i));
       }
-      if (callIn_ != null) {
+      for (int i = 0; i < callEdges_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(9, getCallIn());
+          .computeMessageSize(9, callEdges_.get(i));
       }
-      if (callOut_ != null) {
+      for (int i = 0; i < returnEdges_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(10, getCallOut());
-      }
-      if (returnIn_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(11, getReturnIn());
-      }
-      if (returnOut_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(12, getReturnOut());
+          .computeMessageSize(10, returnEdges_.get(i));
       }
       memoizedSize = size;
       return size;
@@ -5530,51 +4762,20 @@ public final class TraceAbstractionProtos {
         result = result && getReturn()
             .equals(other.getReturn());
       }
-      result = result && (hasEmptyStack() == other.hasEmptyStack());
-      if (hasEmptyStack()) {
-        result = result && getEmptyStack()
-            .equals(other.getEmptyStack());
-      }
-      result = result && (hasInitial() == other.hasInitial());
-      if (hasInitial()) {
-        result = result && getInitial()
-            .equals(other.getInitial());
-      }
-      result = result && (hasFinal() == other.hasFinal());
-      if (hasFinal()) {
-        result = result && getFinal()
-            .equals(other.getFinal());
-      }
-      result = result && (hasInternalIn() == other.hasInternalIn());
-      if (hasInternalIn()) {
-        result = result && getInternalIn()
-            .equals(other.getInternalIn());
-      }
-      result = result && (hasInternalOut() == other.hasInternalOut());
-      if (hasInternalOut()) {
-        result = result && getInternalOut()
-            .equals(other.getInternalOut());
-      }
-      result = result && (hasCallIn() == other.hasCallIn());
-      if (hasCallIn()) {
-        result = result && getCallIn()
-            .equals(other.getCallIn());
-      }
-      result = result && (hasCallOut() == other.hasCallOut());
-      if (hasCallOut()) {
-        result = result && getCallOut()
-            .equals(other.getCallOut());
-      }
-      result = result && (hasReturnIn() == other.hasReturnIn());
-      if (hasReturnIn()) {
-        result = result && getReturnIn()
-            .equals(other.getReturnIn());
-      }
-      result = result && (hasReturnOut() == other.hasReturnOut());
-      if (hasReturnOut()) {
-        result = result && getReturnOut()
-            .equals(other.getReturnOut());
-      }
+      result = result && getStatesList()
+          .equals(other.getStatesList());
+      result = result && (getEmptyStack()
+          == other.getEmptyStack());
+      result = result && getInitialList()
+          .equals(other.getInitialList());
+      result = result && getFinalList()
+          .equals(other.getFinalList());
+      result = result && getInternalEdgesList()
+          .equals(other.getInternalEdgesList());
+      result = result && getCallEdgesList()
+          .equals(other.getCallEdgesList());
+      result = result && getReturnEdgesList()
+          .equals(other.getReturnEdgesList());
       return result;
     }
 
@@ -5597,41 +4798,31 @@ public final class TraceAbstractionProtos {
         hash = (37 * hash) + RETURN_FIELD_NUMBER;
         hash = (53 * hash) + getReturn().hashCode();
       }
-      if (hasEmptyStack()) {
-        hash = (37 * hash) + EMPTYSTACK_FIELD_NUMBER;
-        hash = (53 * hash) + getEmptyStack().hashCode();
+      if (getStatesCount() > 0) {
+        hash = (37 * hash) + STATES_FIELD_NUMBER;
+        hash = (53 * hash) + getStatesList().hashCode();
       }
-      if (hasInitial()) {
+      hash = (37 * hash) + EMPTYSTACK_FIELD_NUMBER;
+      hash = (53 * hash) + getEmptyStack();
+      if (getInitialCount() > 0) {
         hash = (37 * hash) + INITIAL_FIELD_NUMBER;
-        hash = (53 * hash) + getInitial().hashCode();
+        hash = (53 * hash) + getInitialList().hashCode();
       }
-      if (hasFinal()) {
+      if (getFinalCount() > 0) {
         hash = (37 * hash) + FINAL_FIELD_NUMBER;
-        hash = (53 * hash) + getFinal().hashCode();
+        hash = (53 * hash) + getFinalList().hashCode();
       }
-      if (hasInternalIn()) {
-        hash = (37 * hash) + INTERNALIN_FIELD_NUMBER;
-        hash = (53 * hash) + getInternalIn().hashCode();
+      if (getInternalEdgesCount() > 0) {
+        hash = (37 * hash) + INTERNALEDGES_FIELD_NUMBER;
+        hash = (53 * hash) + getInternalEdgesList().hashCode();
       }
-      if (hasInternalOut()) {
-        hash = (37 * hash) + INTERNALOUT_FIELD_NUMBER;
-        hash = (53 * hash) + getInternalOut().hashCode();
+      if (getCallEdgesCount() > 0) {
+        hash = (37 * hash) + CALLEDGES_FIELD_NUMBER;
+        hash = (53 * hash) + getCallEdgesList().hashCode();
       }
-      if (hasCallIn()) {
-        hash = (37 * hash) + CALLIN_FIELD_NUMBER;
-        hash = (53 * hash) + getCallIn().hashCode();
-      }
-      if (hasCallOut()) {
-        hash = (37 * hash) + CALLOUT_FIELD_NUMBER;
-        hash = (53 * hash) + getCallOut().hashCode();
-      }
-      if (hasReturnIn()) {
-        hash = (37 * hash) + RETURNIN_FIELD_NUMBER;
-        hash = (53 * hash) + getReturnIn().hashCode();
-      }
-      if (hasReturnOut()) {
-        hash = (37 * hash) + RETURNOUT_FIELD_NUMBER;
-        hash = (53 * hash) + getReturnOut().hashCode();
+      if (getReturnEdgesCount() > 0) {
+        hash = (37 * hash) + RETURNEDGES_FIELD_NUMBER;
+        hash = (53 * hash) + getReturnEdgesList().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -5747,6 +4938,10 @@ public final class TraceAbstractionProtos {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
                 .alwaysUseFieldBuilders) {
+          getStatesFieldBuilder();
+          getInternalEdgesFieldBuilder();
+          getCallEdgesFieldBuilder();
+          getReturnEdgesFieldBuilder();
         }
       }
       public Builder clear() {
@@ -5769,59 +4964,35 @@ public final class TraceAbstractionProtos {
           return_ = null;
           returnBuilder_ = null;
         }
-        if (emptyStackBuilder_ == null) {
-          emptyStack_ = null;
+        if (statesBuilder_ == null) {
+          states_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
         } else {
-          emptyStack_ = null;
-          emptyStackBuilder_ = null;
+          statesBuilder_.clear();
         }
-        if (initialBuilder_ == null) {
-          initial_ = null;
+        emptyStack_ = 0;
+
+        initial_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        final_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        if (internalEdgesBuilder_ == null) {
+          internalEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000080);
         } else {
-          initial_ = null;
-          initialBuilder_ = null;
+          internalEdgesBuilder_.clear();
         }
-        if (finalBuilder_ == null) {
-          final_ = null;
+        if (callEdgesBuilder_ == null) {
+          callEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000100);
         } else {
-          final_ = null;
-          finalBuilder_ = null;
+          callEdgesBuilder_.clear();
         }
-        if (internalInBuilder_ == null) {
-          internalIn_ = null;
+        if (returnEdgesBuilder_ == null) {
+          returnEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000200);
         } else {
-          internalIn_ = null;
-          internalInBuilder_ = null;
-        }
-        if (internalOutBuilder_ == null) {
-          internalOut_ = null;
-        } else {
-          internalOut_ = null;
-          internalOutBuilder_ = null;
-        }
-        if (callInBuilder_ == null) {
-          callIn_ = null;
-        } else {
-          callIn_ = null;
-          callInBuilder_ = null;
-        }
-        if (callOutBuilder_ == null) {
-          callOut_ = null;
-        } else {
-          callOut_ = null;
-          callOutBuilder_ = null;
-        }
-        if (returnInBuilder_ == null) {
-          returnIn_ = null;
-        } else {
-          returnIn_ = null;
-          returnInBuilder_ = null;
-        }
-        if (returnOutBuilder_ == null) {
-          returnOut_ = null;
-        } else {
-          returnOut_ = null;
-          returnOutBuilder_ = null;
+          returnEdgesBuilder_.clear();
         }
         return this;
       }
@@ -5845,6 +5016,8 @@ public final class TraceAbstractionProtos {
 
       public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton buildPartial() {
         de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton result = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         if (internalBuilder_ == null) {
           result.internal_ = internal_;
         } else {
@@ -5860,51 +5033,54 @@ public final class TraceAbstractionProtos {
         } else {
           result.return_ = returnBuilder_.build();
         }
-        if (emptyStackBuilder_ == null) {
-          result.emptyStack_ = emptyStack_;
+        if (statesBuilder_ == null) {
+          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+            states_ = java.util.Collections.unmodifiableList(states_);
+            bitField0_ = (bitField0_ & ~0x00000008);
+          }
+          result.states_ = states_;
         } else {
-          result.emptyStack_ = emptyStackBuilder_.build();
+          result.states_ = statesBuilder_.build();
         }
-        if (initialBuilder_ == null) {
-          result.initial_ = initial_;
+        result.emptyStack_ = emptyStack_;
+        if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          initial_ = java.util.Collections.unmodifiableList(initial_);
+          bitField0_ = (bitField0_ & ~0x00000020);
+        }
+        result.initial_ = initial_;
+        if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          final_ = java.util.Collections.unmodifiableList(final_);
+          bitField0_ = (bitField0_ & ~0x00000040);
+        }
+        result.final_ = final_;
+        if (internalEdgesBuilder_ == null) {
+          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+            internalEdges_ = java.util.Collections.unmodifiableList(internalEdges_);
+            bitField0_ = (bitField0_ & ~0x00000080);
+          }
+          result.internalEdges_ = internalEdges_;
         } else {
-          result.initial_ = initialBuilder_.build();
+          result.internalEdges_ = internalEdgesBuilder_.build();
         }
-        if (finalBuilder_ == null) {
-          result.final_ = final_;
+        if (callEdgesBuilder_ == null) {
+          if (((bitField0_ & 0x00000100) == 0x00000100)) {
+            callEdges_ = java.util.Collections.unmodifiableList(callEdges_);
+            bitField0_ = (bitField0_ & ~0x00000100);
+          }
+          result.callEdges_ = callEdges_;
         } else {
-          result.final_ = finalBuilder_.build();
+          result.callEdges_ = callEdgesBuilder_.build();
         }
-        if (internalInBuilder_ == null) {
-          result.internalIn_ = internalIn_;
+        if (returnEdgesBuilder_ == null) {
+          if (((bitField0_ & 0x00000200) == 0x00000200)) {
+            returnEdges_ = java.util.Collections.unmodifiableList(returnEdges_);
+            bitField0_ = (bitField0_ & ~0x00000200);
+          }
+          result.returnEdges_ = returnEdges_;
         } else {
-          result.internalIn_ = internalInBuilder_.build();
+          result.returnEdges_ = returnEdgesBuilder_.build();
         }
-        if (internalOutBuilder_ == null) {
-          result.internalOut_ = internalOut_;
-        } else {
-          result.internalOut_ = internalOutBuilder_.build();
-        }
-        if (callInBuilder_ == null) {
-          result.callIn_ = callIn_;
-        } else {
-          result.callIn_ = callInBuilder_.build();
-        }
-        if (callOutBuilder_ == null) {
-          result.callOut_ = callOut_;
-        } else {
-          result.callOut_ = callOutBuilder_.build();
-        }
-        if (returnInBuilder_ == null) {
-          result.returnIn_ = returnIn_;
-        } else {
-          result.returnIn_ = returnInBuilder_.build();
-        }
-        if (returnOutBuilder_ == null) {
-          result.returnOut_ = returnOut_;
-        } else {
-          result.returnOut_ = returnOutBuilder_.build();
-        }
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -5955,32 +5131,132 @@ public final class TraceAbstractionProtos {
         if (other.hasReturn()) {
           mergeReturn(other.getReturn());
         }
-        if (other.hasEmptyStack()) {
-          mergeEmptyStack(other.getEmptyStack());
+        if (statesBuilder_ == null) {
+          if (!other.states_.isEmpty()) {
+            if (states_.isEmpty()) {
+              states_ = other.states_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+            } else {
+              ensureStatesIsMutable();
+              states_.addAll(other.states_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.states_.isEmpty()) {
+            if (statesBuilder_.isEmpty()) {
+              statesBuilder_.dispose();
+              statesBuilder_ = null;
+              states_ = other.states_;
+              bitField0_ = (bitField0_ & ~0x00000008);
+              statesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getStatesFieldBuilder() : null;
+            } else {
+              statesBuilder_.addAllMessages(other.states_);
+            }
+          }
         }
-        if (other.hasInitial()) {
-          mergeInitial(other.getInitial());
+        if (other.getEmptyStack() != 0) {
+          setEmptyStack(other.getEmptyStack());
         }
-        if (other.hasFinal()) {
-          mergeFinal(other.getFinal());
+        if (!other.initial_.isEmpty()) {
+          if (initial_.isEmpty()) {
+            initial_ = other.initial_;
+            bitField0_ = (bitField0_ & ~0x00000020);
+          } else {
+            ensureInitialIsMutable();
+            initial_.addAll(other.initial_);
+          }
+          onChanged();
         }
-        if (other.hasInternalIn()) {
-          mergeInternalIn(other.getInternalIn());
+        if (!other.final_.isEmpty()) {
+          if (final_.isEmpty()) {
+            final_ = other.final_;
+            bitField0_ = (bitField0_ & ~0x00000040);
+          } else {
+            ensureFinalIsMutable();
+            final_.addAll(other.final_);
+          }
+          onChanged();
         }
-        if (other.hasInternalOut()) {
-          mergeInternalOut(other.getInternalOut());
+        if (internalEdgesBuilder_ == null) {
+          if (!other.internalEdges_.isEmpty()) {
+            if (internalEdges_.isEmpty()) {
+              internalEdges_ = other.internalEdges_;
+              bitField0_ = (bitField0_ & ~0x00000080);
+            } else {
+              ensureInternalEdgesIsMutable();
+              internalEdges_.addAll(other.internalEdges_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.internalEdges_.isEmpty()) {
+            if (internalEdgesBuilder_.isEmpty()) {
+              internalEdgesBuilder_.dispose();
+              internalEdgesBuilder_ = null;
+              internalEdges_ = other.internalEdges_;
+              bitField0_ = (bitField0_ & ~0x00000080);
+              internalEdgesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getInternalEdgesFieldBuilder() : null;
+            } else {
+              internalEdgesBuilder_.addAllMessages(other.internalEdges_);
+            }
+          }
         }
-        if (other.hasCallIn()) {
-          mergeCallIn(other.getCallIn());
+        if (callEdgesBuilder_ == null) {
+          if (!other.callEdges_.isEmpty()) {
+            if (callEdges_.isEmpty()) {
+              callEdges_ = other.callEdges_;
+              bitField0_ = (bitField0_ & ~0x00000100);
+            } else {
+              ensureCallEdgesIsMutable();
+              callEdges_.addAll(other.callEdges_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.callEdges_.isEmpty()) {
+            if (callEdgesBuilder_.isEmpty()) {
+              callEdgesBuilder_.dispose();
+              callEdgesBuilder_ = null;
+              callEdges_ = other.callEdges_;
+              bitField0_ = (bitField0_ & ~0x00000100);
+              callEdgesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getCallEdgesFieldBuilder() : null;
+            } else {
+              callEdgesBuilder_.addAllMessages(other.callEdges_);
+            }
+          }
         }
-        if (other.hasCallOut()) {
-          mergeCallOut(other.getCallOut());
-        }
-        if (other.hasReturnIn()) {
-          mergeReturnIn(other.getReturnIn());
-        }
-        if (other.hasReturnOut()) {
-          mergeReturnOut(other.getReturnOut());
+        if (returnEdgesBuilder_ == null) {
+          if (!other.returnEdges_.isEmpty()) {
+            if (returnEdges_.isEmpty()) {
+              returnEdges_ = other.returnEdges_;
+              bitField0_ = (bitField0_ & ~0x00000200);
+            } else {
+              ensureReturnEdgesIsMutable();
+              returnEdges_.addAll(other.returnEdges_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.returnEdges_.isEmpty()) {
+            if (returnEdgesBuilder_.isEmpty()) {
+              returnEdgesBuilder_.dispose();
+              returnEdgesBuilder_ = null;
+              returnEdges_ = other.returnEdges_;
+              bitField0_ = (bitField0_ & ~0x00000200);
+              returnEdgesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getReturnEdgesFieldBuilder() : null;
+            } else {
+              returnEdgesBuilder_.addAllMessages(other.returnEdges_);
+            }
+          }
         }
         onChanged();
         return this;
@@ -6007,6 +5283,7 @@ public final class TraceAbstractionProtos {
         }
         return this;
       }
+      private int bitField0_;
 
       private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Alphabet internal_ = null;
       private com.google.protobuf.SingleFieldBuilderV3<
@@ -6359,1057 +5636,1194 @@ public final class TraceAbstractionProtos {
         return returnBuilder_;
       }
 
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate emptyStack_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> emptyStackBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
-       */
-      public boolean hasEmptyStack() {
-        return emptyStackBuilder_ != null || emptyStack_ != null;
+      private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> states_ =
+        java.util.Collections.emptyList();
+      private void ensureStatesIsMutable() {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+          states_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate>(states_);
+          bitField0_ |= 0x00000008;
+         }
       }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> statesBuilder_;
+
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getEmptyStack() {
-        if (emptyStackBuilder_ == null) {
-          return emptyStack_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance() : emptyStack_;
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> getStatesList() {
+        if (statesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(states_);
         } else {
-          return emptyStackBuilder_.getMessage();
+          return statesBuilder_.getMessageList();
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
        */
-      public Builder setEmptyStack(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
-        if (emptyStackBuilder_ == null) {
+      public int getStatesCount() {
+        if (statesBuilder_ == null) {
+          return states_.size();
+        } else {
+          return statesBuilder_.getCount();
+        }
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getStates(int index) {
+        if (statesBuilder_ == null) {
+          return states_.get(index);
+        } else {
+          return statesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder setStates(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
+        if (statesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          emptyStack_ = value;
+          ensureStatesIsMutable();
+          states_.set(index, value);
           onChanged();
         } else {
-          emptyStackBuilder_.setMessage(value);
+          statesBuilder_.setMessage(index, value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
        */
-      public Builder setEmptyStack(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
-        if (emptyStackBuilder_ == null) {
-          emptyStack_ = builderForValue.build();
+      public Builder setStates(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
+        if (statesBuilder_ == null) {
+          ensureStatesIsMutable();
+          states_.set(index, builderForValue.build());
           onChanged();
         } else {
-          emptyStackBuilder_.setMessage(builderForValue.build());
+          statesBuilder_.setMessage(index, builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
        */
-      public Builder mergeEmptyStack(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
-        if (emptyStackBuilder_ == null) {
-          if (emptyStack_ != null) {
-            emptyStack_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.newBuilder(emptyStack_).mergeFrom(value).buildPartial();
-          } else {
-            emptyStack_ = value;
+      public Builder addStates(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
+        if (statesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
           }
+          ensureStatesIsMutable();
+          states_.add(value);
           onChanged();
         } else {
-          emptyStackBuilder_.mergeFrom(value);
+          statesBuilder_.addMessage(value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder addStates(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
+        if (statesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureStatesIsMutable();
+          states_.add(index, value);
+          onChanged();
+        } else {
+          statesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder addStates(
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
+        if (statesBuilder_ == null) {
+          ensureStatesIsMutable();
+          states_.add(builderForValue.build());
+          onChanged();
+        } else {
+          statesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder addStates(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
+        if (statesBuilder_ == null) {
+          ensureStatesIsMutable();
+          states_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          statesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder addAllStates(
+          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> values) {
+        if (statesBuilder_ == null) {
+          ensureStatesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, states_);
+          onChanged();
+        } else {
+          statesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder clearStates() {
+        if (statesBuilder_ == null) {
+          states_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000008);
+          onChanged();
+        } else {
+          statesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public Builder removeStates(int index) {
+        if (statesBuilder_ == null) {
+          ensureStatesIsMutable();
+          states_.remove(index);
+          onChanged();
+        } else {
+          statesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder getStatesBuilder(
+          int index) {
+        return getStatesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStatesOrBuilder(
+          int index) {
+        if (statesBuilder_ == null) {
+          return states_.get(index);  } else {
+          return statesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
+           getStatesOrBuilderList() {
+        if (statesBuilder_ != null) {
+          return statesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(states_);
+        }
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder addStatesBuilder() {
+        return getStatesFieldBuilder().addBuilder(
+            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance());
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder addStatesBuilder(
+          int index) {
+        return getStatesFieldBuilder().addBuilder(
+            index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance());
+      }
+      /**
+       * <pre>
+       * references to states encoded as int32
+       * </pre>
+       *
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate states = 4;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder> 
+           getStatesBuilderList() {
+        return getStatesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
+          getStatesFieldBuilder() {
+        if (statesBuilder_ == null) {
+          statesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder>(
+                  states_,
+                  ((bitField0_ & 0x00000008) == 0x00000008),
+                  getParentForChildren(),
+                  isClean());
+          states_ = null;
+        }
+        return statesBuilder_;
+      }
+
+      private int emptyStack_ ;
+      /**
+       * <code>optional int32 emptyStack = 5;</code>
+       */
+      public int getEmptyStack() {
+        return emptyStack_;
+      }
+      /**
+       * <code>optional int32 emptyStack = 5;</code>
+       */
+      public Builder setEmptyStack(int value) {
+        
+        emptyStack_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 emptyStack = 5;</code>
        */
       public Builder clearEmptyStack() {
-        if (emptyStackBuilder_ == null) {
-          emptyStack_ = null;
-          onChanged();
-        } else {
-          emptyStack_ = null;
-          emptyStackBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder getEmptyStackBuilder() {
         
+        emptyStack_ = 0;
         onChanged();
-        return getEmptyStackFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getEmptyStackOrBuilder() {
-        if (emptyStackBuilder_ != null) {
-          return emptyStackBuilder_.getMessageOrBuilder();
-        } else {
-          return emptyStack_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance() : emptyStack_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.Predicate emptyStack = 4;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
-          getEmptyStackFieldBuilder() {
-        if (emptyStackBuilder_ == null) {
-          emptyStackBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder>(
-                  getEmptyStack(),
-                  getParentForChildren(),
-                  isClean());
-          emptyStack_ = null;
-        }
-        return emptyStackBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet initial_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder> initialBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      public boolean hasInitial() {
-        return initialBuilder_ != null || initial_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getInitial() {
-        if (initialBuilder_ == null) {
-          return initial_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : initial_;
-        } else {
-          return initialBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      public Builder setInitial(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet value) {
-        if (initialBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          initial_ = value;
-          onChanged();
-        } else {
-          initialBuilder_.setMessage(value);
-        }
-
         return this;
       }
+
+      private java.util.List<java.lang.Integer> initial_ = java.util.Collections.emptyList();
+      private void ensureInitialIsMutable() {
+        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+          initial_ = new java.util.ArrayList<java.lang.Integer>(initial_);
+          bitField0_ |= 0x00000020;
+         }
+      }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+       * <code>repeated int32 initial = 6;</code>
+       */
+      public java.util.List<java.lang.Integer>
+          getInitialList() {
+        return java.util.Collections.unmodifiableList(initial_);
+      }
+      /**
+       * <code>repeated int32 initial = 6;</code>
+       */
+      public int getInitialCount() {
+        return initial_.size();
+      }
+      /**
+       * <code>repeated int32 initial = 6;</code>
+       */
+      public int getInitial(int index) {
+        return initial_.get(index);
+      }
+      /**
+       * <code>repeated int32 initial = 6;</code>
        */
       public Builder setInitial(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder builderForValue) {
-        if (initialBuilder_ == null) {
-          initial_ = builderForValue.build();
-          onChanged();
-        } else {
-          initialBuilder_.setMessage(builderForValue.build());
-        }
-
+          int index, int value) {
+        ensureInitialIsMutable();
+        initial_.set(index, value);
+        onChanged();
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+       * <code>repeated int32 initial = 6;</code>
        */
-      public Builder mergeInitial(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet value) {
-        if (initialBuilder_ == null) {
-          if (initial_ != null) {
-            initial_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.newBuilder(initial_).mergeFrom(value).buildPartial();
-          } else {
-            initial_ = value;
-          }
-          onChanged();
-        } else {
-          initialBuilder_.mergeFrom(value);
-        }
-
+      public Builder addInitial(int value) {
+        ensureInitialIsMutable();
+        initial_.add(value);
+        onChanged();
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
+       * <code>repeated int32 initial = 6;</code>
+       */
+      public Builder addAllInitial(
+          java.lang.Iterable<? extends java.lang.Integer> values) {
+        ensureInitialIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, initial_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 initial = 6;</code>
        */
       public Builder clearInitial() {
-        if (initialBuilder_ == null) {
-          initial_ = null;
-          onChanged();
-        } else {
-          initial_ = null;
-          initialBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder getInitialBuilder() {
-        
+        initial_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000020);
         onChanged();
-        return getInitialFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getInitialOrBuilder() {
-        if (initialBuilder_ != null) {
-          return initialBuilder_.getMessageOrBuilder();
-        } else {
-          return initial_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : initial_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet initial = 5;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder> 
-          getInitialFieldBuilder() {
-        if (initialBuilder_ == null) {
-          initialBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder>(
-                  getInitial(),
-                  getParentForChildren(),
-                  isClean());
-          initial_ = null;
-        }
-        return initialBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet final_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder> finalBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      public boolean hasFinal() {
-        return finalBuilder_ != null || final_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getFinal() {
-        if (finalBuilder_ == null) {
-          return final_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : final_;
-        } else {
-          return finalBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      public Builder setFinal(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet value) {
-        if (finalBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          final_ = value;
-          onChanged();
-        } else {
-          finalBuilder_.setMessage(value);
-        }
-
         return this;
       }
+
+      private java.util.List<java.lang.Integer> final_ = java.util.Collections.emptyList();
+      private void ensureFinalIsMutable() {
+        if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+          final_ = new java.util.ArrayList<java.lang.Integer>(final_);
+          bitField0_ |= 0x00000040;
+         }
+      }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+       * <code>repeated int32 final = 7;</code>
+       */
+      public java.util.List<java.lang.Integer>
+          getFinalList() {
+        return java.util.Collections.unmodifiableList(final_);
+      }
+      /**
+       * <code>repeated int32 final = 7;</code>
+       */
+      public int getFinalCount() {
+        return final_.size();
+      }
+      /**
+       * <code>repeated int32 final = 7;</code>
+       */
+      public int getFinal(int index) {
+        return final_.get(index);
+      }
+      /**
+       * <code>repeated int32 final = 7;</code>
        */
       public Builder setFinal(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder builderForValue) {
-        if (finalBuilder_ == null) {
-          final_ = builderForValue.build();
-          onChanged();
-        } else {
-          finalBuilder_.setMessage(builderForValue.build());
-        }
-
+          int index, int value) {
+        ensureFinalIsMutable();
+        final_.set(index, value);
+        onChanged();
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+       * <code>repeated int32 final = 7;</code>
        */
-      public Builder mergeFinal(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet value) {
-        if (finalBuilder_ == null) {
-          if (final_ != null) {
-            final_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.newBuilder(final_).mergeFrom(value).buildPartial();
-          } else {
-            final_ = value;
-          }
-          onChanged();
-        } else {
-          finalBuilder_.mergeFrom(value);
-        }
-
+      public Builder addFinal(int value) {
+        ensureFinalIsMutable();
+        final_.add(value);
+        onChanged();
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
+       * <code>repeated int32 final = 7;</code>
+       */
+      public Builder addAllFinal(
+          java.lang.Iterable<? extends java.lang.Integer> values) {
+        ensureFinalIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, final_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 final = 7;</code>
        */
       public Builder clearFinal() {
-        if (finalBuilder_ == null) {
-          final_ = null;
-          onChanged();
-        } else {
-          final_ = null;
-          finalBuilder_ = null;
-        }
-
+        final_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
         return this;
       }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder getFinalBuilder() {
-        
-        onChanged();
-        return getFinalFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder getFinalOrBuilder() {
-        if (finalBuilder_ != null) {
-          return finalBuilder_.getMessageOrBuilder();
-        } else {
-          return final_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance() : final_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.StateSet final = 6;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder> 
-          getFinalFieldBuilder() {
-        if (finalBuilder_ == null) {
-          finalBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder>(
-                  getFinal(),
-                  getParentForChildren(),
-                  isClean());
-          final_ = null;
-        }
-        return finalBuilder_;
+
+      private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> internalEdges_ =
+        java.util.Collections.emptyList();
+      private void ensureInternalEdgesIsMutable() {
+        if (!((bitField0_ & 0x00000080) == 0x00000080)) {
+          internalEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>(internalEdges_);
+          bitField0_ |= 0x00000080;
+         }
       }
 
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition internalIn_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> internalInBuilder_;
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> internalEdgesBuilder_;
+
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public boolean hasInternalIn() {
-        return internalInBuilder_ != null || internalIn_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalIn() {
-        if (internalInBuilder_ == null) {
-          return internalIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalIn_;
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getInternalEdgesList() {
+        if (internalEdgesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(internalEdges_);
         } else {
-          return internalInBuilder_.getMessage();
+          return internalEdgesBuilder_.getMessageList();
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder setInternalIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (internalInBuilder_ == null) {
+      public int getInternalEdgesCount() {
+        if (internalEdgesBuilder_ == null) {
+          return internalEdges_.size();
+        } else {
+          return internalEdgesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalEdges(int index) {
+        if (internalEdgesBuilder_ == null) {
+          return internalEdges_.get(index);
+        } else {
+          return internalEdgesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public Builder setInternalEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (internalEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          internalIn_ = value;
+          ensureInternalEdgesIsMutable();
+          internalEdges_.set(index, value);
           onChanged();
         } else {
-          internalInBuilder_.setMessage(value);
+          internalEdgesBuilder_.setMessage(index, value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder setInternalIn(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (internalInBuilder_ == null) {
-          internalIn_ = builderForValue.build();
+      public Builder setInternalEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (internalEdgesBuilder_ == null) {
+          ensureInternalEdgesIsMutable();
+          internalEdges_.set(index, builderForValue.build());
           onChanged();
         } else {
-          internalInBuilder_.setMessage(builderForValue.build());
+          internalEdgesBuilder_.setMessage(index, builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder mergeInternalIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (internalInBuilder_ == null) {
-          if (internalIn_ != null) {
-            internalIn_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(internalIn_).mergeFrom(value).buildPartial();
-          } else {
-            internalIn_ = value;
-          }
-          onChanged();
-        } else {
-          internalInBuilder_.mergeFrom(value);
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-       */
-      public Builder clearInternalIn() {
-        if (internalInBuilder_ == null) {
-          internalIn_ = null;
-          onChanged();
-        } else {
-          internalIn_ = null;
-          internalInBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getInternalInBuilder() {
-        
-        onChanged();
-        return getInternalInFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalInOrBuilder() {
-        if (internalInBuilder_ != null) {
-          return internalInBuilder_.getMessageOrBuilder();
-        } else {
-          return internalIn_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalIn_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalIn = 7;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getInternalInFieldBuilder() {
-        if (internalInBuilder_ == null) {
-          internalInBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getInternalIn(),
-                  getParentForChildren(),
-                  isClean());
-          internalIn_ = null;
-        }
-        return internalInBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition internalOut_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> internalOutBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public boolean hasInternalOut() {
-        return internalOutBuilder_ != null || internalOut_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getInternalOut() {
-        if (internalOutBuilder_ == null) {
-          return internalOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalOut_;
-        } else {
-          return internalOutBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public Builder setInternalOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (internalOutBuilder_ == null) {
+      public Builder addInternalEdges(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (internalEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          internalOut_ = value;
+          ensureInternalEdgesIsMutable();
+          internalEdges_.add(value);
           onChanged();
         } else {
-          internalOutBuilder_.setMessage(value);
+          internalEdgesBuilder_.addMessage(value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder setInternalOut(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (internalOutBuilder_ == null) {
-          internalOut_ = builderForValue.build();
-          onChanged();
-        } else {
-          internalOutBuilder_.setMessage(builderForValue.build());
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public Builder mergeInternalOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (internalOutBuilder_ == null) {
-          if (internalOut_ != null) {
-            internalOut_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(internalOut_).mergeFrom(value).buildPartial();
-          } else {
-            internalOut_ = value;
-          }
-          onChanged();
-        } else {
-          internalOutBuilder_.mergeFrom(value);
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public Builder clearInternalOut() {
-        if (internalOutBuilder_ == null) {
-          internalOut_ = null;
-          onChanged();
-        } else {
-          internalOut_ = null;
-          internalOutBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getInternalOutBuilder() {
-        
-        onChanged();
-        return getInternalOutFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalOutOrBuilder() {
-        if (internalOutBuilder_ != null) {
-          return internalOutBuilder_.getMessageOrBuilder();
-        } else {
-          return internalOut_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : internalOut_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalOut = 8;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getInternalOutFieldBuilder() {
-        if (internalOutBuilder_ == null) {
-          internalOutBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getInternalOut(),
-                  getParentForChildren(),
-                  isClean());
-          internalOut_ = null;
-        }
-        return internalOutBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition callIn_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> callInBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
-       */
-      public boolean hasCallIn() {
-        return callInBuilder_ != null || callIn_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallIn() {
-        if (callInBuilder_ == null) {
-          return callIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callIn_;
-        } else {
-          return callInBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
-       */
-      public Builder setCallIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (callInBuilder_ == null) {
+      public Builder addInternalEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (internalEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          callIn_ = value;
+          ensureInternalEdgesIsMutable();
+          internalEdges_.add(index, value);
           onChanged();
         } else {
-          callInBuilder_.setMessage(value);
+          internalEdgesBuilder_.addMessage(index, value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder setCallIn(
+      public Builder addInternalEdges(
           de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (callInBuilder_ == null) {
-          callIn_ = builderForValue.build();
+        if (internalEdgesBuilder_ == null) {
+          ensureInternalEdgesIsMutable();
+          internalEdges_.add(builderForValue.build());
           onChanged();
         } else {
-          callInBuilder_.setMessage(builderForValue.build());
+          internalEdgesBuilder_.addMessage(builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder mergeCallIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (callInBuilder_ == null) {
-          if (callIn_ != null) {
-            callIn_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(callIn_).mergeFrom(value).buildPartial();
-          } else {
-            callIn_ = value;
-          }
+      public Builder addInternalEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (internalEdgesBuilder_ == null) {
+          ensureInternalEdgesIsMutable();
+          internalEdges_.add(index, builderForValue.build());
           onChanged();
         } else {
-          callInBuilder_.mergeFrom(value);
+          internalEdgesBuilder_.addMessage(index, builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public Builder clearCallIn() {
-        if (callInBuilder_ == null) {
-          callIn_ = null;
+      public Builder addAllInternalEdges(
+          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> values) {
+        if (internalEdgesBuilder_ == null) {
+          ensureInternalEdgesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, internalEdges_);
           onChanged();
         } else {
-          callIn_ = null;
-          callInBuilder_ = null;
+          internalEdgesBuilder_.addAllMessages(values);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getCallInBuilder() {
-        
-        onChanged();
-        return getCallInFieldBuilder().getBuilder();
+      public Builder clearInternalEdges() {
+        if (internalEdgesBuilder_ == null) {
+          internalEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000080);
+          onChanged();
+        } else {
+          internalEdgesBuilder_.clear();
+        }
+        return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallInOrBuilder() {
-        if (callInBuilder_ != null) {
-          return callInBuilder_.getMessageOrBuilder();
+      public Builder removeInternalEdges(int index) {
+        if (internalEdgesBuilder_ == null) {
+          ensureInternalEdgesIsMutable();
+          internalEdges_.remove(index);
+          onChanged();
         } else {
-          return callIn_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callIn_;
+          internalEdgesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getInternalEdgesBuilder(
+          int index) {
+        return getInternalEdgesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getInternalEdgesOrBuilder(
+          int index) {
+        if (internalEdgesBuilder_ == null) {
+          return internalEdges_.get(index);  } else {
+          return internalEdgesBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callIn = 9;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
        */
-      private com.google.protobuf.SingleFieldBuilderV3<
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+           getInternalEdgesOrBuilderList() {
+        if (internalEdgesBuilder_ != null) {
+          return internalEdgesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(internalEdges_);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addInternalEdgesBuilder() {
+        return getInternalEdgesFieldBuilder().addBuilder(
+            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addInternalEdgesBuilder(
+          int index) {
+        return getInternalEdgesFieldBuilder().addBuilder(
+            index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition internalEdges = 8;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder> 
+           getInternalEdgesBuilderList() {
+        return getInternalEdgesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getCallInFieldBuilder() {
-        if (callInBuilder_ == null) {
-          callInBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+          getInternalEdgesFieldBuilder() {
+        if (internalEdgesBuilder_ == null) {
+          internalEdgesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getCallIn(),
+                  internalEdges_,
+                  ((bitField0_ & 0x00000080) == 0x00000080),
                   getParentForChildren(),
                   isClean());
-          callIn_ = null;
+          internalEdges_ = null;
         }
-        return callInBuilder_;
+        return internalEdgesBuilder_;
       }
 
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition callOut_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> callOutBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-       */
-      public boolean hasCallOut() {
-        return callOutBuilder_ != null || callOut_ != null;
+      private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> callEdges_ =
+        java.util.Collections.emptyList();
+      private void ensureCallEdgesIsMutable() {
+        if (!((bitField0_ & 0x00000100) == 0x00000100)) {
+          callEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>(callEdges_);
+          bitField0_ |= 0x00000100;
+         }
       }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> callEdgesBuilder_;
+
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallOut() {
-        if (callOutBuilder_ == null) {
-          return callOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callOut_;
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getCallEdgesList() {
+        if (callEdgesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(callEdges_);
         } else {
-          return callOutBuilder_.getMessage();
+          return callEdgesBuilder_.getMessageList();
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder setCallOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (callOutBuilder_ == null) {
+      public int getCallEdgesCount() {
+        if (callEdgesBuilder_ == null) {
+          return callEdges_.size();
+        } else {
+          return callEdgesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getCallEdges(int index) {
+        if (callEdgesBuilder_ == null) {
+          return callEdges_.get(index);
+        } else {
+          return callEdgesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public Builder setCallEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (callEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          callOut_ = value;
+          ensureCallEdgesIsMutable();
+          callEdges_.set(index, value);
           onChanged();
         } else {
-          callOutBuilder_.setMessage(value);
+          callEdgesBuilder_.setMessage(index, value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder setCallOut(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (callOutBuilder_ == null) {
-          callOut_ = builderForValue.build();
+      public Builder setCallEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (callEdgesBuilder_ == null) {
+          ensureCallEdgesIsMutable();
+          callEdges_.set(index, builderForValue.build());
           onChanged();
         } else {
-          callOutBuilder_.setMessage(builderForValue.build());
+          callEdgesBuilder_.setMessage(index, builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder mergeCallOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (callOutBuilder_ == null) {
-          if (callOut_ != null) {
-            callOut_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(callOut_).mergeFrom(value).buildPartial();
-          } else {
-            callOut_ = value;
-          }
-          onChanged();
-        } else {
-          callOutBuilder_.mergeFrom(value);
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-       */
-      public Builder clearCallOut() {
-        if (callOutBuilder_ == null) {
-          callOut_ = null;
-          onChanged();
-        } else {
-          callOut_ = null;
-          callOutBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getCallOutBuilder() {
-        
-        onChanged();
-        return getCallOutFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallOutOrBuilder() {
-        if (callOutBuilder_ != null) {
-          return callOutBuilder_.getMessageOrBuilder();
-        } else {
-          return callOut_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : callOut_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callOut = 10;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getCallOutFieldBuilder() {
-        if (callOutBuilder_ == null) {
-          callOutBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getCallOut(),
-                  getParentForChildren(),
-                  isClean());
-          callOut_ = null;
-        }
-        return callOutBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition returnIn_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> returnInBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public boolean hasReturnIn() {
-        return returnInBuilder_ != null || returnIn_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnIn() {
-        if (returnInBuilder_ == null) {
-          return returnIn_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnIn_;
-        } else {
-          return returnInBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public Builder setReturnIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (returnInBuilder_ == null) {
+      public Builder addCallEdges(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (callEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          returnIn_ = value;
+          ensureCallEdgesIsMutable();
+          callEdges_.add(value);
           onChanged();
         } else {
-          returnInBuilder_.setMessage(value);
+          callEdgesBuilder_.addMessage(value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder setReturnIn(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (returnInBuilder_ == null) {
-          returnIn_ = builderForValue.build();
-          onChanged();
-        } else {
-          returnInBuilder_.setMessage(builderForValue.build());
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public Builder mergeReturnIn(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (returnInBuilder_ == null) {
-          if (returnIn_ != null) {
-            returnIn_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(returnIn_).mergeFrom(value).buildPartial();
-          } else {
-            returnIn_ = value;
-          }
-          onChanged();
-        } else {
-          returnInBuilder_.mergeFrom(value);
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public Builder clearReturnIn() {
-        if (returnInBuilder_ == null) {
-          returnIn_ = null;
-          onChanged();
-        } else {
-          returnIn_ = null;
-          returnInBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getReturnInBuilder() {
-        
-        onChanged();
-        return getReturnInFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnInOrBuilder() {
-        if (returnInBuilder_ != null) {
-          return returnInBuilder_.getMessageOrBuilder();
-        } else {
-          return returnIn_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnIn_;
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnIn = 11;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getReturnInFieldBuilder() {
-        if (returnInBuilder_ == null) {
-          returnInBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getReturnIn(),
-                  getParentForChildren(),
-                  isClean());
-          returnIn_ = null;
-        }
-        return returnInBuilder_;
-      }
-
-      private de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition returnOut_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> returnOutBuilder_;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-       */
-      public boolean hasReturnOut() {
-        return returnOutBuilder_ != null || returnOut_ != null;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnOut() {
-        if (returnOutBuilder_ == null) {
-          return returnOut_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnOut_;
-        } else {
-          return returnOutBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
-       */
-      public Builder setReturnOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (returnOutBuilder_ == null) {
+      public Builder addCallEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (callEdgesBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          returnOut_ = value;
+          ensureCallEdgesIsMutable();
+          callEdges_.add(index, value);
           onChanged();
         } else {
-          returnOutBuilder_.setMessage(value);
+          callEdgesBuilder_.addMessage(index, value);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder setReturnOut(
+      public Builder addCallEdges(
           de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
-        if (returnOutBuilder_ == null) {
-          returnOut_ = builderForValue.build();
+        if (callEdgesBuilder_ == null) {
+          ensureCallEdgesIsMutable();
+          callEdges_.add(builderForValue.build());
           onChanged();
         } else {
-          returnOutBuilder_.setMessage(builderForValue.build());
+          callEdgesBuilder_.addMessage(builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder mergeReturnOut(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
-        if (returnOutBuilder_ == null) {
-          if (returnOut_ != null) {
-            returnOut_ =
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder(returnOut_).mergeFrom(value).buildPartial();
-          } else {
-            returnOut_ = value;
-          }
+      public Builder addCallEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (callEdgesBuilder_ == null) {
+          ensureCallEdgesIsMutable();
+          callEdges_.add(index, builderForValue.build());
           onChanged();
         } else {
-          returnOutBuilder_.mergeFrom(value);
+          callEdgesBuilder_.addMessage(index, builderForValue.build());
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public Builder clearReturnOut() {
-        if (returnOutBuilder_ == null) {
-          returnOut_ = null;
+      public Builder addAllCallEdges(
+          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> values) {
+        if (callEdgesBuilder_ == null) {
+          ensureCallEdgesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, callEdges_);
           onChanged();
         } else {
-          returnOut_ = null;
-          returnOutBuilder_ = null;
+          callEdgesBuilder_.addAllMessages(values);
         }
-
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getReturnOutBuilder() {
-        
-        onChanged();
-        return getReturnOutFieldBuilder().getBuilder();
+      public Builder clearCallEdges() {
+        if (callEdgesBuilder_ == null) {
+          callEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000100);
+          onChanged();
+        } else {
+          callEdgesBuilder_.clear();
+        }
+        return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnOutOrBuilder() {
-        if (returnOutBuilder_ != null) {
-          return returnOutBuilder_.getMessageOrBuilder();
+      public Builder removeCallEdges(int index) {
+        if (callEdgesBuilder_ == null) {
+          ensureCallEdgesIsMutable();
+          callEdges_.remove(index);
+          onChanged();
         } else {
-          return returnOut_ == null ?
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance() : returnOut_;
+          callEdgesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getCallEdgesBuilder(
+          int index) {
+        return getCallEdgesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getCallEdgesOrBuilder(
+          int index) {
+        if (callEdgesBuilder_ == null) {
+          return callEdges_.get(index);  } else {
+          return callEdgesBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnOut = 12;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
        */
-      private com.google.protobuf.SingleFieldBuilderV3<
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+           getCallEdgesOrBuilderList() {
+        if (callEdgesBuilder_ != null) {
+          return callEdgesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(callEdges_);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addCallEdgesBuilder() {
+        return getCallEdgesFieldBuilder().addBuilder(
+            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addCallEdgesBuilder(
+          int index) {
+        return getCallEdgesFieldBuilder().addBuilder(
+            index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition callEdges = 9;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder> 
+           getCallEdgesBuilderList() {
+        return getCallEdgesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
-          getReturnOutFieldBuilder() {
-        if (returnOutBuilder_ == null) {
-          returnOutBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+          getCallEdgesFieldBuilder() {
+        if (callEdgesBuilder_ == null) {
+          callEdgesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
-                  getReturnOut(),
+                  callEdges_,
+                  ((bitField0_ & 0x00000100) == 0x00000100),
                   getParentForChildren(),
                   isClean());
-          returnOut_ = null;
+          callEdges_ = null;
         }
-        return returnOutBuilder_;
+        return callEdgesBuilder_;
+      }
+
+      private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> returnEdges_ =
+        java.util.Collections.emptyList();
+      private void ensureReturnEdgesIsMutable() {
+        if (!((bitField0_ & 0x00000200) == 0x00000200)) {
+          returnEdges_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition>(returnEdges_);
+          bitField0_ |= 0x00000200;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> returnEdgesBuilder_;
+
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> getReturnEdgesList() {
+        if (returnEdgesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(returnEdges_);
+        } else {
+          return returnEdgesBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public int getReturnEdgesCount() {
+        if (returnEdgesBuilder_ == null) {
+          return returnEdges_.size();
+        } else {
+          return returnEdgesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition getReturnEdges(int index) {
+        if (returnEdgesBuilder_ == null) {
+          return returnEdges_.get(index);
+        } else {
+          return returnEdgesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder setReturnEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (returnEdgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureReturnEdgesIsMutable();
+          returnEdges_.set(index, value);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder setReturnEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (returnEdgesBuilder_ == null) {
+          ensureReturnEdgesIsMutable();
+          returnEdges_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          returnEdgesBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder addReturnEdges(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (returnEdgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureReturnEdgesIsMutable();
+          returnEdges_.add(value);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder addReturnEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition value) {
+        if (returnEdgesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureReturnEdgesIsMutable();
+          returnEdges_.add(index, value);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder addReturnEdges(
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (returnEdgesBuilder_ == null) {
+          ensureReturnEdgesIsMutable();
+          returnEdges_.add(builderForValue.build());
+          onChanged();
+        } else {
+          returnEdgesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder addReturnEdges(
+          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builderForValue) {
+        if (returnEdgesBuilder_ == null) {
+          ensureReturnEdgesIsMutable();
+          returnEdges_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          returnEdgesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder addAllReturnEdges(
+          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition> values) {
+        if (returnEdgesBuilder_ == null) {
+          ensureReturnEdgesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, returnEdges_);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder clearReturnEdges() {
+        if (returnEdgesBuilder_ == null) {
+          returnEdges_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000200);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public Builder removeReturnEdges(int index) {
+        if (returnEdgesBuilder_ == null) {
+          ensureReturnEdgesIsMutable();
+          returnEdges_.remove(index);
+          onChanged();
+        } else {
+          returnEdgesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder getReturnEdgesBuilder(
+          int index) {
+        return getReturnEdgesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder getReturnEdgesOrBuilder(
+          int index) {
+        if (returnEdgesBuilder_ == null) {
+          return returnEdges_.get(index);  } else {
+          return returnEdgesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+           getReturnEdgesOrBuilderList() {
+        if (returnEdgesBuilder_ != null) {
+          return returnEdgesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(returnEdges_);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addReturnEdgesBuilder() {
+        return getReturnEdgesFieldBuilder().addBuilder(
+            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder addReturnEdgesBuilder(
+          int index) {
+        return getReturnEdgesFieldBuilder().addBuilder(
+            index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.NestedWordAutomaton.transition returnEdges = 10;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder> 
+           getReturnEdgesBuilderList() {
+        return getReturnEdgesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder> 
+          getReturnEdgesFieldBuilder() {
+        if (returnEdgesBuilder_ == null) {
+          returnEdgesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transition.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.NestedWordAutomaton.transitionOrBuilder>(
+                  returnEdges_,
+                  ((bitField0_ & 0x00000200) == 0x00000200),
+                  getParentForChildren(),
+                  isClean());
+          returnEdges_ = null;
+        }
+        return returnEdgesBuilder_;
       }
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -9920,741 +9334,6 @@ public final class TraceAbstractionProtos {
 
   }
 
-  public interface StateSetOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.graphvr.StateSet)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> 
-        getStateList();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getState(int index);
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    int getStateCount();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
-        getStateOrBuilderList();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStateOrBuilder(
-        int index);
-  }
-  /**
-   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.StateSet}
-   */
-  public  static final class StateSet extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.graphvr.StateSet)
-      StateSetOrBuilder {
-    // Use StateSet.newBuilder() to construct.
-    private StateSet(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private StateSet() {
-      state_ = java.util.Collections.emptyList();
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
-    }
-    private StateSet(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      int mutable_bitField0_ = 0;
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                state_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              state_.add(
-                  input.readMessage(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.parser(), extensionRegistry));
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          state_ = java.util.Collections.unmodifiableList(state_);
-        }
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.class, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder.class);
-    }
-
-    public static final int STATE_FIELD_NUMBER = 1;
-    private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> state_;
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> getStateList() {
-      return state_;
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
-        getStateOrBuilderList() {
-      return state_;
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    public int getStateCount() {
-      return state_.size();
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getState(int index) {
-      return state_.get(index);
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStateOrBuilder(
-        int index) {
-      return state_.get(index);
-    }
-
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      for (int i = 0; i < state_.size(); i++) {
-        output.writeMessage(1, state_.get(i));
-      }
-    }
-
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      for (int i = 0; i < state_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, state_.get(i));
-      }
-      memoizedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet)) {
-        return super.equals(obj);
-      }
-      de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet other = (de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet) obj;
-
-      boolean result = true;
-      result = result && getStateList()
-          .equals(other.getStateList());
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
-      if (getStateCount() > 0) {
-        hash = (37 * hash) + STATE_FIELD_NUMBER;
-        hash = (53 * hash) + getStateList().hashCode();
-      }
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.StateSet}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.graphvr.StateSet)
-        de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSetOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.class, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.Builder.class);
-      }
-
-      // Construct using de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-          getStateFieldBuilder();
-        }
-      }
-      public Builder clear() {
-        super.clear();
-        if (stateBuilder_ == null) {
-          state_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-        } else {
-          stateBuilder_.clear();
-        }
-        return this;
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getDefaultInstanceForType() {
-        return de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance();
-      }
-
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet build() {
-        de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet buildPartial() {
-        de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet result = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet(this);
-        int from_bitField0_ = bitField0_;
-        if (stateBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            state_ = java.util.Collections.unmodifiableList(state_);
-            bitField0_ = (bitField0_ & ~0x00000001);
-          }
-          result.state_ = state_;
-        } else {
-          result.state_ = stateBuilder_.build();
-        }
-        onBuilt();
-        return result;
-      }
-
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet) {
-          return mergeFrom((de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet other) {
-        if (other == de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet.getDefaultInstance()) return this;
-        if (stateBuilder_ == null) {
-          if (!other.state_.isEmpty()) {
-            if (state_.isEmpty()) {
-              state_ = other.state_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-            } else {
-              ensureStateIsMutable();
-              state_.addAll(other.state_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.state_.isEmpty()) {
-            if (stateBuilder_.isEmpty()) {
-              stateBuilder_.dispose();
-              stateBuilder_ = null;
-              state_ = other.state_;
-              bitField0_ = (bitField0_ & ~0x00000001);
-              stateBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getStateFieldBuilder() : null;
-            } else {
-              stateBuilder_.addAllMessages(other.state_);
-            }
-          }
-        }
-        onChanged();
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> state_ =
-        java.util.Collections.emptyList();
-      private void ensureStateIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          state_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate>(state_);
-          bitField0_ |= 0x00000001;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> stateBuilder_;
-
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> getStateList() {
-        if (stateBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(state_);
-        } else {
-          return stateBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public int getStateCount() {
-        if (stateBuilder_ == null) {
-          return state_.size();
-        } else {
-          return stateBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate getState(int index) {
-        if (stateBuilder_ == null) {
-          return state_.get(index);
-        } else {
-          return stateBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder setState(
-          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
-        if (stateBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureStateIsMutable();
-          state_.set(index, value);
-          onChanged();
-        } else {
-          stateBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder setState(
-          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
-        if (stateBuilder_ == null) {
-          ensureStateIsMutable();
-          state_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          stateBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder addState(de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
-        if (stateBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureStateIsMutable();
-          state_.add(value);
-          onChanged();
-        } else {
-          stateBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder addState(
-          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate value) {
-        if (stateBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureStateIsMutable();
-          state_.add(index, value);
-          onChanged();
-        } else {
-          stateBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder addState(
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
-        if (stateBuilder_ == null) {
-          ensureStateIsMutable();
-          state_.add(builderForValue.build());
-          onChanged();
-        } else {
-          stateBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder addState(
-          int index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder builderForValue) {
-        if (stateBuilder_ == null) {
-          ensureStateIsMutable();
-          state_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          stateBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder addAllState(
-          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate> values) {
-        if (stateBuilder_ == null) {
-          ensureStateIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, state_);
-          onChanged();
-        } else {
-          stateBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder clearState() {
-        if (stateBuilder_ == null) {
-          state_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000001);
-          onChanged();
-        } else {
-          stateBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public Builder removeState(int index) {
-        if (stateBuilder_ == null) {
-          ensureStateIsMutable();
-          state_.remove(index);
-          onChanged();
-        } else {
-          stateBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder getStateBuilder(
-          int index) {
-        return getStateFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder getStateOrBuilder(
-          int index) {
-        if (stateBuilder_ == null) {
-          return state_.get(index);  } else {
-          return stateBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
-           getStateOrBuilderList() {
-        if (stateBuilder_ != null) {
-          return stateBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(state_);
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder addStateBuilder() {
-        return getStateFieldBuilder().addBuilder(
-            de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder addStateBuilder(
-          int index) {
-        return getStateFieldBuilder().addBuilder(
-            index, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.graphvr.Predicate state = 1;</code>
-       */
-      public java.util.List<de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder> 
-           getStateBuilderList() {
-        return getStateFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder> 
-          getStateFieldBuilder() {
-        if (stateBuilder_ == null) {
-          stateBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.Predicate.Builder, de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.PredicateOrBuilder>(
-                  state_,
-                  ((bitField0_ & 0x00000001) == 0x00000001),
-                  getParentForChildren(),
-                  isClean());
-          state_ = null;
-        }
-        return stateBuilder_;
-      }
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.graphvr.StateSet)
-    }
-
-    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.graphvr.StateSet)
-    private static final de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet();
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<StateSet>
-        PARSER = new com.google.protobuf.AbstractParser<StateSet>() {
-      public StateSet parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new StateSet(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<StateSet> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StateSet> getParserForType() {
-      return PARSER;
-    }
-
-    public de.uni_freiburg.informatik.ultimate.graphvr.TraceAbstractionProtos.StateSet getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
   public interface CodeBlockOrBuilder extends
       // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.graphvr.CodeBlock)
       com.google.protobuf.MessageOrBuilder {
@@ -11763,21 +10442,6 @@ public final class TraceAbstractionProtos {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_IterationInfo_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -11792,11 +10456,6 @@ public final class TraceAbstractionProtos {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_graphvr_Alphabet_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_CodeBlock_descriptor;
   private static final 
@@ -11876,58 +10535,39 @@ public final class TraceAbstractionProtos {
       "NONICAL\020\000\022\026\n\022TOTALINTERPOLATION\020\001\022\017\n\013SIN" +
       "GLETRACE\020\002\022\014\n\010TWOTRACK\020\003\022\027\n\023TOTALINTERPO" +
       "LATION2\020\004\"@\n\030HoareAnnotationPositions\022\007\n",
-      "\003All\020\000\022\033\n\027LoopsAndPotentialCycles\020\001\"\230\013\n\023" +
+      "\003All\020\000\022\033\n\027LoopsAndPotentialCycles\020\001\"\327\005\n\023" +
       "NestedWordAutomaton\022G\n\010internal\030\001 \001(\01325." +
       "de.uni_freiburg.informatik.ultimate.grap" +
       "hvr.Alphabet\022C\n\004call\030\002 \001(\01325.de.uni_frei" +
       "burg.informatik.ultimate.graphvr.Alphabe" +
       "t\022E\n\006return\030\003 \001(\01325.de.uni_freiburg.info" +
-      "rmatik.ultimate.graphvr.Alphabet\022J\n\nempt" +
-      "yStack\030\004 \001(\01326.de.uni_freiburg.informati" +
-      "k.ultimate.graphvr.Predicate\022F\n\007initial\030" +
-      "\005 \001(\01325.de.uni_freiburg.informatik.ultim",
-      "ate.graphvr.StateSet\022D\n\005final\030\006 \001(\01325.de" +
-      ".uni_freiburg.informatik.ultimate.graphv" +
-      "r.StateSet\022_\n\ninternalIn\030\007 \001(\0132K.de.uni_" +
-      "freiburg.informatik.ultimate.graphvr.Nes" +
-      "tedWordAutomaton.transition\022`\n\013internalO" +
-      "ut\030\010 \001(\0132K.de.uni_freiburg.informatik.ul" +
-      "timate.graphvr.NestedWordAutomaton.trans" +
-      "ition\022[\n\006callIn\030\t \001(\0132K.de.uni_freiburg." +
-      "informatik.ultimate.graphvr.NestedWordAu" +
-      "tomaton.transition\022\\\n\007callOut\030\n \001(\0132K.de",
-      ".uni_freiburg.informatik.ultimate.graphv" +
-      "r.NestedWordAutomaton.transition\022]\n\010retu" +
-      "rnIn\030\013 \001(\0132K.de.uni_freiburg.informatik." +
-      "ultimate.graphvr.NestedWordAutomaton.tra" +
-      "nsition\022^\n\treturnOut\030\014 \001(\0132K.de.uni_frei" +
-      "burg.informatik.ultimate.graphvr.NestedW" +
-      "ordAutomaton.transition\032\224\003\n\ntransition\022k" +
-      "\n\010relation\030\001 \003(\0132Y.de.uni_freiburg.infor" +
-      "matik.ultimate.graphvr.NestedWordAutomat" +
-      "on.transition.RelationEntry\032\201\001\n\rRelation",
-      "Entry\022\013\n\003key\030\001 \001(\005\022_\n\005value\030\002 \001(\0132P.de.u" +
-      "ni_freiburg.informatik.ultimate.graphvr." +
-      "NestedWordAutomaton.transition.map2:\0028\001\032" +
-      "\224\001\n\004map2\022b\n\001m\030\001 \003(\0132W.de.uni_freiburg.in" +
+      "rmatik.ultimate.graphvr.Alphabet\022F\n\006stat" +
+      "es\030\004 \003(\01326.de.uni_freiburg.informatik.ul" +
+      "timate.graphvr.Predicate\022\022\n\nemptyStack\030\005" +
+      " \001(\005\022\017\n\007initial\030\006 \003(\005\022\r\n\005final\030\007 \003(\005\022b\n\r",
+      "internalEdges\030\010 \003(\0132K.de.uni_freiburg.in" +
       "formatik.ultimate.graphvr.NestedWordAuto" +
-      "maton.transition.map2.MEntry\032(\n\006MEntry\022\013" +
-      "\n\003key\030\001 \001(\005\022\r\n\005value\030\002 \001(\005:\0028\001\"\236\002\n\rItera" +
-      "tionInfo\022Q\n\003run\030\001 \001(\0132D.de.uni_freiburg." +
-      "informatik.ultimate.graphvr.IterationInf" +
-      "o.NestedRun\022\021\n\titeration\030\002 \001(\005\032\246\001\n\tNeste",
-      "dRun\022J\n\nnestedWord\030\001 \003(\01326.de.uni_freibu" +
-      "rg.informatik.ultimate.graphvr.CodeBlock" +
-      "\022M\n\rstateSequence\030\002 \003(\01326.de.uni_freibur" +
-      "g.informatik.ultimate.graphvr.Predicate\"" +
-      "R\n\010Alphabet\022F\n\006letter\030\001 \003(\01326.de.uni_fre" +
-      "iburg.informatik.ultimate.graphvr.CodeBl" +
-      "ock\"Q\n\010StateSet\022E\n\005state\030\001 \003(\01326.de.uni_" +
-      "freiburg.informatik.ultimate.graphvr.Pre" +
-      "dicate\"\031\n\tCodeBlock\022\014\n\004code\030\001 \001(\t\"\032\n\tPre" +
-      "dicate\022\r\n\005label\030\001 \001(\t*8\n\006Result\022\010\n\004SAFE\020",
-      "\000\022\n\n\006UNSAFE\020\001\022\013\n\007TIMEOUT\020\002\022\013\n\007UNKNOWN\020\003B" +
-      "\030B\026TraceAbstractionProtosb\006proto3"
+      "maton.transition\022^\n\tcallEdges\030\t \003(\0132K.de" +
+      ".uni_freiburg.informatik.ultimate.graphv" +
+      "r.NestedWordAutomaton.transition\022`\n\013retu" +
+      "rnEdges\030\n \003(\0132K.de.uni_freiburg.informat" +
+      "ik.ultimate.graphvr.NestedWordAutomaton." +
+      "transition\032I\n\ntransition\022\023\n\013originState\030" +
+      "\001 \001(\005\022\016\n\006letter\030\002 \001(\005\022\026\n\016successorState\030" +
+      "\003 \001(\005\"\236\002\n\rIterationInfo\022Q\n\003run\030\001 \001(\0132D.d",
+      "e.uni_freiburg.informatik.ultimate.graph" +
+      "vr.IterationInfo.NestedRun\022\021\n\titeration\030" +
+      "\002 \001(\005\032\246\001\n\tNestedRun\022J\n\nnestedWord\030\001 \003(\0132" +
+      "6.de.uni_freiburg.informatik.ultimate.gr" +
+      "aphvr.CodeBlock\022M\n\rstateSequence\030\002 \003(\01326" +
+      ".de.uni_freiburg.informatik.ultimate.gra" +
+      "phvr.Predicate\"R\n\010Alphabet\022F\n\006letter\030\001 \003" +
+      "(\01326.de.uni_freiburg.informatik.ultimate" +
+      ".graphvr.CodeBlock\"\031\n\tCodeBlock\022\014\n\004code\030" +
+      "\001 \001(\t\"\032\n\tPredicate\022\r\n\005label\030\001 \001(\t*8\n\006Res",
+      "ult\022\010\n\004SAFE\020\000\022\n\n\006UNSAFE\020\001\022\013\n\007TIMEOUT\020\002\022\013" +
+      "\n\007UNKNOWN\020\003B\030B\026TraceAbstractionProtosb\006p" +
+      "roto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -11958,31 +10598,13 @@ public final class TraceAbstractionProtos {
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_descriptor,
-        new java.lang.String[] { "Internal", "Call", "Return", "EmptyStack", "Initial", "Final", "InternalIn", "InternalOut", "CallIn", "CallOut", "ReturnIn", "ReturnOut", });
+        new java.lang.String[] { "Internal", "Call", "Return", "States", "EmptyStack", "Initial", "Final", "InternalEdges", "CallEdges", "ReturnEdges", });
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor =
       internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_descriptor.getNestedTypes().get(0);
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor,
-        new java.lang.String[] { "Relation", });
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_descriptor =
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor.getNestedTypes().get(0);
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_RelationEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor =
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_descriptor.getNestedTypes().get(1);
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor,
-        new java.lang.String[] { "M", });
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_descriptor =
-      internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_descriptor.getNestedTypes().get(0);
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_graphvr_NestedWordAutomaton_transition_map2_MEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
+        new java.lang.String[] { "OriginState", "Letter", "SuccessorState", });
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_IterationInfo_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_IterationInfo_fieldAccessorTable = new
@@ -12001,20 +10623,14 @@ public final class TraceAbstractionProtos {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_Alphabet_descriptor,
         new java.lang.String[] { "Letter", });
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_graphvr_StateSet_descriptor,
-        new java.lang.String[] { "State", });
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_CodeBlock_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_CodeBlock_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_CodeBlock_descriptor,
         new java.lang.String[] { "Code", });
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_Predicate_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_Predicate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_Predicate_descriptor,
