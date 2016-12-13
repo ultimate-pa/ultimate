@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -49,22 +49,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Evaluate the overall result of a safety checker.
- * 
+ *
  * First, we iterate through all IResults returned by Ultimate and put them into categories (which IResult is a witness
  * for which overall result). Afterwards we iterate through all categories in the order of their significance. The first
  * non-empty category is our overall result.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvaluator<SafetyCheckerOverallResult> {
 
-	private final HashRelation<SafetyCheckerOverallResult, IResult> mCategory2Results = new HashRelation<SafetyCheckerOverallResult, IResult>();
+	private final HashRelation<SafetyCheckerOverallResult, IResult> mCategory2Results = new HashRelation<>();
 	private SafetyCheckerOverallResult mOverallResult;
 	private Set<IResult> mMostSignificantResults;
 
 	@Override
-	public void evaluateOverallResult(IResultService resultService) {
+	public void evaluateOverallResult(final IResultService resultService) {
 		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 			for (final IResult result : entry.getValue()) {
 				final SafetyCheckerOverallResult category = detectResultCategory(result);
@@ -72,19 +72,19 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			}
 		}
 		//@formatter:off
-		//categories are ordered by priority, with the first being the lowest 
+		//categories are ordered by priority, with the first being the lowest
 		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
 				SafetyCheckerOverallResult.SAFE,
 				SafetyCheckerOverallResult.TIMEOUT,
 				SafetyCheckerOverallResult.UNKNOWN,
-				SafetyCheckerOverallResult.UNSAFE, 
+				SafetyCheckerOverallResult.UNSAFE,
 				SafetyCheckerOverallResult.UNSAFE_MEMTRACK,
-				SafetyCheckerOverallResult.UNSAFE_FREE, 
+				SafetyCheckerOverallResult.UNSAFE_FREE,
 				SafetyCheckerOverallResult.UNSAFE_DEREF,
 				SafetyCheckerOverallResult.UNSAFE_OVERAPPROXIMATED,
-				SafetyCheckerOverallResult.UNSUPPORTED_SYNTAX, 
+				SafetyCheckerOverallResult.UNSUPPORTED_SYNTAX,
 				SafetyCheckerOverallResult.SYNTAX_ERROR,
-				SafetyCheckerOverallResult.EXCEPTION_OR_ERROR,  
+				SafetyCheckerOverallResult.EXCEPTION_OR_ERROR,
 		};
 		//@formatter:on
 
@@ -101,7 +101,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		}
 	}
 
-	protected SafetyCheckerOverallResult detectResultCategory(IResult result) {
+	protected SafetyCheckerOverallResult detectResultCategory(final IResult result) {
 		if (result instanceof AllSpecificationsHoldResult) {
 			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof CounterExampleResult) {
@@ -136,9 +136,8 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			final WitnessResult wit = (WitnessResult) result;
 			if (wit.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
-			} else {
-				return null;
 			}
+			return null;
 		} else {
 			return null;
 		}
@@ -182,7 +181,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		return mMostSignificantResults;
 	}
 
-	private String concatenateShortDescriptions(Set<IResult> iresults) {
+	private String concatenateShortDescriptions(final Set<IResult> iresults) {
 		final StringBuilder sb = new StringBuilder();
 		for (final IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());
