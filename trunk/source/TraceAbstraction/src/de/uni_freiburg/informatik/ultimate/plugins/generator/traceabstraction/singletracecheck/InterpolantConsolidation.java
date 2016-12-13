@@ -199,7 +199,18 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					new IsEmpty<>(new AutomataLibraryServices(mServices), diff.getResult());
 			if (!empty.getResult()) {
 				if (!useConsolidationInNonEmptyCase) {
-					mConsolidatedInterpolants = mInterpolatingTraceChecker.getInterpolants();
+					if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use the sequence of backwards predicates
+						boolean forwardsPredicatesPerfect = ((TraceCheckerSpWp)mInterpolatingTraceChecker).isPerfectSequence(true);
+						if (forwardsPredicatesPerfect) {
+							mConsolidatedInterpolants = ((TraceCheckerSpWp)mInterpolatingTraceChecker).getForwardPredicates().toArray(new IPredicate[0]);
+						} else {
+							mConsolidatedInterpolants = ((TraceCheckerSpWp)mInterpolatingTraceChecker).getBackwardPredicates().toArray(new IPredicate[0]);
+						}
+					} else {
+						mConsolidatedInterpolants = mInterpolatingTraceChecker.getInterpolants();
+					}
+					
 					// Stop the time for interpolant consolidation
 					mInterpolantConsolidationBenchmarkGenerator
 							.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
