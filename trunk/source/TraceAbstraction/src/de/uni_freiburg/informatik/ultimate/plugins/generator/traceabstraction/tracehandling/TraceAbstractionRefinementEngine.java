@@ -334,6 +334,9 @@ public final class TraceAbstractionRefinementEngine
 			} else if (message.startsWith("Logic does not allow numerals")) {
 				// wrong usage of external solver, tell the user
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+			} else if (message.startsWith("Timeout exceeded")) {
+				// timeout
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 			} else {
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
