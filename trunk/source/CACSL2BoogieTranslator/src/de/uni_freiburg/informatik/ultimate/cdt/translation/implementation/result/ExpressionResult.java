@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ public class ExpressionResult extends Result {
 	/**
 	 * especially for the havocs when writign a union. contains the field that must be havoced if this union is written.
 	 */
-	public final Map<StructLHS, CType> unionFieldIdToCType;
+	public final List<ExpressionResult> otherUnionFields;
 
 	/**
 	 * Constructor.
@@ -127,34 +128,34 @@ public class ExpressionResult extends Result {
 	 */
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overapproxList,
-			final Map<StructLHS, CType> uField2CType) {
+			final List<ExpressionResult> uField2CType) {
 		super(null);
 		this.stmt = stmt;
 		this.lrVal = lrVal;
 		this.decl = decl;
 		this.auxVars = auxVars;
 		overappr = overapproxList;
-		unionFieldIdToCType = uField2CType;
+		otherUnionFields = uField2CType;
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overapproxList) {
-		this(stmt, lrVal, decl, auxVars, overapproxList, null);
+		this(stmt, lrVal, decl, auxVars, overapproxList, Collections.emptyList());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars) {
-		this(stmt, lrVal, decl, auxVars, new ArrayList<Overapprox>(), null);
+		this(stmt, lrVal, decl, auxVars, new ArrayList<Overapprox>(), Collections.emptyList());
 	}
 
 	public ExpressionResult(final LRValue lrVal, final Map<VariableDeclaration, ILocation> auxVars,
 			final List<Overapprox> overapproxList) {
-		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars, overapproxList, null);
+		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars, overapproxList, Collections.emptyList());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal) {
 		this(stmt, lrVal, new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
-				new ArrayList<Overapprox>(), null);
+				new ArrayList<Overapprox>(), Collections.emptyList());
 	}
 
 	public ExpressionResult(final LRValue lrVal, final Map<VariableDeclaration, ILocation> auxVars) {
@@ -175,7 +176,7 @@ public class ExpressionResult extends Result {
 		decl = rex.decl;
 		auxVars = rex.auxVars;
 		overappr = rex.overappr;
-		unionFieldIdToCType = rex.unionFieldIdToCType;
+		otherUnionFields = rex.otherUnionFields;
 	}
 
 	/**
@@ -184,24 +185,19 @@ public class ExpressionResult extends Result {
 	 * one it is not used any more.
 	 */
 	public static ExpressionResult copyStmtDeclAuxvarOverapprox(final ExpressionResult... resExprs) {
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final List<Overapprox> overappr = new ArrayList<>();
-		Map<StructLHS, CType> unionFieldIdToCType = new LinkedHashMap<>();
+		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		for (final ExpressionResult resExpr : resExprs) {
-			stmt.addAll(resExpr.stmt);
-			decl.addAll(resExpr.decl);
-			auxVars.putAll(resExpr.auxVars);
-			overappr.addAll(resExpr.overappr);
-			if (resExpr.unionFieldIdToCType != null) {
-				unionFieldIdToCType.putAll(resExpr.unionFieldIdToCType);
+			builder.addStatements(resExpr.stmt);
+			builder.addDeclarations(resExpr.decl);
+			builder.putAuxVars(resExpr.auxVars);
+			builder.addOverapprox(resExpr.overappr);
+			if (resExpr.otherUnionFields != null 
+					&& !resExpr.otherUnionFields.isEmpty()) {
+				builder.addNeighbourUnionFields(resExpr.otherUnionFields);
 			}
 		}
-		if (unionFieldIdToCType.isEmpty()) {
-			unionFieldIdToCType = null;
-		}
-		return new ExpressionResult(stmt, null, decl, auxVars, overappr, unionFieldIdToCType);
+		builder.setLRVal(null); // just for being explicit
+		return builder.build();
 	}
 
 	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
@@ -237,7 +233,7 @@ public class ExpressionResult extends Result {
 				resultType = underlyingType;
 			}
 			final RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(), resultType, lrVal.isBoogieBool());
-			result = new ExpressionResult(stmt, newRVal, decl, auxVars, overappr, unionFieldIdToCType);
+			result = new ExpressionResult(stmt, newRVal, decl, auxVars, overappr, otherUnionFields);
 		} else if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
 			CType underlyingType = lrVal.getCType().getUnderlyingType();
@@ -430,7 +426,7 @@ public class ExpressionResult extends Result {
 						fieldValues.toArray(new Expression[fieldValues.size()]));
 
 		result = new ExpressionResult(newStmt, new RValue(sc, structType), newDecl, newAuxVars, overappr,
-				unionFieldIdToCType);
+				otherUnionFields);
 
 		return result;
 	}
@@ -499,7 +495,7 @@ public class ExpressionResult extends Result {
 				final ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
-				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(loc, stmt,
+				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,
 						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, decl, auxVars,
 						overappr);
 				decl = assRex.decl;
@@ -635,5 +631,10 @@ public class ExpressionResult extends Result {
 		} else {
 			// do nothing
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return "ExpressionResult, LrVal: " + lrVal.toString();
 	}
 }

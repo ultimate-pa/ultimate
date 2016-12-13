@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
@@ -889,13 +890,17 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(final Dispatcher main, final FieldAccessExpression node) {
-
+    	ILocation loc = LocationFactory.createACSLLocation(node);
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
         final List<Overapprox> overappr = new ArrayList<Overapprox>();
         final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
        
-        final ExpressionResult r = (ExpressionResult) main.dispatch(node.getStruct());
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+
+        final ExpressionResult r = ((ExpressionResult) main.dispatch(node.getStruct()))
+        		.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
         assert r.getClass() == ExpressionResult.class;
         assert r.lrVal.getValue() instanceof Expression;
         final String field = node.getField();
@@ -906,8 +911,13 @@ public class ACSLHandler implements IACSLHandler {
         auxVars.putAll(r.auxVars);
         
         // TODO: CType
-        return new ExpressionResult(stmt, new RValue(new StructAccessExpression(LocationFactory.createACSLLocation(node),
-                r.lrVal.getValue(), field), ((CStruct) r.lrVal.getCType().getUnderlyingType()).getFieldType(field)), decl, auxVars, overappr);
+        return new ExpressionResult(stmt, 
+        		new RValue(
+        				new StructAccessExpression(loc, r.lrVal.getValue(), field), 
+        				((CStruct) r.lrVal.getCType().getUnderlyingType()).getFieldType(field)), 
+        		decl, 
+        		auxVars, 
+        		overappr);
     }
 
     @Override

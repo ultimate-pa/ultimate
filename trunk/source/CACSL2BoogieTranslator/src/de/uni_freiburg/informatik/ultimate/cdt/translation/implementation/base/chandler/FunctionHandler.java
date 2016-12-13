@@ -998,14 +998,18 @@ public class FunctionHandler {
 			final AssumeStatement assume =
 					new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
 
-			stmt.add(assume);
 
+			
+//			final List<Overapprox> overapprox = new ArrayList<>();
+//			overapprox.add(new Overapprox("builtin_strchr", loc));
+			Overapprox overappFlag = new Overapprox("builtin_strchr", loc);
+			assume.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overappFlag);
+			
+			stmt.add(assume);
+			
 			final RValue lrVal = new RValue(tmpExpr, resultType);
 
-			final List<Overapprox> overapprox = new ArrayList<>();
-			overapprox.add(new Overapprox("builtin_strchr", loc));
-
-			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
+			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.emptyList());
 		} else if (methodName.equals("__builtin_return_address")) {
 			/*
 			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
@@ -1309,7 +1313,7 @@ public class FunctionHandler {
 					// dereference
 					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 
-					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(igLoc, stmt, hlv, // convention:
+					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, stmt, hlv, // convention:
 																													// if
 																													// a
 																													// variable
