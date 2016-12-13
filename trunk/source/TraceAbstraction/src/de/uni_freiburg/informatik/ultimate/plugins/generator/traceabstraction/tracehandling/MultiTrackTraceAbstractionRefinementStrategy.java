@@ -101,7 +101,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final AssertionOrderModulation mAssertionOrderModulation;
-	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
+	protected final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
 	
@@ -161,8 +161,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		final boolean traceContainsFloats = false; // FIXME replace with actual analysis
-		mInterpolationTechniques = initializeInterpolationTechniquesList(traceContainsFloats);
+		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		mNextTechnique = mInterpolationTechniques.next();
 	}
 	
@@ -231,11 +230,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	}
 	
 	/**
-	 * @param traceContainsFloats
-	 *            {@code true} iff the counterexample trace contains floats.
 	 * @return iterator of different combinations
 	 */
-	protected abstract Iterator<Track> initializeInterpolationTechniquesList(final boolean traceContainsFloats);
+	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
 	
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
@@ -328,6 +325,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final ManagedScript result = new ManagedScript(services, solver);
 		
 		// TODO do we need this?
+		// Matthias: Yes, we have to assert the axioms
 		final TermTransferrer tt = new TermTransferrer(solver);
 		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
