@@ -68,7 +68,7 @@ public class Svcomp17TaipanTestSuite extends AbstractSVCOMPTestSuite {
 		rtr.addAll(getForAll("ReachSafety-ProductLines", 10));
 		rtr.addAll(getForAll("ReachSafety-Recursive", 10));
 		rtr.addAll(getForAll("ReachSafety-Sequentialized", 10));
-		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety.set", 10));
+		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 10));
 		
 		return rtr;
 	}
