@@ -10662,7 +10662,7 @@ public final class TraceAbstractionProtos {
     /**
      * <pre>
      * the transformulas and lots of other stuff
-     * in CodeBlock is probably not needed.
+     * in CodeBlock is not used for now.
      * </pre>
      *
      * <code>optional string code = 1;</code>
@@ -10671,7 +10671,7 @@ public final class TraceAbstractionProtos {
     /**
      * <pre>
      * the transformulas and lots of other stuff
-     * in CodeBlock is probably not needed.
+     * in CodeBlock is not used for now.
      * </pre>
      *
      * <code>optional string code = 1;</code>
@@ -10753,7 +10753,7 @@ public final class TraceAbstractionProtos {
     /**
      * <pre>
      * the transformulas and lots of other stuff
-     * in CodeBlock is probably not needed.
+     * in CodeBlock is not used for now.
      * </pre>
      *
      * <code>optional string code = 1;</code>
@@ -10773,7 +10773,7 @@ public final class TraceAbstractionProtos {
     /**
      * <pre>
      * the transformulas and lots of other stuff
-     * in CodeBlock is probably not needed.
+     * in CodeBlock is not used for now.
      * </pre>
      *
      * <code>optional string code = 1;</code>
@@ -11065,7 +11065,7 @@ public final class TraceAbstractionProtos {
       /**
        * <pre>
        * the transformulas and lots of other stuff
-       * in CodeBlock is probably not needed.
+       * in CodeBlock is not used for now.
        * </pre>
        *
        * <code>optional string code = 1;</code>
@@ -11085,7 +11085,7 @@ public final class TraceAbstractionProtos {
       /**
        * <pre>
        * the transformulas and lots of other stuff
-       * in CodeBlock is probably not needed.
+       * in CodeBlock is not used for now.
        * </pre>
        *
        * <code>optional string code = 1;</code>
@@ -11106,7 +11106,7 @@ public final class TraceAbstractionProtos {
       /**
        * <pre>
        * the transformulas and lots of other stuff
-       * in CodeBlock is probably not needed.
+       * in CodeBlock is not used for now.
        * </pre>
        *
        * <code>optional string code = 1;</code>
@@ -11124,7 +11124,7 @@ public final class TraceAbstractionProtos {
       /**
        * <pre>
        * the transformulas and lots of other stuff
-       * in CodeBlock is probably not needed.
+       * in CodeBlock is not used for now.
        * </pre>
        *
        * <code>optional string code = 1;</code>
@@ -11138,7 +11138,7 @@ public final class TraceAbstractionProtos {
       /**
        * <pre>
        * the transformulas and lots of other stuff
-       * in CodeBlock is probably not needed.
+       * in CodeBlock is not used for now.
        * </pre>
        *
        * <code>optional string code = 1;</code>
@@ -11209,7 +11209,7 @@ public final class TraceAbstractionProtos {
 
     /**
      * <pre>
-     * possibly a string created from the formula
+     * pretty printed formula
      * </pre>
      *
      * <code>optional string label = 1;</code>
@@ -11217,7 +11217,7 @@ public final class TraceAbstractionProtos {
     java.lang.String getLabel();
     /**
      * <pre>
-     * possibly a string created from the formula
+     * pretty printed formula
      * </pre>
      *
      * <code>optional string label = 1;</code>
@@ -11298,7 +11298,7 @@ public final class TraceAbstractionProtos {
     private volatile java.lang.Object label_;
     /**
      * <pre>
-     * possibly a string created from the formula
+     * pretty printed formula
      * </pre>
      *
      * <code>optional string label = 1;</code>
@@ -11317,7 +11317,7 @@ public final class TraceAbstractionProtos {
     }
     /**
      * <pre>
-     * possibly a string created from the formula
+     * pretty printed formula
      * </pre>
      *
      * <code>optional string label = 1;</code>
@@ -11608,7 +11608,7 @@ public final class TraceAbstractionProtos {
       private java.lang.Object label_ = "";
       /**
        * <pre>
-       * possibly a string created from the formula
+       * pretty printed formula
        * </pre>
        *
        * <code>optional string label = 1;</code>
@@ -11627,7 +11627,7 @@ public final class TraceAbstractionProtos {
       }
       /**
        * <pre>
-       * possibly a string created from the formula
+       * pretty printed formula
        * </pre>
        *
        * <code>optional string label = 1;</code>
@@ -11647,7 +11647,7 @@ public final class TraceAbstractionProtos {
       }
       /**
        * <pre>
-       * possibly a string created from the formula
+       * pretty printed formula
        * </pre>
        *
        * <code>optional string label = 1;</code>
@@ -11664,7 +11664,7 @@ public final class TraceAbstractionProtos {
       }
       /**
        * <pre>
-       * possibly a string created from the formula
+       * pretty printed formula
        * </pre>
        *
        * <code>optional string label = 1;</code>
@@ -11677,7 +11677,7 @@ public final class TraceAbstractionProtos {
       }
       /**
        * <pre>
-       * possibly a string created from the formula
+       * pretty printed formula
        * </pre>
        *
        * <code>optional string label = 1;</code>

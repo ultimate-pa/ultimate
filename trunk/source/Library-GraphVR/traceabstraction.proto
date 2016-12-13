@@ -4,6 +4,10 @@ package de.uni_freiburg.informatik.ultimate.graphvr;
 //option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "TraceAbstractionProtos";
 
+
+// TODO: integrate in build process
+// ~/src/ultimate/trunk/source/Library-GraphVR$ protoc --java_out=src traceabstraction.proto
+
 message ToolchainInfo {
 	// ToDo: implement
 }
@@ -164,20 +168,18 @@ message StateSet {
 message CodeBlock {
 	string code = 1;
 	// the transformulas and lots of other stuff
-	// in CodeBlock is probably not needed.
+	// in CodeBlock is not used for now.
 }
 
 message Predicate {
 	string label = 1;
-	// possibly a string created from the formula
+	// pretty printed formula
 }
 
 
 /*
-Data Needed:
-
 toolchain:
-??
+TODO
 
 klar:
 TAPreferences (Insbesondere die Interaktiv-Einstellungen)
@@ -191,9 +193,6 @@ IRun<CodeBlock, IPredicate>
 
 forbiddenStates (StartStates und Goalstates auch möglich falls sinnvoll?)
 Set<IPredicate>
-
-Result
-AbstractCegarLoop.Result
 
 
 other CEGAR Loop iteration info:
