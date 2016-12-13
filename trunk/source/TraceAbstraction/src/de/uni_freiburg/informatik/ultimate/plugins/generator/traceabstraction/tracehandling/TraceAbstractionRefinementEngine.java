@@ -134,42 +134,32 @@ public final class TraceAbstractionRefinementEngine
 			final LBool feasibility = checkFeasibility(strategy);
 			
 			switch (feasibility) {
-			case SAT:
-				// feasible counterexample, nothing more to do here
-				handleFeasibleOrUnknownCase(strategy);
-				return LBool.SAT;
-			case UNKNOWN:
-				if (!interpolantSequences.isEmpty()) {
-					// infeasibility was shown in previous attempt already
+				case SAT:
+					// feasible counterexample, nothing more to do here
+					handleFeasibleCase(strategy);
+					return LBool.SAT;
+				case UNKNOWN:
+					return handleUnknownCase(strategy, interpolantSequences);
+				case UNSAT:
+					final List<InterpolantsPreconditionPostcondition> perfectInterpolantsList =
+							handleInterpolantsCase(strategy, interpolantSequences);
+					if (!perfectInterpolantsList.isEmpty()) {
+						// construct interpolant automaton using the perfect sequence
+						constructAutomatonFromPerfectSequence(strategy, perfectInterpolantsList, feasibility);
+						return LBool.UNSAT;
+					}
+					if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
+						// construct the next sequence of interpolants
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("The current sequence of interpolants is not perfect, trying the next one.");
+						}
+						strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
+						continue;
+					}
 					constructAutomatonFromImperfectSequences(strategy, interpolantSequences);
 					return LBool.UNSAT;
-				}
-				if (mLogger.isInfoEnabled()) {
-					mLogger.info("Strategy " + strategy.getClass().getSimpleName()
-							+ " was unsuccessful and could not determine trace feasibility.");
-				}
-				handleFeasibleOrUnknownCase(strategy);
-				return LBool.UNKNOWN;
-			case UNSAT:
-				final List<InterpolantsPreconditionPostcondition> perfectInterpolantsList =
-						handleInterpolantsCase(strategy, interpolantSequences);
-				if (!perfectInterpolantsList.isEmpty()) {
-					// construct interpolant automaton using the perfect sequence
-					constructAutomatonFromPerfectSequence(strategy, perfectInterpolantsList, feasibility);
-					return LBool.UNSAT;
-				}
-				if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
-					// construct the next sequence of interpolants
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("The current sequence of interpolants is not perfect, trying the next one.");
-					}
-					strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
-					continue;
-				}
-				constructAutomatonFromImperfectSequences(strategy, interpolantSequences);
-				return LBool.UNSAT;
-			default:
-				throw new IllegalArgumentException("Unknown case: " + feasibility);
+				default:
+					throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
 		}
 	}
@@ -193,9 +183,23 @@ public final class TraceAbstractionRefinementEngine
 		}
 	}
 	
-	private void handleFeasibleOrUnknownCase(final IRefinementStrategy strategy) {
+	private void handleFeasibleCase(final IRefinementStrategy strategy) {
 		// NOTE: This can crash, but such a crash is intended.
 		mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+	}
+
+	private LBool handleUnknownCase(final IRefinementStrategy strategy,
+			final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
+		if (!interpolantSequences.isEmpty()) {
+			// infeasibility was shown in previous attempt already
+			constructAutomatonFromImperfectSequences(strategy, interpolantSequences);
+			return LBool.UNSAT;
+		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Strategy " + strategy.getClass().getSimpleName()
+					+ " was unsuccessful and could not determine trace feasibility.");
+		}
+		return LBool.UNKNOWN;
 	}
 	
 	/**
@@ -346,20 +350,20 @@ public final class TraceAbstractionRefinementEngine
 		}
 		
 		switch (exceptionCategory) {
-		case KNOWN_IGNORE:
-		case KNOWN_DEPENDING:
-		case KNOWN_THROW:
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught known exception: " + exception.getMessage());
-			}
-			break;
-		case UNKNOWN:
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught unknown exception: " + exception.getMessage());
-			}
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
+			case KNOWN_IGNORE:
+			case KNOWN_DEPENDING:
+			case KNOWN_THROW:
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Caught known exception: " + exception.getMessage());
+				}
+				break;
+			case UNKNOWN:
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Caught unknown exception: " + exception.getMessage());
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
 		
 		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
@@ -403,16 +407,16 @@ public final class TraceAbstractionRefinementEngine
 		 */
 		public boolean throwException(final RefinementStrategyExceptionBlacklist throwSpecification) {
 			switch (throwSpecification) {
-			case ALL:
-				return true;
-			case UNKNOWN:
-				return this == UNKNOWN || this == KNOWN_THROW;
-			case DEPENDING:
-				return this == UNKNOWN || this == KNOWN_THROW || this == KNOWN_DEPENDING;
-			case NONE:
-				return false;
-			default:
-				throw new IllegalArgumentException("Unknown category specification: " + throwSpecification);
+				case ALL:
+					return true;
+				case UNKNOWN:
+					return this == UNKNOWN || this == KNOWN_THROW;
+				case DEPENDING:
+					return this == UNKNOWN || this == KNOWN_THROW || this == KNOWN_DEPENDING;
+				case NONE:
+					return false;
+				default:
+					throw new IllegalArgumentException("Unknown category specification: " + throwSpecification);
 			}
 		}
 	}
