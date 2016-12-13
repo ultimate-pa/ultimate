@@ -3164,7 +3164,7 @@ public class CHandler implements ICHandler {
 							rightHandSideWithConversionsApplied.getCType()));
 
 			for (Overapprox oa : overapprOld) {
-				for (Statement stm : builder.stmt) {
+				for (Statement stm : builder.mStatements) {
 					stm.getPayload().getAnnotations().put(Overapprox.getIdentifier(), oa);
 				}
 			}
@@ -3199,7 +3199,7 @@ public class CHandler implements ICHandler {
 			builder.addStatement(assignStmt);
 			
 			for (Overapprox oa : overapprOld) {
-				for (Statement stm : builder.stmt) {
+				for (Statement stm : builder.mStatements) {
 					stm.getPayload().getAnnotations().put(Overapprox.getIdentifier(), oa);
 				}
 			}
@@ -3254,12 +3254,12 @@ public class CHandler implements ICHandler {
 						makeAssignment(
 								main,
 								loc, 
-								builder.stmt, 
+								builder.mStatements, 
 								er.lrVal, 
 								rVal, 
-								builder.decl, 
-								builder.auxVars, 
-								builder.overappr));
+								builder.mDeclarations, 
+								builder.mAuxVars, 
+								builder.mOverappr));
 
 
 			} else { // otherwise we consider the value undefined, thus havoc it
@@ -3289,11 +3289,11 @@ public class CHandler implements ICHandler {
 						makeAssignment(
 								main,
 								loc, 
-								builder.stmt, 
+								builder.mStatements, 
 								er.lrVal, 
 								tmpVarRVal, 
-								builder.decl, 
-								builder.auxVars, 
+								builder.mDeclarations, 
+								builder.mAuxVars, 
 								Collections.singletonList(overapp)));
 			}
 		}

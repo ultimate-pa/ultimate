@@ -15,21 +15,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class ExpressionResultBuilder {
 
-	public final List<Statement> stmt = new ArrayList<>();
-	public LRValue lrVal;
-	public final List<Declaration> decl = new ArrayList<>(); 
-	public final List<Overapprox> overappr = new ArrayList<>();
-	public final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-	public final List<ExpressionResult> otherUnionFields = new ArrayList<>();
+	public final List<Statement> mStatements = new ArrayList<>();
+	public LRValue mLrVal;
+	public final List<Declaration> mDeclarations = new ArrayList<>(); 
+	public final List<Overapprox> mOverappr = new ArrayList<>();
+	public final Map<VariableDeclaration, ILocation> mAuxVars = new LinkedHashMap<>();
+	public final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
 	
 	
 	public ExpressionResultBuilder(ExpressionResult assignmentExprRes) {
-		stmt.addAll(assignmentExprRes.stmt);
-		decl.addAll(assignmentExprRes.decl);
-		overappr.addAll(assignmentExprRes.overappr);
-		auxVars.putAll(assignmentExprRes.auxVars);
-		otherUnionFields.addAll(assignmentExprRes.otherUnionFields);
-		lrVal = assignmentExprRes.lrVal;
+		mStatements.addAll(assignmentExprRes.stmt);
+		mDeclarations.addAll(assignmentExprRes.decl);
+		mOverappr.addAll(assignmentExprRes.overappr);
+		mAuxVars.putAll(assignmentExprRes.auxVars);
+		mNeighbourUnionFields.addAll(assignmentExprRes.otherUnionFields);
+		mLrVal = assignmentExprRes.lrVal;
 	}
 
 	/**
@@ -39,57 +39,57 @@ public class ExpressionResultBuilder {
 	}
 
 	public ExpressionResultBuilder setLRVal(LRValue val) {
-		assert lrVal == null : "LRValue has already been set";
-		lrVal = val;
+		assert mLrVal == null : "LRValue has already been set";
+		mLrVal = val;
 		return this;
 	}
 
 	public ExpressionResultBuilder addStatement(Statement stm) {
-		stmt.add(stm);
+		mStatements.add(stm);
 		return this;
 	}
 	public ExpressionResultBuilder addStatements(Collection<Statement> stms) {
-		stmt.addAll(stms);
+		mStatements.addAll(stms);
 		return this;
 	}
 	
 	public ExpressionResultBuilder addDeclaration(Declaration stm) {
-		decl.add(stm);
+		mDeclarations.add(stm);
 		return this;
 	}
 	public ExpressionResultBuilder addDeclarations(Collection<Declaration> stms) {
-		decl.addAll(stms);
+		mDeclarations.addAll(stms);
 		return this;
 	}
 	
 	public ExpressionResultBuilder addOverapprox(Overapprox oa) {
-		overappr.add(oa);
+		mOverappr.add(oa);
 		return this;
 	}
 	public ExpressionResultBuilder addOverapprox(Collection<Overapprox> oas) {
-		overappr.addAll(oas);
+		mOverappr.addAll(oas);
 		return this;
 	}
 	
 	public ExpressionResultBuilder putAuxVar(VariableDeclaration avDecl, ILocation avLoc) {
-		auxVars.put(avDecl, avLoc);
+		mAuxVars.put(avDecl, avLoc);
 		return this;
 	}
 	public ExpressionResultBuilder putAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
-		auxVars.putAll(auxVars);
+		mAuxVars.putAll(auxVars);
 		return this;
 	}
 
 	public ExpressionResultBuilder addNeighbourUnionField(ExpressionResult unionField) {
-		otherUnionFields.add(unionField);
+		mNeighbourUnionFields.add(unionField);
 		return this;
 	}
 	public ExpressionResultBuilder addNeighbourUnionFields(Collection<ExpressionResult> unionFields) {
-		otherUnionFields.addAll(unionFields);
+		mNeighbourUnionFields.addAll(unionFields);
 		return this;
 	}
 	
 	public ExpressionResult build() {
-		return new ExpressionResult(stmt, lrVal, decl, auxVars, overappr, otherUnionFields);
+		return new ExpressionResult(mStatements, mLrVal, mDeclarations, mAuxVars, mOverappr, mNeighbourUnionFields);
 	}
 }
