@@ -196,6 +196,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
+
+		mLogger.info("Switched to " + advance + " mode " + mNextTechnique);
 	}
 	
 	@Override
