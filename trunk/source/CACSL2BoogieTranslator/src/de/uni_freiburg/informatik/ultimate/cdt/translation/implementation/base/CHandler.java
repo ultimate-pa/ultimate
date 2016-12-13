@@ -3272,7 +3272,7 @@ public class CHandler implements ICHandler {
 										new VarList(
 												loc,
 												new String[] { tmpId }, 
-												mTypeHandler.ctype2asttype(loc, er.lrVal.getCType())) });
+												mTypeHandler.cType2AstType(loc, er.lrVal.getCType())) });
 				builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
 
 				Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
