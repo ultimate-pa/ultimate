@@ -35,11 +35,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
@@ -48,11 +49,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public abstract class CodeChecker {
 
-	
-	
 	private CodeCheckSettings mGlobalSettings;
 
-	protected BoogieIcfgContainer mOriginalRoot;
+	protected IIcfg<BoogieIcfgLocation> mOriginalRoot;
 	protected CfgSmtToolkit mCfgToolkit;
 	protected ImpRootNode mGraphRoot;
 
@@ -83,7 +82,7 @@ public abstract class CodeChecker {
 	private final HashSet<AnnotatedProgramPoint> mVisited = new HashSet<>();
 	protected final ILogger mLogger;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot,
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final IIcfg<BoogieIcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
 		mLogger = logger;
@@ -95,7 +94,7 @@ public abstract class CodeChecker {
 		mPredicateUnifier = predicateUnifier;
 
 		mGraphWriter = graphWriter;
-		
+
 		setG(globalSettings);
 	}
 
@@ -214,7 +213,7 @@ public abstract class CodeChecker {
 		return mGlobalSettings;
 	}
 
-	public void setG(CodeCheckSettings mGlobalSettings) {
+	public void setG(final CodeCheckSettings mGlobalSettings) {
 		this.mGlobalSettings = mGlobalSettings;
 	}
 }

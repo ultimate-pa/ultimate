@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,10 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -47,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class RCFG2AnnotatedRCFG {
 
-	HashMap<BoogieIcfgLocation, AnnotatedProgramPoint> mOldPpTonew;
+	private HashMap<BoogieIcfgLocation, AnnotatedProgramPoint> mOldPpTonew;
 	private final ILogger mLogger;
-	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mTruePredicate;
 	private final Map<IcfgLocation, Term> mInitialPredicates;
@@ -58,20 +58,16 @@ public class RCFG2AnnotatedRCFG {
 	public RCFG2AnnotatedRCFG(final CfgSmtToolkit smtMan, final PredicateFactory predicateFactory, final ILogger logger,
 			final IPredicate truePredicate, final Map<IcfgLocation, Term> initialPredicates) {
 		mLogger = logger;
-		mCfgSmtToolkit = smtMan;
 		mPredicateFactory = predicateFactory;
 		mTruePredicate = truePredicate;
 		mInitialPredicates = initialPredicates;
 		mUseInitialPredicates = initialPredicates != null;
 	}
 
-	public ImpRootNode convert(final IUltimateServiceProvider mServices, final BoogieIcfgContainer oldRoot) {
-		final BoogieIcfgContainer ra = new BoogieIcfgContainer(mServices, oldRoot.getBoogieDeclarations(),
-				oldRoot.getBoogie2SMT(), null, oldRoot.getPayload().getLocation());
+	public ImpRootNode convert(final IUltimateServiceProvider services, final IIcfg<BoogieIcfgLocation> oldRoot) {
+		final ImpRootNode newRoot = new ImpRootNode();
 
-		final ImpRootNode newRoot = new ImpRootNode(ra);
-
-		final ArrayDeque<BoogieIcfgLocation> openNodes = new ArrayDeque<>();
+		final Deque<BoogieIcfgLocation> openNodes = new ArrayDeque<>();
 		mOldPpTonew = new HashMap<>();
 
 		for (final Entry<String, BoogieIcfgLocation> entry : oldRoot.getProcedureEntryNodes().entrySet()) {
