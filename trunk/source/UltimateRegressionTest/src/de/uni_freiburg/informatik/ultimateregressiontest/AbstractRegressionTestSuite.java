@@ -29,6 +29,9 @@ package de.uni_freiburg.informatik.ultimateregressiontest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
@@ -40,6 +43,15 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
+/**
+ * An {@link AbstractRegressionTestSuite} is a {@link UltimateTestSuite} that automatically generates tests from folders
+ * named <code>regression</code>. For all toolchain and settings file combinations where the toolchain name is a prefix
+ * of the settings file or the settings file name is a prefix of the toolchain filename, test cases are generated for
+ * all files in the folder and all subfolders where the deepest of both (toolchain and settings file) is located.
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	protected long mTimeout;
@@ -55,7 +67,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		final ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		final List<UltimateTestCase> rtr = new ArrayList<>();
 		final Collection<Pair> runConfigurations = getRunConfiguration();
 
 		for (final Pair runConfiguration : runConfigurations) {
@@ -75,11 +87,14 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	}
 
 	/**
-	 * @return A collection of Pairs of Files, where the first file represents a toolchain and the second represents
+	 * Get a collection of toolchain/settings pairs of which the settings name starts with the toolchains name (without
+	 * ending) or vice versa.
+	 *
+	 * @return A collection of {@link Pair}s of files. The first file represents a toolchain and the second represents
 	 *         settings.
 	 */
 	protected Collection<Pair> getRunConfiguration() {
-		final ArrayList<Pair> rtr = new ArrayList<>();
+		final Set<Pair> rtr = new HashSet<>();
 
 		final File root = getRootFolder(mRootFolder);
 		if (root == null) {
@@ -103,7 +118,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			for (final File settings : relevantSettings) {
 				final String settingsName = settings.getName().replaceAll("\\..*", "");
 
-				if (settingsName.startsWith(toolchainName)) {
+				if (settingsName.startsWith(toolchainName) || toolchainName.startsWith(settingsName)) {
 					rtr.add(new Pair(toolchain, settings));
 				}
 			}
@@ -151,7 +166,10 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
 
-	public class Pair {
+	public static final class Pair {
+
+		private final File mToolchainFile;
+		private final File mSettingsFile;
 
 		public Pair(final File toolchain, final File settings) {
 			mToolchainFile = toolchain;
@@ -171,8 +189,44 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return "Toolchain:" + getToolchainFile() + " Settings:" + getSettingsFile();
 		}
 
-		private final File mToolchainFile;
-		private final File mSettingsFile;
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((mSettingsFile == null) ? 0 : mSettingsFile.hashCode());
+			result = prime * result + ((mToolchainFile == null) ? 0 : mToolchainFile.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final Pair other = (Pair) obj;
+			if (mSettingsFile == null) {
+				if (other.mSettingsFile != null) {
+					return false;
+				}
+			} else if (!mSettingsFile.equals(other.mSettingsFile)) {
+				return false;
+			}
+			if (mToolchainFile == null) {
+				if (other.mToolchainFile != null) {
+					return false;
+				}
+			} else if (!mToolchainFile.equals(other.mToolchainFile)) {
+				return false;
+			}
+			return true;
+		}
+
 	}
 
 }
