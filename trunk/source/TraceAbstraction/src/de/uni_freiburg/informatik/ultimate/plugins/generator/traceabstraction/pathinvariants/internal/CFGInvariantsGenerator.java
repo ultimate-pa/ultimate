@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -203,7 +204,8 @@ public final class CFGInvariantsGenerator {
 			final Set<IcfgInternalAction> transitions,
 			final IPredicate precondition, final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
-			final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
+			final boolean useLiveVariables, final Set<IProgramVar> liveVariables,
+			UnmodifiableTransFormula weakestPreconditionOfLastTransition, boolean useWeakestPrecondition) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locations, transitions, precondition,
 				postcondition, startLocation, errorLocation);
 
@@ -230,7 +232,8 @@ public final class CFGInvariantsGenerator {
 		if (useVariablesFromUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			Map<BoogieIcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, patterns, predicates, smtVars2ProgramVars, 
-					startLocation, errorLocation, locations, transitions);
+					startLocation, errorLocation, locations, transitions,
+					weakestPreconditionOfLastTransition, useWeakestPrecondition);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
 			}
@@ -252,6 +255,10 @@ public final class CFGInvariantsGenerator {
 
 			for (final BoogieIcfgLocation location : locations) {
 				patterns.put(location, processor.getInvariantPatternForLocation(location, round));
+			}
+			// add the weakest precondition of the last transition to each pattern
+			if (useWeakestPrecondition && weakestPreconditionOfLastTransition != null) {
+				addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTransition);
 			}
 			logService.info("[CFGInvariants] Built pattern map.");
 
@@ -299,7 +306,23 @@ public final class CFGInvariantsGenerator {
 		return null;
 	}
 	
+
 	
+	private <IPT> void addWeakestPreconditinoOfLastTransitionToPatterns(final Set<BoogieIcfgLocation> locations,
+			final IInvariantPatternProcessor<IPT> processor, final Map<BoogieIcfgLocation, IPT> patterns, UnmodifiableTransFormula weakestPreconditionOfLastTransition) {
+		int numOfLocs = locations.size();
+		assert numOfLocs - 3 >= 0 : "There are not enough locations.";
+		BoogieIcfgLocation[] locationsAsArray = locations.toArray(new BoogieIcfgLocation[0]);
+		IPT newPattern = processor.extendPatternByTransFormula(patterns.get(locationsAsArray[numOfLocs - 3]), 
+				weakestPreconditionOfLastTransition);
+		// Put the new pattern into map
+		patterns.put(locationsAsArray[numOfLocs - 3], newPattern);
+		IPT newPattern2 = processor.extendPatternByTransFormula(patterns.get(locationsAsArray[numOfLocs - 2]), 
+				weakestPreconditionOfLastTransition);
+		// Put the new pattern into map
+		patterns.put(locationsAsArray[numOfLocs - 2], newPattern2);
+	}
+
 	/**
 	 * Check if you can find an invariant with empty patterns for intermediate locations.
 	 * @return
@@ -307,7 +330,8 @@ public final class CFGInvariantsGenerator {
 	private <IPT> Map<BoogieIcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
 			final Map<BoogieIcfgLocation, IPT> patterns, final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, 
-			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions) {
+			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions,
+			UnmodifiableTransFormula weakestPreconditionOfLastTransition, boolean useWeakestPrecondition) {
 		// Start round
 		processor.startRound(round, false, null, true, varsFromUnsatCore);
 		logService.info("Pre-round with empty patterns for intermediate locations started...");
@@ -330,6 +354,10 @@ public final class CFGInvariantsGenerator {
 			patterns.put(location, invPattern);
 		}
 		logService.info("Built (empty) pattern map");
+		// add the weakest precondition of the last transition to each pattern
+		if (useWeakestPrecondition && weakestPreconditionOfLastTransition != null) {
+			addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTransition);
+		}
 
 		// Build transition predicates
 		predicates.clear();

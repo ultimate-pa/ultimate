@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -133,5 +134,12 @@ public interface IInvariantPatternProcessor<IPT> {
 
 	public IPT getExitInvariantPattern();
 
+	/**
+	 *
+	 * @param pattern
+	 * @param p
+	 * @return the pattern, where the formula represented by the given TransFormula has been added to each conjunction as an additional conjunct.
+	 */
+	public IPT extendPatternByTransFormula(IPT pattern, UnmodifiableTransFormula tf);
 
 }

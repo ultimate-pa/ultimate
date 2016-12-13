@@ -84,7 +84,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
 	// as an additional conjunct
-	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
+	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = !false;
 	private final static boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -210,6 +210,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
 		// The location where the nestedRun ends (i.e. the error location)
 		final BoogieIcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len - 1)).getProgramPoint();
+		
+		UnmodifiableTransFormula weakestPreconditionOfLastTransition = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
@@ -238,10 +240,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				if (USE_ONLY_LAST_BACKWARD_PREDICATES && (i == len - 1)) {
 					final IPredicate wpAsPredicate = mPredicateUnifier.getOrConstructPredicate(
 							mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
-					final UnmodifiableTransFormula wpAsTransformula =
+					weakestPreconditionOfLastTransition =
 							TransFormulaBuilder.constructTransFormulaFromPredicate(wpAsPredicate, managedScript);
-					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-							currentLocation.getPayload(), wpAsTransformula));
+//					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
+//							currentLocation.getPayload(), wpAsTransformula));
 					mLogger.info("wp computed: " + wpAsPredicate);
 				}
 			}
@@ -269,7 +271,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
 			// useVarsFromUnsatCore, false, null);
 			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition,
-					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null);
+					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
+					weakestPreconditionOfLastTransition, USE_ONLY_LAST_BACKWARD_PREDICATES);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
