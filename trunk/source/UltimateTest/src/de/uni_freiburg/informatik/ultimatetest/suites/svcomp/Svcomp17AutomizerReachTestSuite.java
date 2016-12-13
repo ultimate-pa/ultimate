@@ -73,17 +73,20 @@ public class Svcomp17AutomizerReachTestSuite extends AbstractSVCOMPTestSuite {
 //		ReachSafety-ProductLines.set
 //		ReachSafety-Recursive.set
 //		ReachSafety-Sequentialized.set
-//		Systems_DeviceDriversLinux64_Safety.set
+//		Systems_DeviceDriversLinux64_ReachSafety.set
 		//@formatter:on
 		
-		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
-		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
-		rtr.addAll(getForAll("ReachSafety-Loops", 40));
-		rtr.addAll(getForAll("ReachSafety-ProductLines", 70));
-		rtr.addAll(getForAll("ReachSafety-Sequentialized", 70));
+		rtr.addAll(getForAll("ReachSafety-Arrays", 10));
 		rtr.addAll(getForAll("ReachSafety-BitVectors", 20));
-//		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_Safety", 500));
-		
+		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
+		rtr.addAll(getForAll("ReachSafety-ECA", 10));
+		rtr.addAll(getForAll("ReachSafety-Heap", 20));
+		rtr.addAll(getForAll("ReachSafety-Loops", 40));
+		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
+//		rtr.addAll(getForAll("ReachSafety-ProductLines", 70));
+//		rtr.addAll(getForAll("ReachSafety-Sequentialized", 70));
+//		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 500));
+//		rtr.addAll(getForAll("ReachSafety-Floats", 9999));
 		return rtr;
 	}
 	
