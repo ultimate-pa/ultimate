@@ -118,7 +118,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	//	private final ControlFlowGraph cfg;
 
 	// New CFG
-	private final Set<IcfgInternalAction> mTransitions;
+	private final List<IcfgInternalAction> mTransitions;
 
 	/**
 	 * The pattern variables, that is the coefficients of program- and helper
@@ -227,7 +227,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final PredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, 
 			final Script solver,
-			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
+			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
@@ -1127,10 +1127,24 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	
 	
 	@Override
-	public Collection<Collection<LinearPatternBase>> extendPatternByTransFormula(final Collection<Collection<LinearPatternBase>> pattern, 
+	public Collection<Collection<LinearPatternBase>> addTransFormulaToEachConjunctInPattern(final Collection<Collection<LinearPatternBase>> pattern, 
 			final UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
+		Collection<? extends LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
+		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
+		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
+		for (Collection<LinearPatternBase> conjunctsInPattern : pattern) {
+			Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
+			newConjuncts.addAll(conjunctsInPattern);
+
+			newConjuncts.addAll(conjunctsFromTransFormula);
+			result.add(newConjuncts);
+		}
+		return result;
+	}
+	
+	private Collection<LinearPatternBase> convertTransFormulaToConjunctionOfLinearInequalities(final UnmodifiableTransFormula tf) {
 		Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();
 		termVariables2ProgramVars.putAll(tf.getInVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
 		termVariables2ProgramVars.putAll(tf.getOutVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
@@ -1148,15 +1162,20 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				conjunctsFromTransFormula.add(lb);
 			}
 		}
+		return conjunctsFromTransFormula;
+	}
+	
+	
+	public Collection<Collection<LinearPatternBase>> addTransFormulaAsAdditionalDisjunctToPattern(Collection<Collection<LinearPatternBase>> pattern, 
+			UnmodifiableTransFormula tf) {
+		assert pattern != null : "pattern must not be null";
+		assert tf != null : "TransFormula must  not be null";
+		Collection<LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
 		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
 		
-		for (Collection<LinearPatternBase> conjunctsInPattern : pattern) {
-			Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
-			newConjuncts.addAll(conjunctsInPattern);
-			newConjuncts.addAll(conjunctsFromTransFormula);
-			result.add(newConjuncts);
-		}
+		result.addAll(pattern);
+		// Add conjuncts from transformula as an additional disjunct
+		result.add(conjunctsFromTransFormula);
 		return result;
 	}
-
 }

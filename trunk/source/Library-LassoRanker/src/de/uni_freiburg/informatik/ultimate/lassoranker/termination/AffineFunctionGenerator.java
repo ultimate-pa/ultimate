@@ -131,7 +131,7 @@ public class AffineFunctionGenerator implements Serializable {
 	}
 	
 	/**
-	 * Generates a linear inequality that has no free coefficients which neet to be determined, all of its coefficients are constants.
+	 * Generates a linear inequality that has no free coefficients which need to be determined, all of its coefficients are constants.
 	 * @author Betim Musa <musab@informatik.uni-freiburg.de>
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @param programVars2NumericalCoefficients a mapping from Boogie variables to their constant (numerical) coefficients

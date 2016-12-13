@@ -138,8 +138,17 @@ public interface IInvariantPatternProcessor<IPT> {
 	 *
 	 * @param pattern
 	 * @param p
-	 * @return the pattern, where the formula represented by the given TransFormula has been added to each conjunction as an additional conjunct.
+	 * @return the pattern, where the formula represented by the given TransFormula has been added to each disjunct as an additional conjunct.
 	 */
-	public IPT extendPatternByTransFormula(IPT pattern, UnmodifiableTransFormula tf);
+	public IPT addTransFormulaToEachConjunctInPattern(IPT pattern, UnmodifiableTransFormula tf);
+	
+	
+	/**
+	 *
+	 * @param pattern
+	 * @param p
+	 * @return the pattern, where the formula represented by the given TransFormula has been added as an additional disjunct.
+	 */
+	public IPT addTransFormulaAsAdditionalDisjunctToPattern(IPT pattern, UnmodifiableTransFormula tf);
 
 }
