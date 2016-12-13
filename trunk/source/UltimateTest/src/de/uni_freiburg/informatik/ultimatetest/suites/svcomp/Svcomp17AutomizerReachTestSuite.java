@@ -31,24 +31,24 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 
 /**
  *
  * @author dietsch@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17AutomizerTestSuite extends AbstractSVCOMPTestSuite {
+public class Svcomp17AutomizerReachTestSuite extends AbstractSVCOMPTestSuite {
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new SvcompReachTestResultDecider(urd, false);
 	}
 	
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 60 * 1000;
+		return 120 * 1000;
 	}
 	
 	@Override
@@ -79,9 +79,10 @@ public class Svcomp17AutomizerTestSuite extends AbstractSVCOMPTestSuite {
 		rtr.addAll(getForAll("ReachSafety-ControlFlow", 40));
 		rtr.addAll(getForAll("ReachSafety-Recursive", 30));
 		rtr.addAll(getForAll("ReachSafety-Loops", 40));
-		rtr.addAll(getForAll("ReachSafety-ProductLines", 20));
-		rtr.addAll(getForAll("ReachSafety-Sequentialized", 20));
+		rtr.addAll(getForAll("ReachSafety-ProductLines", 70));
+		rtr.addAll(getForAll("ReachSafety-Sequentialized", 70));
 		rtr.addAll(getForAll("ReachSafety-BitVectors", 20));
+//		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_Safety", 500));
 		
 		return rtr;
 	}
