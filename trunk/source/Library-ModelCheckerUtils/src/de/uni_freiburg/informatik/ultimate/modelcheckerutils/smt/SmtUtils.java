@@ -1271,8 +1271,15 @@ public final class SmtUtils {
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
 		return sort.isNumericSort() || "Bool".equals(sort.getRealSort().getName())
-				|| "BitVec".equals(sort.getRealSort().getName())
-				|| "FloatingPoint".equals(sort.getRealSort().getName());
+				|| isBitvectorSort(sort) || isFloatingPointSort(sort);
+	}
+	
+	public static boolean isBitvectorSort(final Sort sort) {
+		return "BitVec".equals(sort.getRealSort().getName());
+	}
+	
+	public static boolean isFloatingPointSort(final Sort sort) {
+		return "FloatingPoint".equals(sort.getRealSort().getName());
 	}
 
 	/**
