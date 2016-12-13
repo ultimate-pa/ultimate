@@ -35,14 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.soap.Node;
-
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -116,10 +113,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return mDisEqualitySet;
 	}
 	
-	public void setDisEqualitySet(final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
-		mDisEqualitySet = disEqualitySet;
-	}
-	
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
 		return mEqNodeToEqGraphNodeMap;
 	}
@@ -131,10 +124,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @return
 	 */
 	public EqGraphNode find(final EqGraphNode node) {
-//		if (node.getRepresentative().equals(node)) {
-//			return node;
-//		}
-//		return find(node.getRepresentative());
 		return node.find();
 	}
 	
@@ -344,35 +333,39 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	
 	@Override
 	public String toLogString() {
+		return "VPState:\n" +  mTerm.toString();
 		
-		final StringBuilder sb = new StringBuilder();
-		
-		sb.append("VPState:\n");
-		sb.append("Vars: " + mVars + "\n");
-		sb.append("Graph: \n");
-		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
-			if (graphNode.getRepresentative() == graphNode) {
-				// print only the interesting graph nodes in full
-				sb.append(graphNode.eqNode.toString());
-			} else {
-				sb.append(graphNode.toString());
-			}
-			sb.append('\n');
-		}
-		
-		sb.append("Disequality Set:  \n");
-		for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			sb.append(pair.getFirst().toString());
-			sb.append(", ");
-			sb.append(pair.getSecond().toString());
-			sb.append('\n');
-		}
-		
-		return sb.toString();
+//		final StringBuilder sb = new StringBuilder();
+//		
+//		sb.append("VPState:\n");
+//		sb.append("Vars: " + mVars + "\n");
+//		sb.append("Graph: \n");
+//		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
+//			if (graphNode.getRepresentative() == graphNode) {
+//				// print only the interesting graph nodes in full
+//				sb.append(graphNode.eqNode.toString());
+//			} else {
+//				sb.append(graphNode.toString());
+//			}
+//			sb.append('\n');
+//		}
+//		
+//		sb.append("Disequality Set:  \n");
+//		for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+//			sb.append(pair.getFirst().toString());
+//			sb.append(", ");
+//			sb.append(pair.getSecond().toString());
+//			sb.append('\n');
+//		}
+//		
+//		return sb.toString();
 	}
 	
 	@Override
 	public String toString() {
+		if (mTerm == null) {
+			return "VPState, uninitialized";
+		}
 		return toLogString();
 	}
 	

@@ -97,6 +97,11 @@ public class NewArrayIdProvider {
 	public List<IProgramVarOrConst> getAllNewArrayIds(IProgramVarOrConst oldLhs) {
 		return mArrayToPartitionInformation.get(mArrayIdToArrayGroup.get(oldLhs)).getNewArrayIds().get(oldLhs);
 	}
+	
+	@Override
+	public String toString() {
+		return "NewArrayIdProvider: \n" + mArrayToPartitionInformation.toString();
+	}
 }
 
 /*

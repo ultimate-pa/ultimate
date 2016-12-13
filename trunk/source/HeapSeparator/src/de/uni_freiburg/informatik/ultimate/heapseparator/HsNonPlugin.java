@@ -112,6 +112,8 @@ public class HsNonPlugin {
 
 		final NewArrayIdProvider newArrayIdProvider =
 				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
+		
+		mLogger.info("built NewArrayIdProvider: " + newArrayIdProvider);
 
 		/*
 		 * do the transformation itself..
