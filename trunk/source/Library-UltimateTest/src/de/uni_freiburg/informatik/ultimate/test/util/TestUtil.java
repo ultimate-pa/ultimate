@@ -468,10 +468,10 @@ public final class TestUtil {
 		map.putAll(constructFilenameKeywordMap_SvcompOverflow());
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from SV-COMP filename keywords to verification results for
-	 * the error function reachability specification. 
+	 * Returns a map from SV-COMP filename keywords to verification results for the error function reachability
+	 * specification.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompReach() {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
@@ -481,10 +481,9 @@ public final class TestUtil {
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from SV-COMP filename keywords to verification results for
-	 * memsafety specification. 
+	 * Returns a map from SV-COMP filename keywords to verification results for memsafety specification.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompMemsafety() {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
@@ -499,10 +498,9 @@ public final class TestUtil {
 		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
 		return map;
 	}
-	
+
 	/**
-	 * Returns a map from SV-COMP filename keywords to verification results for
-	 * overflow specification. 
+	 * Returns a map from SV-COMP filename keywords to verification results for overflow specification.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompOverflow() {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
@@ -525,6 +523,13 @@ public final class TestUtil {
 		// we use the following two keywords for concurrent programs
 		map.put("#cSafe", SafetyCheckerOverallResult.SAFE);
 		map.put("#cUnsafe", SafetyCheckerOverallResult.UNSAFE);
+		return map;
+	}
+
+	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMapUnknownSafetyChecker() {
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
+		map.putAll(constructFirstlineKeywordMap_SafetyChecker());
+		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		return map;
 	}
 
