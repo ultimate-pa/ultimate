@@ -922,7 +922,12 @@ public class FunctionHandler {
 			// TODO: Add option that allows us to check for builtin_unreachable by adding assert
 			// return new ExpressionResult(Collections.singletonList(new AssertStatement(loc,
 			// new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(loc, false))), null);
-			return new SkipResult();
+			// TODO: Add option that just ignores the function:
+			// return new SkipResult();
+			// TODO: Keep the following code, but add it as option together with the other two
+			return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc,
+					new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(loc, false))), null);
+
 		} else if (methodName.equals("__builtin_huge_valf")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
 		} else if (methodName.equals("__builtin_strchr")) {
