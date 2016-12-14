@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -48,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -68,13 +69,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class UltimateChecker extends CodeChecker {
 
-	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
-	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
+	private HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> mPre2Stmt2Post;
+	private HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> mPre2Hier2Stmt2Post;
 
-	public UltimateChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
-			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
-		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger, globalSettings);
+	public UltimateChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
+			final IIcfg<BoogieIcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
+			final CodeCheckSettings globalSettings) {
+		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
+				globalSettings);
 	}
 
 	/**
@@ -100,7 +103,6 @@ public class UltimateChecker extends CodeChecker {
 
 		for (int i = 0; i < interpolants.length; i++) {
 			splitNode(nodes[i + 1], interpolants[i]);
-
 		}
 
 		return true;
@@ -224,7 +226,7 @@ public class UltimateChecker extends CodeChecker {
 	}
 
 	private void makeConnections() {
-		for (final Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2 : _pre2stm2post_toConnectIfSat
+		for (final Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2 : mPre2Stmt2Post
 				.entrySet()) {
 			for (final Entry<CodeBlock, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet()) {
 				if (isSatEdge(pre2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate())) {
@@ -233,7 +235,7 @@ public class UltimateChecker extends CodeChecker {
 			}
 		}
 
-		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2 : _pre2hier2stm2post_toConnectIfSat
+		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2 : mPre2Hier2Stmt2Post
 				.entrySet()) {
 			for (final Entry<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>> hier2 : pre2.getValue()
 					.entrySet()) {
@@ -252,9 +254,8 @@ public class UltimateChecker extends CodeChecker {
 		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoing(statement, target);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	protected boolean connectOutgoingReturnIfSat(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
@@ -262,9 +263,8 @@ public class UltimateChecker extends CodeChecker {
 		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoingReturn(hier, statement, target);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -293,7 +293,7 @@ public class UltimateChecker extends CodeChecker {
 			}
 		}
 
-		boolean result = false;
+		final boolean result;
 		if (statement instanceof Call) {
 			// result is true if pre /\ stm /\ post is sat or unknown, false if unsat
 			result = mEdgeChecker.checkCall(preCondition, (ICallAction) statement,

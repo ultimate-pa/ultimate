@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
+public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	
 	private final List<AtomicTraceElement<IcfgEdge>> mTrace;
 	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
@@ -63,18 +63,18 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	private final Map<String, ILocation> mOverapproximations;
 	
 	@SuppressWarnings("unchecked")
-	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
 		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
 	}
 	
-	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders) {
 		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
 	
-	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders, final List<IRelevanceInformation> relevanceInformation) {
 		assert trace != null;
@@ -247,12 +247,12 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		return unproabilityReasons;
 	}
 	
-	public RcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
+	public IcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
 		final List<IcfgEdge> edgeSequence = new ArrayList<>();
 		for (final AtomicTraceElement<IcfgEdge> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());
 		}
-		return new RcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
+		return new IcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
 				relevanceInformation);
 	}
 	

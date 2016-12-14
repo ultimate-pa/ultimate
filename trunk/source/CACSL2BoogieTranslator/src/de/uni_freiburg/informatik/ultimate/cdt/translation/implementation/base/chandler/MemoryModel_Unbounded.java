@@ -60,7 +60,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		 * integer data on the heap. This method returns the CType that we use to
 		 * represents this data.
 		 */
-        final ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType intArrayType = typeHandler.cType2AstType(ignoreLoc, 
         		new CPrimitive(CPrimitives.INT));
         
     	/*
@@ -68,7 +68,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
     	 * floating type data on the heap. This method returns the CType that we 
     	 * use to represent this data.
     	 */
-        final ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
+        final ASTType realArrayType = typeHandler.cType2AstType(ignoreLoc, 
         		new CPrimitive(CPrimitives.FLOAT));
         
        	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
@@ -106,7 +106,7 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final CPrimitives representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;

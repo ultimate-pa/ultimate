@@ -77,11 +77,11 @@ public class FunctionDeclarations {
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, "bool");
 		} else {
-			resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
+			resultASTType = mTypeHandler.cType2AstType(loc, resultCType);
 		}
 		final ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
-			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
+			paramASTTypes[i] = mTypeHandler.cType2AstType(loc, paramCTypes[i]);
 		}
 		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}

@@ -168,7 +168,7 @@ public class TypeSizeAndOffsetComputer {
 	    }
 	    
 	    private void declareConstant(ILocation loc, String id) {
-	    	final ASTType astType =  mTypeHandler.ctype2asttype(loc, getSize_T());
+	    	final ASTType astType =  mTypeHandler.cType2AstType(loc, getSize_T());
 	    	final VarList varList = new VarList(loc, new String[] { id }, astType);
 	    	final ConstDeclaration decl = new ConstDeclaration(loc, 
 	    			new Attribute[0], false, varList, null, false);

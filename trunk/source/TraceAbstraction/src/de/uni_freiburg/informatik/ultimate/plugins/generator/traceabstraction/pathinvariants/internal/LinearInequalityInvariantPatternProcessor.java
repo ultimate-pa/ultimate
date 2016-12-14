@@ -39,10 +39,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
@@ -65,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -115,7 +118,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	//	private final ControlFlowGraph cfg;
 
 	// New CFG
-	private final Set<IcfgInternalAction> mTransitions;
+	private final List<IcfgInternalAction> mTransitions;
 
 	/**
 	 * The pattern variables, that is the coefficients of program- and helper
@@ -224,7 +227,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final PredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, 
 			final Script solver,
-			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
+			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
@@ -737,8 +740,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private Term buildPredicateTerm(
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
-		final LinearTransition transition = mLinearizer.linearize(predicate
-				.getTransition());
+		final LinearTransition transition = mLinearizer.linearize(predicate.getTransition());
 		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
 		completeMapping(unprimedMapping);
@@ -798,7 +800,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * 2. Generate for each predicate in predicates a constraint.
 	 * 3. Generate a constraint s.t. the invariant template implies the post-condition.
 	 * @param predicates - represent the intermediate transitions of the path program
-	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
 		// Generate and assert term for precondition
@@ -814,7 +816,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * Extract the Motzkin coefficients from the given term.
 	 * @param t - term the Motzkin coefficients to be extracted from
 	 * @return
-	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
 	private Set<String> getTermVariablesFromTerm(final Term t) {
 		final HashSet<String> result = new HashSet<>();
@@ -841,7 +843,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	}
 
 	/**
-	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 * @return
 	 */
 	public Collection<TermVariable> getVarsFromUnsatCore() {
@@ -1077,7 +1079,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase(
 								mSolver, mPatternCoefficients, newPrefix(), strict);
-						mPatternVariables.addAll(inequality.getVariables());
+						Collection<Term> params = inequality.getVariables();
+						mPatternVariables.addAll(params);
 						conjunction.add(inequality);
 					}
 				}
@@ -1093,6 +1096,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 //			mExitInvariantPattern = disjunction;
 //		}
 	}
+	
+	
 	
 	@Override
 	public void initializeEntryAndExitPattern() {
@@ -1119,5 +1124,58 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		emptyInvPattern = Collections.singleton(emptyConjunction);
 		return emptyInvPattern;
 	}
+	
+	
+	@Override
+	public Collection<Collection<LinearPatternBase>> addTransFormulaToEachConjunctInPattern(final Collection<Collection<LinearPatternBase>> pattern, 
+			final UnmodifiableTransFormula tf) {
+		assert pattern != null : "pattern must not be null";
+		assert tf != null : "TransFormula must  not be null";
+		Collection<? extends LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
+		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
+		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
+		for (Collection<LinearPatternBase> conjunctsInPattern : pattern) {
+			Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
+			newConjuncts.addAll(conjunctsInPattern);
 
+			newConjuncts.addAll(conjunctsFromTransFormula);
+			result.add(newConjuncts);
+		}
+		return result;
+	}
+	
+	private Collection<LinearPatternBase> convertTransFormulaToConjunctionOfLinearInequalities(final UnmodifiableTransFormula tf) {
+		Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();
+		termVariables2ProgramVars.putAll(tf.getInVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
+		termVariables2ProgramVars.putAll(tf.getOutVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
+		
+		
+		List<List<LinearInequality>> linearinequalities = mLinearizer.linearize(tf).getPolyhedra();
+		Collection<LinearPatternBase> conjunctsFromTransFormula = new ArrayList<LinearPatternBase>(linearinequalities.size());
+		for (List<LinearInequality> lineqs : linearinequalities) {
+			for (LinearInequality lineq : lineqs) {
+				Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients = new HashMap<>();
+				for (Term termVar : lineq.getVariables()) {
+					programVarsToConstantCoefficients.put(termVariables2ProgramVars.get(termVar), lineq.getCoefficient(termVar));
+				}
+				LinearPatternBase lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), programVarsToConstantCoefficients);
+				conjunctsFromTransFormula.add(lb);
+			}
+		}
+		return conjunctsFromTransFormula;
+	}
+	
+	
+	public Collection<Collection<LinearPatternBase>> addTransFormulaAsAdditionalDisjunctToPattern(Collection<Collection<LinearPatternBase>> pattern, 
+			UnmodifiableTransFormula tf) {
+		assert pattern != null : "pattern must not be null";
+		assert tf != null : "TransFormula must  not be null";
+		Collection<LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
+		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
+		
+		result.addAll(pattern);
+		// Add conjuncts from transformula as an additional disjunct
+		result.add(conjunctsFromTransFormula);
+		return result;
+	}
 }

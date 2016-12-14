@@ -62,7 +62,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<>(
-				TestUtil.constructFilenameKeywordMap_SafetyChecker(), null,
+				TestUtil.constructFilenameKeywordMap_AllSafetyChecker(), null,
 				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
 

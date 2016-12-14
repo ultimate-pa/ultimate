@@ -37,14 +37,17 @@ import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -54,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -106,7 +110,10 @@ public class StructHandler {
 		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
 
 		LRValue newValue = null;
-		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;
+
+		List<ExpressionResult> unionFieldToCType = fieldOwner.otherUnionFields == null 
+				? new ArrayList<>() 
+						: new ArrayList<>(fieldOwner.otherUnionFields);
 
 		CType foType = fieldOwner.lrVal.getCType().getUnderlyingType();
 		
@@ -145,6 +152,12 @@ public class StructHandler {
 			final Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					newStartAddressBase, sumOffset, loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
+			
+			if (cStructType instanceof CUnion) {
+				unionFieldToCType.addAll(
+						computeUnionFieldToCType(
+								loc, field, unionFieldToCType, (CUnion) cStructType, fieldOwnerHlv));
+			}
 		} else if (fieldOwner.lrVal instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.lrVal;
 			final StructAccessExpression sexpr = new StructAccessExpression(loc, 
@@ -156,22 +169,67 @@ public class StructHandler {
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
 			
-			//only here -- assuming the RValue case means that no write is taking place..
-			if (foType instanceof CUnion) {
-				if (unionFieldToCType == null) {
-					unionFieldToCType = new LinkedHashMap<StructLHS, CType>();
-				}
-				for (final String fieldId : ((CUnion) foType).getFieldIds()) {
-					if (!fieldId.equals(field)) {
-						final StructLHS havocSlhs = new StructLHS(loc, lVal.getLHS(), fieldId);
-						unionFieldToCType.put(havocSlhs, ((CUnion) foType).getFieldType(fieldId));
-					}
-				}
+			if (cStructType instanceof CUnion) {
+				unionFieldToCType.addAll(
+						computeUnionFieldToCType(
+								loc, field, unionFieldToCType, (CUnion) cStructType, lVal));
 			}
 		}
 	
 		return new ExpressionResult(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
 				fieldOwner.overappr, unionFieldToCType);
+	}
+
+
+	private List<ExpressionResult> computeUnionFieldToCType(
+			final ILocation loc, 
+			final String field,
+			final List<ExpressionResult> unionFieldToCType, 
+			final CUnion foType, 
+			final LRValue fieldOwner) {
+
+		List<ExpressionResult> result;
+		if (unionFieldToCType == null) {
+			result = new ArrayList<>();
+		} else {
+			result = new ArrayList<>(unionFieldToCType);
+		}
+
+		for (final String neighbourField : ((CUnion) foType).getFieldIds()) {
+			if (neighbourField.equals(field)) {
+				continue;
+			}
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+			
+			if (fieldOwner instanceof LocalLValue) {
+				final StructLHS havocSlhs = new StructLHS(loc, ((LocalLValue) fieldOwner).getLHS(), neighbourField);
+				builder.setLRVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField)));
+			} else {
+				assert fieldOwner instanceof HeapLValue;
+				Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
+				Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
+				Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc, 
+						IASTBinaryExpression.op_plus, 
+						MemoryHandler.getPointerOffset(unionAddress, loc), 
+						mExpressionTranslation.getCTypeOfPointerComponents(), 
+						fieldOffset, 
+						mExpressionTranslation.getCTypeOfPointerComponents());
+				StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
+						MemoryHandler.getPointerBaseAddress(unionAddress, loc), 
+						summedOffset, 
+						loc);
+				
+				builder.setLRVal(
+						new HeapLValue(
+								neighbourFieldAddress, 
+								foType.getFieldType(neighbourField)));
+
+			}
+			
+			result.add(builder.build());
+		}
+
+		return result;
 	}
 
 

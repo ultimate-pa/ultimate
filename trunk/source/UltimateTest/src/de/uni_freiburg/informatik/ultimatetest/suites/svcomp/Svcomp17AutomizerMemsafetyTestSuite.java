@@ -31,7 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
 
 /**
  *
@@ -42,7 +42,7 @@ public class Svcomp17AutomizerMemsafetyTestSuite extends AbstractSVCOMPTestSuite
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new SvcompMemsafetyTestResultDecider(urd, false);
 	}
 	
 	@Override

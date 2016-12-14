@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -157,7 +157,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final RcfgProgramExecution pe) {
+	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
@@ -167,7 +167,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(final RcfgProgramExecution pe,
+	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
 		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes =
@@ -176,7 +176,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		reportResult(uknRes);
 	}
 
-	public BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();

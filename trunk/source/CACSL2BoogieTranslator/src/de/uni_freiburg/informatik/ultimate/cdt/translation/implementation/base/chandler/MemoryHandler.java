@@ -342,7 +342,7 @@ public class MemoryHandler {
 	private VariableDeclaration constuctLengthArrayDeclaration() {
 		// var #length : [int]int;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final ASTType pointerComponentType = mTypeHandler.ctype2asttype(ignoreLoc,
+		final ASTType pointerComponentType = mTypeHandler.cType2AstType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final ASTType lengthType = new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType },
 				pointerComponentType);
@@ -353,7 +353,7 @@ public class MemoryHandler {
 	private VariableDeclaration constructValidArrayDeclaration() {
 		// var #valid : [int]bool;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final ASTType pointerComponentType = mTypeHandler.ctype2asttype(ignoreLoc,
+		final ASTType pointerComponentType = mTypeHandler.cType2AstType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final ASTType validType = new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType },
 				mBooleanArrayHelper.constructBoolReplacementType());
@@ -382,11 +382,11 @@ public class MemoryHandler {
 		final VarList inParamPtrVl = new VarList(ignoreLoc, new String[] { inParamPtr },
 				mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inParamAmountOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamAmountOfFields },
-				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 		final VarList inParamSizeOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamSizeOfFields },
-				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 		final VarList inParamProductVl = new VarList(ignoreLoc, new String[] { inParamProduct },
-				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 
 		final VarList[] inParams = new VarList[] { inParamPtrVl, inParamAmountOfFieldsVl, inParamSizeOfFieldsVl,
 				inParamProductVl };
@@ -395,7 +395,7 @@ public class MemoryHandler {
 		final List<VariableDeclaration> decl = new ArrayList<>();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
-		final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
 		final VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
@@ -485,7 +485,7 @@ public class MemoryHandler {
 		final VarList inPSrc = new VarList(ignoreLoc, new String[] { memcpyInParamSrc },
 				mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize },
-				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 		final VarList outP = new VarList(ignoreLoc, new String[] { memcpyOutParam },
 				mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
@@ -494,7 +494,7 @@ public class MemoryHandler {
 		final List<VariableDeclaration> decl = new ArrayList<>();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
-		final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
 		final VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
@@ -753,9 +753,9 @@ public class MemoryHandler {
 		final VarList inParamPtrVl = new VarList(ignoreLoc, new String[] { inParamPtr },
 				mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inParamValueVl = new VarList(ignoreLoc, new String[] { inParamValue },
-				mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(CPrimitives.INT)));
+				mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)));
 		final VarList inParamAmountVl = new VarList(ignoreLoc, new String[] { inParamAmount },
-				mTypeHandler.ctype2asttype(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
 		final VarList outParamResultVl = new VarList(ignoreLoc, new String[] { outParamResult },
 				mTypeHandler.constructPointerType(ignoreLoc));
 
@@ -765,7 +765,7 @@ public class MemoryHandler {
 		final List<VariableDeclaration> decl = new ArrayList<>();
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
-		final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
 		final VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
@@ -863,7 +863,7 @@ public class MemoryHandler {
 		final String inPtr = "#ptr";
 		final String writtenTypeSize = "#sizeOfWrittenType";
 
-		final ASTType sizetType = mTypeHandler.ctype2asttype(loc, mTypeSizeAndOffsetComputer.getSize_T());
+		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSize_T());
 		final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { value }, valueAstType),
 				new VarList(loc, new String[] { inPtr }, mTypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { writtenTypeSize }, sizetType) };
@@ -929,7 +929,7 @@ public class MemoryHandler {
 		final ASTType valueAstType = rda.getASTType();
 		final String ptrId = "#ptr";
 		final String readTypeSize = "#sizeOfReadType";
-		final ASTType sizetType = mTypeHandler.ctype2asttype(loc, mTypeSizeAndOffsetComputer.getSize_T());
+		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSize_T());
 		final VarList[] inRead = new VarList[] {
 				new VarList(loc, new String[] { ptrId }, mTypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { readTypeSize }, sizetType) };
@@ -1286,7 +1286,7 @@ public class MemoryHandler {
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
 	private ArrayList<Declaration> declareMalloc(final ITypeHandler typeHandler, final ILocation tuLoc) {
-		final ASTType intType = typeHandler.ctype2asttype(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		final Expression addr = new IdentifierExpression(tuLoc, ADDR);
@@ -1558,9 +1558,9 @@ public class MemoryHandler {
 		final String tmpId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
 		final ASTType tmpAstType;
 		if (bitvectorConversionNeeded) {
-			tmpAstType = mTypeHandler.ctype2asttype(loc, resultType);
+			tmpAstType = mTypeHandler.cType2AstType(loc, resultType);
 		} else {
-			tmpAstType = mTypeHandler.ctype2asttype(loc, resultType);
+			tmpAstType = mTypeHandler.cType2AstType(loc, resultType);
 		}
 		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpAstType, loc);
 		auxVars.put(tVarDecl, loc);

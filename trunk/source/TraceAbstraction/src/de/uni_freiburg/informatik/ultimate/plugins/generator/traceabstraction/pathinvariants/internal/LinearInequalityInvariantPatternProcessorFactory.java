@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -155,7 +156,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 
 	@Override
 	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
-			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions,
+			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions,
 			final IPredicate precondition, final IPredicate postcondition, final BoogieIcfgLocation startLocation,
 			final BoogieIcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,

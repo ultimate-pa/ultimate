@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -79,7 +79,7 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
 		}
-		final RcfgProgramExecution pex = new RcfgProgramExecution(trace, programStates);
+		final IcfgProgramExecution pex = new IcfgProgramExecution(trace, programStates);
 		
 		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, getLast(cex),
 				mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");

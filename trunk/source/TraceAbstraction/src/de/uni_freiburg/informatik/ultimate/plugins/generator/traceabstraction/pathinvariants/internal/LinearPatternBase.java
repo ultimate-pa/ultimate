@@ -42,11 +42,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * A class representing an (possibly strict) linear inequality over a set of
  * {@link IProgramVar}s. A DNF over these inequalities forms a pattern as used
  * within {@link LinearInequalityInvariantPatternProcessor}.
+ * @author David Zschocke, Dirk Steinmetz, Betim Musa
  */
-public final class LinearPatternBase {
-	private final AffineFunctionGenerator function;
-	private final boolean strict;
+public class LinearPatternBase {
+	protected AffineFunctionGenerator mFunctionGenerator;
+	protected boolean mStrictInequality;
+	
 
+	/**
+	 * This constructor is needed so that this class can be sub-classed.
+	 */
+	protected LinearPatternBase() {
+	}
+	
 	/**
 	 * Creates a new linear inequality over a given set of {@link IProgramVar}s.
 	 * 
@@ -65,10 +73,10 @@ public final class LinearPatternBase {
 	public LinearPatternBase(final Script solver,
 			final Collection<IProgramVar> variables, final String prefix,
 			final boolean strict) {
-		function = new AffineFunctionGenerator(solver, variables, prefix);
-		this.strict = strict;
+		mFunctionGenerator = new AffineFunctionGenerator(solver, variables, prefix);
+		mStrictInequality = strict;
 	}
-
+	
 	/**
 	 * Returns a collection of terms representing one generated variable each.
 	 * 
@@ -78,7 +86,7 @@ public final class LinearPatternBase {
 	 * @return collection of all variables
 	 */
 	public Collection<Term> getVariables() {
-		return function.getCoefficients();
+		return mFunctionGenerator.getCoefficients();
 	}
 
 	/**
@@ -95,8 +103,8 @@ public final class LinearPatternBase {
 	 *         to the given mapping
 	 */
 	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
-		final LinearInequality inequality = function.generate(map);
-		inequality.setStrict(strict);
+		final LinearInequality inequality = mFunctionGenerator.generate(map);
+		inequality.setStrict(mStrictInequality);
 		return inequality;
 	}
 	
@@ -106,7 +114,7 @@ public final class LinearPatternBase {
 	 * @return true iff the pattern represents a strict term
 	 */
 	public boolean isStrict() {
-		return strict;
+		return mStrictInequality;
 	}
 	
 	/**
@@ -120,6 +128,6 @@ public final class LinearPatternBase {
 	 * @return the valuated affine function corresponding to this LinearInequality
 	 */
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
-		return function.extractAffineFunction(valuation);
+		return mFunctionGenerator.extractAffineFunction(valuation);
 	}
 }

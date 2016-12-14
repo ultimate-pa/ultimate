@@ -224,7 +224,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return the found ASTType.
      */
     public ASTType getTypeOfVariable(String cId, ILocation loc) {
-    	return main.mTypeHandler.ctype2asttype(loc, this.get(cId, loc).getCVariable());
+    	return main.mTypeHandler.cType2AstType(loc, this.get(cId, loc).getCVariable());
 //        if (this.get(cId, loc).getBoogieDecl() instanceof VariableDeclaration) {
 //            VariableDeclaration vd = (VariableDeclaration) get(cId, loc)
 //                    .getBoogieDecl();

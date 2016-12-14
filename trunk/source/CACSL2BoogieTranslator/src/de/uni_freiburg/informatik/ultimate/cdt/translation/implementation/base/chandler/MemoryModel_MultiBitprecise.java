@@ -77,7 +77,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 		if (result == null) {
 			final String name = primitive.getPrimitiveCategory().toString() + bytesize;
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			final ASTType astType = mTypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(primitive));
+			final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(primitive));
 			result = new HeapDataArray(name, astType, bytesize);
 			size2HeapdataArray.put(bytesize, result);
 		}
@@ -103,7 +103,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
 			final CPrimitives representative = bytesizes2primitives.getImage(bytesize).iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(),
+			final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(),
 					new CPrimitive(representative));
 			result.add(
 					new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));

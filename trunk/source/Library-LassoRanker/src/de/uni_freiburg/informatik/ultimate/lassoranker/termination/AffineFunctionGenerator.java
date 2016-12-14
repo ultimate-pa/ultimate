@@ -91,6 +91,28 @@ public class AffineFunctionGenerator implements Serializable {
 	}
 	
 	/**
+	 * Constructors that creates an AffineFunctionGenerator with constant coefficients.
+	 * @author Betim Musa <musab@informatik.uni-freiburg.de>
+	 * @param script
+	 * @param variables
+	 * @param prefix
+	 * @param withoutCoefficients - is true, otherwise the call of this constructor doesn't make sense
+	 */
+	public AffineFunctionGenerator(final Script script, final Collection<IProgramVar> variables,
+			final String prefix, boolean withoutCoefficients) {
+		assert withoutCoefficients : "This constructor is called only if the program variables shouldn't have any coefficients which"
+				+ "need to be determined";
+		// Create variables
+		mconstant = SmtUtils.buildNewConstant(script, constName(prefix), 
+				"Real");
+		mcoefficients = new LinkedHashMap<IProgramVar, Term>();
+		// initialize all the coefficients with the numerical constant '1'
+		for (final IProgramVar var : variables) {
+			mcoefficients.put(var, script.numeral(BigInteger.ONE));
+		}
+	}
+	
+	/**
 	 * Generate the linear inequality
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
@@ -103,6 +125,23 @@ public class AffineFunctionGenerator implements Serializable {
 				li.add(entry.getValue(),
 						new AffineTerm(mcoefficients.get(entry.getKey()),
 								Rational.ONE));
+			}
+		}
+		return li;
+	}
+	
+	/**
+	 * Generates a linear inequality that has no free coefficients which need to be determined, all of its coefficients are constants.
+	 * @author Betim Musa <musab@informatik.uni-freiburg.de>
+	 * @param vars a mapping from Boogie variables to TermVariables to be used
+	 * @param programVars2NumericalCoefficients a mapping from Boogie variables to their constant (numerical) coefficients
+	 * @return Linear inequality corresponding to si(x)
+	 */
+	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars, Map<IProgramVar, AffineTerm> programVars2NumericalCoefficients ) {
+		final LinearInequality li = new LinearInequality();
+		for (final Map.Entry<IProgramVar,? extends Term> entry : vars.entrySet()) {
+			if (mcoefficients.containsKey(entry.getKey())) {
+				li.add(entry.getValue(), programVars2NumericalCoefficients.get(entry.getKey()));
 			}
 		}
 		return li;

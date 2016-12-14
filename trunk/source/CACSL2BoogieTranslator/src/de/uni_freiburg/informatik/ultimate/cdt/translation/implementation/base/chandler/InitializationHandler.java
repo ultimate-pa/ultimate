@@ -851,7 +851,7 @@ public class InitializationHandler {
 							new IdentifierExpression(loc, tmpId), underlyingFieldType));
 					final VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] { tmpId },
-									main.mTypeHandler.ctype2asttype(loc, underlyingFieldType)) });
+									main.mTypeHandler.cType2AstType(loc, underlyingFieldType)) });
 					fieldWrites.decl.add(auxVarDec);
 					fieldWrites.auxVars.put(auxVarDec, loc);
 				}
@@ -977,7 +977,7 @@ public class InitializationHandler {
 				}
 				final VariableDeclaration auxVarDec =
 						new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
-								new String[] { tmpId }, main.mTypeHandler.ctype2asttype(loc, underlyingFieldType)) });
+								new String[] { tmpId }, main.mTypeHandler.cType2AstType(loc, underlyingFieldType)) });
 				fieldContents.decl.add(auxVarDec);
 				fieldContents.auxVars.put(auxVarDec, loc);
 			} else {
@@ -1005,7 +1005,7 @@ public class InitializationHandler {
 					final HeapLValue lrVal = new HeapLValue(fieldEx, underlyingFieldType);
 
 					final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId,
-							main.mTypeHandler.ctype2asttype(loc, underlyingFieldType), loc);
+							main.mTypeHandler.cType2AstType(loc, underlyingFieldType), loc);
 					fieldAuxVars.put(tVarDecl, loc);
 					fieldDecl.add(tVarDecl);
 					final VariableLHS fieldLHS = new VariableLHS(loc, tmpId);

@@ -28,8 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,9 +84,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
-	// as an additional conjunct
+	// This is a safe and the simplest strategy: add the weakest precondition of the last transition and the formula 'false' to 
+	// the location before the error location, and before that one
 	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
+	// There are two different ways to add an additional predicate to the invariant templates/patterns.
+	// 1. We add the predicate to each disjunct as an additional conjunct, or
+	// 2. we add the predicate as an additional disjunct.
+	private final static boolean ADD_WP_TO_EACH_CONJUNCT = false;
 	private final static boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -201,15 +207,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Project path to CFG
 		final int len = mRun.getLength();
 		// Use LinkedHashSet to iterate in insertion-order afterwards
-		final Set<BoogieIcfgLocation> locations = new LinkedHashSet<>(len);
+		final LinkedHashSet<BoogieIcfgLocation> locations = new LinkedHashSet<>(len);
 		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
-		final Set<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
+		final LinkedHashSet<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
 //		final Set<CodeBlock> transitionsForAI = new LinkedHashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 		// The location where the nestedRun starts
 		final BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
 		// The location where the nestedRun ends (i.e. the error location)
 		final BoogieIcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len - 1)).getProgramPoint();
+		
+		UnmodifiableTransFormula weakestPreconditionOfLastTransition = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
@@ -238,10 +246,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				if (USE_ONLY_LAST_BACKWARD_PREDICATES && (i == len - 1)) {
 					final IPredicate wpAsPredicate = mPredicateUnifier.getOrConstructPredicate(
 							mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
-					final UnmodifiableTransFormula wpAsTransformula =
+					weakestPreconditionOfLastTransition =
 							TransFormulaBuilder.constructTransFormulaFromPredicate(wpAsPredicate, managedScript);
-					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-							currentLocation.getPayload(), wpAsTransformula));
+//					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
+//							currentLocation.getPayload(), wpAsTransformula));
 					mLogger.info("wp computed: " + wpAsPredicate);
 				}
 			}
@@ -268,8 +276,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
 			// useVarsFromUnsatCore, false, null);
-			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition,
-					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null);
+			List<BoogieIcfgLocation> locationsAsList = new ArrayList<>(locations.size());
+			locationsAsList.addAll(locations);
+			List<IcfgInternalAction> transitionsAsList = new ArrayList<>(transitions.size());
+			transitionsAsList.addAll(transitions);
+			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition, postcondition,
+					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
+					weakestPreconditionOfLastTransition, USE_ONLY_LAST_BACKWARD_PREDICATES, ADD_WP_TO_EACH_CONJUNCT);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}

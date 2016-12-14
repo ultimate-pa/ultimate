@@ -453,7 +453,7 @@ public final class TestUtil {
 	 * verification results. If a key of this map is a substring of the filename, the value of this map is the expected
 	 * verification result of a safety checker.
 	 */
-	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
+	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_AllSafetyChecker() {
 		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put(".*-safe.*", SafetyCheckerOverallResult.SAFE);
 		map.put(".*_safe.*", SafetyCheckerOverallResult.SAFE);
@@ -463,12 +463,30 @@ public final class TestUtil {
 		map.put(".*_unsafe.*?!(.*_false-valid-deref.*)", SafetyCheckerOverallResult.UNSAFE);
 		map.put(".*-Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
 		map.put(".*_Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
+		map.putAll(constructFilenameKeywordMap_SvcompReach());
+		map.putAll(constructFilenameKeywordMap_SvcompMemsafety());
+		map.putAll(constructFilenameKeywordMap_SvcompOverflow());
+		return map;
+	}
+
+	/**
+	 * Returns a map from SV-COMP filename keywords to verification results for the error function reachability
+	 * specification.
+	 */
+	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompReach() {
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		// true-unreach-call is the SV-COMP annotation for safe wrt. reachability of error function
 		map.put(".*_true-unreach-call.*", SafetyCheckerOverallResult.SAFE);
 		// false-unreach-call is the SV-COMP annotation for unsafe wrt. reachability of error function
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
-		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory
-		// safety
+		return map;
+	}
+
+	/**
+	 * Returns a map from SV-COMP filename keywords to verification results for memsafety specification.
+	 */
+	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompMemsafety() {
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put(".*_true-valid-memsafety.*", SafetyCheckerOverallResult.SAFE);
 		// false-valid-deref is the SV-COMP annotation for unsafe wrt. pointer
 		// dereference
@@ -478,11 +496,17 @@ public final class TestUtil {
 		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory
 		// leaks
 		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
-		{
-			// no-signed-integer-overflow might become the SV-COMP annotation for integer overflow checks
-			map.put(".*_true-no-overflow.*", SafetyCheckerOverallResult.SAFE);
-			map.put(".*_false-no-overflow.*", SafetyCheckerOverallResult.UNSAFE);
-		}
+		return map;
+	}
+
+	/**
+	 * Returns a map from SV-COMP filename keywords to verification results for overflow specification.
+	 */
+	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SvcompOverflow() {
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
+		// no-overflow is SV-COMP annotation for signed integer overflows
+		map.put(".*_true-no-overflow.*", SafetyCheckerOverallResult.SAFE);
+		map.put(".*_false-no-overflow.*", SafetyCheckerOverallResult.UNSAFE);
 		return map;
 	}
 
@@ -499,6 +523,13 @@ public final class TestUtil {
 		// we use the following two keywords for concurrent programs
 		map.put("#cSafe", SafetyCheckerOverallResult.SAFE);
 		map.put("#cUnsafe", SafetyCheckerOverallResult.UNSAFE);
+		return map;
+	}
+
+	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMapUnknownSafetyChecker() {
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
+		map.putAll(constructFirstlineKeywordMap_SafetyChecker());
+		map.put("#Unknown", SafetyCheckerOverallResult.UNKNOWN);
 		return map;
 	}
 

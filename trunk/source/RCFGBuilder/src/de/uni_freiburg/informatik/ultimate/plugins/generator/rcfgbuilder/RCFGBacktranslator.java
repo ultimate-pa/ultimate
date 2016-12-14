@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 public class RCFGBacktranslator
 		extends DefaultTranslator<IcfgEdge, BoogieASTNode, Term, Expression, IcfgLocation, String> {
@@ -199,10 +199,10 @@ public class RCFGBacktranslator
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
-		if (!(programExecution instanceof RcfgProgramExecution)) {
+		if (!(programExecution instanceof IcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
-		final RcfgProgramExecution rcfgProgramExecution = (RcfgProgramExecution) programExecution;
+		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();

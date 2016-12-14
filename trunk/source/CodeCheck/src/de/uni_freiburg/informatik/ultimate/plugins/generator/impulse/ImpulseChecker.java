@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -46,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -64,10 +65,12 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
 
-	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
-			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globSettings) {
-		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger, globSettings);
+	public ImpulseChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
+			final IIcfg<BoogieIcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
+			final CodeCheckSettings globSettings) {
+		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
+				globSettings);
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;
 	}
@@ -389,7 +392,7 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		visited.add(node);
 		if (print) {
-			System.err.println(String.format("\n%s\n", node));
+			System.err.println(String.format("%n%s%n", node));
 			System.err.print("[ ");
 			for (final AppEdge nextEdge : node.getOutgoingEdges()) {
 				System.err.print(
@@ -411,13 +414,15 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	boolean isStrongerPredicate(final AnnotatedProgramPoint node1, final AnnotatedProgramPoint node2) {
-
 		boolean result = mPredicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(),
 				node2.getPredicate()) == Validity.VALID;
 		if (result) {
 			final boolean converse = mPredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(),
 					node1.getPredicate()) == Validity.VALID;
-			result &= !converse || converse && node1._nodeID > node2._nodeID;
+			// DD : Changed from this:
+			// result &= !converse || converse && node1._nodeID > node2._nodeID;
+			// to
+			result &= !converse || node1._nodeID > node2._nodeID;
 		}
 		return result;
 	}

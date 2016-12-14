@@ -23,13 +23,13 @@ public class ProcedureSignature {
 	
 	public ProcedureSignature(Dispatcher main, CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
-			final ASTType type = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), ip.getType());
+			final ASTType type = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
 			inParams.add(type);
 		}
 		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
 			returnType = null;
 		} else {
-			returnType = main.mTypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), cf.getResultType());
+			returnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
 		takesVarArgs = cf.takesVarArgs();
 	}

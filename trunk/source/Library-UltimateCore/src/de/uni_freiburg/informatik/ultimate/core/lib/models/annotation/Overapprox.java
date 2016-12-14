@@ -71,4 +71,9 @@ public class Overapprox extends ModernAnnotations {
 	public Map<String, ILocation> getOverapproximatedLocations() {
 		return mReason2Loc;
 	}
+	
+	@Override
+	public String toString() {
+		return "Overapprox: " + mReason2Loc;
+	}
 }

@@ -63,13 +63,11 @@ public class PenguinRefinementStrategy extends MultiTrackTraceAbstractionRefinem
 	}
 	
 	@Override
-	protected Iterator<Track> initializeInterpolationTechniquesList(final boolean traceContainsFloats) {
+	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_FPBP);
-		if (!traceContainsFloats) {
-			list.add(Track.CVC4_FPBP);
-		}
+		list.add(Track.CVC4_FPBP);
 		return list.iterator();
 	}
 	

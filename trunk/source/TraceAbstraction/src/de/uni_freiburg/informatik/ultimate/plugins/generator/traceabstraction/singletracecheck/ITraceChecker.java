@@ -32,7 +32,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
  *
@@ -57,11 +57,13 @@ public interface ITraceChecker {
 	IPredicate getPostcondition();
 
 	Map<Integer, IPredicate> getPendingContexts();
+	
+	boolean providesRcfgProgramExecution();
 
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
-	RcfgProgramExecution getRcfgProgramExecution();
+	IcfgProgramExecution getRcfgProgramExecution();
 
 	TraceCheckerStatisticsGenerator getTraceCheckerBenchmark();
 

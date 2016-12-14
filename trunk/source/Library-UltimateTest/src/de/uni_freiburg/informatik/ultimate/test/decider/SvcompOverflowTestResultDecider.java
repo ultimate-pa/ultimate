@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE UnitTest Library.
  * 
@@ -19,43 +19,44 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.test.decider;
 
-import java.util.Collections;
-import java.util.Map;
+package de.uni_freiburg.informatik.ultimate.test.decider;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.KeywordBasedExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Use keywords in filename and first line to decide correctness of overflow
- * checks. Since so far we do not use keywords for this we use an empty map.
+ * Use keywords in filename to decide correctness of SV-COMP overflow benchmarks.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class SafetyCheckTestResultDecider_Overflow extends SafetyCheckTestResultDecider {
+public class SvcompOverflowTestResultDecider extends SafetyCheckTestResultDecider {
 
-	public SafetyCheckTestResultDecider_Overflow(
-			UltimateRunDefinition ultimateRunDefinition,
-			boolean unknownIsJUnitSuccess) {
+	/**
+	 * 
+	 * @param ultimateRunDefinition
+	 * 
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if
+	 *            false, the TestResult UNKNOWN is a failure for JUnit.
+	 */
+	public SvcompOverflowTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		final Map<String, SafetyCheckerOverallResult> emptyMap = Collections.emptyMap();
-		return new KeywordBasedExpectedResultFinder<SafetyCheckerOverallResult>(
-				emptyMap, null,
-				emptyMap);
+		return new KeywordBasedExpectedResultFinder<>(
+				TestUtil.constructFilenameKeywordMap_SvcompOverflow(), null, null);
 	}
-
 
 }

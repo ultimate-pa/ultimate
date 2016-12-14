@@ -27,16 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -52,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -65,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -311,9 +304,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			Set<IProgramVar> assignedVars, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, final boolean negated, final ApplicationTerm appTerm) {
 
-//
-		
-		
 		VPState resultState = prestate;
 		
 		Term param1 = appTerm.getParameters()[0];
@@ -322,6 +312,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		EqNode nodeParam1 = mPreAnalysis.getEqNode(param1, tvToPvMap);
 		EqNode nodeParam2 = mPreAnalysis.getEqNode(param2, tvToPvMap);
 		
+		/*
+		 * If there's node that is not being tracked, return pre-state.
+		 */
+		if (nodeParam1 == null || nodeParam2 == null) {
+			return Collections.singletonList(prestate);
+		}
 		
 		boolean isParam1InVar = isXVar(inVars, param1);
 		boolean isParam1OutVar = isXVar(outVars, param1);

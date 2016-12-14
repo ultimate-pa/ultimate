@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -170,7 +170,7 @@ public final class TypeUtils {
 			return arrayFunction.apply(type);
 		}
 
-		throw new UnsupportedOperationException("Type not implemented: " + type.getClass().getSimpleName());
+		throw new UnsupportedOperationException("Type not implemented: " + type.getClass());
 	}
 
 	public static boolean isArray(final Sort sort) {

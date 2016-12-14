@@ -94,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
@@ -257,8 +257,8 @@ public class LassoRankerStarter {
 
 	private Map<String, ILocation> lassoWasOverapproximated() {
 		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(mStem.asList()));
-		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(mLoop.asList()));
+		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(mStem.asList()));
+		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(mLoop.asList()));
 		return overapproximations;
 	}
 
