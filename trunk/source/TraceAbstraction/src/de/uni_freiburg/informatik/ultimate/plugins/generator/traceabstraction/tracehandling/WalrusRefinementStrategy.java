@@ -68,7 +68,7 @@ public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefineme
 			list.add(Track.CVC4_FPBP);
 		}
 		list.add(Track.Z3_FPBP);
-		list.add(Track.Z3_NESTED_INTERPOLANTS);
+//		list.add(Track.Z3_NESTED_INTERPOLANTS);
 		return list.iterator();
 	}
 	
