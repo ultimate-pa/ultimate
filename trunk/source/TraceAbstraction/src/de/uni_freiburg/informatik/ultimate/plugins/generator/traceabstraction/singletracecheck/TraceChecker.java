@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalUnknownSolverTerminationDuringFeasibilityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -137,6 +138,7 @@ public class TraceChecker implements ITraceChecker {
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
+	private final TraceCheckReasonUnknown mTraceCheckReasonUnknown;
 	
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -201,6 +203,7 @@ public class TraceChecker implements ITraceChecker {
 		LBool isSafe = null;
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution icfgProgramExecution = null;
+		TraceCheckReasonUnknown traceCheckReasonUnknown = null;
 		try {
 			isSafe = checkTrace();
 			if (isSafe == LBool.UNSAT) {
@@ -209,6 +212,10 @@ public class TraceChecker implements ITraceChecker {
 					unlockSmtManager();
 				}
 			} else {
+				if (LBool.UNKNOWN == isSafe) {
+					// solver response was 'unknown' and no Exception was thrown.
+					traceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null);
+				}
 				if (computeRcfgProgramExecution && isSafe == LBool.SAT) {
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
 					if (icfgProgramExecution != null) {
@@ -226,6 +233,7 @@ public class TraceChecker implements ITraceChecker {
 			mIsSafe = isSafe;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
+			mTraceCheckReasonUnknown = traceCheckReasonUnknown;
 		}
 	}
 	
@@ -236,6 +244,14 @@ public class TraceChecker implements ITraceChecker {
 	@Override
 	public LBool isCorrect() {
 		return mIsSafe;
+	}
+	
+	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+		if (isCorrect() == LBool.UNKNOWN) {
+			return mTraceCheckReasonUnknown;
+		} else {
+			throw new IllegalStateException("only available trace feasibility result is unknown.");
+		}
 	}
 	
 	/**
