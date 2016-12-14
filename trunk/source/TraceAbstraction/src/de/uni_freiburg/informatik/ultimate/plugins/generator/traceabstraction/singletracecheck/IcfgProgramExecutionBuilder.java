@@ -49,19 +49,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
-public class RcfgProgramExecutionBuilder {
+public class IcfgProgramExecutionBuilder {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final NestedWord<CodeBlock> mTrace;
 	private final Map<IProgramVar, Map<Integer, Term>> mvar2pos2value;
 	private final RelevantVariables mRelevantVariables;
-	private RcfgProgramExecution mRcfgProgramExecution;
+	private IcfgProgramExecution mIcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final IIcfgSymbolTable mSymbolTable;
 
-	public RcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
+	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
 			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final IIcfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;
@@ -69,15 +69,15 @@ public class RcfgProgramExecutionBuilder {
 		mvar2pos2value = new HashMap<IProgramVar, Map<Integer, Term>>();
 		mRelevantVariables = relevantVariables;
 		mBranchEncoders = new Map[mTrace.length()];
-		mRcfgProgramExecution = null;
+		mIcfgProgramExecution = null;
 		mSymbolTable = symbolTable;
 	}
 
-	public RcfgProgramExecution getRcfgProgramExecution() {
-		if (mRcfgProgramExecution == null) {
-			mRcfgProgramExecution = computeRcfgProgramExecution();
+	public IcfgProgramExecution getIcfgProgramExecution() {
+		if (mIcfgProgramExecution == null) {
+			mIcfgProgramExecution = computeIcfgProgramExecution();
 		}
-		return mRcfgProgramExecution;
+		return mIcfgProgramExecution;
 	}
 
 	private boolean isReAssigned(final IProgramVar bv, final int position) {
@@ -163,7 +163,7 @@ public class RcfgProgramExecutionBuilder {
 	}
 	
 
-	private RcfgProgramExecution computeRcfgProgramExecution() {
+	private IcfgProgramExecution computeIcfgProgramExecution() {
 		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = 
 				new HashMap<Integer, ProgramState<Term>>();
 		for (int i = 0; i < mTrace.length(); i++) {
@@ -180,7 +180,7 @@ public class RcfgProgramExecutionBuilder {
 			final ProgramState<Term> pps = new ProgramState<Term>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new RcfgProgramExecution(mTrace.asList(), partialProgramStateMapping, mBranchEncoders);
+		return new IcfgProgramExecution(mTrace.asList(), partialProgramStateMapping, mBranchEncoders);
 	}
 	
 

@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -242,11 +242,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution stemPE = new RcfgProgramExecution(counterexample.getStem().getWord().asList(),
+			IcfgProgramExecution stemPE = new IcfgProgramExecution(counterexample.getStem().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
+			IcfgProgramExecution loopPE = new IcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes = new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
@@ -286,7 +286,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution cex = new RcfgProgramExecution(combined, partialProgramStateMapping,
+			IcfgProgramExecution cex = new IcfgProgramExecution(combined, partialProgramStateMapping,
 					new Map[combined.size()]);
 			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
@@ -296,11 +296,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution stemPE = new RcfgProgramExecution(stem, partialProgramStateMapping,
+			IcfgProgramExecution stemPE = new IcfgProgramExecution(stem, partialProgramStateMapping,
 					new Map[stem.size()]);
 			@SuppressWarnings("unchecked")
 			final
-			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
+			IcfgProgramExecution loopPE = new IcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),

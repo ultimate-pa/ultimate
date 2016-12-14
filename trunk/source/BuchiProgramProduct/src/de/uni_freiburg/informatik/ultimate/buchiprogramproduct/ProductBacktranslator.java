@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
  *
@@ -61,8 +61,8 @@ public class ProductBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge,
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
-		if (programExecution instanceof RcfgProgramExecution) {
-			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
+		if (programExecution instanceof IcfgProgramExecution) {
+			oldBranchEncoders = ((IcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
 		final ArrayList<IcfgEdge> newTrace = new ArrayList<>();
@@ -85,7 +85,7 @@ public class ProductBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge,
 			}
 		}
 
-		return new RcfgProgramExecution(newTrace, newValues,
+		return new IcfgProgramExecution(newTrace, newValues,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
 	}
 

@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -325,7 +325,7 @@ public class TraceAbstractionStarter {
 			reportTimeoutResult(errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
-			final RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
+			final IcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
 			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
 			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
 			unprovabilityReasons.addAll(pe.getUnprovabilityReasons());
@@ -372,7 +372,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 	
-	private void reportCounterexampleResult(final RcfgProgramExecution pe) {
+	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
@@ -398,7 +398,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 	
-	private void reportUnproveableResult(final RcfgProgramExecution pe,
+	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
 		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
@@ -431,7 +431,7 @@ public class TraceAbstractionStarter {
 		return HoareAnnotation.getAnnotation(locNode);
 	}
 	
-	public static BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public static BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		return (BoogieIcfgLocation) last.getTarget();

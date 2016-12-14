@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
@@ -69,7 +69,7 @@ public final class TraceAbstractionRefinementEngine
 	private final LBool mFeasibility;
 	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
 	private boolean mProvidesIcfgProgramExecution;
-	private RcfgProgramExecution mIcfgProgramExecution;
+	private IcfgProgramExecution mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	
 	/**
@@ -99,7 +99,7 @@ public final class TraceAbstractionRefinementEngine
 	};
 	
 	@Override
-	public RcfgProgramExecution getIcfgProgramExecution() {
+	public IcfgProgramExecution getIcfgProgramExecution() {
 		return mIcfgProgramExecution;
 	}
 	

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
@@ -129,7 +129,7 @@ public class TraceChecker implements ITraceChecker {
 	protected AnnotateAndAsserter mAAA;
 	protected final LBool mIsSafe;
 	protected final boolean mProvidesIcfgProgramExecution;
-	protected final RcfgProgramExecution mRcfgProgramExecution;
+	protected final IcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckerStatisticsGenerator mTraceCheckerBenchmarkGenerator =
@@ -200,7 +200,7 @@ public class TraceChecker implements ITraceChecker {
 		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		LBool isSafe = null;
 		boolean providesIcfgProgramExecution = false;
-		RcfgProgramExecution icfgProgramExecution = null;
+		IcfgProgramExecution icfgProgramExecution = null;
 		try {
 			isSafe = checkTrace();
 			if (isSafe == LBool.UNSAT) {
@@ -291,7 +291,7 @@ public class TraceChecker implements ITraceChecker {
 	 * parallel composed CodeBlock violates the specification.
 	 * @return 
 	 */
-	private RcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
+	private IcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
@@ -319,10 +319,10 @@ public class TraceChecker implements ITraceChecker {
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
-	private RcfgProgramExecution computeRcfgProgramExecution(final NestedSsaBuilder nsb) {
+	private IcfgProgramExecution computeRcfgProgramExecution(final NestedSsaBuilder nsb) {
 		final RelevantVariables relVars =
 				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
-		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
+		final IcfgProgramExecutionBuilder rpeb = new IcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
 				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
@@ -352,7 +352,7 @@ public class TraceChecker implements ITraceChecker {
 			}
 		}
 		unlockSmtManager();
-		return rpeb.getRcfgProgramExecution();
+		return rpeb.getIcfgProgramExecution();
 	}
 	
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
@@ -405,7 +405,7 @@ public class TraceChecker implements ITraceChecker {
 	};
 	
 	@Override
-	public RcfgProgramExecution getRcfgProgramExecution() {
+	public IcfgProgramExecution getRcfgProgramExecution() {
 		if (mRcfgProgramExecution == null) {
 			throw new AssertionError("program execution has not yet been computed");
 		}

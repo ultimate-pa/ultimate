@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -571,8 +571,8 @@ public class BuchiCegarLoop {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(stem.asList()));
-		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(loop.asList()));
+		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(stem.asList()));
+		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(loop.asList()));
 		return overapproximations;
 	}
 

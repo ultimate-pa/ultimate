@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -253,10 +253,10 @@ public final class TraceCheckerUtils {
 	 * does not provide any values.
 	 * This is needed e.g., in case the solver said UNKNOWN while analyzing a trace.
 	 */
-	public static RcfgProgramExecution computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IcfgEdge> trace) {
+	public static IcfgProgramExecution computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IcfgEdge> trace) {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
-		return new RcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
+		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
 	
 	/**

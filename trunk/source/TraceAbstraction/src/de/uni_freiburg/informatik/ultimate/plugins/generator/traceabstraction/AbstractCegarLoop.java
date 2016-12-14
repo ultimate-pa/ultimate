@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -151,7 +151,7 @@ public abstract class AbstractCegarLoop {
 	 * Program execution that leads to error. Only computed in the last iteration of the CEGAR loop if the program is
 	 * incorrect.
 	 */
-	protected RcfgProgramExecution mRcfgProgramExecution;
+	protected IcfgProgramExecution mRcfgProgramExecution;
 	
 	// used for the collection of statistics
 	public int mInitialAbstractionSize = 0;
@@ -274,7 +274,7 @@ public abstract class AbstractCegarLoop {
 		return mIteration;
 	}
 	
-	public RcfgProgramExecution getRcfgProgramExecution() {
+	public IcfgProgramExecution getRcfgProgramExecution() {
 		return mRcfgProgramExecution;
 	}
 	

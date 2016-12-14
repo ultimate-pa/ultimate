@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
@@ -63,7 +63,7 @@ public interface IRefinementEngine<T> {
 	/**
 	 * @return RCFG program execution.
 	 */
-	RcfgProgramExecution getIcfgProgramExecution();
+	IcfgProgramExecution getIcfgProgramExecution();
 	
 	/**
 	 * @return Hoare triple checker.
