@@ -68,7 +68,8 @@ public final class TraceAbstractionRefinementEngine
 	private final PredicateUnifier mPredicateUnifier;
 	private final LBool mFeasibility;
 	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
-	private RcfgProgramExecution mRcfgProgramExecution;
+	private boolean mProvidesIcfgProgramExecution;
+	private RcfgProgramExecution mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	
 	/**
@@ -93,8 +94,13 @@ public final class TraceAbstractionRefinementEngine
 	}
 	
 	@Override
-	public RcfgProgramExecution getRcfgProgramExecution() {
-		return mRcfgProgramExecution;
+	public boolean providesICfgProgramExecution() {
+		return mProvidesIcfgProgramExecution;
+	};
+	
+	@Override
+	public RcfgProgramExecution getIcfgProgramExecution() {
+		return mIcfgProgramExecution;
 	}
 	
 	@Override
@@ -184,8 +190,10 @@ public final class TraceAbstractionRefinementEngine
 	}
 	
 	private void handleFeasibleCase(final IRefinementStrategy strategy) {
-		// NOTE: This can crash, but such a crash is intended.
-		mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+		if (strategy.getTraceChecker().providesRcfgProgramExecution()) {
+			mProvidesIcfgProgramExecution = true;
+			mIcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+		}	
 	}
 
 	private LBool handleUnknownCase(final IRefinementStrategy strategy,

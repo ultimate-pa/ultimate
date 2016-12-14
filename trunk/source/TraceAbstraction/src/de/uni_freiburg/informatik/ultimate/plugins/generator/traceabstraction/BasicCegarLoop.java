@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
@@ -297,22 +298,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample might be feasible");
-			final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(mCounterexample.getWord());
-			String indentation = "";
-			indentation += "  ";
-			for (int j = 0; j < counterexample.length(); j++) {
-				// String stmts =
-				// counterexample.getSymbol(j).getPrettyPrintedStatements();
-				// System.out.println(indentation + stmts);
-				// s_Logger.info(indentation + stmts);
-				if (counterexample.isCallPosition(j)) {
-					indentation += "    ";
-				}
-				if (counterexample.isReturnPosition(j)) {
-					indentation = indentation.substring(0, indentation.length() - 4);
-				}
+			if (mTraceCheckAndRefinementEngine.providesICfgProgramExecution()) {
+				mRcfgProgramExecution = mTraceCheckAndRefinementEngine.getIcfgProgramExecution();
+			} else {
+				mRcfgProgramExecution = TraceCheckerUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
-			mRcfgProgramExecution = mTraceCheckAndRefinementEngine.getRcfgProgramExecution();
+			
 			if ((mDoFaultLocalizationNonFlowSensitive || mDoFaultLocalizationFlowSensitive)
 					&& feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
@@ -325,8 +316,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getSymboltable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
-			// s_Logger.info("Trace with values");
-			// s_Logger.info(mTraceCheckAndRefinementSelection.getInterpolatingTraceChecker().getRcfgProgramExecution());
 		}
 		
 		return feasibility;

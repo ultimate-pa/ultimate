@@ -58,10 +58,12 @@ public interface IRefinementEngine<T> {
 	 */
 	PredicateUnifier getPredicateUnifier();
 	
+	boolean providesICfgProgramExecution();
+	
 	/**
 	 * @return RCFG program execution.
 	 */
-	RcfgProgramExecution getRcfgProgramExecution();
+	RcfgProgramExecution getIcfgProgramExecution();
 	
 	/**
 	 * @return Hoare triple checker.

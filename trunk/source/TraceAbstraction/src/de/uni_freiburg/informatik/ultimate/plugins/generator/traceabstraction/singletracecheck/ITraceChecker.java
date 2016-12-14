@@ -57,6 +57,8 @@ public interface ITraceChecker {
 	IPredicate getPostcondition();
 
 	Map<Integer, IPredicate> getPendingContexts();
+	
+	boolean providesRcfgProgramExecution();
 
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -37,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -131,7 +128,8 @@ public class TraceChecker implements ITraceChecker {
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	protected AnnotateAndAsserter mAAA;
 	protected final LBool mIsSafe;
-	protected RcfgProgramExecution mRcfgProgramExecution;
+	protected final boolean mProvidesIcfgProgramExecution;
+	protected final RcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
 	protected final TraceCheckerStatisticsGenerator mTraceCheckerBenchmarkGenerator =
@@ -201,6 +199,8 @@ public class TraceChecker implements ITraceChecker {
 		mNestedFormulas = rv;
 		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		LBool isSafe = null;
+		boolean providesIcfgProgramExecution = false;
+		RcfgProgramExecution icfgProgramExecution = null;
 		try {
 			isSafe = checkTrace();
 			if (isSafe == LBool.UNSAT) {
@@ -209,8 +209,12 @@ public class TraceChecker implements ITraceChecker {
 					unlockSmtManager();
 				}
 			} else {
-				if (computeRcfgProgramExecution) {
-					computeRcfgProgramExecution(isSafe);
+				if (computeRcfgProgramExecution && isSafe == LBool.SAT) {
+					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
+					if (icfgProgramExecution != null) {
+						providesIcfgProgramExecution = true;
+					}
+					mTraceCheckFinished = true;
 				} else {
 					mTraceCheckFinished = true;
 					unlockSmtManager();
@@ -220,6 +224,8 @@ public class TraceChecker implements ITraceChecker {
 			mToolchainCanceledException = tce;
 		} finally {
 			mIsSafe = isSafe;
+			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
+			mRcfgProgramExecution = icfgProgramExecution;
 		}
 	}
 	
@@ -279,69 +285,41 @@ public class TraceChecker implements ITraceChecker {
 	
 	/**
 	 * Compute a program execution for the checked trace.
-	 * <ul>
-	 * <li>If the checked trace violates its specification (result of trace check is SAT), we compute a program
+	 * If the checked trace violates its specification (result of trace check is SAT), we compute a program
 	 * execution that contains program states that witness the violation of the specification (however, this can still
 	 * be partial program states e.g., no values assigned to arrays) and that contains information which branch of a
 	 * parallel composed CodeBlock violates the specification.
-	 * <li>If we can not determine if the trace violates its specification (result of trace check is UNKNOWN) we compute
-	 * a program execution trace that contains neither states nor information about which branch of a parallel composed
-	 * CodeBlock violates the specification.
-	 * <li>If we have proven that the trace satisfies its specification (result of trace check is UNSAT) we throw an
-	 * Error.
-	 *
-	 * @param isSafe
+	 * @return 
 	 */
-	private void computeRcfgProgramExecution(final LBool isSafe) {
+	private RcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError(
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
-		if (isSafe == LBool.SAT) {
-			if (!((DefaultTransFormulas) mNestedFormulas).hasBranchEncoders()) {
-				unlockSmtManager();
-				final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
-						mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
-						mCsToolkit.getOldVarsAssignmentCache(), true);
-				final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
-						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit,
-						withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
-				if (tc.getToolchainCanceledExpection() != null) {
-					throw tc.getToolchainCanceledExpection();
-				}
-				assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
-				mRcfgProgramExecution = tc.getRcfgProgramExecution();
-			} else {
-				mRcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(mNsb);
+		if (!((DefaultTransFormulas) mNestedFormulas).hasBranchEncoders()) {
+			unlockSmtManager();
+			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
+					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
+					mCsToolkit.getOldVarsAssignmentCache(), true);
+			final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
+					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit,
+					withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
+			if (tc.getToolchainCanceledExpection() != null) {
+				throw tc.getToolchainCanceledExpection();
 			}
-		} else if (isSafe == LBool.UNKNOWN) {
-			mRcfgProgramExecution = computeRcfgProgramExecutionCaseUNKNOWN();
-		} else if (isSafe == LBool.UNSAT) {
-			throw new AssertionError("specification satisfied - " + "cannot compute counterexample");
+			assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
+			return tc.getRcfgProgramExecution();
 		} else {
-			throw new AssertionError("unexpected result of correctness check");
+			return computeRcfgProgramExecution(mNsb);
 		}
-		mTraceCheckFinished = true;
 	}
 	
-	/**
-	 * Compute program execution in the case that we do not know if the checked specification is violated (result of
-	 * trace check is UNKNOWN).
-	 */
-	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
-		final Map<Integer, ProgramState<Term>> emptyMap = Collections.emptyMap();
-		@SuppressWarnings("unchecked")
-		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
-		unlockSmtManager();
-		mTraceCheckFinished = true;
-		return new RcfgProgramExecution((List<? extends IcfgEdge>) mNestedFormulas.getTrace().asList(), emptyMap,
-				branchEncoders);
-	}
+
 	
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
-	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
+	private RcfgProgramExecution computeRcfgProgramExecution(final NestedSsaBuilder nsb) {
 		final RelevantVariables relVars =
 				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
@@ -420,6 +398,11 @@ public class TraceChecker implements ITraceChecker {
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return mPendingContexts;
 	}
+	
+	@Override
+	public boolean providesRcfgProgramExecution() {
+		return mProvidesIcfgProgramExecution;
+	};
 	
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
