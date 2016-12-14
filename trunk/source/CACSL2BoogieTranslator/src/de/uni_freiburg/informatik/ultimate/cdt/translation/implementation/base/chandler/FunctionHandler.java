@@ -106,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -1036,24 +1037,35 @@ public class FunctionHandler {
 			 *
 			 * Current solution: replace call by a havocced aux variable.
 			 */
-			final List<Declaration> decl = new ArrayList<>();
-			final List<Statement> stmt = new ArrayList<>();
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//			final List<Declaration> decl = new ArrayList<>();
+//			final List<Statement> stmt = new ArrayList<>();
+//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 			final VariableDeclaration tmpVarDecl =
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-			decl.add(tmpVarDecl);
-			auxVars.put(tmpVarDecl, loc);
+			builder.addDeclaration(tmpVarDecl);
+			builder.putAuxVar(tmpVarDecl, loc);
 
-			final RValue lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+			IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 
-			final List<Overapprox> overapprox = new ArrayList<>();
-			overapprox.add(new Overapprox("builtin_return_address", loc));
+//			final List<Overapprox> overapprox = new ArrayList<>();
+//			overapprox.add(new Overapprox("builtin_return_address", loc));
 
-			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
+			// current strategy (alex, Dec 2016) for Overapprox: 
+			//  annotate it as soon as possible, don't use ExpressionResult.overappr
+			Overapprox overAppFlag = new Overapprox("builtin_return_address", loc);
+			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
+			builder.addOverapprox(overAppFlag); // TODO -should- be redundant, but is not... (actually both registrations seem necessary)
+
+			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
+			
+			builder.setLRVal(lrVal);
+
+			return builder.build();
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
