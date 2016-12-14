@@ -40,5 +40,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ error\ function\ in\ SV-COMP\ mode=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
