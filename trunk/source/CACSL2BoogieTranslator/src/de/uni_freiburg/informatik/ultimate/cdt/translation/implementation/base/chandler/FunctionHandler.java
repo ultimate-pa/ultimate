@@ -1007,15 +1007,15 @@ public class FunctionHandler {
 
 			
 //			final List<Overapprox> overapprox = new ArrayList<>();
-//			overapprox.add(new Overapprox("builtin_strchr", loc));
 			Overapprox overappFlag = new Overapprox("builtin_strchr", loc);
-			assume.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overappFlag);
+//			overapprox.add(overappFlag);
+//			assume.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overappFlag);
 			
 			stmt.add(assume);
 			
 			final RValue lrVal = new RValue(tmpExpr, resultType);
 
-			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.emptyList());
+			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.singletonList(overappFlag));
 		} else if (methodName.equals("__builtin_return_address")) {
 			/*
 			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
@@ -1058,7 +1058,7 @@ public class FunctionHandler {
 			// current strategy (alex, Dec 2016) for Overapprox: 
 			//  annotate it as soon as possible, don't use ExpressionResult.overappr
 			Overapprox overAppFlag = new Overapprox("builtin_return_address", loc);
-			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
+//			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
 			builder.addOverapprox(overAppFlag); // TODO -should- be redundant, but is not... (actually both registrations seem necessary)
 
 			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);

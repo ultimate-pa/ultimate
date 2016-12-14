@@ -3163,11 +3163,12 @@ public class CHandler implements ICHandler {
 							rightHandSideWithConversionsApplied.getValue(), 
 							rightHandSideWithConversionsApplied.getCType()));
 
-			for (Overapprox oa : overapprOld) {
-				for (Statement stm : builder.mStatements) {
-					stm.getPayload().getAnnotations().put(Overapprox.getIdentifier(), oa);
-				}
-			}
+//			for (Overapprox oa : overapprOld) {
+//				for (Statement stm : builder.mStatements) {
+//					stm.getPayload().getAnnotations().put(Overapprox.getIdentifier(), oa);
+//				}
+//			}
+//			builder.addOverapprox(overapprOld);
 			
 			
 			builder.setLRVal(rightHandSideWithConversionsApplied);
