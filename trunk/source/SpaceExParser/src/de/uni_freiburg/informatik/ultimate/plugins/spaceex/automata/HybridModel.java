@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystemFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 
@@ -57,6 +58,7 @@ public class HybridModel {
 	private final ILogger mLogger;
 	private final HybridSystemFactory mHybridSystemFactory;
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
+	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private List<HybridSystem> mSystems;
 	
 	public HybridModel(final Sspaceex root, final ILogger logger) {
@@ -64,6 +66,7 @@ public class HybridModel {
 
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new ArrayList<>();
 
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
@@ -97,12 +100,11 @@ public class HybridModel {
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 			});
-			
 			/*
 			HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
 			HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
-			mHybridAutomatonFactory.computeParallelComposition(automaton1, automaton2);
-			*/	
+			mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
+			*/
 		}
 	}
 

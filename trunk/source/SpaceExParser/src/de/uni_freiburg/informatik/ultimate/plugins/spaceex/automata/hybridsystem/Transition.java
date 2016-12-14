@@ -101,7 +101,7 @@ public class Transition {
 
 		sb.append("(").append(mSource.getId()).append(")").append(" === (").append(mGuard).append("); {")
 		        .append(mUpdate).append("}");
-		if (!mLabel.isEmpty()) {
+		if (mLabel != null && !mLabel.isEmpty()) {
 			sb.append("; Label: ").append(mLabel);
 		}
 		sb.append(" ===> ").append("(").append(mTarget.getId()).append(")");
