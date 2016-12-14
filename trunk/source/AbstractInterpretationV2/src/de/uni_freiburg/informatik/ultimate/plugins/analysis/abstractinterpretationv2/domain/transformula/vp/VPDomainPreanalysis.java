@@ -113,6 +113,11 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		}
 	}
 
+	
+	// TODO: what about AbstractIcfgEdges??
+	//  separate between Call, Return and so?
+	//  do we miss TransFormulas ??
+	
 	@Override
 	protected void visit(final CodeBlock c) {
 		c.getPrettyPrintedStatements();
@@ -493,6 +498,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 
 	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
 		IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
+		assert pvoc != null : "perhaps implement this case?";
 	    return isArrayTracked(pvoc);
 	}
 
@@ -509,6 +515,12 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	
 	public ManagedScript getManagedScript() {
 		return mManagedScript;
+	}
+
+	public boolean isArrayTracked(Term lhs, Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars) {
+		return isArrayTracked(lhs, 
+				VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(inVars, outVars));
 	}
 }
 

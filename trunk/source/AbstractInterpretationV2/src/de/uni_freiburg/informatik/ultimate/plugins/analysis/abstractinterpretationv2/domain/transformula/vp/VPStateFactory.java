@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -681,5 +682,24 @@ public class VPStateFactory {
 			result.add(havocArray(key, state));
 		}
 		return result;
+	}
+
+	/**
+	 * Takes a set of TransitionStates (VPTfState) and a TransFormula. Converts the transition-states to 
+	 * normal states (VPState), essentially by projecting the transition state to the outVars of the given
+	 * TransFormula.
+	 * 
+	 * @param resultTfStates
+	 * @param tf
+	 * @return
+	 */
+	public Set<VPState> convertToStates(Set<VPTfState> tfStates, UnmodifiableTransFormula tf) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private VPState convertToStates(VPTfState tfState, UnmodifiableTransFormula tf) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

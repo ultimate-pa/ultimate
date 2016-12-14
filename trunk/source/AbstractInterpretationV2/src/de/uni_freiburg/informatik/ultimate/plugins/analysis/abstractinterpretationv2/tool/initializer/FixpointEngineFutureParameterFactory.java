@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -148,8 +149,10 @@ public class FixpointEngineFutureParameterFactory {
 	public IAbstractDomain<VPState, CodeBlock, IProgramVar> createEqualityDomain(final ILogger logger) {
 		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger);
 		preAnalysis.postProcess();
+		final VPTransFormulaStateBuilderPreparer tfPreparer = 
+				new VPTransFormulaStateBuilderPreparer(preAnalysis, mRoot, logger);
 		return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices, mRoot.getSymboltable(),
-				preAnalysis);
+				preAnalysis, tfPreparer);
 	}
 	
 	private static String getFailureString(final String selectedDomain) {

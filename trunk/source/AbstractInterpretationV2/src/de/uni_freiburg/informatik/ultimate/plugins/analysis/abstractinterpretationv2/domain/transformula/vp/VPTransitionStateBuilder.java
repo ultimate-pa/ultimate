@@ -23,7 +23,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class VPTransitionStateBuilder extends VPStateBuilder {
 	
 	Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap = new HashMap<>();
-	private NestedMap3<EqNode, Map<IProgramVar, TermVariable>, Map<IProgramVar, TermVariable>, TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
+	private NestedMap3<EqNode, 
+		Map<IProgramVar, TermVariable>, 
+		Map<IProgramVar, TermVariable>, 
+		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
 
 	public VPTransitionStateBuilder(VPDomain domain, VPDomainPreanalysis preAnalysis,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
@@ -265,17 +268,17 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 		return null;
 	}
 
-	void havoc(TermVariable tv) {
-		
-	}
-
-	void addEquality(Term t1, Term t2) {
-
-	}
-	
-	void addDisEquality(Term t1, Term t2) {
-		
-	}
+//	void havoc(TermVariable tv) {
+//		
+//	}
+//
+//	void addEquality(Term t1, Term t2) {
+//
+//	}
+//	
+//	void addDisEquality(Term t1, Term t2) {
+//		
+//	}
 
 	
 	/**
@@ -284,6 +287,17 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 	@Override
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
 		assert false;
+		return null;
+	}
+	
+	@Override 
+	@Deprecated
+	VPState build() {
+		assert false : "use buildTf()";
+		return null;
+	}
+	
+	VPTfState buildTf() {
 		return null;
 	}
 }

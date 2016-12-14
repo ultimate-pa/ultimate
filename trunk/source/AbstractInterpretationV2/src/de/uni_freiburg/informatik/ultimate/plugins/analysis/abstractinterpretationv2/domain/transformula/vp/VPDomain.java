@@ -63,9 +63,15 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final VPStateFactory mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
+	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
+	private final VpTfStateFactory mTfStateFactory;
 	
-	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
+	public VPDomain(final ILogger logger, 
+			final ManagedScript script, 
+			final IUltimateServiceProvider services,
+			final IIcfgSymbolTable symbolTable, 
+			final VPDomainPreanalysis preAnalysis, 
+			final VPTransFormulaStateBuilderPreparer tfPreparer) {
 		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
@@ -76,6 +82,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mVpStateFactory = new VPStateFactory(this);
 		mPost = new VPPostOperator(script, services, this);
 		mSymboltable = symbolTable;
+		mTfPreparer = tfPreparer;
+		mTfStateFactory = new VpTfStateFactory(tfPreparer);
 	}
 	
 	@Override
@@ -153,5 +161,13 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			}
 		}
 		return literalSet;
+	}
+
+	public VPTransFormulaStateBuilderPreparer getTfPreparer() {
+		return mTfPreparer;
+	}
+
+	public VpTfStateFactory getTfStateFactory() {
+		return mTfStateFactory;
 	}
 }
