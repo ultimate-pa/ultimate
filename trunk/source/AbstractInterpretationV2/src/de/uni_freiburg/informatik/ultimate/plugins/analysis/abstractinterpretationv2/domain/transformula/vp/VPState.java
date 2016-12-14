@@ -127,9 +127,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return node.find();
 	}
 	
-	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {
-		return find(node).getCcchild();
-	}
+//	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {
+//		return find(node).getCcchild();
+//	}
 	
 	/**
 	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
@@ -409,8 +409,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		Term disEquality;
 		
 		for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			disEqualityFirst = pair.getFirst().getTerm(mScript.getScript());
-			disEqualitySecond = pair.getSecond().getTerm(mScript.getScript());
+			disEqualityFirst = pair.getFirst().getTerm(mScript);
+			disEqualitySecond = pair.getSecond().getTerm(mScript);
 			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
 					disEqualitySecond));
 		}
@@ -434,8 +434,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.eqNode.getTerm(mScript.getScript());
-				equalitySecond = graphNode.getRepresentative().eqNode.getTerm(mScript.getScript());
+				equalityFirst = graphNode.eqNode.getTerm(mScript);
+				equalitySecond = graphNode.getRepresentative().eqNode.getTerm(mScript);
 				equalityTermSet.add(mDomain.getManagedScript().getScript().term("=", equalityFirst, equalitySecond));
 			}
 		}

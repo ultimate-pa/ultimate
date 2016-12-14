@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * 
@@ -47,7 +48,9 @@ public class EqFunctionNode extends EqNode {
 
 	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args) {
 		super(function.isGlobal() 
-				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get());
+				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
+			!(function instanceof IProgramVar)
+				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
 		this.function = function;
 		this.args = args;
 	}
@@ -76,11 +79,11 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	@Override
-	public Term getTerm(Script script) {
+	public Term getTerm(ManagedScript script) {
 		return restoreMultidimensionalSelect(script, function, args);
 	}
 	
-	private static Term restoreMultidimensionalSelect(Script script,
+	private static Term restoreMultidimensionalSelect(ManagedScript script,
 			IProgramVarOrConst function, List<EqNode> args) {
 		
 		Term functionTerm = null;
@@ -92,12 +95,18 @@ public class EqFunctionNode extends EqNode {
 
 		assert args.size() > 0;
 		if (args.size() == 1) {
-			return script.term("select", functionTerm, args.get(0).getTerm(script));
+			script.lock(function);
+			Term result =  script.term(function, "select", functionTerm, args.get(0).getTerm(script));
+			script.unlock(function);
+			return result;
 		} else {
 			List<EqNode> newArgs = args.subList(0, args.size() - 1);
-			return script.term("select", 
+			script.lock(function);
+			Term result = script.term(function, "select", 
 					restoreMultidimensionalSelect(script, function, newArgs), 
 					args.get(args.size() - 1).getTerm(script));
+			script.unlock(function);
+			return result;
 		}
 	}
 

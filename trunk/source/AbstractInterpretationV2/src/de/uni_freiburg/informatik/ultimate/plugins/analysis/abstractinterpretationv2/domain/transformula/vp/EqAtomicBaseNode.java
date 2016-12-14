@@ -32,9 +32,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * 
@@ -48,7 +49,7 @@ public class EqAtomicBaseNode extends EqNode {
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
 	public EqAtomicBaseNode(IProgramVarOrConst bv) {
-		super(bv.isGlobal());
+		super(bv.isGlobal(), !(bv instanceof IProgramVar));
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
 	}
@@ -58,7 +59,7 @@ public class EqAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public Term getTerm(Script s) {
+	public Term getTerm(ManagedScript s) {
 		return mVarOrConst.getTerm();
 	}
 	

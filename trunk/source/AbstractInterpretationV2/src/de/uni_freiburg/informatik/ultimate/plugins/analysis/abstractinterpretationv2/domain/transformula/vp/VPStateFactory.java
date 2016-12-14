@@ -61,7 +61,7 @@ public class VPStateFactory {
 		 * initCcpar and initCcchild fields
 		 */
 		for (EqGraphNode egn : builder.getEqNodeToEqGraphNodeMap().values()) {
-			egn.setupNode(builder.getEqNodeToEqGraphNodeMap());
+			egn.setupNode();
 		}
 		
 		/*
@@ -104,6 +104,14 @@ public class VPStateFactory {
 		return createEmptyStateBuilder().setVars(vars).build();
 	}
 
+	public VPStateBuilder translateForTransFormula(VPState originalState, 
+			Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars,
+			Set<TermVariable> auxVars) {
+		//TODO
+		return null;
+	}
+
 	public VPStateBuilder copy(VPState originalState) {
 		if (originalState.isBottom()) {
 			return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
@@ -131,6 +139,7 @@ public class VPStateFactory {
 		assert builder.mVars.equals(originalState.getVariables());
 		return builder;
 	}
+
 	
 	
 	public Set<VPState> addEquality(final EqNode eqNode1, final EqNode eqNode2, final Set<VPState> originalStates) {
@@ -269,8 +278,8 @@ public class VPStateFactory {
 		Set<VPState> result = new HashSet<>();
 		result.add(originalStateCopy);
 		
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(representative1);
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalStateCopy.ccchild(representative2);
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = representative1.find().getCcchild();
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = representative2.find().getCcchild();
 		
 		for (IProgramVarOrConst arrayId : ccchild1.getDomain()) {
 			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
@@ -309,6 +318,9 @@ public class VPStateFactory {
 		if (originalState.isBottom()) {
 			return originalState;
 		}
+		
+		//assert !node.isLiteral() : "cannot havoc a literal";
+		assert node.getTerm(mDomain.getManagedScript()).getFreeVars().length > 0 : "cannot havoc a constant term";
 		
 		
 		VPStateBuilder builder = copy(originalState);
@@ -449,7 +461,7 @@ public class VPStateFactory {
 		for (final IProgramVar var : assignmentVars) {
 
 			if (var.getTerm().getSort().isArraySort()) {
-				// assigned to arrays get special treatment..
+				resultState = havocArray(var, resultState);
 				continue;
 			}
 
@@ -659,6 +671,14 @@ public class VPStateFactory {
 		Set<VPState> result = new HashSet<>();
 		for (VPState state : states) {
 			result.add(havoc(node, state));
+		}
+		return result;
+	}
+
+	public Set<VPState> havocArray(IProgramVar key, Set<VPState> resultStates) {
+		Set<VPState> result = new HashSet<>();
+		for (VPState state : resultStates) {
+			result.add(havocArray(key, state));
 		}
 		return result;
 	}

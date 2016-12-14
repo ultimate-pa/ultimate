@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -72,7 +73,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, IProgramVarOrConst> mTermToProgramVarOrConst = new HashMap<>();
-	private final Script mScript;
+	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymboltable;
 	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore =
 			new NestedMap2<>();
@@ -87,7 +88,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	private final ILogger mLogger;
 
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
-		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
+		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mSymboltable = root.getSymboltable();
 		mSettings = new VPDomainPreanalysisSettings();
@@ -119,9 +120,9 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		final TransFormula tf = c.getTransitionFormula();
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
-		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(tf.getFormula());
+		final Term formulaWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(tf.getFormula());
 		
-		Map<TermVariable, IProgramVar> tvToPvMap = VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
+//		Map<TermVariable, IProgramVar> tvToPvMap = VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
 		
 
 		/*
@@ -434,7 +435,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 		final Set<Term> arrayIndices = new HashSet<>();
 		for (final IProgramVarOrConst array : mArrayToAccessingEqNodes.getDomain()) {
 			for (final EqNode eqNode : mArrayToAccessingEqNodes.getImage(array)) {
-				arrayIndices.add(eqNode.getTerm(mScript));
+				arrayIndices.add(eqNode.getTerm(mManagedScript));
 			}
 		}
 
@@ -480,7 +481,7 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	public EqNode getEqNode(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
 		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
 		final Map<Term, Term> substitionMap = VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap);
-		final Term termWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(term);
+		final Term termWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(term);
 		final EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
 		return result;
 	}
@@ -504,6 +505,10 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 //		}
 //		return mSettings.getArraysToTrack().contains(normalizedName);
 		return mSettings.getArraysToTrack().contains(pvoc.toString());
+	}
+	
+	public ManagedScript getManagedScript() {
+		return mManagedScript;
 	}
 }
 

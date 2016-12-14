@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * 
@@ -41,18 +42,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public abstract class EqNode {
 
-	public abstract Term getTerm(Script s) ;
+	public abstract Term getTerm(ManagedScript s) ;
 
 	public abstract boolean isLiteral();
+
 	
-	EqNode(boolean isGlobal) {
+	EqNode(boolean isGlobal, boolean isConstant) {
 		mIsGlobal = isGlobal;
+		mIsConstant = isConstant;
 	}
 	
 	/**
 	 * Is true iff this EqNode's term only uses global program symbols.
 	 */
-	boolean mIsGlobal;
+	final boolean mIsGlobal;
+	
+	final boolean mIsConstant;
+	
 
 	Set<EqNode> mParents = new HashSet<>();
 
@@ -73,5 +79,10 @@ public abstract class EqNode {
 	 */
 	public boolean isGlobal() {
 		return mIsGlobal;
+	}
+	
+	
+	public boolean isConstant() {
+		return mIsConstant;
 	}
 }

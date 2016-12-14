@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -71,6 +72,13 @@ public class VPDomainHelpers {
 			}
 		}
 		return true;
+	}
+	public static boolean allStateBuildersHaveSameVariables(Collection<VPStateBuilder> resultStates) {
+		Set<VPState> mapped = 
+				resultStates.stream()
+				.map(builder -> builder.build())
+				.collect(Collectors.toSet());
+		return allStatesHaveSameVariables(mapped);
 	}
 
 	public static boolean allStatesHaveSameVariables(Collection<VPState> resultStates) {

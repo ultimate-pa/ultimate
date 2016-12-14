@@ -12,15 +12,18 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class VPStateBuilder {
 
 	protected Set<IProgramVar> mVars;
-	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
+	protected Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
 	protected final VPDomain mDomain;
-	private boolean mIsTop;
-	private EqGraph mEqGraph;
+	protected boolean mIsTop;
+	protected EqGraph mEqGraph;
 	
+	private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+
 	public VPStateBuilder(VPDomain domain) {
 		mDomain = domain;
 		mEqGraph = new EqGraph();
@@ -28,6 +31,50 @@ public class VPStateBuilder {
 		mVars = new HashSet<>();
 	}
 	
+	protected VPStateBuilder(VPDomain domain, boolean dontCreateEqGraphNodes) {
+		assert dontCreateEqGraphNodes;
+		mDomain = domain;
+		mEqGraph = new EqGraph();
+		mVars = new HashSet<>();
+	}
+	
+	private void createEqGraphNodes() {
+		/*
+		 * Create fresh EqGraphNodes from EqNodes.
+		 */
+		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
+		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
+			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
+		}
+		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+	}
+
+	private EqGraphNode getOrConstructEqGraphNode(
+			EqNode eqNode, 
+			Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
+
+		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
+			return eqNodeToEqGraphNode.get(eqNode);
+		}
+
+		final EqGraphNode graphNode = new EqGraphNode(eqNode);
+		List<EqGraphNode> argNodes = new ArrayList<>();
+
+		if (eqNode instanceof EqFunctionNode) {
+
+			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
+				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
+				//				argNode.addToInitCcpar(graphNode);
+				argNode.addToCcpar(graphNode);
+				argNodes.add(argNode);
+			}
+			//			graphNode.addToInitCcchild(argNodes);
+			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
+		}
+		eqNodeToEqGraphNode.put(eqNode, graphNode);
+		return graphNode;
+	}
+
 	public VPStateBuilder setVars(Set<IProgramVar> vars) { 
 		mVars = new HashSet<>(vars);
 		return this;
@@ -35,13 +82,13 @@ public class VPStateBuilder {
 
 	public VPStateBuilder setEqGraphNodes(Map<EqNode, EqGraphNode> map) {
 		assert map != null;
-		mEqGraph.mEqNodeToEqGraphNodeMap = map;
+		mEqNodeToEqGraphNodeMap = map;
 		return this;
 	}
 	
 	VPState build() {
-		assert mEqGraph.mEqNodeToEqGraphNodeMap != null;
-		return new VPState(mEqGraph.mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
+		assert mEqNodeToEqGraphNodeMap != null;
+		return new VPState(mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
 	}
 
 	public VPStateBuilder setDisEqualites(Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
@@ -49,9 +96,9 @@ public class VPStateBuilder {
 		return this;
 	}
 
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return mEqGraph.getEqNodeToEqGraphNodeMap();
-	}
+//	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+//		return mEqGraph.getEqNodeToEqGraphNodeMap();
+//	}
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
 		return mDisEqualitySet;
@@ -84,8 +131,8 @@ public class VPStateBuilder {
 	boolean checkContradiction() {
 
 		for (final VPDomainSymmetricPair<EqNode> disEqPair : getDisEqualitySet()) {
-			if (find(mEqGraph.mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst()))
-					.equals(find(mEqGraph.mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond())))) {
+			if (find(mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst()))
+					.equals(find(mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond())))) {
 				return true;
 			}
 		}
@@ -151,9 +198,11 @@ public class VPStateBuilder {
 		mVars.remove(pv);
 	}
 
-	private class EqGraph {
-		private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		return mEqNodeToEqGraphNodeMap;
+	}
 
+	protected class EqGraph {
 		/**
 		 * Union of two equivalence classes. 
 		 * The representative of node1 will become the representative of node2.
@@ -161,7 +210,7 @@ public class VPStateBuilder {
 		 * @param node1
 		 * @param node2
 		 */
-		private void union(final EqGraphNode node1, final EqGraphNode node2) {
+		protected void union(final EqGraphNode node1, final EqGraphNode node2) {
 	
 			final EqGraphNode graphNode1Find = find(node1);
 			final EqGraphNode graphNode2Find = find(node2);
@@ -245,10 +294,6 @@ public class VPStateBuilder {
 		private Set<EqGraphNode> ccpar(final EqGraphNode node) {
 			return find(node).getCcpar();
 		}
-
-		public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-			return mEqNodeToEqGraphNodeMap;
-		}
 	}
 
 	public void addVariables(Collection<IProgramVar> variables) {
@@ -281,38 +326,7 @@ public class VPStateBuilder {
 		return true;
 	}
 
-	private void createEqGraphNodes() {
-		/*
-		 * Create fresh EqGraphNodes from EqNodes.
-		 */
-		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
-		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
-			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
-		}
-		mEqGraph.mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
-	}
-
-	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-		
-		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
-			return eqNodeToEqGraphNode.get(eqNode);
-		}
-		
-		final EqGraphNode graphNode = new EqGraphNode(eqNode);
-		List<EqGraphNode> argNodes = new ArrayList<>();
-		
-		if (eqNode instanceof EqFunctionNode) {
-
-			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
-				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
-//				argNode.addToInitCcpar(graphNode);
-				argNode.addToCcpar(graphNode);
-				argNodes.add(argNode);
-			}
-//			graphNode.addToInitCcchild(argNodes);
-			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
-		}
-		eqNodeToEqGraphNode.put(eqNode, graphNode);
-		return graphNode;
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(EqGraphNode representative1) {
+		return representative1.find().getCcchild();
 	}
 }

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +60,7 @@ public class EqGraphNode {
 	private List<EqGraphNode> initCcchild;
 
 	public EqGraphNode(EqNode eqNode) {
+		assert eqNode != null || this instanceof TFEqGraphNode;
 		this.eqNode = eqNode;
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();
@@ -75,18 +77,22 @@ public class EqGraphNode {
 	 * the EqNode
 	 * @param eqNodeToEqGraphNode
 	 */
-	public void setupNode(Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-		initCcpar = new HashSet<>();
-		for (EqNode par : this.eqNode.getParents()) {
-			EqGraphNode gnPar = eqNodeToEqGraphNode.get(par);
-			assert gnPar != null;
-			initCcpar.add(gnPar);
-		}
+	public void setupNode() {
+//	public void setupNode(Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
+//		initCcpar = new HashSet<>();
+//		for (EqNode par : this.eqNode.getParents()) {
+//			EqGraphNode gnPar = eqNodeToEqGraphNode.get(par);
+//			assert gnPar != null;
+//			initCcpar.add(gnPar);
+//		}
+		initCcpar = new HashSet<>(this.ccpar);
 		initCcpar = Collections.unmodifiableSet(initCcpar);
 		
 		if (eqNode instanceof EqFunctionNode) {
 			EqFunctionNode eqfn = (EqFunctionNode) eqNode;
-			initCcchild = eqfn.getArgs().stream().map(eqn -> eqNodeToEqGraphNode.get(eqn)).collect(Collectors.toList());
+//			initCcchild = eqfn.getArgs().stream().map(eqn -> eqNodeToEqGraphNode.get(eqn)).collect(Collectors.toList());
+			assert this.ccchild.getImage(eqfn.getFunction()).size() == 1;
+			initCcchild = new ArrayList<>(this.ccchild.getImage(eqfn.getFunction()).iterator().next());
 			initCcchild = Collections.unmodifiableList(initCcchild);
 		}
 	}
