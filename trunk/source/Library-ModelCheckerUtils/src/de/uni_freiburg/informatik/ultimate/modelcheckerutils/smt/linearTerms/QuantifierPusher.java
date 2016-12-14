@@ -112,6 +112,7 @@ public class QuantifierPusher extends TermTransformer {
 		case DUAL_QUANTIFIER:
 			// unable to push inner quantifier, hence we cannot push
 			result = quantifiedFormula;
+			break;
 		case SAME_QUANTIFIER:
 			throw new AssertionError("must have been handled above");
 		default:
