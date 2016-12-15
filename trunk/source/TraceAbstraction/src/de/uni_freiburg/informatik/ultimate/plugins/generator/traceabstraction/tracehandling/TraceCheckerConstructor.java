@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
  * On-demand trace checker constructor from given preferences.
@@ -225,7 +226,8 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 						NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 						mServices, true, mPredicateUnifier, mInterpolationTechnique, mManagedScript, true,
-						xnfConversionTechnique, simplificationTechnique, mCounterexample.getStateSequence(), false);
+						xnfConversionTechnique, simplificationTechnique, 
+						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), false);
 		return traceChecker;
 	}
 	
@@ -240,7 +242,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, true, mPredicateUnifier,
 				mInterpolationTechnique, mManagedScript, xnfConversionTechnique, simplificationTechnique,
-				mCounterexample.getStateSequence());
+				TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())));
 		return traceChecker;
 	}
 	

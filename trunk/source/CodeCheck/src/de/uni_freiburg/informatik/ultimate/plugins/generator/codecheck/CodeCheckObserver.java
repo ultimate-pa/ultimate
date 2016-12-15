@@ -115,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -594,7 +595,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, true, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence(), false);
+						SIMPLIFICATION_TECHNIQUE, 
+						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), false);
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
@@ -609,7 +611,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence());
+						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, 
+						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -621,7 +624,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence());
+						SIMPLIFICATION_TECHNIQUE, 
+						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
@@ -631,7 +635,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateUnifier, mGlobalSettings.getInterpolationMode(), mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence());
+						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, 
+						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			}
 		default:
 			throw new UnsupportedOperationException(
