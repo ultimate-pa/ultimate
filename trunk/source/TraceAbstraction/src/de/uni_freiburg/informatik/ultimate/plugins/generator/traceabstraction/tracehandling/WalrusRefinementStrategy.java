@@ -64,7 +64,9 @@ public class WalrusRefinementStrategy extends MultiTrackTraceAbstractionRefineme
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		if (!RefinementStrategyUtils.containsFloats(mCounterexample.getWord())) {
+		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord())) {
+			list.add(Track.MATHSAT_FPBP);	
+		} else {
 			list.add(Track.CVC4_FPBP);
 		}
 		list.add(Track.Z3_FPBP);
