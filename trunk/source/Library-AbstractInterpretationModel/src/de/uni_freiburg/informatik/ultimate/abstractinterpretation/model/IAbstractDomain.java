@@ -35,11 +35,21 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
  *
  */
 public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	/**
 	 * @return A new state of the current abstract domain.
 	 */
 	STATE createFreshState();
+
+	/**
+	 * @return A new state of the current abstract domain representing &top;.
+	 */
+	STATE createTopState();
+
+	/**
+	 * @return A new state of the current abstract domain representing &bot;.
+	 */
+	STATE createBottomState();
 
 	/**
 	 * @return The widening operator appropriate for the current abstract domain.

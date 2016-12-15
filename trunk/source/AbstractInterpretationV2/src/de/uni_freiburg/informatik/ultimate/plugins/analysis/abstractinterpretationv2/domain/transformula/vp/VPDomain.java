@@ -55,9 +55,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPPostOperator mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
-	
+
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
-	
+
 	private final ManagedScript mManagedScript;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -65,12 +65,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final IIcfgSymbolTable mSymboltable;
 	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
-	
-	public VPDomain(final ILogger logger, 
-			final ManagedScript script, 
-			final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable, 
-			final VPDomainPreanalysis preAnalysis, 
+
+	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
+			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis,
 			final VPTransFormulaStateBuilderPreparer tfPreparer) {
 		assert script != null;
 		mLogger = logger;
@@ -85,32 +82,32 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mTfPreparer = tfPreparer;
 		mTfStateFactory = new VpTfStateFactory(tfPreparer);
 	}
-	
+
 	@Override
 	public VPState createFreshState() {
 		return getVpStateFactory().createEmptyStateBuilder().build();
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<VPState> getWideningOperator() {
 		return mMerge;
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<VPState> getMergeOperator() {
 		return mMerge;
 	}
-	
+
 	@Override
 	public IAbstractPostOperator<VPState, CodeBlock, IProgramVar> getPostOperator() {
 		return mPost;
 	}
-	
+
 	@Override
 	public int getDomainPrecision() {
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
-	
+
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {
 		
 		@Override
@@ -118,56 +115,66 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			return getVpStateFactory().disjoin(first, second);
 		}
 	}
-	
+
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNodeMap;
 	}
-	
+
 	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
 		return mArrayIdToEqFnNodes;
 	}
-	
+
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
 		return null;
 	}
-	
+
 	public ManagedScript getManagedScript() {
 		return mManagedScript;
 	}
-	
+
 	public ILogger getLogger() {
 		return mLogger;
 	}
-	
+
 	public VPDomainPreanalysis getPreAnalysis() {
 		return mPreAnalysis;
 	}
-	
+
 	public VPStateFactory getVpStateFactory() {
 		return mVpStateFactory;
 	}
-	
+
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}
-
+	
 	public Set<EqNode> getLiteralEqNodes() {
 		// TODO only compute this once!
-		Set<EqNode> literalSet = new HashSet<>();
-		for (EqNode eqNode : getTermToEqNodeMap().values()) {
+		final Set<EqNode> literalSet = new HashSet<>();
+		for (final EqNode eqNode : getTermToEqNodeMap().values()) {
 			if (eqNode.isLiteral()) {
 				literalSet.add(eqNode);
 			}
 		}
 		return literalSet;
 	}
-
+	
 	public VPTransFormulaStateBuilderPreparer getTfPreparer() {
 		return mTfPreparer;
 	}
-
+	
 	public VpTfStateFactory getTfStateFactory() {
 		return mTfStateFactory;
+	}
+	
+	@Override
+	public VPState createTopState() {
+		throw new UnsupportedOperationException("Not implemented: createTopState");
+	}
+	
+	@Override
+	public VPState createBottomState() {
+		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
 }

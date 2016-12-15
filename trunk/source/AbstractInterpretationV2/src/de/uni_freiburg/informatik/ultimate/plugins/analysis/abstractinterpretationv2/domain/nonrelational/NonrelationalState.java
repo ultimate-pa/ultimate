@@ -71,6 +71,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	private final Set<IBoogieVar> mVariables;
 	private final Map<IBoogieVar, V> mValueMap;
 	private final Map<IBoogieVar, BooleanValue> mBooleanValuesMap;
+	private final boolean mIsBottom;
 	
 	private final ILogger mLogger;
 	
@@ -82,6 +83,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	protected NonrelationalState(final ILogger logger) {
 		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>());
+	}
+
+	/**
+	 * Default constructor of an {@link NonrelationalState}.
+	 *
+	 * @param logger
+	 *            The current logger object in the current context.
+	 * @param isBottom
+	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
+	 */
+	protected NonrelationalState(final ILogger logger, final boolean isBottom) {
+		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom);
 	}
 	
 	/**
@@ -99,12 +112,34 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variables,
 			final Map<IBoogieVar, V> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap) {
+		this(logger, variables, valuesMap, booleanValuesMap, false);
+	}
+
+	/**
+	 * Creates a new instance of {@link NonrelationalState} with given logger, variables map, values map and boolean
+	 * values map and defines whether the state is bottom or not.
+	 *
+	 * @param logger
+	 *            The current logger object in the current context.
+	 * @param variables
+	 *            The map with all variable identifiers and their types.
+	 * @param valuesMap
+	 *            The values of all variables.
+	 * @param booleanValuesMap
+	 *            The values of all boolean variables.
+	 * @param isBottom
+	 *            If <code>true</code> the created state corresponds to &bot;, &top; otherwise.
+	 */
+	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variables,
+			final Map<IBoogieVar, V> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap,
+			final boolean isBottom) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
 		sId++;
 		mId = sId;
 		mLogger = logger;
+		mIsBottom = isBottom;
 	}
 	
 	@Override
@@ -526,7 +561,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			}
 		}
 		
-		return false;
+		return mIsBottom;
 	}
 	
 	@Override

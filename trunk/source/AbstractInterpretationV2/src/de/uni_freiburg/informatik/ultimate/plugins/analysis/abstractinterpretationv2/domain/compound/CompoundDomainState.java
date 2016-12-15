@@ -63,6 +63,14 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 	
+	/**
+	 * Constructor for a new CompoundDomainState.
+	 *
+	 * @param services
+	 *            The Ultimate services.
+	 * @param domainList
+	 *            The list of abstract domains to use.
+	 */
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList) {
 		sId++;
 		mId = sId;
@@ -74,6 +82,16 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		}
 	}
 	
+	/**
+	 * Constructor for a new CompountDomainState from a given abstract state.
+	 *
+	 * @param services
+	 *            The Ultimate services.
+	 * @param domainList
+	 *            The list of abstract domains to use.
+	 * @param abstractStateList
+	 *            The abstract state to create the new state from.
+	 */
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
 			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
 		sId++;
@@ -85,6 +103,32 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		mServices = services;
 		mDomainList = domainList;
 		mAbstractStates = abstractStateList;
+	}
+	
+	/**
+	 * Constructor for a new compount domain state which is either top or bottom.
+	 *
+	 * @param services
+	 *            The Ultimate services.
+	 * @param domainList
+	 *            The list of domains.
+	 * @param isBottom
+	 *            If <code>true</code>, the constructed state is corresponding to &bot;, &top; otherwise.
+	 */
+	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
+			final boolean isBottom) {
+		sId++;
+		mId = sId;
+		mServices = services;
+		mDomainList = domainList;
+		mAbstractStates = new ArrayList<>();
+		for (final IAbstractDomain domain : mDomainList) {
+			if (isBottom) {
+				mAbstractStates.add(domain.createBottomState());
+			} else {
+				mAbstractStates.add(domain.createTopState());
+			}
+		}
 	}
 	
 	@Override

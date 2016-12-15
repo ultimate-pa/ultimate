@@ -57,17 +57,25 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	private static int sId;
 	private final Set<VARDECL> mVarDecls;
 	private final int mId;
+	private final boolean mIsBottom;
 	
 	protected EmptyDomainState() {
-		mVarDecls = new HashSet<>();
-		sId++;
-		mId = sId;
+		this(new HashSet<>());
+	}
+
+	protected EmptyDomainState(final boolean isBottom) {
+		this(new HashSet<>(), isBottom);
 	}
 	
 	protected EmptyDomainState(final Set<VARDECL> varDecls) {
+		this(varDecls, false);
+	}
+	
+	protected EmptyDomainState(final Set<VARDECL> varDecls, final boolean isBottom) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
+		mIsBottom = isBottom;
 	}
 	
 	@Override
@@ -123,7 +131,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	
 	@Override
 	public boolean isBottom() {
-		return false;
+		return mIsBottom;
 	}
 	
 	@Override

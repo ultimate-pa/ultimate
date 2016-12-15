@@ -64,7 +64,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
-	private final Supplier<OctDomainState> mOctDomainStateFactory;
+	private final Function<Boolean, OctDomainState> mOctDomainStateFactory;
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
 	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory;
 	private final BoogieIcfgContainer mRootAnnotation;
@@ -92,7 +92,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 *            Preferences
 	 * @return Factory for creating empty octagons
 	 */
-	private Supplier<OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
+	private Function<Boolean, OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 		
@@ -111,7 +111,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 			throw makeIllegalSettingException(settingLabel, settingValue);
 		}
 		
-		return () -> OctDomainState.createFreshState(logStringFunction);
+		return (isBottom) -> OctDomainState.createFreshState(logStringFunction, isBottom);
 	}
 	
 	/**
@@ -181,7 +181,17 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	
 	@Override
 	public OctDomainState createFreshState() {
-		return mOctDomainStateFactory.get();
+		return mOctDomainStateFactory.apply(false);
+	}
+	
+	@Override
+	public OctDomainState createTopState() {
+		return mOctDomainStateFactory.apply(false);
+	}
+
+	@Override
+	public OctDomainState createBottomState() {
+		return mOctDomainStateFactory.apply(true);
 	}
 	
 	@Override

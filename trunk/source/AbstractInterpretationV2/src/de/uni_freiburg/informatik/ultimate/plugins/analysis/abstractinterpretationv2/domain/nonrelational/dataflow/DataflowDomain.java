@@ -66,6 +66,18 @@ public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock,
 	}
 	
 	@Override
+	public DataflowState createTopState() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("createTopState not implemented, yet.");
+	}
+
+	@Override
+	public DataflowState createBottomState() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("createBottomState not implemented, yet.");
+	}
+	
+	@Override
 	public IAbstractStateBinaryOperator<DataflowState> getWideningOperator() {
 		return mMerge;
 	}

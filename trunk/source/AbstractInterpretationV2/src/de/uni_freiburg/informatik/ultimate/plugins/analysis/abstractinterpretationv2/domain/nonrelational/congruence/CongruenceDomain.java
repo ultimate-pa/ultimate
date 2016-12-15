@@ -27,11 +27,11 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
-	
+
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
 	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
-	
+
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
 			final BoogieSymbolTable symbolTable, final BoogieIcfgContainer rootAnnotation) {
 		mLogger = logger;
@@ -39,12 +39,22 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 		mServices = services;
 		mRootAnnotation = rootAnnotation;
 	}
-	
+
 	@Override
 	public CongruenceDomainState createFreshState() {
 		return new CongruenceDomainState(mLogger);
 	}
+
+	@Override
+	public CongruenceDomainState createTopState() {
+		return new CongruenceDomainState(mLogger, false);
+	}
 	
+	@Override
+	public CongruenceDomainState createBottomState() {
+		return new CongruenceDomainState(mLogger, true);
+	}
+
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
@@ -53,7 +63,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 		}
 		return mWideningOperator;
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getMergeOperator() {
 		if (mMergeOperator == null) {
@@ -61,7 +71,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 		}
 		return mMergeOperator;
 	}
-	
+
 	@Override
 	public IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -75,7 +85,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 		}
 		return mPostOperator;
 	}
-	
+
 	@Override
 	public int getDomainPrecision() {
 		return 300;

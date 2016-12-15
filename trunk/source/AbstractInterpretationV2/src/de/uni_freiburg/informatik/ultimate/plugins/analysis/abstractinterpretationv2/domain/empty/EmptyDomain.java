@@ -46,24 +46,34 @@ public class EmptyDomain<ACTION, VARDECL>
 	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
-		return new EmptyDomainState<ACTION, VARDECL>();
+		return new EmptyDomainState<>();
+	}
+
+	@Override
+	public EmptyDomainState<ACTION, VARDECL> createTopState() {
+		return new EmptyDomainState<>(false);
 	}
 	
+	@Override
+	public EmptyDomainState<ACTION, VARDECL> createBottomState() {
+		return new EmptyDomainState<>(true);
+	}
+
 	@Override
 	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getWideningOperator() {
 		return new EmptyOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getMergeOperator() {
 		return new EmptyOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
-	
+
 	@Override
 	public int getDomainPrecision() {
 		// This domain is the least-expressive domain there is.
