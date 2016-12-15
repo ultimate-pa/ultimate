@@ -456,7 +456,7 @@ public class SdHoareTripleCheckerHelper {
 		}
 		for (final IProgramVar bv : pre.getVars()) {
 			if (bv.isGlobal() && !bv.isOldvar()) {
-				if (pre.getVars().contains(bv)) {
+				if (post.getVars().contains(bv)) {
 					return false;
 				}
 			}
