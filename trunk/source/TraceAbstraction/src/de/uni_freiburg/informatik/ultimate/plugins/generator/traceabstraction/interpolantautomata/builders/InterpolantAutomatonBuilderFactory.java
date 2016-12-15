@@ -183,7 +183,7 @@ public class InterpolantAutomatonBuilderFactory {
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, ipp,
-				counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
+				TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(counterexample.getWord())), mLogger, interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
 	}
