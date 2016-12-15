@@ -698,7 +698,7 @@ public class VPStateFactory {
 		return null;
 	}
 
-	private VPState convertToStates(VPTfState tfState, UnmodifiableTransFormula tf) {
+	private VPState convertToState(VPTfState tfState, UnmodifiableTransFormula tf) {
 		// TODO Auto-generated method stub
 		return null;
 	}

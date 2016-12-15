@@ -1,8 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 public class VpTfStateFactory {
@@ -43,7 +46,7 @@ public class VpTfStateFactory {
 	}
 
 
-	public Set<VPTfState> conjoinAll(Set<VPTfState>... transitionStateSets) {
+	public Set<VPTfState> conjoinAll(List<Set<VPTfState>> andList) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -56,6 +59,19 @@ public class VpTfStateFactory {
 
 
 	public VPTfState getTopState() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public Set<VPTfState> handleArrayEqualityWithException(TermVariable newArray, Term oldArray,
+			ApplicationTerm storeTerm, Term value, VPTfState tfPreState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public Set<VPTfState> handleArrayEquality(Term lhs, Term rhs, VPTfState tfPreState) {
 		// TODO Auto-generated method stub
 		return null;
 	}	

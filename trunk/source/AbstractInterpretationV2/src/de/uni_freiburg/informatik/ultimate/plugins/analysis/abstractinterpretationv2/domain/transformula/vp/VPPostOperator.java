@@ -141,7 +141,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			}
 
 			Set<VPTfState> resultStates =
-					mTfStateFactory.conjoinAll((Set<VPTfState>[]) andList.toArray(new Set<?>[andList.size()]));
+					mTfStateFactory.conjoinAll(andList);
 			assert !resultStates.isEmpty();
 //			assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 			return resultStates;
@@ -196,7 +196,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 										aus.get(0).getOldArray(), tf.getInVars(), tf.getOutVars())){
 							return Collections.singleton(tfPreState);
 						}
-
 
 						// we have an array update
 						Set<VPTfState> result = handleArrayUpdateTransition(
@@ -282,453 +281,94 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 	private Set<VPTfState> handleBasicEquality(VPTfState tfPreState, TransFormula tf, ApplicationTerm appTerm,
 			boolean negated) {
-		// TODO Auto-generated method stub
-		return null;
+		Term param1 = appTerm.getParameters()[0];
+		Term param2 = appTerm.getParameters()[1];
+
+		if (tfPreState.tracksTerm(param1) 
+				&& tfPreState.tracksTerm(param2)) {
+			if (!negated) {
+				Set<VPTfState> result = mTfStateFactory.addEquality(param1, param2, tfPreState);
+				return result;
+			} else {
+				Set<VPTfState> result = mTfStateFactory.addDisequality(param1, param2, tfPreState);
+				return result;
+			}
+		} else {
+			// we don't track at least one of the params 
+			return Collections.singleton(tfPreState);
+		}
 	}
 
 		private Set<VPTfState> handleArrayUpdateTransition(VPTfState tfPreState, TransFormula tf, ArrayUpdate arrayUpdate,
 			boolean negated) {
-		// TODO Auto-generated method stub
-		return null;
+			
+			
+//			/*
+//			 * special case: the newArray is the outVar, the oldArray the inVar of the same IProgramVar
+//			 *  i.e., we have something like a[i] := x;
+//			 * (question: can we generalize this some more?, what if one of them is an auxVar?)
+//			 * (another case might be: newArray == oldArray on TermVariable level, then this could be replaced
+//			 *  by a equality with select.. --> maybe does not happen.., but may be covered anyway)
+//			 */
+//			if (VPDomainHelpers.getProgramVar(arrayUpdate.getNewArray(), tf) 
+//					== VPDomainHelpers.getProgramVar(arrayUpdate.getOldArray(), tf)) {
+//				if (!negated) {
+//					// technical note: by our convention the EqNode of a store is that of the corresponding select
+//					Set<VPTfState> result = mTfStateFactory.addEquality(arrayUpdate.getNewArray(), 
+//							arrayUpdate.getMultiDimensionalStore().getStoreTerm(),  
+//							tfPreState);
+//					return result;
+//				} else {
+//					
+//				}
+//			}
+			
+			
+			
+			if (!negated) {
+				Set<VPTfState> result = mTfStateFactory.handleArrayEqualityWithException(
+						arrayUpdate.getNewArray(), 
+						arrayUpdate.getOldArray(),
+						arrayUpdate.getMultiDimensionalStore().getStoreTerm(),
+						arrayUpdate.getMultiDimensionalStore().getValue(), 
+						tfPreState);
+						return result;
+			} else {
+				// we have a disequality between arrays
+				// --> "it could be anywhere"..
+				return Collections.singleton(tfPreState);
+			}
 	}
 
 		private Set<VPTfState> handleArrayEqualityTransition(VPTfState tfPreState, TransFormula tf, ArrayEquality arrayEquality,
 			boolean negated) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-		private List<VPState> handleBasicEquality(final VPState prestate, final Map<TermVariable, IProgramVar> tvToPvMap,
-				Set<IProgramVar> assignedVars, Map<IProgramVar, TermVariable> inVars,
-				Map<IProgramVar, TermVariable> outVars, final boolean negated, final ApplicationTerm appTerm) {
-
-			VPState resultState = prestate;
-
-			Term param1 = appTerm.getParameters()[0];
-			Term param2 = appTerm.getParameters()[1];
-
-			EqNode nodeParam1 = mPreAnalysis.getEqNode(param1, tvToPvMap);
-			EqNode nodeParam2 = mPreAnalysis.getEqNode(param2, tvToPvMap);
-
-			/*
-			 * If there's node that is not being tracked, return pre-state.
-			 */
-			if (nodeParam1 == null || nodeParam2 == null) {
-				return Collections.singletonList(prestate);
-			}
-
-			boolean isParam1InVar = isXVar(inVars, param1);
-			boolean isParam1OutVar = isXVar(outVars, param1);
-			boolean isParam2InVar = isXVar(inVars, param2);
-			boolean isParam2OutVar = isXVar(outVars, param2);
-
-
-			// havocs before equation
-
-			if (!isParam1InVar) {
-				resultState = mStateFactory.havoc(nodeParam1, resultState);
-			}
-			if (!isParam2InVar) {
-				resultState = mStateFactory.havoc(nodeParam2, resultState);
-			}
-
-			Set<VPState> resultStates = new HashSet<>();
-			resultStates.add(resultState);
-
-
-			// the equation
-
-			if (isParam1InVar) {
-				resultStates = addXQualitiesForInVar(prestate, negated, nodeParam1, nodeParam2, resultStates);
-			}
-			if (isParam1InVar) {
-				resultStates = addXQualitiesForInVar(prestate, negated, nodeParam2, nodeParam1, resultStates);
-			}
-
-
-			// havocs after equation
-
-			if (!isParam1OutVar) {
-				resultStates = mStateFactory.havoc(nodeParam1, resultStates);
-			}
-			if (!isParam2OutVar) {
-				resultStates = mStateFactory.havoc(nodeParam2, resultStates);
-			}
-
-
-
-			return new ArrayList<>(resultStates);
-
-
-			//		for (Entry<IProgramVar, TermVariable> outPvAndTv : outVars.entrySet()) {
-			//			/*
-			//			 * plan : for each outVar we establish what we now about it after applying the equality
-			//			 */
-			//			
-			//			
-			//			EqNode nodeForOutPv = mPreAnalysis.getEqNode(outPvAndTv.getKey().getTerm(), Collections.emptyMap());
-			//			
-			//			if (outPvAndTv.getValue() != appTerm.getParameters()[0]
-			//					&& outPvAndTv.getValue() != appTerm.getParameters()[1]) {
-			//				// variable is inside 
-			//				continue;
-			//			}
-			//			
-			//			if (nodeForOutPv == null) {
-			//				// we don't track the current pv --> do nothing
-			//				continue;
-			//			}
-			//
-			//			if (!Arrays.asList(appTerm.getFreeVars()).contains(outPvAndTv.getValue())) {
-			//				// the termVariable of the current pv does not occur in the formula
-			//				// --> the current pv is unconstrained in the new state
-			//				resultStates = mVpStateFactory.havoc(nodeForOutPv, resultStates);
-			//				continue;
-			//			}
-			//			
-			//			// the current out pv occurs in the equation
-			//			// -->
-			//			
-			//			Term otherSideofEquation = appTerm.getParameters()[0] == outPvAndTv.getValue() 
-			//					? appTerm.getParameters()[1] 
-			//							: appTerm.getParameters()[0];
-			//					
-			//			// the other side is either an inVar or a constant
-			//			EqNode nodeForOtherSide = mPreAnalysis.getEqNode(otherSideofEquation, tvToPvMap);
-			//			
-			//			if (nodeForOtherSide == null) {
-			//				// we don't track the other side of the equation's term --> we know nothing about it ..
-			//				resultStates = mVpStateFactory.havoc(nodeForOutPv, resultStates);// implementation as fallback
-			//				continue;
-			//			}
-			//
-			//
-			//			if (otherSideofEquation instanceof TermVariable
-			//					&& !inVars.containsValue(otherSideofEquation)) {
-			//				// equation between two outvars where at least one is not an invar -- seems odd..
-			//				// but means that in the new states both are equal -- so we just add the equality..
-			//				if (assignedVars.contains(nodeForOutPv)) {
-			//					resultStates = mVpStateFactory.havoc(nodeForOutPv, resultStates);
-			//				}
-			//				resultStates = mVpStateFactory.addEquality(nodeForOutPv, nodeForOtherSide, resultStates);
-			//				continue;
-			//			}
-			//			
-			//			
-			//			
-			//			if (!inVars.containsValue(otherSideofEquation)) {
-			//				if (assignedVars.contains(nodeForOutPv)) {
-			//					resultStates = mVpStateFactory.havoc(nodeForOutPv, resultStates);
-			//				}
-			//				// the other side must be a constant --> we don't need to take the prestate into account
-			//				if (!negated) {
-			//					resultStates = mVpStateFactory.addEquality(nodeForOutPv, nodeForOtherSide, resultStates);
-			//				} else {
-			//					resultStates = mVpStateFactory.addDisEquality(nodeForOutPv, nodeForOtherSide, resultStates);
-			//				}
-			//				continue;
-			//			}
-			//			
-			//			// the other side of the equation is a TermVariable that is an inVar 
-			//			// --> we need to extract all information about it from the prestate and update the current pv in the new state accordingly
-			//
-			//			if (assignedVars.contains(nodeForOutPv)) {
-			//				resultStates = mVpStateFactory.havoc(nodeForOutPv, resultStates);
-			//			}
-			//
-			//			
-			//			Set<EqNode> nodesEqualToOtherSideInVar = collectEqualitiesForNodeInState(nodeForOtherSide, prestate);
-			//			for (EqNode equalNode : nodesEqualToOtherSideInVar) {
-			//				if (!negated) {
-			//					// tf says: nodeForOutPv == nodeForOtherSide
-			//					// prestate says: nodeForOhterSide == equalNode
-			//					// --> nodeForOutPv == equalNode
-			//					resultStates = mVpStateFactory.addEquality(nodeForOutPv, equalNode, resultStates);
-			//				} else {
-			//					// tf says: nodeForOutPv != nodeForOtherSide
-			//					// prestate says: nodeForOhterSide == equalNode
-			//					// --> nodeForOutPv != equalNode
-			//					resultStates = mVpStateFactory.addDisEquality(nodeForOutPv, equalNode, resultStates);
-			//				}
-			//			}
-			//			
-			//			Set<EqNode> nodesUnequalToOtherSideInVar = collectDisEqualitiesForNodeInState(nodeForOtherSide, prestate);
-			//			for (EqNode unequalNode : nodesUnequalToOtherSideInVar) {
-			//				if (!negated) {
-			//					// tf says: nodeForOutPv == nodeForOtherSide
-			//					// prestate says: nodeForOhterSide != unequalNode
-			//					// --> nodeForOutPv != equalNode
-			//					resultStates = mVpStateFactory.addDisEquality(nodeForOutPv, unequalNode, resultStates);
-			//				} else {
-			//					// tf says: nodeForOutPv != nodeForOtherSide
-			//					// prestate says: nodeForOhterSide != unequalNode
-			//					// --> do nothing
-			//				}
-			//			}
-			//
-			//		}
-			//		return new ArrayList<>(resultStates);
-		}
-
-		private Set<VPState> addXQualitiesForInVar(final VPState prestate, final boolean negated,
-				EqNode nodeParam1, EqNode nodeParam2, Set<VPState> resultStates) {
-			Set<EqNode> nodesEqualToParam1InVar = collectEqualitiesForNodeInState(nodeParam1, prestate);
-			for (EqNode equalNode : nodesEqualToParam1InVar) {
-				if (!negated) {
-					// tf says: nodeForOutPv == nodeForOtherSide
-					// prestate says: nodeForOhterSide == equalNode
-					// --> nodeForOutPv == equalNode
-					resultStates = mStateFactory.addEquality(nodeParam2, equalNode, resultStates);
-				} else {
-					// tf says: nodeForOutPv != nodeForOtherSide
-					// prestate says: nodeForOhterSide == equalNode
-					// --> nodeForOutPv != equalNode
-					resultStates = mStateFactory.addDisEquality(nodeParam2, equalNode, resultStates);
-				}
-			}
-
-			Set<EqNode> nodesUnequalToOtherSideInVar = collectDisEqualitiesForNodeInState(nodeParam1, prestate);
-			for (EqNode unequalNode : nodesUnequalToOtherSideInVar) {
-				if (!negated) {
-					// tf says: nodeForOutPv == nodeForOtherSide
-					// prestate says: nodeForOhterSide != unequalNode
-					// --> nodeForOutPv != equalNode
-					resultStates = mStateFactory.addDisEquality(nodeParam2, unequalNode, resultStates);
-				} else {
-					// tf says: nodeForOutPv != nodeForOtherSide
-					// prestate says: nodeForOhterSide != unequalNode
-					// --> do nothing
-				}
-			}
-			return resultStates;
-		}
-
-
-		private boolean isXVar(Map<IProgramVar, TermVariable> inVars, Term param1) {
-			boolean result = false;
-			for (TermVariable fv : param1.getFreeVars()) {
-				result |= inVars.values().contains(fv);
-			}
-			return result;
-		}
-
-		private Set<EqNode> collectDisEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState prestate) {
-			return prestate.getUnequalNodes(nodeForOtherSide);
-		}
-
-		private Set<EqNode> collectEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState prestate) {
-			Set<EqNode> result = new HashSet<>();
-			EqGraphNode graphNode = prestate.getEqNodeToEqGraphNodeMap().get(nodeForOtherSide);
-			result.add(graphNode.getRepresentative().eqNode);
-			for (EqGraphNode rr : graphNode.getReverseRepresentative()) {
-				result.add(rr.eqNode);
-			}
-			return result;
-		}
-
-		private Set<VPState> handleArrayEqualityTransition(
-				final VPState preState,
-				final Map<TermVariable, IProgramVar> tvToPvMap, 
-				Set<IProgramVar> assignedVars, 
-				final Map<IProgramVar, TermVariable> inVars, 
-				final Map<IProgramVar, TermVariable> outVars, 
-				final boolean negated, 
-				final ArrayEquality aeq) {
-			final Term array1Term = aeq.getLhs();
-			final Term array2Term = aeq.getRhs();
-			final IProgramVarOrConst array1 =
-					mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array1Term, tvToPvMap);
-			final IProgramVarOrConst array2 =
-					mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
-
-			VPState resultState = preState;
-
-			if (assignedVars.contains(array1)) {
-				resultState = mStateFactory.havocArray(array1, resultState);
-			} 
-			if (assignedVars.contains(array2)) {
-				resultState = mStateFactory.havocArray(array1, resultState);
-			}
-
+			
 			if (!negated) {
-				Set<VPState> resultStates = mDomain.getVpStateFactory().arrayEquality(array1, array2, resultState);
-				assert !resultStates.isEmpty();
-				return resultStates;
+				Set<VPTfState> result = mTfStateFactory.handleArrayEquality(
+						arrayEquality.getLhs(),
+						arrayEquality.getRhs(),
+						tfPreState);
+				return result;
 			} else {
-				/*
-				 * something of the form a != b where a and b are arrays
-				 *  --> we cannot derive anything from this because we only track a finite number
-				 *     of positions in each (infinite) array
-				 */
-				return Collections.singleton(resultState);
+				// we have a disequality between arrays
+				// --> "it could be anywhere"..
+				return Collections.singleton(tfPreState);
 			}
 		}
 
-		private Set<VPState> handleArrayUpdateTransition(
-				final VPState preState,
-				final Map<TermVariable, IProgramVar> tvToPvMap, 
-				final Set<IProgramVar> assignedVars, 
-				final Map<IProgramVar, TermVariable> inVars, 
-				final Map<IProgramVar, TermVariable> outVars, 
-				final boolean negated, final ArrayUpdate au) {
-			final MultiDimensionalStore mdStore = au.getMultiDimensionalStore();
-			final TermVariable newArrayTv = au.getNewArray();
-			final Term oldArrayTerm = au.getOldArray();
-			final Term value = au.getValue();
-
-			final IProgramVarOrConst newArrayId =
-					mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(newArrayTv, tvToPvMap);
-			final IProgramVarOrConst oldArrayId =
-					mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(oldArrayTerm, tvToPvMap);
-
-			VPState havoccedPreState = preState;
-			if (assignedVars.contains(newArrayId)) {
-				havoccedPreState = mStateFactory.havocArray(newArrayId, havoccedPreState);
-			} 
-			if (assignedVars.contains(oldArrayId)) {
-				havoccedPreState = mStateFactory.havocArray(oldArrayId, havoccedPreState);
-			}
-
-			if (newArrayId.equals(oldArrayId)) {
-				assert newArrayId == oldArrayId : "right?..";
-				/*
-				 * we essentially have something of the form a[i_1, ..,i_n] := v; in terms of Boogie --> we only havoc the
-				 * EqNode belonging to a[i_1, ..,i_n] and add an equality to v
-				 */
-
-				// TODO: strictly speaking we have to check here, that newArrayId is an outVar, oldArrayId an inVar
-
-				final EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
-				final List<EqNode> indexNodeList = new ArrayList<>();
-				for (Term index : mdStore.getIndex()) {
-					indexNodeList.add(mDomain.getPreAnalysis().getEqNode(index, tvToPvMap));
-				}
-				final EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
-
-				final Set<EqNode> arrayAtIndexNodeCongruentce = new HashSet<>();
-
-				if (!negated) {
-					havoccedPreState = mDomain.getVpStateFactory().copy(havoccedPreState).build();
-
-					/*
-					 * Set of fnNodes to be handled (3 cases)
-					 */
-					Set<EqFunctionNode> fnNodes = mDomain.getArrayIdToEqFnNodeMap().getImage(oldArrayId);
-
-					/*
-					 * Case 1: for nodes that are not congruence with arrayAtIndexNode 
-					 * 			-> copy the information into new state
-					 * 			(which is being done by the copy() method called few lines before)
-					 */
-					for (final VPDomainSymmetricPair<EqNode> pair : havoccedPreState.getDisEqualitySet()) {
-						if (pair.contains(arrayAtIndexNode)) {
-							if (pair.getOther(arrayAtIndexNode) instanceof EqFunctionNode) {
-								final EqFunctionNode fNode = (EqFunctionNode)pair.getOther(arrayAtIndexNode);
-								if (fNode.getFunction().equals(oldArrayId)) {
-									fnNodes.remove(fNode);
-								}
-							}
-						} 
-					}
-
-					boolean isContinue;
-					for (EqFunctionNode fnNode : fnNodes) {
-						isContinue = true;
-						/*
-						 * Case 2: fnNode that are congruence with arrayAtIndexNode 
-						 * 			-> havoc and set to valueNode (will be set later)
-						 */
-						assert arrayAtIndexNode instanceof EqFunctionNode;
-						if (havoccedPreState.congruentIgnoreFunctionSymbol((EqFunctionNode)arrayAtIndexNode, fnNode)) {
-							havoccedPreState = mDomain.getVpStateFactory().havoc(fnNode, havoccedPreState);
-							arrayAtIndexNodeCongruentce.add(fnNode);
-						} else {
-
-							/*
-							 * To catch some remaining nodes for case 1 
-							 * 	-> check each argument, if at least one argument is not equal, do nothing.
-							 */
-							for (int i = 0; i < indexNodeList.size(); i++) {
-								for (final VPDomainSymmetricPair<EqNode> pair : havoccedPreState.getDisEqualitySet()) {
-									if (pair.contains(((EqFunctionNode)arrayAtIndexNode).getArgs().get(i))) {
-										if (pair.getOther(((EqFunctionNode)arrayAtIndexNode).getArgs().get(i))
-												.equals(fnNode.getArgs().get(i))) {
-											isContinue = false;
-										}
-									} 
-								}
-							}
-
-							/*
-							 * Case 3: for those nodes that we are not sure if it's congruence with arrayAtIndexNode or not, 
-							 * 			-> havoc
-							 */
-							if (isContinue) {
-								havoccedPreState = mDomain.getVpStateFactory().havoc(fnNode, havoccedPreState);
-							}
-						}
-					}
-
-					final Set<VPState> resultStates = new HashSet<>();
-					resultStates.addAll(mDomain.getVpStateFactory().addEquality(arrayAtIndexNode, valueNode, havoccedPreState));
-					for (EqNode congruentNode : arrayAtIndexNodeCongruentce) {
-						// TODO restore these node's information first?
-						resultStates.addAll(mDomain.getVpStateFactory().addEquality(congruentNode, valueNode, havoccedPreState));
-					}
-					return resultStates;
-				} else {
-					final Set<VPState> resultStates = new HashSet<>();
-					resultStates.addAll(mDomain.getVpStateFactory().addDisEquality(arrayAtIndexNode, valueNode, havoccedPreState));
-					return resultStates;
-				}
-			} else {
-				/*
-				 * we have something of the form b := a[(i_1, ..,i_n) := v] in terms of Boogie -->
-				 */
-
-				if (!negated) {
-					final EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
-					final EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
-
-					if (arrayAtIndexNode == null || valueNode == null) {
-						return Collections.singleton(havoccedPreState);
-					}
-
-					/*
-					 * treat essentially like an ArrayEquality (except for that one point)
-					 * for all points p except (i_1, .., i_n), we add 
-					 *   b[p] = a[p] to the state
-					 * and we add b[i_1, ..., i_n] = v
-					 */
-					final VPState resultState = mDomain.getVpStateFactory().havocArray(newArrayId, havoccedPreState);
-					final Set<VPState> resultStates = new HashSet<>();
-
-					for (EqFunctionNode oldArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(oldArrayId)) { 
-						if (!oldArrayNode.equals(arrayAtIndexNode)) {
-							for (EqFunctionNode newArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(newArrayId)) {
-								if (resultState.congruentIgnoreFunctionSymbol(oldArrayNode, newArrayNode)) {
-									resultStates.addAll(mDomain.getVpStateFactory().addEquality(oldArrayNode, newArrayNode, resultState));
-								}
-							}
-						} else {
-							for (EqFunctionNode newArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(newArrayId)) {
-								if (resultState.congruentIgnoreFunctionSymbol(oldArrayNode, newArrayNode)) {
-									resultStates.addAll(mDomain.getVpStateFactory().addEquality(newArrayNode, valueNode, resultState));
-								}
-							}
-						}
-					}
-
-					return resultStates;
-				} else {
-					/*
-					 * see the "negated" case in handleArrayEquality for an explanation
-					 */
-					return Collections.singleton(havoccedPreState);
-				}
-			}
-		}
+//		private Set<EqNode> collectDisEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState prestate) {
+//			return prestate.getUnequalNodes(nodeForOtherSide);
+//		}
+//
+//		private Set<EqNode> collectEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState prestate) {
+//			Set<EqNode> result = new HashSet<>();
+//			EqGraphNode graphNode = prestate.getEqNodeToEqGraphNodeMap().get(nodeForOtherSide);
+//			result.add(graphNode.getRepresentative().eqNode);
+//			for (EqGraphNode rr : graphNode.getReverseRepresentative()) {
+//				result.add(rr.eqNode);
+//			}
+//			return result;
+//		}
 
 		@Override
 		public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,

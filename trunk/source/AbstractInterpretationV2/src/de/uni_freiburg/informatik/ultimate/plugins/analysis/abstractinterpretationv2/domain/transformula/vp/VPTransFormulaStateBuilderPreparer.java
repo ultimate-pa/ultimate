@@ -87,10 +87,7 @@ public class VPTransFormulaStateBuilderPreparer extends RCFGEdgeVisitor {
 		}
 	}
 	
-	
-	// TODO: what about AbstractIcfgEdges??
-	//  separate between Call, Return and so?
-	//  do we miss TransFormulas ??
+	// TODO: move to interfaces I<X>Action, the visitor is unnecessary, then
 	
 	@Override
 	protected void visit(CodeBlock c) {

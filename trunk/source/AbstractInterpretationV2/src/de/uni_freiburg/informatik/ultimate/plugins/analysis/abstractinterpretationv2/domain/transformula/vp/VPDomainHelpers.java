@@ -92,4 +92,28 @@ public class VPDomainHelpers {
 		}
 		return result;
 	}
+
+	public static IProgramVar getProgramVar(TermVariable newArray, Map<IProgramVar, TermVariable> map) {
+		for (Entry<IProgramVar, TermVariable> en : map.entrySet()) {
+			if (en.getValue() == newArray) {
+				return en.getKey();
+			}
+		}
+		return null;
+	}
+
+	public static Object getProgramVar(Term term, TransFormula tf) {
+		if (!(term instanceof TermVariable)) {
+			return null;
+		}
+		IProgramVar invarPv = getProgramVar((TermVariable) term, tf.getInVars());
+		if (invarPv != null) {
+			return invarPv;
+		}
+		IProgramVar outvarPv = getProgramVar((TermVariable) term, tf.getOutVars());
+		if (outvarPv != null) {
+			return outvarPv;
+		}
+		return null;
+	}
 }
