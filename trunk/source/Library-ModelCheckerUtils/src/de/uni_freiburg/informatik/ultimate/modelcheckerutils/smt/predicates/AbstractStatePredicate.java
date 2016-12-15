@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <ACTION>
  * @param <VARDECL>
  */
-public class AbstractStatePredicate<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
-		extends BasicPredicate {
+public class AbstractStatePredicate extends BasicPredicate {
 	
 	private static final long serialVersionUID = 1L;
-	
-	private final STATE mAbstractState;
 
+	private final IAbstractState<?, ?, ?> mAbstractState;
+	private final IAbstractPostOperator<?, ?, ?> mPostOperator;
+	
 	/**
 	 * Default constructor of an abstract state predicate, constructed from an abstract state.
 	 *
@@ -61,17 +62,23 @@ public class AbstractStatePredicate<STATE extends IAbstractState<STATE, ACTION, 
 	 * @param abstractState
 	 */
 	public AbstractStatePredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final STATE abstractState) {
+			final Set<IProgramVar> vars, final Term closedFormula, final IAbstractState<?, ?, ?> abstractState,
+			final IAbstractPostOperator<?, ?, ?> postOperator) {
 		super(serialNumber, procedures, term, vars, closedFormula);
-
+		
 		mAbstractState = abstractState;
+		mPostOperator = postOperator;
 	}
-	
+
 	@Visualizable
-	public STATE getAbstractState() {
+	public IAbstractState<?, ?, ?> getAbstractState() {
 		return mAbstractState;
 	}
 
+	public IAbstractPostOperator<?, ?, ?> getPostOperator() {
+		return mPostOperator;
+	}
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -79,12 +86,12 @@ public class AbstractStatePredicate<STATE extends IAbstractState<STATE, ACTION, 
 		sb.append(mFormula.toStringDirect());
 		return sb.toString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mSerialNumber;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
@@ -96,11 +103,9 @@ public class AbstractStatePredicate<STATE extends IAbstractState<STATE, ACTION, 
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		
-		@SuppressWarnings("rawtypes")
-		final AbstractStatePredicate other = (AbstractStatePredicate) obj;
 
+		final AbstractStatePredicate other = (AbstractStatePredicate) obj;
+		
 		return mSerialNumber == other.mSerialNumber;
 	}
 }
-

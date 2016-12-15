@@ -81,6 +81,16 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	}
 	
 	@Override
+	public IntervalDomainState createTopState() {
+		return new IntervalDomainState(mLogger, false);
+	}
+
+	@Override
+	public IntervalDomainState createBottomState() {
+		return new IntervalDomainState(mLogger, true);
+	}
+	
+	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
 			final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
-
+	
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
 
@@ -79,6 +79,11 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/** Function used to generate log strings. */
 	private final Function<OctDomainState, String> mLogStringFunction;
+
+	/**
+	 * Indicates whether the state is bottom. This field is only used to determine whether a bottom state was created.
+	 */
+	private final boolean mIsBottom;
 
 	/** Map of variable names to their {@link IBoogieVar}. */
 	private Set<IBoogieVar> mMapVarToBoogieVar;
@@ -120,8 +125,21 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 *            Function to be used for creating log strings of this abstract state.
 	 */
 	private OctDomainState(final Function<OctDomainState, String> logStringFunction) {
+		this(logStringFunction, false);
+	}
+
+	/**
+	 * Creates a new, un-initialized abstract state. <b>Most attributes are not initialized and must be set by hand.</b>
+	 *
+	 * @param logStringFunction
+	 *            Function to be used for creating log strings of this abstract state.
+	 * @param isBottom
+	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
+	 */
+	private OctDomainState(final Function<OctDomainState, String> logStringFunction, final boolean isBottom) {
 		mLogStringFunction = logStringFunction;
 		mId = sId++;
+		mIsBottom = isBottom;
 	}
 
 	/**
@@ -132,7 +150,19 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * @return Empty octagon abstract state
 	 */
 	public static OctDomainState createFreshState(final Function<OctDomainState, String> logStringFunction) {
-		final OctDomainState s = new OctDomainState(logStringFunction);
+		return createFreshState(logStringFunction, false);
+	}
+
+	/**
+	 * Creates a new abstract state without any variables.
+	 *
+	 * @param logStringFunction
+	 *            Function to be used for creating log strings of this abstract state.
+	 * @return Empty octagon abstract state
+	 */
+	public static OctDomainState createFreshState(final Function<OctDomainState, String> logStringFunction,
+			final boolean isBottom) {
+		final OctDomainState s = new OctDomainState(logStringFunction, isBottom);
 		s.mMapVarToBoogieVar = new HashSet<>();
 		s.mMapNumericVarToIndex = new HashMap<>();
 		s.mNumericNonIntVars = new HashSet<>();
@@ -297,7 +327,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 */
 	@Override
 	public OctDomainState removeVariables(final Collection<IBoogieVar> variables) {
-
+		
 		final OctDomainState newState = shallowCopy();
 		final Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (final IBoogieVar name : variables) {
@@ -359,7 +389,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	@Override
 	public boolean isBottom() {
-		return isBooleanAbstractionBottom() || isNumericAbstractionBottom();
+		if (!mIsBottom) {
+			return isBooleanAbstractionBottom() || isNumericAbstractionBottom();
+		}
+		return true;
 	}
 
 	/** @return The numeric abstraction represents no concrete states */
@@ -698,7 +731,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 */
 	public OctDomainState copyValuesOnScopeChange(final OctDomainState source,
 			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
-
+		
 		assert assertNotBottomBeforeAssign();
 
 		// TODO closure in advance to reduce information loss
@@ -989,7 +1022,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * @param mapTargetVarToSourceVar
 	 */
 	protected void copyVars(final List<Pair<IBoogieVar, IBoogieVar>> mapTargetVarToSourceVar) {
-
+		
 		assert assertNotBottomBeforeAssign();
 
 		boolean usedClosure = false;

@@ -71,6 +71,16 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	}
 	
 	@Override
+	public SignDomainState createTopState() {
+		throw new UnsupportedOperationException("Not implemented: createTopState");
+	}
+
+	@Override
+	public SignDomainState createBottomState() {
+		throw new UnsupportedOperationException("Not implemented: createBottomState");
+	}
+	
+	@Override
 	public IAbstractStateBinaryOperator<SignDomainState> getWideningOperator() {
 		return new SignMergeOperator();
 	}

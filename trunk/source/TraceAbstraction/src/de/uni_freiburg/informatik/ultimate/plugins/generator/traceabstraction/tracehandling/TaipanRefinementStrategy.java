@@ -74,6 +74,11 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
+	/**
+	 * @see #getModeForWindowsUsers()
+	 */
+	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
+
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
@@ -312,10 +317,17 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
-
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
+
+		final Mode scriptMode;
+		if (I_AM_A_POOR_WINDOWS_USER) {
+			scriptMode = getModeForWindowsUsers();
+		} else {
+			scriptMode = mCurrentMode;
+		}
+
 		final ManagedScript managedScript =
-				constructManagedScript(mServices, mPrefs, mCurrentMode, useTimeout, mIteration);
+				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mIteration);
 
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
@@ -332,6 +344,22 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 
 		return result;
+	}
+
+	/**
+	 * Because we rely on the "golden copy" of CVC4 and we only have this for Linux, windows users are screwed during
+	 * debugging. To enable at least some debugging, we hack the mode if someone is a poor windows user.
+	 */
+	private Mode getModeForWindowsUsers() {
+		final Mode modeHack;
+		if (mCurrentMode == Mode.CVC4_IG) {
+			modeHack = Mode.Z3_IG;
+		} else if (mCurrentMode == Mode.CVC4_NO_IG) {
+			modeHack = Mode.Z3_NO_IG;
+		} else {
+			modeHack = mCurrentMode;
+		}
+		return modeHack;
 	}
 
 	private static InterpolationTechnique getInterpolationTechnique(final Mode mode) {
