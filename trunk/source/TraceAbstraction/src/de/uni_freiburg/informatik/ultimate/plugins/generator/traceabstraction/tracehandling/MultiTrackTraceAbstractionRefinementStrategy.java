@@ -92,7 +92,11 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		/**
 		 * CVC4 with forward and backward predicates.
 		 */
-		CVC4_FPBP
+		CVC4_FPBP,
+		/**
+		 * MathSAT with forward and backward predicates.
+		 */
+		MATHSAT_FPBP,
 	}
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
@@ -268,6 +272,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				break;
 			case Z3_FPBP:
 			case CVC4_FPBP:
+			case MATHSAT_FPBP:
 				interpolationTechnique = InterpolationTechnique.FPandBP;
 				break;
 			default:
@@ -315,6 +320,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 								baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 				logicForExternalSolver = getCvc4Logic();
+				break;
+			case MATHSAT_FPBP:
+				command = COMMAND_MATHSAT;
+				solverSettings =
+						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+								baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+				logicForExternalSolver = LOGIC_MATHSAT;
 				break;
 			default:
 				throw new IllegalArgumentException(
