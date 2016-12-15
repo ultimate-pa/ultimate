@@ -94,9 +94,9 @@ public class HybridModel {
 		} else {
 			// create the systems
 			systems.forEach((id,comp)->{
-				mLogger.info("creating hybridsystem for system: " + id);
+				//mLogger.info("creating hybridsystem for system: " + id);
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
-				mLogger.info("hybridsystem created:\n" + hybsys.toString());
+				//mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 			});			
 		}

@@ -36,6 +36,7 @@ public class SpaceExWriter {
 	 * @return
 	 */
 	public Sspaceex HybridAutomatonToSpaceEx(HybridAutomaton automaton){
+		// TODO: functions for all this stuff
 		double x = 100;
 		Sspaceex root = new Sspaceex();
 		Map<Integer, Location> locations = automaton.getLocations();

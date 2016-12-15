@@ -99,7 +99,7 @@ public class ParallelCompositionGenerator {
 		// 1. get the initial locations, merge them
 		// 2. get the outgoing transitions from the initials
 		// 3. compare and merge the outgoing transitions
-		// 4. Repeat with target locations
+		// 4. Repeat
 		// TODO: determine initial locations with the config file (i guess)
 		Location initial1 = locations1.get(1);
 		Location initial2 = locations2.get(1);

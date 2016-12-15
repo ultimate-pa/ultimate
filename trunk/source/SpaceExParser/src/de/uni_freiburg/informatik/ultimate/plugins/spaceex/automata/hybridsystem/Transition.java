@@ -37,7 +37,7 @@ public class Transition {
 	private Location mTarget;
 
 	/**
-	 * Connects two locations with a transition. The source and target location's transitions are updated accordingly.
+	 * Connects two locations with a transition. The source and target location's transitions are updated accordingly
 	 * 
 	 * @param source
 	 *            The source location of the transition.
