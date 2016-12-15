@@ -27,7 +27,7 @@ mvn clean install -Pmaterialize
 popd > /dev/null
 
 ./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml
-./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCWithBlockEncoding.xml AutomizerC.xml
+./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml
 ./createZip.sh Kojak linux KojakC_WitnessPrinter.xml
 
 rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
