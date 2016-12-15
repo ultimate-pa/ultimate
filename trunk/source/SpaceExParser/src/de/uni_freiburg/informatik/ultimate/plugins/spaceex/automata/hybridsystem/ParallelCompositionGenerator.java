@@ -30,15 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 
 /**
  * Generator that creates a parallel composition from {@link HybridAutomaton} instances.
@@ -58,8 +56,10 @@ public class ParallelCompositionGenerator {
 	private final Map<String,Set<String>> mLocalLabels;
 	private final Map<Integer, Location> mLocationsMerge;
 	private final List<Transition> mTransitionMerge;
+	private final AtomicInteger mIdCounter;	
 	private final Map<String,Integer> mCreatedLocations;
-	private final AtomicInteger mIdCounter;
+	private Stack<LocationPair> mComputationStack;
+	private Set<String> mVisitedLocations;
 	
 	public ParallelCompositionGenerator(ILogger logger){
 		mLogger = logger;
@@ -74,6 +74,8 @@ public class ParallelCompositionGenerator {
 		mTransitionMerge = new ArrayList<>();
 		mCreatedLocations = new HashMap<>();
 		mIdCounter = new AtomicInteger(0);
+		mComputationStack = new Stack<>();
+		mVisitedLocations = new HashSet<>();
 	}
 		
 	/**
@@ -102,132 +104,157 @@ public class ParallelCompositionGenerator {
 		// 4. Repeat with target locations
 		Location initial1 = locations1.get(1);
 		Location initial2 = locations2.get(1);
+		mComputationStack.push(new LocationPair(initial1, initial2));
 		// Use an recursive function to create the merged transitions and locations
 		// It start the call with both initial locations, create the merged locations and transitions
 		// after that it will take the target locations of the created transitions and call the function again.
-		createLocationsAndTransitions(initial1,initial2, locations1,locations2, automaton1.getName(),automaton2.getName());        
+		createLocationsAndTransitions(locations1,locations2);
 		HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mTransitionMerge,mLocalParamsMerge,
 				                                     mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge, mLabelsMerge, mLogger);
 		mLogger.info(hybAut.toString());
 		return hybAut;
 	}
 	
-	// TODO: Fix complexity (use a priority queue instead of recursive calls) 
-	// Add Termination condition!
-	private void createLocationsAndTransitions(Location currentLoc1, Location currentLoc2, Map<Integer, Location> locations1,
-												Map<Integer, Location> locations2, String aut1Name, String aut2Name) {
-		// local vars for the loop
-        Location srcLoc1;
-        Location srcLoc2;
-        Location tarLoc1;
-        Location tarLoc2;
-        String srcLocPair;
-        String tarLocPair;
-        String srcTarLocPair1;
-        String srcTarLocPair2;
-        // get all outgoing transitions and set labels,guards,updates
-		List<Transition> outgoing1 = currentLoc1.getOutgoingTransitions();
-		List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
-		Transition currentTransition1 = null;
-		Transition currentTransition2 = null;
-		String currentLabel1 = "";
-		String currentGuard1 = "";
-		String currentUpdate1 = "";
-		String currentLabel2 = "";
-		String currentGuard2 = "";
-		String currentUpdate2 = "";
-		while(outgoing1.iterator().hasNext() || outgoing2.iterator().hasNext()){
-			srcLoc1 = currentLoc1;
-			srcLoc2 = currentLoc2;
-			// if there is a transition, get it
-			// if there is no transition, the target is the source.
-			if(outgoing1.iterator().hasNext()){
-				currentTransition1 = outgoing1.iterator().next();
-				tarLoc1 = locations1.get(currentTransition1.getTargetId());
-				currentLabel1 = (currentTransition1.getLabel() != null) ? currentTransition1.getLabel() : "";
-				currentGuard1 = (currentTransition1.getGuard() != null) ? currentTransition1.getGuard() : "";
-				currentUpdate1 = (currentTransition1.getUpdate() != null) ? currentTransition1.getUpdate() : "";
-			} else{
-				tarLoc1 = srcLoc1;
+	// TODO: reduce cyclomatic Complexity + make the whole function more understandable
+	private void createLocationsAndTransitions(Map<Integer, Location> locations1,Map<Integer, Location> locations2) {
+		while(!mComputationStack.isEmpty()){
+			LocationPair locpair = mComputationStack.pop();
+			if(mVisitedLocations.contains(locpair.toString())){
+				continue;
 			}
-			if(outgoing2.iterator().hasNext()){
-				currentTransition2 = outgoing2.iterator().next();
-				tarLoc2 = locations2.get(currentTransition2.getTargetId());
-				currentLabel2 = (currentTransition2.getLabel() != null) ? currentTransition2.getLabel() : "";
-				currentGuard2 = (currentTransition2.getGuard() != null) ? currentTransition2.getGuard() : "";
-				currentUpdate2 = (currentTransition2.getUpdate() != null) ? currentTransition2.getUpdate() : "";
-			} else{
-				tarLoc2 = srcLoc2;
-			}
-			srcLocPair = srcLoc1 + "," + srcLoc2;
-			tarLocPair = tarLoc1 + "," + tarLoc2;
-			boolean synchronization;
-			if(currentLabel1 != null && currentLabel2 != null){
-				if(currentLabel1.equals(currentLabel2)){
-					synchronization = true;
-				}else{
-					synchronization = false;
+			Location currentLoc1 = locpair.getLocation1();
+			Location currentLoc2 = locpair.getLocation2();
+			// local vars for the loop
+	        Location srcLoc1;
+	        Location srcLoc2;
+	        Location tarLoc1;
+	        Location tarLoc2;
+	        String srcLocPair;
+	        String tarLocPair;
+	        String srcTarLocPair1;
+	        String srcTarLocPair2;
+	        // get all outgoing transitions and set labels,guards,updates
+			List<Transition> outgoing1 = currentLoc1.getOutgoingTransitions();
+			List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
+			mLogger.info(outgoing1.toString());
+			mLogger.info(outgoing2.toString());
+			Transition currentTransition1 = null;
+			Transition currentTransition2 = null;
+			String currentLabel1 = "";
+			String currentGuard1 = "";
+			String currentUpdate1 = "";
+			String currentLabel2 = "";
+			String currentGuard2 = "";
+			String currentUpdate2 = "";
+			while(outgoing1.listIterator().hasNext() || outgoing2.listIterator().hasNext()){
+				srcLoc1 = currentLoc1;
+				srcLoc2 = currentLoc2;
+				mVisitedLocations.add((new LocationPair(srcLoc1, srcLoc2)).toString());
+				// if there is a transition, get it
+				// if there is no transition, the target is the source.
+				if(outgoing1.listIterator().hasNext()){
+					currentTransition1 = outgoing1.listIterator().next();
+					tarLoc1 = locations1.get(currentTransition1.getTargetId());
+					currentLabel1 = (currentTransition1.getLabel() != null) ? currentTransition1.getLabel() : "";
+					currentGuard1 = (currentTransition1.getGuard() != null) ? currentTransition1.getGuard() : "";
+					currentUpdate1 = (currentTransition1.getUpdate() != null) ? currentTransition1.getUpdate() : "";
+				} else{
+					tarLoc1 = srcLoc1;
 				}
-			} else {
-				synchronization	= false;
-			}
-    		// if the labels are equal merge the transition and location right away
-    		if(synchronization){
-    			// if the location exists, get it, else create a new one from the source locations
-    			Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
-    			// if the location exists, get it, else create a new one from the target locations
-    			Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);     			
-    			// transition
-    			Transition trans = new Transition(source, target);
-    			trans.setLabel(currentLabel1);
-    			trans.setGuard(intersectStrings(currentGuard1, currentGuard2));
-    			trans.setUpdate(intersectStrings(currentUpdate1, currentUpdate2));
-    			mTransitionMerge.add(trans);
-    			// add incoming/outgoing transitions to locations
-    			source.addOutgoingTransition(trans);
-    			target.addIncomingTransition(trans);
-    			// add to locations
-    			mLocationsMerge.put(source.getId(), source);
-    			mLocationsMerge.put(target.getId(), target);
-    			createLocationsAndTransitions(tarLoc1, tarLoc2, locations1, locations2, aut1Name, aut2Name);
-    		} else if(isMergeValid(aut1Name,aut2Name, currentLabel1, currentLabel2)) {
-    			// if one or both labels are local OR either one of them is empty, we can merge locations.
-    			// in order to do that, it is necessary to compute all possible combinations.
-    			// from s1,s2 -> s1,t2 AND t1,s2
-    			// pairs s1,t2 and t1,s2
-    			srcTarLocPair1 = srcLoc1 + "," + tarLoc2;
-    			srcTarLocPair2 = tarLoc1 + "," + srcLoc2;
-    			// if the location exists, get it, else create a new one from the source location pairs
-    			Location source = getLocation(srcLocPair,srcLoc1,srcLoc2);
-    			// Create 2 target locations		        		
-    			// if the locations exists, get it, else create a new one from the location pairs
-    			// s1,t2
-    			Location target1 =  getLocation(srcTarLocPair1, srcLoc1, tarLoc2);
-    			// t1,s2
-    			Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
-    			// Create 2 transitions
-    			// s1,s2 ---> s1,t2
-    			Transition srcTar1 = new Transition(source, target1);
-    			srcTar1.setGuard(currentGuard2);
-    			srcTar1.setUpdate(currentUpdate2);
-    			srcTar1.setLabel(currentLabel2);
-    			// s1,s2 ---> t1,s2
-    			Transition srcTar2 = new Transition(source, target2);
-    			srcTar2.setGuard(currentGuard1);
-    			srcTar2.setUpdate(currentUpdate1);
-    			srcTar2.setLabel(currentLabel1);
-    			// incoming /outgoing transitions
-    			source.addOutgoingTransition(srcTar1);
-    			source.addOutgoingTransition(srcTar2);
-    			target1.addIncomingTransition(srcTar1);
-    			target2.addIncomingTransition(srcTar2);
-    			// recursive calls
-    			createLocationsAndTransitions(srcLoc1, tarLoc2, locations1, locations2, aut1Name, aut2Name);
-    			createLocationsAndTransitions(tarLoc1, srcLoc2, locations1, locations2, aut1Name, aut2Name);
-    		} else {
-    			continue;
-    		}
-		}		
+				if(outgoing2.listIterator().hasNext()){
+					currentTransition2 = outgoing2.listIterator().next();
+					tarLoc2 = locations2.get(currentTransition2.getTargetId());
+					currentLabel2 = (currentTransition2.getLabel() != null) ? currentTransition2.getLabel() : "";
+					currentGuard2 = (currentTransition2.getGuard() != null) ? currentTransition2.getGuard() : "";
+					currentUpdate2 = (currentTransition2.getUpdate() != null) ? currentTransition2.getUpdate() : "";
+				} else{
+					tarLoc2 = srcLoc2;
+				}
+				srcLocPair = srcLoc1 + "," + srcLoc2;
+				tarLocPair = tarLoc1 + "," + tarLoc2;
+				boolean synchronization;
+				if((!("".equals(currentLabel1)) && !("".equals(currentLabel2))) && currentLabel1.equals(currentLabel2)){
+					synchronization = true;
+				} else {
+					synchronization	= false;
+				}
+	    		// if the labels are equal merge the transition and location right away
+	    		if(synchronization){
+	    			// if the location exists, get it, else create a new one from the source locations
+	    			Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
+	    			// if the location exists, get it, else create a new one from the target locations
+	    			Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);     			
+	    			// transition
+	    			Transition trans = new Transition(source, target);
+	    			trans.setLabel(currentLabel1);
+	    			trans.setGuard(intersectStrings(currentGuard1, currentGuard2));
+	    			trans.setUpdate(intersectStrings(currentUpdate1, currentUpdate2));
+	    			mTransitionMerge.add(trans);
+	    			// add incoming/outgoing transitions to locations
+	    			source.addOutgoingTransition(trans);
+	    			target.addIncomingTransition(trans);
+	    			// add to locations
+	    			mLogger.info("Created:\n");
+	    			mLogger.info(source.toString());
+	    			mLogger.info(target.toString());
+	    			mLogger.info(trans.toString());
+	    			mLocationsMerge.put(source.getId(), source);
+	    			mLocationsMerge.put(target.getId(), target);
+	    			outgoing1.remove(currentTransition1);
+	    			outgoing2.remove(currentTransition2);
+	    			mComputationStack.push(new LocationPair(tarLoc1, tarLoc2));
+	    		} else {
+	    			// if one or both labels are local OR either one of them is empty, we can merge locations.
+	    			// in order to do that, it is necessary to compute all possible combinations.
+	    			// from s1,s2 -> s1,t2 AND t1,s2
+	    			// pairs s1,t2 and t1,s2
+	    			srcTarLocPair1 = srcLoc1 + "," + tarLoc2;
+	    			srcTarLocPair2 = tarLoc1 + "," + srcLoc2;
+	    			// if the location exists, get it, else create a new one from the source location pairs
+	    			Location source = getLocation(srcLocPair,srcLoc1,srcLoc2);
+	    			// Create 2 target locations		        		
+	    			// if the locations exists, get it, else create a new one from the location pairs
+	    			// s1,t2
+	    			Location target1 =  getLocation(srcTarLocPair1, srcLoc1, tarLoc2);
+	    			// t1,s2
+	    			Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
+	    			// Create 2 transitions
+	    			// s1,s2 ---> s1,t2
+	    			Transition srcTar1 = new Transition(source, target1);
+	    			srcTar1.setGuard(currentGuard2);
+	    			srcTar1.setUpdate(currentUpdate2);
+	    			srcTar1.setLabel(currentLabel2);
+	    			// s1,s2 ---> t1,s2
+	    			Transition srcTar2 = new Transition(source, target2);
+	    			srcTar2.setGuard(currentGuard1);
+	    			srcTar2.setUpdate(currentUpdate1);
+	    			srcTar2.setLabel(currentLabel1);
+	    			// incoming /outgoing transitions
+	    			if(tarLoc1 != srcLoc1){
+	    				source.addOutgoingTransition(srcTar1);
+	    				target1.addIncomingTransition(srcTar1);   				
+	    			} 
+	    			if(tarLoc2 != srcLoc2){
+	    			source.addOutgoingTransition(srcTar2);
+	    			target2.addIncomingTransition(srcTar2);
+	    			}
+	    			// add to lists
+	    			mLocationsMerge.put(source.getId(), source);
+	    			mLocationsMerge.put(target1.getId(), target1);
+	    			mLocationsMerge.put(target2.getId(), target2);
+	    			mTransitionMerge.add(srcTar1);
+	    			mTransitionMerge.add(srcTar2);
+	    			// remove from outgoing transitions
+	    			//outgoing1.remove(currentTransition1);
+	    			//outgoing2.remove(currentTransition2);
+	    			// recursive calls
+	    			mComputationStack.push(new LocationPair(srcLoc1, tarLoc2));
+	    			mComputationStack.push(new LocationPair(tarLoc1, srcLoc2));
+	    			break;
+	    		}
+			}		
+		}
+		
 	}
 
 	private Location getLocation(String locPair, Location loc1, Location loc2) {
@@ -262,22 +289,6 @@ public class ParallelCompositionGenerator {
 		});
 		mLocalLabels.put(automatonName2, locLabs2);
 	}
-
-	private boolean isMergeValid(String automatonname1, String automatonname2, String label1, String label2) {
-		boolean isLocal1 = mLocalLabels.get(automatonname1).contains(label1);
-		boolean isLocal2 = mLocalLabels.get(automatonname2).contains(label2);
-		// double check if labels are not global
-		if(mGlobalLabels.contains(label1) || mGlobalLabels.contains(label2)){
-			return false;
-		}
-		boolean isEmpty1 = (label1 == null || "".equals(label1)) ? true : false;
-		boolean isEmpty2 = (label2 == null || "".equals(label2)) ? true : false;
-		if((isLocal1 && isLocal2) || (isLocal1 && isEmpty2) || (isLocal2 && isEmpty1) || (isEmpty1 && isEmpty2)){
-			return true;
-		}else{
-			return false;
-		}
-	}
 	
 	private void mergeVariables(HybridAutomaton automaton1, HybridAutomaton automaton2) {
 		// global consts
@@ -294,17 +305,6 @@ public class ParallelCompositionGenerator {
 		mLocalParamsMerge.addAll(automaton2.getLocalParameters());		
 	}
 
-	/* 
-	 * helper function to create a transition which holds the same label,guard,update as a given parent Transition	
-	 */
-	private Transition createTransitionFromParent(Location source, Location target, Transition parent){
-		Transition trans = new Transition(source, target);
-		trans.setLabel(parent.getLabel());
-		trans.setGuard(parent.getGuard());
-		trans.setUpdate(parent.getUpdate());
-		return trans;
-	}
-	
 	/*
 	 * helper function to merge locations
 	 */

@@ -68,7 +68,6 @@ public class HybridModel {
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new ArrayList<>();
-
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 			        mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
