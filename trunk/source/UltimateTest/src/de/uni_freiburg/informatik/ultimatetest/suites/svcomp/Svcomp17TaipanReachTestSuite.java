@@ -31,32 +31,32 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 
 /**
  *
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class Svcomp17TaipanTestSuite extends AbstractSVCOMPTestSuite {
-	
+public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
+
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new SvcompReachTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
 		return 90 * 1000;
 	}
-	
+
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
 		return -1;
 	}
-	
+
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
@@ -69,21 +69,21 @@ public class Svcomp17TaipanTestSuite extends AbstractSVCOMPTestSuite {
 		rtr.addAll(getForAll("ReachSafety-Recursive", 10));
 		rtr.addAll(getForAll("ReachSafety-Sequentialized", 10));
 		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 10));
-		
+
 		return rtr;
 	}
-	
+
 	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit) {
 		return getForAll(set, getTimeout(), limit);
 	}
-	
+
 	private List<SVCOMPTestDefinition> getForAll(final String set) {
 		return getForAll(set, getTimeout(), getFilesPerCategory());
 	}
-	
+
 	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
-		
+
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
@@ -96,7 +96,7 @@ public class Svcomp17TaipanTestSuite extends AbstractSVCOMPTestSuite {
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf", timeout, limit));
-		
+
 		return rtr;
 	}
 }
