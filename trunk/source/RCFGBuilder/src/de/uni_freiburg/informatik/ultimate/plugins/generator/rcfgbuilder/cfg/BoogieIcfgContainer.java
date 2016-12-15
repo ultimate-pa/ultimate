@@ -68,14 +68,14 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
-	
+
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Set<BoogieIcfgLocation> mLoopLocations;
 	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
 	private final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes;
-	
+
 	/**
 	 * Maps a procedure name to the final node of that procedure. The final node of a procedure represents the location
 	 * that is reached after executing the last statement of the procedure or after executing a return statement. At
@@ -87,19 +87,18 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 *
 	 */
 	final Map<String, BoogieIcfgLocation> mFinalNode;
-	
+
 	private final Boogie2SMT mBoogie2SMT;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IPayload mPayload;
-	private Set<BoogieIcfgLocation> mPotentialCycleProgramPoints;
 	private final Set<BoogieIcfgLocation> mInitialNodes;
-	
+
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
 			final Boogie2SMT mBoogie2smt, final RCFGBacktranslator backtranslator, final ILocation loc) {
-		
+
 		mEntryNodes = new HashMap<>();
 		mExitNode = new HashMap<>();
 		mFinalNode = new HashMap<>();
@@ -107,7 +106,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mErrorNodes = new HashMap<>();
 		mLoopLocations = new HashSet<>();
 		mInitialNodes = new HashSet<>();
-		
+
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = mBoogie2smt.getManagedScript();
@@ -123,13 +122,13 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mPayload = new Payload(loc);
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
 	}
-	
+
 	@Override
 	@Visualizable
 	public Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints() {
 		return mLocNodes;
 	}
-	
+
 	public int getNumberOfProgramPoints() {
 		int result = 0;
 		for (final String proc : getProgramPoints().keySet()) {
@@ -137,22 +136,22 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Map<String, BoogieIcfgLocation> getProcedureEntryNodes() {
 		return mEntryNodes;
 	}
-	
+
 	@Override
 	public Map<String, BoogieIcfgLocation> getProcedureExitNodes() {
 		return mExitNode;
 	}
-	
+
 	@Override
 	public Map<String, Set<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
 	}
-	
+
 	public int getNumberOfErrorNodes() {
 		int result = 0;
 		for (final String proc : getProcedureErrorNodes().keySet()) {
@@ -160,50 +159,50 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		}
 		return result;
 	}
-	
+
 	// public ModifiableGlobalVariableManager getModifiableGlobals() {
 	// return mModifiableGlobalVariableManager;
 	// }
-	
+
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}
-	
+
 	@Override
 	@Visualizable
 	public Set<BoogieIcfgLocation> getLoopLocations() {
 		return mLoopLocations;
 	}
-	
+
 	public BoogieDeclarations getBoogieDeclarations() {
 		return mBoogieDeclarations;
 	}
-	
+
 	public CodeBlockFactory getCodeBlockFactory() {
 		return mCodeBlockFactory;
 	}
-	
+
 	@Override
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-	
+
 	@Override
 	public IPayload getPayload() {
 		return mPayload;
 	}
-	
+
 	@Override
 	public boolean hasPayload() {
 		return true;
 	}
-	
+
 	public String getFilename() {
 		final String pathAndFilename = getPayload().getLocation().getFileName();
 		final String pureFilename = new File(pathAndFilename).getName();
 		return pureFilename;
 	}
-	
+
 	/**
 	 * @return Collection that contains all edges that are predecessor of the initial location of some procedure.
 	 */
@@ -214,7 +213,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		}
 		return startEdges;
 	}
-	
+
 	public RootNode constructRootNode() {
 		final RootNode rootNode = new RootNode(getPayload().getLocation(), this);
 		for (final Entry<String, BoogieIcfgLocation> entry : getProcedureEntryNodes().entrySet()) {
@@ -222,17 +221,17 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		}
 		return rootNode;
 	}
-	
+
 	@Override
 	public String getIdentifier() {
 		return getClass().getSimpleName() + " " + getFilename();
 	}
-	
+
 	@Override
 	public IIcfgSymbolTable getSymboltable() {
 		return mBoogie2SMT.getBoogie2SmtSymbolTable();
 	}
-	
+
 	@Override
 	public Set<BoogieIcfgLocation> getInitialNodes() {
 		return mInitialNodes;
