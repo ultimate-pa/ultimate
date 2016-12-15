@@ -291,9 +291,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	public class ReturnCheckHelper extends CheckHelper {
 		@Override
 		public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
-			// sat if (not only if!) preLin and preHier are independent,
-			// hence we can use the "normal" sdec method
-			return getSdHoareTripleChecker().sdecReturn(preLin, preHier, (IReturnAction) act, getFalsePredicate());
+			return getSdHoareTripleChecker().sdecReturnToFalse(preLin, preHier, (IReturnAction) act);
 		}
 		
 		@Override
