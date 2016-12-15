@@ -456,9 +456,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					//								pair.getFirst(), pair.getSecond(), resultStates));
 
 					// TODO: fallback, think through
-					Set<VPState> newStates = mDomain.getVpStateFactory().addEquality(
-							pair.getFirst(), pair.getSecond(), resultState);
-					resultState = mDomain.getVpStateFactory().disjoinAll(newStates);
+					Set<VPState> newStates = VPFactoryHelpers.addEquality(
+							new VPNodeIdentifier(pair.getFirst()), 
+							new VPNodeIdentifier(pair.getSecond()), 
+							resultState, 
+							mDomain.getVpStateFactory());
+					resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 				}
 				Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = 
 						extractDisequalitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
@@ -467,10 +470,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					//						mDomain.getVpStateFactory().addDisEquality(
 					//								pair.getFirst(), pair.getSecond(), resultStates));
 					// TODO: fallback, think through
-					Set<VPState> newStates = mDomain.getVpStateFactory().addDisEquality(
-							pair.getFirst(), pair.getSecond(), resultState);
-					resultState = mDomain.getVpStateFactory().disjoinAll(newStates);
-
+					Set<VPState> newStates = VPFactoryHelpers.addDisEquality(
+							new VPNodeIdentifier(pair.getFirst()), 
+							new VPNodeIdentifier(pair.getSecond()), 
+							resultState, 
+							mDomain.getVpStateFactory());
+					resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 				}
 
 			}

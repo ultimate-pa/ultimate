@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-public class VPTransitionStateBuilder extends VPStateBuilder {
+public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState> {
 	
 	Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap = new HashMap<>();
 	private NestedMap3<EqNode, 
@@ -30,7 +30,6 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 
 	public VPTransitionStateBuilder(VPDomain domain, VPDomainPreanalysis preAnalysis,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
-		super(domain, true);
 		createEqGraphNodes(tf, preAnalysis, allConstantEqNodes);
 		
 		for (TFEqGraphNode tfegn : mTermToEqGraphNodeMap.values()) {
@@ -173,6 +172,15 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 		mEqNodeToInVarsToOutVarsToEqGraphNode = eqNodeToInVarsToOutVarsToEqGraphNode;
 	}
 	
+	public void merge(Term t1, Term t2) {
+		TFEqGraphNode egn1 = mTermToEqGraphNodeMap.get(t1);
+		assert egn1 != null;
+		TFEqGraphNode egn2 = mTermToEqGraphNodeMap.get(t2);
+		assert egn2 != null;
+		
+		merge(egn1, egn2);
+	}
+	
 	private TFEqGraphNode getOrConstructEqGraphNode(
 			EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars, 
@@ -231,7 +239,10 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 				argNodes.add(argNode);
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
-			result.getCcchild().addPair(eqFunctionNode.getFunction(), argNodes);
+			result.getCcchild().addPair(
+					new VPArrayIdentifier(
+							((EqFunctionNode) eqNode).getFunction()), 
+							argNodes);
 		}
 		
 		eqNodeToInVarsToOutVarsToEqGraphNode.put(eqNode, inVars, outVars, result);
@@ -281,23 +292,34 @@ public class VPTransitionStateBuilder extends VPStateBuilder {
 //	}
 
 	
-	/**
-	 * There is in general no unique mapping between EqNodes and EqGraphNodes  in the transition-case
-	 */
+//	@Override 
+//	@Deprecated
+//	VPState build() {
+//		assert false : "use buildTf()";
+//		return null;
+//	}
+	
+	VPTfState build() {
+		return null;
+	}
+
+
 	@Override
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		assert false;
+	EqGraphNode getEqGraphNode(VPNodeIdentifier i) {
+		return mTermToEqGraphNodeMap.get(i.getIdTerm());
+	}
+
+
+	@Override
+	IVPStateOrTfStateBuilder<VPTfState> setIsTop(boolean b) {
+		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	@Override 
-	@Deprecated
-	VPState build() {
-		assert false : "use buildTf()";
-		return null;
-	}
-	
-	VPTfState buildTf() {
-		return null;
+
+
+	@Override
+	void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
+		// TODO Auto-generated method stub
+		
 	}
 }

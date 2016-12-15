@@ -112,7 +112,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		
 		@Override
 		public VPState apply(final VPState first, final VPState second) {
-			return getVpStateFactory().disjoin(first, second);
+			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
 		}
 	}
 

@@ -50,18 +50,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class EqGraphNode {
 
-	public final EqNode eqNode;
+	/**
+	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
+	 */
+	public final VPNodeIdentifier nodeIdentifier;
 	private EqGraphNode representative;
 	private Set<EqGraphNode> reverseRepresentative;
 	private Set<EqGraphNode> ccpar;
-	private HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild;
+	private HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild;
 
 	private Set<EqGraphNode> initCcpar;
 	private List<EqGraphNode> initCcchild;
 
 	public EqGraphNode(EqNode eqNode) {
 		assert eqNode != null || this instanceof TFEqGraphNode;
-		this.eqNode = eqNode;
+		this.nodeIdentifier = new VPNodeIdentifier(eqNode);
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();
 		this.ccpar = new HashSet<>();
@@ -78,21 +81,13 @@ public class EqGraphNode {
 	 * @param eqNodeToEqGraphNode
 	 */
 	public void setupNode() {
-//	public void setupNode(Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-//		initCcpar = new HashSet<>();
-//		for (EqNode par : this.eqNode.getParents()) {
-//			EqGraphNode gnPar = eqNodeToEqGraphNode.get(par);
-//			assert gnPar != null;
-//			initCcpar.add(gnPar);
-//		}
 		initCcpar = new HashSet<>(this.ccpar);
 		initCcpar = Collections.unmodifiableSet(initCcpar);
 		
-		if (eqNode instanceof EqFunctionNode) {
-			EqFunctionNode eqfn = (EqFunctionNode) eqNode;
-//			initCcchild = eqfn.getArgs().stream().map(eqn -> eqNodeToEqGraphNode.get(eqn)).collect(Collectors.toList());
-			assert this.ccchild.getImage(eqfn.getFunction()).size() == 1;
-			initCcchild = new ArrayList<>(this.ccchild.getImage(eqfn.getFunction()).iterator().next());
+		if (nodeIdentifier.isFunction()) {
+			VPArrayIdentifier arrayId = nodeIdentifier.getFunction();
+			assert this.ccchild.getImage(arrayId).size() == 1;
+			initCcchild = new ArrayList<>(this.ccchild.getImage(arrayId).iterator().next());
 			initCcchild = Collections.unmodifiableList(initCcchild);
 		}
 	}
@@ -107,8 +102,8 @@ public class EqGraphNode {
 		/*
 		 * Only function node have initCcchild.
 		 */
-		if (eqNode instanceof EqFunctionNode) {
-			this.ccchild.addPair(((EqFunctionNode)eqNode).getFunction(), initCcchild);
+		if (nodeIdentifier.isFunction()) {
+			this.ccchild.addPair(nodeIdentifier.getFunction(), initCcchild);
 		}
 	}	
 	
@@ -120,24 +115,24 @@ public class EqGraphNode {
 	}
 
 	void copyFields(EqGraphNode other, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-		assert this.eqNode == other.eqNode;
+		assert this.nodeIdentifier == other.nodeIdentifier;
 		
-		this.setRepresentative(eqNodeToEqGraphNode.get(other.getRepresentative().eqNode));
+		this.setRepresentative(eqNodeToEqGraphNode.get(other.getRepresentative().nodeIdentifier));
 		
 		this.getReverseRepresentative().clear();
 		for (EqGraphNode reverseRe : other.getReverseRepresentative()) {
-			this.getReverseRepresentative().add(eqNodeToEqGraphNode.get(reverseRe.eqNode));
+			this.getReverseRepresentative().add(eqNodeToEqGraphNode.get(reverseRe.nodeIdentifier));
 		}
 		this.getCcpar().clear();
 		for (EqGraphNode ccpar : other.getCcpar()) {
-			this.getCcpar().add(eqNodeToEqGraphNode.get(ccpar.eqNode));
+			this.getCcpar().add(eqNodeToEqGraphNode.get(ccpar.nodeIdentifier));
 		}
 		
 		this.ccchild = new HashRelation<>();
-		for (IProgramVarOrConst arrayId : other.getCcchild().getDomain()) {
+		for (VPArrayIdentifier arrayId : other.getCcchild().getDomain()) {
 			for (List<EqGraphNode> nodes : other.getCcchild().getImage(arrayId)) {
 				List<EqGraphNode> newList = nodes.stream()
-						.map(otherNode -> eqNodeToEqGraphNode.get(otherNode.eqNode))
+						.map(otherNode -> eqNodeToEqGraphNode.get(otherNode.nodeIdentifier))
 						.collect(Collectors.toList());
 				this.getCcchild().addPair(arrayId, newList);
 			}
@@ -152,7 +147,7 @@ public class EqGraphNode {
 		this.representative = representative;
 		//TODO check
         // if (eqNodes are identical) then (graphnodes must be identical)
-        assert this.representative.eqNode != this.eqNode || this.representative == this;
+        assert this.representative.nodeIdentifier != this.nodeIdentifier || this.representative == this;
 	}
 
 	public Set<EqGraphNode> getReverseRepresentative() {
@@ -183,29 +178,17 @@ public class EqGraphNode {
 		this.ccpar.addAll(ccpar);
 	}
 
-	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> getCcchild() {
+	public HashRelation<VPArrayIdentifier, List<EqGraphNode>> getCcchild() {
 		return ccchild;
 	}
 	
-	public void addToCcchild(IProgramVarOrConst pVorC, List<EqGraphNode> ccchild) {
+	public void addToCcchild(VPArrayIdentifier pVorC, List<EqGraphNode> ccchild) {
 		this.ccchild.addPair(pVorC, ccchild);
 	}
 	
 	public Set<EqGraphNode> getInitCcpar() {
 		return initCcpar;
 	}
-
-//	public void setInitCcpar(Set<EqGraphNode> initCcpar) {
-//		this.initCcpar = initCcpar;
-//	}
-//
-//	public void addToInitCcpar(Set<EqGraphNode> initCcpar) {
-//		this.initCcpar.addAll(initCcpar);
-//	}
-//
-//	public void addToInitCcpar(EqGraphNode initCcpar) {
-//		this.initCcpar.add(initCcpar);
-//	}
 
 	public List<EqGraphNode> getInitCcchild() {
 		return initCcchild;
@@ -214,22 +197,14 @@ public class EqGraphNode {
 	public void setInitCcchild(List<EqGraphNode> initCcchild) {
 		this.initCcchild = initCcchild;
 	}
-//	
-//	public void addToInitCcchild(EqGraphNode initCcchild) {
-//		this.initCcchild.add(initCcchild);
-//	}
-//	
-//	public void addToInitCcchild(List<EqGraphNode> initCcchild) {
-//		this.initCcchild.addAll(initCcchild);
-//	}
 
 	public String toString() {
 
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(eqNode.toString());
+		sb.append(nodeIdentifier.toString());
 		sb.append(" ||| representative: ");
-		sb.append(representative.eqNode.toString());
+		sb.append(representative.nodeIdentifier.toString());
 		
 //		sb.append(" ||| reverseRepresentative: ");
 //		for (EqGraphNode node : reverseRepresentative) {
@@ -259,7 +234,9 @@ public class EqGraphNode {
 		if (!(other instanceof EqGraphNode)) {
 			return false;
 		}
-		return ((EqGraphNode)other).eqNode.equals(this.eqNode);
+		//TODO: what is this for??
+		assert false;
+		return ((EqGraphNode)other).nodeIdentifier.equals(this.nodeIdentifier);
 	}
 
 //	public void setCcchild(Map<Object, Object> newMap) {
