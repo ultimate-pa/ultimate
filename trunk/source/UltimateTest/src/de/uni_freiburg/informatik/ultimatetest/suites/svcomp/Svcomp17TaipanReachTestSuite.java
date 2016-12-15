@@ -88,10 +88,8 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 				"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf", timeout, limit));
+		rtr.add(getTestDefinitionFromExamples(set, "KojakC_WitnessPrinter.xml",
+				"svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
