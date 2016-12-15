@@ -56,25 +56,25 @@
 
   <tasks name="Bitvectors">
 	<include>../../../trunk/examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_false-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_true-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_false-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_true-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector/gcd_4_true-unreach-call.c</include>
-	<include>../../../trunk/examples/svcomp/bitvector/jain_1_true-unreach-call.c</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_false-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector/byte_add_false-unreach-call.c</include>
-	<include>../../../trunk/examples/svcomp/bitvector/num_conversion_1_true-unreach-call.i</include>
-	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_false-unreach-call.BV.c.cil.c</include>
-	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call.c.cil.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/implicitunsignedconversion_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/signextension2_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/gcd_4_true-unreach-call_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/jain_1_false-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector-regression/integerpromotion_false-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/byte_add_false-unreach-call_true-no-overflow.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/num_conversion_1_true-unreach-call_true-no-overflow.i</include>
+	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_true-unreach-call_true-no-overflow.BV.c.cil.c</include>
+	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call_true-no-overflow.c.cil.c</include>
 	<propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
 
   <tasks name="Recursive">
-    <include>../../../trunk/examples/svcomp/recursive/recHanoi02_true-unreach-call_true-termination.c</include>
-    <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_false-termination.c</include>
+    <include>../../../trunk/examples/svcomp/recursive/recHanoi02_true-unreach-call_true-no-overflow_true-termination.c</include>
+    <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_true-no-overflow_true-termination.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
@@ -83,9 +83,9 @@
     <include>../../../trunk/examples/svcomp/termination-15/cstrcmp_diffterm_alloca_true-termination.c.i</include>
 	<include>../../../trunk/examples/svcomp/termination-15/cstrncpy_malloc_true-termination.c.i</include>
 	<include>../../../trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-counterex1a_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/Madrid_false-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/NonTermination1_false-termination.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/Madrid_false-termination_true-valid-memsafety.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_true-termination_true-valid-memsafety.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/NonTermination1_false-termination_true-valid-memsafety.c</include>
 	<include>../../../trunk/examples/svcomp/termination-libowfat/strcpy_small_true-termination.c.i</include>
 	<include>../../../trunk/examples/svcomp/termination-libowfat/strstr_true-termination.c.i</include>
 	<include>../../../trunk/examples/svcomp/termination-memory-alloca/b.10-alloca_true-termination.c.i</include>
