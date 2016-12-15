@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -45,9 +48,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.writer.SpaceExWriter;
 
 /**
  * @author Marius Greitschus
@@ -168,13 +173,17 @@ public class SpaceExParser implements ISource {
 		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
-//		final Marshaller marshaller = jaxContext.createMarshaller();
-//		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-//		final StringWriter streamWriter = new StringWriter();
-//		marshaller.marshal(spaceEx, streamWriter);
-//		mLogger.debug(streamWriter.toString());
 		fis.close();
-		final HybridModel system = new HybridModel(spaceEx, mLogger);		
+		final HybridModel system = new HybridModel(spaceEx, mLogger);
+		/*
+		final Marshaller marshaller = jaxContext.createMarshaller();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		final StringWriter streamWriter = new StringWriter();
+		final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger);		
+		Sspaceex root = spaceexWriter.HybridAutomatonToSpaceEx(system.getMerged());
+		String targetfile = "" ; // some path/filename you want
+		spaceexWriter.writeXmlToDisk(root,targetfile);
+		*/
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 

@@ -55,11 +55,11 @@ public class Transition {
 		target.addIncomingTransition(this);
 	}
 
-	protected int getSourceId() {
+	public int getSourceId() {
 		return mSource.getId();
 	}
 
-	protected int getTargetId() {
+	public int getTargetId() {
 		return mTarget.getId();
 	}
 
@@ -67,7 +67,7 @@ public class Transition {
 		mLabel = label;
 	}
 
-	protected String getLabel() {
+	public String getLabel() {
 		return mLabel;
 	}
 
@@ -75,7 +75,7 @@ public class Transition {
 		mUpdate = update;
 	}
 
-	protected String getUpdate() {
+	public String getUpdate() {
 		return mUpdate;
 	}
 
@@ -83,7 +83,7 @@ public class Transition {
 		mGuard = guard;
 	}
 
-	protected String getGuard() {
+	public String getGuard() {
 		return mGuard;
 	}
 

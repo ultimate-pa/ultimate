@@ -98,12 +98,7 @@ public class HybridModel {
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
-			});
-			/*
-			HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
-			HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
-			mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
-			*/
+			});			
 		}
 	}
 
@@ -136,6 +131,15 @@ public class HybridModel {
 	
 	public List<HybridSystem> getSystems(){
 		return mSystems;
+	}
+	
+	// just for tests
+	public HybridAutomaton getMerged(){
+		HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
+		HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
+		HybridAutomaton merged = mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
+		return merged;
+	
 	}
 	
 	
