@@ -18,19 +18,14 @@
 #Fri Apr 03 17:28:56 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=LoopFreeBlock
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=/home/matthias/ultimate/dump
-#Fri Apr 03 17:28:56 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+
+
 #Fri Apr 03 17:28:56 CEST 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
