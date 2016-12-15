@@ -308,6 +308,10 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public Validity sdecReturn(final IPredicate pre, final IPredicate hier, final IReturnAction ret, final IPredicate post) {
+//		final boolean ind = preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure());
+//		final boolean dist = preHierNotFalse(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure());
+//		assert !ind || dist : "inddistbug";
+		
 		if (hierPostIndependent(hier, ret, post)
 				&& preHierIndependent(pre, hier, ret.getLocalVarsAssignmentOfCall(), ret.getPrecedingProcedure())
 				&& prePostIndependent(pre, ret, post)) {
@@ -443,6 +447,117 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
+	private boolean preHierNotFalse(final IPredicate pre, final IPredicate hier,
+			final UnmodifiableTransFormula localVarsAssignment, final String calledProcedure) {
+		
+		// pre hier not connected via call
+		// local in disjoint or local out disjoint
+		// not if pre contains old and global in hier or localVarsAssignment
+		// or not modifiable and hier contains oldvar
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
+		final boolean isSelfConnectedViaLocalVarsAssignment = isSelfConnectedViaLocalVarsAssignment(pre, localVarsAssignment, modifiableGlobals);
+		if (isSelfConnectedViaLocalVarsAssignment) {
+			return false;
+		}
+		final boolean isConnectedViaLocalVarsAssignment = isConnectedViaLocalVarsAssignment(hier, localVarsAssignment, pre);
+		if (isConnectedViaLocalVarsAssignment) {
+			return false;
+		}
+		final boolean canBeCrossConnectedViaGlobalVars = canBeCrossConnectedViaGlobalVars(hier, pre, modifiableGlobals);
+		if (canBeCrossConnectedViaGlobalVars) {
+			return false;
+		}
+		final boolean disjointOnNonOldVars = disjointOnNonModifiableGlobals(hier, pre, modifiableGlobals);
+		if (disjointOnNonOldVars) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	private boolean disjointOnNonModifiableGlobals(final IPredicate hier, final IPredicate returnPred, final Set<IProgramNonOldVar> modifiableGlobals) {
+		for (final IProgramVar pv : returnPred.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				if (!modifiableGlobals.contains(pv)) {
+					if (hier.getVars().contains(pv)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean canBeCrossConnectedViaGlobalVars(final IPredicate hier, final IPredicate returnPred,
+			final Set<IProgramNonOldVar> modifiableGlobals) {
+		for (final IProgramVar pv : returnPred.getVars()) {
+			if (pv instanceof IProgramOldVar) {
+				final IProgramNonOldVar nonOld = ((IProgramOldVar) pv).getNonOldVar();
+				if (hier.getVars().contains(nonOld)) {
+					return true;
+				}
+				if (!modifiableGlobals.contains(nonOld)) {
+					// there is some risk that pv is also not modifiable by
+					// caller and then the oldvar of the caller coincides
+					// with the global var of the caller
+					if (hier.getVars().contains(pv)) {
+						return true;
+					}
+				}
+			} else if (pv instanceof IProgramNonOldVar) {
+				if (!modifiableGlobals.contains(pv)) {
+					if (hier.getVars().contains(pv)) {
+						return true;
+					}
+					final IProgramOldVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+					// there is some risk that pv is also not modifiable by
+					// caller and then the oldvar of the caller coincides
+					// with the global var of the caller
+					if (hier.getVars().contains(oldVar)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean isConnectedViaLocalVarsAssignment(final IPredicate hier, final UnmodifiableTransFormula localVarsAssignment,
+			final IPredicate returnPred) {
+		return !varSetDisjoint(localVarsAssignment.getAssignedVars(), returnPred.getVars()) &&
+				!varSetDisjoint(hier.getVars(), localVarsAssignment.getInVars().keySet());
+	}
+
+	/**
+	 * E.g., returnPred: g != x 
+	 * localVarsAssignment x := g
+	 * and g not modifiable
+	 */
+	private boolean isSelfConnectedViaLocalVarsAssignment(final IPredicate returnPred, 
+			final UnmodifiableTransFormula localVarsAssignment, final Set<IProgramNonOldVar> modifiableGlobals) {
+		if (varSetDisjoint(localVarsAssignment.getAssignedVars(), returnPred.getVars())) {
+			return false;
+		} else {
+			for (final IProgramVar pv : returnPred.getVars()) {
+				if (pv instanceof IProgramOldVar) {
+					final IProgramNonOldVar nonOld = ((IProgramOldVar) pv).getNonOldVar();
+					if (localVarsAssignment.getInVars().containsKey(nonOld)) {
+						return true;
+					}
+				} else if (pv instanceof IProgramNonOldVar) {
+					if (!modifiableGlobals.contains(pv)) {
+						if (localVarsAssignment.getInVars().containsKey(pv)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
+	}
+
 	private boolean prePostIndependent(final IPredicate pre, final IReturnAction ret, final IPredicate post) {
 		final UnmodifiableTransFormula returnAssignTf = ret.getAssignmentOfReturn();
 		if (!varSetDisjoint(pre.getVars(), returnAssignTf.getInVars().keySet())
