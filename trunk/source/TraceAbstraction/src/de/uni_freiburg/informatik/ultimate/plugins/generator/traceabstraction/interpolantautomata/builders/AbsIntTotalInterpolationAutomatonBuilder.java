@@ -58,6 +58,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -88,6 +91,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	
 	private static final boolean SIMPLE_HOARE_CHECK = true;
 	
@@ -109,7 +114,9 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final IRun<CodeBlock, IPredicate, ?> currentCounterExample, final IIcfgSymbolTable symbolTable) {
+			final IRun<CodeBlock, IPredicate, ?> currentCounterExample, final IIcfgSymbolTable symbolTable,
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
@@ -118,6 +125,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 	
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
@@ -126,46 +135,55 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			final PredicateUnifier predicateUnifier) {
 		
 		mLogger.info("Creating interpolant automaton from AI predicates (total)");
-		
+
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
 				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
-		
+
 		final NestedRun<CodeBlock, IPredicate> counterExample =
 				(NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final Word<CodeBlock> word = counterExample.getWord();
-		
+
 		final int wordLength = word.length();
 		assert wordLength > 1 : "Unexpected: length of word smaller or equal to 1.";
-		
+
 		final Map<Call, IPredicate> callHierarchyPredicates = new HashMap<>();
-		
+
+		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices,
+				mCsToolkit.getManagedScript(), mSymbolTable, mSimplificationTechnique, mXnfConversionTechnique);
+
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
 		IPredicate previous = predicateUnifier.getTruePredicate();
 		alreadyThereAsState.add(previous);
 		result.addState(true, false, previous);
-		
+
 		final Map<IPredicate, Set<IAbstractState<?, CodeBlock, IBoogieVar>>> predicateToStates = new HashMap<>();
-		
+
 		for (int i = 0; i < wordLength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
-			
+
 			final Set<IAbstractState<?, CodeBlock, IBoogieVar>> nextStates =
 					(Set<IAbstractState<?, CodeBlock, IBoogieVar>>) aiResult.getLoc2States().get(symbol.getTarget());
-			
+
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
-				
+
 				if (mLogger.isDebugEnabled()) {
 					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
 			} else {
+				// target = predicateUnifier
+				// .getOrConstructPredicateForDisjunction(
+				// nextStates.stream()
+				// .map(state -> predicateFactory.newAbstractStatePredicate(state,
+				// aiResult.getUsedDomain().getPostOperator()))
+				// .collect(Collectors.toSet()));
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
 						nextStates.stream().map(s -> s.getTerm(mCsToolkit.getManagedScript().getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
-				
+
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is
 				// originating from.
 				if (!predicateToStates.containsKey(target)) {
@@ -173,16 +191,16 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				} else {
 					predicateToStates.get(target).addAll(nextStates.stream().collect(Collectors.toSet()));
 				}
-				
+
 				if (mLogger.isDebugEnabled()) {
 					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
 			}
-			
+
 			if (alreadyThereAsState.add(target)) {
 				result.addState(false, falsePredicate.equals(target), target);
 			}
-			
+
 			// Add transition
 			if (symbol instanceof Call) {
 				result.addCallTransition(previous, symbol, target);
@@ -195,15 +213,15 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			} else {
 				result.addInternalTransition(previous, symbol, target);
 			}
-			
+
 			previous = target;
 		}
-		
+
 		// Add self-loops to final states
 		for (final IPredicate finalState : result.getFinalStates()) {
 			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
 		}
-		
+
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
 					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
@@ -215,7 +233,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		}
 		
 		enhanceResult(oldAbstraction, aiResult, result, predicateToStates, predicateUnifier);
-		
+
 		return result;
 	}
 	
