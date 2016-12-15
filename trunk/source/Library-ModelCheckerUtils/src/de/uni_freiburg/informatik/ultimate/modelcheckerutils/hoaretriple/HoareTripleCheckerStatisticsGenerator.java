@@ -135,4 +135,29 @@ public class HoareTripleCheckerStatisticsGenerator implements IStatisticsDataPro
 		return HoareTripleCheckerStatisticsType.getInstance();
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append("HoareTripleCheckerStatisticsGenerator [mSDtfsCounter=");
+		builder.append(mSDtfsCounter);
+		builder.append(", mSDsluCounter=");
+		builder.append(mSDsluCounter);
+		builder.append(", mSDsCounter=");
+		builder.append(mSDsCounter);
+		builder.append(", mSdLazyCounter=");
+		builder.append(mSdLazyCounter);
+		builder.append(", mSolverCounterSat=");
+		builder.append(mSolverCounterSat);
+		builder.append(", mSolverCounterUnsat=");
+		builder.append(mSolverCounterUnsat);
+		builder.append(", mSolverCounterUnknown=");
+		builder.append(mSolverCounterUnknown);
+		builder.append(", mSolverCounterNotChecked=");
+		builder.append(mSolverCounterNotChecked);
+		builder.append("]");
+		return builder.toString();
+	}
+	
+	
+
 }
