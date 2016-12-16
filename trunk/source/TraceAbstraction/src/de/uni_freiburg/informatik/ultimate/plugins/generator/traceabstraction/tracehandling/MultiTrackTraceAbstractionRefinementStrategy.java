@@ -273,7 +273,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			case Z3_FPBP:
 			case CVC4_FPBP:
 			case MATHSAT_FPBP:
-				interpolationTechnique = InterpolationTechnique.FPandBP;
+				interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
 				break;
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
