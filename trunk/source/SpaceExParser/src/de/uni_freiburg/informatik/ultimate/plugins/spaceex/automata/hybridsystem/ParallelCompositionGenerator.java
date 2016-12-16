@@ -91,6 +91,7 @@ public class ParallelCompositionGenerator {
 		// labels are merged with union
 		mLabelsMerge.addAll(automaton1.getLabels());
 		mLabelsMerge.addAll(automaton2.getLabels());
+		splitLabels(automaton1.getName(), automaton2.getName(), automaton1.getLabels(), automaton2.getLabels());
 		// merge variables
 		mergeVariables(automaton1,automaton2);
 		// locations
@@ -234,23 +235,22 @@ public class ParallelCompositionGenerator {
 	    			srcTar2.setUpdate(currentUpdate1);
 	    			srcTar2.setLabel(currentLabel1);
 	    			// incoming /outgoing transitions
-	    			if(source.getId() != target1.getId()){
+	    			if(source.getId() != target1.getId() && !mGlobalLabels.contains(srcTar1.getLabel())){
 	    				source.addOutgoingTransition(srcTar1);
 	    				target1.addIncomingTransition(srcTar1);
 	    				mTransitionMerge.add(srcTar1);
+	    				mLocationsMerge.put(target1.getId(), target1);
+	    				mComputationStack.push(new LocationPair(srcLoc1, tarLoc2));
+	    				
 	    			} 
-	    			if(source.getId() != target2.getId()){
+	    			if(source.getId() != target2.getId() && !mGlobalLabels.contains(srcTar2.getLabel())){
 	    				source.addOutgoingTransition(srcTar2);
 	    				target2.addIncomingTransition(srcTar2);
 	    				mTransitionMerge.add(srcTar2);
+	    				mLocationsMerge.put(target2.getId(), target2);
+	    				mComputationStack.push(new LocationPair(tarLoc1, srcLoc2));
 	    			}
-	    			// add to lists
 	    			mLocationsMerge.put(source.getId(), source);
-	    			mLocationsMerge.put(target1.getId(), target1);
-	    			mLocationsMerge.put(target2.getId(), target2);
-	    			// add new locations to the computation stack
-	    			mComputationStack.push(new LocationPair(srcLoc1, tarLoc2));
-	    			mComputationStack.push(new LocationPair(tarLoc1, srcLoc2));
 	    			break;
 	    		}
 			}		
@@ -302,8 +302,9 @@ public class ParallelCompositionGenerator {
 	 */
 	private boolean isSynchronization(String currentLabel1, String currentLabel2){
 		boolean bothEmpty = ("".equals(currentLabel1) && "".equals(currentLabel2)) ? true : false ;
-		boolean equalLabels = (currentLabel1.equals(currentLabel2)) ? true : false;
-		return !bothEmpty && equalLabels;
+		boolean equalLabels = currentLabel1.equals(currentLabel2) ? true : false;
+		boolean bothGlobal = mGlobalLabels.contains(currentLabel1) && mGlobalLabels.contains(currentLabel2);
+		return !bothEmpty && equalLabels && bothGlobal;
 	}
 	
 	private void mergeVariables(HybridAutomaton automaton1, HybridAutomaton automaton2) {

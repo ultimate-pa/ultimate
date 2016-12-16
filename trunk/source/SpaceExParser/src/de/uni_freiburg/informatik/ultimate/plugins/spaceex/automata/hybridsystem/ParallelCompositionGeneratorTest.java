@@ -5,14 +5,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 
 import static org.junit.Assert.*;
 
-import java.io.Console;
+
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -111,7 +105,9 @@ public class ParallelCompositionGeneratorTest {
 			}
 		};
 		// TEST1: aut1: 1 location, 0 transitions, aut2: 1 location, 0 transitions
-		String file = "S:\\uni\\Bachelorarbeit\\ultimate\\ultimate\\trunk\\source\\SpaceExParser\\src\\de\\uni_freiburg\\informatik\\ultimate\\plugins\\spaceex\\automata\\hybridsystem\\testfiles\\test1.xml";
+		System.out.println("Starting Test 1..");
+		long startTime = System.nanoTime();
+		String file = "../SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/automata/hybridsystem/testfiles/test1.xml";
 		FileInputStream fis = new FileInputStream(file);
 		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
@@ -127,8 +123,12 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[]",merge.getLocalParameters().toString());
 		assertEquals("{1=loc_1(1), Invariant: x <= 10 && y <= 10, Flow: x' == 10 && y' == 10}",merge.getLocations().toString());
 		assertEquals("[]",merge.getTransitions().toString());
+		long estimatedTime = System.nanoTime() - startTime;
+		System.out.println("Done in " + estimatedTime/(float)1000000 +" milliseconds");
 		// TEST2: aut1: 1 location, 0 transitions, aut2: 2 locations, 1 transition
-		file = "S:\\uni\\Bachelorarbeit\\ultimate\\ultimate\\trunk\\source\\SpaceExParser\\src\\de\\uni_freiburg\\informatik\\ultimate\\plugins\\spaceex\\automata\\hybridsystem\\testfiles\\test2.xml";
+		System.out.println("Starting Test 2..");
+		startTime = System.nanoTime();
+		file = "../SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/automata/hybridsystem/testfiles/test2.xml";
 		fis = new FileInputStream(file);		
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
@@ -145,8 +145,12 @@ public class ParallelCompositionGeneratorTest {
 				+ "3=loc_3(3), Invariant: x <= 10 && y <= 10, Flow: x' == 10 && y' == 10}",merge.getLocations().toString());
 		assertEquals("[(1) === (); {} ===> (2),"
 				+ " (1) === (); {} ===> (3)]",merge.getTransitions().toString());
+		estimatedTime = System.nanoTime() - startTime;
+		System.out.println("Done in " + estimatedTime/(float)1000000 +" milliseconds");
 		// TEST3: aut1: 3 locations, 1 sync transition, 1 discrete transition , aut2: 3 locations, 1 sync transition, 1 discrete transition
-		file = "S:\\uni\\Bachelorarbeit\\ultimate\\ultimate\\trunk\\source\\SpaceExParser\\src\\de\\uni_freiburg\\informatik\\ultimate\\plugins\\spaceex\\automata\\hybridsystem\\testfiles\\test3.xml";
+		System.out.println("Starting Test 3..");
+		startTime = System.nanoTime();
+		file = "../SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/automata/hybridsystem/testfiles/test3.xml";
 		fis = new FileInputStream(file);		
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
@@ -169,6 +173,34 @@ public class ParallelCompositionGeneratorTest {
 				+ " (2) === (); {} ===> (4),"
 				+ " (4) === (); {} ===> (5),"
 				+ " (3) === (); {} ===> (5)]",merge.getTransitions().toString());
+		estimatedTime = System.nanoTime() - startTime;
+		System.out.println("Done in " + estimatedTime/(float)1000000 +" milliseconds");
+		// TEST4: aut1: 3 locations, 1 sync transition, 1 discrete transition , aut2: 3 locations, 1 sync transition, 1 discrete transition
+		System.out.println("Starting Test 4..");
+		startTime = System.nanoTime();
+		file = "../SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/automata/hybridsystem/testfiles/test4.xml";
+		fis = new FileInputStream(file);		
+		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
+		fis.close();
+		system = new HybridModel(spaceEx, logger);
+		merge = system.getMerged();
+		System.out.println(merge);
+		assertEquals("aut1||aut2", merge.getName());
+		assertEquals("[]",merge.getGlobalConstants().toString());
+		assertEquals("[x, y]",merge.getGlobalParameters().toString());
+		assertEquals("[]",merge.getLocalConstants().toString());
+		assertEquals("[]",merge.getLocalParameters().toString());
+		assertEquals("[jump1]", merge.getLabels().toString());
+		assertEquals("{1=loc_1(1), Invariant: x <= 4 && y <= 4, Flow: x'==1 && y'==1, "
+				+ "3=loc_3(3), Invariant: x <= 5 && y <= 4, Flow: x'==1 && y'==1, "
+				+ "4=loc_4(4), Invariant: x <= 6 && y <= 5, Flow: x'==1 && y'==1, "
+				+ "5=loc_5(5), Invariant: x <= 6 && y <= 6, Flow: x'==1 && y'==1}",merge.getLocations().toString());
+		assertEquals("[(1) === (); {} ===> (3), "
+				+ "(3) === (); {x:=0 && y:=0}; Label: jump1 ===> (4), "
+				+ "(4) === (); {} ===> (5)]",merge.getTransitions().toString());
+		estimatedTime = System.nanoTime() - startTime;
+		System.out.println("Done in " + estimatedTime/(float)1000000 +" milliseconds");
+
 	}
 
 }
