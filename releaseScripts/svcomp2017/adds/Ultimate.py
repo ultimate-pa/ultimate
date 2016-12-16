@@ -286,7 +286,7 @@ def getToolchainPath(termmode, memDeref, memDerefMemtrack, overflowMode, witness
     else:
         searchString = '*Reach.xml'
     
-    toolchain = searchCurrentDir('*Termination.xml');
+    toolchain = searchCurrentDir(searchString);
     if toolchain == '' or toolchain == None:
         print ('No suitable toolchain file found using ' + searchString)
         sys.exit(1)
