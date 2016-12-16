@@ -40,6 +40,7 @@
   <tasks name="Overflow">
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow.c.i</include>
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
+	<include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMax_false-no-overflow.c.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyOverflow.prp</propertyfile>
 	<option name="64bit"></option>
   </tasks>
