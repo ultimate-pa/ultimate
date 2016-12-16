@@ -104,8 +104,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 
 	protected final InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationBenchmarkGenerator;
-	private final boolean mprintDebugInformation = !false;
-	private final boolean mprintAutomataOfDifference = !false;
+	private final boolean mprintDebugInformation = false;
+	private final boolean mprintAutomataOfDifference = false;
 	private boolean mInterpolantsConsolidationSuccessful = false;
 	private final boolean useConsolidationInNonEmptyCase = false;
 
