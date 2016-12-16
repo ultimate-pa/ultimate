@@ -86,7 +86,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	// This is a safe and the simplest strategy: add the weakest precondition of the last transition and the formula 'false' to 
 	// the location before the error location, and before that one
-	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
+	private final static boolean USE_WP_FOR_LAST_2_TRANSITIONS =!false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
@@ -243,14 +243,20 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				// transitions.add(new Transition(transFormula, locations.get(i - 1), location));
 				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
 						transFormula));
-				if (USE_ONLY_LAST_BACKWARD_PREDICATES && (i == len - 1)) {
-					final IPredicate wpAsPredicate = mPredicateUnifier.getOrConstructPredicate(
+				if (USE_WP_FOR_LAST_2_TRANSITIONS && (i == len - 1)) {
+					final IPredicate wpFor1stTransition = mPredicateUnifier.getOrConstructPredicate(
 							mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
-					weakestPreconditionOfLastTransition =
-							TransFormulaBuilder.constructTransFormulaFromPredicate(wpAsPredicate, managedScript);
-//					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-//							currentLocation.getPayload(), wpAsTransformula));
-					mLogger.info("wp computed: " + wpAsPredicate);
+					final IPredicate wpFor2ndTransition = mPredicateUnifier.getOrConstructPredicate(
+							mPredicateTransformer.weakestPrecondition(wpFor1stTransition, ((IInternalAction) mRun.getSymbol(i - 2)).getTransformula()));
+//					if (mPredicateUnifier.getTruePredicate().equals(wpFor2ndTransition)) {
+//						
+//					} else {
+						weakestPreconditionOfLastTransition =
+								TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition, managedScript);
+						//					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
+						//							currentLocation.getPayload(), wpAsTransformula));
+						mLogger.info("wp computed: " + weakestPreconditionOfLastTransition);
+//					}
 				}
 			}
 			previousLocation = currentLocation;
@@ -282,7 +288,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			transitionsAsList.addAll(transitions);
 			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition, postcondition,
 					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
-					weakestPreconditionOfLastTransition, USE_ONLY_LAST_BACKWARD_PREDICATES, ADD_WP_TO_EACH_CONJUNCT);
+					weakestPreconditionOfLastTransition, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}

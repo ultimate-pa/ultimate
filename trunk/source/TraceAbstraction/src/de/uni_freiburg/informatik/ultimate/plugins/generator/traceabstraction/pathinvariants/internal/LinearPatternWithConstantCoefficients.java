@@ -50,8 +50,11 @@ public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
 	@Override
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation) {
 		AffineFunction func = new AffineFunction();
+//		assert mProgramVars2TermVariables != null : "ProgramVars2TermVariables should not be null";
 		for (IProgramVar pv : mProgramVars2TermVariables.keySet()) {
-			func.put(pv, mProgramVars2ConstantCoefficients.get(pv).getConstant().numerator());
+			if (mProgramVars2ConstantCoefficients.containsKey(pv)) {
+				func.put(pv, mProgramVars2ConstantCoefficients.get(pv).getConstant().numerator());
+			}
 		}
 		func.setConstant(BigInteger.ZERO);
 		return func;

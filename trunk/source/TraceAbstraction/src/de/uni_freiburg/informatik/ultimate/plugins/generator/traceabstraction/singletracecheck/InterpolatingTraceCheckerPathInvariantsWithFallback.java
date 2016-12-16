@@ -108,7 +108,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	}
 
 	private static IPredicate[] fallbackInterpolantComputation() {
-		throw new UnsupportedOperationException("fallback comutation not yet implemented");
+		throw new UnsupportedOperationException("fallback computation not yet implemented");
 	}
 
 }
