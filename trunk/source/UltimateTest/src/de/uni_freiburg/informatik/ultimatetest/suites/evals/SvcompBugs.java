@@ -63,6 +63,7 @@ public class SvcompBugs extends AbstractEvalTestSuite {
 	
 	
 	// ExceptionOrErrorResult: IllegalArgumentException: The expression RoundingMode_RTZ has a null type
+	// Matthias: don't care about these - the best that we can achieve is that we crash with a better error message
 	private static final Triple<String, String, String>[] ERROR_2 = new Triple[] {
 		new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/seq-mthreaded/rekcba_nxt_true-unreach-call.2.M4.c"),
 		new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/seq-mthreaded/rekcba_nxt_true-unreach-call.3.M1.c"),
