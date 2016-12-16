@@ -509,7 +509,9 @@ public class RefineBuchi {
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
-		case FPandBP: {
+		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
+		{
 			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
 					word, mCsToolkit, /*
 					 * TODO: When Matthias

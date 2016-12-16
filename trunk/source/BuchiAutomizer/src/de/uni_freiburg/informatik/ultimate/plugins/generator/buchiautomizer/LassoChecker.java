@@ -454,6 +454,7 @@ public class LassoChecker {
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
+			case FPandBPonlyIfFpWasNotPerfect:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
 						run.getWord(), mCsToolkit, /*
 						 * TODO: When Matthias introduced this parameter he set the argument to

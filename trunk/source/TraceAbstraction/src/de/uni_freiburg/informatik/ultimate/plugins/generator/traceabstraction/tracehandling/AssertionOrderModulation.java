@@ -96,6 +96,7 @@ public class AssertionOrderModulation {
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
 			return ASSERTION_ORDERS[getNewIndex(traceHistogram, histogramHistory)];
 		default:

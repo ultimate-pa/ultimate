@@ -156,6 +156,7 @@ public class LoopCannibalizer {
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
 					 * TODO: When Matthias

@@ -617,6 +617,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),

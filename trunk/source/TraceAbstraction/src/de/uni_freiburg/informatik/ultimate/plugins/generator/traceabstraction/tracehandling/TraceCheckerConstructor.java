@@ -184,6 +184,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
+			case FPandBPonlyIfFpWasNotPerfect:
 				traceChecker = constructForwardBackward();
 				break;
 			case PathInvariants:

@@ -91,7 +91,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private final static boolean mPostProcess_FP_Predicates = false;
 	
 	private final boolean mConstructForwardInterpolantSequence;
-	private final boolean mConstructBackwardInterpolantSequence;
+	
+	private enum ConstructBackwardSequence { YES, NO, IF_FP_WAS_NOT_PERFECT };
+	private final ConstructBackwardSequence mConstructBackwardInterpolantSequence;
 	
 	private AnnotateAndAssertConjunctsOfCodeBlocks mAnnotateAndAsserterConjuncts;
 	
@@ -117,15 +119,19 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		switch (interpolation) {
 			case ForwardPredicates:
 				mConstructForwardInterpolantSequence = true;
-				mConstructBackwardInterpolantSequence = false;
+				mConstructBackwardInterpolantSequence = ConstructBackwardSequence.NO;
 				break;
 			case BackwardPredicates:
 				mConstructForwardInterpolantSequence = false;
-				mConstructBackwardInterpolantSequence = true;
+				mConstructBackwardInterpolantSequence = ConstructBackwardSequence.YES;
 				break;
 			case FPandBP:
 				mConstructForwardInterpolantSequence = true;
-				mConstructBackwardInterpolantSequence = true;
+				mConstructBackwardInterpolantSequence = ConstructBackwardSequence.YES;
+				break;
+			case FPandBPonlyIfFpWasNotPerfect:
+				mConstructForwardInterpolantSequence = true;
+				mConstructBackwardInterpolantSequence = ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT;
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupportedInterpolation");
@@ -151,12 +157,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		mTraceCheckFinished = true;
 	}
 	
-	public boolean forwardsPredicatesComputed() {
+	public boolean wasForwardPredicateComputationRequested() {
 		return mConstructForwardInterpolantSequence;
 	}
 	
-	public boolean backwardsPredicatesComputed() {
-		return mConstructBackwardInterpolantSequence;
+	public boolean wasBackwardsPredicatesComputationRequested() {
+		return (mConstructBackwardInterpolantSequence == ConstructBackwardSequence.YES) ||
+				(mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT && !isForwardSequencePerfect());
 	}
 	
 	public List<IPredicate> getForwardPredicates() {
@@ -256,7 +263,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					mCfgManagedScript) : "invalid Hoare triple in FP";
 		}
 		
-		if (mConstructBackwardInterpolantSequence) {
+		if (wasBackwardsPredicatesComputationRequested()) {
 			mLogger.debug("Computing backward predicates...");
 			try {
 				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
@@ -281,7 +288,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					mCfgManagedScript) : "invalid Hoare triple in BP";
 		}
 		
-		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
+		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
 			// Post-process forwards predicates
 			if (mPostProcess_FP_Predicates) {
 				for (int i = 0; i < mInterpolantsFp.size(); i++) {
@@ -308,7 +315,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
 		}
-		if (mConstructBackwardInterpolantSequence) {
+		if (wasBackwardsPredicatesComputationRequested()) {
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
 			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
 					InterpolantType.Backward);
@@ -330,7 +337,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		// if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
 		// checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
 		// }
-		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
+		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
 			final boolean omitMixedSequence = true;
 			if (omitMixedSequence) {
 				mInterpolants = null;
@@ -339,7 +346,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		} else if (mConstructForwardInterpolantSequence) {
 			mInterpolants = mInterpolantsFp.toArray(new IPredicate[mInterpolantsFp.size()]);
-		} else if (mConstructBackwardInterpolantSequence) {
+		} else if (wasBackwardsPredicatesComputationRequested()) {
 			mInterpolants = mInterpolantsBp.toArray(new IPredicate[mInterpolantsBp.size()]);
 		} else {
 			throw new AssertionError("illegal choice");

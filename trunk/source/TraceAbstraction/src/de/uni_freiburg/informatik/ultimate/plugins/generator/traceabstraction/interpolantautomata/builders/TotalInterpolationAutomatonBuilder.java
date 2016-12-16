@@ -328,6 +328,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,

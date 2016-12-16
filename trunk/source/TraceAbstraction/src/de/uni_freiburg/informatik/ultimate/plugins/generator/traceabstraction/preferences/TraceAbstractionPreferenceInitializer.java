@@ -281,6 +281,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		ForwardPredicates,
 		BackwardPredicates,
 		FPandBP,
+		FPandBPonlyIfFpWasNotPerfect,
 		PathInvariants
 	}
 	

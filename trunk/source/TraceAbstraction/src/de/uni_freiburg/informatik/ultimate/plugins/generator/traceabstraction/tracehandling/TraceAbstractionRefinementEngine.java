@@ -254,12 +254,12 @@ public final class TraceAbstractionRefinementEngine
 			final TraceCheckerSpWp traceCheckerSpWp) {
 		final List<InterpolantsPreconditionPostcondition> interpolantsList = new ArrayList<>(2);
 		boolean oneSequenceWasPerfect;
-		if (traceCheckerSpWp.forwardsPredicatesComputed()) {
+		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
 			oneSequenceWasPerfect = addForwardPredicates(traceCheckerSpWp, interpolantsList);
-			if (traceCheckerSpWp.backwardsPredicatesComputed()) {
+			if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
 				oneSequenceWasPerfect = addBackwardPredicates(traceCheckerSpWp, interpolantsList);
 			}
-		} else if (traceCheckerSpWp.backwardsPredicatesComputed()) {
+		} else if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
 			oneSequenceWasPerfect = addBackwardPredicates(traceCheckerSpWp, interpolantsList);
 		} else {
 			return Collections.emptyList();
