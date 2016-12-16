@@ -43,6 +43,19 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class SvcompBugs extends AbstractEvalTestSuite {
 
 	// @formatter:off
+	private static final Triple<String, String, String>[] ERROR_3_US = new Triple[] {
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/modf_true-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/nearbyint_true-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/rint_true-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/rounding_functions_true-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-consumption/linux-3.8-rc1-32_7a-drivers--scsi--mpt3sas--mpt3sas.ko-ldv_main4_false-unreach-call.cil.out.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-3.7.3/main4_false-unreach-call_drivers-scsi-mpt2sas-mpt2sas-ko--32_7a--linux-3.7.3.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-32_7a-drivers--md--dm-crypt.ko-entry_point_false-unreach-call.cil.out.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-validator-v0.8/linux-stable-064368f-1-111_1a-drivers--media--radio--si4713-i2c.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c"),
+	};
+	
 	
 	// ExceptionOrErrorResult: IllegalArgumentException: The expression RoundingMode_RTZ has a null type
 	private static final Triple<String, String, String>[] ERROR_2 = new Triple[] {
@@ -615,7 +628,7 @@ public class SvcompBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = ERROR_1;
+	private static final Triple<String, String, String>[] INPUTS = ERROR_3_US;
 	
 	@Override
 	protected long getTimeout() {
