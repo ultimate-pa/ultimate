@@ -47,7 +47,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -67,8 +71,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * Create and collects @EqNode from ApplicationTerm (store and select)
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz
  */
-public class VPDomainPreanalysis extends RCFGEdgeVisitor {
+public class VPDomainPreanalysis {
 
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
@@ -108,7 +113,9 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 			if (!finished.add(current)) {
 				continue;
 			}
-			visit(current);
+			if (current instanceof IAction) {
+				visit((IAction) current);
+			}
 			worklist.addAll(current.getTarget().getOutgoingEdges());
 		}
 	}
@@ -116,18 +123,39 @@ public class VPDomainPreanalysis extends RCFGEdgeVisitor {
 	
 	// TODO: move to interfaces I<X>Action, the visitor is unnecessary, then
 	
-	@Override
-	protected void visit(final CodeBlock c) {
-		c.getPrettyPrintedStatements();
+	protected void visit(IAction c) {
+		if (c instanceof ICallAction) {
+			visit((ICallAction) c);
+		} else if (c instanceof IReturnAction) {
+			visit((IReturnAction) c);
+		} else if (c instanceof IInternalAction) {
+			visit((IInternalAction) c);
+		} else {
+			assert false : "forgot a case?";
+		}
+	}
 
-		final TransFormula tf = c.getTransitionFormula();
+	protected void visit(ICallAction c) {
+		TransFormula tf = c.getLocalVarsAssignment();
+		handleTransFormula(tf);
+	}
+
+	protected void visit(IReturnAction c) {
+		TransFormula tf = c.getAssignmentOfReturn();
+		handleTransFormula(tf);
+	}
+
+	protected void visit(IInternalAction c) {
+		TransFormula tf = c.getTransformula();
+		handleTransFormula(tf);
+	}
+
+	
+	private void handleTransFormula(TransFormula tf) {
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
 		final Term formulaWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(tf.getFormula());
 		
-//		Map<TermVariable, IProgramVar> tvToPvMap = VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
-		
-
 		/*
 		 * handle selects in the formula
 		 */

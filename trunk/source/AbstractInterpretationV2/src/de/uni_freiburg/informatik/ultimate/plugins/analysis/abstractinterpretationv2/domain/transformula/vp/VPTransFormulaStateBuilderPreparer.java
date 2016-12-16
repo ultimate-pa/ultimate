@@ -16,7 +16,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -28,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
-public class VPTransFormulaStateBuilderPreparer extends RCFGEdgeVisitor {
+public class VPTransFormulaStateBuilderPreparer {
 	
 	Map<TransFormula, VPTransitionStateBuilder> mTransFormulaToTransitionStateBuilder = new HashMap<>();
 	
@@ -82,22 +86,46 @@ public class VPTransFormulaStateBuilderPreparer extends RCFGEdgeVisitor {
 			if (!finished.add(current)) {
 				continue;
 			}
-			visit(current);
+			if (current instanceof IAction) {
+				visit((IAction) current);
+			}
 			worklist.addAll(current.getTarget().getOutgoingEdges());
 		}
 	}
 	
-	// TODO: move to interfaces I<X>Action, the visitor is unnecessary, then
 	
-	@Override
-	protected void visit(CodeBlock c) {
-		TransFormula tf = c.getTransitionFormula();
+	protected void visit(IAction c) {
+		if (c instanceof ICallAction) {
+			visit((ICallAction) c);
+		} else if (c instanceof IReturnAction) {
+			visit((IReturnAction) c);
+		} else if (c instanceof IInternalAction) {
+			visit((IInternalAction) c);
+		} else {
+			assert false : "forgot a case?";
+		}
+	}
+	
+	
+	protected void visit(ICallAction c) {
+		TransFormula tf = c.getLocalVarsAssignment();
+		handleTransFormula(tf);
+	}
+
+	protected void visit(IReturnAction c) {
+		TransFormula tf = c.getAssignmentOfReturn();
+		handleTransFormula(tf);
+	}
+
+	protected void visit(IInternalAction c) {
+		TransFormula tf = c.getTransformula();
 		handleTransFormula(tf);
 	}
 
 
+
 	private void handleTransFormula(TransFormula tf) {
-		VPTransitionStateBuilder vptsb = new VPTransitionStateBuilder(null, mPreAnalysis, tf, mAllConstantEqNodes);
+		VPTransitionStateBuilder vptsb = new VPTransitionStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
 		
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
@@ -109,20 +137,4 @@ public class VPTransFormulaStateBuilderPreparer extends RCFGEdgeVisitor {
 		return result;
 	}
 
-}
-
-class TrackedTermFinder extends TermTransformer {
-
-	@Override
-	protected void convert(Term term) {
-		// TODO Auto-generated method stub
-		super.convert(term);
-	}
-
-	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		// TODO Auto-generated method stub
-		super.convertApplicationTerm(appTerm, newArgs);
-	}
-	
 }
