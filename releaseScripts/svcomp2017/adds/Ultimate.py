@@ -299,7 +299,11 @@ def printErr(*objs):
 
 
 def determineMode(propertyFileName):
-    propFile = open(propertyFileName, 'r')
+    terminationMode = False
+    memDeref = False
+    memDerefMemtrack = False
+    overflowMode = False
+	propFile = open(propertyFileName, 'r')
     for line in propFile:
         if line.find('valid-deref') != -1:
             memDeref = True
@@ -313,15 +317,7 @@ def determineMode(propertyFileName):
     return terminationMode, memDeref, memDerefMemtrack, overflowMode
 
 def main():
-    # different modes 
-    memDeref = False
-    memDerefMemtrack = False
-    terminationMode = False
-    validateWitness = False
-    overflowMode = False
-    
     ultimateBin = getBinary()
-    
     propertyFileName, architecture, cFile, verbose, validateWitness = parseArgs()
     terminationMode, memDeref, memDerefMemtrack, overflowMode = determineMode(propertyFileName)
             
