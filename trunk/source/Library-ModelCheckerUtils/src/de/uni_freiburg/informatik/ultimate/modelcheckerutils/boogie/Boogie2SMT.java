@@ -174,6 +174,7 @@ public class Boogie2SMT {
 	 * Construct auxiliary variables only if the assertion stack of the script is at the lowest level. Auxiliary
 	 * variables are not supported in any backtranslation.
 	 */
+	@Deprecated
 	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList) {
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
