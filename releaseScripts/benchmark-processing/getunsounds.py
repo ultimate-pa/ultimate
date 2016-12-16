@@ -3,6 +3,7 @@
 
 import xml.etree.ElementTree as ET
 import os
+import subprocess
 import sys
 import argparse
 
@@ -20,20 +21,27 @@ if len(sys.argv) == 2:
     dirname = sys.argv[1]
 
 unsounds = set()
-
+i=0
 def parsexml(filename):
+    global i
     "Parses a result file from SVCOMP"
     tree = ET.parse(filename)
     root = tree.getroot()
+    urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/uautomizer.2016-12-15_0135.logfiles/sv-comp17."
+    origTmpFilename = "tmp"
 
     currentunsound = set()
 
     for run in root.findall('run'):
+        testFilename = run.get('files').split("/")[5].split("]")[0];
         for column in run.iter('column'):
             key = column.get('title')
             value = column.get('value')
 
             if key == "category" and value == "wrong":
+                i=i+1  
+                tmpFilename = origTmpFilename + str(i) + '-' + testFilename
+                sha = subprocess.Popen(['wget', '-qO',tmpFilename,urlBase + testFilename + ".log"], stdout=subprocess.PIPE).communicate()[0]				
                 unsounds.add(run.get('name'))
                 if args.printunsound:
                     currentunsound.add(run.get('name'))
@@ -51,7 +59,7 @@ for filename in os.listdir(args.directory):
     if filename.endswith(".xml"):
         if args.verbose:
             print "Parsing " + filename + " ..."
-    
+
         parsexml(args.directory + "/" + filename)
 
 print ""

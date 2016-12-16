@@ -21,15 +21,16 @@ args = argparser.parse_args()
 if len(sys.argv) == 2:
     dirname = sys.argv[1]
 
+
 errors = set()
 errorMessages = {}
-
+i=0
 def parsexml(dir, filename):
+    global i
     fullXmlFilename = dir + "/" + filename
     
     urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/uautomizer.2016-12-15_0135.logfiles/sv-comp17."
     origTmpFilename = "tmp"
-    i=0
     "Parses a result file from SVCOMP"
     tree = ET.parse(fullXmlFilename)
     root = tree.getroot()
@@ -78,7 +79,7 @@ for filename in os.listdir(args.directory):
     if filename.endswith(".xml"):
         if args.verbose:
             print "Parsing " + filename + " ..."
-    
+
         parsexml(args.directory, filename)
 
 print ""
