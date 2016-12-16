@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -92,12 +93,28 @@ public interface IRefinementStrategy {
 	IInterpolantGenerator getInterpolantGenerator();
 	
 	/**
-	 * @param ipps
-	 *            Sequences of interpolants.
+	 * A user should use this method whenever new interpolants have been computed to give the strategy the option for
+	 * early termination.
+	 * 
+	 * @param perfectIpps
+	 *            perfect interpolant sequences
+	 * @param imperfectIpps
+	 *            imperfect interpolant sequences
+	 * @return {@code true} iff the refinement should be terminated, i.e., no further interpolants should be computed
+	 */
+	boolean checkTermination(List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps);
+	
+	/**
+	 * @param perfectIpps
+	 *            Sequences of perfect interpolants.
+	 * @param imperfectIpps
+	 *            sequences of imperfect interpolants
 	 * @return The interpolant automaton builder.
 	 */
-	IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
-			getInterpolantAutomatonBuilder(List<InterpolantsPreconditionPostcondition> ipps);
+	IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
+			List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps);
 	
 	/**
 	 * @return Predicate unifier.
@@ -108,4 +125,21 @@ public interface IRefinementStrategy {
 	 * @return Object that encapsulates which exceptions are blacklisted.
 	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
+	
+	/**
+	 * @param list1
+	 *            First list.
+	 * @param list2
+	 *            second list
+	 * @return new list containing all elements from the two lists
+	 */
+	static List<InterpolantsPreconditionPostcondition> wrapTwoListsInOne(
+			final List<InterpolantsPreconditionPostcondition> list1,
+			final List<InterpolantsPreconditionPostcondition> list2) {
+		final List<InterpolantsPreconditionPostcondition> allIpps =
+				new ArrayList<>(list1.size() + list2.size());
+		allIpps.addAll(list1);
+		allIpps.addAll(list2);
+		return allIpps;
+	}
 }

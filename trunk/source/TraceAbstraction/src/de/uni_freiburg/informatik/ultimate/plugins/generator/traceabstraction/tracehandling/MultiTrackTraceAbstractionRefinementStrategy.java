@@ -199,7 +199,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
-
+		
 		mLogger.info("Switched to " + advance + " mode " + mNextTechnique);
 	}
 	
@@ -224,13 +224,28 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	}
 	
 	@Override
-	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
-			getInterpolantAutomatonBuilder(final List<InterpolantsPreconditionPostcondition> ipps) {
+	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
+			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		// current policy: use all interpolant sequences
+		final List<InterpolantsPreconditionPostcondition> allIpps =
+				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
-					new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, ipps, mAbstraction);
+					new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, allIpps, mAbstraction);
 		}
 		return mInterpolantAutomatonBuilder;
+	}
+	
+	@Override
+	public boolean checkTermination(final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		// current policy: at least one perfect interpolant sequence or at least two interpolant sequences in total
+		if (!perfectIpps.isEmpty()) {
+			return true;
+		}
+		return perfectIpps.size() + imperfectIpps.size() >= 2;
 	}
 	
 	/**

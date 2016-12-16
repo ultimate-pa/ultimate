@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -96,7 +94,7 @@ public final class TraceAbstractionRefinementEngine
 	@Override
 	public boolean providesICfgProgramExecution() {
 		return mProvidesIcfgProgramExecution;
-	};
+	}
 	
 	@Override
 	public IcfgProgramExecution getIcfgProgramExecution() {
@@ -128,7 +126,8 @@ public final class TraceAbstractionRefinementEngine
 	 * @return counterexample feasibility
 	 */
 	private LBool executeStrategy(final IRefinementStrategy strategy) {
-		final List<InterpolantsPreconditionPostcondition> interpolantSequences = new LinkedList<>();
+		final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences = new LinkedList<>();
+		final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences = new LinkedList<>();
 		while (true) {
 			/*
 			 * check feasibility using the strategy
@@ -142,28 +141,25 @@ public final class TraceAbstractionRefinementEngine
 			switch (feasibility) {
 				case SAT:
 					// feasible counterexample, nothing more to do here
-					handleFeasibleCase(strategy);
-					return LBool.SAT;
+					return handleFeasibleCase(strategy);
 				case UNKNOWN:
-					return handleUnknownCase(strategy, interpolantSequences);
+					return handleUnknownCase(strategy, perfectInterpolantSequences, imperfectInterpolantSequences);
 				case UNSAT:
-					final List<InterpolantsPreconditionPostcondition> perfectInterpolantsList =
-							handleInterpolantsCase(strategy, interpolantSequences);
-					if (!perfectInterpolantsList.isEmpty()) {
-						// construct interpolant automaton using the perfect sequence
-						constructAutomatonFromPerfectSequence(strategy, perfectInterpolantsList, feasibility);
-						return LBool.UNSAT;
-					}
-					if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
+					handleInterpolantsCase(strategy, perfectInterpolantSequences, imperfectInterpolantSequences);
+					
+					// TODO refactor, the hasNext() method has become redundant
+					if (!strategy.checkTermination(perfectInterpolantSequences, imperfectInterpolantSequences)
+							&& strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
 						// construct the next sequence of interpolants
 						if (mLogger.isInfoEnabled()) {
-							mLogger.info("The current sequence of interpolants is not perfect, trying the next one.");
+							mLogger.info(
+									"The current sequences of interpolants are not accepted, trying to find more.");
 						}
 						strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
 						continue;
 					}
-					constructAutomatonFromImperfectSequences(strategy, interpolantSequences);
-					return LBool.UNSAT;
+					return constructAutomatonFromInterpolantSequences(strategy, perfectInterpolantSequences,
+							imperfectInterpolantSequences);
 				default:
 					throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
@@ -189,18 +185,21 @@ public final class TraceAbstractionRefinementEngine
 		}
 	}
 	
-	private void handleFeasibleCase(final IRefinementStrategy strategy) {
+	private LBool handleFeasibleCase(final IRefinementStrategy strategy) {
 		if (strategy.getTraceChecker().providesRcfgProgramExecution()) {
 			mProvidesIcfgProgramExecution = true;
 			mIcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
-		}	
+		}
+		return LBool.SAT;
 	}
-
+	
 	private LBool handleUnknownCase(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
-		if (!interpolantSequences.isEmpty()) {
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences) {
+		if (perfectInterpolantSequences.size() + imperfectInterpolantSequences.size() > 0) {
 			// infeasibility was shown in previous attempt already
-			constructAutomatonFromImperfectSequences(strategy, interpolantSequences);
+			constructAutomatonFromInterpolantSequences(strategy, perfectInterpolantSequences,
+					imperfectInterpolantSequences);
 			return LBool.UNSAT;
 		}
 		if (mLogger.isInfoEnabled()) {
@@ -210,20 +209,12 @@ public final class TraceAbstractionRefinementEngine
 		return LBool.UNKNOWN;
 	}
 	
-	/**
-	 * There is a huge hack for supporting the special {@link TraceCheckerSpWp} architecture because
-	 * <ol>
-	 * <li>we need a different getter for the interpolant sequence and</li>
-	 * <li>there are two sequences of interpolants.</li>
-	 * </ol>
-	 * 
-	 * @return perfect interpolant sequence or {@code null}
-	 */
-	private List<InterpolantsPreconditionPostcondition> handleInterpolantsCase(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
+	private void handleInterpolantsCase(final IRefinementStrategy strategy,
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences) {
 		final IInterpolantGenerator interpolantGenerator = handleExceptions(strategy::getInterpolantGenerator);
 		if (interpolantGenerator == null) {
-			return Collections.emptyList();
+			return;
 		}
 		
 		if (interpolantGenerator instanceof InterpolantConsolidation) {
@@ -232,78 +223,75 @@ public final class TraceAbstractionRefinementEngine
 		}
 		
 		if (interpolantGenerator instanceof TraceCheckerSpWp) {
-			return handleTraceCheckerSpWpCase(interpolantSequences, (TraceCheckerSpWp) interpolantGenerator);
+			handleTraceCheckerSpWpCase(perfectInterpolantSequences, imperfectInterpolantSequences,
+					(TraceCheckerSpWp) interpolantGenerator);
+			return;
 		}
 		
 		final InterpolantsPreconditionPostcondition interpolants = interpolantGenerator.getIpp();
-		final boolean perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
-		if (perfectInterpolantsFound) {
-			return Collections.singletonList(interpolants);
+		final boolean interpolantsArePerfect = interpolantGenerator.isPerfectSequence();
+		if (interpolantsArePerfect) {
+			perfectInterpolantSequences.add(interpolants);
 		}
 		if (interpolantGenerator.imperfectSequencesUsable()) {
-			interpolantSequences.add(interpolants);
+			imperfectInterpolantSequences.add(interpolants);
 		}
-		return Collections.emptyList();
 	}
 	
 	/**
-	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckerSpWp}.
+	 * NOTE: This method is complicated due to the structure of the {@link TraceCheckerSpWp} because
+	 * <ol>
+	 * <li>we need a different getter for the interpolant sequence and</li>
+	 * <li>there are two sequences of interpolants.</li>
+	 * </ol>
 	 */
-	private static List<InterpolantsPreconditionPostcondition> handleTraceCheckerSpWpCase(
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
+	private static void handleTraceCheckerSpWpCase(
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences,
 			final TraceCheckerSpWp traceCheckerSpWp) {
-		final List<InterpolantsPreconditionPostcondition> interpolantsList = new ArrayList<>(2);
-		boolean oneSequenceWasPerfect;
 		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
-			oneSequenceWasPerfect = addForwardPredicates(traceCheckerSpWp, interpolantsList);
-			if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
-				oneSequenceWasPerfect = addBackwardPredicates(traceCheckerSpWp, interpolantsList);
-			}
-		} else if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
-			oneSequenceWasPerfect = addBackwardPredicates(traceCheckerSpWp, interpolantsList);
-		} else {
-			return Collections.emptyList();
+			addForwardPredicates(traceCheckerSpWp, perfectInterpolantSequences, imperfectInterpolantSequences);
 		}
-		
-		if (oneSequenceWasPerfect) {
-			return interpolantsList;
+		if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
+			addBackwardPredicates(traceCheckerSpWp, perfectInterpolantSequences, imperfectInterpolantSequences);
 		}
-		interpolantSequences.addAll(interpolantsList);
-		return Collections.emptyList();
 	}
 	
-	private static boolean addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<InterpolantsPreconditionPostcondition> interpolantsList) {
+	private static void addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences) {
 		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getForwardIpp();
 		assert interpolants != null;
-		interpolantsList.add(interpolants);
-		return traceCheckerSpWp.isForwardSequencePerfect();
+		if (traceCheckerSpWp.isForwardSequencePerfect()) {
+			perfectInterpolantSequences.add(interpolants);
+		} else {
+			imperfectInterpolantSequences.add(interpolants);
+		}
 	}
 	
-	private static boolean addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<InterpolantsPreconditionPostcondition> interpolantsList) {
+	private static void addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences) {
 		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getBackwardIpp();
 		assert interpolants != null;
-		interpolantsList.add(interpolants);
-		return traceCheckerSpWp.isBackwardSequencePerfect();
+		if (traceCheckerSpWp.isBackwardSequencePerfect()) {
+			perfectInterpolantSequences.add(interpolants);
+		} else {
+			imperfectInterpolantSequences.add(interpolants);
+		}
 	}
 	
-	private LBool constructAutomatonFromPerfectSequence(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantsList, final LBool feasibility) {
+	private LBool constructAutomatonFromInterpolantSequences(final IRefinementStrategy strategy,
+			final List<InterpolantsPreconditionPostcondition> perfectInterpolantSequences,
+			final List<InterpolantsPreconditionPostcondition> imperfectInterpolantSequences) {
+		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Found a perfect sequence of interpolants.");
+			mLogger.info("Constructing automaton from " + perfectInterpolantSequences.size() + " perfect and "
+					+ imperfectInterpolantSequences.size() + " imperfect interpolant sequences.");
 		}
-		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantsList).getResult();
-		return feasibility;
-	}
-	
-	private void constructAutomatonFromImperfectSequences(final IRefinementStrategy strategy,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
-		// construct the interpolant automaton from the sequences we have found previously
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("No perfect sequence of interpolants found, combining those we have.");
-		}
-		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
+		mInterpolantAutomaton = strategy
+				.getInterpolantAutomatonBuilder(perfectInterpolantSequences, imperfectInterpolantSequences).getResult();
+		return LBool.UNSAT;
 	}
 	
 	/**
