@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -290,19 +291,21 @@ public final class TraceAbstractionRefinementEngine
 			mLogger.info("Constructing automaton from " + perfectInterpolantSequences.size() + " perfect and "
 					+ imperfectInterpolantSequences.size() + " imperfect interpolant sequences.");
 		}
-		if (mLogger.isDebugEnabled()) {
+		if (mLogger.isInfoEnabled()) {
+			final List<Integer> numberInterpolantsPerfect = new ArrayList<>();
 			final Set<IPredicate> allInterpolants = new HashSet<>();
-			mLogger.debug("perfect sequences:");
 			for (final InterpolantsPreconditionPostcondition ipps : perfectInterpolantSequences) {
-				mLogger.debug(ipps.getInterpolants());
+				numberInterpolantsPerfect.add(new HashSet<IPredicate>(ipps.getInterpolants()).size());
 				allInterpolants.addAll(ipps.getInterpolants());
 			}
-			mLogger.debug("imperfect sequences:");
+			final List<Integer> numberInterpolantsImperfect = new ArrayList<>();
 			for (final InterpolantsPreconditionPostcondition ipps : imperfectInterpolantSequences) {
-				mLogger.debug(ipps.getInterpolants());
+				numberInterpolantsImperfect.add(new HashSet<IPredicate>(ipps.getInterpolants()).size());
 				allInterpolants.addAll(ipps.getInterpolants());
 			}
-			mLogger.debug("total number of interpolants: " + allInterpolants.size());
+			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect 
+					+ " imperfect sequences " + numberInterpolantsImperfect
+					+ " total " + allInterpolants.size());
 		}
 		mInterpolantAutomaton = strategy
 				.getInterpolantAutomatonBuilder(perfectInterpolantSequences, imperfectInterpolantSequences).getResult();
