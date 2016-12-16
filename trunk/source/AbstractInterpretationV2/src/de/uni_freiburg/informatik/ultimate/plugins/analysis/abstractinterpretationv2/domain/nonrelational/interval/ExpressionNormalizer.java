@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.
  *
  */
 public class ExpressionNormalizer extends BoogieTransformer {
-
+	
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
 	ExpressionNormalizer() {
@@ -97,13 +98,13 @@ public class ExpressionNormalizer extends BoogieTransformer {
 					if (operator == Operator.COMPGT) {
 						// x > y ---> x >= y + 1
 						final Expression newRightGt =
-								createBinaryExpr(right, Operator.ARITHPLUS, right, createIntegerLiteral(right, "1"));
+								createBinaryExpr(right, Operator.ARITHPLUS, right, createValueLiteral(right, "1"));
 						return createBinaryExpr(expr, Operator.COMPGEQ, left, newRightGt);
 
 					} else if (operator == Operator.COMPLT) {
 						// x < y ---> x <= y - 1
 						final BinaryExpression newRightLt = new BinaryExpression(right.getLocation(), right.getType(),
-								Operator.ARITHMINUS, right, createIntegerLiteral(right, "1"));
+								Operator.ARITHMINUS, right, createValueLiteral(right, "1"));
 						return createBinaryExpr(expr, Operator.COMPLEQ, left, newRightLt);
 					}
 				}
@@ -142,7 +143,7 @@ public class ExpressionNormalizer extends BoogieTransformer {
 						final IdentifierExpression innerIdLeft = (IdentifierExpression) uLeft.getExpr();
 						if (innerIdLeft.getIdentifier().equals(idRight.getIdentifier())) {
 							// -x - x ==> -2x
-							return createBinaryExpr(expr, Operator.ARITHMUL, neg(expr, createIntegerLiteral(expr, "2")),
+							return createBinaryExpr(expr, Operator.ARITHMUL, neg(expr, createValueLiteral(expr, "2")),
 									idRight);
 						}
 					}
@@ -157,8 +158,8 @@ public class ExpressionNormalizer extends BoogieTransformer {
 					// x - x ==> 0
 					// x + x ==> 2x
 					return operator == Operator.ARITHPLUS
-							? createBinaryExpr(expr, Operator.ARITHMUL, createIntegerLiteral(expr, "2"), idLeft)
-							: createIntegerLiteral(expr, "0");
+							? createBinaryExpr(expr, Operator.ARITHMUL, createValueLiteral(expr, "2"), idLeft)
+							: createValueLiteral(expr, "0");
 				}
 			}
 		}
@@ -204,8 +205,27 @@ public class ExpressionNormalizer extends BoogieTransformer {
 		return createBinaryExpr(oldExpr, Operator.LOGICAND, left, right);
 	}
 
+	private static Expression createValueLiteral(final Expression old, final String value) {
+		if (!(old.getType() instanceof BoogieType)) {
+			throw new UnsupportedOperationException("Expected IBoogieType to be of type BoogieType.");
+		}
+
+		final BoogieType bType = (BoogieType) old.getType();
+		if (bType == BoogieType.TYPE_INT) {
+			return createIntegerLiteral(old, value);
+		} else if (bType == BoogieType.TYPE_REAL) {
+			return createRealLiteral(old, value);
+		} else {
+			throw new UnsupportedOperationException("Type " + bType + " not implemented.");
+		}
+	}
+	
 	private static IntegerLiteral createIntegerLiteral(final Expression old, final String value) {
 		return new IntegerLiteral(old.getLocation(), BoogieType.TYPE_INT, value);
+	}
+	
+	private static RealLiteral createRealLiteral(final Expression old, final String value) {
+		return new RealLiteral(old.getLocation(), BoogieType.TYPE_REAL, value);
 	}
 
 	private static Expression createBinaryExpr(final Expression oldExpr, final Operator op, final Expression left,
