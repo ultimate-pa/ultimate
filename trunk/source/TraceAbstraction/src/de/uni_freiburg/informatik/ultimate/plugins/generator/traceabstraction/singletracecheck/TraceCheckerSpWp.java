@@ -239,7 +239,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		
 		if (mConstructForwardInterpolantSequence) {
-			mLogger.debug("Computing forward predicates...");
+			mLogger.info("Computing forward predicates...");
 			try {
 				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
@@ -283,7 +283,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		
 		if (wasBackwardsPredicatesComputationRequested()) {
-			mLogger.debug("Computing backward predicates...");
+			mLogger.info("Computing backward predicates...");
 			try {
 				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
