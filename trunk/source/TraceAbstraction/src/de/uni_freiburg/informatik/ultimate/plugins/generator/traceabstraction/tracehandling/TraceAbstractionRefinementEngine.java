@@ -289,6 +289,16 @@ public final class TraceAbstractionRefinementEngine
 			mLogger.info("Constructing automaton from " + perfectInterpolantSequences.size() + " perfect and "
 					+ imperfectInterpolantSequences.size() + " imperfect interpolant sequences.");
 		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("perfect sequences:");
+			for (final InterpolantsPreconditionPostcondition ipps : perfectInterpolantSequences) {
+				mLogger.debug(ipps.getInterpolants());
+			}
+			mLogger.debug("imperfect sequences:");
+			for (final InterpolantsPreconditionPostcondition ipps : imperfectInterpolantSequences) {
+				mLogger.debug(ipps.getInterpolants());
+			}
+		}
 		mInterpolantAutomaton = strategy
 				.getInterpolantAutomatonBuilder(perfectInterpolantSequences, imperfectInterpolantSequences).getResult();
 		return LBool.UNSAT;
