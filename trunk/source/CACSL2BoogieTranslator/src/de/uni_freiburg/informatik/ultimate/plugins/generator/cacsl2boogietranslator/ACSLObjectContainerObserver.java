@@ -47,7 +47,7 @@ public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
 			throws Throwable {
-		mWaitForMe = numberOfModels > 1;
+		mWaitForMe = currentModelIndex < numberOfModels - 1;
 		if ("de.uni_freiburg.informatik.ultimate.ltl2aut".equals(modelType.getCreator())) {
 			mLogger.info("Executing ACSLObjectContainerObserver...");
 			mListen = true;
