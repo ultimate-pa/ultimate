@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -290,14 +292,18 @@ public final class TraceAbstractionRefinementEngine
 					+ imperfectInterpolantSequences.size() + " imperfect interpolant sequences.");
 		}
 		if (mLogger.isDebugEnabled()) {
+			final Set<IPredicate> allInterpolants = new HashSet<>();
 			mLogger.debug("perfect sequences:");
 			for (final InterpolantsPreconditionPostcondition ipps : perfectInterpolantSequences) {
 				mLogger.debug(ipps.getInterpolants());
+				allInterpolants.addAll(ipps.getInterpolants());
 			}
 			mLogger.debug("imperfect sequences:");
 			for (final InterpolantsPreconditionPostcondition ipps : imperfectInterpolantSequences) {
 				mLogger.debug(ipps.getInterpolants());
+				allInterpolants.addAll(ipps.getInterpolants());
 			}
+			mLogger.debug("total number of interpolants: " + allInterpolants.size());
 		}
 		mInterpolantAutomaton = strategy
 				.getInterpolantAutomatonBuilder(perfectInterpolantSequences, imperfectInterpolantSequences).getResult();
