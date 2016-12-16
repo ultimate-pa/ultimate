@@ -86,11 +86,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * Whether to print the AST and some debug information for the translation, or not.
 	 */
-	private static final boolean mExtendedDebugOutput = false;
+	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
 	/**
 	 * The logger instance.
 	 */
-	private final ILogger mLogger; 
+	private final ILogger mLogger;
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */
@@ -100,10 +100,10 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mService;
 
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
-	private IASTTranslationUnit inputTU;
+	private IASTTranslationUnit mInputTU;
 	private boolean mLastModel;
 	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
-	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
+	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
@@ -123,14 +123,13 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			return false;
 		}
 
-		if (!(root instanceof WrapperNode) || !((((WrapperNode) root).getBacking()) instanceof IASTTranslationUnit)) {
+		if (!(root instanceof WrapperNode) || !(((WrapperNode) root).getBacking() instanceof IASTTranslationUnit)) {
 			// we ignore everything that will not get us an IASTTranslationUnit
 			return false;
-		} else {
-			inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
-			mWitnessExtractor.setAST(inputTU);
-			return false;
 		}
+		mInputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
+		mWitnessExtractor.setAST(mInputTU);
+		return false;
 	}
 
 	private void extractWitnessInformation(final WitnessNode wnode) {
@@ -204,8 +203,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	}
 
 	private void doTranslation() {
-		if (mExtendedDebugOutput) {
-			ASTPrinter.print(inputTU);
+		if (EXTENDED_DEBUG_OUTPUT) {
+			ASTPrinter.print(mInputTU);
 		}
 
 		// translate to Boogie
@@ -234,40 +233,36 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		final ASTDecorator decorator = new ASTDecorator();
 		// build a list of ACSL ASTs
 		final FunctionLineVisitor visitor = new FunctionLineVisitor();
-		inputTU.accept(visitor);
-		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
+		mInputTU.accept(visitor);
+		final CommentParser cparser = new CommentParser(mInputTU.getComments(), visitor.getLineRange(), mLogger, main);
 		final List<ACSLNode> acslNodes = cparser.processComments();
-		
 
 		validateLTLProperty(acslNodes);
 		decorator.setAcslASTs(acslNodes);
-		// build decorator tree 
-		decorator.mapASTs(inputTU);
-		//if an additional Annotation was parsed put it into the root node
-		if (mAdditionalAnnotationObserver.getAnnotation() != null){
-			ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
+		// build decorator tree
+		decorator.mapASTs(mInputTU);
+		// if an additional Annotation was parsed put it into the root node
+		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
+			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
 			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
-			decorator.getRootNode().getChildren().add(
-					0, 
-					new DecoratorNode(decorator.getRootNode(), node));
+			decorator.getRootNode().getChildren().add(0, new DecoratorNode(decorator.getRootNode(), node));
 		}
-	
-		
+
 		try {
 			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
-			outputTU = (new BoogieAstCopier()).copy((Unit) outputTU);
+			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 			mRootNode = new WrapperNode(null, outputTU);
-			final IdentifierMapping<String, String> map = new IdentifierMapping<String, String>();
+			final IdentifierMapping<String, String> map = new IdentifierMapping<>();
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
 			mService.getBacktranslationService().addTranslator(backtranslator);
 		} catch (final IncorrectSyntaxException e) {
-			final IResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME,
-					e.getLocation(), e.getLocalizedMessage());
+			final IResult result =
+					new SyntaxErrorResult(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
 			commonDoTranslationExceptionHandling(result);
 		} catch (final UnsupportedSyntaxException e) {
-			final IResult result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
-					e.getLocation(), e.getLocalizedMessage());
+			final IResult result =
+					new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, e.getLocation(), e.getLocalizedMessage());
 			commonDoTranslationExceptionHandling(result);
 		}
 	}

@@ -124,15 +124,16 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	private boolean addItem(final ModelContainer vault) {
-		if (mModelMap.containsKey(vault.getType())) {
+		final ModelType type = vault.getType();
+		if (mModelMap.containsKey(type)) {
 			mLogger.warn("Model is already present, skipping insertion....");
 			return false;
 		}
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Inserting " + vault);
 		}
-		mModelMap.put(vault.getType(), vault);
-		setLastAdded(vault.getType());
+		mModelMap.put(type, vault);
+		mLastAdded = type;
 		return true;
 	}
 
@@ -296,10 +297,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 			}
 		}
 		return null;
-	}
-
-	private void setLastAdded(final ModelType lastAdded) {
-		mLastAdded = lastAdded;
 	}
 
 	@Override

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
@@ -34,20 +34,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 public class ACSLObjectContainerObserver implements IUnmanagedObserver {
-	
-	private ACSLNode mAnotation = null;
+
+	private ACSLNode mAnotation;
 	private boolean mListen;
-	private ILogger mLogger;
+	private final ILogger mLogger;
 	private boolean mWaitForMe;
-	
-	public ACSLObjectContainerObserver(ILogger logger){
+
+	public ACSLObjectContainerObserver(final ILogger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
+			throws Throwable {
 		mWaitForMe = numberOfModels > 1;
-		if (("de.uni_freiburg.informatik.ultimate.ltl2aut".equals(modelType.getCreator()))){
+		if ("de.uni_freiburg.informatik.ultimate.ltl2aut".equals(modelType.getCreator())) {
 			mLogger.info("Executing ACSLObjectContainerObserver...");
 			mListen = true;
 		} else {
@@ -57,15 +58,14 @@ public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
-	
-	public ACSLNode getAnnotation(){
+
+	public ACSLNode getAnnotation() {
 		return mAnotation;
 	}
-	
-	public boolean waitForMe(){
+
+	public boolean waitForMe() {
 		return mWaitForMe && mAnotation == null;
 	}
 
@@ -75,16 +75,13 @@ public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
-		if (!mListen){
+	public boolean process(final IElement root) throws Throwable {
+		if (!mListen) {
 			return false;
 		}
-		if (root instanceof ObjectContainer){
-			if (((ObjectContainer) root).getValue() instanceof ACSLNode){
-				ObjectContainer container = (ObjectContainer)root;
-				mAnotation = (ACSLNode)container.getValue();
-			}
-			
+		if (root instanceof ObjectContainer && ((ObjectContainer<?>) root).getValue() instanceof ACSLNode) {
+			final ObjectContainer<?> container = (ObjectContainer<?>) root;
+			mAnotation = (ACSLNode) container.getValue();
 		}
 		return false;
 	}

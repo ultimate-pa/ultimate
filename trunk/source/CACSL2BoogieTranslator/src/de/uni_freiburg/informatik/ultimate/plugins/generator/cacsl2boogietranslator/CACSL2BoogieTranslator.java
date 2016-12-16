@@ -70,7 +70,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void init() {
-		mAdditionalAnnotationObserver = new ACSLObjectContainerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
+		mAdditionalAnnotationObserver =
+				new ACSLObjectContainerObserver(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage, mAdditionalAnnotationObserver);
 
 	}
@@ -87,9 +88,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		if (!("de.uni_freiburg.informatik.ultimate.ltl2aut".equals(graphType.getCreator()))) {
-			mInputDefinition = graphType;
-		}
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -102,20 +101,15 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		if (mInputDefinition == null) {
-			return null;
-		} else {
-			return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
-		}
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
 		if (mAdditionalAnnotationObserver.waitForMe()) {
 			return null;
-		} else {
-			return mObserver.getRoot();
-		}		
+		}
+		return mObserver.getRoot();
 	}
 
 	@Override
