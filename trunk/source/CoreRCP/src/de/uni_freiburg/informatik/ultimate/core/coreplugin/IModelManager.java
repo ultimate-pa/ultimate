@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -33,7 +33,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
@@ -44,13 +43,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 /**
  * IModelManager
  * 
- * The new model manager has access to a repository where models can be put. At
- * any time a model can still be kept in the memory using the map. Additionally
- * it can be persisted in the repository.
+ * The new model manager has access to a repository where models can be put. At any time a model can still be kept in
+ * the memory using the map. Additionally it can be persisted in the repository.
  * 
- * Models can be removed from the model manager as before but if the model
- * manager is queries for it and does not find it in the vault map, it looks in
- * the repository.
+ * Models can be removed from the model manager as before but if the model manager is queries for it and does not find
+ * it in the vault map, it looks in the repository.
  * 
  * 
  * @author Björn Buchhold
@@ -62,21 +59,17 @@ public interface IModelManager {
 	 * Adds a new (sub)graph or (sub)tree to the Chamber
 	 * 
 	 * @param rootNode
-	 *            The node itself and all its children and so on are added as
-	 *            own model to the chamber (in a cyclic graph possibly adding
-	 *            the whole graph, especially the parents of this node)
+	 *            The node itself and all its children and so on are added as own model to the chamber (in a cyclic
+	 *            graph possibly adding the whole graph, especially the parents of this node)
 	 * @param graphtype
-	 *            The concrete type of graph this node belongs to (should this
-	 *            be calculated or set somehow here ? )
-	 * @return false if vault is present in chamber - method does not add the
-	 *         vault in this case; true otherwise
+	 *            The concrete type of graph this node belongs to (should this be calculated or set somehow here ? )
+	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	boolean addItem(IElement rootNode, ModelType graphtype);
 
 	/**
-	 * Should remove whole tree/graph independent of node position in this tree
-	 * or prune tree/graph at this position (for graphs possibly removing the
-	 * whole graph). Also removes persistent instances
+	 * Should remove whole tree/graph independent of node position in this tree or prune tree/graph at this position
+	 * (for graphs possibly removing the whole graph). Also removes persistent instances
 	 * 
 	 * @param graphtype
 	 *            the graph to remove
@@ -85,9 +78,8 @@ public interface IModelManager {
 	boolean removeItem(ModelType graphtype);
 
 	/**
-	 * Should remove whole tree/graph independent of node position in this tree
-	 * or prune tree/graph at this position (for graphs possibly removing the
-	 * whole graph). Also removes persistent instances
+	 * Should remove whole tree/graph independent of node position in this tree or prune tree/graph at this position
+	 * (for graphs possibly removing the whole graph). Also removes persistent instances
 	 * 
 	 * @param id
 	 *            the string representation of the graph to remove
@@ -103,12 +95,10 @@ public interface IModelManager {
 	 * @throws StoreObjectException
 	 * @throws GraphNotFoundException
 	 */
-	void persistAndDropExistingGraph(ModelType key)
-			throws StoreObjectException, GraphNotFoundException;
+	void persistAndDropExistingGraph(ModelType key) throws StoreObjectException, GraphNotFoundException;
 
 	/**
-	 * persist an existing graph. May choose if the graph is kept or removed
-	 * from the memory
+	 * persist an existing graph. May choose if the graph is kept or removed from the memory
 	 * 
 	 * @param key
 	 *            id of the model as graphtype
@@ -117,12 +107,10 @@ public interface IModelManager {
 	 * @throws StoreObjectException
 	 * @throws GraphNotFoundException
 	 */
-	void persistExistingGraph(ModelType key, boolean keepInMemory)
-			throws StoreObjectException, GraphNotFoundException;
+	void persistExistingGraph(ModelType key, boolean keepInMemory) throws StoreObjectException, GraphNotFoundException;
 
 	/**
-	 * persists all models. May choose if the models are kept or removed from
-	 * the memory
+	 * persists all models. May choose if the models are kept or removed from the memory
 	 * 
 	 * @param keepInMemory
 	 *            boolean indicating of the model should also be kept in memory
@@ -134,14 +122,12 @@ public interface IModelManager {
 	 * Removes an existing object from the Chamber
 	 * 
 	 * @param vault
-	 * @return false if vault is not present in chamber - method does not remove
-	 *         the vault in this case; true otherwise
+	 * @return false if vault is not present in chamber - method does not remove the vault in this case; true otherwise
 	 */
 	boolean removeItem(ModelContainer vault);
 
 	/**
-	 * Checks if the model manager is empty. works regarding the memory model,
-	 * not the persistent repository
+	 * Checks if the model manager is empty. works regarding the memory model, not the persistent repository
 	 * 
 	 * @return true if it's empty, false if there is at least one model present
 	 */
@@ -155,18 +141,15 @@ public interface IModelManager {
 	int size();
 
 	/**
-	 * removes all models from the model manager. Only in-memory model are
-	 * affected and not persisted models.
+	 * removes all models from the model manager. Only in-memory model are affected and not persisted models.
 	 */
 	void removeAll();
 
-
 	/**
 	 * 
-	 * @return A list of the names of all models that are accessible. Includes
-	 *         models in the repository
+	 * @return A list of the names of all models that are accessible. Includes models in the repository
 	 */
-	ArrayList<String> getItemNames();
+	List<String> getItemNames();
 
 	/**
 	 * Get the GraphType object for its String representation
@@ -178,8 +161,7 @@ public interface IModelManager {
 	ModelType getGraphTypeById(String s);
 
 	/**
-	 * Get the GraphType object that identifies a model generated by a certain
-	 * plug-in
+	 * Get the GraphType object that identifies a model generated by a certain plug-in
 	 * 
 	 * @param id
 	 *            the plug-in id of the generator
@@ -202,14 +184,6 @@ public interface IModelManager {
 	 * @param callerName
 	 */
 	void showStatus(String callerName);
-
-	/**
-	 * void setLastAdded
-	 * 
-	 * @param lastAdded
-	 *            the model that has been added recently
-	 */
-	void setLastAdded(ModelType lastAdded);
 
 	/**
 	 * GraphType getLastAdded

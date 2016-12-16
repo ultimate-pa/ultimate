@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.DataAccessException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
@@ -73,15 +74,15 @@ public class PersistenceAwareModelManager implements IModelManager {
 	private final ILogger mLogger;
 	private ModelType mLastAdded;
 
-	public PersistenceAwareModelManager(File repositoryRoot, ILogger logger) {
+	public PersistenceAwareModelManager(final File repositoryRoot, final ILogger logger) {
 		assert logger != null;
-		mModelMap = new HashMap<ModelType, ModelContainer>();
+		mModelMap = new HashMap<>();
 		mLogger = logger;
 		mLogger.info("Repository-Root is: " + repositoryRoot.getAbsolutePath());
 		mRepository = new SerializationRepository(repositoryRoot, mLogger);
 	}
 
-	public PersistenceAwareModelManager(String tmp_dir, ILogger logger) {
+	public PersistenceAwareModelManager(final String tmp_dir, final ILogger logger) {
 		this(new File(tmp_dir), logger);
 	}
 
@@ -91,7 +92,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @param node
 	 * @return File name for a given node.
 	 */
-	private String createFileNameFromNode(IElement node) {
+	private static String createFileNameFromNode(final IElement node) {
 		if (node == null) {
 			return "";
 		}
@@ -122,16 +123,17 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @param vault
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
-	private boolean addItem(ModelContainer vault) {
+	private boolean addItem(final ModelContainer vault) {
 		if (mModelMap.containsKey(vault.getType())) {
 			mLogger.warn("Model is already present, skipping insertion....");
 			return false;
-		} else {
-			mModelMap.put(vault.getType(), vault);
-			mLogger.debug("Inserting " + vault);
-			setLastAdded(vault.getType());
-			return true;
 		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Inserting " + vault);
+		}
+		mModelMap.put(vault.getType(), vault);
+		setLastAdded(vault.getType());
+		return true;
 	}
 
 	/**
@@ -145,15 +147,13 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	@Override
-	public boolean addItem(IElement rootNode, ModelType graphtype) {
-		final ModelContainer vault = new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode));
-		setLastAdded(vault.getType());
-		return this.addItem(vault);
+	public boolean addItem(final IElement rootNode, final ModelType graphtype) {
+		return addItem(new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode)));
 	}
 
 	@Override
-	public ArrayList<String> getItemNames() {
-		final ArrayList<String> names = new ArrayList<String>();
+	public List<String> getItemNames() {
+		final ArrayList<String> names = new ArrayList<>();
 		for (final ModelType t : mModelMap.keySet()) {
 			names.add(t.toString());
 		}
@@ -167,7 +167,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public IElement getRootNode(ModelType graph) throws GraphNotFoundException {
+	public IElement getRootNode(final ModelType graph) throws GraphNotFoundException {
 		ModelContainer container = mModelMap.get(graph);
 		if (container == null) {
 			try {
@@ -185,13 +185,13 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public boolean isEmpty() {
-		return (mModelMap.isEmpty() && mRepository.isEmpty());
+		return mModelMap.isEmpty() && mRepository.isEmpty();
 	}
 
 	@Override
-	public void persistAll(boolean keepInMemory) throws StoreObjectException {
+	public void persistAll(final boolean keepInMemory) throws StoreObjectException {
 		for (final Entry<ModelType, ModelContainer> mapEntry : mModelMap.entrySet()) {
-			if(mapEntry.getKey() == null || mapEntry.getValue() == null){
+			if (mapEntry.getKey() == null || mapEntry.getValue() == null) {
 				continue;
 			}
 			mRepository.addOrReplace(mapEntry.getKey().toString(), mapEntry.getValue());
@@ -202,12 +202,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public void persistAndDropExistingGraph(ModelType key) throws StoreObjectException, GraphNotFoundException {
+	public void persistAndDropExistingGraph(final ModelType key) throws StoreObjectException, GraphNotFoundException {
 		persistExistingGraph(key, false);
 	}
 
 	@Override
-	public void persistExistingGraph(ModelType key, boolean keepInMemory)
+	public void persistExistingGraph(final ModelType key, final boolean keepInMemory)
 			throws StoreObjectException, GraphNotFoundException {
 		if (mModelMap.containsKey(key)) {
 			mRepository.addOrReplace(key.toString(), mModelMap.get(key));
@@ -226,7 +226,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public boolean removeItem(ModelType graphtype) {
+	public boolean removeItem(final ModelType graphtype) {
 		boolean successfull = true;
 		if (mModelMap.containsKey(graphtype)) {
 			successfull = mModelMap.remove(graphtype) != null;
@@ -235,7 +235,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public boolean removeItem(String id) {
+	public boolean removeItem(final String id) {
 		boolean successfull = true;
 		final ModelType graphType = getInMemoryGraphTypeById(id);
 		if (graphType != null) {
@@ -245,12 +245,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public boolean removeItem(ModelContainer vault) {
+	public boolean removeItem(final ModelContainer vault) {
 		return mModelMap.remove(vault.getType()) != null;
 	}
 
 	@Override
-	public ModelType getGraphTypeById(String s) {
+	public ModelType getGraphTypeById(final String s) {
 		for (final ModelType t : mModelMap.keySet()) {
 			if (t.toString().equals(s)) {
 				return t;
@@ -266,7 +266,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return null;
 	}
 
-	private ModelType getInMemoryGraphTypeById(String id) {
+	private ModelType getInMemoryGraphTypeById(final String id) {
 		for (final ModelType t : mModelMap.keySet()) {
 			if (t.toString().equals(id)) {
 				return t;
@@ -276,12 +276,13 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public ModelType getGraphTypeByGeneratorPluginId(String id) {
-		for (final ModelType t : mModelMap.keySet()) {
-			if (t.getCreator().equals(id)) {
-				return t;
-			}
+	public ModelType getGraphTypeByGeneratorPluginId(final String id) {
+		final Optional<Entry<ModelType, ModelContainer>> creator =
+				mModelMap.entrySet().stream().filter(a -> a.getKey().getCreator().equals(id)).findFirst();
+		if (creator.isPresent()) {
+			return creator.get().getKey();
 		}
+
 		for (final String keyFromRepos : mRepository.listKeys()) {
 			if (keyFromRepos.contains(id)) {
 				try {
@@ -297,13 +298,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return null;
 	}
 
-	@Override
-	public void setLastAdded(ModelType lastAdded) {
+	private void setLastAdded(final ModelType lastAdded) {
 		mLastAdded = lastAdded;
 	}
 
 	@Override
-	public void showStatus(String callerName) {
+	public void showStatus(final String callerName) {
 		mLogger.debug(callerName + " reguests chamber status");
 		int i = 0;
 		for (final ModelContainer v : mModelMap.values()) {
@@ -322,6 +322,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public List<ModelType> getItemKeys() {
-		return new ArrayList<ModelType>(mModelMap.keySet());
+		return new ArrayList<>(mModelMap.keySet());
 	}
 }

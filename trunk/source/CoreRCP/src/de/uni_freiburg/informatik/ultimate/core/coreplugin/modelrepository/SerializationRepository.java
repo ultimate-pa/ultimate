@@ -64,12 +64,12 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	private final ILogger mLogger;
 
 	/**
-	 * Constructor for {@link SerializationRepository}. Constructs a repository
-	 * that uses {@link Serializable} to persist objects in the file system .
+	 * Constructor for {@link SerializationRepository}. Constructs a repository that uses {@link Serializable} to
+	 * persist objects in the file system .
 	 * 
 	 * @param fileSystemDirectory
-	 *            the directory in the local file system used by the repository
-	 *            to store the files containing the persisted objects
+	 *            the directory in the local file system used by the repository to store the files containing the
+	 *            persisted objects
 	 */
 	public SerializationRepository(final File fileSystemDirectory, final ILogger logger) {
 		assert logger != null;
@@ -77,27 +77,14 @@ public class SerializationRepository implements IRepository<String, ModelContain
 		mLogger = logger;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#dump()
-	 */
 	@Override
 	public void dump() {
 		removeAll(listKeys());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#get(
-	 * java.lang.Object)
-	 */
 	@Override
-	public ModelContainer get(final String key) throws PersistentObjectNotFoundException,
-			PersistentObjectTypeMismatchException {
+	public ModelContainer get(final String key)
+			throws PersistentObjectNotFoundException, PersistentObjectTypeMismatchException {
 		if (listKeys().contains(key)) {
 			try {
 				mLogger.debug("deserializing model");
@@ -113,9 +100,8 @@ public class SerializationRepository implements IRepository<String, ModelContain
 								+ " in the stored object graph could not be found. Maybe it has been produced by a plug-in that didn't export this package",
 						e);
 			}
-		} else {
-			throw new PersistentObjectNotFoundException("No object found using the key: " + key);
 		}
+		throw new PersistentObjectNotFoundException("No object found using the key: " + key);
 	}
 
 	/**
@@ -136,17 +122,10 @@ public class SerializationRepository implements IRepository<String, ModelContain
 		return rtr;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#listKeys
-	 * ()
-	 */
 	@Override
 	public List<String> listKeys() {
 		// initialize return value
-		final List<String> keys = new LinkedList<String>();
+		final List<String> keys = new LinkedList<>();
 		for (final String fileName : mFileSystemDirectory.list()) {
 			final File file = new File(fileName);
 			if (file.getName().endsWith(".ser")) {
@@ -157,13 +136,6 @@ public class SerializationRepository implements IRepository<String, ModelContain
 		return keys;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#remove
-	 * (java.lang.Object)
-	 */
 	@Override
 	public boolean remove(final String key) {
 		final File toBeDeleted = new File(mFileSystemDirectory + "/" + key + ".ser");
@@ -171,20 +143,12 @@ public class SerializationRepository implements IRepository<String, ModelContain
 		if (!success && listKeys().contains(key)) {
 			mLogger.warn("Could not delete " + toBeDeleted.getPath() + " from the file system!");
 			return false;
-		} else {
-			mLogger.debug("Now, the model is not in the repository (anymore)");
-			return true;
 		}
+		mLogger.debug("Now, the model is not in the repository (anymore)");
+		return true;
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#removeAll
-	 * (java.util.List)
-	 */
 	@Override
 	public void removeAll(final List<String> keys) {
 		for (final String string : keys) {
@@ -192,30 +156,16 @@ public class SerializationRepository implements IRepository<String, ModelContain
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#add(
-	 * java.lang.Object, java.lang.Object)
-	 */
 	@Override
-	public void add(final String key, final ModelContainer transientInstance) throws DuplicateKeyException, StoreObjectException {
+	public void add(final String key, final ModelContainer transientInstance)
+			throws DuplicateKeyException, StoreObjectException {
 		if (listKeys().contains(key)) {
 			throw new DuplicateKeyException("The key: " + key + " is already in use. If you want to "
 					+ "replace the stored object, use method addOrReplace instead!");
-		} else {
-			addOrReplace(key, transientInstance);
 		}
+		addOrReplace(key, transientInstance);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#addOrReplace
-	 * (java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void addOrReplace(final String key, final ModelContainer transientInstance) throws StoreObjectException {
 		try {
@@ -236,7 +186,8 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	private void serializie(final String key, final ModelContainer transientInstance) throws FileNotFoundException, IOException {
+	private void serializie(final String key, final ModelContainer transientInstance)
+			throws FileNotFoundException, IOException {
 		final ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)));
 		stream.writeObject(transientInstance);
 		stream.close();
@@ -255,26 +206,17 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	}
 
 	/**
-	 * Should replace all illegal characters in a filename with '_' . It is not
-	 * sure if it catches all invalid filenames on all OS.
+	 * Should replace all illegal characters in a filename with '_' . It is not sure if it catches all invalid filenames
+	 * on all OS.
 	 * 
 	 * @param filename
-	 *            - A string that will be used as a filename (paths will not
-	 *            work!) somewhere else.
-	 * @return A string having converted all illegal characters in filename to
-	 *         '_'
+	 *            - A string that will be used as a filename (paths will not work!) somewhere else.
+	 * @return A string having converted all illegal characters in filename to '_'
 	 */
-	private String sanitize(final String filename) {
+	private static String sanitize(final String filename) {
 		return filename.replaceAll("[\\/:\"*?<>|]+", "_");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.repository.IRepository#isEmpty
-	 * ()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return listKeys().isEmpty();
