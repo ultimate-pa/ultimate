@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
+import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
@@ -50,6 +51,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
@@ -64,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.IASTNodeConsumer;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
@@ -174,14 +177,13 @@ public class AggressiveStrategy implements IHddStrategy {
 			final IASTNode astNode = node.getAstNode();
 			
 			// Delete everything that is known to be comma separated accordingly
+			// Expressions are handled explicitly below.
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
-			if (propertyInParent == IASTExpressionList.NESTED_EXPRESSION
-					|| propertyInParent == IASTInitializerList.NESTED_INITIALIZER
+			if (propertyInParent == IASTInitializerList.NESTED_INITIALIZER
 					|| propertyInParent == ICASTDesignatedInitializer.OPERAND) {
 				collector.addDeleteWithCommaChange(node, true);
 				return;
 			} else if (propertyInParent == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER
-					|| propertyInParent == IASTFunctionCallExpression.ARGUMENT
 					|| propertyInParent == IASTEnumerationSpecifier.ENUMERATOR) {
 				collector.addDeleteWithCommaChange(node, false);
 				return;
@@ -216,9 +218,11 @@ public class AggressiveStrategy implements IHddStrategy {
 		
 		@Override
 		public void on(final IASTDeclSpecifier declSpecifier) {
-			// This causes many type checking errors, but let's see what happens
+			// Changing types is likely to cause type checking errors, but let's see what happens.
 			// Should add at least a few more checks to rule out clear compilation errors
-			if (mCurrentNode.getRegularParent().getAstNode() instanceof IASTFunctionDefinition) {
+			final IASTNode regularParent = mCurrentNode.getRegularParent().getAstNode();
+			if (regularParent instanceof IASTFunctionDefinition || (regularParent instanceof IASTSimpleDeclaration
+					&& ASTNodeUtils.isFunctionPrototype((IASTSimpleDeclaration) regularParent))) {
 				mCollector.addMultiReplaceChange(mCurrentNode, Arrays.asList("void", "int"));
 			} else {
 				mCollector.addReplaceChange(mCurrentNode, "int");
@@ -234,9 +238,8 @@ public class AggressiveStrategy implements IHddStrategy {
 		@Override
 		public void on(final IASTExpression expression) {
 			final ASTNodeProperty property = expression.getPropertyInParent();
-			
-			// delete the function name from function calls, leaving an expression
-			// list
+
+			// delete the function name from function calls, leaving an expression list
 			// Note that this may cause subsequent compilation errors, because the
 			// last element of that expression list may be deleted (since it is
 			// considered to be a function call argument list)
@@ -244,7 +247,7 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-			
+
 			// Probably not a good idea to generate infinite loops, but these are
 			// one of the few expressions that can be deleted without causing syntax
 			// errors.
@@ -253,6 +256,7 @@ public class AggressiveStrategy implements IHddStrategy {
 				return;
 			}
 
+			// Compute a list of possible replacement strings depending on the expression type
 			final List<String> replacements = RewriteUtils.removeEquivalentReplacements(mCurrentNode,
 					RewriteUtils.getMinimalExpressionReplacements(expression));
 
@@ -269,6 +273,21 @@ public class AggressiveStrategy implements IHddStrategy {
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
+				return;
+			}
+
+			// Array subscript expressions have enclosing tokens [<expr>] that can be deleted
+			if (property == IASTArraySubscriptExpression.SUBSCRIPT) {
+				mCollector.addArraySubscriptChange(mCurrentNode, replacements);
+				return;
+			}
+
+			// Comma separated expressions can be deleted as well
+			if (property == IASTExpressionList.NESTED_EXPRESSION) {
+				mCollector.addDeleteWithCommaOrReplaceChange(mCurrentNode, true, replacements);
+				return;
+			} else if (property == IASTFunctionCallExpression.ARGUMENT) {
+				mCollector.addDeleteWithCommaOrReplaceChange(mCurrentNode, false, replacements);
 				return;
 			}
 			

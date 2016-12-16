@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.ch
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -530,6 +532,57 @@ public class ChangeCollector {
 		return addChange(new DeleteWithCommaChange(parent, commaPositions, keepOne, token));
 	}
 	
+
+	/**
+	 * Delete an element with comma or replace it alternatively.
+	 *
+	 * @param node
+	 *            PST node.
+	 * @param keepOne
+	 *            {@code true} iff one element should be kept
+	 * @param replacements
+	 *            list of alternative replacements if deletion fails
+	 * @return {@code true} iff a change has been added
+	 * @return
+	 */
+	public boolean addDeleteWithCommaOrReplaceChange(final IPSTRegularNode node, final boolean keepOne,
+			final List<String> replacements) {
+		final IPSTRegularNode parent = node.getRegularParent();
+		final ASTNodeProperty childProperty = ASTNodeUtils.getPropertyOfCommaSeparatedChildNodes(parent.getAstNode());
+		if (childProperty == null || node.getAstNode().getPropertyInParent() != childProperty) {
+			mLogger.warn("DeleteWithCommaChange not supported for node " + node + " with property "
+					+ node.getAstNode().getPropertyInParent());
+			return addMultiReplaceChange(node, replacements);
+		}
+
+		final List<CommaSeparatedChild> commaPositions = mParentToCommaPositionMap.computeIfAbsent(parent,
+				n -> CommaSeparatedChildFinder.runWithVarArgsSupport(n, childProperty));
+		if (keepOne && commaPositions.size() <= 1) {
+			return addMultiReplaceChange(node, replacements);
+		}
+
+		if (!CommaDeleter.isDeletionWithCommaPossible(node, commaPositions)) {
+			mLogger.debug("DeleteWithCommaChange not supported because of missing comma: " + node);
+			return addMultiReplaceChange(node, replacements);
+		}
+
+		final List<String> validReplacements = RewriteUtils.removeEquivalentReplacements(node, replacements);
+		return addChange(new DeleteWithCommaChange(node, parent, commaPositions, keepOne) {
+			@Override
+			public Optional<HddChange> createAlternativeChange() {
+				return validReplacements.isEmpty() ? Optional.empty()
+						: Optional.of(new MultiReplaceChange(getNode(), validReplacements));
+			}
+
+			@Override
+			public String toString() {
+				return super.toString() + " with alternative replacements ("
+						+ validReplacements.stream().collect(Collectors.joining(", ")) + ")";
+			}
+		});
+	}
+
+
 	/**
 	 * Split initialization expression from a declaration by replacing the equals character by a semicolon. This may
 	 * allow a deletion of the declaration statement in following HDD applications, while keeping the expression
@@ -585,6 +638,48 @@ public class ChangeCollector {
 		});
 	}	
 	
+
+	/**
+	 * Deletes an array subscript expression{@literal <array>[<subscript>]}. Can try alternative replacements if
+	 * deletion fails.
+	 *
+	 * @param node
+	 *            array subscript expression node
+	 * @param replacements
+	 *            list of alternative replacements
+	 * @return
+	 */
+	public boolean addArraySubscriptChange(final IPSTRegularNode node, final List<String> replacements) {
+		final IPSTNode parent = node.getRegularParent();
+		final Token[] tokens = TokenUtils.getExpectedTokenArray(parent, IToken.tLBRACKET, IToken.tRBRACKET);
+		if (tokens[0] == null || tokens[1] == null) {
+			mLogger.debug(
+					"DeleteArraySubscript not supported because of missing bracket tokens in parent node " + parent);
+			return false;
+		}
+		final List<String> validReplacements = RewriteUtils.removeEquivalentReplacements(node, replacements);
+		return addChange(new HddChange(node) {
+			@Override
+			public void apply(final SourceRewriter rewriter) {
+				RewriteUtils.replaceByWhitespace(rewriter, tokens[0]);
+				RewriteUtils.replaceByWhitespace(rewriter, getNode());
+				RewriteUtils.replaceByWhitespace(rewriter, tokens[1]);
+			}
+
+			@Override
+			public Optional<HddChange> createAlternativeChange() {
+				return validReplacements.isEmpty() ? Optional.empty()
+						: Optional.of(new MultiReplaceChange(getNode(), validReplacements));
+			}
+
+			@Override
+			public String toString() {
+				return "Delete or replace array subscript " + getNode();
+			}
+		});
+	}
+
+
 	/**
 	 * @param node
 	 *            PST node.

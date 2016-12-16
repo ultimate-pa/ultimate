@@ -167,11 +167,10 @@ public class SafeStrategy implements IHddStrategy {
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
 
 			// Do not delete function parameters. Call Arguments are handled like normal expressions.
-			// Delete everything else is comma separated
+			// Delete everything else is comma separated (expressions are handled below)
 			if (propertyInParent == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER) {
 				return;
-			} else if (propertyInParent == IASTExpressionList.NESTED_EXPRESSION
-					|| propertyInParent == IASTInitializerList.NESTED_INITIALIZER
+			} else if (propertyInParent == IASTInitializerList.NESTED_INITIALIZER
 					|| propertyInParent == ICASTDesignatedInitializer.OPERAND) {
 				collector.addDeleteWithCommaChange(node, true);
 				return;
@@ -257,6 +256,12 @@ public class SafeStrategy implements IHddStrategy {
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
+				return;
+			}
+
+			// Comma separated expressions can be deleted as well
+			if (property == IASTExpressionList.NESTED_EXPRESSION) {
+				mCollector.addDeleteWithCommaOrReplaceChange(mCurrentNode, true, replacements);
 				return;
 			}
 			
