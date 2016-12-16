@@ -303,7 +303,7 @@ def determineMode(propertyFileName):
     memDeref = False
     memDerefMemtrack = False
     overflowMode = False
-	propFile = open(propertyFileName, 'r')
+    propFile = open(propertyFileName, 'r')
     for line in propFile:
         if line.find('valid-deref') != -1:
             memDeref = True
