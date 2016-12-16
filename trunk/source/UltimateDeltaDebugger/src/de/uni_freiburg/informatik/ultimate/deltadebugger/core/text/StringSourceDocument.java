@@ -152,27 +152,13 @@ public class StringSourceDocument implements ISourceDocument {
 		// Create an object with a more useful toString() for easier debugging
 		return new SourceRange(offset, endOffset);
 	}
-	
+
 	/**
 	 * A range in the source.
 	 */
-	class SourceRange implements ISourceRange {
-		private final int mBegin;
-		private final int mEnd;
-		
+	private class SourceRange extends PlainSourceRange {
 		SourceRange(final int offset, final int endOffset) {
-			mBegin = offset;
-			mEnd = endOffset;
-		}
-		
-		@Override
-		public int endOffset() {
-			return mEnd;
-		}
-		
-		@Override
-		public int offset() {
-			return mBegin;
+			super(offset, endOffset);
 		}
 		
 		@Override

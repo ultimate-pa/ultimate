@@ -212,7 +212,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		if (offset > endOffset) {
 			throw new IndexOutOfBoundsException();
 		}
-		return mDocument.newSourceRange(remapOffset(offset, false), remapOffset(endOffset, includeInsertionsAtEnd));
+		return new PlainSourceRange(remapOffset(offset, false), remapOffset(endOffset, includeInsertionsAtEnd));
 	}
 	
 	/**
@@ -233,7 +233,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		super.replace(offset, endOffset, replacement);
 		return this;
 	}
-	
+
 	/**
 	 * Replaces a range of text.
 	 * Equivalent to {@code replace(location.offset(), location.endOffset(), replacement)}
