@@ -204,11 +204,9 @@ public class PluginConnector {
 			mLogger.info("Adding new model " + type + " " + element.getClass().getSimpleName());
 			mModelManager.addItem(element, type);
 		} else {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(String.format(
-						"%s did return invalid model for observer %s, skipping insertion in model container",
-						tool.getPluginName(), observer));
-			}
+			mLogger.info(String.format(
+					"%s did return invalid model for observer %s and model type %s, skipping insertion in model container",
+					tool.getPluginName(), observer, type));
 		}
 	}
 
