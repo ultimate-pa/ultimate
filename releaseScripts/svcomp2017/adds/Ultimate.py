@@ -8,23 +8,11 @@ import fnmatch
 import platform
 import argparse
 
-
 version = '47e1251f'
 toolname = 'wrong toolname'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
-
-# various settings file strings 
-settingsFileMemSafetyDerefMemtrack = 'DerefFreeMemtrack'
-settingsFileMemSafetyDeref = 'Deref'
-settingsFileOverflow = 'Overflow'
-settingsFileTermination = 'Termination'
-settingsFileReach = 'Reach'
-settingsFileBitprecise = 'Bitvector'
-settingsFileDefault = 'Default'
-settingsFile32 = '32bit'
-settingsFile64 = '64bit'
 
 # special strings in ultimate output
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
@@ -195,13 +183,13 @@ def createWitnessPassthroughArgumentsList(printWitness, prop, architecture, cFil
     return ret
         
 
-def getSettingsFile(bitprecise, settingsSearchString):
+def getSettingsPath(bitprecise, settingsSearchString):
     if bitprecise:
         print ('Using bit-precise analysis')
-        settingsSearchString = settingsSearchString + '*_' + settingsFileBitprecise
+        settingsSearchString = settingsSearchString + '*_' + 'Bitvector'
     else:
         print ('Using default analysis')
-        settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
+        settingsSearchString = settingsSearchString + '*_' + 'Default'
     settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
     if settingsArgument == '' or settingsArgument == None:
         print ('No suitable settings file found using ' + settingsSearchString)
@@ -270,48 +258,59 @@ def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, over
     settingsSearchString = ''
     if memDeref and memDerefMemtrack:
         print ('Checking for memory safety (deref-memtrack)')
-        settingsSearchString = settingsFileMemSafetyDerefMemtrack
+        settingsSearchString = 'DerefFreeMemtrack'
     elif memDeref:
         print ('Checking for memory safety (deref)')
-        settingsSearchString = settingsFileMemSafetyDeref
+        settingsSearchString = 'Deref'
     elif terminationMode:
         print ('Checking for termination')
-        settingsSearchString = settingsFileTermination
+        settingsSearchString = 'Termination'
     elif overflowMode:
         print ('Checking for overflows')
-        settingsSearchString = settingsFileOverflow
+        settingsSearchString = 'Overflow'
     else:
         print ('Checking for ERROR reachability')
-        settingsSearchString = settingsFileReach
+        settingsSearchString = 'Reach'
     settingsSearchString = settingsSearchString + '*' + architecture
     return settingsSearchString
 
 
-def createToolchainString(termmode, witnessmode):
+def getToolchainPath(termmode, memDeref, memDerefMemtrack, overflowMode, witnessmode):
+    searchString = None
     if termmode:
-        toolchain = searchCurrentDir('*Termination.xml');
-        if toolchain == '' or toolchain == None:
-            print ('No suitable settings file found using *Termination.xml')
-            sys.exit(1)
-        return toolchain
-    elif witnessmode: 
-        toolchain = searchCurrentDir('*WitnessValidation.xml');
-        if toolchain == '' or toolchain == None:
-            print ('No suitable settings file found using **WitnessValidation.xml')
-            sys.exit(1)
-        return toolchain
+        searchString = '*Termination.xml'
+    elif witnessmode:
+        searchString = '*WitnessValidation.xml'
+    elif memDeref and memDerefMemtrack:
+        searchString = '*MemDerefMemtrack.xml'
     else:
-        for root, dirs, files in os.walk('.'):
-            for name in files:
-                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml') and not fnmatch.fnmatch(name, '*WitnessValidation.xml'):
-                    return os.path.join(root, name)
-            break
-    print('No suitable toolchain file found')
-    sys.exit(1)
-    return 
+        searchString = '*Reach.xml'
+    
+    toolchain = searchCurrentDir('*Termination.xml');
+    if toolchain == '' or toolchain == None:
+        print ('No suitable toolchain file found using ' + searchString)
+        sys.exit(1)
+        
+    return toolchain 
+
 
 def printErr(*objs):
     print(*objs, file=sys.stderr)
+
+
+def determineMode(propertyFileName):
+    propFile = open(propertyFileName, 'r')
+    for line in propFile:
+        if line.find('valid-deref') != -1:
+            memDeref = True
+        if line.find('valid-memtrack') != -1:
+            memDerefMemtrack = True
+        if line.find('LTL(F end)') != -1:
+            terminationMode = True
+        if line.find('overflow') != -1:
+            overflowMode = True
+    
+    return terminationMode, memDeref, memDerefMemtrack, overflowMode
 
 def main():
     # different modes 
@@ -324,23 +323,13 @@ def main():
     ultimateBin = getBinary()
     
     propertyFileName, architecture, cFile, verbose, validateWitness = parseArgs()
-    
-    propFile = open(propertyFileName, 'r')
-    for line in propFile:
-        if line.find('valid-deref') != -1:
-            memDeref = True
-        if line.find('valid-memtrack') != -1:
-            memDerefMemtrack = True
-        if line.find('LTL(F end)') != -1:
-            terminationMode = True
-        if line.find('overflow') != -1:
-            overflowMode = True
+    terminationMode, memDeref, memDerefMemtrack, overflowMode = determineMode(propertyFileName)
             
     propFileStr = open(propertyFileName, 'r').read()
 
-    toolchain = createToolchainString(terminationMode, validateWitness)
+    toolchain = getToolchainPath(terminationMode, memDeref, memDerefMemtrack, overflowMode, validateWitness)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
-    settingsArgument = getSettingsFile(False, settingsSearchString)
+    settingsArgument = getSettingsPath(False, settingsSearchString)
     witnessPassthroughArguments = createWitnessPassthroughArgumentsList(
                                     not validateWitness and not terminationMode,
                                     propFileStr, architecture, cFile)
@@ -356,7 +345,7 @@ def main():
     if(overapprox):
         # we did fail because we had to overaproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
-        settingsArgument = getSettingsFile(True, settingsSearchString)
+        settingsArgument = getSettingsPath(True, settingsSearchString)
         ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
         safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output

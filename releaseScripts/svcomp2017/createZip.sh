@@ -20,6 +20,7 @@ if [ $# -le 2 ]; then
 	echo "3. (optional) the reach toolchain (e.g., 'AutomizerC_WitnessPrinter.xml')"
 	echo "4. (optional) the termination toolchain or NONE"
 	echo "5. (optional) the witness validation toolchain or NONE"
+	echo "6. (optional) the memsafety deref and memtrack toolchain or NONE"
 	exit 1
 fi
 
@@ -77,6 +78,13 @@ else
 	VALTOOLCHAIN=
 fi
 
+if [ ! -z "$6" -a ! "NONE" = "$6" ]; then
+	MEMDEREFMEMTRACKTOOLCHAIN=../../trunk/examples/toolchains/${6}
+else 
+	echo "No memory deref toolchain specified, ommitting..."
+	MEMDEREFMEMTRACKTOOLCHAIN=
+fi
+
 SETTINGS=../../trunk/examples/settings/svcomp2017/${LCTOOLNAME}/*${TOOLNAME}*
 
 if [ -d "$TARGETDIR" ]; then
@@ -92,13 +100,16 @@ echo "Copying files"
 mkdir "$TARGETDIR"
 test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
 if [ ! -z "$TOOLCHAIN" ]; then 
-	test cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME".xml
+	test cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Reach.xml
 fi
 if [ ! -z "$TERMTOOLCHAIN" ]; then  
 	test cp "$TERMTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Termination.xml
 fi
 if [ ! -z "$VALTOOLCHAIN" ]; then 
 	test cp "$VALTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"WitnessValidation.xml
+fi
+if [ ! -z "$MEMDEREFMEMTRACKTOOLCHAIN" ]; then 
+	test cp "$MEMDEREFMEMTRACKTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"MemDerefMemtrack.xml
 fi
 
 test cp adds/LICENSE* "$TARGETDIR"/
