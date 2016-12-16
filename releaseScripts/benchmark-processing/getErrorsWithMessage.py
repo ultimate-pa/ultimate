@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import xml.etree.ElementTree as ET
+import subprocess
 import os
 import sys
 import argparse
@@ -27,8 +28,8 @@ def parsexml(dir, filename):
     fullXmlFilename = dir + "/" + filename
     
     urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/uautomizer.2016-12-15_0135.logfiles/sv-comp17."
-    tmpFilename = "tmp"
-    
+    origTmpFilename = "tmp"
+    i=0
     "Parses a result file from SVCOMP"
     tree = ET.parse(fullXmlFilename)
     root = tree.getroot()
@@ -43,13 +44,16 @@ def parsexml(dir, filename):
             value = column.get('value')
 
             if key == "status" and value == "ERROR":
+                i=i+1  
+                tmpFilename = origTmpFilename + str(i)
                 print testFilename
                 errors.add(run.get('name'))
                 if args.printerror:
                     currenterror.add(run.get('name'))
                 
                 # receive log file from server
-                urllib.urlretrieve(urlBase + testFilename + ".log", filename=tmpFilename)
+                sha = subprocess.Popen(['wget', '-qO',tmpFilename,urlBase + testFilename + ".log"], stdout=subprocess.PIPE).communicate()[0]				
+                #urllib.urlretrieve(urlBase + testFilename + ".log", filename=tmpFilename)
                 
                 # search for error keyword and increment occurrence counter
                 for line in open(tmpFilename):
