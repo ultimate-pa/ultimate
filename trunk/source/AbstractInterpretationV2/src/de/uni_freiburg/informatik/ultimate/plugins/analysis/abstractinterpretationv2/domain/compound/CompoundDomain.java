@@ -49,34 +49,33 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
 	private final BoogieIcfgContainer mRootAnnotation;
-
+	
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
-
+	
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
 			final BoogieIcfgContainer rootAnnotation) {
 		mServices = serviceProvider;
 		mDomainList = domainList;
 		mRootAnnotation = rootAnnotation;
 	}
-
+	
 	@Override
 	public CompoundDomainState createFreshState() {
 		return new CompoundDomainState(mServices, mDomainList);
 	}
-
-	@Override
-	public CompoundDomainState createTopState() {
-		return new CompoundDomainState(mServices, mDomainList);
-	}
 	
 	@Override
-	public CompoundDomainState createBottomState() {
-		// TODO Auto-generated method stub
-		return null;
+	public CompoundDomainState createTopState() {
+		return new CompoundDomainState(mServices, mDomainList, false);
 	}
 
+	@Override
+	public CompoundDomainState createBottomState() {
+		return new CompoundDomainState(mServices, mDomainList, true);
+	}
+	
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
@@ -84,7 +83,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mWideningOperator;
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
 		if (mMergeOperator == null) {
@@ -92,7 +91,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mMergeOperator;
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -100,7 +99,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mPostOperator;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		// This domain is the most-expressive domain there is.
