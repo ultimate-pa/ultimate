@@ -258,7 +258,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				 */
 //				VPState result = mStateFactory.havocVariables(assignedVars, prestate);
 				assert false : "TODO: implement";
-				return Collections.singleton(mTfStateFactory.getTopState());
+				return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
 			}
 
 		} else if (term instanceof QuantifiedFormula) {
@@ -393,20 +393,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				assert false : "unexpected..";
 			}
 
-			// List<VPState> conjoined = mDomain.getVpStateFactory().conjoin(stateBeforeLeaving, stateAfterLeaving);
-
-			// TODO
-
-			// return apply(conjoined, transition);
-			assert false;
-			return null;
-		}
-
-		private List<VPState> applyReturn(VPState stateBeforeLeaving, VPState stateAfterLeaving, Return transition) {
-			transition.getAssignmentOfReturn();
-			transition.getLocalVarsAssignmentOfCall();
-
-			// TODO Auto-generated method stub
+			assert false : "forgot a case?";
 			return null;
 		}
 

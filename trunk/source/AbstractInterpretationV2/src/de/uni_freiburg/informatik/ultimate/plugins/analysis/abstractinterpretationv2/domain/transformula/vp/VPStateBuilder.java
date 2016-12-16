@@ -7,18 +7,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 
 	protected Set<IProgramVar> mVars;
-//	protected Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
 	protected final VPDomain mDomain;
 	protected boolean mIsTop;
 	protected EqGraph mEqGraph;
@@ -169,100 +165,6 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 		return mEqNodeToEqGraphNodeMap;
 	}
 
-//	protected class EqGraph {
-//		/**
-//		 * Union of two equivalence classes. 
-//		 * The representative of node1 will become the representative of node2.
-//		 *
-//		 * @param node1
-//		 * @param node2
-//		 */
-//		protected void union(final EqGraphNode node1, final EqGraphNode node2) {
-//	
-//			final EqGraphNode graphNode1Find = find(node1);
-//			final EqGraphNode graphNode2Find = find(node2);
-//	
-//			if (!graphNode1Find.equals(graphNode2Find)) {
-//				graphNode2Find.addToReverseRepresentative(graphNode1Find);
-//				graphNode1Find.setRepresentative(graphNode2Find);
-//				graphNode2Find.addToCcpar(graphNode1Find.getCcpar());
-//				for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode1Find.getCcchild().entrySet()) {
-//					graphNode2Find.getCcchild().addPair(entry.getKey(), entry.getValue());
-//				}
-//				
-//				/*
-//				 * Because of the change of representative, the disequality set also need to be updated.
-//				 */
-//				Set<VPDomainSymmetricPair<EqNode>> copyOfDisEqSet = new HashSet<>(mDisEqualitySet);
-//				for (VPDomainSymmetricPair<EqNode> pair : copyOfDisEqSet) {
-//					if (pair.contains(graphNode1Find.eqNode)) {
-//						EqNode first = pair.getFirst();
-//						EqNode second = pair.getSecond();
-//						
-//						/*
-//						 * TODO check: If both nodes in pair are constant, ignore it.
-//						 */
-//						if (first.isLiteral() && second.isLiteral()) {
-//							continue;
-//						}
-//						
-//						mDisEqualitySet.remove(pair);
-//						if (first.equals(graphNode1Find.eqNode)) {
-//							mDisEqualitySet.add(
-//									new VPDomainSymmetricPair<EqNode>(graphNode2Find.eqNode, second));
-//						} else {
-//							mDisEqualitySet.add(
-//									new VPDomainSymmetricPair<EqNode>(first, graphNode2Find.eqNode));
-//						}
-//					}
-//				}
-//			}
-//		}
-//
-//		private void equalityPropagation(final EqGraphNode node1, final EqGraphNode node2) {
-//			final Set<EqGraphNode> p1 = ccpar(node1);
-//			final Set<EqGraphNode> p2 = ccpar(node2);
-//
-//			for (final EqGraphNode t1 : p1) {
-//				for (final EqGraphNode t2 : p2) {
-//					if (!(find(t1).equals(find(t2))) && congruent(t1, t2)) {
-//						merge(t1, t2);
-//					}
-//				}
-//			}
-//		}	
-//
-//		/**
-//		 * Check whether @param node1 and @param node2 are congruent.
-//		 *
-//		 * @param node1
-//		 * @param node2
-//		 * @return true if they are congruent
-//		 */
-//		private boolean congruent(final EqGraphNode node1, final EqGraphNode node2) {
-//			if (!(node1.eqNode instanceof EqFunctionNode) || !(node2.eqNode instanceof EqFunctionNode)) {
-//				return false;
-//			}
-//
-//			final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
-//			final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
-//
-//			if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
-//				return false;
-//			}
-//			return congruentIgnoreFunctionSymbol(fnNode1, fnNode2);
-//		}
-//		
-//		/* Returns the parents of all nodes in @param node's congruence class.
-//		 *
-//		 * @param node
-//		 * @return
-//		 */
-//		private Set<EqGraphNode> ccpar(final EqGraphNode node) {
-//			return find(node).getCcpar();
-//		}
-//	}
-
 	public void addVariables(Collection<IProgramVar> variables) {
 		mVars.addAll(variables);
 	}
@@ -271,28 +173,6 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 		mVars.removeAll(variables);
 	}
 	
-//	/**
-//	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
-//	 *
-//	 * @param fnNode1
-//	 * @param fnNode2
-//	 * @return
-//	 */
-//	boolean congruentIgnoreFunctionSymbol(final EqFunctionNode fnNode1, final EqFunctionNode fnNode2) {
-//		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-//
-//		for (int i = 0; i < fnNode1.getArgs().size(); i++) {
-//			final EqNode fnNode1Arg = fnNode1.getArgs().get(i);
-//			final EqNode fnNode2Arg = fnNode2.getArgs().get(i);
-//			if (!find(getEqNodeToEqGraphNodeMap().get(fnNode1Arg))
-//					.equals(find(getEqNodeToEqGraphNodeMap().get(fnNode2Arg)))) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
-
 	public HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild(EqGraphNode representative1) {
 		return representative1.find().getCcchild();
 	}
@@ -303,22 +183,5 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 		EqGraphNode result = mEqNodeToEqGraphNodeMap.get(id.getEqNode());
 		assert result != null;
 		return result;
-	}
-
-//	@Override
-//	void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
-//		assert nodeIdentifier.getEqNode() != null;
-//		assert nodeIdentifier2.getEqNode() != null;
-//		
-//		EqNode f1 = find(nodeIdentifier.getEqNode());
-//		EqNode f2 = find(nodeIdentifier2.getEqNode());
-//		
-//		mDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(f1, f2));
-//	}
-
-	private EqNode find(EqNode eqNode) {
-		EqGraphNode gn = mEqNodeToEqGraphNodeMap.get(eqNode);
-		assert gn != null;
-		return gn.find().nodeIdentifier.getEqNode();
 	}
 }

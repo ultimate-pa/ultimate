@@ -1,23 +1,30 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class VpTfStateFactory implements IVPFactory<VPTfState>{
 	
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
+	private final VPDomainPreanalysis mPreAnalysis;
 
-	public VpTfStateFactory(VPTransFormulaStateBuilderPreparer tfStatePreparer) {
+	private final Map<Set<IProgramVar>, VPTfBottomState> mVarsToBottomState = new HashMap<>();
+
+	public VpTfStateFactory(VPTransFormulaStateBuilderPreparer tfStatePreparer, VPDomainPreanalysis preAnalysis) {
 		mTfStatePreparer = tfStatePreparer;
+		mPreAnalysis = preAnalysis;
 	}
 
 	
@@ -28,17 +35,16 @@ public class VpTfStateFactory implements IVPFactory<VPTfState>{
 	}
 	
 	public Set<VPTfState> addDisequality(Term t1, Term t2, VPTfState state) { 
-		return null;
+		return VPFactoryHelpers.addDisEquality(
+				new VPNodeIdentifier(t1), new VPNodeIdentifier(t2), state, this);
 	}
 	
 	public Set<VPTfState> conjoin(VPTfState state1, VPTfState state2) {
-		
-		return null;
+		return VPFactoryHelpers.conjoin(state1, state2, this);
 	}
 
 	public VPTfState disjoin(VPTfState state1, VPTfState state2) {
-		
-		return null;
+		return VPFactoryHelpers.disjoin(state1, state2, this);
 	}
 
 
@@ -46,44 +52,66 @@ public class VpTfStateFactory implements IVPFactory<VPTfState>{
 		return VPFactoryHelpers.conjoinAll(andList, this);
 	}
 
-
-	public VPTfState getTopState() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
 	public Set<VPTfState> handleArrayEqualityWithException(TermVariable newArray, Term oldArray,
 			ApplicationTerm storeTerm, Term value, VPTfState tfPreState) {
-		// TODO Auto-generated method stub
-		return null;
+		return VPFactoryHelpers.arrayEqualityWithException(
+				new VPArrayIdentifier(newArray), new VPArrayIdentifier(oldArray), 
+				tfPreState.getEqGraphNode(storeTerm).nodeIdentifier,  //TODO: not nice
+				tfPreState.getEqGraphNode(value).nodeIdentifier,  //TODO: not nice
+				tfPreState, this);
 	}
 
 
 	public Set<VPTfState> handleArrayEquality(Term lhs, Term rhs, VPTfState tfPreState) {
-		// TODO Auto-generated method stub
-		return null;
+		return VPFactoryHelpers.arrayEquality(
+				new VPArrayIdentifier(lhs), new VPArrayIdentifier(rhs), tfPreState, this);
 	}
 
 
 	@Override
 	public VPTransitionStateBuilder copy(VPTfState state) {
-		// TODO Auto-generated method stub
-		return null;
+//		if (originalState.isBottom()) {
+//			return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
+//		}
+		assert !state.isBottom();
+		
+		final VPTransitionStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		
+		for (EqGraphNode egnInOldState : state.getAllEqGraphNodes()) {
+			VPNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
+			EqGraphNode newGraphNode = builder.getEqGraphNode(nodeId);
+			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
+			assert !state.isTop() || newGraphNode.getRepresentative() == newGraphNode;
+		}
+		
+		for (VPDomainSymmetricPair<VPNodeIdentifier> pair : state.getDisEqualities()) {
+			builder.addDisEquality(pair);
+			assert !state.isTop() || (pair.mFst.isLiteral() && pair.mSnd.isLiteral()) : 
+				"The only disequalites in a top state are between constants";
+		}
+		
+		builder.addVars(new HashSet<>(state.getVariables()));
+		
+		builder.setIsTop(state.isTop());
+
+		assert builder.mVars.equals(state.getVariables());
+		return builder;
 	}
 
 
 	@Override
 	public VPTfState getBottomState(Set<IProgramVar> variables) {
-		// TODO Auto-generated method stub
-		return null;
+		VPTfBottomState result = mVarsToBottomState.get(variables);
+		if (result == null) {
+			
+		}
+		return result;
 	}
 
 
 	@Override
-	public VPTransitionStateBuilder createEmptyStateBuilder() {
-		// TODO Auto-generated method stub
-		return null;
+	public VPTransitionStateBuilder createEmptyStateBuilder(TransFormula tf) {
+		return mTfStatePreparer.getVPTfStateBuilder(tf);
 	}
 
 
@@ -93,13 +121,13 @@ public class VpTfStateFactory implements IVPFactory<VPTfState>{
 		}
 		
 		if (state.isTop()) {
-			VPTransitionStateBuilder builder = createEmptyStateBuilder();
+			VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
 			builder.addVariables(state.getVariables());
 			return builder.build();
 		}
 	
 		
-		IVPStateOrTfStateBuilder<VPTfState> builder = createEmptyStateBuilder();
+		IVPStateOrTfStateBuilder<VPTfState> builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		builder.setIsTop(true);
 

@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.lang.model.type.ExecutableType;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -205,8 +207,8 @@ public class VPFactoryHelpers {
 			return first;
 		}
 	
-		IVPStateOrTfStateBuilder<T> builder = factory.createEmptyStateBuilder();
-		builder.setIsTop(false);
+		IVPStateOrTfStateBuilder<T> builder = 
+				factory.createEmptyStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
 		
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection)
@@ -214,6 +216,9 @@ public class VPFactoryHelpers {
 		Set<VPDomainSymmetricPair<VPNodeIdentifier>> newDisequalities = new HashSet<>(first.getDisEqualities());
 		newDisequalities.retainAll(second.getDisEqualities());
 		builder.addDisEqualites(newDisequalities);
+		if (!newDisequalities.isEmpty()) {
+			builder.setIsTop(false);
+		}
 		
 		/**
 		 * the disjoined state has the intersection of the prior state's variables
@@ -380,14 +385,30 @@ public class VPFactoryHelpers {
 	public static <T extends IVPStateOrTfState> Set<T> arrayEquality(
 			final VPArrayIdentifier firstArray, final VPArrayIdentifier secondArray, 
 			T originalState, IVPFactory<T> factory) {
-		T resultState = factory.copy(originalState).build();
-//		resultState = havocArray(firstArray, resultState);
+		return arrayEqualityWithException(firstArray, secondArray, null, null, originalState, factory);
+	}
+	
+	public static <T extends IVPStateOrTfState> Set<T> arrayEqualityWithException(
+			VPArrayIdentifier firstArray,
+			VPArrayIdentifier secondArray, 
+			VPNodeIdentifier exceptionArrayNode, 
+			VPNodeIdentifier exceptionValueNode,
+			T state, 
+			IVPFactory<T> factory) {
+		assert (exceptionArrayNode == null) == (exceptionValueNode == null);
+		T resultState = factory.copy(state).build();
 
 		Set<T> resultStates = new HashSet<>();
 		for (final VPNodeIdentifier fnNode1 : factory.getFunctionNodesForArray(resultState, firstArray)) {
 			for (final VPNodeIdentifier fnNode2 : factory.getFunctionNodesForArray(resultState, secondArray)) {
 				EqGraphNode gn1 = resultState.getEqGraphNode(fnNode1);
 				EqGraphNode gn2 = resultState.getEqGraphNode(fnNode2);
+				
+				if (fnNode1.equals(exceptionArrayNode) || fnNode2.equals(exceptionArrayNode)) {
+					// this arrayIndex is excepted -- we will set it to exceptionValueNode instead
+					continue;
+				}
+				
 				if (congruentIgnoreFunctionSymbol(gn1, gn2)) {
 					resultStates = conjoinAll(
 							resultStates, 
@@ -396,12 +417,21 @@ public class VPFactoryHelpers {
 				}
 			}
 		}
+
+		if (exceptionArrayNode != null) {
+			resultStates = conjoinAll(
+					resultStates, 
+					addEquality(exceptionArrayNode, exceptionValueNode, resultState, factory), 
+					factory);
+		}
+	
+		
 		if (resultStates.isEmpty()) {
 			resultStates.add(resultState);
 		}
 		return resultStates;
 	}
-	
+
 	/**
 	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
 	 *
@@ -414,7 +444,7 @@ public class VPFactoryHelpers {
 		//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
 		assert fnNode1.nodeIdentifier.isFunction();
 		assert fnNode2.nodeIdentifier.isFunction();
-
+	
 		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
 			final EqGraphNode fnNode1Arg = fnNode1.getInitCcchild().get(i);
 			final EqGraphNode fnNode2Arg = fnNode2.getInitCcchild().get(i);

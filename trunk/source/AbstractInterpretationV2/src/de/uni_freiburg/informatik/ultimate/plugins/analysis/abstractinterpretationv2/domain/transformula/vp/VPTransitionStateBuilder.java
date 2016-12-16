@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState> {
@@ -31,7 +32,11 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		Map<IProgramVar, TermVariable>, 
 		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
 
-	public VPTransitionStateBuilder(VPDomain domain, VPDomainPreanalysis preAnalysis,
+	private HashRelation<VPArrayIdentifier, VPNodeIdentifier> mArrayIdToFunctionNodes;
+
+	private TransFormula mTransFormula;
+
+	public VPTransitionStateBuilder(VPDomainPreanalysis preAnalysis,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
 		createEqGraphNodes(tf, preAnalysis, allConstantEqNodes);
 		
@@ -185,12 +190,12 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	}
 	
 	private TFEqGraphNode getOrConstructEqGraphNode(
-			EqNode eqNode, 
-			Map<IProgramVar, TermVariable> inVars, 
-			Map<IProgramVar, TermVariable> outVars, 
-			Term term,
-			Map<Term, TFEqGraphNode> termToEqGraphNode,
-			NestedMap3<EqNode, Map<IProgramVar, TermVariable>, Map<IProgramVar, TermVariable>, TFEqGraphNode> 
+			final EqNode eqNode, 
+			final Map<IProgramVar, TermVariable> inVars, 
+			final Map<IProgramVar, TermVariable> outVars, 
+			final Term term,
+			final Map<Term, TFEqGraphNode> termToEqGraphNode,
+			final NestedMap3<EqNode, Map<IProgramVar, TermVariable>, Map<IProgramVar, TermVariable>, TFEqGraphNode> 
 				eqNodeToInVarsToOutVarsToEqGraphNode) {
 
 		TFEqGraphNode result = termToEqGraphNode.get(term);
@@ -242,10 +247,10 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 				argNodes.add(argNode);
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
-			result.getCcchild().addPair(
-					new VPArrayIdentifier(
-							((EqFunctionNode) eqNode).getFunction()), 
-							argNodes);
+			VPArrayIdentifier arrayId = new VPArrayIdentifier(((EqFunctionNode) eqNode).getFunction());
+			result.getCcchild().addPair(arrayId, argNodes);
+			
+			mArrayIdToFunctionNodes.addPair(arrayId, new VPNodeIdentifier(term));
 		}
 		
 		eqNodeToInVarsToOutVarsToEqGraphNode.put(eqNode, inVars, outVars, result);
@@ -282,28 +287,20 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		return null;
 	}
 
-//	void havoc(TermVariable tv) {
-//		
-//	}
-//
-//	void addEquality(Term t1, Term t2) {
-//
-//	}
-//	
-//	void addDisEquality(Term t1, Term t2) {
-//		
-//	}
 
 	
-//	@Override 
-//	@Deprecated
-//	VPState build() {
-//		assert false : "use buildTf()";
-//		return null;
-//	}
-	
+	@Override
 	VPTfState build() {
-		return null;
+		assert mTransFormula != null;
+		assert mTermToEqGraphNodeMap != null;
+		assert mArrayIdToFunctionNodes != null;
+		assert mDisEqualitySet != null;
+		assert mVars != null;
+		return new VPTfState(
+				mTransFormula, 
+				mTermToEqGraphNodeMap, 
+				mArrayIdToFunctionNodes, 
+				mDisEqualitySet, mIsTop, mVars);
 	}
 
 
@@ -311,14 +308,6 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	EqGraphNode getEqGraphNode(VPNodeIdentifier i) {
 		return mTermToEqGraphNodeMap.get(i.getIdTerm());
 	}
-
-
-	@Override
-	IVPStateOrTfStateBuilder<VPTfState> setIsTop(boolean b) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 
 	public void addVariables(Set<IProgramVar> variables) {
 		mVars.addAll(variables);

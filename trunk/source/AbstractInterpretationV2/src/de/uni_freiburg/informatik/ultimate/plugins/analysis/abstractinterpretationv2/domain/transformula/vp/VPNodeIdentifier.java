@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class VPNodeIdentifier {
@@ -11,12 +12,18 @@ public class VPNodeIdentifier {
 	private final Term mIdentifyingTerm;
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
+	private final VPArrayIdentifier mFunction;
 
 	public VPNodeIdentifier(EqNode eqNode) {
 		this.mEqNode = eqNode;
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 		this.mIdentifyingTerm = null;
 		this.mIsLiteral = eqNode.isLiteral();
+		if (mIsFunction) {
+			mFunction = new VPArrayIdentifier(((EqFunctionNode) eqNode).getFunction());
+		} else {
+			mFunction = null;
+		}
 	}
 
 	public VPNodeIdentifier(Term term) {
@@ -27,6 +34,14 @@ public class VPNodeIdentifier {
 			!((ApplicationTerm) term).getFunction().getName().equals("store") : "right?";
 		this.mIdentifyingTerm = term;
 		this.mIsLiteral = term instanceof ConstantTerm;
+		if (mIsFunction) {
+			ApplicationTerm at = (ApplicationTerm) term;
+			assert at.getFunction().getName().equals("select");
+			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			mFunction = new VPArrayIdentifier(mds.getArray());
+		} else {
+			mFunction = null;
+		}
 	}
 
 	public EqNode getEqNode() {
@@ -49,7 +64,8 @@ public class VPNodeIdentifier {
 	}
 	
 	public VPArrayIdentifier getFunction() {
-		return null;
+		assert mIsFunction : "check isFunction() before";
+		return mFunction;
 	}
 	
 	public boolean isLiteral() {

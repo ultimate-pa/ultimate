@@ -114,27 +114,28 @@ public class EqGraphNode {
 		return this.getRepresentative().find();
 	}
 
-	void copyFields(EqGraphNode other, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-		assert this.nodeIdentifier == other.nodeIdentifier;
+	static <T extends IVPStateOrTfState> void copyFields(
+			EqGraphNode source, EqGraphNode target, IVPStateOrTfStateBuilder<T> builder) {
+		assert target.nodeIdentifier == source.nodeIdentifier;
 		
-		this.setRepresentative(eqNodeToEqGraphNode.get(other.getRepresentative().nodeIdentifier));
+		target.setRepresentative(builder.getEqGraphNode(source.getRepresentative().nodeIdentifier));
 		
-		this.getReverseRepresentative().clear();
-		for (EqGraphNode reverseRe : other.getReverseRepresentative()) {
-			this.getReverseRepresentative().add(eqNodeToEqGraphNode.get(reverseRe.nodeIdentifier));
+		target.getReverseRepresentative().clear();
+		for (EqGraphNode reverseRe : source.getReverseRepresentative()) {
+			target.getReverseRepresentative().add(builder.getEqGraphNode(reverseRe.nodeIdentifier));
 		}
-		this.getCcpar().clear();
-		for (EqGraphNode ccpar : other.getCcpar()) {
-			this.getCcpar().add(eqNodeToEqGraphNode.get(ccpar.nodeIdentifier));
+		target.getCcpar().clear();
+		for (EqGraphNode ccpar : source.getCcpar()) {
+			target.getCcpar().add(builder.getEqGraphNode(ccpar.nodeIdentifier));
 		}
 		
-		this.ccchild = new HashRelation<>();
-		for (VPArrayIdentifier arrayId : other.getCcchild().getDomain()) {
-			for (List<EqGraphNode> nodes : other.getCcchild().getImage(arrayId)) {
+		target.ccchild = new HashRelation<>();
+		for (VPArrayIdentifier arrayId : source.getCcchild().getDomain()) {
+			for (List<EqGraphNode> nodes : source.getCcchild().getImage(arrayId)) {
 				List<EqGraphNode> newList = nodes.stream()
-						.map(otherNode -> eqNodeToEqGraphNode.get(otherNode.nodeIdentifier))
+						.map(otherNode -> builder.getEqGraphNode(otherNode.nodeIdentifier))
 						.collect(Collectors.toList());
-				this.getCcchild().addPair(arrayId, newList);
+				target.getCcchild().addPair(arrayId, newList);
 			}
 		}
 	}

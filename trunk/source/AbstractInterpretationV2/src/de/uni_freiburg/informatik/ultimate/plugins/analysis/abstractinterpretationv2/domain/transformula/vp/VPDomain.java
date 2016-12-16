@@ -80,7 +80,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mPost = new VPPostOperator(script, services, this);
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
-		mTfStateFactory = new VpTfStateFactory(tfPreparer);
+		mTfStateFactory = new VpTfStateFactory(tfPreparer, preAnalysis);
 	}
 
 	@Override
@@ -126,6 +126,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
+		assert false;
 		return null;
 	}
 

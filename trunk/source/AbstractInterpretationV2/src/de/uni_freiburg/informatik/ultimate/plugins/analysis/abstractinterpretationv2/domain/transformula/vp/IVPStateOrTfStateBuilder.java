@@ -16,9 +16,9 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 	
 	protected EqGraph mEqGraph;
 	
+	protected boolean mIsTop;
+	
 	abstract EqGraphNode getEqGraphNode(VPNodeIdentifier i2);
-
-	abstract IVPStateOrTfStateBuilder<T> setIsTop(boolean b);
 
 	abstract T build();
 
@@ -26,6 +26,11 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 
 //	abstract boolean checkContradiction();
 	
+	IVPStateOrTfStateBuilder<T> setIsTop(boolean b) {
+		mIsTop = b;
+		return this;
+	}
+
 	/**
 	 * Merge two congruence class. propagation.
 	 *

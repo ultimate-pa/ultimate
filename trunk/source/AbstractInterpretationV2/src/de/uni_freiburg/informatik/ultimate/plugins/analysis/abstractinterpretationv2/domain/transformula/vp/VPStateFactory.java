@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -108,14 +109,6 @@ public class VPStateFactory implements IVPFactory<VPState>{
 		return createEmptyStateBuilder().setVars(vars).build();
 	}
 
-	public VPStateBuilder translateForTransFormula(VPState originalState, 
-			Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars,
-			Set<TermVariable> auxVars) {
-		//TODO
-		return null;
-	}
-
 	public VPStateBuilder copy(VPState originalState) {
 		if (originalState.isBottom()) {
 			return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
@@ -126,7 +119,7 @@ public class VPStateFactory implements IVPFactory<VPState>{
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			EqGraphNode newGraphNode = builder.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
-			newGraphNode.copyFields(oldGraphNode, builder.getEqNodeToEqGraphNodeMap());
+			EqGraphNode.copyFields(oldGraphNode, newGraphNode, builder);
 			assert !originalState.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
 		
@@ -143,191 +136,6 @@ public class VPStateFactory implements IVPFactory<VPState>{
 		assert builder.mVars.equals(originalState.getVariables());
 		return builder;
 	}
-
-//	/**
-//	 * To havoc a node. There are three main parts to handle: (1) Handling the
-//	 * outgoing edge chain. (2) Handling the incoming edges. (3) Handling the
-//	 * node itself.
-//	 * 
-//	 * @param EqGraphNode
-//	 *            to be havoc
-//	 */
-//	public VPState havoc(final EqNode node, final VPState originalState) {
-//		if (originalState.isBottom()) {
-//			return originalState;
-//		}
-//		
-//		//assert !node.isLiteral() : "cannot havoc a literal";
-//		assert node.getTerm(mDomain.getManagedScript()).getFreeVars().length > 0 : "cannot havoc a constant term";
-//		
-//		
-//		VPStateBuilder builder = copy(originalState);
-//		EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
-//		
-//		// TODO: determine if state becomes top through the havoc!
-//
-//		// Handling the outgoing edge chain
-//		final EqGraphNode firstRepresentative = graphNode.getRepresentative();
-//		EqGraphNode nextRepresentative = firstRepresentative;
-//		nextRepresentative.getReverseRepresentative().remove(graphNode);
-//		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
-//			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-//			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
-//				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
-//			}
-//			nextRepresentative = nextRepresentative.getRepresentative();
-//		}
-//		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-//		HashRelation<IProgramVarOrConst, List<EqGraphNode>> copyOfGraphNodeCcchild = new HashRelation<>();
-//		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
-//			copyOfGraphNodeCcchild.addPair(entry.getKey(), entry.getValue());
-//		}
-//		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : copyOfGraphNodeCcchild.entrySet()) {
-//			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
-//		}
-//
-//		/*
-//		 *  Handling the incoming edges (reverseRepresentative).
-//		 *  Point nodes in reverseRepresentative to the representative of the node that is being havoc.
-//		 *  For example, y -> x -> z. Havoc x, then we have y -> z
-//		 *  But if the node that is being havoc is its own representative, 
-//		 *  then point nodes in reverseRepresentative to one of them.
-//		 *  For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
-//		 */
-//		EqGraphNode firstReserveRepresentativeNode = null;
-//		if (!graphNode.getReverseRepresentative().isEmpty()) {
-//			firstReserveRepresentativeNode = graphNode.getReverseRepresentative().iterator().next();
-//		}
-//		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
-//			// first reset the representative of all the reverseRepresentative nodes.
-//			reverseNode.setRepresentative(reverseNode);
-//		}
-//		
-//		boolean havocNodeIsItsRepresentative = false;
-//		VPState resultState = builder.build();
-//		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
-//			// case y -> x <- z
-//			if (firstRepresentative.equals(graphNode)) {
-//				havocNodeIsItsRepresentative = true;
-//				if (graphNode.getReverseRepresentative().size() > 1) {
-//					assert firstReserveRepresentativeNode != null;
-//					resultState = disjoinAll(addEquality(reverseNode.eqNode, firstReserveRepresentativeNode.eqNode, resultState));
-//				}
-//			} else { // case y -> x -> z
-//				resultState = disjoinAll(addEquality(reverseNode.eqNode, firstRepresentative.eqNode, resultState));
-//			}
-//		}
-//		
-//		builder = copy(resultState);
-//		graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
-//		
-//		/*
-//		 * Handling the node itself:
-//		 * First update disequality set.
-//		 * Then set havoc node to initial.
-//		 */
-//		if (havocNodeIsItsRepresentative) {
-//			Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>();
-//			for (VPDomainSymmetricPair<EqNode> pair : builder.getDisEqualitySet()) {
-//				if (pair.contains(graphNode.eqNode)) {
-//					newDisEqualitySet.add(
-//							new VPDomainSymmetricPair<EqNode>(pair.getOther(graphNode.eqNode), resultState.find(firstReserveRepresentativeNode).eqNode));
-//				} else {
-//					newDisEqualitySet.add(pair);
-//				}
-//			}
-//			builder.setDisEqualites(newDisEqualitySet);
-//		} else {
-//			// do nothing: no need to update disequality set, because if x is not representative, then x should not be in disequality set.
-//		}
-////		if (graphNode.getRepresentative().equals(graphNode)) {
-////			Set<VPDomainSymmetricPair<EqNode>> newSet = 
-////					builder.getDisEqualitySet().stream()
-////					.filter(pair -> !pair.contains(node))
-////					.collect(Collectors.toSet());
-////			builder.setDisEqualites(newSet);
-////		}
-//		graphNode.setNodeToInitial();
-//
-//		if (node instanceof EqFunctionNode) {
-//			builder.restorePropagation((EqFunctionNode) node);
-//		}
-//		resultState = builder.build();
-//		
-//		// also havoc the function nodes which index had been havoc.
-//		if (!graphNode.getInitCcpar().isEmpty()) {
-//			for (final EqGraphNode initCcpar : graphNode.getInitCcpar()) {
-//				resultState = havoc(initCcpar.eqNode, resultState);
-//			}
-//		}
-//		
-//		/*
-//		 * havoc all the non-atomic EqNodes which depend on this one
-//		 */
-//		if (node instanceof EqAtomicBaseNode) {
-//			for (EqNonAtomicBaseNode  dependentNode : ((EqAtomicBaseNode) node).getDependentNonAtomicBaseNodes()) {
-//				resultState = havoc(dependentNode, resultState);
-//			}
-//		}
-//		
-//		return resultState;
-//	}
-//	
-//	/**
-//	 * To havoc an array. All the element in this array will be havoc.
-//	 * 
-//	 * @param term
-//	 */
-//	public VPState havocArray(final IProgramVarOrConst array, VPState originalState) {
-//		VPState resultState = copy(originalState).build();
-//
-//		for (final EqFunctionNode fnNode : mDomain.getArrayIdToEqFnNodeMap()
-//				.getImage(array)) {
-//			resultState = this.havoc(fnNode, resultState);
-//		}
-//		return resultState;
-//	}
-//
-//	/**
-//	 * To havoc a set of nodes. If this set contains array, it will not be havoc
-//	 * here.
-//	 * 
-//	 * @param assignmentVars
-//	 */
-//	public VPState havocVariables(final Set<IProgramVar> assignmentVars, VPState originalState) {
-//		VPState resultState = copy(originalState).build();
-//		for (final IProgramVar var : assignmentVars) {
-//
-//			if (var.getTerm().getSort().isArraySort()) {
-//				resultState = havocArray(var, resultState);
-//				continue;
-//			}
-//
-//			EqNode node = mDomain.getPreAnalysis().getEqNode(var.getTerm(), Collections.emptyMap());
-//			
-//			if (node != null) {
-//				resultState = havoc(node, resultState);
-//			}
-//		}
-//		return resultState;
-//	}
-//	
-//
-//	public Set<VPState> havoc(EqNode node, Set<VPState> states) {
-//		Set<VPState> result = new HashSet<>();
-//		for (VPState state : states) {
-//			result.add(havoc(node, state));
-//		}
-//		return result;
-//	}
-//
-//	public Set<VPState> havocArray(IProgramVar key, Set<VPState> resultStates) {
-//		Set<VPState> result = new HashSet<>();
-//		for (VPState state : resultStates) {
-//			result.add(havocArray(key, state));
-//		}
-//		return result;
-//	}
 
 	/**
 	 * Takes a set of TransitionStates (VPTfState) and a TransFormula. Converts the transition-states to 
@@ -431,5 +239,10 @@ public class VPStateFactory implements IVPFactory<VPState>{
 
 	public VPState disjoinAll(Set<VPState> statesForCurrentEc) {
 		return VPFactoryHelpers.disjoinAll(statesForCurrentEc, this);
+	}
+
+	@Override
+	public IVPStateOrTfStateBuilder<VPState> createEmptyStateBuilder(TransFormula tf) {
+		return createEmptyStateBuilder();
 	}
 }

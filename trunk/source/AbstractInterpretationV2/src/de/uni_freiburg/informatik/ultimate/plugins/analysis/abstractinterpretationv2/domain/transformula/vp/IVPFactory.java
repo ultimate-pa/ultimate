@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public interface IVPFactory<T extends IVPStateOrTfState> {
@@ -10,7 +11,7 @@ public interface IVPFactory<T extends IVPStateOrTfState> {
 
 	T getBottomState(Set<IProgramVar> variables);
 
-	IVPStateOrTfStateBuilder<T> createEmptyStateBuilder();
-
 	Set<VPNodeIdentifier> getFunctionNodesForArray(T resultState, VPArrayIdentifier firstArray);
+
+	IVPStateOrTfStateBuilder<T> createEmptyStateBuilder(TransFormula tf); // TODO not so nice..
 }
