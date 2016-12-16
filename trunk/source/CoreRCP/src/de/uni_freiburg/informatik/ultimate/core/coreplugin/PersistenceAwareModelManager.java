@@ -303,17 +303,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	@Override
-	public void showStatus(final String callerName) {
-		mLogger.debug(callerName + " reguests chamber status");
-		int i = 0;
-		for (final ModelContainer v : mModelMap.values()) {
-			mLogger.debug(
-					"(" + i + ") " + "Name/Type/Size: " + v.getName() + " / " + v.getType() + " / " + v.getSize());
-			i++;
-		}
-	}
-
-	@Override
 	public int size() {
 		mLogger.debug("Current MM size is " + mModelMap.size() + ". There are " + mRepository.listKeys().size()
 				+ " models in the repository.");

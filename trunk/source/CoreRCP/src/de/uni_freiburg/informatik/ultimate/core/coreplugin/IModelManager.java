@@ -179,13 +179,6 @@ public interface IModelManager {
 	IElement getRootNode(ModelType graphType) throws GraphNotFoundException;
 
 	/**
-	 * void showStatus
-	 * 
-	 * @param callerName
-	 */
-	void showStatus(String callerName);
-
-	/**
 	 * GraphType getLastAdded
 	 * 
 	 * @return the model that has been added most recently.
