@@ -66,30 +66,35 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class CommuhashNormalForm {
 
+	private static final boolean DEBUG_LOG_SIZES = false;
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	
-	public CommuhashNormalForm(IUltimateServiceProvider services, Script script) {
+	public CommuhashNormalForm(final IUltimateServiceProvider services, final Script script) {
 		super();
 		mServices = services;
 		mScript = script;
 	}
 	
-	public Term transform(Term term) {
+	public Term transform(final Term term) {
 		final ILogger logger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		logger.debug(new DebugMessage(
-				"applying CommuhashNormalForm to formula of DAG size {0}", 
-				new DagSizePrinter(term)));
+		if (DEBUG_LOG_SIZES) {
+			logger.debug(new DebugMessage(
+					"applying CommuhashNormalForm to formula of DAG size {0}", 
+					new DagSizePrinter(term)));
+		}
 		final Term result = (new CommuhashNormalFormHelper()).transform(term);
-		logger.debug(new DebugMessage(
-				"DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}", 
-				new DagSizePrinter(term), new DagSizePrinter(result)));
+		if (DEBUG_LOG_SIZES) {
+			logger.debug(new DebugMessage(
+					"DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}", 
+					new DagSizePrinter(term), new DagSizePrinter(result)));
+		}
 		assert (Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
 		return result;
 	}
 	
 	
-	private boolean isKnownToBeCommutative(String applicationString) {
+	private boolean isKnownToBeCommutative(final String applicationString) {
 		switch (applicationString) {
 		case "and":
 		case "or":
@@ -106,7 +111,7 @@ public class CommuhashNormalForm {
 	private class CommuhashNormalFormHelper extends TermTransformer {
 
 		@Override
-		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
 				final Term simplified = constructTermWithSortedParams(
@@ -118,7 +123,7 @@ public class CommuhashNormalForm {
 		}
 
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			try {
 				final Term result = tryToTransformToPositiveNormalForm(term);
 				setResult(result);
@@ -128,7 +133,7 @@ public class CommuhashNormalForm {
 			} 
 		}
 
-		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
+		private Term tryToTransformToPositiveNormalForm(final Term simplified) throws NotAffineException {
 			final AffineRelation affRel = new AffineRelation(mScript, simplified, TransformInequality.STRICT2NONSTRICT);
 			final Term pnf = affRel.positiveNormalForm(mScript);
 			return pnf;
@@ -138,7 +143,7 @@ public class CommuhashNormalForm {
 			final Term[] sortedParams = params.clone();
 			final Comparator<Term> hashBasedComperator = new Comparator<Term>() {
 				@Override
-				public int compare(Term arg0, Term arg1) {
+				public int compare(final Term arg0, final Term arg1) {
 					return Integer.compare(arg0.hashCode(), arg1.hashCode());
 				}
 			};
@@ -146,8 +151,8 @@ public class CommuhashNormalForm {
 			return sortedParams;
 		}
 		
-		private Term constructTermWithSortedParams(String funcname, 
-									BigInteger[] indices, Term[] params) {
+		private Term constructTermWithSortedParams(final String funcname, 
+									final BigInteger[] indices, final Term[] params) {
 			final Term[] sortedParams = sortByHashCode(params);
 			final Term simplified = SmtUtils.termWithLocalSimplification(
 					mScript, funcname, indices, sortedParams);
@@ -155,7 +160,7 @@ public class CommuhashNormalForm {
 		}
 
 		@Override
-		public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
+		public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
 			final Term result = SmtUtils.quantifier(mScript, 
 					old.getQuantifier(), Arrays.asList(old.getVariables()), newBody);
 			setResult(result);
