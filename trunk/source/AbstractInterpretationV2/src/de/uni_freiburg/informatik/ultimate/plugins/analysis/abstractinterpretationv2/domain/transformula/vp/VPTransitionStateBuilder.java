@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,6 +22,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState> {
+	
+	Set<IProgramVar> mVars = new HashSet<>();
 	
 	Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap = new HashMap<>();
 	private NestedMap3<EqNode, 
@@ -317,9 +320,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	}
 
 
-	@Override
-	void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
-		// TODO Auto-generated method stub
-		
+	public void addVariables(Set<IProgramVar> variables) {
+		mVars.addAll(variables);
 	}
 }

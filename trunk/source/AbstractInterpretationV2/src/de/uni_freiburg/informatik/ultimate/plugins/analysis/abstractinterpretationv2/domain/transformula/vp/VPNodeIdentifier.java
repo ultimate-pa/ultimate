@@ -55,4 +55,14 @@ public class VPNodeIdentifier {
 	public boolean isLiteral() {
 		return mIsLiteral;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof VPNodeIdentifier)) {
+			return false;
+		}
+		VPNodeIdentifier otherNodeId = (VPNodeIdentifier) other;
+		return this.mEqNode == otherNodeId.mEqNode 
+				&& this.mIdentifyingTerm == otherNodeId.mIdentifyingTerm;
+	}
 }

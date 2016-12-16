@@ -238,12 +238,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (!negated) {
 					return Collections.singleton(tfPreState);
 				} else {
-					VPTfState result = mTfStateFactory.getBottomState();
+					VPTfState result = mTfStateFactory.getBottomState(tfPreState.getVariables());
 					return Collections.singleton(result);
 				}
 			} else if (applicationName == "false") {
 				if (!negated) {
-					VPTfState result = mTfStateFactory.getBottomState();
+					VPTfState result = mTfStateFactory.getBottomState(tfPreState.getVariables());
 					return Collections.singleton(result);
 				} else {
 					return Collections.singleton(tfPreState);

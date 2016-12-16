@@ -11,7 +11,7 @@ public class VPStateBottomBuilder extends VPStateBuilder {
 
 	public VPStateBottomBuilder(VPDomain domain) {
 		super(domain);
-		setDisEqualites(Collections.emptySet());
+//		setDisEqualites(Collections.emptySet());
 	}
 	
 //	Set<IProgramVar> mVariables;

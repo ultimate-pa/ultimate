@@ -20,8 +20,6 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 
 	abstract IVPStateOrTfStateBuilder<T> setIsTop(boolean b);
 
-	abstract void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2);
-
 	abstract T build();
 
 //	abstract void merge(EqGraphNode gn1, EqGraphNode gn2);
@@ -39,30 +37,6 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 			mEqGraph.union(node1, node2);
 			mEqGraph.equalityPropagation(node1, node2);
 		}
-	}	
-
-	
-	/**
-	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
-	 *
-	 * @param fnNode1
-	 * @param fnNode2
-	 * @return
-	 */
-	boolean congruentIgnoreFunctionSymbol(final EqGraphNode fnNode1, final EqGraphNode fnNode2) {
-//		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-		assert fnNode1.nodeIdentifier.isFunction();
-		assert fnNode2.nodeIdentifier.isFunction();
-
-		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
-			final EqGraphNode fnNode1Arg = fnNode1.getInitCcchild().get(i);
-			final EqGraphNode fnNode2Arg = fnNode2.getInitCcchild().get(i);
-			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
-				return false;
-			}
-		}
-		return true;
 	}	
 
 	protected class EqGraph {
@@ -146,7 +120,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 			if (!(node1.nodeIdentifier.getFunction().equals(node2.nodeIdentifier.getFunction()))) {
 				return false;
 			}
-			return congruentIgnoreFunctionSymbol(node1, node2);
+			return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
 		}
 		
 		/* Returns the parents of all nodes in @param node's congruence class.
@@ -157,6 +131,14 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 		private Set<EqGraphNode> ccpar(final EqGraphNode node) {
 			return node.find().getCcpar();
 		}
+	}
+	
+	public void addDisEquality(VPNodeIdentifier id1, VPNodeIdentifier id2) {
+		mDisEqualitySet.add(new VPDomainSymmetricPair<VPNodeIdentifier>(id1, id2));
+	}
+
+	public void addDisEquality(VPDomainSymmetricPair<VPNodeIdentifier> newDisequality) {
+		mDisEqualitySet.add(newDisequality);
 	}
 
 	public void addDisEqualites(Set<VPDomainSymmetricPair<VPNodeIdentifier>> newDisequalities) {

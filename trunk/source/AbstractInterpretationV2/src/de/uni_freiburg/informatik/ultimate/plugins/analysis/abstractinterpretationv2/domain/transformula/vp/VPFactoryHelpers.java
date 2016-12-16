@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -91,7 +92,7 @@ public class VPFactoryHelpers {
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		builder.addToDisEqSet(gn1.find().nodeIdentifier, gn2.find().nodeIdentifier);
+		builder.addDisEquality(gn1.find().nodeIdentifier, gn2.find().nodeIdentifier);
 		
 		builder.setIsTop(false);
 		
@@ -121,8 +122,14 @@ public class VPFactoryHelpers {
 			return Collections.singleton(originalState);
 		}
 		IVPStateOrTfStateBuilder<T> builder = factory.copy(originalState);
+
 		EqGraphNode gn1 = builder.getEqGraphNode(eqNode1);
 		EqGraphNode gn2 = builder.getEqGraphNode(eqNode2);
+		if (gn1.find() == gn2.find()) {
+			// the given identifiers are already equal in the originalState
+			return Collections.singleton(originalState);
+		}
+
 		builder.merge(gn1, gn2);
 		builder.setIsTop(false);
 		boolean contradiction = builder.checkContradiction();
@@ -156,7 +163,7 @@ public class VPFactoryHelpers {
 		return resultStates;
 	}
 
-	public <T extends IVPStateOrTfState> Set<T> addEquality(
+	public static <T extends IVPStateOrTfState> Set<T> addEquality(
 			final VPNodeIdentifier eqNode1, 
 			final VPNodeIdentifier eqNode2, 
 			final Set<T> originalStates, 
@@ -354,6 +361,13 @@ public class VPFactoryHelpers {
 		
 		return resultStates;
 	}
+	
+	public static <T extends IVPStateOrTfState> Set<T> conjoinAll(
+			List<Set<T>> sets, IVPFactory<T> factory) {
+		Set<T> result = sets.stream().reduce((set1, set2) -> conjoinAll(set1, set2, factory)).get();
+		assert result != null;
+		return result;
+	}
 
 	/**
 	 * Updates this state according to the added information that firstArray
@@ -369,15 +383,16 @@ public class VPFactoryHelpers {
 		T resultState = factory.copy(originalState).build();
 //		resultState = havocArray(firstArray, resultState);
 
-		Set<VPState> resultStates = new HashSet<>();
-		for (final EqFunctionNode fnNode1 : mDomain.getArrayIdToEqFnNodeMap()
-				.getImage(
-						firstArray)) {
-			for (final EqFunctionNode fnNode2 : mDomain.getArrayIdToEqFnNodeMap()
-					.getImage(
-							secondArray)) {
-				if (resultState.congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
-					resultStates = conjoinAll(resultStates, addEquality(fnNode1, fnNode2, resultState));
+		Set<T> resultStates = new HashSet<>();
+		for (final VPNodeIdentifier fnNode1 : factory.getFunctionNodesForArray(resultState, firstArray)) {
+			for (final VPNodeIdentifier fnNode2 : factory.getFunctionNodesForArray(resultState, secondArray)) {
+				EqGraphNode gn1 = resultState.getEqGraphNode(fnNode1);
+				EqGraphNode gn2 = resultState.getEqGraphNode(fnNode2);
+				if (congruentIgnoreFunctionSymbol(gn1, gn2)) {
+					resultStates = conjoinAll(
+							resultStates, 
+							addEquality(fnNode1, fnNode2, resultState, factory), 
+							factory);
 				}
 			}
 		}
@@ -385,5 +400,28 @@ public class VPFactoryHelpers {
 			resultStates.add(resultState);
 		}
 		return resultStates;
+	}
+	
+	/**
+	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
+	 *
+	 * @param fnNode1
+	 * @param fnNode2
+	 * @return
+	 */
+	public static boolean congruentIgnoreFunctionSymbol(final EqGraphNode fnNode1, final EqGraphNode fnNode2) {
+		//		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+		//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+		assert fnNode1.nodeIdentifier.isFunction();
+		assert fnNode2.nodeIdentifier.isFunction();
+
+		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
+			final EqGraphNode fnNode1Arg = fnNode1.getInitCcchild().get(i);
+			final EqGraphNode fnNode2Arg = fnNode2.getInitCcchild().get(i);
+			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

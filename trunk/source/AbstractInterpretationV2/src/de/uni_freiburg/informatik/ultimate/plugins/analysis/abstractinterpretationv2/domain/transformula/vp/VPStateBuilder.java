@@ -92,10 +92,10 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 	@Override
 	VPState build() {
 		assert mEqNodeToEqGraphNodeMap != null;
-		Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = mDisEqualitySet.stream()
-				.map(pair -> new VPDomainSymmetricPair<>(pair.getFirst().getEqNode(), pair.getFirst().getEqNode()))
-				.collect(Collectors.toSet());
-		return new VPState(mEqNodeToEqGraphNodeMap, disEqualitySet, mVars, mDomain, mIsTop);
+//		Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqualitySet = mDisEqualitySet.stream()
+//				.map(pair -> new VPDomainSymmetricPair<>(pair.getFirst().getEqNode(), pair.getFirst().getEqNode()))
+//				.collect(Collectors.toSet());
+		return new VPState(mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
 	}
 
 //	public VPStateBuilder setDisEqualites(Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
@@ -126,81 +126,36 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 	}
 	
 //	/**
-//	 * Returns the representative of a @param node's equivalence class.
-//	 *
-//	 * @param node
-//	 * @return
+//	 * An additional process after a function node is havoc, in order to restore the propagation.
+//	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
+//	 * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j], 
+//	 * which is the result of equality propagation of (i = j). This method is to restore this 
+//	 * information.
+//	 * 
+//	 * @param functionNode
 //	 */
-//	public EqGraphNode find(final EqGraphNode node) {
-//		return node.find();
-//	}
-	
-//	/**
-//	 * Use disEqualitySet to check if there exist contradiction in the graph.
-//	 *
-//	 * @return true if there is contradiction
-//	 */
-//	boolean checkContradiction() {
+//	void restorePropagation(final EqFunctionNode functionNode) {
 //
-//		for (final VPDomainSymmetricPair<VPNodeIdentifier> disEqPair : mDisEqualitySet) {
-//			if (getEqGraphNode(disEqPair.getFirst()).find()
-//					.equals(getEqGraphNode(disEqPair.getSecond()).find())) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
-	
-//	public EqGraph getEqGraph() {
-//		return mEqGraph;
-//	}
-	
-	
-//	/**
-//	 * Merge two congruence class. propagation.
-//	 *
-//	 * @param i1
-//	 * @param i2
-//	 */
-//	void merge(final EqGraphNode node1, final EqGraphNode node2) {
-//		if (!find(node1).equals(find(node2))) {
-//			mEqGraph.union(node1, node2);
-//			mEqGraph.equalityPropagation(node1, node2);
-//		}
-//	}
-
-
-	/**
-	 * An additional process after a function node is havoc, in order to restore the propagation.
-	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
-	 * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j], 
-	 * which is the result of equality propagation of (i = j). This method is to restore this 
-	 * information.
-	 * 
-	 * @param functionNode
-	 */
-	void restorePropagation(final EqFunctionNode functionNode) {
-
-		EqNode firstIndex = functionNode.getArgs().get(0);
-		EqGraphNode firstIndexGN = getEqNodeToEqGraphNodeMap().get(firstIndex);
-		
-		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
-		for (final EqFunctionNode fnNode : fnNodeSet) {
-			if (find(getEqNodeToEqGraphNodeMap().get(fnNode.getArgs().get(0))).equals(find(firstIndexGN))) {
-				if (mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode))) {
-					merge(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode));
-				}
-			}
-		}
-		
-//		for (final EqFunctionNode fnNode1 : fnNodeSet) {
-//			for (final EqFunctionNode fnNode2 : fnNodeSet) {
-//				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
-//					merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
+//		EqNode firstIndex = functionNode.getArgs().get(0);
+//		EqGraphNode firstIndexGN = getEqNodeToEqGraphNodeMap().get(firstIndex);
+//		
+//		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
+//		for (final EqFunctionNode fnNode : fnNodeSet) {
+//			if (find(getEqNodeToEqGraphNodeMap().get(fnNode.getArgs().get(0))).equals(find(firstIndexGN))) {
+//				if (mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode))) {
+//					merge(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode));
 //				}
 //			}
 //		}
-	}
+//		
+////		for (final EqFunctionNode fnNode1 : fnNodeSet) {
+////			for (final EqFunctionNode fnNode2 : fnNodeSet) {
+////				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
+////					merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
+////				}
+////			}
+////		}
+//	}
 	
 	public void addVariable(IProgramVar pv) {
 		mVars.add(pv);
@@ -350,16 +305,16 @@ public class VPStateBuilder extends IVPStateOrTfStateBuilder<VPState> {
 		return result;
 	}
 
-	@Override
-	void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
-		assert nodeIdentifier.getEqNode() != null;
-		assert nodeIdentifier2.getEqNode() != null;
-		
-		EqNode f1 = find(nodeIdentifier.getEqNode());
-		EqNode f2 = find(nodeIdentifier2.getEqNode());
-		
-		mDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(f1, f2));
-	}
+//	@Override
+//	void addToDisEqSet(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
+//		assert nodeIdentifier.getEqNode() != null;
+//		assert nodeIdentifier2.getEqNode() != null;
+//		
+//		EqNode f1 = find(nodeIdentifier.getEqNode());
+//		EqNode f2 = find(nodeIdentifier2.getEqNode());
+//		
+//		mDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(f1, f2));
+//	}
 
 	private EqNode find(EqNode eqNode) {
 		EqGraphNode gn = mEqNodeToEqGraphNodeMap.get(eqNode);

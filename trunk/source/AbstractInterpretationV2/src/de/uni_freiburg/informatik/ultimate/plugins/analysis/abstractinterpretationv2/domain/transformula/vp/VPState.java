@@ -53,21 +53,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
-public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>, IVPStateOrTfState {
+public class VPState extends IVPStateOrTfState implements IAbstractState<VPState, CodeBlock, IProgramVar>  {
 	
 	private static final String TERM_FUNC_NAME_AND = "and";
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
 	
-	private final Set<IProgramVar> mVars;
 	
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
-	
-	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
-	
+
 	private final VPDomain mDomain;
 	private final ManagedScript mScript;
-	private final boolean mIsTop;
 	private Term mTerm;
 	
 	/**
@@ -83,14 +79,17 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 	 * Constructor to be used by VPStateFactory.createTopState() only.
 	 */
 	VPState(final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVar> vars, final VPDomain domain,
+			final Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqualitySet, 
+			final Set<IProgramVar> vars, 
+			final VPDomain domain,
 			final boolean isTop) {
-		mVars = Collections.unmodifiableSet(vars);
+		super(disEqualitySet, isTop, vars);
+//		mVars = Collections.unmodifiableSet(vars);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
-		mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
+//		mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
-		mIsTop = isTop;
+//		mIsTop = isTop;
 		
 		constructTerm();
 
@@ -98,50 +97,24 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 	}
 
 	private boolean sanityCheck() {
-		for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mFst)) {
+		for (VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
+			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mFst.getEqNode())) {
 				return false;
 			}
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mSnd)) {
+			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mSnd.getEqNode())) {
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
-		return mDisEqualitySet;
-	}
+//	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
+//		return mDisEqualitySet;
+//	}
 	
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
 		return mEqNodeToEqGraphNodeMap;
 	}
-
-//	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {
-//		return find(node).getCcchild();
-//	}
-	
-//	/**
-//	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
-//	 *
-//	 * @param fnNode1
-//	 * @param fnNode2
-//	 * @return
-//	 */
-//	boolean congruentIgnoreFunctionSymbol(final EqFunctionNode fnNode1, final EqFunctionNode fnNode2) {
-//		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-//		
-//		for (int i = 0; i < fnNode1.getArgs().size(); i++) {
-//			final EqNode fnNode1Arg = fnNode1.getArgs().get(i);
-//			final EqNode fnNode2Arg = fnNode2.getArgs().get(i);
-//			if (!find(getEqNodeToEqGraphNodeMap().get(fnNode1Arg))
-//					.equals(find(getEqNodeToEqGraphNodeMap().get(fnNode2Arg)))) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
 
 	@Override
 	public VPState addVariable(final IProgramVar variable) {
@@ -170,7 +143,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		}
 		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
 		copy.removeVariable(variable);
-		VPState result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable), copy.build());
+//		VPState result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable), copy.build());
+		VPState result = copy.build();
 		return result;
 	}
 	
@@ -181,7 +155,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		}
 		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
 		copy.removeVariables(variables);
-		VPState result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
+//		VPState result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
+		VPState result = copy.build();
 		return result;
 	}
 	
@@ -218,9 +193,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		builder.addVariables(this.mVars);
 		
 		builder.setIsTop(this.isTop() && dominator.isTop());
-		
-//		Set<VPState> resultStates = new HashSet<>();
-//		resultStates.add(builder.build());
 		
 		VPState resultState = builder.build();
 		
@@ -283,9 +255,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		return false;
 	}
 	
-	public boolean isTop() {
-		return mIsTop;
-	}
+//	public boolean isTop() {
+//		return mIsTop;
+//	}
 	
 	@Override
 	public boolean isEqualTo(final VPState other) {
@@ -403,7 +375,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		final Set<Term> distinctTermSet = new HashSet<>();
 		Term disEquality;
 		
-		for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
 			disEqualityFirst = pair.getFirst().getTerm(mScript);
 			disEqualitySecond = pair.getSecond().getTerm(mScript);
 			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
@@ -484,9 +456,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 		return mDomain;
 	}
 
-	public boolean mayEqual(EqNode accessingNode1, EqNode accessingNode2) {
+	public boolean mayEqual(VPNodeIdentifier accessingNode1, VPNodeIdentifier accessingNode2) {
 		return accessingNode1 == accessingNode2 
-				|| !mDisEqualitySet.contains(new VPDomainSymmetricPair<EqNode>(
+				|| !getDisEqualities().contains(new VPDomainSymmetricPair<VPNodeIdentifier>(
 						find(accessingNode1), find(accessingNode2)));
 	}
 
@@ -497,23 +469,12 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 	public Set<EqNode> getUnequalNodes(EqNode callParamNode) {
 		Set<EqNode> result = new HashSet<>();
 		
-		for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			if (pair.contains(callParamNode)) {
-				result.add(pair.getOther(callParamNode));
+		for (VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
+			if (pair.contains(new VPNodeIdentifier(callParamNode))) {
+				result.add(pair.getOther(new VPNodeIdentifier(callParamNode)).getEqNode());
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public Set<VPDomainSymmetricPair<VPNodeIdentifier>> getDisEqualities() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean containsDisEquality(VPNodeIdentifier nodeId1, VPNodeIdentifier nodeId2) {
-		return mDisEqualitySet.contains(new VPDomainSymmetricPair<VPNodeIdentifier>(nodeId1, nodeId2));
 	}
 
 	@Override
@@ -522,21 +483,18 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar>,
 	}
 
 	@Override
-	public Set<VPNodeIdentifier> getDisequalities(VPNodeIdentifier nodeIdentifer) {
-		assert nodeIdentifer.getEqNode() != null;
-		Set<VPNodeIdentifier> result = new HashSet<>();
-		for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-			if (pair.contains(nodeIdentifer.getEqNode())) {
-				result.add(
-						new VPNodeIdentifier(
-								pair.getOther(nodeIdentifer.getEqNode())));
-			}
-		}
-		return result;
-	}
-
-	@Override
 	public Set<EqGraphNode> getAllEqGraphNodes() {
 		return new HashSet<>(mEqNodeToEqGraphNodeMap.values());
+	}
+	
+	@Override
+	public VPNodeIdentifier find(VPNodeIdentifier id) {
+		return mEqNodeToEqGraphNodeMap.get(id.getEqNode()).find().nodeIdentifier;
+	}
+
+	public boolean mayEqual(EqNode accessingNode1, EqNode accessingNode2) {
+		return mayEqual(
+				new VPNodeIdentifier(accessingNode1), 
+				new VPNodeIdentifier(accessingNode2));
 	}
 }

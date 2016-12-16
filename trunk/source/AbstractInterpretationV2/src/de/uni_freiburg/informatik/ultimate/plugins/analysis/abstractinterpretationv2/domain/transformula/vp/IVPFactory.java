@@ -11,4 +11,6 @@ public interface IVPFactory<T extends IVPStateOrTfState> {
 	T getBottomState(Set<IProgramVar> variables);
 
 	IVPStateOrTfStateBuilder<T> createEmptyStateBuilder();
+
+	Set<VPNodeIdentifier> getFunctionNodesForArray(T resultState, VPArrayIdentifier firstArray);
 }

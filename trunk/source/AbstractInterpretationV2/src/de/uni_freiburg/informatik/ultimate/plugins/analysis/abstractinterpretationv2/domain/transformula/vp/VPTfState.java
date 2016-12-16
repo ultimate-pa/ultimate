@@ -8,21 +8,29 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-public class VPTfState implements IVPStateOrTfState{
+public class VPTfState extends IVPStateOrTfState {
 	
-	Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap;
-	private NestedMap3<EqNode, 
+	public VPTfState(Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqs, boolean isTop, Set<IProgramVar> vars) {
+		super(disEqs, isTop, vars);
+		mTermToEqGraphNodeMap = null; //TODO
+		mEqNodeToInVarsToOutVarsToEqGraphNode = null; // TODO
+		mArrayIdToFunctionNodes = null; //TODO
+	}
+
+	private final Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap;
+	private final NestedMap3<EqNode, 
 		Map<IProgramVar, TermVariable>, 
 		Map<IProgramVar, TermVariable>, 
 		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
+	private final HashRelation<VPArrayIdentifier, VPNodeIdentifier> mArrayIdToFunctionNodes;
 
 
 
-	public boolean tracksTerm(Term param1) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean tracksTerm(Term term) {
+		return mTermToEqGraphNodeMap.containsKey(term);
 	}
 
 	public boolean isBottom() {
@@ -30,29 +38,7 @@ public class VPTfState implements IVPStateOrTfState{
 		return false;
 	}
 
-	@Override
-	public Set<VPDomainSymmetricPair<VPNodeIdentifier>> getDisEqualities() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public boolean isTop() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Set<IProgramVar> getVariables() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean containsDisEquality(VPNodeIdentifier nodeIdentifier, VPNodeIdentifier nodeIdentifier2) {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	public EqGraphNode getEqGraphNode(Term term) {
 		TFEqGraphNode result = mTermToEqGraphNodeMap.get(term);
@@ -66,14 +52,17 @@ public class VPTfState implements IVPStateOrTfState{
 	}
 
 	@Override
-	public Set<VPNodeIdentifier> getDisequalities(VPNodeIdentifier nodeIdentifer) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<EqGraphNode> getAllEqGraphNodes() {
+		return new HashSet<>(mTermToEqGraphNodeMap.values());
 	}
 
 	@Override
-	public Set<EqGraphNode> getAllEqGraphNodes() {
-		return new HashSet<>(mTermToEqGraphNodeMap.values());
+	public VPNodeIdentifier find(VPNodeIdentifier id) {
+		return mTermToEqGraphNodeMap.get(id.getIdTerm()).find().nodeIdentifier;
+	}
+
+	public Set<VPNodeIdentifier> getFunctionNodesForArray(VPArrayIdentifier array) {
+		return mArrayIdToFunctionNodes.getImage(array);
 	}
 
 }
