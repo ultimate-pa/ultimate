@@ -234,8 +234,7 @@ public final class TraceAbstractionRefinementEngine
 		final boolean interpolantsArePerfect = interpolantGenerator.isPerfectSequence();
 		if (interpolantsArePerfect) {
 			perfectInterpolantSequences.add(interpolants);
-		}
-		if (interpolantGenerator.imperfectSequencesUsable()) {
+		} else if (interpolantGenerator.imperfectSequencesUsable()) {
 			imperfectInterpolantSequences.add(interpolants);
 		}
 	}
