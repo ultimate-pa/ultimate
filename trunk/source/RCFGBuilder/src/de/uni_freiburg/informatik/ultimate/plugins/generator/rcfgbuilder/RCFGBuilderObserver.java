@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -51,14 +51,8 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * Sucessors of this node exactly the initial nodes of procedures.
 	 */
 	private BoogieIcfgContainer mGraphroot;
-
-	/**
-	 * ILogger for this plugin.
-	 */
 	private final ILogger mLogger;
-
 	private final IUltimateServiceProvider mServices;
-
 	private final IToolchainStorage mStorage;
 
 	public RCFGBuilderObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
@@ -87,28 +81,25 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws IOException {
 		if (!(root instanceof Unit)) {
-			// TODO
-			mLogger.debug("No WrapperNode. Let Ultimate process with next node");
+			mLogger.info("No WrapperNode. Let Ultimate process with next node");
 			return true;
-		} else {
-			final Unit unit = (Unit) root;
-			final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
-			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
-			try {
-				mGraphroot = recCFGBuilder.createIcfg(unit);
-				translator.setTerm2Expression(mGraphroot.getBoogie2SMT().getTerm2Expression());				
-				ModelUtils.copyAnnotations(unit, mGraphroot);
-				mServices.getBacktranslationService().addTranslator(translator);
-			} catch (final SMTLIBException e) {
-				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {
-					mLogger.warn("Unsupported syntax: " + e.getMessage());
-				} else if (e.getMessage().equals("Sort Array not declared")) {
-					mLogger.warn("Unsupported syntax: " + e.getMessage());
-				} else if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
-					mLogger.warn("Unsupported syntax: " + e.getMessage());
-				} else {
-					throw e;
-				}
+		}
+		final Unit unit = (Unit) root;
+		final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
+		final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
+		try {
+			mGraphroot = recCFGBuilder.createIcfg(unit);
+			translator.setTerm2Expression(mGraphroot.getBoogie2SMT().getTerm2Expression());
+			ModelUtils.copyAnnotations(unit, mGraphroot);
+			mServices.getBacktranslationService().addTranslator(translator);
+		} catch (final SMTLIBException e) {
+			final String message = e.getMessage();
+			if ("Cannot create quantifier in quantifier-free logic".equals(message)
+					|| "Sort Array not declared".equals(message)
+					|| "Unsupported non-linear arithmetic".equals(message)) {
+				mLogger.warn("Unsupported syntax: " + e.getMessage());
+			} else {
+				throw e;
 			}
 		}
 		return false;
@@ -116,20 +107,16 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
 }
