@@ -94,9 +94,9 @@ public class HybridModel {
 		} else {
 			// create the systems
 			systems.forEach((id,comp)->{
-				//mLogger.info("creating hybridsystem for system: " + id);
+				mLogger.info("creating hybridsystem for system: " + id);
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
-				//mLogger.info("hybridsystem created:\n" + hybsys.toString());
+				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 			});			
 		}
@@ -137,8 +137,7 @@ public class HybridModel {
 	public HybridAutomaton getMerged(){
 		HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
 		HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
-		HybridAutomaton merged = mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
-		return merged;
+		return mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
 	
 	}
 	

@@ -18,7 +18,7 @@ public class LocationPair {
 	}
 	
 	public String toString(){
-		return "(" + mLocation1.toString() + "," + mLocation2.toString()+")";
+		return  mLocation1.toString() + "," + mLocation2.toString();
 	}
 
 }

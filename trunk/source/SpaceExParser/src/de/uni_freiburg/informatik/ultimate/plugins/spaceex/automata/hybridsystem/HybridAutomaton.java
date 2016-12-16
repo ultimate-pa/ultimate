@@ -97,7 +97,7 @@ public class HybridAutomaton {
 		mLabels = labels;
 		mLogger = logger;
 	}
-	
+
 	private void addLocation(LocationType location) {
 		if (mLocations.containsKey(location.getId())) {
 			throw new IllegalArgumentException(

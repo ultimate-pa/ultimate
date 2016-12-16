@@ -136,7 +136,7 @@ public class ParallelCompositionGenerator {
 			List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
 			// if there are no outgoing transitions in either location, we can simply merge them and continue.
 			if(outgoing1.isEmpty() && outgoing2.isEmpty()){
-    			Location source = mergeLocations(mIdCounter.incrementAndGet(), currentLoc1, currentLoc2);
+    			Location source = getLocation(locpair.toString(), currentLoc1,currentLoc2);
     			mLocationsMerge.put(source.getId(), source);
     			continue;
 			}
