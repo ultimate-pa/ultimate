@@ -261,6 +261,25 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, mTrace, mPrecondition,
 					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in FP";
+			
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
+			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
+					InterpolantType.Forward);
+			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+			if (mControlLocationSequence != null) {
+				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
+				mPerfectForwardSequence =
+						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+				if (mPerfectForwardSequence) {
+					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+				}
+				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			}
+		}
+		
+		if ((mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT) && isForwardSequencePerfect()) {
+			mLogger.info("Omiting computation of backward sequence because forward sequence was already perfect");
 		}
 		
 		if (wasBackwardsPredicatesComputationRequested()) {
@@ -286,36 +305,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 					mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in BP";
-		}
-		
-		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
-			// Post-process forwards predicates
-			if (mPostProcess_FP_Predicates) {
-				for (int i = 0; i < mInterpolantsFp.size(); i++) {
-					final IPredicate p_old = mInterpolantsFp.get(i);
-					final IPredicate p_new = mPredicateUnifier.getOrConstructPredicate(p_old.getFormula());
-					mInterpolantsFp.set(i, p_new);
-				}
-			}
-		}
-		
-		if (mConstructForwardInterpolantSequence) {
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
-			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
-					InterpolantType.Forward);
-			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
-			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
-						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				mPerfectForwardSequence =
-						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
-				if (mPerfectForwardSequence) {
-					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
-				}
-				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
-			}
-		}
-		if (wasBackwardsPredicatesComputationRequested()) {
+			
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
 			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
 					InterpolantType.Backward);
@@ -330,9 +320,20 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				}
 				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
-			
 		}
 		
+		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
+			// Post-process forwards predicates
+			if (mPostProcess_FP_Predicates) {
+				for (int i = 0; i < mInterpolantsFp.size(); i++) {
+					final IPredicate p_old = mInterpolantsFp.get(i);
+					final IPredicate p_new = mPredicateUnifier.getOrConstructPredicate(p_old.getFormula());
+					mInterpolantsFp.set(i, p_new);
+				}
+			}
+		}
+		
+	
 		// Check the validity of the computed interpolants.
 		// if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
 		// checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
