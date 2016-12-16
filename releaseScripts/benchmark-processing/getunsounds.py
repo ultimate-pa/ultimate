@@ -52,7 +52,7 @@ for filename in os.listdir(args.directory):
         if args.verbose:
             print "Parsing " + filename + " ..."
     
-        parsexml(args.directory + filename)
+        parsexml(args.directory + "/" + filename)
 
 print ""
 print "Unsound accumulated files: "
