@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
@@ -65,6 +65,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public void init() {
+		// not needed
 	}
 
 	@Override
@@ -74,12 +75,11 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mInputDefinition = graphType;
 	}
 
@@ -91,10 +91,6 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		/*
-		 * TODO This generated method body only assumes a standard case. Adapt
-		 * it if necessary. Otherwise remove this todo-tag.
-		 */
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, mInputDefinition.getFileNames());
 
 	}
@@ -115,18 +111,17 @@ public class RCFGBuilder implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		// not needed
 	}
 }
