@@ -29,7 +29,7 @@ popd > /dev/null
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc>
 ./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml AutomizerC_WitnessPrinter.xml
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml
-./createZip.sh Kojak linux KojakC_WitnessPrinter.xml None None KojakC_WitnessPrinter.xml
+./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml
 
 rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
 rm *.zip 
