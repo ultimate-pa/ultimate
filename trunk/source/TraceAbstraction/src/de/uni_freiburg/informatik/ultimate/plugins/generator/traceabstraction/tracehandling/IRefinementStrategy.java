@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
@@ -23,32 +24,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * </ol>
  * In the following class documentation this combination is just called "combination".
  * <p>
- * The class contract is that {@link #hasNext(RefinementStrategyAdvance)} returns {@code true} iff
- * {@link #next(RefinementStrategyAdvance)} advances the respective component. Between two calls to
- * {@link #next(RefinementStrategyAdvance)} the respective getter returns the same object. However, for instance by a
- * call to this method to advance the {@link IInterpolantGenerator}, the {@link TraceChecker} may change. A user should
- * hence not store these objects temporarily.
+ * The contract is that if {@link #hasNextTraceChecker()} (resp. {@link #hasNextInterpolantGenerator(List, List)})
+ * returns {@code true}, then {@link #nextTraceChecker()} (resp. {@link #nextInterpolantGenerator()}) advances the
+ * respective component (but the strategy may also return {@code false} to enforce early termination).<br>
+ * Between two calls to {@link #nextTraceChecker()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
+ * {@link #getTraceChecker()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same
+ * object and {@link #hasNextTraceChecker()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the
+ * same answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceChecker} may
+ * change. A user should hence not store these objects temporarily.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IRefinementStrategy {
-	/**
-	 * Determines which component of the current combination should be advanced.
-	 *
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public enum RefinementStrategyAdvance {
-		/**
-		 * Advance the {@link TraceChecker}.
-		 */
-		TRACE_CHECKER,
-		/**
-		 * Advance the {@link IInterpolantGenerator}.
-		 */
-		INTERPOLANT_GENERATOR,
-	}
-	
 	String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
 	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt";
@@ -65,25 +53,45 @@ public interface IRefinementStrategy {
 	String LOGIC_MATHSAT = "ALL";
 	
 	/**
-	 * @param advance
-	 *            How to advance.
-	 * @return {@code true} iff there are more combinations available.
+	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
+	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
+	 * {@link TraceChecker}.
+	 * 
+	 * @return {@code true} iff there is another {@link TraceChecker} available and should be used
 	 */
-	boolean hasNext(RefinementStrategyAdvance advance);
+	boolean hasNextTraceChecker();
 	
 	/**
-	 * Changes the combination.<br>
-	 * Throws a {@link NoSuchElementException} if there is no next combination; use {@link #hasNext()} to check this.
-	 *
-	 * @param advance
-	 *            how to advance
+	 * Changes the {@link TraceChecker}.<br>
+	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceChecker}; use
+	 * {@link #hasNextTraceChecker()} to check this.
 	 */
-	void next(final RefinementStrategyAdvance advance);
+	void nextTraceChecker();
 	
 	/**
-	 * @return The trace checker strategy of the current combination.
+	 * @return The trace checker of the current combination.
 	 */
 	TraceChecker getTraceChecker();
+	
+	/**
+	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
+	 * strategy then decides whether it wants to and whether it can use another {@link IInterpolantGenerator}.
+	 * 
+	 * @param perfectIpps
+	 *            perfect interpolant sequences constructed so far
+	 * @param imperfectIpps
+	 *            imperfect interpolant sequences constructed so far
+	 * @return {@code true} iff there is another {@link IInterpolantGenerator} available and should be used
+	 */
+	boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps);
+	
+	/**
+	 * Changes the {@link IInterpolantGenerator}.<br>
+	 * Throws a {@link NoSuchElementException} if there is no next {@link IInterpolantGenerator}; use
+	 * {@link #hasNextInterpolantGenerator(List, List)} to check this.
+	 */
+	void nextInterpolantGenerator();
 	
 	/**
 	 * This method must only be called if the {@link TraceChecker} returns {@code UNSAT}.
@@ -93,24 +101,11 @@ public interface IRefinementStrategy {
 	IInterpolantGenerator getInterpolantGenerator();
 	
 	/**
-	 * A user should use this method whenever new interpolants have been computed to give the strategy the option for
-	 * early termination.
-	 * 
-	 * @param perfectIpps
-	 *            perfect interpolant sequences
-	 * @param imperfectIpps
-	 *            imperfect interpolant sequences
-	 * @return {@code true} iff the refinement should be terminated, i.e., no further interpolants should be computed
-	 */
-	boolean checkTermination(List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps);
-	
-	/**
 	 * @param perfectIpps
 	 *            Sequences of perfect interpolants.
 	 * @param imperfectIpps
 	 *            sequences of imperfect interpolants
-	 * @return The interpolant automaton builder.
+	 * @return an interpolant automaton builder
 	 */
 	IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
 			List<InterpolantsPreconditionPostcondition> perfectIpps,
@@ -123,6 +118,7 @@ public interface IRefinementStrategy {
 	
 	/**
 	 * @return Object that encapsulates which exceptions are blacklisted.
+	 * @see RefinementStrategyExceptionBlacklist
 	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
 	

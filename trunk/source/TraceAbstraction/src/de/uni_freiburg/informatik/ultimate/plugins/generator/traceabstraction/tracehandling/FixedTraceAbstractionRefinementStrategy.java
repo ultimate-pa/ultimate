@@ -117,12 +117,12 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	}
 	
 	@Override
-	public boolean hasNext(final RefinementStrategyAdvance advance) {
+	public boolean hasNextTraceChecker() {
 		return false;
 	}
 	
 	@Override
-	public void next(final RefinementStrategyAdvance advance) {
+	public void nextTraceChecker() {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
 	
@@ -135,17 +135,22 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	}
 	
 	@Override
+	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		return false;
+	}
+	
+	@Override
+	public void nextInterpolantGenerator() {
+		throw new NoSuchElementException("This strategy has only one element.");
+	}
+	
+	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = constructInterpolantGenerator(getTraceChecker());
 		}
 		return mInterpolantGenerator;
-	}
-	
-	@Override
-	public boolean checkTermination(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		return perfectIpps.size() + imperfectIpps.size() > 0;
 	}
 	
 	@Override
@@ -177,7 +182,6 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 			}
 			return interpolatingTraceChecker;
 		}
-		// TODO insert code here to support generating interpolants from a different source
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
 	

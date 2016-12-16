@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
 	/**
-	 * @see #getModeForWindowsUsers()
+	 * @see #getModeForWindowsUsers().
 	 */
 	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
 	
@@ -149,18 +149,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	@Override
-	public boolean hasNext(final RefinementStrategyAdvance advance) {
-		switch (advance) {
-			case TRACE_CHECKER:
-				return hasNextTraceChecker();
-			case INTERPOLANT_GENERATOR:
-				return hasNextInterpolantGenerator();
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
-		}
-	}
-	
-	private boolean hasNextTraceChecker() {
+	public boolean hasNextTraceChecker() {
 		switch (mCurrentMode) {
 			case SMTINTERPOL:
 			case Z3_NO_IG:
@@ -175,7 +164,41 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 	}
 	
-	private boolean hasNextInterpolantGenerator() {
+	@Override
+	public void nextTraceChecker() {
+		switch (mCurrentMode) {
+			case SMTINTERPOL:
+				mCurrentMode = Mode.Z3_NO_IG;
+				break;
+			case Z3_NO_IG:
+				mCurrentMode = Mode.CVC4_NO_IG;
+				mZ3TraceCheckUnsuccessful = true;
+				break;
+			case CVC4_NO_IG:
+			case ABSTRACT_INTERPRETATION:
+			case Z3_IG:
+			case CVC4_IG:
+				assert !hasNextTraceChecker();
+				throw new NoSuchElementException("No next trace checker available.");
+			default:
+				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
+		}
+		
+		// reset trace checker, interpolant generator, and constructor
+		mTraceChecker = null;
+		mInterpolantGenerator = null;
+		mPrevTcConstructor = mTcConstructor;
+		mTcConstructor = null;
+	}
+	
+	@Override
+	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		// current policy: stop after finding one perfect interpolant sequence
+		return perfectIpps.isEmpty() && hasNextInterpolantGeneratorAvailable();
+	}
+	
+	private boolean hasNextInterpolantGeneratorAvailable() {
 		switch (mCurrentMode) {
 			case SMTINTERPOL:
 			case ABSTRACT_INTERPRETATION:
@@ -191,20 +214,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	@Override
-	public void next(final RefinementStrategyAdvance advance) {
-		switch (advance) {
-			case TRACE_CHECKER:
-				nextTraceChecker(advance);
-				break;
-			case INTERPOLANT_GENERATOR:
-				nextInterpolantGenerator(advance);
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
-		}
-	}
-	
-	private void nextInterpolantGenerator(final RefinementStrategyAdvance advance) {
+	public void nextInterpolantGenerator() {
 		final boolean resetTraceChecker;
 		switch (mCurrentMode) {
 			case SMTINTERPOL:
@@ -212,11 +222,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				resetTraceChecker = false;
 				break;
 			case ABSTRACT_INTERPRETATION:
-				if (mZ3TraceCheckUnsuccessful) {
-					mCurrentMode = Mode.CVC4_IG;
-				} else {
-					mCurrentMode = Mode.Z3_IG;
-				}
+				mCurrentMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
 				resetTraceChecker = true;
 				break;
 			case Z3_IG:
@@ -226,10 +232,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			case CVC4_IG:
 			case Z3_NO_IG:
 			case CVC4_NO_IG:
-				assert !hasNext(advance);
+				assert !hasNextInterpolantGeneratorAvailable();
 				throw new NoSuchElementException("No next interpolant generator available.");
 			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
+				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 		
 		// reset interpolant generator
@@ -240,33 +246,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			mPrevTcConstructor = mTcConstructor;
 			mTcConstructor = null;
 		}
-		mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
-	}
-	
-	private void nextTraceChecker(final RefinementStrategyAdvance advance) {
-		switch (mCurrentMode) {
-			case SMTINTERPOL:
-				mCurrentMode = Mode.Z3_NO_IG;
-				break;
-			case Z3_NO_IG:
-				mCurrentMode = Mode.CVC4_NO_IG;
-				mZ3TraceCheckUnsuccessful = true;
-				break;
-			case CVC4_NO_IG:
-			case ABSTRACT_INTERPRETATION:
-			case Z3_IG:
-			case CVC4_IG:
-				assert !hasNext(advance);
-				throw new NoSuchElementException("No next trace checker available.");
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
-		}
 		
-		// reset trace checker, interpolant generator, and constructor
-		mTraceChecker = null;
-		mInterpolantGenerator = null;
-		mPrevTcConstructor = mTcConstructor;
-		mTcConstructor = null;
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
+		}
 	}
 	
 	@Override
@@ -282,6 +265,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
+		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = constructInterpolantGenerator(mCurrentMode);
 		}
@@ -292,7 +276,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
 					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode);
@@ -389,6 +372,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		return interpolationTechnique;
 	}
 	
+	@SuppressWarnings("squid:S1151")
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Mode mode, final boolean useTimeout,
 			final int iteration) {
@@ -423,7 +407,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = getLogicForCvc4();
+				logicForExternalSolver = LOGIC_CVC4_DEFAULT;
 				break;
 			case ABSTRACT_INTERPRETATION:
 				return null;
@@ -434,7 +418,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
 		final ManagedScript result = new ManagedScript(services, solver);
 		
-		// TODO do we need this?
 		final TermTransferrer tt = new TermTransferrer(solver);
 		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
@@ -471,13 +454,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	@Override
-	public boolean checkTermination(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		// current policy: at least one perfect interpolant sequence
-		return !perfectIpps.isEmpty();
-	}
-	
-	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
@@ -487,11 +463,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		return RefinementStrategyExceptionBlacklist.UNKNOWN;
 	}
 	
-	protected static String getLogicForCvc4() {
-		// FIXME make this changeable
-		return LOGIC_CVC4_DEFAULT;
-	}
-	
+	/**
+	 * Wrapper for {@link CegarAbsIntRunner} that works like an {@link IInterpolantGenerator}.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	private class AiRunnerWrapper implements IInterpolantGenerator {
 		public AiRunnerWrapper() {
 			// default constructor

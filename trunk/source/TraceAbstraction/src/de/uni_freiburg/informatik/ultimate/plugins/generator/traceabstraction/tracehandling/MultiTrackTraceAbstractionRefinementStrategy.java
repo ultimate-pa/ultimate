@@ -71,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private static final int INTERPOLANT_ACCEPTANCE_THRESHOLD = 2;
+
 	/**
 	 * Possible tracks.
 	 *
@@ -86,7 +88,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		 */
 		Z3_FPBP,
 		/**
-		 * Z3 with Craig interpolation
+		 * Z3 with Craig interpolation.
 		 */
 		Z3_NESTED_INTERPOLANTS,
 		/**
@@ -101,11 +103,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 	
+	protected final IRun<CodeBlock, IPredicate, ?> mCounterexample;
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final AssertionOrderModulation mAssertionOrderModulation;
-	protected final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
 	
@@ -149,6 +152,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
+	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation assertionOrderModulation,
@@ -165,42 +169,30 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
+		
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		mNextTechnique = mInterpolationTechniques.next();
 	}
 	
 	@Override
-	public boolean hasNext(final RefinementStrategyAdvance advance) {
-		switch (advance) {
-			case TRACE_CHECKER:
-			case INTERPOLANT_GENERATOR:
-				return mInterpolationTechniques.hasNext();
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
-		}
+	public boolean hasNextTraceChecker() {
+		return mInterpolationTechniques.hasNext();
 	}
 	
 	@Override
-	public void next(final RefinementStrategyAdvance advance) {
-		switch (advance) {
-			case TRACE_CHECKER:
-			case INTERPOLANT_GENERATOR:
-				if (mNextTechnique != null) {
-					throw new UnsupportedOperationException("Try the existing combination before advancing.");
-				}
-				mNextTechnique = mInterpolationTechniques.next();
-				
-				// reset trace checker, interpolant generator, and constructor
-				mTraceChecker = null;
-				mInterpolantGenerator = null;
-				mPrevTcConstructor = mTcConstructor;
-				mTcConstructor = null;
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
+	public void nextTraceChecker() {
+		if (mNextTechnique != null) {
+			throw new UnsupportedOperationException("Try the existing combination before advancing.");
 		}
+		mNextTechnique = mInterpolationTechniques.next();
 		
-		mLogger.info("Switched to " + advance + " mode " + mNextTechnique);
+		// reset trace checker, interpolant generator, and constructor
+		mTraceChecker = null;
+		mInterpolantGenerator = null;
+		mPrevTcConstructor = mTcConstructor;
+		mTcConstructor = null;
+		
+		mLogger.info("Switched to mode " + mNextTechnique);
 	}
 	
 	@Override
@@ -212,6 +204,32 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			mTraceChecker = mTcConstructor.get();
 		}
 		return mTraceChecker;
+	}
+	
+	@Override
+	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		if (!hasNextInterpolantGeneratorAvailable()) {
+			return false;
+		}
+		
+		/*
+		 * current policy: stop after finding at least one perfect interpolant sequence or at least two interpolant
+		 * sequences in total
+		 */
+		if (!perfectIpps.isEmpty()) {
+			return false;
+		}
+		return imperfectIpps.size() < INTERPOLANT_ACCEPTANCE_THRESHOLD;
+	}
+	
+	private boolean hasNextInterpolantGeneratorAvailable() {
+		return mInterpolationTechniques.hasNext();
+	}
+	
+	@Override
+	public void nextInterpolantGenerator() {
+		nextTraceChecker();
 	}
 	
 	@Override
@@ -238,18 +256,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		return mInterpolantAutomatonBuilder;
 	}
 	
-	@Override
-	public boolean checkTermination(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		// current policy: at least one perfect interpolant sequence or at least two interpolant sequences in total
-		if (!perfectIpps.isEmpty()) {
-			return true;
-		}
-		return perfectIpps.size() + imperfectIpps.size() >= 2;
-	}
-	
 	/**
-	 * @return iterator of different combinations
+	 * @return iterator of different combinations.
 	 */
 	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
 	
@@ -296,6 +304,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		return interpolationTechnique;
 	}
 	
+	@SuppressWarnings("squid:S1151")
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Track mode, final boolean useTimeout) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
@@ -315,12 +324,17 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				logicForExternalSolver = null;
 				break;
 			case Z3_NESTED_INTERPOLANTS:
+				throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
+				/*
 				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
-				solverSettings = new Settings(false, true, command, 0, /* TODO: Add external interpolator */
-						null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+				// TODO: Add external interpolator
+				String externalInterpolator = null;
+				solverSettings = new Settings(false, true, command, 0, externalInterpolator,
+						dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_Z3InterpolationMode;
 				logicForExternalSolver = LOGIC_Z3;
 				break;
+				*/
 			case Z3_FPBP:
 				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
 				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
@@ -352,8 +366,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mIteration);
 		final ManagedScript result = new ManagedScript(services, solver);
 		
-		// TODO do we need this?
-		// Matthias: Yes, we have to assert the axioms
 		final TermTransferrer tt = new TermTransferrer(solver);
 		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
@@ -385,7 +397,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			}
 			return interpolatingTraceChecker;
 		}
-		// TODO insert code here to support generating interpolants from a different source
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
 	
