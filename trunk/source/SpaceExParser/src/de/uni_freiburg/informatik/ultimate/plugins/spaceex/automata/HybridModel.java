@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +62,7 @@ public class HybridModel {
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private List<HybridSystem> mSystems;
+	private Map<String,HybridAutomaton> mMergedAutomata;
 	
 	public HybridModel(final Sspaceex root, final ILogger logger) {
 		mLogger = logger;
@@ -68,6 +71,7 @@ public class HybridModel {
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new ArrayList<>();
+		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 			        mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
@@ -98,6 +102,8 @@ public class HybridModel {
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
+				HybridAutomaton hybAut = mergeAutomata(hybsys);
+				mMergedAutomata.put(hybAut.getName(), hybAut);
 			});			
 		}
 	}
@@ -133,12 +139,36 @@ public class HybridModel {
 		return mSystems;
 	}
 	
+	public Map<String, HybridAutomaton> getMergedAutomata(){
+		return mMergedAutomata;
+	}
+	
 	// just for tests
 	public HybridAutomaton getMerged(){
 		HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
 		HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
 		return mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
-	
+	}
+	/**
+	 * Function that merges all Automata of a {@link HybridSystem} into one {@link HybridAutomata}
+	 * @param system
+	 * @return
+	 */
+	public HybridAutomaton mergeAutomata(HybridSystem system){
+		HybridAutomaton merged;
+		Collection<HybridAutomaton> automata = system.getAutomata().values();
+		HybridAutomaton aut1 = automata.iterator().next();
+		merged = aut1;
+		automata.remove(aut1);
+		while(automata.iterator().hasNext()){
+			HybridAutomaton aut2 = automata.iterator().next();
+			automata.remove(aut2);
+			mLogger.info("merging: " + aut1.getName() + " and " + aut2.getName());
+			merged = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2);
+			aut1 = merged;
+		}
+		mLogger.info(merged.toString());
+		return merged;
 	}
 	
 	

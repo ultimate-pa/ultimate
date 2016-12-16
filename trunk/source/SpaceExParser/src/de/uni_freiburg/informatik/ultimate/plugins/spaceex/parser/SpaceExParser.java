@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -179,11 +181,12 @@ public class SpaceExParser implements ISource {
 		final Marshaller marshaller = jaxContext.createMarshaller();
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		final StringWriter streamWriter = new StringWriter();
-		final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger);		
-		Sspaceex root = spaceexWriter.HybridAutomatonToSpaceEx(system.getMerged());
+		final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger);
+		Map<String, HybridAutomaton> mergedAutomata = system.getMergedAutomata();
+		Sspaceex root = spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get("ofOnn||controller||clock"));
 		String targetfile = "" ; // some path/filename you want
 		spaceexWriter.writeXmlToDisk(root,targetfile);
-		*/
+		*/		
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 

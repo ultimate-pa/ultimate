@@ -109,7 +109,7 @@ public class ParallelCompositionGenerator {
 		createLocationsAndTransitions(locations1,locations2);
 		HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mTransitionMerge,mLocalParamsMerge,
 				                                     mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge, mLabelsMerge, mLogger);
-		mLogger.info(hybAut.toString());
+		mIdCounter.set(0);
 		return hybAut;
 	}
 	
@@ -239,7 +239,6 @@ public class ParallelCompositionGenerator {
 	    				source.addOutgoingTransition(srcTar1);
 	    				target1.addIncomingTransition(srcTar1);
 	    				mTransitionMerge.add(srcTar1);
-	    				mLocationsMerge.put(target1.getId(), target1);
 	    				mComputationStack.push(new LocationPair(srcLoc1, tarLoc2));
 	    				
 	    			} 
@@ -247,10 +246,8 @@ public class ParallelCompositionGenerator {
 	    				source.addOutgoingTransition(srcTar2);
 	    				target2.addIncomingTransition(srcTar2);
 	    				mTransitionMerge.add(srcTar2);
-	    				mLocationsMerge.put(target2.getId(), target2);
 	    				mComputationStack.push(new LocationPair(tarLoc1, srcLoc2));
 	    			}
-	    			mLocationsMerge.put(source.getId(), source);
 	    			break;
 	    		}
 			}		
@@ -267,11 +264,13 @@ public class ParallelCompositionGenerator {
 		} else {
 			loc = mergeLocations(mIdCounter.incrementAndGet(), loc1, loc2);
 			mCreatedLocations.put(locPair, mIdCounter.get());
+			mLocationsMerge.put(loc.getId(), loc);
 		}
 		// hack TODO: change this
 		if(loc == null){
 			loc = mergeLocations(mIdCounter.incrementAndGet(), loc1, loc2);
 			mCreatedLocations.put(locPair, mIdCounter.get());
+			mLocationsMerge.put(loc.getId(), loc);
 		}
 		return loc;
 	}
