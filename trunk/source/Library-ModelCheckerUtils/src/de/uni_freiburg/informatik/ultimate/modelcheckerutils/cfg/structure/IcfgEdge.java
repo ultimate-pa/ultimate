@@ -31,12 +31,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
  * Edge of an ICFG.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public abstract class IcfgEdge extends ModifiableMultigraphEdge<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
-		implements IIcfgElement {
+		implements IIcfgElement, IAction {
 
 	private static final long serialVersionUID = -7368006453981803743L;
 
@@ -47,5 +47,17 @@ public abstract class IcfgEdge extends ModifiableMultigraphEdge<IcfgLocation, Ic
 	@Override
 	public IcfgEdge getLabel() {
 		return this;
+	}
+
+	@Override
+	public String getPrecedingProcedure() {
+		final IcfgLocation source = getSource();
+		return source == null ? null : source.getProcedure();
+	}
+
+	@Override
+	public String getSucceedingProcedure() {
+		final IcfgLocation target = getTarget();
+		return target == null ? null : target.getProcedure();
 	}
 }
