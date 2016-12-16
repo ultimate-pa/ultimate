@@ -277,7 +277,7 @@ public final class TraceAbstractionRefinementEngine
 		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getForwardIpp();
 		assert interpolants != null;
 		interpolantsList.add(interpolants);
-		return traceCheckerSpWp.isPerfectSequence(true);
+		return traceCheckerSpWp.isForwardSequencePerfect();
 	}
 	
 	private static boolean addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
@@ -285,7 +285,7 @@ public final class TraceAbstractionRefinementEngine
 		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getBackwardIpp();
 		assert interpolants != null;
 		interpolantsList.add(interpolants);
-		return traceCheckerSpWp.isPerfectSequence(false);
+		return traceCheckerSpWp.isBackwardSequencePerfect();
 	}
 	
 	private LBool constructAutomatonFromPerfectSequence(final IRefinementStrategy strategy,

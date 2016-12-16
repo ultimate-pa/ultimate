@@ -201,7 +201,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				if (!useConsolidationInNonEmptyCase) {
 					if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
 						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use the sequence of backwards predicates
-						boolean forwardsPredicatesPerfect = ((TraceCheckerSpWp)mInterpolatingTraceChecker).isPerfectSequence(true);
+						final boolean forwardsPredicatesPerfect = ((TraceCheckerSpWp)mInterpolatingTraceChecker).isForwardSequencePerfect();
 						if (forwardsPredicatesPerfect) {
 							mConsolidatedInterpolants = ((TraceCheckerSpWp)mInterpolatingTraceChecker).getForwardPredicates().toArray(new IPredicate[0]);
 						} else {

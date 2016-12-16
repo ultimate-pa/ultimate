@@ -563,7 +563,18 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return mAnnotateAndAsserterConjuncts;
 	}
 	
-	public boolean isPerfectSequence(final boolean forward) {
-		return forward ? mPerfectForwardSequence : mPerfectBackwardSequence;
+	public boolean isForwardSequencePerfect() {
+		if (mInterpolantsFp == null) {
+			throw new UnsupportedOperationException("forward sequence not constructed");
+		}
+		return mPerfectForwardSequence;
 	}
+	
+	public boolean isBackwardSequencePerfect() {
+		if (mInterpolantsBp == null) {
+			throw new UnsupportedOperationException("backward sequence not constructed");
+		}
+		return mPerfectBackwardSequence;
+	}
+
 }
