@@ -126,7 +126,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<MemoryModel>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MemoryModel.values()),
 				new UltimatePreferenceItem<PointerIntegerConversion>(LABEL_POINTER_INTEGER_CONVERSION,
