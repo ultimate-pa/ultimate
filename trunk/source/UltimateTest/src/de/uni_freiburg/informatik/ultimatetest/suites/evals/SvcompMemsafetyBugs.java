@@ -64,6 +64,15 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c"),
 			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_true-unreach-call.i.cil.c"),
 	};
+	
+	@SuppressWarnings("unchecked")
+	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
+			
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
+
+	};
+
+	// @formatter:on
 
 	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
 
@@ -71,7 +80,7 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new SvcompMemsafetyTestResultDecider(ultimateRunDefinition, false);
 	}
-	
+
 	@Override
 	protected long getTimeout() {
 		return 90 * 1000;
