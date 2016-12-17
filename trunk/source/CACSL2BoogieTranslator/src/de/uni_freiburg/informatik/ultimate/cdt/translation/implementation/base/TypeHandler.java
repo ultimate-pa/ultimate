@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 
 /**
@@ -382,6 +383,12 @@ public class TypeHandler implements ITypeHandler {
 					fTypes.add(declaration.getType());
 					fields.add(new VarList(loc, new String[] { declaration.getName() },
 							cType2AstType(loc, declaration.getType())));
+					if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS)) {
+						if (declaration.getBitfieldSize() != -1) {
+							final String msg = "bitfield implementation not yet bitprecisse (soundness first)";
+							throw new UnsupportedSyntaxException(loc, msg);
+						}
+					}
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
 			} else if (r instanceof SkipResult) { // skip ;)

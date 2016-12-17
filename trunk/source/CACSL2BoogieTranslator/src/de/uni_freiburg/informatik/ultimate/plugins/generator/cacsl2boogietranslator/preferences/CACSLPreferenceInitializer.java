@@ -51,10 +51,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
 			"Check for the main procedure if all allocated memory was freed";
+	public static final String LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE =
+			"SV-COMP memtrack compatibility mode";
 	public static final String LABEL_MEMORY_MODEL = "Memory model";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
+	public static final String LABEL_BITPRECISE_BITFIELDS = "Bitprecise bitfields";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY =
 			"If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
@@ -123,12 +126,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<MemoryModel>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MemoryModel.values()),
 				new UltimatePreferenceItem<PointerIntegerConversion>(LABEL_POINTER_INTEGER_CONVERSION,
 						PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
 						PointerIntegerConversion.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_REPORT_UNSOUNDNESS_WARNING, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<PointerCheckMode>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<UnsignedTreatment>(LABEL_UNSIGNED_TREATMENT, UnsignedTreatment.WRAPAROUND,

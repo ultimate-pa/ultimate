@@ -118,6 +118,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -632,6 +633,10 @@ public class FunctionHandler {
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,
 									ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 					check.addToNodeAnnot(spec[nrSpec]);
+					if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
+						final Map<String, IAnnotations> annots = spec[nrSpec].getPayload().getAnnotations();
+						annots.put(Overapprox.getIdentifier(), new Overapprox(Collections.singletonMap("memtrack", ensLoc)));
+					}
 				}
 			}
 			declarations.add(new Procedure(loc, procDecl.getAttributes(), mId, procDecl.getTypeParams(),
@@ -1007,7 +1012,7 @@ public class FunctionHandler {
 
 			
 //			final List<Overapprox> overapprox = new ArrayList<>();
-			Overapprox overappFlag = new Overapprox("builtin_strchr", loc);
+			final Overapprox overappFlag = new Overapprox("builtin_strchr", loc);
 //			overapprox.add(overappFlag);
 //			assume.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overappFlag);
 			
@@ -1040,7 +1045,7 @@ public class FunctionHandler {
 //			final List<Declaration> decl = new ArrayList<>();
 //			final List<Statement> stmt = new ArrayList<>();
 //			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			ExpressionResultBuilder builder = new ExpressionResultBuilder();
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
@@ -1050,14 +1055,14 @@ public class FunctionHandler {
 			builder.addDeclaration(tmpVarDecl);
 			builder.putAuxVar(tmpVarDecl, loc);
 
-			IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+			final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 
 //			final List<Overapprox> overapprox = new ArrayList<>();
 //			overapprox.add(new Overapprox("builtin_return_address", loc));
 
 			// current strategy (alex, Dec 2016) for Overapprox: 
 			//  annotate it as soon as possible, don't use ExpressionResult.overappr
-			Overapprox overAppFlag = new Overapprox("builtin_return_address", loc);
+			final Overapprox overAppFlag = new Overapprox("builtin_return_address", loc);
 //			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
 			builder.addOverapprox(overAppFlag); // TODO -should- be redundant, but is not... (actually both registrations seem necessary)
 
