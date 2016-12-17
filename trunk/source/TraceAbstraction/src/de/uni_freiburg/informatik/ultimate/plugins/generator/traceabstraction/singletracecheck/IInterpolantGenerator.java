@@ -82,8 +82,13 @@ public interface IInterpolantGenerator {
 	 * @return {@code true} iff the {@link IInterpolantGenerator} returns a usable interpolant sequence even if it is
 	 *         imperfect. Certain interpolant generators (e.g. {@link CegarAbsIntRunner}) can only deliver perfect
 	 *         sequences.
+	 * @deprecated Matthias: Either your provide a sequence or not, why shouldn't
+	 * the sequence be usable.
 	 */
+	@Deprecated
 	default boolean imperfectSequencesUsable() {
 		return true;
 	}
+	
+	InterpolantComputationStatus getInterpolantComputationStatus();
 }

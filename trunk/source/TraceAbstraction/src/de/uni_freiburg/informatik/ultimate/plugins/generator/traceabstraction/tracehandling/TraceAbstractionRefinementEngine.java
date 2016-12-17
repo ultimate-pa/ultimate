@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -44,9 +44,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -157,16 +158,46 @@ public final class TraceAbstractionRefinementEngine
 	private LBool checkFeasibility(final IRefinementStrategy strategy) {
 		while (true) {
 			// NOTE: Do not convert to method reference!
-			final Supplier<LBool> tc = () -> strategy.getTraceChecker().isCorrect();
-			LBool feasibility = handleExceptions(tc);
-			if (feasibility == null) {
-				feasibility = LBool.UNKNOWN;
-			}
+			final LBool feasibility = strategy.getTraceChecker().isCorrect();
+			Objects.requireNonNull(feasibility);
 			
-			if (feasibility == LBool.UNKNOWN && strategy.hasNextTraceChecker()) {
-				// feasibility check failed, try next combination in the strategy
-				mLogger.info("Advancing trace checker");
-				strategy.nextTraceChecker();
+			if (feasibility == LBool.UNKNOWN) {
+				final TraceCheckReasonUnknown tcra = strategy.getTraceChecker().getTraceCheckReasonUnknown();
+				if (tcra.getException() != null) {
+					final ExceptionHandlingCategory exceptionCategory = tcra.getExceptionHandlingCategory();
+					switch (exceptionCategory) {
+					case KNOWN_IGNORE:
+					case KNOWN_DEPENDING:
+					case KNOWN_THROW:
+						if (mLogger.isErrorEnabled()) {
+							mLogger.error("Caught known exception: " + tcra.getException().getMessage());
+						}
+						break;
+					case UNKNOWN:
+						if (mLogger.isErrorEnabled()) {
+							mLogger.error("Caught unknown exception: " + tcra.getException().getMessage());
+						}
+						break;
+					default:
+						throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
+					}
+				}
+
+				final boolean throwException = tcra.getExceptionHandlingCategory().throwException(mExceptionBlacklist);
+				if (throwException) {
+					if (mLogger.isInfoEnabled()) {
+						mLogger.info("Global settings require throwing the exception.");
+					}
+					throw new AssertionError(tcra.getException());
+				}
+				
+				if (strategy.hasNextTraceChecker()) {
+					// feasibility check failed, try next combination in the strategy
+					mLogger.info("Advancing trace checker");
+					strategy.nextTraceChecker();
+				} else {
+					return feasibility;
+				}
 			} else {
 				return feasibility;
 			}
@@ -217,8 +248,44 @@ public final class TraceAbstractionRefinementEngine
 	private void extractInterpolants(final IRefinementStrategy strategy,
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		final IInterpolantGenerator interpolantGenerator = handleExceptions(strategy::getInterpolantGenerator);
-		if (interpolantGenerator == null) {
+		IInterpolantGenerator interpolantGenerator = null;
+		try {
+			interpolantGenerator = strategy.getInterpolantGenerator();
+		} catch (final ToolchainCanceledException tce) {
+			throw tce;
+		} catch (final Exception e) {
+			final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
+			category.throwException(mExceptionBlacklist);
+			return;
+		}
+		final InterpolantComputationStatus status = interpolantGenerator.getInterpolantComputationStatus();
+		if (!status.wasComputationSuccesful()) {
+			switch (status.getStatus()) {
+			case ALGORITHM_FAILED: {
+				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_IGNORE;
+				category.throwException(mExceptionBlacklist);
+				break;
+			}
+			case OTHER: {
+				final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
+				category.throwException(mExceptionBlacklist);
+				break;
+			}
+			case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT: {
+				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_IGNORE;
+				category.throwException(mExceptionBlacklist);
+				break;
+			}
+			case SMT_SOLVER_CRASH: {
+				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_DEPENDING;
+				category.throwException(mExceptionBlacklist);
+				break;
+			}
+			case TRACE_FEASIBLE:
+				throw new IllegalStateException("should not try to interpolate");
+			default:
+				throw new AssertionError("unknown case : " + status.getStatus());
+			}
 			return;
 		}
 		
@@ -310,85 +377,6 @@ public final class TraceAbstractionRefinementEngine
 		}
 		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
 		return LBool.UNSAT;
-	}
-	
-	/**
-	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
-	 */
-	@SuppressWarnings("squid:S1871")
-	private <T> T handleExceptions(final Supplier<T> supp) {
-		Exception exception;
-		ExceptionHandlingCategory exceptionCategory;
-		try {
-			return supp.get();
-		} catch (final UnsupportedOperationException e) {
-			exception = e;
-			final String message = e.getMessage();
-			if (message == null) {
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			} else if (message.startsWith("Cannot interpolate")) {
-				// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else {
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			}
-		} catch (final SMTLIBException e) {
-			exception = e;
-			final String message = e.getMessage();
-			if (message == null) {
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			} else if ("Unsupported non-linear arithmetic".equals(message)) {
-				// SMTInterpol does not support non-linear arithmetic
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.endsWith("Connection to SMT solver broken")) {
-				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
-			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
-				// problem with Z3
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.contains("Received EOF on stdin. stderr output:")) {
-				// problem with CVC4
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
-			} else if (message.startsWith("Logic does not allow numerals")) {
-				// wrong usage of external solver, tell the user
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
-			} else if (message.startsWith("Timeout exceeded")) {
-				// timeout
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.startsWith("A non-linear fact")) {
-				// CVC4 complains about non-linear arithmetic although logic was set to linear arithmetic
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else {
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			}
-		}
-		
-		switch (exceptionCategory) {
-			case KNOWN_IGNORE:
-			case KNOWN_DEPENDING:
-			case KNOWN_THROW:
-				if (mLogger.isErrorEnabled()) {
-					mLogger.error("Caught known exception: " + exception.getMessage());
-				}
-				break;
-			case UNKNOWN:
-				if (mLogger.isErrorEnabled()) {
-					mLogger.error("Caught unknown exception: " + exception.getMessage());
-				}
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
-		}
-		
-		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
-		if (throwException) {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Global settings require throwing the exception.");
-			}
-			throw new AssertionError(exception);
-		}
-		
-		return null;
 	}
 	
 	/**

@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
@@ -469,8 +470,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private class AiRunnerWrapper implements IInterpolantGenerator {
+		private final InterpolantComputationStatus mInterpolantComputationStatus;
 		public AiRunnerWrapper() {
 			// default constructor
+			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		}
 		
 		@Override
@@ -516,6 +519,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		@Override
 		public Word<? extends IAction> getTrace() {
 			throw new UnsupportedOperationException();
+		}
+		
+		@Override
+		public InterpolantComputationStatus getInterpolantComputationStatus() {
+			return mInterpolantComputationStatus;
 		}
 	}
 	

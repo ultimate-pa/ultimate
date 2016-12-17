@@ -96,6 +96,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private final ConstructBackwardSequence mConstructBackwardInterpolantSequence;
 	
 	private AnnotateAndAssertConjunctsOfCodeBlocks mAnnotateAndAsserterConjuncts;
+	private final InterpolantComputationStatus mInterpolantComputationStatus;
 	
 	private int mNonLiveVariablesFp = 0;
 	private int mNonLiveVariablesBp = 0;
@@ -139,6 +140,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 		}
+		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 	}
 	
 	@Override
@@ -583,6 +585,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			throw new UnsupportedOperationException("backward sequence not constructed");
 		}
 		return mPerfectBackwardSequence;
+	}
+	
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		return mInterpolantComputationStatus;
 	}
 
 }

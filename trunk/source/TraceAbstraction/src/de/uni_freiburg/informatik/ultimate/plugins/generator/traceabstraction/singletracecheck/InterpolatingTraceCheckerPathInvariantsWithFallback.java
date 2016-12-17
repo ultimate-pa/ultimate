@@ -59,6 +59,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final IIcfg<?> mIcfg;
+	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -83,6 +84,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			super.unlockSmtManager();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 		}
+		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 	}
 
 	@Override
@@ -109,6 +111,11 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 
 	private static IPredicate[] fallbackInterpolantComputation() {
 		throw new UnsupportedOperationException("fallback computation not yet implemented");
+	}
+	
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		return mInterpolantComputationStatus;
 	}
 
 }

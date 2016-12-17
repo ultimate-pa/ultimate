@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
@@ -101,6 +102,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final PredicateTransformer mPredicateTransformer;
+	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	/**
 	 * Creates a default factory.
@@ -282,9 +284,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
 			// useVarsFromUnsatCore, false, null);
-			List<BoogieIcfgLocation> locationsAsList = new ArrayList<>(locations.size());
+			final List<BoogieIcfgLocation> locationsAsList = new ArrayList<>(locations.size());
 			locationsAsList.addAll(locations);
-			List<IcfgInternalAction> transitionsAsList = new ArrayList<>(transitions.size());
+			final List<IcfgInternalAction> transitionsAsList = new ArrayList<>(transitions.size());
 			transitionsAsList.addAll(transitions);
 			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition, postcondition,
 					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
@@ -306,6 +308,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mInterpolants = null;
 			mLogger.info("[PathInvariants] No invariants found.");
 		}
+		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 	}
 
 	private void generateLiveVariables(final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
@@ -372,4 +375,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 		return isPerfect;
 	}
+
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		return mInterpolantComputationStatus;
+	}
+	
+	
 }

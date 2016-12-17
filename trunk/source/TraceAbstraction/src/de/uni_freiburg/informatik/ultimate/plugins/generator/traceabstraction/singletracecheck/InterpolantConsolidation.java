@@ -102,6 +102,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
+	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	protected final InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationBenchmarkGenerator;
 	private final boolean mprintDebugInformation = false;
@@ -135,6 +136,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		if (mInterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers());
 		}
+		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 	}
 
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions)
@@ -634,6 +636,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, this, mLogger);
 		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 		return isPerfect;
+	}
+	
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		return mInterpolantComputationStatus;
 	}
 
 	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationBenchmarks() {

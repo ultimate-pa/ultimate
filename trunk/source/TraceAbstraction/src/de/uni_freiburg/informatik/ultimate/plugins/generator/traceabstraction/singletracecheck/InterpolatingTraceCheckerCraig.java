@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator.InterpolantType;
 
 /**
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 	private final boolean mInstantiateArrayExt;
+	private final InterpolantComputationStatus mInterpolantComputationStatus;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -97,22 +99,35 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		}
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
-			computeInterpolants(new AllIntegers(), interpolation);
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
-					InterpolantType.Craig);
-			if (!innerRecursiveNestedInterpolationCall) {
-				mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
-				if (mControlLocationSequence != null) {
-					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
-							mControlLocationSequence, mLogger, mPredicateUnifier);
-					final boolean perfectSequence =
-							(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
-					if (perfectSequence) {
-						mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+			InterpolantComputationStatus ics = new InterpolantComputationStatus(true, null, null);
+			try {
+				computeInterpolants(new AllIntegers(), interpolation);
+				mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
+						InterpolantType.Craig);
+				if (!innerRecursiveNestedInterpolationCall) {
+					mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+					if (mControlLocationSequence != null) {
+						final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
+								mControlLocationSequence, mLogger, mPredicateUnifier);
+						final boolean perfectSequence =
+								(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+						if (perfectSequence) {
+							mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+						}
+						mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 					}
-					mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 				}
+			} catch (final UnsupportedOperationException e) {
+				final String message = e.getMessage();
+				if (message != null && message.startsWith("Cannot interpolate")) {
+					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
+					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
+				} 
+				mTraceCheckFinished = true;
 			}
+			mInterpolantComputationStatus = ics;
+		} else {
+			mInterpolantComputationStatus = new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
 		}
 	}
 
@@ -206,6 +221,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			return mInterpolants;
 		}
 		throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
+	}
+	
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		return mInterpolantComputationStatus;
 	}
 
 	/**

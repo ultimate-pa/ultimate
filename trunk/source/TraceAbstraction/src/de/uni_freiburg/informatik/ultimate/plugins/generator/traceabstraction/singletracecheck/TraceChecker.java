@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalUnknownSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -214,7 +216,7 @@ public class TraceChecker implements ITraceChecker {
 			} else {
 				if (LBool.UNKNOWN == isSafe) {
 					// solver response was 'unknown' and no Exception was thrown.
-					traceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null);
+					traceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null, null);
 				}
 				if (computeRcfgProgramExecution && isSafe == LBool.SAT) {
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
@@ -229,6 +231,46 @@ public class TraceChecker implements ITraceChecker {
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
+		} catch (final SMTLIBException e) {
+			final String message = e.getMessage();
+			final Reason reason;
+			final ExceptionHandlingCategory exceptionCategory;
+			if (message == null) {
+				reason = Reason.SOLVER_CRASH_OTHER;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+			} else if ("Unsupported non-linear arithmetic".equals(message)) {
+				// SMTInterpol does not support non-linear arithmetic
+				reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+			} else if (message.endsWith("Connection to SMT solver broken")) {
+				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
+				reason = Reason.SOLVER_CRASH_OTHER;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
+				// problem with Z3
+				reason = Reason.SOLVER_CRASH_OTHER;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+			} else if (message.contains("Received EOF on stdin. stderr output:")) {
+				// problem with CVC4
+				reason = Reason.SOLVER_CRASH_OTHER;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+			} else if (message.startsWith("Logic does not allow numerals")) {
+				// wrong usage of external solver, tell the user
+				reason = Reason.SOLVER_CRASH_WRONG_USAGE;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+			} else if (message.startsWith("Timeout exceeded")) {
+				// timeout
+				reason = Reason.SOLVER_RESPONSE_TIMEOUT;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+			} else if (message.startsWith("A non-linear fact")) {
+				// CVC4 complains about non-linear arithmetic although logic was set to linear arithmetic
+				reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+			} else {
+				reason = Reason.SOLVER_CRASH_OTHER;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+			}
+			traceCheckReasonUnknown = new TraceCheckReasonUnknown(reason, e, exceptionCategory);
 		} finally {
 			mIsSafe = isSafe;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;

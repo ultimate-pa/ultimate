@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
+
 /**
  * Provides reasons why the trace feasiblity result of {@link TraceChecker}
  * is unknown. 
@@ -45,7 +47,7 @@ public class TraceCheckReasonUnknown {
 
 		/**
 		 * Solver response to check-sat was unknown.
-		 * This sometimes includes
+		 * This sometimes includes timeouts
 		 */
 		SOLVER_RESPONSE_OTHER,
 		
@@ -64,6 +66,11 @@ public class TraceCheckReasonUnknown {
 		UNSUPPORTED_NON_LINEAR_ARITHMETIC,
 		
 		/**
+		 * Solver crash because an Ultimate developer used wrong parameters
+		 */
+		SOLVER_CRASH_WRONG_USAGE,
+		
+		/**
 		 * Solver crash that does not fall in one of the other categories
 		 */
 		SOLVER_CRASH_OTHER
@@ -71,11 +78,13 @@ public class TraceCheckReasonUnknown {
 	
 	private final Reason mReason;
 	private final Exception mException;
+	private final ExceptionHandlingCategory mExceptionHandlingCategory;
 	
-	public TraceCheckReasonUnknown(final Reason reason, final Exception exception) {
+	public TraceCheckReasonUnknown(final Reason reason, final Exception exception, final ExceptionHandlingCategory category) {
 		super();
 		mReason = reason;
 		mException = exception;
+		mExceptionHandlingCategory = category;
 	}
 
 	public Reason getReason() {
@@ -84,6 +93,10 @@ public class TraceCheckReasonUnknown {
 
 	public Exception getException() {
 		return mException;
+	}
+
+	public ExceptionHandlingCategory getExceptionHandlingCategory() {
+		return mExceptionHandlingCategory;
 	}
 	
 	
