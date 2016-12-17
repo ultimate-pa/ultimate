@@ -103,7 +103,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	/**
 	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
 	 */
-	private final Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	private final Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
 
 	private final boolean mUseVarsFromUnsatCore;
 
@@ -146,6 +146,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	private Collection<TermVariable> mVarsFromUnsatCore;
 	private final BoogieIcfgLocation mStartLocation;
 	private final BoogieIcfgLocation mErrorLocation;
+	
+	private static final boolean PRINT_CONSTRAINTS = false;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -261,7 +263,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2OriginalTerm = new HashMap<>();
-		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
+		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 	}
 	/**
 	 * {@inheritDoc}
@@ -591,7 +593,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 					mSolver, analysisType, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
-			mMotzkinCoeffiecients2LinearInequalities.putAll(transformation.getMotzkinCoeffiecients2LinearInequalities());
+			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoeffiecients2LinearInequalities());
 		}
 		return SmtUtils.and(mSolver, resultTerms);
 	}
@@ -766,6 +768,17 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			newList.addAll(list);
 			transitionDNF.add(newList);
 		}
+		if (PRINT_CONSTRAINTS) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("StartPattern: ");
+			startInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
+			sb.append("Transition: ");
+			sb.append(predicate.getTransition());
+			sb.append(" AND "); 
+			sb.append("EndPattern: ");
+			endInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
+			mLogger.info(sb.toString());
+		}
 
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
 				transitionDNF);
@@ -892,13 +905,16 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				}
 				mVarsFromUnsatCore = new HashSet<>();
 				for (final String motzkinVar : motzkinVariables) {
-					final LinearInequality linq = mMotzkinCoeffiecients2LinearInequalities.get(motzkinVar);
+					final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);
 					for (final Term varInLinq : linq.getVariables()) {
 						if (varInLinq instanceof TermVariable) {
 							mVarsFromUnsatCore.add((TermVariable)varInLinq);
-						} else {
-							throw new UnsupportedOperationException("Var in linear inequality is not a TermVariable.");
-						}
+						} 
+//						else if (varInLinq instanceof ApplicationTerm) {
+//							
+//						} else {
+//							throw new UnsupportedOperationException("Var in linear inequality is neither a TermVariable nor a Replacement-Variable.");
+//						}
 
 					}
 				}
@@ -1077,7 +1093,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 						invariantPatternCopies = new boolean[] { false };
 					}
 					for (final boolean strict : invariantPatternCopies) {
-						final LinearPatternBase inequality = new LinearPatternBase(
+						final LinearPatternBase inequality = new LinearPatternBase (
 								mSolver, mPatternCoefficients, newPrefix(), strict);
 						Collection<Term> params = inequality.getVariables();
 						mPatternVariables.addAll(params);
@@ -1131,28 +1147,31 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
-		Collection<? extends LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
+		Collection<Collection<LinearPatternBase>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
 		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
 		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
 		for (Collection<LinearPatternBase> conjunctsInPattern : pattern) {
-			Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
-			newConjuncts.addAll(conjunctsInPattern);
-
-			newConjuncts.addAll(conjunctsFromTransFormula);
-			result.add(newConjuncts);
+			for (Collection<LinearPatternBase> conjunctsInTransFormula : transFormulaAsLinIneqs) {
+				Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
+				newConjuncts.addAll(conjunctsInPattern);
+				newConjuncts.addAll(conjunctsInTransFormula);
+				result.add(newConjuncts);
+			}
+			
 		}
 		return result;
 	}
 	
-	private Collection<LinearPatternBase> convertTransFormulaToConjunctionOfLinearInequalities(final UnmodifiableTransFormula tf) {
+	private Collection<Collection<LinearPatternBase>> convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
 		Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();
 		termVariables2ProgramVars.putAll(tf.getInVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
 		termVariables2ProgramVars.putAll(tf.getOutVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
 		
-		
+		// Transform the transformula into a disjunction of conjunctions, where each conjunct is a LinearInequality
 		List<List<LinearInequality>> linearinequalities = mLinearizer.linearize(tf).getPolyhedra();
-		Collection<LinearPatternBase> conjunctsFromTransFormula = new ArrayList<LinearPatternBase>(linearinequalities.size());
+		Collection<Collection<LinearPatternBase>> result = new ArrayList<>(linearinequalities.size());
 		for (List<LinearInequality> lineqs : linearinequalities) {
+			Collection<LinearPatternBase> conjunctsFromTransFormula = new ArrayList<LinearPatternBase>(linearinequalities.size());
 			for (LinearInequality lineq : lineqs) {
 				Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients = new HashMap<>();
 				for (Term termVar : lineq.getVariables()) {
@@ -1161,8 +1180,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				LinearPatternBase lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), programVarsToConstantCoefficients);
 				conjunctsFromTransFormula.add(lb);
 			}
+			result.add(conjunctsFromTransFormula);
 		}
-		return conjunctsFromTransFormula;
+		return result;
 	}
 	
 	
@@ -1170,12 +1190,12 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
-		Collection<LinearPatternBase> conjunctsFromTransFormula = convertTransFormulaToConjunctionOfLinearInequalities(tf);
+		Collection<Collection<LinearPatternBase>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
 		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
 		
 		result.addAll(pattern);
-		// Add conjuncts from transformula as an additional disjunct
-		result.add(conjunctsFromTransFormula);
+		// Add conjuncts from transformula as additional disjuncts
+		result.addAll(transFormulaAsLinIneqs);
 		return result;
 	}
 }

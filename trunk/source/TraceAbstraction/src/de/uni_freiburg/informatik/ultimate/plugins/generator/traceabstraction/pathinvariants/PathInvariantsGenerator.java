@@ -85,13 +85,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	// This is a safe and the simplest strategy: add the weakest precondition of the last transition and the formula 'false' to 
-	// the location before the error location, and before that one
-	private final static boolean USE_WP_FOR_LAST_2_TRANSITIONS =!false;
+	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path program to 
+	// the predecessor of the predecessor of the error location.
+	private final static boolean USE_WP_FOR_LAST_2_TRANSITIONS = false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
-	private final static boolean ADD_WP_TO_EACH_CONJUNCT = false;
+	private final static boolean ADD_WP_TO_EACH_CONJUNCT = true;
 	private final static boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
