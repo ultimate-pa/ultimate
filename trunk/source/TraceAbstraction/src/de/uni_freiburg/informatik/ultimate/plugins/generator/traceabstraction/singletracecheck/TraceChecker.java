@@ -232,6 +232,7 @@ public class TraceChecker implements ITraceChecker {
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
 		} catch (final SMTLIBException e) {
+			isSafe = LBool.UNKNOWN;
 			final String message = e.getMessage();
 			final Reason reason;
 			final ExceptionHandlingCategory exceptionCategory;
@@ -504,5 +505,9 @@ public class TraceChecker implements ITraceChecker {
 	 */
 	class TraceCheckerLock {
 		// this abomination helps Matthias debug
+	}
+
+	public boolean wasTracecheckFinished() {
+		return mTraceCheckFinished;
 	}
 }

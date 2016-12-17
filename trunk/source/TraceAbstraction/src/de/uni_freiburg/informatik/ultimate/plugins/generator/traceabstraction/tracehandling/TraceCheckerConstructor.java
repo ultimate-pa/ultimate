@@ -194,11 +194,13 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				throw new UnsupportedOperationException("unsupported interpolation");
 			}
 		}
-		mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+		if (traceChecker.wasTracecheckFinished()) {
+			mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+		}
 		
 		if (traceChecker.getToolchainCanceledExpection() != null) {
 			throw traceChecker.getToolchainCanceledExpection();
-		} else if (mPrefs.getUseSeparateSolverForTracechecks()) {
+		} else if (mPrefs.getUseSeparateSolverForTracechecks() && traceChecker.wasTracecheckFinished()) {
 			mManagedScript.getScript().exit();
 		}
 		

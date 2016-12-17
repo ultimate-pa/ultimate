@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator.InterpolantType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -139,8 +140,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
+		} else {
+			mInterpolantComputationStatus = new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
 		}
-		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 	}
 	
 	@Override
