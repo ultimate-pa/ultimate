@@ -43,10 +43,27 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SvcompBugs extends AbstractEvalTestSuite {
+public class SvcompReachBugs extends AbstractEvalTestSuite {
 
 	// @formatter:off
-	private static final Triple<String, String, String>[] ERROR_3_US = new Triple[] {
+	
+	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
+			//floats already fixed
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/modf_true-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/nearbyint_true-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/rint_true-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/rounding_functions_true-unreach-call.i"),
+
+			//currently not debuggable, masked by de.uni_freiburg.informatik.ultimate.logic.SMTLIBException: Unsupported non-linear arithmetic
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
+	};
+	
+	
+	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
 			//floats already fixed
 //			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/modf_true-unreach-call.i"),
 //			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/nearbyint_true-unreach-call.i"),
@@ -68,12 +85,6 @@ public class SvcompBugs extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
 	};
-	
-	@Override
-	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
-	}
-	
 	
 	// ExceptionOrErrorResult: IllegalArgumentException: The expression RoundingMode_RTZ has a null type
 	// Matthias: don't care about these - the best that we can achieve is that we crash with a better error message
@@ -647,7 +658,12 @@ public class SvcompBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = ERROR_3_US;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
+	}
 	
 	@Override
 	protected long getTimeout() {

@@ -79,9 +79,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 * @see #getModeForWindowsUsers().
 	 */
 	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
-	
+
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
@@ -90,24 +90,24 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private final AssertionOrderModulation mAssertionOrderModulation;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
-	
+
 	private Mode mCurrentMode;
-	
+
 	// if the first Z3 trace check was unsuccessful, we can skip it the second time
 	private boolean mZ3TraceCheckUnsuccessful;
-	
+
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
-	
+
 	private TraceCheckerConstructor mTcConstructor;
 	private TraceCheckerConstructor mPrevTcConstructor;
-	
+
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -145,100 +145,100 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		mAbstraction = abstraction;
 		mIteration = iteration;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
-		
+
 		mCurrentMode = Mode.SMTINTERPOL;
 	}
-	
+
 	@Override
 	public boolean hasNextTraceChecker() {
 		switch (mCurrentMode) {
-			case SMTINTERPOL:
-			case Z3_NO_IG:
-				return true;
-			case CVC4_NO_IG:
-			case ABSTRACT_INTERPRETATION:
-			case Z3_IG:
-			case CVC4_IG:
-				return false;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
+		case SMTINTERPOL:
+		case Z3_NO_IG:
+			return true;
+		case CVC4_NO_IG:
+		case ABSTRACT_INTERPRETATION:
+		case Z3_IG:
+		case CVC4_IG:
+			return false;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 	}
-	
+
 	@Override
 	public void nextTraceChecker() {
 		switch (mCurrentMode) {
-			case SMTINTERPOL:
-				mCurrentMode = Mode.Z3_NO_IG;
-				break;
-			case Z3_NO_IG:
-				mCurrentMode = Mode.CVC4_NO_IG;
-				mZ3TraceCheckUnsuccessful = true;
-				break;
-			case CVC4_NO_IG:
-			case ABSTRACT_INTERPRETATION:
-			case Z3_IG:
-			case CVC4_IG:
-				assert !hasNextTraceChecker();
-				throw new NoSuchElementException("No next trace checker available.");
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
+		case SMTINTERPOL:
+			mCurrentMode = Mode.Z3_NO_IG;
+			break;
+		case Z3_NO_IG:
+			mCurrentMode = Mode.CVC4_NO_IG;
+			mZ3TraceCheckUnsuccessful = true;
+			break;
+		case CVC4_NO_IG:
+		case ABSTRACT_INTERPRETATION:
+		case Z3_IG:
+		case CVC4_IG:
+			assert !hasNextTraceChecker();
+			throw new NoSuchElementException("No next trace checker available.");
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
-		
+
 		// reset trace checker, interpolant generator, and constructor
 		mTraceChecker = null;
 		mInterpolantGenerator = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
 	}
-	
+
 	@Override
 	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		// current policy: stop after finding one perfect interpolant sequence
 		return perfectIpps.isEmpty() && hasNextInterpolantGeneratorAvailable();
 	}
-	
+
 	private boolean hasNextInterpolantGeneratorAvailable() {
 		switch (mCurrentMode) {
-			case SMTINTERPOL:
-			case ABSTRACT_INTERPRETATION:
-			case Z3_IG:
-				return true;
-			case CVC4_IG:
-			case Z3_NO_IG:
-			case CVC4_NO_IG:
-				return false;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
+		case SMTINTERPOL:
+		case ABSTRACT_INTERPRETATION:
+		case Z3_IG:
+			return true;
+		case CVC4_IG:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			return false;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
 	}
-	
+
 	@Override
 	public void nextInterpolantGenerator() {
 		final boolean resetTraceChecker;
 		switch (mCurrentMode) {
-			case SMTINTERPOL:
-				mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
-				resetTraceChecker = false;
-				break;
-			case ABSTRACT_INTERPRETATION:
-				mCurrentMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
-				resetTraceChecker = true;
-				break;
-			case Z3_IG:
-				mCurrentMode = Mode.CVC4_IG;
-				resetTraceChecker = true;
-				break;
-			case CVC4_IG:
-			case Z3_NO_IG:
-			case CVC4_NO_IG:
-				assert !hasNextInterpolantGeneratorAvailable();
-				throw new NoSuchElementException("No next interpolant generator available.");
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
+		case SMTINTERPOL:
+			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
+			resetTraceChecker = false;
+			break;
+		case ABSTRACT_INTERPRETATION:
+			mCurrentMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
+			resetTraceChecker = true;
+			break;
+		case Z3_IG:
+			mCurrentMode = Mode.CVC4_IG;
+			resetTraceChecker = true;
+			break;
+		case CVC4_IG:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			assert !hasNextInterpolantGeneratorAvailable();
+			throw new NoSuchElementException("No next interpolant generator available.");
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mCurrentMode);
 		}
-		
+
 		// reset interpolant generator
 		mInterpolantGenerator = null;
 		if (resetTraceChecker) {
@@ -247,12 +247,12 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			mPrevTcConstructor = mTcConstructor;
 			mTcConstructor = null;
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
 		}
 	}
-	
+
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
@@ -263,7 +263,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mTraceChecker;
 	}
-	
+
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		mHasShownInfeasibilityBefore = true;
@@ -272,7 +272,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mInterpolantGenerator;
 	}
-	
+
 	@Override
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
@@ -283,45 +283,45 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return mInterpolantAutomatonBuilder;
 	}
-	
+
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> constructInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps, final Mode mode) {
 		switch (mode) {
-			case ABSTRACT_INTERPRETATION:
-				return ((AiRunnerWrapper) mInterpolantGenerator).getInterpolantAutomatonBuilder();
-			case SMTINTERPOL:
-			case Z3_IG:
-			case CVC4_IG:
-				// current policy: use all interpolant sequences
-				final List<InterpolantsPreconditionPostcondition> allIpps =
-						IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
-				return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, allIpps, mAbstraction);
-			case Z3_NO_IG:
-			case CVC4_NO_IG:
-				throw new AssertionError("The mode " + mode + " should be unreachable here.");
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case ABSTRACT_INTERPRETATION:
+			return ((AiRunnerWrapper) mInterpolantGenerator).getInterpolantAutomatonBuilder();
+		case SMTINTERPOL:
+		case Z3_IG:
+		case CVC4_IG:
+			// current policy: use all interpolant sequences
+			final List<InterpolantsPreconditionPostcondition> allIpps =
+					IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+			return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, allIpps, mAbstraction);
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			throw new AssertionError("The mode " + mode + " should be unreachable here.");
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 	}
-	
+
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
-		
+
 		final Mode scriptMode;
 		if (I_AM_A_POOR_WINDOWS_USER) {
 			scriptMode = getModeForWindowsUsers();
 		} else {
 			scriptMode = mCurrentMode;
 		}
-		
+
 		final ManagedScript managedScript =
 				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mIteration);
-		
+
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
-		
+
 		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
 				+ " (IT: " + interpolationTechnique + ")");
 		TraceCheckerConstructor result;
@@ -332,10 +332,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Because we rely on the "golden copy" of CVC4 and we only have this for Linux, windows users are screwed during
 	 * debugging. To enable at least some debugging, we hack the mode if someone is a poor windows user.
@@ -351,28 +351,28 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		return modeHack;
 	}
-	
+
 	private static InterpolationTechnique getInterpolationTechnique(final Mode mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
-			case SMTINTERPOL:
-				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
-				break;
-			case Z3_IG:
-			case CVC4_IG:
-				interpolationTechnique = InterpolationTechnique.FPandBP;
-				break;
-			case Z3_NO_IG:
-			case CVC4_NO_IG:
-			case ABSTRACT_INTERPRETATION:
-				interpolationTechnique = null;
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case SMTINTERPOL:
+			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
+			break;
+		case Z3_IG:
+		case CVC4_IG:
+			interpolationTechnique = InterpolationTechnique.FPandBP;
+			break;
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+		case ABSTRACT_INTERPRETATION:
+			interpolationTechnique = null;
+			break;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
 	}
-	
+
 	@SuppressWarnings("squid:S1151")
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Mode mode, final boolean useTimeout,
@@ -386,84 +386,83 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		final String logicForExternalSolver;
 		final String command;
 		switch (mode) {
-			case SMTINTERPOL:
-				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
-				solverSettings =
-						new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
-								baseNameOfDumpedScript);
-				solverMode = SolverMode.Internal_SMTInterpol;
-				logicForExternalSolver = null;
-				break;
-			case Z3_IG:
-			case Z3_NO_IG:
-				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
-				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-						baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_Z3;
-				break;
-			case CVC4_IG:
-			case CVC4_NO_IG:
-				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
-				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-						baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_CVC4_DEFAULT;
-				break;
-			case ABSTRACT_INTERPRETATION:
-				return null;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case SMTINTERPOL:
+			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.Internal_SMTInterpol;
+			logicForExternalSolver = null;
+			break;
+		case Z3_IG:
+		case Z3_NO_IG:
+			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = LOGIC_Z3;
+			break;
+		case CVC4_IG:
+		case CVC4_NO_IG:
+			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = LOGIC_CVC4_DEFAULT;
+			break;
+		case ABSTRACT_INTERPRETATION:
+			return null;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
 		final ManagedScript result = new ManagedScript(services, solver);
-		
+
 		final TermTransferrer tt = new TermTransferrer(solver);
 		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
 		}
-		
+
 		return result;
 	}
-	
+
 	private IInterpolantGenerator constructInterpolantGenerator(final Mode mode) {
 		switch (mode) {
-			case SMTINTERPOL:
-			case CVC4_IG:
-				return castTraceChecker();
-			case Z3_IG:
-				assert !mZ3TraceCheckUnsuccessful;
-				return castTraceChecker();
-			case Z3_NO_IG:
-			case CVC4_NO_IG:
-				mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
-				//$FALL-THROUGH$
-			case ABSTRACT_INTERPRETATION:
-				mAbsIntRunner.generateFixpoints(mCounterexample,
-						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction);
-				return new AiRunnerWrapper();
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case SMTINTERPOL:
+		case CVC4_IG:
+			return castTraceChecker();
+		case Z3_IG:
+			assert !mZ3TraceCheckUnsuccessful;
+			return castTraceChecker();
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
+			//$FALL-THROUGH$
+		case ABSTRACT_INTERPRETATION:
+			mAbsIntRunner.generateFixpoints(mCounterexample,
+					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction);
+			return new AiRunnerWrapper();
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 	}
-	
+
 	private IInterpolantGenerator castTraceChecker() {
 		final TraceChecker traceChecker = getTraceChecker();
 		assert traceChecker != null && traceChecker instanceof InterpolatingTraceChecker;
 		return (InterpolatingTraceChecker) traceChecker;
 	}
-	
+
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-	
+
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return RefinementStrategyExceptionBlacklist.UNKNOWN;
+		return RefinementStrategyExceptionBlacklist.NONE;
 	}
-	
+
 	/**
 	 * Wrapper for {@link CegarAbsIntRunner} that works like an {@link IInterpolantGenerator}.
 	 * 
@@ -471,62 +470,63 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 */
 	private class AiRunnerWrapper implements IInterpolantGenerator {
 		private final InterpolantComputationStatus mInterpolantComputationStatus;
+
 		public AiRunnerWrapper() {
 			// default constructor
 			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		}
-		
+
 		@Override
 		public IPredicate[] getInterpolants() {
 			return new IPredicate[0];
 		}
-		
+
 		@Override
 		public boolean isPerfectSequence() {
 			return mAbsIntRunner.hasShownInfeasibility();
 		}
-		
+
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
 			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
 		}
-		
+
 		@Override
 		public IPredicate getPrecondition() {
 			return mPredicateUnifier.getTruePredicate();
 		}
-		
+
 		@Override
 		public IPredicate getPostcondition() {
 			return mPredicateUnifier.getFalsePredicate();
 		}
-		
+
 		@Override
 		public Map<Integer, IPredicate> getPendingContexts() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public PredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier;
 		}
-		
+
 		@Override
 		public boolean imperfectSequencesUsable() {
 			return false;
 		}
-		
+
 		@Override
 		public Word<? extends IAction> getTrace() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public InterpolantComputationStatus getInterpolantComputationStatus() {
 			return mInterpolantComputationStatus;
 		}
 	}
-	
+
 	/**
 	 * Current mode in this strategy.
 	 *
