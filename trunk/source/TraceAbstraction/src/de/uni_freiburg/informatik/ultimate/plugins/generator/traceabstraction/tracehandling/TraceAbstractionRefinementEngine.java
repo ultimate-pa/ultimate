@@ -255,7 +255,10 @@ public final class TraceAbstractionRefinementEngine
 			throw tce;
 		} catch (final Exception e) {
 			final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
-			category.throwException(mExceptionBlacklist);
+			final boolean throwException = category.throwException(mExceptionBlacklist);
+			if (throwException) {
+				throw e;
+			}
 			return;
 		}
 		final InterpolantComputationStatus status = interpolantGenerator.getInterpolantComputationStatus();
