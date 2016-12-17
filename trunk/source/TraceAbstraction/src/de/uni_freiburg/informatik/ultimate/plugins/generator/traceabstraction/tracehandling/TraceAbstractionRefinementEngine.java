@@ -257,7 +257,7 @@ public final class TraceAbstractionRefinementEngine
 			final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
 			final boolean throwException = category.throwException(mExceptionBlacklist);
 			if (throwException) {
-				throw e;
+				throw new AssertionError(e);
 			}
 			return;
 		}
