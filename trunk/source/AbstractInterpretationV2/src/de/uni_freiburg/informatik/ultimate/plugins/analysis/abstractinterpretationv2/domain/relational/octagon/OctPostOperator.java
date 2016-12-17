@@ -179,6 +179,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	@Override
 	public List<OctDomainState> apply(final OctDomainState oldState, final CodeBlock codeBlock) {
+		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+		if (codeBlock instanceof Summary && !((Summary) codeBlock).calledProcedureHasImplementation()) {
+	        throw new UnsupportedOperationException("Summary for procedure without implementation");
+	    }
+
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		final List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
 		for (final Statement statement : statements) {
