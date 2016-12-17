@@ -29,7 +29,9 @@ def parsexml(dir, filename):
     global i
     fullXmlFilename = dir + "/" + filename
     
-    urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/uautomizer.2016-12-15_0135.logfiles/sv-comp17."
+    urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/"
+    suffix = ".".join(os.path.basename(filename).split(".")[:2])
+    url = urlBase + suffix + '.logfiles/sv-comp17.'
     origTmpFilename = "tmp"
     "Parses a result file from SVCOMP"
     tree = ET.parse(fullXmlFilename)
@@ -53,8 +55,10 @@ def parsexml(dir, filename):
                     currenterror.add(run.get('name'))
                 
                 # receive log file from server
-                sha = subprocess.Popen(['wget', '-qO',tmpFilename,urlBase + testFilename + ".log"], stdout=subprocess.PIPE).communicate()[0]				
-                #urllib.urlretrieve(urlBase + testFilename + ".log", filename=tmpFilename)
+                dlUrl = url + testFilename + ".log"
+                print "Downloading "+dlUrl
+                sha = subprocess.Popen(['wget', '-t','3','-qO',tmpFilename,dlUrl], stdout=subprocess.PIPE).communicate()[0]
+                #urllib.urlretrieve(url + testFilename + ".log", filename=tmpFilename)
                 
                 # search for error keyword and increment occurrence counter
                 for line in open(tmpFilename):

@@ -27,7 +27,9 @@ def parsexml(filename):
     "Parses a result file from SVCOMP"
     tree = ET.parse(filename)
     root = tree.getroot()
-    urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/uautomizer.2016-12-15_0135.logfiles/sv-comp17."
+    urlBase = "https://sv-comp.sosy-lab.org/2017/results/results-verified/"
+    suffix = ".".join(os.path.basename(filename).split(".")[:2])
+    url = urlBase + suffix + '.logfiles/sv-comp17.'
     origTmpFilename = "tmp"
 
     currentunsound = set()
@@ -39,9 +41,11 @@ def parsexml(filename):
             value = column.get('value')
 
             if key == "category" and value == "wrong":
-                i=i+1  
+                i=i+1
                 tmpFilename = origTmpFilename + str(i) + '-' + testFilename
-                sha = subprocess.Popen(['wget', '-qO',tmpFilename,urlBase + testFilename + ".log"], stdout=subprocess.PIPE).communicate()[0]				
+                dlUrl = url + testFilename + ".log"
+                print "Downloading "+dlUrl
+                sha = subprocess.Popen(['wget', '-t','3','-qO',tmpFilename,dlUrl], stdout=subprocess.PIPE).communicate()[0]
                 unsounds.add(run.get('name'))
                 if args.printunsound:
                     currentunsound.add(run.get('name'))
