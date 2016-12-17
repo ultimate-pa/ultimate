@@ -181,14 +181,13 @@ public final class TraceAbstractionRefinementEngine
 					default:
 						throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 					}
-				}
-
-				final boolean throwException = tcra.getExceptionHandlingCategory().throwException(mExceptionBlacklist);
-				if (throwException) {
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("Global settings require throwing the exception.");
+					final boolean throwException = tcra.getExceptionHandlingCategory().throwException(mExceptionBlacklist);
+					if (throwException) {
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Global settings require throwing the exception.");
+						}
+						throw new AssertionError(tcra.getException());
 					}
-					throw new AssertionError(tcra.getException());
 				}
 				
 				if (strategy.hasNextTraceChecker()) {
@@ -263,31 +262,32 @@ public final class TraceAbstractionRefinementEngine
 		}
 		final InterpolantComputationStatus status = interpolantGenerator.getInterpolantComputationStatus();
 		if (!status.wasComputationSuccesful()) {
+			final ExceptionHandlingCategory category;
 			switch (status.getStatus()) {
 			case ALGORITHM_FAILED: {
-				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_IGNORE;
-				category.throwException(mExceptionBlacklist);
+				category = ExceptionHandlingCategory.KNOWN_IGNORE;
 				break;
 			}
 			case OTHER: {
-				final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
-				category.throwException(mExceptionBlacklist);
+				category = ExceptionHandlingCategory.UNKNOWN;
 				break;
 			}
 			case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT: {
-				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_IGNORE;
-				category.throwException(mExceptionBlacklist);
+				category = ExceptionHandlingCategory.KNOWN_IGNORE;
 				break;
 			}
 			case SMT_SOLVER_CRASH: {
-				final ExceptionHandlingCategory category = ExceptionHandlingCategory.KNOWN_DEPENDING;
-				category.throwException(mExceptionBlacklist);
+				category = ExceptionHandlingCategory.KNOWN_DEPENDING;
 				break;
 			}
 			case TRACE_FEASIBLE:
 				throw new IllegalStateException("should not try to interpolate");
 			default:
 				throw new AssertionError("unknown case : " + status.getStatus());
+			}
+			final boolean throwException = category.throwException(mExceptionBlacklist);
+			if (throwException) {
+				throw new AssertionError(status.getException());
 			}
 			return;
 		}
