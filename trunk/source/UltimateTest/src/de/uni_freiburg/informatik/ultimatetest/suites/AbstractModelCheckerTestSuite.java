@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.suites;
@@ -49,7 +49,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected final List<UltimateTestCase> mTestCases;
 
 	public AbstractModelCheckerTestSuite() {
-		mTestCases = new ArrayList<UltimateTestCase>();
+		mTestCases = new ArrayList<>();
 	}
 
 	/**
@@ -68,7 +68,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		return mTestCases;
 	}
 
-	protected void addTestCases(File toolchainFile, File settingsFile, Collection<File> inputFiles) {
+	protected void addTestCases(final File toolchainFile, final File settingsFile, final Collection<File> inputFiles) {
 		for (final File inputFile : inputFiles) {
 			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile));
 		}
@@ -78,27 +78,28 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		for (final UltimateRunDefinition urd : urds) {
 			final UltimateStarter starter = new UltimateStarter(urd, getTimeout());
 			mTestCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(),
-					constructITestResultDecider(urd), starter, urd, super.getSummaries(), super.getIncrementalLogs()));
+					constructITestResultDecider(urd), starter, urd, getSummaries(), getIncrementalLogs()));
 		}
 	}
 
-	protected void addTestCase(UltimateRunDefinition urd) {
+	protected void addTestCase(final UltimateRunDefinition urd) {
 		final UltimateStarter starter = new UltimateStarter(urd, getTimeout());
 		mTestCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(), constructITestResultDecider(urd),
-				starter, urd, super.getSummaries(), super.getIncrementalLogs()));
+				starter, urd, getSummaries(), getIncrementalLogs()));
 	}
 
-	protected void addTestCase(String toolchain, String settings, String input) {
+	protected void addTestCase(final String toolchain, final String settings, final String input) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(input, settings, toolchain));
 	}
 
-	protected void addTestCase(String toolchain, String settings, String[] directories, String[] fileEndings) {
+	protected void addTestCase(final String toolchain, final String settings, final String[] directories,
+			final String[] fileEndings) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(directories, fileEndings, settings,
 				toolchain));
 	}
 
-	protected void addTestCase(String toolchain, String settings,
-			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+	protected void addTestCase(final String toolchain, final String settings,
+			final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(toolchain, settings,
 				directoryFileEndingsPairs));
 	}
