@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -525,10 +526,10 @@ public class MemoryHandler {
 
 		final Expression memcpyParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
 
-		// add requires size + dest!offset <= #length[dest!base];
+		// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
 		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamDest, specs);
 
-		// add requires size + src!offset <= #length[src!base];
+		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
 		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamSrc, specs);
 
 		// free ensures #res == dest;
@@ -796,7 +797,7 @@ public class MemoryHandler {
 		// add requires #valid[#ptr!base];
 		addPointerBaseValidityCheck(ignoreLoc, inParamPtr, specs);
 
-		// add requires size + #ptr!offset <= #length[#ptr!base];
+		// add requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset);
 		checkPointerTargetFullyAllocated(ignoreLoc, inParamAmountExpr, inParamPtr, specs);
 
 		// free ensures #res == dest;
@@ -1042,11 +1043,13 @@ public class MemoryHandler {
 	/**
 	 * Add specification that target of pointer is fully allocated to the list {@link specList}. The specification
 	 * checks that the address of the pointer plus the size of the type that we read/write is smaller than or equal to
-	 * the size of the allocated memory at the base address of the pointer. In case mPointerBaseValidity is
+	 * the size of the allocated memory at the base address of the pointer. Furthermore, we check that the offset is
+	 * greater than or equal to zero. 
+	 * 	 * In case mPointerBaseValidity is
 	 * ASSERTandASSUME, we add the requires specification
-	 * <code>requires #size + #ptr!offset <= #length[#ptr!base]</code>. In case mPointerBaseValidity is ASSERTandASSUME,
+	 * <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>. In case mPointerBaseValidity is ASSERTandASSUME,
 	 * we add the <b>free</b> requires specification
-	 * <code>free requires #size + #ptr!offset <= #length[#ptr!base]</code>. In case mPointerBaseValidity is IGNORE, we
+	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>. In case mPointerBaseValidity is IGNORE, we
 	 * add nothing.
 	 * 
 	 * @param loc
@@ -1064,12 +1067,26 @@ public class MemoryHandler {
 			// add nothing
 			return;
 		} else {
-			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
-			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final Expression aae = new ArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
-			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
-			final Expression leq = constructPointerComponentLessEqual(loc, sum, aae);
+			final Expression leq;
+			{
+				final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+				final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
+				final Expression aae = new ArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
+				final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
+				final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
+				leq = constructPointerComponentLessEqual(loc, sum, aae);
+			}
+			final Expression offsetGeqZero;
+			{
+				final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+				final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
+				final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(loc,
+						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				offsetGeqZero = constructPointerComponentLessEqual(loc, nr0, ptrOffset);
+				
+			}
+			final Expression offsetInAllocatedRange = ExpressionFactory.newBinaryExpression(loc, 
+					BinaryExpression.Operator.LOGICAND,	leq, offsetGeqZero);
 			final boolean isFreeRequires;
 			if (mPointerTargetFullyAllocated == PointerCheckMode.ASSERTandASSUME) {
 				isFreeRequires = false;
@@ -1077,7 +1094,7 @@ public class MemoryHandler {
 				assert mPointerTargetFullyAllocated == PointerCheckMode.ASSUME;
 				isFreeRequires = true;
 			}
-			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, leq);
+			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
 			final Check check = new Check(Spec.MEMORY_DEREFERENCE);
 			check.addToNodeAnnot(spec);
 			specList.add(spec);
