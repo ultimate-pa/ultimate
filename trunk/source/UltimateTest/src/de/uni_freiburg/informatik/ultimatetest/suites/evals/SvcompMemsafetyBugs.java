@@ -48,6 +48,22 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 	// @formatter:off
 	
 	@SuppressWarnings("unchecked")
+	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2.1_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/list-ext-properties/list-ext_flag_false-unreach-call_false-valid-deref.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/list-ext-properties/simple-ext_false-unreach-call_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/memsafety/test-0158_true-valid-memsafety.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ntdrivers/diskperf_false-unreach-call_true-valid-memsafety.i.cil.c"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ntdrivers/diskperf_true-unreach-call_true-valid-memsafety.i.cil.c"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ntdrivers/parport_false-unreach-call_true-valid-memsafety.i.cil.c"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/ntdrivers/parport_true-unreach-call_true-valid-memsafety.i.cil.c"),
+	};
+	
+	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
 			
 			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_true-valid-memsafety.i"),
@@ -74,7 +90,7 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 
 	// @formatter:on
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_KOJAK;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
