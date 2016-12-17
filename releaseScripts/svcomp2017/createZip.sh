@@ -39,12 +39,14 @@ if [ "$2" == "linux" ]; then
 	ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
 	Z3PATH="adds/z3"
 	CVC4PATH="adds/cvc4"
+	MATHSATPATH="adds/mathsat"
 elif [ "$2" == "win32" ]; then
 	echo "Building .zip for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
 	Z3PATH="adds/z3.exe"
 	CVC4PATH="adds/cvc4.exe"
+	MATHSATPATH="adds/mathsat.exe adds/mpir.dll"
 else
     echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"		
 	exit 1
@@ -119,6 +121,7 @@ test cp adds/Ultimate.ini "$TARGETDIR"/
 test cp adds/README "$TARGETDIR"/
 test cp ${Z3PATH} "$TARGETDIR"/
 test cp ${CVC4PATH} "$TARGETDIR"/
+test cp ${MATHSATPATH} "$TARGETDIR"/
 
 echo "Creating .zip"
 ## replacing version value in Ultimate.py
