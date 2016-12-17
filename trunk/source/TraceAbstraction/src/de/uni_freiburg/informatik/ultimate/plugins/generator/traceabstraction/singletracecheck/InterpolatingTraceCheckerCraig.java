@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -117,12 +118,22 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 						mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 					}
 				}
-			} catch (final UnsupportedOperationException e) {
+			} catch (final UnsupportedOperationException | SMTLIBException e) {
 				final String message = e.getMessage();
-				if (message != null && message.startsWith("Cannot interpolate")) {
-					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
-					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
-				} 
+				if (message == null) {
+					throw new IllegalArgumentException("solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+				} else {
+					if ((e instanceof UnsupportedOperationException) && message.startsWith("Cannot interpolate")) {
+						// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
+						ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
+					} else if ((e instanceof SMTLIBException) && message.equals("Unsupported non-linear arithmetic")) {
+						// SMTInterpol was somehow able to determine satisfiability but detects 
+						// non-linear arithmetic during interpolation
+						ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
+					} else {
+						throw e;
+					}
+				}
 				mTraceCheckFinished = true;
 			}
 			mInterpolantComputationStatus = ics;
