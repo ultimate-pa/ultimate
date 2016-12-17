@@ -47,6 +47,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 
 	// @formatter:off
 	
+	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
 			//floats already fixed
 //			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/modf_true-unreach-call.i"),
@@ -62,7 +63,14 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
 	};
 	
+	@SuppressWarnings("unchecked")
+	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test29_true-unreach-call.c"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call_1.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call.i"),
+	};
 	
+	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
 			//floats already fixed
 //			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/floats-esbmc-regression/modf_true-unreach-call.i"),
@@ -660,7 +668,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_KOJAK;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
