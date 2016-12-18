@@ -1152,8 +1152,11 @@ public class CfgBuilder {
 			if (oldLocNode == mIcfg.getProcedureEntryNodes().get(mCurrentProcedureName)) {
 				mIcfg.getProcedureEntryNodes().put(mCurrentProcedureName, newLocNode);
 			}
+			if (mIcfg.getLoopLocations().remove(oldLocNode)) {
+				// if the old location was a loop location, the new one is also
+				mIcfg.getLoopLocations().add(newLocNode);
+			}
 		}
-
 	}
 
 	private class LargeBlockEncoding {
