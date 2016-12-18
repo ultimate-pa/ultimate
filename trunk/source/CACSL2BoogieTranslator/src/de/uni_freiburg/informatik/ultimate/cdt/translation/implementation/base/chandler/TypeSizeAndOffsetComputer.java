@@ -279,11 +279,11 @@ public class TypeSizeAndOffsetComputer {
  			}
  			
  			final SizeTValueAggregator aggregator;
- 			if (cStruct instanceof CUnion) {
- 				aggregator = new SizeTValueAggregator_Max();
- 			} else {
+// 			if (cStruct instanceof CUnion) {
+// 				aggregator = new SizeTValueAggregator_Max();
+// 			} else {
  				aggregator = new SizeTValueAggregator_Add();
- 			}
+// 			}
  			return aggregator.aggregate(loc, fieldTypeSizes);
 		}
 		

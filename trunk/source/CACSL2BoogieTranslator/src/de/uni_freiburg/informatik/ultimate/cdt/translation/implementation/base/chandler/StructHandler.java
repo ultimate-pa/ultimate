@@ -155,7 +155,7 @@ public class StructHandler {
 			
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
-						computeUnionFieldToCType(
+						computeNeighbourFieldsOfUnionField(
 								loc, field, unionFieldToCType, (CUnion) cStructType, fieldOwnerHlv));
 			}
 		} else if (fieldOwner.lrVal instanceof RValue) {
@@ -171,7 +171,7 @@ public class StructHandler {
 			
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
-						computeUnionFieldToCType(
+						computeNeighbourFieldsOfUnionField(
 								loc, field, unionFieldToCType, (CUnion) cStructType, lVal));
 			}
 		}
@@ -181,7 +181,7 @@ public class StructHandler {
 	}
 
 
-	private List<ExpressionResult> computeUnionFieldToCType(
+	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(
 			final ILocation loc, 
 			final String field,
 			final List<ExpressionResult> unionFieldToCType, 
@@ -277,10 +277,10 @@ public class StructHandler {
 			final String msg = "Incorrect or unexpected field owner!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
-		final boolean fieldOffsetIsZero = isOffsetZero(structType, fieldIndex);
-		if (fieldOffsetIsZero) {
-			return addressOffsetOfFieldOwner;
-		} else {
+//		final boolean fieldOffsetIsZero = isOffsetZero(structType, fieldIndex);
+//		if (fieldOffsetIsZero) {
+//			return addressOffsetOfFieldOwner;
+//		} else {
 			final Expression fieldOffset = mTypeSizeAndOffsetComputer.
 					constructOffsetForField(loc, structType, fieldIndex);
 			final Expression result = mExpressionTranslation.constructArithmeticExpression(
@@ -288,7 +288,7 @@ public class StructHandler {
 					IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, 
 					mTypeSizeAndOffsetComputer.getSize_T(), fieldOffset, mTypeSizeAndOffsetComputer.getSize_T());
 			return result;
-		}
+//		}
 	}
 
 	private boolean isOffsetZero(CStruct cStruct, int fieldIndex) {
