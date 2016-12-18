@@ -1405,6 +1405,7 @@ public class MemoryHandler {
 	 */
 	public CallStatement getFreeCall(final Dispatcher main, final FunctionHandler fh, final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
+		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
 		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
 		// or let it be??
 
@@ -1426,6 +1427,7 @@ public class MemoryHandler {
 	 */
 	public CallStatement getDeallocCall(final Dispatcher main, final FunctionHandler fh, final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
+		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
 		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
 		// or let it be??
 
@@ -2022,9 +2024,17 @@ public class MemoryHandler {
 	}
 
 	public static enum MemoryModelDeclarations {
-		Ultimate_Alloc("#Ultimate.alloc"), Ultimate_MemInit("#Ultimate.meminit"), C_Memcpy(
-				"#Ultimate.C_memcpy"), C_Memset("#Ultimate.C_memset"),
-			Ultimate_Length("#length"), Ultimate_Valid("#valid");
+		//@formatter:off
+		Ultimate_Alloc("#Ultimate.alloc"),
+		Free(SFO.FREE), 
+		Ultimate_MemInit("#Ultimate.meminit"), 
+		C_Memcpy("#Ultimate.C_memcpy"), 
+		C_Memset("#Ultimate.C_memset"),
+		Ultimate_Length("#length"), 
+		Ultimate_Valid("#valid"),
+		//@formatter:on
+		;
+
 
 		private final String mName;
 
