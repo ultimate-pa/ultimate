@@ -141,19 +141,19 @@ public class CfgBuilder {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBacktranslator = backtranslator;
-		mAddAssumeForEachAssert = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		mAddAssumeForEachAssert = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
-		mCodeBlockSize = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
 		final String pathAndFilename = unit.getPayload().getLocation().getFileName();
-		final String filename = (new File(pathAndFilename)).getName();
+		final String filename = new File(pathAndFilename).getName();
 		final Script script = constructAndInitializeSolver(services, storage, filename);
 		final ManagedScript maScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean bitvectorInsteadInt = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean bitvectorInsteadInt = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
 		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator,
@@ -169,27 +169,27 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final String filename) {
-		final SolverMode solverMode = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final SolverMode solverMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean fakeNonIncrementalScript = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 
-		final boolean dumpSmtScriptToFile = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean dumpSmtScriptToFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		final String pathOfDumpedScript =
-				(mServices.getPreferenceProvider(Activator.PLUGIN_ID)).getString(RcfgPreferenceInitializer.LABEL_Path);
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(RcfgPreferenceInitializer.LABEL_Path);
 
-		final String commandExternalSolver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 
-		final boolean dumpUsatCoreTrackBenchmark = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean dumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
 
-		final boolean dumpMainTrackBenchmark = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean dumpMainTrackBenchmark = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
 
-		final String logicForExternalSolver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final String logicForExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
@@ -244,7 +244,7 @@ public class CfgBuilder {
 		}
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
-		mCodeBlockSize = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
@@ -284,7 +284,7 @@ public class CfgBuilder {
 			final SimplificationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
-		assert (mIcfg.getProcedureEntryNodes().containsKey(callee)) : "Source code contains" + " call of " + callee
+		assert mIcfg.getProcedureEntryNodes().containsKey(callee) : "Source code contains" + " call of " + callee
 				+ " but no such procedure.";
 
 		// Add call transition from callerNode to procedures entry node
@@ -438,17 +438,17 @@ public class CfgBuilder {
 
 				if (st instanceof Label) {
 					if (mCurrent instanceof BoogieIcfgLocation) {
-						assert (mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
-								|| mLastStmt instanceof Label) : "If st is Label"
+						assert mCurrent == mIcfg.getProcedureEntryNodes().get(procName)
+								|| mLastStmt instanceof Label : "If st is Label"
 										+ " and mcurrent is LocNode lastSt is Label";
 						mLogger.debug("Two Labels in a row: " + mCurrent + " and " + ((Label) st).getName() + "."
 								+ " I am expecting that at least one was" + " introduced by the user (or vcc). In the"
 								+ " CFG only the first label of those two (or" + " more) will be used");
 					}
 					if (mCurrent instanceof CodeBlock) {
-						assert (mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
+						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement) : "If st"
+								|| mLastStmt instanceof CallStatement : "If st"
 										+ " is a Label and the last constructed node"
 										+ " was a TransEdge, then the last"
 										+ " Statement must not be a Label, Return or" + " Goto";
@@ -461,9 +461,9 @@ public class CfgBuilder {
 				else if (st instanceof AssumeStatement || st instanceof AssignmentStatement
 						|| st instanceof HavocStatement) {
 					if (mCurrent instanceof CodeBlock) {
-						assert (mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
+						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement) : "If the"
+								|| mLastStmt instanceof CallStatement : "If the"
 										+ " last constructed node is a TransEdge, then"
 										+ " the last Statement must not be a Label,"
 										+ " Return or Goto. (i.e. this is not the first" + " Statemnt of the block)";
@@ -473,9 +473,9 @@ public class CfgBuilder {
 
 				else if (st instanceof AssertStatement) {
 					if (mCurrent instanceof CodeBlock) {
-						assert (mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
+						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement) : "If the"
+								|| mLastStmt instanceof CallStatement : "If the"
 										+ " last constructed node is a TransEdge, then"
 										+ " the last Statement must not be a Label,"
 										+ " Return or Goto. (i.e. this is not the first" + " Statement of the block)";
@@ -495,15 +495,15 @@ public class CfgBuilder {
 
 				else if (st instanceof CallStatement) {
 					if (mCurrent instanceof CodeBlock) {
-						assert (mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
+						assert mLastStmt instanceof AssumeStatement || mLastStmt instanceof AssignmentStatement
 								|| mLastStmt instanceof HavocStatement || mLastStmt instanceof AssertStatement
-								|| mLastStmt instanceof CallStatement) : "If mcurrent is a TransEdge, then lastSt"
+								|| mLastStmt instanceof CallStatement : "If mcurrent is a TransEdge, then lastSt"
 										+ " must not be a Label, Return or Goto."
 										+ " (i.e. this is not the first Statemnt" + " of the block)";
 					}
 					if (mCurrent instanceof BoogieIcfgLocation) {
-						assert (mLastStmt instanceof Label
-								|| mLastStmt instanceof CallStatement) : "If mcurrent is LocNode, then st is"
+						assert mLastStmt instanceof Label
+								|| mLastStmt instanceof CallStatement : "If mcurrent is LocNode, then st is"
 										+ " first statement of a block or fist" + " statement after a call";
 					}
 					processCallStatement((CallStatement) st);
@@ -532,11 +532,11 @@ public class CfgBuilder {
 			assertAndAssumeEnsures();
 
 			// Remove auxiliary GotoTransitions
-			final boolean removeGotoEdges = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+			final boolean removeGotoEdges = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(RcfgPreferenceInitializer.LABEL_RemoveGotoEdges);
 			if (removeGotoEdges) {
 				mLogger.debug("Starting removal of auxiliaryGotoTransitions");
-				while (!(mGotoEdges.isEmpty())) {
+				while (!mGotoEdges.isEmpty()) {
 					final GotoEdge gotoEdge = mGotoEdges.remove(0);
 					final boolean wasRemoved = removeAuxiliaryGoto(gotoEdge, true);
 					assert wasRemoved : "goto not removed";
@@ -631,7 +631,7 @@ public class CfgBuilder {
 			// Target of a goto should never be an error location.
 			// If this assertion will fail some day. A fix might be that
 			// mother has to become an error location.
-			assert (!child.isErrorLocation());
+			assert !child.isErrorLocation();
 
 			for (final IcfgEdge grandchild : child.getOutgoingEdges()) {
 				if (grandchild instanceof Call) {
@@ -843,7 +843,7 @@ public class CfgBuilder {
 		 *            overwritten, when this method is called with the correct Label as second parameter.
 		 * @return LocNode that is the representative for labelName.
 		 */
-		private BoogieIcfgLocation getLocNodeforLabel(final String labelName, final Statement st) {
+		private BoogieIcfgLocation getLocNodeForLabel(final String labelName, final Statement st) {
 			if (mLabel2LocNodes.containsKey(labelName)) {
 				final BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelName);
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
@@ -889,7 +889,7 @@ public class CfgBuilder {
 				// label? (This can be the case if this label was destination
 				// of a goto statement) If not construct the LocNode.
 				// If yes, add the Location Object to the existing LocNode.
-				final BoogieIcfgLocation locNode = getLocNodeforLabel(labelName, st);
+				final BoogieIcfgLocation locNode = getLocNodeForLabel(labelName, st);
 
 				if (mCurrent instanceof CodeBlock) {
 					((IcfgEdge) mCurrent).setTarget(locNode);
@@ -985,7 +985,7 @@ public class CfgBuilder {
 				return;
 			}
 			final String[] targets = st.getLabels();
-			assert (targets.length != 0) : "Goto must have at least one target";
+			assert targets.length != 0 : "Goto must have at least one target";
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
@@ -1003,7 +1003,7 @@ public class CfgBuilder {
 			for (final String label : targets) {
 				// Add an auxiliary GotoEdge and a LocNode
 				// for each target of the GotoStatement.
-				final BoogieIcfgLocation targetLocNode = getLocNodeforLabel(label, st);
+				final BoogieIcfgLocation targetLocNode = getLocNodeForLabel(label, st);
 				final GotoEdge newGotoEdge = mCbf.constructGotoEdge(locNode, targetLocNode);
 				ModelUtils.copyAnnotations(st, newGotoEdge);
 				mGotoEdges.add(newGotoEdge);
@@ -1123,7 +1123,7 @@ public class CfgBuilder {
 		 */
 		private void mergeLocNodes(final BoogieIcfgLocation oldLocNode, final BoogieIcfgLocation newLocNode) {
 			// oldLocNode must not represent an error location
-			assert (!oldLocNode.isErrorLocation());
+			assert !oldLocNode.isErrorLocation();
 			if (oldLocNode == newLocNode) {
 				return;
 			}
@@ -1163,7 +1163,7 @@ public class CfgBuilder {
 		final boolean mSimplifyCodeBlocks;
 
 		public LargeBlockEncoding() {
-			mSimplifyCodeBlocks = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+			mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 
 			for (final String proc : mIcfg.getProgramPoints().keySet()) {
@@ -1196,8 +1196,8 @@ public class CfgBuilder {
 		}
 
 		private void composeSequential(final BoogieIcfgLocation pp) {
-			assert (pp.getIncomingEdges().size() == 1);
-			assert (pp.getOutgoingEdges().size() == 1);
+			assert pp.getIncomingEdges().size() == 1;
+			assert pp.getOutgoingEdges().size() == 1;
 			final CodeBlock incoming = (CodeBlock) pp.getIncomingEdges().get(0);
 			final CodeBlock outgoing = (CodeBlock) pp.getOutgoingEdges().get(0);
 			final BoogieIcfgLocation predecessor = (BoogieIcfgLocation) incoming.getSource();
@@ -1246,16 +1246,16 @@ public class CfgBuilder {
 			if (incoming instanceof Call) {
 				return false;
 			}
-			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition
+			assert incoming instanceof StatementSequence || incoming instanceof SequentialComposition
 					|| incoming instanceof ParallelComposition || incoming instanceof Summary
-					|| incoming instanceof GotoEdge);
+					|| incoming instanceof GotoEdge;
 			final IcfgEdge outgoing = pp.getOutgoingEdges().get(0);
 			if (outgoing instanceof Return) {
 				return false;
 			}
-			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
+			assert outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
 					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary
-					|| outgoing instanceof GotoEdge);
+					|| outgoing instanceof GotoEdge;
 			return true;
 		}
 

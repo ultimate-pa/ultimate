@@ -204,8 +204,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mSatQuadruples = new NestedMap4<>();
 			mUnsatQuadruples = new NestedMap4<>();
 		}
-		mGraphWriter = new GraphWriter(mGlobalSettings.getDotGraphPath(), true, true, true, false,
-				mCsToolkit.getManagedScript().getScript());
+		mGraphWriter = new GraphWriter(mGlobalSettings.getDotGraphPath(), true, true, true);
 
 		// AI Module
 		final boolean usePredicatesFromAbstractInterpretation = mGlobalSettings.getUseAbstractInterpretation();
@@ -233,12 +232,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mGraphRoot = r2ar.convert(mServices, mOriginalRoot);
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot,
-				String.format("graph_%s_originalAfterConversion", mGraphWriter._graphCounter));
+				String.format("graph_%s_originalAfterConversion", mGraphWriter.getGraphCounter()));
 
 		removeSummaryEdges();
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot,
-				String.format("graph_%s_originalSummaryEdgesRemoved", mGraphWriter._graphCounter));
+				String.format("graph_%s_originalSummaryEdgesRemoved", mGraphWriter.getGraphCounter()));
 
 		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
 			mCodeChecker = new ImpulseChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
@@ -361,12 +360,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final IIcfg<BoogieIcfgLocation> icfg = (IIcfg<BoogieIcfgLocation>) root;
 		initialize(icfg);
 
-		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter._graphCounter));
+		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter.getGraphCounter()));
 
 		final ImpRootNode originalGraphCopy = copyGraph(mGraphRoot);
 
 		mGraphWriter.writeGraphAsImage(originalGraphCopy,
-				String.format("graph_%s_originalCopied", mGraphWriter._graphCounter));
+				String.format("graph_%s_originalCopied", mGraphWriter.getGraphCounter()));
 
 		final ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<>();
 
@@ -423,14 +422,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (errorRun == null) {
 					// TODO: this only works for the case where we have 1 procedure in procRootsToCheck, right??
 					mGraphWriter.writeGraphAsImage(procedureRoot, String.format("graph_%s_%s_noEP",
-							mGraphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
+							mGraphWriter.getGraphCounter(), procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
 					mLogger.warn("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
 					break;
 				}
 				mLogger.info("Error Path is FOUND.");
 				mGraphWriter.writeGraphAsImage(procedureRoot,
-						String.format("graph_%s_%s_foundEP", mGraphWriter._graphCounter,
+						String.format("graph_%s_%s_foundEP", mGraphWriter.getGraphCounter(),
 								procedureRoot.toString().substring(0, 5)),
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
