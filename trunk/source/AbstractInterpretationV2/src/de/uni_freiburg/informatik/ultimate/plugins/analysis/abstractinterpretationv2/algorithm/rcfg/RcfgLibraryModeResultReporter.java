@@ -31,31 +31,32 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
-		extends RcfgResultReporter<STATE, VARDECL> {
-	
+public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
+		extends RcfgResultReporter<STATE, ACTION, VARDECL, LOC> {
+
 	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
-	public void reportSafe(final CodeBlock first) {
+	public void reportSafe(final ACTION first) {
 		reportSafe(first, "No error locations were reached.");
 	}
-	
+
 	@Override
-	public void reportSafe(final CodeBlock first, final String msg) {
+	public void reportSafe(final ACTION first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResultAtElement<>(first, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 						"Procedure " + first.getPrecedingProcedure() + " is safe", msg, Severity.INFO));
 	}
-	
+
 }

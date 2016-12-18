@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2016 Yu-Wen Chen 
+ * Copyright (C) 2016 Yu-Wen Chen
  * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
@@ -33,50 +33,51 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public class VPDomainSymmetricPair<T> {
 	T mFst, mSnd;
-	public VPDomainSymmetricPair(T f, T s) {
+
+	public VPDomainSymmetricPair(final T f, final T s) {
 		mFst = f;
 		mSnd = s;
 	}
-	
+
 	public T getFirst() {
 		return mFst;
 	}
+
 	public T getSecond() {
 		return mSnd;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mFst.hashCode() + mSnd.hashCode();
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (o instanceof VPDomainSymmetricPair<?>) {
 			final VPDomainSymmetricPair<?> p = (VPDomainSymmetricPair<?>) o;
-			return (mFst.equals(p.mFst) && mSnd.equals(p.mSnd))
-			    || (mFst.equals(p.mSnd) && mSnd.equals(p.mFst));
+			return mFst.equals(p.mFst) && mSnd.equals(p.mSnd) || mFst.equals(p.mSnd) && mSnd.equals(p.mFst);
 		}
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "(" + mFst + "," + mSnd + ")";
 	}
 
-	public boolean contains(T element) {
+	public boolean contains(final T element) {
 		return mFst.equals(element) || mSnd.equals(element);
 	}
-	
-	public T getOther(T element) {
+
+	public T getOther(final T element) {
 		if (element.equals(mFst)) {
 			return mSnd;
 		} else if (element.equals(mSnd)) {
 			return mFst;
-		} 
+		}
 		assert false : "check for containment first!";
 		return null;
-		
+
 	}
 }

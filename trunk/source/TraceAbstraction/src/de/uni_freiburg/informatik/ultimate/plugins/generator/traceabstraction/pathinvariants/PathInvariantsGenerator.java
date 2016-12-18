@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -61,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -85,7 +85,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path program to 
+	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
+	// program to
 	// the predecessor of the predecessor of the error location.
 	private final static boolean USE_WP_FOR_LAST_2_TRANSITIONS = false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
@@ -212,13 +213,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final LinkedHashSet<BoogieIcfgLocation> locations = new LinkedHashSet<>(len);
 		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
 		final LinkedHashSet<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
-//		final Set<CodeBlock> transitionsForAI = new LinkedHashSet<>(len - 1);
+		// final Set<CodeBlock> transitionsForAI = new LinkedHashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 		// The location where the nestedRun starts
 		final BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
 		// The location where the nestedRun ends (i.e. the error location)
 		final BoogieIcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len - 1)).getProgramPoint();
-		
+
 		UnmodifiableTransFormula weakestPreconditionOfLastTransition = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
@@ -238,27 +239,28 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
 				// Add codeblock to transitions needed for live variable analysis
-//				transitionsForAI.add((CodeBlock) mRun.getSymbol(i-1));
+				// transitionsForAI.add((CodeBlock) mRun.getSymbol(i-1));
 
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
 				// transitions.add(new Transition(transFormula, locations.get(i - 1), location));
 				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
 						transFormula));
-				if (USE_WP_FOR_LAST_2_TRANSITIONS && (i == len - 1)) {
+				if (USE_WP_FOR_LAST_2_TRANSITIONS && i == len - 1) {
 					final IPredicate wpFor1stTransition = mPredicateUnifier.getOrConstructPredicate(
 							mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
-					final IPredicate wpFor2ndTransition = mPredicateUnifier.getOrConstructPredicate(
-							mPredicateTransformer.weakestPrecondition(wpFor1stTransition, ((IInternalAction) mRun.getSymbol(i - 2)).getTransformula()));
-//					if (mPredicateUnifier.getTruePredicate().equals(wpFor2ndTransition)) {
-//						
-//					} else {
-						weakestPreconditionOfLastTransition =
-								TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition, managedScript);
-						//					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-						//							currentLocation.getPayload(), wpAsTransformula));
-						mLogger.info("wp computed: " + weakestPreconditionOfLastTransition);
-//					}
+					final IPredicate wpFor2ndTransition =
+							mPredicateUnifier.getOrConstructPredicate(mPredicateTransformer.weakestPrecondition(
+									wpFor1stTransition, ((IInternalAction) mRun.getSymbol(i - 2)).getTransformula()));
+					// if (mPredicateUnifier.getTruePredicate().equals(wpFor2ndTransition)) {
+					//
+					// } else {
+					weakestPreconditionOfLastTransition =
+							TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition, managedScript);
+					// transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
+					// currentLocation.getPayload(), wpAsTransformula));
+					mLogger.info("wp computed: " + weakestPreconditionOfLastTransition);
+					// }
 				}
 			}
 			previousLocation = currentLocation;
@@ -269,7 +271,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
 				+ " transitions.");
 
-		
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services);
 		final Map<BoogieIcfgLocation, IPredicate> invariants;
@@ -288,9 +289,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			locationsAsList.addAll(locations);
 			final List<IcfgInternalAction> transitionsAsList = new ArrayList<>(transitions.size());
 			transitionsAsList.addAll(transitions);
-			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition, postcondition,
-					startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
-					weakestPreconditionOfLastTransition, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
+			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition,
+					postcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false,
+					null, weakestPreconditionOfLastTransition, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
@@ -316,7 +317,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		final IIcfg<?> pathProgram = new PathProgram<>("PathInvariantsPathProgram", originalIcfg, allowedTransitions);
-		final IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation> result =
+		final IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> result =
 				AbstractInterpreter.runFutureDataflowDomain(pathProgram, timer, mServices, false, mLogger);
 
 		// TODO: Create path program as IIcfg
@@ -380,6 +381,5 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
 	}
-	
-	
+
 }

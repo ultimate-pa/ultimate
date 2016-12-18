@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpretationResult;
@@ -56,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa.NWAPathProgramTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLibraryModeResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
@@ -105,7 +108,7 @@ public final class AbstractInterpreter {
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
 			run(final IIcfg<BoogieIcfgLocation> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
-		return run(root, RcfgUtils.getInitialEdges(root), timer, services, false);
+		return run(root, RcfgUtils.getInitialCodeblocks(root), timer, services, false);
 	}
 
 	/**
@@ -224,10 +227,10 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation>
-			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-					final boolean isSilent, final ILogger logger) {
+	public static <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> runFuture(final IIcfg<?> root,
+					final IProgressAwareTimer timer, final IUltimateServiceProvider services, final boolean isSilent,
+					final ILogger logger) {
 		return runFuture(root, timer, services, logger, isSilent, (fac, log) -> fac.selectDomainFutureCfg());
 	}
 
@@ -238,28 +241,28 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, BoogieIcfgLocation>
+	public static IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
 			runFutureEqualityDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
 		return runFuture(root, timer, services, logger, isSilent,
 				(fac, log) -> fac.selectDomainFutureCfg(VPDomain.class, log));
 	}
 
-	public static IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation>
+	public static IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
 			runFutureDataflowDomain(final IIcfg<?> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent, final ILogger logger) {
 		return runFuture(root, timer, services, logger, isSilent,
 				(fac, log) -> fac.selectDomainFutureCfg(DataflowDomain.class, log));
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation>
+	private static <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation>
 			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final ILogger logger, final boolean isSilent,
-					final BiFunction<FixpointEngineFutureParameterFactory, ILogger, IAbstractDomain<STATE, CodeBlock, IProgramVar>> fun) {
+					final BiFunction<FixpointEngineFutureParameterFactory, ILogger, IAbstractDomain<STATE, IcfgEdge, IProgramVar>> fun) {
 
-		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
-		final Collection<CodeBlock> filteredInitialElements =
+		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
+		final Collection<IcfgEdge> filteredInitialElements =
 				transProvider.filterInitialElements(RcfgUtils.getInitialEdges(root));
 
 		if (filteredInitialElements.isEmpty()) {
@@ -269,16 +272,16 @@ public final class AbstractInterpreter {
 
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineFutureParameterFactory domFac = new FixpointEngineFutureParameterFactory(root, services);
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>();
+		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
 
-		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> result = null;
+		AbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> result = null;
 
-		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
+		final Iterator<IcfgEdge> iter = filteredInitialElements.iterator();
 		while (iter.hasNext()) {
-			final CodeBlock initial = iter.next();
-			final FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> params =
+			final IcfgEdge initial = iter.next();
+			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression> params =
 					domFac.createParamsFuture(timer, transProvider, loopDetector, fun.apply(domFac, logger));
-			final FixpointEngine<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> fxpe =
+			final FixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
 			result = fxpe.run(initial, script, result);
 		}
@@ -290,7 +293,7 @@ public final class AbstractInterpreter {
 
 		final boolean isLib = filteredInitialElements.size() > 1;
 		if (result.hasReachedError()) {
-			final IResultReporter<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> reporter =
+			final IResultReporter<STATE, IcfgEdge, IProgramVar, IcfgLocation> reporter =
 					getReporter(services, isLib, isSilent);
 			result.getCounterexamples().forEach(cex -> reporter.reportPossibleError(cex));
 		} else {
@@ -321,8 +324,9 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
-			IResultReporter<STATE, CodeBlock, VARDECL, BoogieIcfgLocation>
+	private static <
+			STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
+			IResultReporter<STATE, ACTION, VARDECL, LOC>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
 		if (isSilent) {
 			return new SilentReporter<>();

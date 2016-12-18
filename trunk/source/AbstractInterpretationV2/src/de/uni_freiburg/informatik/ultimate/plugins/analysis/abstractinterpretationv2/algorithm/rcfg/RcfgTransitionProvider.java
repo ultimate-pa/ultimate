@@ -32,9 +32,9 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -55,7 +55,7 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	}
 
 	@Override
-	public boolean isPostErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
+	public boolean isSuccessorErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
 		assert elem != null;
 
 		if (elem instanceof Return) {

@@ -47,7 +47,7 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 	}
 	
 	@Override
-	public boolean isPostErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
+	public boolean isSuccessorErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
 		assert elem != null;
 		return mPostErrorLoc == elem;
 	}

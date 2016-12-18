@@ -34,65 +34,79 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DataflowPostOperator implements IAbstractPostOperator<DataflowState, CodeBlock, IProgramVar> {
-	
+public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
+		implements IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVar> {
+
 	@Override
-	public List<DataflowState> apply(final DataflowState oldstate, final CodeBlock transition) {
-		final UnmodifiableTransFormula tf = transition.getTransitionFormula();
+	public List<DataflowState<ACTION>> apply(final DataflowState<ACTION> oldstate, final ACTION transition) {
+		final UnmodifiableTransFormula tf = getTransformula(transition);
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
-		
-		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
-		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = new HashMap<>(oldstate.getNoWrite());
-		
+
+		final Map<IProgramVar, Set<ACTION>> reach = new HashMap<>(oldstate.getReachingDefinitions());
+		final Map<IProgramVar, Set<IcfgLocation>> noWrite = new HashMap<>(oldstate.getNoWrite());
+
 		// for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 		// reach.put(entry.getKey(), Collections.singleton(transition));
 		// }
 		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
 		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
 		nonDefSet.removeAll(defSet);
-		
+
 		for (final IProgramVar pv : defSet) {
 			reach.put(pv, Collections.singleton(transition));
 			noWrite.put(pv, new HashSet<>());
 		}
 		for (final IProgramVar pv : nonDefSet) {
-			Set<BoogieIcfgLocation> programPoints = noWrite.get(pv);
+			Set<IcfgLocation> programPoints = noWrite.get(pv);
 			if (programPoints == null) {
 				programPoints = new HashSet<>();
 				noWrite.put(pv, programPoints);
 			}
-			programPoints.add((BoogieIcfgLocation) transition.getSource());
+			programPoints.add(transition.getSource());
 		}
-		
+
 		return Collections.singletonList(
-				new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
+				new DataflowState<>(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
 	}
-	
+
+	private UnmodifiableTransFormula getTransformula(final ACTION transition) {
+		if (transition instanceof IInternalAction) {
+			return ((IInternalAction) transition).getTransformula();
+		} else if (transition instanceof ICallAction) {
+			return ((ICallAction) transition).getLocalVarsAssignment();
+		} else if (transition instanceof IReturnAction) {
+			return ((IReturnAction) transition).getAssignmentOfReturn();
+		}
+		throw new UnsupportedOperationException("Unknown transition type " + transition.getClass().getSimpleName());
+	}
+
 	@Override
-	public List<DataflowState> apply(final DataflowState stateBeforeLeaving, final DataflowState stateAfterLeaving,
-			final CodeBlock transition) {
-		// TODO Auto-generated method stub
+	public List<DataflowState<ACTION>> apply(final DataflowState<ACTION> stateBeforeLeaving,
+			final DataflowState<ACTION> stateAfterLeaving, final ACTION transition) {
 		return null;
 	}
-	
+
 	private Set<IProgramVar> computeDefSetFromTransFormula(final UnmodifiableTransFormula tf,
 			final Set<IProgramVar> allVariables) {
 		// TODO I think we will need something like "constrained vars"
 		// i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
 		// x is constrained by the formula (i.e. like from an assume statement)
-		
+
 		// for now: rudimentary test if it is an assume -- then return all outvars
 		// otherwise return the AssignedVars
 		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { // TODO: don't use keySet()

@@ -50,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  *
  */
 public class CodeBlockFactory implements IStorable {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final CfgSmtToolkit mMgvManager;
 	private int mSerialNumberCounter;
-	
+
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable) {
 		super();
@@ -66,16 +66,16 @@ public class CodeBlockFactory implements IStorable {
 		mMgdScript = mgdScript;
 		mMgvManager = mgvManager;
 	}
-	
+
 	public Call constructCall(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement call) {
 		return new Call(makeFreshSerial(), source, target, call, mLogger);
 	}
-	
+
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {
 		return new GotoEdge(makeFreshSerial(), source, target, mLogger);
 	}
-	
+
 	public ParallelComposition constructParallelComposition(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final List<CodeBlock> codeBlocks,
 			final XnfConversionTechnique xnfConversionTechnique,
@@ -83,12 +83,12 @@ public class CodeBlockFactory implements IStorable {
 		return new ParallelComposition(makeFreshSerial(), source, target, mMgdScript, mServices, codeBlocks,
 				xnfConversionTechnique);
 	}
-	
+
 	public Return constructReturn(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Call correspondingCall) {
 		return new Return(makeFreshSerial(), source, target, correspondingCall, mLogger);
 	}
-	
+
 	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final boolean simplify, final boolean extPqe,
 			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
@@ -96,31 +96,31 @@ public class CodeBlockFactory implements IStorable {
 		return new SequentialComposition(makeFreshSerial(), source, target, mMgvManager, simplify, extPqe, mServices,
 				codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
-	
+
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final Statement st) {
 		return new StatementSequence(makeFreshSerial(), source, target, st, mLogger);
 	}
-	
+
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final Statement st, final Origin origin) {
 		return new StatementSequence(makeFreshSerial(), source, target, st, origin, mLogger);
 	}
-	
+
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final List<Statement> stmts, final Origin origin) {
 		return new StatementSequence(makeFreshSerial(), source, target, stmts, origin, mLogger);
 	}
-	
+
 	public Summary constructSummary(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final boolean calledProcedureHasImplementation) {
 		return new Summary(makeFreshSerial(), source, target, st, calledProcedureHasImplementation, mLogger);
 	}
-	
+
 	private int makeFreshSerial() {
 		return mSerialNumberCounter++;
 	}
-	
+
 	public CodeBlock copyCodeBlock(final CodeBlock codeBlock, final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target) {
 		if (codeBlock instanceof Call) {
@@ -128,6 +128,7 @@ public class CodeBlockFactory implements IStorable {
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof Return) {
+			// FIXME: The return keeps its reference to the old call and thus to a possibly old Icfg
 			final Return copy = constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
@@ -150,18 +151,18 @@ public class CodeBlockFactory implements IStorable {
 					"unsupported kind of CodeBlock: " + codeBlock.getClass().getSimpleName());
 		}
 	}
-	
+
 	@Override
 	public void destroy() {
 		// nothing to destroy
 	}
-	
+
 	public static CodeBlockFactory getFactory(final IToolchainStorage storage) {
 		return (CodeBlockFactory) storage.getStorable(CodeBlockFactory.class.getName());
 	}
-	
+
 	public void storeFactory(final IToolchainStorage storage) {
 		storage.putStorable(CodeBlockFactory.class.getName(), this);
 	}
-	
+
 }

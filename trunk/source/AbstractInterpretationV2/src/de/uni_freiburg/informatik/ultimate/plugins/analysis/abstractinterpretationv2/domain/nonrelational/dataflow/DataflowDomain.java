@@ -30,8 +30,9 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Domain that can be used to compute fixpoints for various dataflow analyses like reaching definitions, def-use, etc.
@@ -48,60 +49,59 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock, IProgramVar> {
-	
-	private final DataflowPostOperator mPost;
+public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
+		implements IAbstractDomain<DataflowState<ACTION>, ACTION, IProgramVar> {
+
+	private final DataflowPostOperator<ACTION> mPost;
 	private final DataflowMergeOperator mMerge;
 	private final ILogger mLogger;
-	
+
 	public DataflowDomain(final ILogger logger) {
-		mPost = new DataflowPostOperator();
+		mPost = new DataflowPostOperator<>();
 		mMerge = new DataflowMergeOperator();
 		mLogger = logger;
 	}
-	
+
 	@Override
-	public DataflowState createFreshState() {
-		return new DataflowState();
+	public DataflowState<ACTION> createFreshState() {
+		return new DataflowState<>();
 	}
-	
+
 	@Override
-	public DataflowState createTopState() {
-		// TODO Auto-generated method stub
+	public DataflowState<ACTION> createTopState() {
 		throw new UnsupportedOperationException("createTopState not implemented, yet.");
 	}
 
 	@Override
-	public DataflowState createBottomState() {
-		// TODO Auto-generated method stub
+	public DataflowState<ACTION> createBottomState() {
 		throw new UnsupportedOperationException("createBottomState not implemented, yet.");
 	}
-	
+
 	@Override
-	public IAbstractStateBinaryOperator<DataflowState> getWideningOperator() {
+	public IAbstractStateBinaryOperator<DataflowState<ACTION>> getWideningOperator() {
 		return mMerge;
 	}
-	
+
 	@Override
-	public IAbstractStateBinaryOperator<DataflowState> getMergeOperator() {
+	public IAbstractStateBinaryOperator<DataflowState<ACTION>> getMergeOperator() {
 		return mMerge;
 	}
-	
+
 	@Override
-	public IAbstractPostOperator<DataflowState, CodeBlock, IProgramVar> getPostOperator() {
+	public IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVar> getPostOperator() {
 		return mPost;
 	}
-	
+
 	@Override
 	public int getDomainPrecision() {
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
-	
-	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState> {
-		
+
+	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState<ACTION>> {
+
 		@Override
-		public DataflowState apply(final DataflowState first, final DataflowState second) {
-			final DataflowState rtr = first.union(second);
+		public DataflowState<ACTION> apply(final DataflowState<ACTION> first, final DataflowState<ACTION> second) {
+			final DataflowState<ACTION> rtr = first.union(second);
 			if (mLogger.isDebugEnabled()) {
 				final StringBuilder sb = new StringBuilder();
 				sb.append("merge(");

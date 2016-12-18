@@ -78,8 +78,14 @@ public final class RcfgUtils {
 		return false;
 	}
 
-	public static Collection<CodeBlock> getInitialEdges(final IIcfg<?> icfg) {
-		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
-				.collect(Collectors.toSet());
+	public static Collection<IcfgEdge> getInitialEdges(final IIcfg<?> icfg) {
+		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet());
 	}
+
+	public static Collection<CodeBlock> getInitialCodeblocks(final IIcfg<?> icfg) {
+		final Collection<IcfgEdge> initialEdges = getInitialEdges(icfg);
+		assert initialEdges.stream().allMatch(a -> a instanceof CodeBlock);
+		return initialEdges.stream().map(a -> (CodeBlock) a).collect(Collectors.toSet());
+	}
+
 }

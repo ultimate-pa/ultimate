@@ -41,12 +41,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -55,59 +54,57 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
-		implements IResultReporter<STATE, CodeBlock, VARDECL, BoogieIcfgLocation> {
-	
+public class RcfgResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
+		implements IResultReporter<STATE, ACTION, VARDECL, LOC> {
+
 	protected final IUltimateServiceProvider mServices;
-	
+
 	public RcfgResultReporter(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-	
+
 	@Override
 	public void reportPossibleError(
-			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, BoogieIcfgLocation> cex) {
+			final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<IcfgEdge> trace = new ArrayList<>();
-		
+
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
-		
+
 		int i = 0;
-		for (final Triple<AbstractMultiState<STATE, CodeBlock, VARDECL>, BoogieIcfgLocation, CodeBlock> elem : cex
-				.getAbstractExecution()) {
+		for (final Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOC, ACTION> elem : cex.getAbstractExecution()) {
 			trace.add(elem.getThird());
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
 		}
 		final IcfgProgramExecution pex = new IcfgProgramExecution(trace, programStates);
-		
+
 		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, getLast(cex),
 				mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
-		
+
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
-	
+
 	private ProgramState<Term>
-			computeProgramState(final AbstractMultiState<STATE, CodeBlock, VARDECL> abstractMultiState) {
+			computeProgramState(final AbstractMultiState<STATE, ACTION, VARDECL> abstractMultiState) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}
-	
-	private BoogieIcfgLocation getLast(
-			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, BoogieIcfgLocation> cex) {
+
+	private LOC getLast(final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}
-	
+
 	@Override
-	public void reportSafe(final CodeBlock first) {
+	public void reportSafe(final ACTION first) {
 		reportSafe(first, "No error locations were reached.");
 	}
-	
+
 	@Override
-	public void reportSafe(final CodeBlock first, final String msg) {
+	public void reportSafe(final ACTION first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
 	}
-	
+
 }

@@ -258,7 +258,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 
 	}
 
-	private static class PathProgramIcfgAction<T extends IcfgEdge & IAction> extends IcfgEdge implements IAction {
+	private static class PathProgramIcfgAction<T extends IcfgEdge> extends IcfgEdge {
 
 		private static final long serialVersionUID = 1L;
 		private final T mBacking;

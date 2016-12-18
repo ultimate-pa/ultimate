@@ -37,10 +37,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -50,8 +51,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
-public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar> {
-	
+public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
+		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVar> {
+
 	private final VPPostOperator mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -61,7 +63,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final ManagedScript mManagedScript;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final VPDomainPreanalysis mPreAnalysis;
-	private final VPStateFactory mVpStateFactory;
+	private final VPStateFactory<ACTION> mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
 	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
@@ -76,7 +78,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
 		mMerge = new VPMergeOperator();
-		mVpStateFactory = new VPStateFactory(this);
+		mVpStateFactory = new VPStateFactory<>(this);
 		mPost = new VPPostOperator(script, services, this);
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
@@ -84,22 +86,22 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	}
 
 	@Override
-	public VPState createFreshState() {
+	public VPState<ACTION> createFreshState() {
 		return getVpStateFactory().createEmptyStateBuilder().build();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPState> getWideningOperator() {
+	public IAbstractStateBinaryOperator<VPState<ACTION>> getWideningOperator() {
 		return mMerge;
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPState> getMergeOperator() {
+	public IAbstractStateBinaryOperator<VPState<ACTION>> getMergeOperator() {
 		return mMerge;
 	}
 
 	@Override
-	public IAbstractPostOperator<VPState, CodeBlock, IProgramVar> getPostOperator() {
+	public IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVar> getPostOperator() {
 		return mPost;
 	}
 
@@ -108,10 +110,10 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
 
-	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {
-		
+	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState<ACTION>> {
+
 		@Override
-		public VPState apply(final VPState first, final VPState second) {
+		public VPState<ACTION> apply(final VPState<ACTION> first, final VPState<ACTION> second) {
 			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
 		}
 	}
@@ -142,14 +144,14 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mPreAnalysis;
 	}
 
-	public VPStateFactory getVpStateFactory() {
+	public VPStateFactory<ACTION> getVpStateFactory() {
 		return mVpStateFactory;
 	}
 
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}
-	
+
 	public Set<EqNode> getLiteralEqNodes() {
 		// TODO only compute this once!
 		final Set<EqNode> literalSet = new HashSet<>();
@@ -160,22 +162,22 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		}
 		return literalSet;
 	}
-	
+
 	public VPTransFormulaStateBuilderPreparer getTfPreparer() {
 		return mTfPreparer;
 	}
-	
+
 	public VpTfStateFactory getTfStateFactory() {
 		return mTfStateFactory;
 	}
-	
+
 	@Override
-	public VPState createTopState() {
+	public VPState<ACTION> createTopState() {
 		throw new UnsupportedOperationException("Not implemented: createTopState");
 	}
-	
+
 	@Override
-	public VPState createBottomState() {
+	public VPState<ACTION> createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
 }

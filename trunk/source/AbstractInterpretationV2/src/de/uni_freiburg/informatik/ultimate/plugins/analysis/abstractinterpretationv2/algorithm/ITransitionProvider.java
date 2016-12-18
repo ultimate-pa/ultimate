@@ -42,7 +42,7 @@ public interface ITransitionProvider<ACTION, LOCATION> {
 
 	Collection<ACTION> getSuccessors(ACTION action, ACTION scope);
 
-	boolean isPostErrorLocation(ACTION action, ACTION scope);
+	boolean isSuccessorErrorLocation(ACTION action, ACTION scope);
 
 	String toLogString(ACTION action);
 

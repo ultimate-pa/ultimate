@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 Yu-Wen Chen 
+ * Copyright (C) 2016 Yu-Wen Chen
  * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -28,22 +28,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
-*
-* @author Yu-Wen Chen (yuwenchen1105@gmail.com)
-*
-*/
-public class VPStateBottom extends VPState {
-	
-	VPStateBottom(VPDomain domain, final Set<IProgramVar> vars) {
+ *
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ *
+ */
+public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends VPState<ACTION> {
+
+	VPStateBottom(final VPDomain domain, final Set<IProgramVar> vars) {
 		super(domain, vars);
 	}
-	
+
 	@Override
 	public boolean isBottom() {
 		return true;
@@ -53,38 +54,6 @@ public class VPStateBottom extends VPState {
 	public String toLogString() {
 		return "VPStateBottom, Vars: " + getVariables();
 	}
-
-//	@Override
-//	public VPState addVariable(IProgramVar variable) {
-//		return this;
-//	}
-//
-//	@Override
-//	public VPState removeVariable(IProgramVar variable) {
-//		return this;
-//	}
-//
-//	@Override
-//	public VPState addVariables(Collection<IProgramVar> variables) {
-//		return this;
-//	}
-//
-//	@Override
-//	public VPState removeVariables(Collection<IProgramVar> variables) {
-//		return this;
-//	}
-
-//	@Override
-//	public Set<IProgramVar> getVariables() {
-//		// TODO Auto-generated method stub
-//		return super.getVariables();
-//	}
-
-//	@Override
-//	public VPState patch(VPState dominator) {
-//		// TODO Auto-generated method stub
-//		return super.patch(dominator);
-//	}
 
 	@Override
 	public boolean isTop() {

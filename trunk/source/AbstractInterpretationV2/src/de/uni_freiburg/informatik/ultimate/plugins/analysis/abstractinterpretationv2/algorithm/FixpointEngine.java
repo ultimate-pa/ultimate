@@ -321,7 +321,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final Set<ACTION> reachedErrors) {
 		final ACTION currentAction = currentItem.getAction();
-		if (!mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
+		if (!mTransitionProvider.isSuccessorErrorLocation(currentAction, currentItem.getCurrentScope())
 				|| postState.isBottom() || !reachedErrors.add(currentAction)) {
 			// no new error reached
 			return;
