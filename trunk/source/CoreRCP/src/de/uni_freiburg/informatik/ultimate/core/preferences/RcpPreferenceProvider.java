@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 public class RcpPreferenceProvider implements IPreferenceProvider {
 
 	static {
-		sActiveListener = new HashMap<String, Set<IPreferenceChangeListener>>();
+		sActiveListener = new HashMap<>();
 	}
 
 	private final String mPluginID;
@@ -115,11 +115,9 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	public <T extends Enum<T>> T getEnum(final String key, final Class<T> enumType) {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
-			throw new UnknownFormatConversionException(
-					"String " + strValue + " cannot be converted to type " + enumType);
-		} else {
-			return Enum.valueOf(enumType, strValue);
+			throw new UnknownFormatConversionException("An empty string cannot be converted to type " + enumType);
 		}
+		return Enum.valueOf(enumType, strValue);
 	}
 
 	/**
@@ -136,9 +134,8 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			return defaultValue;
-		} else {
-			return Enum.valueOf(enumType, strValue);
 		}
+		return Enum.valueOf(enumType, strValue);
 	}
 
 	/**

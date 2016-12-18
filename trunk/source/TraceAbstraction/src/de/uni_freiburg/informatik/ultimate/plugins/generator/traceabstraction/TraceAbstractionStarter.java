@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -161,51 +160,9 @@ public class TraceAbstractionStarter {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
 				&& mServices.getProgressMonitorService().continueProcessing()) {
-			assert new HoareAnnotationChecker(mServices, icfg, csToolkit).isInductive() : "incorrect Hoare annotation";
-
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
-
-			final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
-
-			locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-			locsForLoopLocations.addAll(icfg.getLoopLocations());
-			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
-			for (final BoogieIcfgLocation locNode : locsForLoopLocations) {
-				final HoareAnnotation hoare = getHoareAnnotation(locNode);
-				if (hoare == null) {
-					continue;
-				}
-				final Term formula = hoare.getFormula();
-				final InvariantResult<IIcfgElement, Term> invResult =
-						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
-				reportResult(invResult);
-
-				if (formula.equals(trueterm)) {
-					continue;
-				}
-				final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
-				new WitnessInvariant(inv).annotate(locNode);
-			}
-
-			final Map<String, BoogieIcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-			for (final Entry<String, BoogieIcfgLocation> proc : finalNodes.entrySet()) {
-				final String procName = proc.getKey();
-				if (isAuxilliaryProcedure(procName)) {
-					continue;
-				}
-				final BoogieIcfgLocation finalNode = proc.getValue();
-				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
-				if (hoare != null) {
-					final Term formula = hoare.getFormula();
-					final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
-							Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
-
-					reportResult(result);
-					// TODO: Add setting that controls the generation of those witness invariants
-				}
-			}
+			createInvariantResults(icfg, csToolkit, backTranslatorService);
+			createProcedureContractResults(icfg, backTranslatorService);
 		}
 		reportBenchmark(traceAbstractionBenchmark);
 		switch (mOverallResult) {
@@ -223,6 +180,57 @@ public class TraceAbstractionStarter {
 		}
 
 		mRootOfNewModel = mArtifact;
+	}
+
+	private void createInvariantResults(final IIcfg<BoogieIcfgLocation> icfg, final CfgSmtToolkit csToolkit,
+			final IBacktranslationService backTranslatorService) {
+		assert new HoareAnnotationChecker(mServices, icfg, csToolkit).isInductive() : "incorrect Hoare annotation";
+
+		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
+
+		final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
+
+		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+		for (final BoogieIcfgLocation locNode : locsForLoopLocations) {
+			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(locNode);
+			if (hoare == null) {
+				continue;
+			}
+			final Term formula = hoare.getFormula();
+			final InvariantResult<IIcfgElement, Term> invResult =
+					new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
+			reportResult(invResult);
+
+			if (formula.equals(trueterm)) {
+				continue;
+			}
+			final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
+			new WitnessInvariant(inv).annotate(locNode);
+		}
+	}
+
+	private void createProcedureContractResults(final IIcfg<BoogieIcfgLocation> icfg,
+			final IBacktranslationService backTranslatorService) {
+		final Map<String, BoogieIcfgLocation> finalNodes = icfg.getProcedureExitNodes();
+		for (final Entry<String, BoogieIcfgLocation> proc : finalNodes.entrySet()) {
+			final String procName = proc.getKey();
+			if (isAuxilliaryProcedure(procName)) {
+				continue;
+			}
+			final BoogieIcfgLocation finalNode = proc.getValue();
+			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(finalNode);
+			if (hoare != null) {
+				final Term formula = hoare.getFormula();
+				final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
+						Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
+
+				reportResult(result);
+				// TODO: Add setting that controls the generation of those witness invariants
+			}
+		}
 	}
 
 	// private void computeHoareAnnotation(final Set<? extends IcfgLocation> locsForHoareAnnotation) {
@@ -338,7 +346,7 @@ public class TraceAbstractionStarter {
 	private void writeHoareAnnotationToLogger(final IIcfg<BoogieIcfgLocation> root) {
 		for (final Entry<String, Map<String, BoogieIcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
 			for (final BoogieIcfgLocation pp : proc2label2pp.getValue().values()) {
-				final HoareAnnotation hoare = getHoareAnnotation(pp);
+				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
 				if (hoare == null) {
 					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
 							+ "  no Hoare annotation was computed.");
@@ -424,10 +432,6 @@ public class TraceAbstractionStarter {
 	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
-	}
-
-	public static HoareAnnotation getHoareAnnotation(final IcfgLocation locNode) {
-		return HoareAnnotation.getAnnotation(locNode);
 	}
 
 	public static BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {

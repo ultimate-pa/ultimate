@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker;
@@ -38,14 +38,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class CFGWalker extends BaseWalker {
 
-	private final HashSet<IWalkable> mVisitedNodes = new HashSet<IWalkable>();
+	private final HashSet<IWalkable> mVisitedNodes = new HashSet<>();
 
-	public CFGWalker(ILogger logger) {
+	public CFGWalker(final ILogger logger) {
 		super(logger);
 	}
 
 	@Override
-	protected void runObserver(IElement element, IUnmanagedObserver observer) throws Throwable {
+	protected void runObserver(final IElement element, final IUnmanagedObserver observer) throws Throwable {
 		IElement tobeproccessed = element;
 		if (element instanceof WrapperNode) {
 			final WrapperNode wnode = (WrapperNode) element;
@@ -54,23 +54,20 @@ public class CFGWalker extends BaseWalker {
 			}
 		}
 
-		if (observer.process(tobeproccessed)) {
-			if (element instanceof IWalkable) {
-				final IWalkable node = (IWalkable) element;
+		if (observer.process(tobeproccessed) && element instanceof IWalkable) {
+			final IWalkable node = (IWalkable) element;
 
-				if (mVisitedNodes.contains(node)) {
-					return;
-				} else {
-					mVisitedNodes.add(node);
-					final List<IWalkable> outgoings = node.getSuccessors();
-					if (outgoings != null) {
-						for (final IWalkable i : outgoings) {
-							runObserver(i, observer);
-						}
-					}
-				}
-
+			if (mVisitedNodes.contains(node)) {
+				return;
 			}
+			mVisitedNodes.add(node);
+			final List<IWalkable> outgoings = node.getSuccessors();
+			if (outgoings != null) {
+				for (final IWalkable i : outgoings) {
+					runObserver(i, observer);
+				}
+			}
+
 		}
 	}
 
