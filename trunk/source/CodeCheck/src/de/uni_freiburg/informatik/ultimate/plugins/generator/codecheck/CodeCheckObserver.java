@@ -114,7 +114,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
@@ -628,34 +627,34 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
-//			try {
-			InterpolatingTraceChecker tc = 
-				new InterpolatingTraceCheckerCraig(mPredicateUnifier.getTruePredicate(),
-						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
-						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
+			try {
+				final InterpolatingTraceChecker tc = new InterpolatingTraceCheckerCraig(
+						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, true, XNF_CONVERSION_TECHNIQUE,
 						SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), false);
-			if (tc.getInterpolantComputationStatus().wasComputationSuccesful()) {
-				return tc;
+				if (tc.getInterpolantComputationStatus().wasComputationSuccesful()) {
+					return tc;
+				}
+			} catch (final Exception e) {
+				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
+					throw e;
+				}
 			}
-//			} catch (final Exception e) {
-//				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
-//					throw e;
-//				}
-				/*
-				 * The fallback tracechecker is always the normal solver (i.e. the csToolkit that was set in RCFGBuilder
-				 * settings with forward predicates betim interpolation.
-				 *
-				 * The fallback interpolation mode is hardcoded for now
-				 */
+			/*
+			 * The fallback tracechecker is always the normal solver (i.e. the csToolkit that was set in RCFGBuilder
+			 * settings with forward predicates betim interpolation.
+			 *
+			 * The fallback interpolation mode is hardcoded for now
+			 */
 			return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
-//			}
+					new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
+					mPredicateUnifier, InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(),
+					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
+					TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
