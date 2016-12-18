@@ -46,6 +46,10 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 
 	// @formatter:off
+	private static final Triple<String, String, String>[] KOJAK_NO_INTERPOLANTS = new Triple[] {
+		new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/array-memsafety/cstrchr-alloca_true-valid-memsafety.i"),
+		new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-DerefFreeMemtrack-32bit-Kojak_Default.epf", "examples/svcomp/array-memsafety/cstrcmp-alloca_true-valid-memsafety.i"),
+	};
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
@@ -102,7 +106,7 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 
 	// @formatter:on
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_AUTOMIZER;
+	private static final Triple<String, String, String>[] INPUTS = KOJAK_NO_INTERPOLANTS;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
