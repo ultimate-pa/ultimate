@@ -59,7 +59,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	private final Map<String, IStorable> mToolchainStorage;
 
 	public ToolchainStorage() {
-		mToolchainStorage = new LinkedHashMap<String, IStorable>();
+		mToolchainStorage = new LinkedHashMap<>();
 	}
 
 	@Override
@@ -101,7 +101,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 					continue;
 				}
 				coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
-				        + storable.getClass().toString() + ": " + t.getMessage());
+						+ storable.getClass().toString() + ": " + t.getMessage());
 			}
 		}
 		mToolchainStorage.clear();

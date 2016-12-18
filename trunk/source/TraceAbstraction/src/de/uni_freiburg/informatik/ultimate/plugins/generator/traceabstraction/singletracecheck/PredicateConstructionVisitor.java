@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -37,16 +37,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * Traverse a Term top-down and replace all subterms which occur as key of
- * the Map term2BoogieVars by the value of term2BoogieVars.
- * Furthermore all replaced BoogieVars are stored in mVars and if the BoogieVar
- * has a procedure, the procedure is stored in mProcedure.
+ * Traverse a Term top-down and replace all subterms which occur as key of the Map term2BoogieVars by the value of
+ * term2BoogieVars. Furthermore all replaced BoogieVars are stored in mVars and if the BoogieVar has a procedure, the
+ * procedure is stored in mProcedure.
  * 
- * This may only applied to formulas such that the result contains only global
- * BoogieVars and BoogieVars of a single procedure.
+ * This may only applied to formulas such that the result contains only global BoogieVars and BoogieVars of a single
+ * procedure.
  * 
- * This class is used to construct Predicates from, given craig interpolants
- * obtained from checking satisfiability of an SSA. 
+ * This class is used to construct Predicates from, given craig interpolants obtained from checking satisfiability of an
+ * SSA.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -54,39 +53,35 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class PredicateConstructionVisitor implements SymbolVisitor {
 
 	Map<Term, IProgramVar> mterm2BoogieVars;
-	
+
 	Set<IProgramVar> mVars;
 	Set<String> mProcedures;
-	
-	
-	public PredicateConstructionVisitor(Map<Term, IProgramVar> term2BoogieVars)
-	{
+
+	public PredicateConstructionVisitor(final Map<Term, IProgramVar> term2BoogieVars) {
 		mterm2BoogieVars = term2BoogieVars;
 		mVars = null;
-		mProcedures = new HashSet<String>();
+		mProcedures = new HashSet<>();
 	}
 
 	public void clearVarsAndProc() {
-		mVars = new HashSet<IProgramVar>();
-		mProcedures = new HashSet<String>();
+		mVars = new HashSet<>();
+		mProcedures = new HashSet<>();
 	}
-	
+
 	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
-	
+
 	public Set<String> getProcedure() {
 		return mProcedures;
 	}
-	
-	
-	   
-	
-	@Override
-	public void quantifier(TermVariable[] tvs) {}
 
 	@Override
-	public Term term (Term input) {
+	public void quantifier(final TermVariable[] tvs) {
+	}
+
+	@Override
+	public Term term(final Term input) {
 		if (mterm2BoogieVars.containsKey(input)) {
 			final IProgramVar bv = mterm2BoogieVars.get(input);
 			assert bv != null;
@@ -96,11 +91,9 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 			mVars.add(bv);
 			final Term termVariable = bv.getTermVariable();
 			return termVariable;
-		}
-		else if (input instanceof ConstantTerm) {
+		} else if (input instanceof ConstantTerm) {
 			return input;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -116,19 +109,19 @@ public class PredicateConstructionVisitor implements SymbolVisitor {
 	}
 
 	@Override
-	public void let(TermVariable[] tv, Term[] mval) {
+	public void let(final TermVariable[] tv, final Term[] mval) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void endscope(TermVariable[] tv) {
-		// TODO Auto-generated method stub		
+	public void endscope(final TermVariable[] tv) {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
-	public void done(Term input) {
+	public void done(final Term input) {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 }

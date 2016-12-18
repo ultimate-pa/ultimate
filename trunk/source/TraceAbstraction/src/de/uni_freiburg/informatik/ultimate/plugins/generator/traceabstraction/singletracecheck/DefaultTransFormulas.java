@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -39,45 +39,39 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
-	
+
 	private final OldVarsAssignmentCache mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
-	
-	
-	
+
 	public OldVarsAssignmentCache getModifiableGlobalVariableManager() {
 		return mModifiableGlobalVariableManager;
 	}
 
-	public DefaultTransFormulas(final NestedWord<? extends IAction> nestedWord, 
-			final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts,
-			final OldVarsAssignmentCache oldVarsAssignmentCache,
-			final boolean withBranchEncoders) {
+	public DefaultTransFormulas(final NestedWord<? extends IAction> nestedWord, final IPredicate precondition,
+			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
+			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean withBranchEncoders) {
 		super(nestedWord, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mModifiableGlobalVariableManager = oldVarsAssignmentCache;
 		mWithBranchEncoders = withBranchEncoders;
 	}
-	
+
 	public boolean hasBranchEncoders() {
 		return mWithBranchEncoders;
 	}
-	
+
 	@Override
 	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(final int i) {
 		if (super.getTrace().isReturnPosition(i)) {
 			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
-		} else {
-			final IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
-			if (mWithBranchEncoders) {
-				return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
-			} else {
-				return cb.getTransformula();
-			}
 		}
+		final IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
+		if (mWithBranchEncoders) {
+			return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
+		}
+		return cb.getTransformula();
 	}
 
 	@Override
@@ -94,11 +88,11 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	}
 
 	@Override
-	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(final int i) {		
+	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(final int i) {
 		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}
-	
+
 	/**
 	 * TODO: return set of all pending calls in case of InterproceduralSequentialComposition
 	 */
@@ -113,6 +107,5 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 			throw new UnsupportedOperationException("only available for call and pending return");
 		}
 	}
-
 
 }

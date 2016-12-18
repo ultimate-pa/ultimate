@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -64,8 +64,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker.TraceCheckerLock;
@@ -113,22 +113,18 @@ public class NestedInterpolantsBuilder {
 	private Stack<Integer> mstartOfSubtreeStack;
 
 	private final boolean mTreeInterpolation;
-	
+
 	private final TermTransformer mConst2RepTvSubst;
 
 	private final boolean mInstantiateArrayExt;
 
-	
-
-
-
-	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckerLock scriptLockOwner, 
-			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar, 
+	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckerLock scriptLockOwner,
+			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar,
 			final PredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services,
-			final TraceChecker traceChecker, final ManagedScript mgdScriptCfg, final boolean instantiateArrayExt, 
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final IUltimateServiceProvider services, final TraceChecker traceChecker, final ManagedScript mgdScriptCfg,
+			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -144,7 +140,7 @@ public class NestedInterpolantsBuilder {
 		mInterpolatedPositions = interpolatedPositions;
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
-		final HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
+		final HashMap<Term, Term> const2RepTv = new HashMap<>();
 		for (final Entry<Term, IProgramVar> entry : mconstants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
@@ -166,11 +162,11 @@ public class NestedInterpolantsBuilder {
 	}
 
 	public void computeCraigInterpolants() {
-		interpolInput = new ArrayList<Term>();
-		treeStructure = new ArrayList<Integer>();
-		craigInt2interpolantIndex = new ArrayList<Integer>();
+		interpolInput = new ArrayList<>();
+		treeStructure = new ArrayList<>();
+		craigInt2interpolantIndex = new ArrayList<>();
 		startOfCurrentSubtree = 0;
-		mstartOfSubtreeStack = new Stack<Integer>();
+		mstartOfSubtreeStack = new Stack<>();
 		mstackHeightAtLastInterpolatedPosition = 0;
 		boolean startNewFormula = true;
 
@@ -266,8 +262,8 @@ public class NestedInterpolantsBuilder {
 			interpolInput[0] = Util.and(mMgdScriptTc.getScript(), interpolInput[0], mAnnotSSA.getPrecondition());
 		}
 		// add negated postcondition to last term
-		interpolInput[interpolInput.length - 1] = Util.and(mMgdScriptTc.getScript(), interpolInput[interpolInput.length - 1],
-				mAnnotSSA.getPostcondition());
+		interpolInput[interpolInput.length - 1] = Util.and(mMgdScriptTc.getScript(),
+				interpolInput[interpolInput.length - 1], mAnnotSSA.getPostcondition());
 
 		final int[] startOfSubtree = integerListToIntArray(treeStructure);
 		if (mTreeInterpolation) {
@@ -290,8 +286,8 @@ public class NestedInterpolantsBuilder {
 		if (mstackHeightAtLastInterpolatedPosition == mstartOfSubtreeStack.size()) {
 			// everything ok
 		} else {
-			if (mstackHeightAtLastInterpolatedPosition + 1 == mstartOfSubtreeStack.size()
-					&& mTrace.isCallPosition(i) && (i == 0 || isInterpolatedPositio(i - 1))) {
+			if (mstackHeightAtLastInterpolatedPosition + 1 == mstartOfSubtreeStack.size() && mTrace.isCallPosition(i)
+					&& (i == 0 || isInterpolatedPositio(i - 1))) {
 				// everything ok
 			} else {
 				if (mstackHeightAtLastInterpolatedPosition - 1 == mstartOfSubtreeStack.size()
@@ -332,9 +328,8 @@ public class NestedInterpolantsBuilder {
 		}
 		if (mInterpolatedPositions == null) {
 			return true;
-		} else {
-			return mInterpolatedPositions.contains(i);
 		}
+		return mInterpolatedPositions.contains(i);
 	}
 
 	public IPredicate[] getNestedInterpolants() {
@@ -534,7 +529,7 @@ public class NestedInterpolantsBuilder {
 		assert mCraigInterpolants.length == craigInt2interpolantIndex.size();
 		// assert mInterpolatedPositions.size() == mCraigInterpolants.length;
 
-		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
+		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<>();
 
 		int craigInterpolPos = 0;
 		for (int resultPos = 0; resultPos < mTrace.length() - 1; resultPos++) {
@@ -557,19 +552,17 @@ public class NestedInterpolantsBuilder {
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {
-					/* remove all let terms
-					 * added because iZ3's interpolants contain let terms
-					 * better solution: implement support for let terms in SafeSubstitution
+					/*
+					 * remove all let terms added because iZ3's interpolants contain let terms better solution:
+					 * implement support for let terms in SafeSubstitution
 					 */
-					withIndices = (new FormulaUnLet()).transform(withIndices);
+					withIndices = new FormulaUnLet().transform(withIndices);
 					Term withoutIndices = mConst2RepTvSubst.transform(withIndices);
-					if (mInstantiateArrayExt ) {
+					if (mInstantiateArrayExt) {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
-					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							mServices, mLogger, mMgdScriptCfg, 
-							withoutIndices,
-							mSimplificationTechnique, mXnfConversionTechnique);
+					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+							mMgdScriptCfg, withoutIndices, mSimplificationTechnique, mXnfConversionTechnique);
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
@@ -584,26 +577,24 @@ public class NestedInterpolantsBuilder {
 	private void checkTimeout() {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass(),
-					"constructing predicates for " + (mTrace.length() - 1) 
-					+ " interpolants");
+					"constructing predicates for " + (mTrace.length() - 1) + " interpolants");
 		}
 	}
 
 	/**
-	 * The interpolating Z3 generates Craig interpolants that contain the
-	 * array-ext function whose semantics is defined by the following axiom
-	 * ∀a∀b∃k. array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]).
-	 * The theory of arrays does not contain this axiom, hence we instantiate
-	 * it for each occurrence.
+	 * The interpolating Z3 generates Craig interpolants that contain the array-ext function whose semantics is defined
+	 * by the following axiom ∀a∀b∃k. array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]). The theory of arrays does not contain
+	 * this axiom, hence we instantiate it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
-		final Term nnf = (new Nnf(mMgdScriptCfg, 
-				mServices, QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
-//		not needed, at the moment our NNF transformation also produces 		
-//		Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(), mCsToolkitPredicates.getVariableManager())).transform(nnf);
+		final Term nnf =
+				new Nnf(mMgdScriptCfg, mServices, QuantifierHandling.PULL).transform(interpolantWithoutIndices);
+		// not needed, at the moment our NNF transformation also produces
+		// Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(),
+		// mCsToolkitPredicates.getVariableManager())).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScriptCfg.getScript(), nnf);
-//		The quantifier-free part of of formula in prenex normal form is called
-//		matrix
+		// The quantifier-free part of of formula in prenex normal form is called
+		// matrix
 		final Term matrix = qs.getInnerTerm();
 
 		final ApplicationTermFinder atf = new ApplicationTermFinder("array-ext", false);
@@ -622,21 +613,22 @@ public class NestedInterpolantsBuilder {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = (new Substitution(mMgdScriptCfg.getScript(), substitutionMapping)).transform(matrix);
+		Term result = new Substitution(mMgdScriptCfg.getScript(), substitutionMapping).transform(matrix);
 		result = Util.and(mMgdScriptCfg.getScript(), result, Util.and(mMgdScriptCfg.getScript(), implications));
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
-		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(), result);
-//		Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(), mServices).transform(result);
+		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(),
+				result);
+		// Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(), mServices).transform(result);
 		return result;
 	}
-	
+
 	private class ArrayExtTerm {
 		private final ApplicationTerm mArrayExtTerm;
 		private final Term mFirstArray;
 		private final Term mSecondArray;
 		private final TermVariable mReplacementTermVariable;
 		private final Term mImplication;
-		
+
 		public ArrayExtTerm(final ApplicationTerm arrayExtTerm) {
 			mArrayExtTerm = arrayExtTerm;
 			if (!mArrayExtTerm.getFunction().getName().equals("array-ext")) {
@@ -647,7 +639,8 @@ public class NestedInterpolantsBuilder {
 			}
 			mFirstArray = mArrayExtTerm.getParameters()[0];
 			mSecondArray = mArrayExtTerm.getParameters()[1];
-			mReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
+			mReplacementTermVariable =
+					arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
 			mImplication = constructImplication();
 		}
 
@@ -679,12 +672,12 @@ public class NestedInterpolantsBuilder {
 		public Term getImplication() {
 			return mImplication;
 		}
-		
-		
+
 	}
 
-	private static void dumpInterpolationInput(final int offset, final Term[] interpolInput, final List<Integer> indexTranslation,
-			final NestedRun<CodeBlock, IPredicate> run, final Script theory, final PrintWriter pW, final ILogger logger) {
+	private static void dumpInterpolationInput(final int offset, final Term[] interpolInput,
+			final List<Integer> indexTranslation, final NestedRun<CodeBlock, IPredicate> run, final Script theory,
+			final PrintWriter pW, final ILogger logger) {
 		String line;
 		int indentation = 0;
 		int translatedPosition;
@@ -699,14 +692,14 @@ public class NestedInterpolantsBuilder {
 				} else {
 					translatedPosition = indexTranslation.get(j - 1);
 				}
-				line = BasicCegarLoop.addIndentation(indentation, "Location " + translatedPosition + ": "
+				line = AbstractCegarLoop.addIndentation(indentation, "Location " + translatedPosition + ": "
 						+ ((SPredicate) run.getStateAtPosition(translatedPosition)).getProgramPoint());
 				logger.debug(line);
 				pW.println(line);
 				if (run.isCallPosition(translatedPosition)) {
 					indentation++;
 				}
-				line = BasicCegarLoop.addIndentation(indentation, unflet.unlet(interpolInput[j]).toString());
+				line = AbstractCegarLoop.addIndentation(indentation, unflet.unlet(interpolInput[j]).toString());
 				logger.debug(line);
 				pW.println(line);
 				if (run.isReturnPosition(translatedPosition)) {
@@ -715,7 +708,7 @@ public class NestedInterpolantsBuilder {
 			}
 			if (offset != 0) {
 				final int returnSuccPos = run.getWord().getReturnPosition(offset) + 1;
-				line = BasicCegarLoop.addIndentation(indentation, "Location " + returnSuccPos + ": "
+				line = AbstractCegarLoop.addIndentation(indentation, "Location " + returnSuccPos + ": "
 						+ ((SPredicate) run.getStateAtPosition(returnSuccPos)).getProgramPoint());
 				logger.debug(line);
 				pW.println(line);
@@ -727,12 +720,12 @@ public class NestedInterpolantsBuilder {
 		}
 	}
 
-	private static void dumpInterpolationOutput(final int offset, final Term[] interpolOutput, final List<Integer> indexTranslation,
-			final Word<CodeBlock> run, final PrintWriter pW, final ILogger logger) {
+	private static void dumpInterpolationOutput(final int offset, final Term[] interpolOutput,
+			final List<Integer> indexTranslation, final Word<CodeBlock> run, final PrintWriter pW,
+			final ILogger logger) {
 		@SuppressWarnings("unchecked")
-		final
-		NestedWord<CodeBlock> word = NestedWord.nestedWord(run);
-		assert (interpolOutput.length == indexTranslation.size());
+		final NestedWord<CodeBlock> word = NestedWord.nestedWord(run);
+		assert interpolOutput.length == indexTranslation.size();
 		String line;
 		int indentation = 0;
 		int translatedPosition;
@@ -745,8 +738,8 @@ public class NestedInterpolantsBuilder {
 				if (translatedPosition > 1 && word.isCallPosition(translatedPosition - 1)) {
 					indentation++;
 				}
-				line = BasicCegarLoop.addIndentation(indentation, "InterpolOutput" + translatedPosition + ": "
-						+ interpolOutput[j]);
+				line = AbstractCegarLoop.addIndentation(indentation,
+						"InterpolOutput" + translatedPosition + ": " + interpolOutput[j]);
 				logger.debug(line);
 				pW.println(line);
 				if (word.isReturnPosition(translatedPosition)) {
@@ -760,12 +753,11 @@ public class NestedInterpolantsBuilder {
 		}
 	}
 
-	private static void dumpNestedStateFormulas(final IPredicate[] stateFormulas, final Word<CodeBlock> word, final PrintWriter pW,
-			final ILogger logger) {
+	private static void dumpNestedStateFormulas(final IPredicate[] stateFormulas, final Word<CodeBlock> word,
+			final PrintWriter pW, final ILogger logger) {
 		@SuppressWarnings("unchecked")
-		final
-		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
-		assert (stateFormulas.length == word.length() + 1);
+		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
+		assert stateFormulas.length == word.length() + 1;
 		String line;
 		int indentation = 0;
 		try {
@@ -773,7 +765,7 @@ public class NestedInterpolantsBuilder {
 			logger.debug(line);
 			pW.println(line);
 			for (int j = 0; j < stateFormulas.length; j++) {
-				line = BasicCegarLoop.addIndentation(indentation, j + ": " + stateFormulas[j]);
+				line = AbstractCegarLoop.addIndentation(indentation, j + ": " + stateFormulas[j]);
 				logger.debug(line);
 				pW.println(line);
 				if (j != stateFormulas.length - 1) {

@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class TraceChecker implements ITraceChecker {
-	
+
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	/**
@@ -141,7 +141,7 @@ public class TraceChecker implements ITraceChecker {
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	private final TraceCheckReasonUnknown mTraceCheckReasonUnknown;
-	
+
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
@@ -165,7 +165,7 @@ public class TraceChecker implements ITraceChecker {
 						csToolkit.getOldVarsAssignmentCache(), false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
-	
+
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
 			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
@@ -174,7 +174,7 @@ public class TraceChecker implements ITraceChecker {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit, rv, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, csToolkit.getManagedScript());
 	}
-	
+
 	/**
 	 * Commit additionally the DefaultTransFormulas
 	 *
@@ -279,24 +279,23 @@ public class TraceChecker implements ITraceChecker {
 			mTraceCheckReasonUnknown = traceCheckReasonUnknown;
 		}
 	}
-	
+
 	protected TraceCheckerStatisticsGenerator getBenchmarkGenerator() {
 		return new TraceCheckerStatisticsGenerator();
 	}
-	
+
 	@Override
 	public LBool isCorrect() {
 		return mIsSafe;
 	}
-	
+
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
 		if (isCorrect() == LBool.UNKNOWN) {
 			return mTraceCheckReasonUnknown;
-		} else {
-			throw new IllegalStateException("only available trace feasibility result is unknown.");
 		}
+		throw new IllegalStateException("only available trace feasibility result is unknown.");
 	}
-	
+
 	/**
 	 * Like three-argument-checkTrace-Method above but for traces which contain pending returns. The pendingContext maps
 	 * the positions of pending returns to predicates which define possible variable valuations in the context to which
@@ -311,7 +310,7 @@ public class TraceChecker implements ITraceChecker {
 				mLogger, transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
-		
+
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		if (mAssertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
@@ -341,14 +340,14 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return isSafe;
 	}
-	
+
 	/**
-	 * Compute a program execution for the checked trace.
-	 * If the checked trace violates its specification (result of trace check is SAT), we compute a program
-	 * execution that contains program states that witness the violation of the specification (however, this can still
-	 * be partial program states e.g., no values assigned to arrays) and that contains information which branch of a
-	 * parallel composed CodeBlock violates the specification.
-	 * @return 
+	 * Compute a program execution for the checked trace. If the checked trace violates its specification (result of
+	 * trace check is SAT), we compute a program execution that contains program states that witness the violation of
+	 * the specification (however, this can still be partial program states e.g., no values assigned to arrays) and that
+	 * contains information which branch of a parallel composed CodeBlock violates the specification.
+	 * 
+	 * @return
 	 */
 	private IcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
 		if (!(mNestedFormulas instanceof DefaultTransFormulas)) {
@@ -368,13 +367,10 @@ public class TraceChecker implements ITraceChecker {
 			}
 			assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
 			return tc.getRcfgProgramExecution();
-		} else {
-			return computeRcfgProgramExecution(mNsb);
 		}
+		return computeRcfgProgramExecution(mNsb);
 	}
-	
 
-	
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
@@ -413,18 +409,18 @@ public class TraceChecker implements ITraceChecker {
 		unlockSmtManager();
 		return rpeb.getIcfgProgramExecution();
 	}
-	
+
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckerLock, ssa, mLogger);
-		
+
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(mCsToolkit, ssa, aaacb);
 	}
-	
+
 	private Term getValue(final Term term) {
 		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
-	
+
 	private static Boolean getBooleanValue(final Term term) {
 		Boolean result;
 		if (SmtUtils.isTrue(term)) {
@@ -438,31 +434,31 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return result;
 	}
-	
+
 	public NestedWord<? extends IAction> getTrace() {
 		return mTrace;
 	}
-	
+
 	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
-	
+
 	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
-	
+
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return mPendingContexts;
 	}
-	
+
 	@Override
 	public boolean providesRcfgProgramExecution() {
 		return mProvidesIcfgProgramExecution;
-	};
-	
+	}
+
 	@Override
 	public IcfgProgramExecution getRcfgProgramExecution() {
 		if (mRcfgProgramExecution == null) {
@@ -470,11 +466,11 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return mRcfgProgramExecution;
 	}
-	
+
 	protected final void unlockSmtManager() {
 		endTraceCheck();
 	}
-	
+
 	@Override
 	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
@@ -482,24 +478,24 @@ public class TraceChecker implements ITraceChecker {
 		}
 		throw new AssertionError("Benchmark is only available after the trace check is finished.");
 	}
-	
+
 	@Override
 	public ToolchainCanceledException getToolchainCanceledExpection() {
 		return mToolchainCanceledException;
 	}
-	
+
 	private void startTraceCheck() {
 		mTcSmtManager.lock(mTraceCheckerLock);
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("starting trace check"));
 		mTcSmtManager.push(mTraceCheckerLock, 1);
 	}
-	
+
 	private void endTraceCheck() {
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("finished trace check"));
 		mTcSmtManager.pop(mTraceCheckerLock, 1);
 		mTcSmtManager.unlock(mTraceCheckerLock);
 	}
-	
+
 	/**
 	 * Package private class used by trace checker to lock the {@link ManagedScript}.
 	 */

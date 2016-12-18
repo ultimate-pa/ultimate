@@ -90,12 +90,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final boolean instanticateArrayExt,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final List<? extends Object> controlLocationSequence,
-			final boolean innerRecursiveNestedInterpolationCall) {
+			final List<? extends Object> controlLocationSequence, final boolean innerRecursiveNestedInterpolationCall) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique,
 				xnfConversionTechnique, controlLocationSequence);
-		if ((assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY)) {
+		if (assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			throw new UnsupportedOperationException("incremental assertion is not available for Craig interpolation");
 		}
 		mInstantiateArrayExt = instanticateArrayExt;
@@ -108,10 +107,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				if (!innerRecursiveNestedInterpolationCall) {
 					mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
 					if (mControlLocationSequence != null) {
-						final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
-								mControlLocationSequence, mLogger, mPredicateUnifier);
+						final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+								getIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
 						final boolean perfectSequence =
-								(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+								bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 						if (perfectSequence) {
 							mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
 						}
@@ -121,24 +120,27 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			} catch (final UnsupportedOperationException | SMTLIBException e) {
 				final String message = e.getMessage();
 				if (message == null) {
-					throw new IllegalArgumentException("solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+					throw new IllegalArgumentException(
+							"solver crashed with " + e.getClass().getSimpleName() + " whose message is null");
+				}
+				if (e instanceof UnsupportedOperationException && message.startsWith("Cannot interpolate")) {
+					// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
+					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
+							e);
+				} else if (e instanceof SMTLIBException && message.equals("Unsupported non-linear arithmetic")) {
+					// SMTInterpol was somehow able to determine satisfiability but detects
+					// non-linear arithmetic during interpolation
+					ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
+							e);
 				} else {
-					if ((e instanceof UnsupportedOperationException) && message.startsWith("Cannot interpolate")) {
-						// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
-						ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
-					} else if ((e instanceof SMTLIBException) && message.equals("Unsupported non-linear arithmetic")) {
-						// SMTInterpol was somehow able to determine satisfiability but detects 
-						// non-linear arithmetic during interpolation
-						ics = new InterpolantComputationStatus(false, ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, e);
-					} else {
-						throw e;
-					}
+					throw e;
 				}
 				mTraceCheckFinished = true;
 			}
 			mInterpolantComputationStatus = ics;
 		} else {
-			mInterpolantComputationStatus = new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
+			mInterpolantComputationStatus =
+					new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
 		}
 	}
 
@@ -233,7 +235,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		}
 		throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 	}
-	
+
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
@@ -331,11 +333,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
-			final InterpolatingTraceCheckerCraig tc =
-					new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts,
-							subtrace, mCsToolkit, mAssertCodeBlocksIncrementally, mServices, false, mPredicateUnifier,
-							InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt,
-							mXnfConversionTechnique, mSimplificationTechnique, null, true);
+			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition,
+					interpolantAtReturnPosition, pendingContexts, subtrace, mCsToolkit, mAssertCodeBlocksIncrementally,
+					mServices, false, mPredicateUnifier, InterpolationTechnique.Craig_NestedInterpolation,
+					mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, null, true);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStopwatches
-	implements IStatisticsDataProvider {
-	
-	public enum InterpolantType { Craig, Forward, Backward };
+		implements IStatisticsDataProvider {
+
+	public enum InterpolantType {
+		Craig, Forward, Backward
+	}
 
 	private int mNumberOfCodeBlocks = 0;
 	private int mNumberOfCodeBlocksAsserted = 0;
@@ -55,8 +57,6 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 	private int mInterpolantComputations = 0;
 	private int mPerfectInterpolantSequences = 0;
 	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
-
-
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
@@ -91,17 +91,19 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 		mConjunctsInUnsatCore = conjunctsInUC;
 	}
 
-	public void reportSequenceOfInterpolants(final List<IPredicate> interpolants, final InterpolantType interpolantType) {
+	public void reportSequenceOfInterpolants(final List<IPredicate> interpolants,
+			final InterpolantType interpolantType) {
 		for (final IPredicate pred : interpolants) {
 			mConstructedInterpolants++;
 			final boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
 			if (isQuantified) {
 				mQuantifiedInterpolants++;
 			}
-			mSizeOfPredicates += computeLongSumOfIntArray(PredicateUtils.computeDagSizeOfPredicates(interpolants, FormulaSize.TREESIZE));
+			mSizeOfPredicates += computeLongSumOfIntArray(
+					PredicateUtils.computeDagSizeOfPredicates(interpolants, FormulaSize.TREESIZE));
 		}
 	}
-	
+
 	private long computeLongSumOfIntArray(final long[] arr) {
 		long sum = 0;
 		for (int i = 0; i < arr.length; i++) {
@@ -109,24 +111,24 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 		}
 		return sum;
 	}
-	
-	public void reportNumberOfNonLiveVariables(final int numberOfNonLiveVariables, final InterpolantType interpolantType) {
+
+	public void reportNumberOfNonLiveVariables(final int numberOfNonLiveVariables,
+			final InterpolantType interpolantType) {
 		mNumberOfNonLiveVariables += numberOfNonLiveVariables;
 	}
-	
+
 	public void reportInterpolantComputation() {
 		mInterpolantComputations++;
 	}
-	
+
 	public void reportPerfectInterpolantSequences() {
 		mPerfectInterpolantSequences++;
 	}
-	
+
 	public void addBackwardCoveringInformation(final BackwardCoveringInformation bci) {
 		mInterpolantCoveringCapability = new BackwardCoveringInformation(mInterpolantCoveringCapability, bci);
 	}
-	
-	
+
 	@Override
 	public Object getValue(final String key) {
 		final TraceCheckerStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckerStatisticsDefinitions.class, key);
@@ -167,12 +169,10 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 			throw new AssertionError("unknown data");
 		}
 	}
-	
-	
+
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { 
-				TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString(),
+		return new String[] { TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString(),
 				TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(),
 				TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString() };
 	}

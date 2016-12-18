@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -35,92 +35,84 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 
 /**
  * NestedFormulas where we can set formulas after construction of the object.
+ * 
  * @author Matthias Heizmann
  *
- * @param <TF> formula for transitions
- * @param <SF> formula for states
+ * @param <TF>
+ *            formula for transitions
+ * @param <SF>
+ *            formula for states
  */
-public class ModifiableNestedFormulas<TF, SF> extends
-		NestedFormulas<TF, SF> {
-	
-	
+public class ModifiableNestedFormulas<TF, SF> extends NestedFormulas<TF, SF> {
+
 	/**
-	 * If index i is an internal position or a return transition in the
-	 * nested trace Term[i] represents the i-th statement.
-	 * If index i is a call position Term[i] represents the assignment 
-	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
-	 * global variables modified by the called procedure.  
+	 * If index i is an internal position or a return transition in the nested trace Term[i] represents the i-th
+	 * statement. If index i is a call position Term[i] represents the assignment
+	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the global variables modified by the called
+	 * procedure.
 	 */
 	private final TF[] mTerms;
-	
-	/**
-	 * Maps a call position to a formula that represents the assignment 
-	 * {@code x_1,...,x_n := t_1,...,t_n} where x_1,...,x_n are the parameters
-	 * of the callee and t_1,...,t_n are the arguments of the caller.
-	 */
-	private final Map<Integer,TF> mLocalVarAssignmentAtCall =
-			new HashMap<Integer,TF>();
-	
-	/**
-	 * Maps a call position to a formula that represents the assignment 
-	 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
-	 * global variables modified by the called procedure.  
-	 */
-	private final Map<Integer,TF> mGlobalOldVarAssignmentAtCall =
-			new HashMap<Integer,TF>();
-	
 
-	public ModifiableNestedFormulas(
-			NestedWord<? extends IAction> nestedWord, SortedMap<Integer, SF> pendingContexts) {
+	/**
+	 * Maps a call position to a formula that represents the assignment {@code x_1,...,x_n := t_1,...,t_n} where
+	 * x_1,...,x_n are the parameters of the callee and t_1,...,t_n are the arguments of the caller.
+	 */
+	private final Map<Integer, TF> mLocalVarAssignmentAtCall = new HashMap<>();
+
+	/**
+	 * Maps a call position to a formula that represents the assignment {@code old(g_1),...,old(g_n) := g_1,...,g_n}
+	 * where g_1,...,g_n are the global variables modified by the called procedure.
+	 */
+	private final Map<Integer, TF> mGlobalOldVarAssignmentAtCall = new HashMap<>();
+
+	public ModifiableNestedFormulas(final NestedWord<? extends IAction> nestedWord,
+			final SortedMap<Integer, SF> pendingContexts) {
 		super(nestedWord, pendingContexts);
 		mTerms = (TF[]) new Object[nestedWord.length()];
 	}
 
 	@Override
-	protected TF getFormulaFromValidNonCallPos(int i) {
+	protected TF getFormulaFromValidNonCallPos(final int i) {
 		return mTerms[i];
 	}
 
 	@Override
-	protected TF getLocalVarAssignmentFromValidPos(int i) {
+	protected TF getLocalVarAssignmentFromValidPos(final int i) {
 		return mLocalVarAssignmentAtCall.get(i);
 	}
 
 	@Override
-	protected TF getGlobalVarAssignmentFromValidPos(int i) {
+	protected TF getGlobalVarAssignmentFromValidPos(final int i) {
 		return mTerms[i];
 	}
 
 	@Override
-	protected TF getOldVarAssignmentFromValidPos(int i) {
+	protected TF getOldVarAssignmentFromValidPos(final int i) {
 		return mGlobalOldVarAssignmentAtCall.get(i);
 	}
-	
-	void setFormulaAtNonCallPos(int i, TF tf) {
+
+	void setFormulaAtNonCallPos(final int i, final TF tf) {
 		assert !super.getTrace().isCallPosition(i);
 		assert mTerms[i] == null : "already set";
 		mTerms[i] = tf;
 	}
-	
-	void setLocalVarAssignmentAtPos(int i, TF tf) {
+
+	void setLocalVarAssignmentAtPos(final int i, final TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
 		assert mLocalVarAssignmentAtCall.get(i) == null : "already set";
 		mLocalVarAssignmentAtCall.put(i, tf);
 	}
-	
-	void setOldVarAssignmentAtPos(int i, TF tf) {
+
+	void setOldVarAssignmentAtPos(final int i, final TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
 		assert mGlobalOldVarAssignmentAtCall.get(i) == null : "already set";
 		mGlobalOldVarAssignmentAtCall.put(i, tf);
 	}
-	
-	void setGlobalVarAssignmentAtPos(int i, TF tf) {
+
+	void setGlobalVarAssignmentAtPos(final int i, final TF tf) {
 		assert super.getTrace().isCallPosition(i) || super.getTrace().isPendingReturn(i);
 		assert mTerms[i] == null : "already set";
 		mTerms[i] = tf;
 	}
-
-	
-	
 
 }

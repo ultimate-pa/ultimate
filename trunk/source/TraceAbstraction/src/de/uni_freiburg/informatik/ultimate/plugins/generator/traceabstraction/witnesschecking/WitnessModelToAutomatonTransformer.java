@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
@@ -43,17 +43,18 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 public class WitnessModelToAutomatonTransformer {
 	private final NestedWordAutomaton<WitnessEdge, WitnessNode> mResult;
 	private final WitnessNode mWitnessRoot;
-	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
-	
+	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<>();
+
 	public WitnessModelToAutomatonTransformer(final WitnessNode witnessRoot, final IUltimateServiceProvider services) {
 		super();
 		mWitnessRoot = witnessRoot;
-		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
+		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<>();
 		final Set<WitnessEdge> callAlphabet = Collections.emptySet();
 		final Set<WitnessEdge> returnAlphabet = Collections.emptySet();
 		final IStateFactory<WitnessNode> stateFactory = new IStateFactory<WitnessNode>() {
 		};
-		mResult = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
+				returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 
@@ -74,8 +75,8 @@ public class WitnessModelToAutomatonTransformer {
 
 	private void addNewState(final WitnessNode successor) {
 		final WitnessNodeAnnotation annotation = WitnessNodeAnnotation.getAnnotation(successor);
-		final boolean isInitial = (annotation != null && annotation.isInitial());
-		final boolean isFinal = (annotation != null && annotation.isError());
+		final boolean isInitial = annotation != null && annotation.isInitial();
+		final boolean isFinal = annotation != null && annotation.isError();
 		mResult.addState(isInitial, isFinal, successor);
 		worklist.add(successor);
 	}

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
@@ -62,11 +62,12 @@ public class IcfgProgramExecutionBuilder {
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
-			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final IIcfgSymbolTable symbolTable) {
+			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables,
+			final IIcfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;
 		mTrace = trace;
-		mvar2pos2value = new HashMap<IProgramVar, Map<Integer, Term>>();
+		mvar2pos2value = new HashMap<>();
 		mRelevantVariables = relevantVariables;
 		mBranchEncoders = new Map[mTrace.length()];
 		mIcfgProgramExecution = null;
@@ -89,7 +90,8 @@ public class IcfgProgramExecutionBuilder {
 			final Call call = (Call) mTrace.getSymbolAt(position);
 			final String callee = call.getCallStatement().getMethodName();
 			if (bv.isGlobal()) {
-				final Set<IProgramNonOldVar> modGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(callee);
+				final Set<IProgramNonOldVar> modGlobals =
+						mModifiableGlobalVariableManager.getModifiedBoogieVars(callee);
 				if (bv instanceof IProgramNonOldVar) {
 					result = modGlobals.contains(bv);
 				} else if (bv instanceof IProgramOldVar) {
@@ -101,7 +103,7 @@ public class IcfgProgramExecutionBuilder {
 				// TransFormula locVarAssign =
 				// mTrace.getSymbolAt(position).getTransitionFormula();
 				// result = locVarAssign.getAssignedVars().contains(bv);
-				result = (callee.equals(bv.getProcedure()));
+				result = callee.equals(bv.getProcedure());
 			}
 		} else {
 			throw new AssertionError();
@@ -114,7 +116,7 @@ public class IcfgProgramExecutionBuilder {
 		assert index == -1 || isReAssigned(bv, index) : "oldVar in procedure where it is not modified?";
 		Map<Integer, Term> pos2value = mvar2pos2value.get(bv);
 		if (pos2value == null) {
-			pos2value = new HashMap<Integer, Term>();
+			pos2value = new HashMap<>();
 			mvar2pos2value.put(bv, pos2value);
 		}
 		assert !pos2value.containsKey(index);
@@ -138,10 +140,9 @@ public class IcfgProgramExecutionBuilder {
 		} else if (mTrace.isReturnPosition(pos)) {
 			if (bv.isGlobal() && !bv.isOldvar()) {
 				return indexWhereVarWasAssignedTheLastTime(bv, pos - 1);
-			} else {
-				final int callPos = mTrace.getCallPosition(pos);
-				return indexWhereVarWasAssignedTheLastTime(bv, callPos - 1);
 			}
+			final int callPos = mTrace.getCallPosition(pos);
+			return indexWhereVarWasAssignedTheLastTime(bv, callPos - 1);
 		} else {
 			throw new AssertionError();
 		}
@@ -149,7 +150,7 @@ public class IcfgProgramExecutionBuilder {
 	}
 
 	public Map<IProgramVar, Term> varValAtPos(final int position) {
-		final Map<IProgramVar, Term> result = new HashMap<IProgramVar, Term>();
+		final Map<IProgramVar, Term> result = new HashMap<>();
 		final Set<IProgramVar> vars = mRelevantVariables.getForwardRelevantVariables()[position + 1];
 		for (final IProgramVar bv : vars) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
@@ -161,15 +162,12 @@ public class IcfgProgramExecutionBuilder {
 		}
 		return result;
 	}
-	
 
 	private IcfgProgramExecution computeIcfgProgramExecution() {
-		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = 
-				new HashMap<Integer, ProgramState<Term>>();
+		final Map<Integer, ProgramState<Term>> partialProgramStateMapping = new HashMap<>();
 		for (int i = 0; i < mTrace.length(); i++) {
 			final Map<IProgramVar, Term> varValAtPos = varValAtPos(i);
-			final Map<Term, Collection<Term>> variable2Values = 
-					new HashMap<Term, Collection<Term>>();
+			final Map<Term, Collection<Term>> variable2Values = new HashMap<>();
 			for (final Entry<IProgramVar, Term> entry : varValAtPos.entrySet()) {
 				if (!(entry.getKey() instanceof BoogieVar) && !(entry.getKey() instanceof BoogieConst)) {
 					throw new IllegalArgumentException("in backtranslation we need BoogieVars");
@@ -177,11 +175,10 @@ public class IcfgProgramExecutionBuilder {
 				final IProgramVar bv = entry.getKey();
 				variable2Values.put(bv.getTermVariable(), Collections.singleton(entry.getValue()));
 			}
-			final ProgramState<Term> pps = new ProgramState<Term>(variable2Values);
+			final ProgramState<Term> pps = new ProgramState<>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
 		return new IcfgProgramExecution(mTrace.asList(), partialProgramStateMapping, mBranchEncoders);
 	}
-	
 
 }
