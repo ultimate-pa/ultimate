@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -172,13 +171,16 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals(FUNC_NAME_ERROR)) {
 			final boolean checkSvcompErrorfunction =
 					main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
+			final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
+			Statement st;
 			if (checkSvcompErrorfunction) {
 				final Check check = new Check(Spec.ERROR_Function);
-				final AssertStatement assertStmt =
-						new AssertStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), false));
-				check.addToNodeAnnot(assertStmt);
-				stmt.add(assertStmt);
+				st = new AssertStatement(loc, falseLiteral);
+				check.addToNodeAnnot(st);
+			} else {
+				st = new AssumeStatement(loc, falseLiteral);
 			}
+			stmt.add(st);
 			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 		if (methodName.equals(FUNC_NAME_ASSUME)) {
