@@ -31,7 +31,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -43,37 +45,45 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class Overapprox extends ModernAnnotations {
-	
+
 	private static final long serialVersionUID = -575969312624287029L;
 	public static final String BITVEC = "bitvector operation";
 	public static final String FUNC_POINTER = "call of function pointer";
-	
+
 	@Visualizable
 	private final Map<String, ILocation> mReason2Loc;
-	
+
 	public Overapprox(final Map<String, ILocation> reason2Loc) {
 		mReason2Loc = reason2Loc;
 	}
-	
+
 	public Overapprox(final String reason, final ILocation loc) {
 		this(Collections.singletonMap(reason, loc));
 	}
-	
+
 	public static final String getIdentifier() {
 		return Overapprox.class.getName();
 	}
-	
+
 	@Visualizable
 	private Set<String> getReasonForOverapproximation() {
 		return mReason2Loc.keySet();
 	}
-	
+
 	public Map<String, ILocation> getOverapproximatedLocations() {
 		return mReason2Loc;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Overapprox: " + mReason2Loc;
+	}
+
+	public IAnnotations annotate(final IElement elem) {
+		return elem.getPayload().getAnnotations().put(getIdentifier(), this);
+	}
+
+	public static Overapprox getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, getIdentifier(), a -> (Overapprox) a);
 	}
 }
