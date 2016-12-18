@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgLocalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * @author Matthias Heizmann
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SequentialComposition extends CodeBlock implements IInternalAction {
+public class SequentialComposition extends CodeBlock implements IIcfgLocalTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = 9192152338120598669L;
 	private final List<CodeBlock> mCodeBlocks;

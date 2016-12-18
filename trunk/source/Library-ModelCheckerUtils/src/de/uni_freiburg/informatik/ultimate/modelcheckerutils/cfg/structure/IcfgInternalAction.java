@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
@@ -30,16 +30,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link IInternalAction} in an ICFG. 
+ * Generic implementation of a {@link IInternalAction} in an ICFG.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class IcfgInternalAction extends AbstractIcfgAction implements IInternalAction {
+public class IcfgInternalAction extends AbstractIcfgAction implements IIcfgLocalTransition<IcfgLocation> {
 	private static final long serialVersionUID = -4893486021673688404L;
 	private final UnmodifiableTransFormula mTransFormula;
-	
-	public IcfgInternalAction(final IcfgLocation source, final IcfgLocation target, 
-			final IPayload payload, final UnmodifiableTransFormula transFormula) {
+
+	public IcfgInternalAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
+			final UnmodifiableTransFormula transFormula) {
 		super(source, target, payload);
 		mTransFormula = transFormula;
 	}

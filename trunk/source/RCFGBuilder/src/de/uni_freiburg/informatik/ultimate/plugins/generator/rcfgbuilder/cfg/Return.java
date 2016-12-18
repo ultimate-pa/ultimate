@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class Return extends CodeBlock implements IReturnAction {
+public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocation, Call> {
 
 	private static final long serialVersionUID = 3561826943033450950L;
 
@@ -53,10 +54,12 @@ public class Return extends CodeBlock implements IReturnAction {
 		mCorrespondingCall = correspondingCall;
 	}
 
+	@Override
 	public Call getCorrespondingCall() {
 		return mCorrespondingCall;
 	}
 
+	@Override
 	public BoogieIcfgLocation getCallerProgramPoint() {
 		return (BoogieIcfgLocation) getCorrespondingCall().getSource();
 	}

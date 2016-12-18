@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
  *
  */
 public abstract class IcfgEdge extends ModifiableMultigraphEdge<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
-		implements IIcfgElement, IAction {
+		implements IIcfgTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = -7368006453981803743L;
 

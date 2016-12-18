@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
@@ -29,13 +29,14 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
- * Abstract superclass of *IcfgAction. 
+ * Abstract superclass of *IcfgAction.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbstractIcfgAction extends IcfgEdge implements IAction {
+public abstract class AbstractIcfgAction extends IcfgEdge implements IIcfgTransition<IcfgLocation> {
 	private static final long serialVersionUID = 2115527505602304364L;
-	
+
 	public AbstractIcfgAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload) {
 		super(source, target, payload);
 	}

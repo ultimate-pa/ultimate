@@ -38,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgLocalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 /**
  * Edge in a recursive control flow graph that represents a set of CodeBlocks of which only one is executed.
  */
-public class ParallelComposition extends CodeBlock implements IInternalAction {
+public class ParallelComposition extends CodeBlock implements IIcfgLocalTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = -221110423926589618L;
 	private final List<CodeBlock> mCodeBlocks;
@@ -104,7 +105,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		mPrettyPrinted = prettyPrinted;
 
 		final boolean s_TransformToCNF =
-				(mServices.getPreferenceProvider(Activator.PLUGIN_ID)).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
 				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
