@@ -45,10 +45,12 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -70,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -129,7 +133,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private static final boolean DEBUG = false;
-	private static final boolean OUTPUT_HOARE_ANNOTATION = false;
+	private static final boolean OUTPUT_HOARE_ANNOTATION = true;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
@@ -354,7 +358,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		initialize((IIcfg<BoogieIcfgLocation>) root);
+		final IIcfg<BoogieIcfgLocation> icfg = (IIcfg<BoogieIcfgLocation>) root;
+		initialize(icfg);
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter._graphCounter));
 
@@ -563,14 +568,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportPositiveResults(mErrNodesOfAllProc);
 
 			if (OUTPUT_HOARE_ANNOTATION) {
-				for (final AnnotatedProgramPoint pr : procRootsToCheck) {
-					mLogger.info("Hoare annotation for entrypoint " + pr.getProgramPoint().getProcedure());
-					final HashMap<BoogieIcfgLocation, Term> ha = computeHoareAnnotation(pr);
-					for (final Entry<BoogieIcfgLocation, Term> kvp : ha.entrySet()) {
-						mLogger.info("At program point  " + prettyPrintProgramPoint(kvp.getKey())
-								+ "  the Hoare annotation is:  " + kvp.getValue());
-					}
-				}
+				createInvariantResults(procRootsToCheck, icfg, icfg.getCfgSmtToolkit(),
+						mServices.getBacktranslationService());
 			}
 		} else if (overallResult == Result.INCORRECT) {
 			reportCounterexampleResult(realErrorProgramExecution);
@@ -585,6 +584,45 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 
+	private void createInvariantResults(final List<AnnotatedProgramPoint> procRootsToCheck,
+			final IIcfg<BoogieIcfgLocation> icfg, final CfgSmtToolkit csToolkit,
+			final IBacktranslationService backTranslatorService) {
+		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
+
+		final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
+
+		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
+			final Map<BoogieIcfgLocation, Term> ha = computeHoareAnnotation(pr);
+			for (final Entry<BoogieIcfgLocation, Term> kvp : ha.entrySet()) {
+				final BoogieIcfgLocation locNode = kvp.getKey();
+				if (!locsForLoopLocations.contains(locNode)) {
+					// only compute loop invariants
+					continue;
+				}
+
+				final Term invariant = kvp.getValue();
+				if (invariant == null) {
+					continue;
+				}
+
+				final InvariantResult<IIcfgElement, Term> invResult =
+						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, invariant);
+				reportResult(invResult);
+
+				if (trueterm.equals(invariant)) {
+					continue;
+				}
+				final String invStr = backTranslatorService.translateExpressionToString(invariant, Term.class);
+				new WitnessInvariant(invStr).annotate(locNode);
+
+			}
+		}
+	}
+
 	private InterpolatingTraceChecker createTraceChecker(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
 		switch (mGlobalSettings.getInterpolationMode()) {
@@ -595,7 +633,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, true, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE, 
+						SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), false);
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
@@ -611,7 +649,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, 
+						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			}
 		case ForwardPredicates:
@@ -625,7 +663,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE, 
+						SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
@@ -636,7 +674,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateUnifier, mGlobalSettings.getInterpolationMode(), mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, 
+						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			}
 		default:
@@ -658,26 +696,23 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return sb.toString();
 	}
 
-	private HashMap<BoogieIcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
-		final HashMap<BoogieIcfgLocation, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints =
-				new HashMap<>();
+	private Map<BoogieIcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
+		final Map<BoogieIcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
+		final Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> pp2app =
+				computeProgramPointToAnnotatedProgramPoints(pr);
 
-		final HashMap<BoogieIcfgLocation, Term> programPointToHoareAnnotation = new HashMap<>();
+		final IPredicate falsePred =
+				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("false"));
 
-		computeProgramPointToAnnotatedProgramPoints(pr, programPointToAnnotatedProgramPoints);
-
-		for (final Entry<BoogieIcfgLocation, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
-				.entrySet()) {
-			IPredicate annot = mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("false"));
-
+		for (final Entry<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
+			IPredicate annot = falsePred;
 			for (final AnnotatedProgramPoint app : kvp.getValue()) {
 				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate());
 				annot = mPredicateFactory.newSPredicate(kvp.getKey(), tvp);
 			}
-			// programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
-			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());
+			pp2HoareAnnotation.put(kvp.getKey(), annot.getFormula());
 		}
-		return programPointToHoareAnnotation;
+		return pp2HoareAnnotation;
 	}
 
 	/**
@@ -686,22 +721,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @param annotatedProgramPoint
 	 * @param programPointToAnnotatedProgramPoints
 	 */
-	private static void computeProgramPointToAnnotatedProgramPoints(final AnnotatedProgramPoint entry,
-			final HashMap<BoogieIcfgLocation, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints) {
-
-		final HashSet<AnnotatedProgramPoint> visited = new HashSet<>();
-
-		final ArrayDeque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
-
+	private static Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>>
+			computeProgramPointToAnnotatedProgramPoints(final AnnotatedProgramPoint entry) {
+		final Set<AnnotatedProgramPoint> visited = new HashSet<>();
+		final Deque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
+		final Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> rtr = new HashMap<>();
 		queue.push(entry);
 
 		while (!queue.isEmpty()) {
 			final AnnotatedProgramPoint current = queue.pop();
 
-			HashSet<AnnotatedProgramPoint> apps = programPointToAnnotatedProgramPoints.get(current.getProgramPoint());
+			Set<AnnotatedProgramPoint> apps = rtr.get(current.getProgramPoint());
 			if (apps == null) {
 				apps = new HashSet<>();
-				programPointToAnnotatedProgramPoints.put(current.getProgramPoint(), apps);
+				rtr.put(current.getProgramPoint(), apps);
 			}
 			apps.add(current);
 
@@ -712,6 +745,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 			}
 		}
+		return rtr;
 	}
 
 	/**
