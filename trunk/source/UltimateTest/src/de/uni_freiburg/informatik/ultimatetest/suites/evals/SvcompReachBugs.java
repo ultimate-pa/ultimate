@@ -50,6 +50,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	private static final Triple<String, String, String>[] KOJAK_NO_INTERPOLANTS = new Triple[] {
 			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/loops/sum_array_true-unreach-call.i"),
 			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-64bit-Kojak_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--v4l2-core--videobuf-dma-contig.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Bitvector.epf", "examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.c"),
 	};
 	
 	@SuppressWarnings("unchecked")
@@ -687,7 +688,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
+	private static final Triple<String, String, String>[] INPUTS = KOJAK_NO_INTERPOLANTS;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {

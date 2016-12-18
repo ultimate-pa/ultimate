@@ -639,6 +639,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					return tc;
 				}
 			} catch (final Exception e) {
+				mLogger.error("First Tracecheck threw exception " + e.getMessage());
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
 				}
