@@ -221,7 +221,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement,
 				super.mErrorLocs);
-		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
+		if (mComputeHoareAnnotation && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<CodeBlock, IPredicate> nwa =
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 			for (final IPredicate pred : nwa.getStates()) {
