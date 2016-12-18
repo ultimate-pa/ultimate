@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 public class WitnessInvariant extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = ConditionAnnotation.class.getName();
+	private static final String KEY = WitnessInvariant.class.getName();
 
 	@Visualizable
 	private final String mInvariant;
@@ -51,7 +51,7 @@ public class WitnessInvariant extends ModernAnnotations {
 		return mInvariant;
 	}
 
-	public void annotate(IElement node) {
+	public void annotate(final IElement node) {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 

@@ -139,8 +139,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>, GeneratedWitnessNode> nodecache = new HashMap<>();
 		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph =
 				new DirectedOrderedSparseMultigraph<>();
-		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac =
-				new GeneratedWitnessNodeEdgeFactory<TTE, TE>(mStringProvider);
+		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<>(mStringProvider);
 
 		// add initial node to nodecache s.t. it will always be initial
 		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));

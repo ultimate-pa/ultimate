@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
@@ -31,7 +29,7 @@ public class CACSLBacktranslatedCFG extends BacktranslatedCFG<String, CACSLLocat
 
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new CorrectnessWitnessGenerator<CACSLLocation, IASTExpression>(this,
-				new CACSLBacktranslationValueProvider(), mLogger, mServices).makeGraphMLString();
+		return new CorrectnessWitnessGenerator<>(this, new CACSLBacktranslationValueProvider(), mLogger, mServices)
+				.makeGraphMLString();
 	}
 }

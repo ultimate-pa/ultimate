@@ -38,18 +38,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -69,47 +62,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class HoareAnnotation extends SPredicate {
 
-	// DD: Matthias, do you really want to save only one annotation?
-	private static final String KEY = Activator.PLUGIN_ID;
+	private static final String KEY = HoareAnnotation.class.getSimpleName();
 	private static final long serialVersionUID = 72852101509650437L;
 
-	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-
 	private final Script mScript;
-	private final IIcfgSymbolTable mSymbolTable;
-	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
-	private final ModifiableGlobalsTable mModifiableGlobals;
-
 	@Visualizable
 	private final Map<Term, Term> mPrecondition2Invariant = new HashMap<>();
 	@Visualizable
 	private boolean mIsUnknown = false;
 
 	private final boolean mFormulaHasBeenComputed = false;
-	private Term mClosedFormula;
-	private static final boolean AVOID_IMPLICATIONS = true;
 	private final List<Term> mInvariants = new ArrayList<>();
 
 	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
-			final IIcfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript, final Script script,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final PredicateFactory predicateFactory, final Script script) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
 				new HashSet<IProgramVar>(), null);
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mServices = services;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
-		mSymbolTable = symbolTable;
-		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = script;
-		mModifiableGlobals = modifiableGlobalsTable;
 	}
 
 	public void addInvariant(final IPredicate pred) {
@@ -129,20 +100,13 @@ public class HoareAnnotation extends SPredicate {
 		mVars.addAll(procPrecond.getVars());
 		mVars.addAll(locInvar.getVars());
 		final Term procPrecondFormula = procPrecond.getFormula();
-		// procPrecondFormula = (new SimplifyDDA(mScript,
-		// s_Logger)).getSimplifiedTerm(procPrecondFormula);
 		final Term locInvarFormula = locInvar.getFormula();
-		Term invarForPrecond = mPrecondition2Invariant.get(procPrecondFormula);
+		final Term invarForPrecond = mPrecondition2Invariant.get(procPrecondFormula);
 		if (invarForPrecond == null) {
-			invarForPrecond = locInvarFormula;
+			mPrecondition2Invariant.put(procPrecondFormula, locInvarFormula);
 		} else {
-			invarForPrecond = Util.and(mScript, invarForPrecond, locInvarFormula);
+			mPrecondition2Invariant.put(procPrecondFormula, Util.and(mScript, invarForPrecond, locInvarFormula));
 		}
-		// invarForPrecond = (new SimplifyDDA(mScript,
-		// s_Logger)).getSimplifiedTerm(invarForPrecond);
-		// procPrecondFormula = (new SimplifyDDA(mScript,
-		// s_Logger)).getSimplifiedTerm(procPrecondFormula);
-		mPrecondition2Invariant.put(procPrecondFormula, invarForPrecond);
 	}
 
 	@Override
@@ -152,8 +116,7 @@ public class HoareAnnotation extends SPredicate {
 
 	@Override
 	public Term getClosedFormula() {
-		final Term closedFormula = PredicateUtils.computeClosedFormula(getFormula(), mVars, mScript);
-		return closedFormula;
+		return PredicateUtils.computeClosedFormula(getFormula(), mVars, mScript);
 	}
 
 	/**
@@ -178,12 +141,6 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	public void annotate(final IElement node) {
-		if (node instanceof BoogieIcfgLocation) {
-			annotate((BoogieIcfgLocation) node);
-		}
-	}
-
-	public void annotate(final BoogieIcfgLocation node) {
 		if (node == null) {
 			return;
 		}
@@ -191,13 +148,6 @@ public class HoareAnnotation extends SPredicate {
 	}
 
 	public static HoareAnnotation getAnnotation(final IElement node) {
-		if (node instanceof BoogieIcfgLocation) {
-			return getAnnotation((BoogieIcfgLocation) node);
-		}
-		return null;
-	}
-
-	public static HoareAnnotation getAnnotation(final BoogieIcfgLocation node) {
 		if (node != null && node.hasPayload()) {
 			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {

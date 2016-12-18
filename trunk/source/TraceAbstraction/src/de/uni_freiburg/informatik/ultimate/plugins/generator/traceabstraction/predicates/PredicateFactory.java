@@ -110,7 +110,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(final BoogieIcfgLocation pp, final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), mSymbolTable, this, modifiableGlobalsTable, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mScript);
 	}
 
 
