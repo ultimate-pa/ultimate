@@ -117,7 +117,7 @@ public class FixpointEngineParameterFactory {
 		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> storageProvider =
 				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider =
-				new FutureRcfgVariableProvider<>(mSymbolTable, mRoot.getSymboltable(), mServices);
+				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
 		
@@ -151,7 +151,7 @@ public class FixpointEngineParameterFactory {
 				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider =
-				new FutureRcfgVariableProvider<>(mSymbolTable, mRoot.getSymboltable(), mServices);
+				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());

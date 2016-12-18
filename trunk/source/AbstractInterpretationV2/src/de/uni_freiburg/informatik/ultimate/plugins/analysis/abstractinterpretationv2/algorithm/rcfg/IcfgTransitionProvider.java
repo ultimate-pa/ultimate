@@ -97,11 +97,7 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 	@Override
 	public boolean isLeavingScope(final IcfgEdge current, final IcfgEdge scope) {
 		assert current != null;
-		if (current instanceof CodeBlock && scope instanceof CodeBlock) {
-			return RcfgUtils.isAllowedReturn((CodeBlock) current, (CodeBlock) scope);
-		}
-		throw new UnsupportedOperationException("Unclear how ICallAction / IReturnAction relation is encoded");
-
+		return RcfgUtils.isAllowedReturn(current, scope);
 	}
 
 	@Override

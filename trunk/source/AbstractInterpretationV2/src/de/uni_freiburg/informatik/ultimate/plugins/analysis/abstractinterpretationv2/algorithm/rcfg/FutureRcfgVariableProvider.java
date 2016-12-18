@@ -33,7 +33,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -58,8 +57,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, ACTI
 	private final ILogger mLogger;
 	private final IIcfgSymbolTable mBoogieVarTable;
 
-	public FutureRcfgVariableProvider(final BoogieSymbolTable table, final IIcfgSymbolTable boogieVarTable,
-			final IUltimateServiceProvider services) {
+	public FutureRcfgVariableProvider(final IIcfgSymbolTable boogieVarTable, final IUltimateServiceProvider services) {
 		assert services != null;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogieVarTable = boogieVarTable;

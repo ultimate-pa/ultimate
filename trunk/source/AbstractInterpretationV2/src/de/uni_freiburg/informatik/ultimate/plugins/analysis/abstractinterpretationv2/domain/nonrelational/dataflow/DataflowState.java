@@ -217,9 +217,15 @@ public class DataflowState<ACTION extends IAction>
 				sb.delete(sb.length() - 2, sb.length());
 				sb.append('}');
 			}
+			sb.append(", ");
 		}
 		sb.append('}');
 		return sb.toString();
+	}
+
+	@Override
+	public String toString() {
+		return toLogString();
 	}
 
 	@Override

@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -23,13 +26,13 @@ public final class RcfgUtils {
 	private RcfgUtils() {
 	}
 
-	public static boolean isAllowedReturn(final CodeBlock current, final CodeBlock currentScope) {
+	public static boolean isAllowedReturn(final IIcfgTransition<?> current, final IIcfgTransition<?> currentScope) {
 		if (currentScope == null) {
 			return false;
 		}
-		if (current instanceof Return) {
-			final Return currReturn = (Return) current;
-			assert currentScope instanceof Call;
+		if (current instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> currReturn = (IIcfgReturnTransition<?, ?>) current;
+			assert currentScope instanceof IIcfgCallTransition<?>;
 			return currReturn.getCorrespondingCall().equals(currentScope);
 		}
 		return false;

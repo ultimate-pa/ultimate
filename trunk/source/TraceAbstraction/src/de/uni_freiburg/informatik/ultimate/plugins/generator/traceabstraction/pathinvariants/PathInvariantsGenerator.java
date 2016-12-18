@@ -88,12 +88,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
 	// program to
 	// the predecessor of the predecessor of the error location.
-	private final static boolean USE_WP_FOR_LAST_2_TRANSITIONS = false;
+	private static final boolean USE_WP_FOR_LAST_2_TRANSITIONS = false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
-	private final static boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private final static boolean USE_LIVE_VARIABLES = false;
+	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
+	private static final boolean USE_LIVE_VARIABLES = !false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -318,13 +318,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		final IIcfg<?> pathProgram = new PathProgram<>("PathInvariantsPathProgram", originalIcfg, allowedTransitions);
 		final IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> result =
-				AbstractInterpreter.runFutureDataflowDomain(pathProgram, timer, mServices, false, mLogger);
+				AbstractInterpreter.runFutureDataflowDomain(pathProgram, timer, mServices, true, mLogger);
+		final Map<IcfgLocation, Set<DataflowState<IcfgEdge>>> loc2states = result.getLoc2States();
 
-		// TODO: Create path program as IIcfg
-		// @SuppressWarnings("unchecked")
-		// final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
-		// AbstractInterpreter.runFuture(root, initials, timer, services, isSilent)(mRoot, currentAbstraction,
-		// (NestedRun<CodeBlock, IPredicate>) currentCex, pathProgramSet, timer, mServices);
 	}
 
 	@Override
