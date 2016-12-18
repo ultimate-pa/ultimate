@@ -27,11 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -48,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -207,11 +206,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * @return Collection that contains all edges that are predecessor of the initial location of some procedure.
 	 */
 	public static Collection<IcfgEdge> extractStartEdges(final BoogieIcfgContainer root) {
-		final List<IcfgEdge> startEdges = new ArrayList<>();
-		for (final Entry<String, BoogieIcfgLocation> entry : root.getProcedureEntryNodes().entrySet()) {
-			startEdges.addAll(entry.getValue().getOutgoingEdges());
-		}
-		return startEdges;
+		return IcfgUtils.extractStartEdges(root);
 	}
 
 	public RootNode constructRootNode() {

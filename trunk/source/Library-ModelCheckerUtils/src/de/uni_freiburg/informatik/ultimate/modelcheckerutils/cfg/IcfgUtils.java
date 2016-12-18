@@ -26,14 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * 
@@ -41,16 +50,41 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  *
  */
 public class IcfgUtils {
-	
+
 	private IcfgUtils() {
 		// do not instantiate utility class
 	}
-	
+
 	public static <LOC extends IcfgLocation> Set<LOC> getPotentialCycleProgramPoints(final IIcfg<LOC> icfg) {
 		return new IcfgLocationIterator<>(icfg).asStream().filter(a -> a.getOutgoingEdges().stream().anyMatch(b -> {
 			final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);
 			return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
 		})).collect(Collectors.toSet());
-		
+	}
+
+	/**
+	 * @return {@link List} that contains all {@link IcfgEdge}s that are predecessor of the initial location of some
+	 *         procedure.
+	 */
+	public static <LOC extends IcfgLocation> List<IcfgEdge> extractStartEdges(final IIcfg<LOC> icfg) {
+		final List<IcfgEdge> startEdges = new ArrayList<>();
+		for (final Entry<String, LOC> entry : icfg.getProcedureEntryNodes().entrySet()) {
+			startEdges.addAll(entry.getValue().getOutgoingEdges());
+		}
+		return startEdges;
+	}
+
+	public static <T extends IIcfgTransition<IcfgLocation>> UnmodifiableTransFormula
+			getTransformula(final T transition) {
+		if (transition instanceof IInternalAction) {
+			return ((IInternalAction) transition).getTransformula();
+		} else if (transition instanceof ICallAction) {
+			return ((ICallAction) transition).getLocalVarsAssignment();
+		} else if (transition instanceof IReturnAction) {
+			return ((IReturnAction) transition).getAssignmentOfReturn();
+		} else {
+			throw new UnsupportedOperationException(
+					"Dont know how to extract transformula from transition " + transition);
+		}
 	}
 }
