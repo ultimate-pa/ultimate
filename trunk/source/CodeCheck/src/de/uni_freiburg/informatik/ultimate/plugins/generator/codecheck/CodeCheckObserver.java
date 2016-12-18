@@ -515,7 +515,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				} else { // trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 					allSafe = false;
-					realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
+					if (traceChecker.providesRcfgProgramExecution()) {
+						realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
+					} else {
+						realErrorProgramExecution = TraceCheckerUtils.computeSomeIcfgProgramExecutionWithoutValues(errorRun.getWord());
+					}
+					
 
 					if (DEBUG) {
 						mCodeChecker.debug();
