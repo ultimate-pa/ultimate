@@ -70,19 +70,32 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
 			
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_true-valid-memsafety.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2.1_true-valid-memsafety.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_true-valid-memsafety.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3_true-valid-memsafety.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test12_false-valid-free.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test18_2_false-valid-memtrack.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test23_1_true-valid-memsafety.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/list-ext_flag_false-unreach-call_false-valid-deref.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/memsafety/test-0220_false-valid-memtrack.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/cdaudio_true-unreach-call.i.cil.c"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_true-unreach-call.i.cil.c"),
+			//fixed by matthias' bitfield workaround
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-1_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-2.1_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3.1_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety-bitfields/test-bitfields-3_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/cdaudio_true-unreach-call.i.cil.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ntdrivers/diskperf_true-unreach-call.i.cil.c"),
+			
+			//fixed
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/list-ext_flag_false-unreach-call_false-valid-deref.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/memsafety/960521-1_false-valid-deref.i"),
+			
+			//unclear, was timeout
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-64bit-Taipan_Default.epf", "examples/svcomp/busybox-1.22.0/logname_true-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-64bit-Taipan_Default.epf", "examples/svcomp/busybox-1.22.0/whoami-incomplete_true-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test12_false-valid-free.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test18_2_false-valid-memtrack.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test23_1_true-valid-memsafety.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
+//			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/memsafety/test-0220_false-valid-memtrack.i"),
+			
+			//unsound
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-64bit-Taipan_Default.epf", "examples/svcomp/busybox-1.22.0/mkfifo-incomplete_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf", "examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i"),
 	};
 	
 	@SuppressWarnings("unchecked")
@@ -106,7 +119,7 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 
 	// @formatter:on
 
-	private static final Triple<String, String, String>[] INPUTS = KOJAK_NO_INTERPOLANTS;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
