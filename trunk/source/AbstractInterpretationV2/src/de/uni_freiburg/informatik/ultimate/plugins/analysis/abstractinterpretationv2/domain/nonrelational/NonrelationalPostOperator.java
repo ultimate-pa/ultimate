@@ -115,6 +115,11 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		assert !oldstate.isBottom() : "You should not need to calculate post of a bottom state";
 		assert transition != null;
 		
+		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
+	        throw new UnsupportedOperationException("Summary for procedure without implementation");
+	    }
+		
 		List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		final List<Statement> statements = mStatementExtractor.process(transition);

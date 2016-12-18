@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
 		implements IAbstractPostOperator<STATE, CodeBlock, IProgramVarOrConst> {
@@ -51,6 +52,11 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "Trying to compute post for a bottom state.";
 		assert transition != null;
+		
+		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
+	        throw new UnsupportedOperationException("Summary for procedure without implementation");
+	    }
 		
 		final List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);

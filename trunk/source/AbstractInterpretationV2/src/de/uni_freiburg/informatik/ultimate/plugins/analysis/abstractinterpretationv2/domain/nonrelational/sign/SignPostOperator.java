@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * Applies a post operation to an abstract state of the {@link SignDomain}.
@@ -77,6 +78,11 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
+		
+		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
+	        throw new UnsupportedOperationException("Summary for procedure without implementation");
+	    }
 		
 		List<SignDomainState> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
