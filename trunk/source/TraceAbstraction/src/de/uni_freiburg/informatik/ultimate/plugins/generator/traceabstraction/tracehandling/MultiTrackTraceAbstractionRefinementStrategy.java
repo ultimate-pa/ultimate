@@ -223,7 +223,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		return imperfectIpps.size() < INTERPOLANT_ACCEPTANCE_THRESHOLD;
 	}
 	
-	private boolean hasNextInterpolantGeneratorAvailable() {
+	protected boolean hasNextInterpolantGeneratorAvailable() {
 		return mInterpolationTechniques.hasNext();
 	}
 	

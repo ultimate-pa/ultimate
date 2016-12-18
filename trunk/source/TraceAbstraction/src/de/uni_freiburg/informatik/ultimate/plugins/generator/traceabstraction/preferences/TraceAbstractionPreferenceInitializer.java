@@ -406,7 +406,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
 		 */
-		WALRUS
+		WALRUS,
+		
+		CAMEL,
 	}
 	
 	/**

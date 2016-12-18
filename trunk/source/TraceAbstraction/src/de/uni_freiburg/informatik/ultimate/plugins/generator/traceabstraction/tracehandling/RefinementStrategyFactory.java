@@ -127,6 +127,10 @@ public class RefinementStrategyFactory {
 				return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
 						mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration,
 						benchmark);
+			case CAMEL:
+				return new CamelRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+						mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration,
+						benchmark);
 			case WALRUS:
 				return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
 						mAssertionOrderModulation,
