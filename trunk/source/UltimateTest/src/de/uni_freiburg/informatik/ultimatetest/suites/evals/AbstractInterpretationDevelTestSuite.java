@@ -45,38 +45,38 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
-	
+
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	
+
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
@@ -124,22 +124,22 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	};
 
 	private static final String[] INPUT = new String[] {
-			"examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_true-unreach-call.ufo.BOUNDED-10.pals_true-termination.c",
-			"examples/svcomp/recursive-simple/fibo_10_false-unreach-call.c",
-			"examples/svcomp/recursive-simple/fibo_20_false-unreach-call.c",
-			"examples/svcomp/list-properties/simple_true-unreach-call_true-valid-memsafety.i",
-			"examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i",
-			"examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i",
-			
-			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
-			"examples/svcomp/loop-invgen/nested9_true-unreach-call_true-termination.i",
-			"examples/svcomp/loop-acceleration/array_true-unreach-call4_true-termination.i",
-			"examples/svcomp/loop-industry-pattern/aiob_1_true-unreach-call.c",
-			"examples/svcomp/loops/insertion_sort_false-unreach-call_true-termination.i",
-			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
+//			"examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_true-unreach-call.ufo.BOUNDED-10.pals_true-termination.c",
+//			"examples/svcomp/recursive-simple/fibo_10_false-unreach-call.c",
+//			"examples/svcomp/recursive-simple/fibo_20_false-unreach-call.c",
+//			"examples/svcomp/list-properties/simple_true-unreach-call_true-valid-memsafety.i",
+//			"examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i",
+//			"examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i",
+//
+//			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
+//			"examples/svcomp/loop-invgen/nested9_true-unreach-call_true-termination.i",
+//			"examples/svcomp/loop-acceleration/array_true-unreach-call4_true-termination.i",
+//			"examples/svcomp/loop-industry-pattern/aiob_1_true-unreach-call.c",
+//			"examples/svcomp/loops/insertion_sort_false-unreach-call_true-termination.i",
+//			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
 			
 			// Normal regressions
-			//			"examples/programs/abstractInterpretation/regression",
+						"examples/programs/abstractInterpretation/regression",
 
 // Unexpected timeouts
 //			"examples/svcomp/ldv-consumption/32_7a_cilled_false-unreach-call_linux-3.8-rc1-drivers--media--rc--rc-core.ko-main.cil.out.c",
@@ -171,7 +171,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/ssh-simplified/s3_srvr_2_true-unreach-call.cil.c",
 	};
 	// @formatter:on
-	
+
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
@@ -179,7 +179,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 		// return 30 * 1000;
 		// return 15 * 60 * 1000;
 	}
-	
+
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		return new ColumnDefinition[] {
@@ -210,12 +210,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
 	}
-	
+
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {

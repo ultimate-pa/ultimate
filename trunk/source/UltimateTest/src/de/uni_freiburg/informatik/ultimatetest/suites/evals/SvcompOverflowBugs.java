@@ -68,7 +68,7 @@ public class SvcompOverflowBugs extends AbstractEvalTestSuite {
 
 	// @formatter:on
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_KOJAK;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_AUTOMIZER;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {

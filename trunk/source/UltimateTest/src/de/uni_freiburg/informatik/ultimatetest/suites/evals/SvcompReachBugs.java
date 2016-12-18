@@ -91,11 +91,11 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 			
 			
 			//unresolved / unclear
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/list-ext_flag_false-unreach-call_false-valid-deref.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-validator-v0.8/linux-stable-064368f-1-111_1a-drivers--media--radio--si4713-i2c.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-32_7a-drivers--md--dm-crypt.ko-entry_point_false-unreach-call.cil.out.c"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/list-ext_flag_false-unreach-call_false-valid-deref.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-validator-v0.8/linux-stable-064368f-1-111_1a-drivers--media--radio--si4713-i2c.ko-entry_point_ldv-val-v0.8_false-unreach-call.cil.out.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-32_7a-drivers--md--dm-crypt.ko-entry_point_false-unreach-call.cil.out.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
 			
 			
 			//new
@@ -682,7 +682,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_AUTOMIZER;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
