@@ -19,14 +19,9 @@
 	<option name="32bit"></option>
   </tasks>
 
-  <tasks name="Memsafety Deref">
+  <tasks name="Memsafety">
     <include>../../../trunk/examples/svcomp/array-memsafety/diff_usafe_false-valid-deref.i</include>
     <include>../../../trunk/examples/svcomp/array-memsafety/array02-alloca_true-valid-memsafety.i</include>
-    <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
-	<option name="32bit"></option>
-  </tasks>
-
-  <tasks name="Memsafety DerefFreeMemtrack">
     <include>../../../trunk/examples/svcomp/memsafety/test-0158_false-valid-free.i</include>
     <include>../../../trunk/examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i</include>
 	<include>../../../trunk/examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i</include>
@@ -45,12 +40,13 @@
 	<option name="64bit"></option>
   </tasks>
   
-  <tasks name="CFI">
+  <tasks name="Reach">
     <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c</include>
     <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
     <include>../../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3_true-termination.i</include>
     <include>../../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2_true-termination.i</include>
 	<include>../../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
+	<include>../../../trunk/examples/svcomp/float-benchs/addsub_double_exact_true-unreach-call.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
@@ -69,7 +65,7 @@
 	<include>../../../trunk/examples/svcomp/bitvector/num_conversion_1_true-unreach-call_true-no-overflow.i</include>
 	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_true-unreach-call_true-no-overflow.BV.c.cil.c</include>
 	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call_true-no-overflow.c.cil.c</include>
-	<propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
 
