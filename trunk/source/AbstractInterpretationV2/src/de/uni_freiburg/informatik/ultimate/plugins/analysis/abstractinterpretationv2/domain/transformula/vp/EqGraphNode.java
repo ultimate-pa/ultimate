@@ -116,7 +116,7 @@ public class EqGraphNode {
 
 	static <T extends IVPStateOrTfState> void copyFields(
 			EqGraphNode source, EqGraphNode target, IVPStateOrTfStateBuilder<T> builder) {
-		assert target.nodeIdentifier == source.nodeIdentifier;
+		assert target.nodeIdentifier.equals(source.nodeIdentifier);
 		
 		target.setRepresentative(builder.getEqGraphNode(source.getRepresentative().nodeIdentifier));
 		
@@ -230,15 +230,15 @@ public class EqGraphNode {
 		return sb.toString();
 	}
 	
-	@Override
-	public boolean equals(Object other) {
-		if (!(other instanceof EqGraphNode)) {
-			return false;
-		}
-		//TODO: what is this for??
-		assert false;
-		return ((EqGraphNode)other).nodeIdentifier.equals(this.nodeIdentifier);
-	}
+//	@Override
+//	public boolean equals(Object other) {
+//		if (!(other instanceof EqGraphNode)) {
+//			return false;
+//		}
+//		//TODO: what is this for??
+//		assert false;
+//		return ((EqGraphNode)other).nodeIdentifier.equals(this.nodeIdentifier);
+//	}
 
 //	public void setCcchild(Map<Object, Object> newMap) {
 //		ccchild = newMap;

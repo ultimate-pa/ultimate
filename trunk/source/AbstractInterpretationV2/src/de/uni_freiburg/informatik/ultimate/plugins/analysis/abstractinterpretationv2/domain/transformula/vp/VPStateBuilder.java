@@ -113,10 +113,13 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		return this;
 	}
 
-	public void addToDisEqSet(final EqNode node1, final EqNode node2) {
-		// getDisEqualitySet().add(new VPDomainSymmetricPair<>(node1, node2));
-		mDisEqualitySet.add(new VPDomainSymmetricPair<>(new VPNodeIdentifier(node1), new VPNodeIdentifier(node2)));
-	}
+//	public void addToDisEqSet(final EqNode node1, final EqNode node2) {
+////		getDisEqualitySet().add(new VPDomainSymmetricPair<>(node1, node2));
+//		mDisEqualitySet.add(
+//				new VPDomainSymmetricPair<VPNodeIdentifier>(
+//						new VPNodeIdentifier(node1),
+//						new VPNodeIdentifier(node2)));
+//	}
 
 	// /**
 	// * An additional process after a function node is havoc, in order to restore the propagation.

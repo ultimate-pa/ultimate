@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class VPNodeIdentifier {
@@ -29,16 +31,14 @@ public class VPNodeIdentifier {
 	public VPNodeIdentifier(Term term) {
 		this.mEqNode = null;
 		this.mIsFunction = term instanceof ApplicationTerm 
-				&& ((ApplicationTerm) term).getFunction().getName().equals("select");
-		assert !(term instanceof ApplicationTerm) || 
-			!((ApplicationTerm) term).getFunction().getName().equals("store") : "right?";
+				&& (((ApplicationTerm) term).getFunction().getName().equals("select")
+						|| ((ApplicationTerm) term).getFunction().getName().equals("store"));
+
 		this.mIdentifyingTerm = term;
 		this.mIsLiteral = term instanceof ConstantTerm;
 		if (mIsFunction) {
 			ApplicationTerm at = (ApplicationTerm) term;
-			assert at.getFunction().getName().equals("select");
-			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
-			mFunction = new VPArrayIdentifier(mds.getArray());
+			mFunction = new VPArrayIdentifier(getArrayTerm(at));
 		} else {
 			mFunction = null;
 		}
@@ -78,7 +78,79 @@ public class VPNodeIdentifier {
 			return false;
 		}
 		VPNodeIdentifier otherNodeId = (VPNodeIdentifier) other;
-		return this.mEqNode == otherNodeId.mEqNode 
-				&& this.mIdentifyingTerm == otherNodeId.mIdentifyingTerm;
+		
+		if (this.mEqNode != otherNodeId.mEqNode) {
+			return false;
+		}
+		
+		if (this.mIdentifyingTerm != otherNodeId.mIdentifyingTerm) {
+			if (this.isFunction()) {
+				// one term might be a store, one a select
+				Term thisArray = getArrayTerm((ApplicationTerm) this.mIdentifyingTerm);
+				Term otherArray = getArrayTerm((ApplicationTerm) otherNodeId.mIdentifyingTerm);
+				
+				if (thisArray != otherArray) {
+					return false;
+				}
+				
+				ArrayIndex thisIndices = getArrayIndices((ApplicationTerm) this.mIdentifyingTerm);
+				ArrayIndex otherIndices = getArrayIndices((ApplicationTerm) otherNodeId.mIdentifyingTerm);
+				assert thisIndices.size() == otherIndices.size();
+				for (int i = 0; i < thisIndices.size(); i++) {
+					if (!new VPNodeIdentifier(thisIndices.get(i))
+							.equals(new VPNodeIdentifier(otherIndices.get(i)))) {
+						return false;
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+		
+	private ArrayIndex getArrayIndices(ApplicationTerm at) {
+		if (at.getFunction().getName().equals("select")) {
+			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			return mds.getIndex();
+		} else if (at.getFunction().getName().equals("store")) {
+			MultiDimensionalStore mds = new MultiDimensionalStore(at);
+			return mds.getIndex();
+		} else {
+			assert false;
+			return null;
+		}
+	}
+
+	private Term getArrayTerm(ApplicationTerm at) {
+		if (at.getFunction().getName().equals("select")) {
+			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			return mds.getArray();
+		} else if (at.getFunction().getName().equals("store")) {
+			MultiDimensionalStore mds = new MultiDimensionalStore(at);
+			return mds.getArray();
+		} else {
+			assert false;
+			return null;
+		}
+	}
+	
+	@Override
+	public String toString() {
+		if (mEqNode != null) {
+			return "NodeId: " + mEqNode;
+		} else if (mIdentifyingTerm != null) {
+			return "NodeId: " + mIdentifyingTerm;
+		} else {
+			assert false;
+			return null;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO
+		return 0;
 	}
 }

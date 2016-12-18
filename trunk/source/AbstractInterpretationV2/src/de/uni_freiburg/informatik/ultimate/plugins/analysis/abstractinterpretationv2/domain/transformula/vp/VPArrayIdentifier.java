@@ -16,4 +16,31 @@ public class VPArrayIdentifier {
 		mTerm = term;
 	}
 
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof VPArrayIdentifier)) {
+			return false;
+		}
+		VPArrayIdentifier otherArrayId = (VPArrayIdentifier) other;
+		return this.mTerm == otherArrayId.mTerm && this.mPvoc == otherArrayId.mPvoc;
+	}
+	
+	@Override
+	public String toString() {
+		if (mPvoc != null) {
+			return "ArrayId: " + mPvoc.toString();
+		}
+		if (mTerm != null) {
+			return "ArrayId: " + mTerm.toString();
+		}
+		assert false;
+		return null;
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO
+		return 0;
+	}
+	
 }

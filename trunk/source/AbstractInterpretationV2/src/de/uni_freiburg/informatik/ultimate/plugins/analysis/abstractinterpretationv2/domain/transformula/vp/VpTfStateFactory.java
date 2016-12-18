@@ -73,6 +73,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState> {
 		for (final EqGraphNode egnInOldState : state.getAllEqGraphNodes()) {
 			final VPNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
 			final EqGraphNode newGraphNode = builder.getEqGraphNode(nodeId);
+			assert newGraphNode != null;
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
 			assert !state.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
@@ -87,7 +88,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState> {
 
 		builder.setIsTop(state.isTop());
 
-		assert builder.mVars.equals(state.getVariables());
+//		assert builder.mVars.equals(state.getVariables());
 		return builder;
 	}
 

@@ -10,21 +10,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 
-	protected Set<VPDomainSymmetricPair<VPNodeIdentifier>> mDisEqualitySet;
+	protected final Set<VPDomainSymmetricPair<VPNodeIdentifier>> mDisEqualitySet = new HashSet<>();
 
-	protected Set<IProgramVar> mVars;
+	protected final Set<IProgramVar> mVars = new HashSet<>();
 	
-	protected EqGraph mEqGraph;
+	protected final EqGraph mEqGraph = new EqGraph();
 	
 	protected boolean mIsTop;
 	
 	abstract EqGraphNode getEqGraphNode(VPNodeIdentifier i2);
 
 	abstract T build();
-
-//	abstract void merge(EqGraphNode gn1, EqGraphNode gn2);
-
-//	abstract boolean checkContradiction();
 	
 	IVPStateOrTfStateBuilder<T> setIsTop(boolean b) {
 		mIsTop = b;

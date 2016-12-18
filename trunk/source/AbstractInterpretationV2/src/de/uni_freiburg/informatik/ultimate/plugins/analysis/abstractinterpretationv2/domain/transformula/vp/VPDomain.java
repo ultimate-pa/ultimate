@@ -78,11 +78,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
 		mMerge = new VPMergeOperator();
-		mVpStateFactory = new VPStateFactory<>(this);
-		mPost = new VPPostOperator(script, services, this);
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
+		mVpStateFactory = new VPStateFactory<>(this);
 		mTfStateFactory = new VpTfStateFactory(tfPreparer, preAnalysis);
+		mPost = new VPPostOperator(script, services, this);
 	}
 
 	@Override

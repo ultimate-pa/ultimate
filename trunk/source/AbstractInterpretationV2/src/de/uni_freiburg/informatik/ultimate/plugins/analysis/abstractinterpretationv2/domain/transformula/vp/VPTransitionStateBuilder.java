@@ -24,20 +24,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState> {
 	
-	Set<IProgramVar> mVars = new HashSet<>();
+	private Set<IProgramVar> mVars = new HashSet<>();
 	
-	Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap = new HashMap<>();
+	private Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap = new HashMap<>();
 	private NestedMap3<EqNode, 
 		Map<IProgramVar, TermVariable>, 
 		Map<IProgramVar, TermVariable>, 
-		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
+		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode = new NestedMap3<>();
 
-	private HashRelation<VPArrayIdentifier, VPNodeIdentifier> mArrayIdToFunctionNodes;
+	private HashRelation<VPArrayIdentifier, VPNodeIdentifier> mArrayIdToFunctionNodes = new HashRelation<>();
 
-	private TransFormula mTransFormula;
+	private final TransFormula mTransFormula;
 
 	public VPTransitionStateBuilder(VPDomainPreanalysis preAnalysis,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
+		mTransFormula = tf;
 		createEqGraphNodes(tf, preAnalysis, allConstantEqNodes);
 		
 		for (TFEqGraphNode tfegn : mTermToEqGraphNodeMap.values()) {
@@ -248,7 +249,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
 			VPArrayIdentifier arrayId = new VPArrayIdentifier(((EqFunctionNode) eqNode).getFunction());
-			result.getCcchild().addPair(arrayId, argNodes);
+			result.addToCcchild(arrayId, argNodes);
 			
 			mArrayIdToFunctionNodes.addPair(arrayId, new VPNodeIdentifier(term));
 		}
@@ -273,7 +274,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	}
 
 	private ArrayIndex extractArgumentsFromStoreOrSelect(Term term) {
-		List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectDeep(term, true);
+		List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(term, false);
 		if (selects.size() > 0) {
 			assert selects.size() == 1;
 			return selects.get(0).getIndex();
@@ -306,6 +307,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 
 	@Override
 	EqGraphNode getEqGraphNode(VPNodeIdentifier i) {
+		assert i.getIdTerm() != null;
 		return mTermToEqGraphNodeMap.get(i.getIdTerm());
 	}
 

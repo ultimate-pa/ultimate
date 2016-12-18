@@ -34,8 +34,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 public class VPTransFormulaStateBuilderPreparer {
 	
-	Map<TransFormula, VPTransitionStateBuilder> mTransFormulaToTransitionStateBuilder = new HashMap<>();
-	
 	VPDomainPreanalysis mPreAnalysis;
 
 	private final Collection<EqNode> mAllEqNodes;
@@ -132,7 +130,7 @@ public class VPTransFormulaStateBuilderPreparer {
 	
 	
 	VPTransitionStateBuilder getVPTfStateBuilder(TransFormula tf) {
-		VPTransitionStateBuilder result = mTransFormulaToTransitionStateBuilder.get(tf);
+		VPTransitionStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
 		assert result != null : "we should have a VPTransitionStateBuidler for every Transformula in the program";
 		return result;
 	}
