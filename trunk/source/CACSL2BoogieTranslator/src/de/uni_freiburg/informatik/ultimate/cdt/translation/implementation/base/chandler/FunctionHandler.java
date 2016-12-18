@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -720,7 +721,7 @@ public class FunctionHandler {
 			} else {
 				in = in.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			}
-
+			
 			if (in.lrVal.getValue() == null) {
 				final String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);
@@ -741,8 +742,9 @@ public class FunctionHandler {
 				CType expectedParamType =
 						mProcedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
-				if (expectedParamType instanceof CPrimitive
-						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
+				if ((expectedParamType instanceof CPrimitive
+						&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE)
+						|| expectedParamType instanceof CEnum) {
 					in.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
