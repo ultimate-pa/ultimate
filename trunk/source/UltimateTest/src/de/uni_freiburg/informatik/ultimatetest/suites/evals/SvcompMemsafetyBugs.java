@@ -85,7 +85,19 @@ public class SvcompMemsafetyBugs extends AbstractEvalTestSuite {
 	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
 			
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
-
+			
+			//new
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/chroot-incomplete_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/echo_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/logname_true-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/mkfifo-incomplete_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/realpath_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/whoami-incomplete_true-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-64bit-Automizer_Default.epf", "examples/svcomp/busybox-1.22.0/yes_false-unreach-call_true-no-overflow_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/memsafety/960521-1_false-valid-deref.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf", "examples/svcomp/ldv-memsafety/memleaks_test23_1_true-valid-memsafety.i"),
 	};
 
 	// @formatter:on

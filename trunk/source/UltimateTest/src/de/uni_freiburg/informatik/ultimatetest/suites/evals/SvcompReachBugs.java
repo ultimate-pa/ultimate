@@ -56,18 +56,20 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/rounding_functions_true-unreach-call.i"),
 
 			//currently not debuggable, masked by de.uni_freiburg.informatik.ultimate.logic.SMTLIBException: Unsupported non-linear arithmetic
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
+			
+			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-alloc-spinlock__drivers-media-dvb-core-dvb-core_true-unreach-call.cil.c"),
 	};
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
-			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test29_true-unreach-call.c"),
-			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call_1.i"),
 			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call_1.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/ldv-regression/test29_true-unreach-call.c"),
 	};
 	
 	@SuppressWarnings("unchecked")
@@ -94,10 +96,22 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-32_7a-drivers--md--dm-crypt.ko-entry_point_false-unreach-call.cil.out.c"),
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
 			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
+			
+			
+			//new
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/eca-rers2012/Problem18_label01_false-unreach-call.c"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/eca-rers2012/Problem18_label32_false-unreach-call.c"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_abp_1_false-unreach-call.c"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_true-unreach-call.c"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/ldv-regression/test_union.c_true-unreach-call_1.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/ldv-regression/test29_true-unreach-call.c"),
+
 	};
 	
 	// ExceptionOrErrorResult: IllegalArgumentException: The expression RoundingMode_RTZ has a null type
 	// Matthias: don't care about these - the best that we can achieve is that we crash with a better error message
+	@SuppressWarnings("unused")
 	private static final Triple<String, String, String>[] ERROR_2 = new Triple[] {
 		new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/seq-mthreaded/rekcba_nxt_true-unreach-call.2.M4.c"),
 		new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/seq-mthreaded/rekcba_nxt_true-unreach-call.3.M1.c"),
@@ -668,7 +682,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_KOJAK;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
