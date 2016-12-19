@@ -2248,7 +2248,7 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("no such operation");
 			}
 			final AssertStatement smallerMaxInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPLT, operationResult,
+					BinaryExpression.Operator.COMPLEQ, operationResult,
 					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType(resultType).toString())));
 			check.addToNodeAnnot(smallerMaxInt);
 			final AssertStatement biggerMinInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
@@ -3199,8 +3199,8 @@ public class CHandler implements ICHandler {
 
 			builder.addStatement(assignStmt);
 			
-			for (Overapprox oa : overapprOld) {
-				for (Statement stm : builder.mStatements) {
+			for (final Overapprox oa : overapprOld) {
+				for (final Statement stm : builder.mStatements) {
 					stm.getPayload().getAnnotations().put(Overapprox.getIdentifier(), oa);
 				}
 			}
@@ -3276,13 +3276,13 @@ public class CHandler implements ICHandler {
 												mTypeHandler.cType2AstType(loc, er.lrVal.getCType())) });
 				builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
 
-				Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-				RValue tmpVarRVal = new RValue(tmpVarIdExpr, er.lrVal.getCType());
+				final Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+				final RValue tmpVarRVal = new RValue(tmpVarIdExpr, er.lrVal.getCType());
 
 //				builder.addOverapprox(new Overapprox("union field of non-heap union updated "
 //						+ "--> havoccing other fields (CHandler.makeAssignment(..))", loc));
 				
-				Overapprox overapp = new Overapprox("field of union updated "
+				final Overapprox overapp = new Overapprox("field of union updated "
 						+ "--> havoccing other fields (CHandler.makeAssignment(..))", loc);
 
 
