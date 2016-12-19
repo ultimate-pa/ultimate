@@ -80,7 +80,6 @@ public class ParallelCompositionGenerator {
 		
 	/**
 	 * Function that computes the parallel composition of two hybrid automata
-	 * TODO: regard local and global parameters, regard automata without transitions !!!!!, optimize
 	 * @param automaton1
 	 * @param automaton2
 	 * @return 
@@ -164,7 +163,6 @@ public class ParallelCompositionGenerator {
 				mVisitedLocations.add((new LocationPair(srcLoc1, srcLoc2)).toString());
 				// if there is a transition, get it
 				// if there is no transition, the target is the source.
-				// TODO: write a function for this
 				if(outgoing1.listIterator().hasNext()){
 					currentTransition1 = outgoing1.listIterator().next();
 					tarLoc1 = locations1.get(currentTransition1.getTargetId());
@@ -193,11 +191,9 @@ public class ParallelCompositionGenerator {
 	    			// if the location exists, get it, else create a new one from the target locations
 	    			Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);     			
 	    			// transition
-	    			// TODO: write a function for this because it is needed frequently anyway
-	    			Transition trans = new Transition(source, target);
-	    			trans.setLabel(currentLabel1);
-	    			trans.setGuard(intersectStrings(currentGuard1, currentGuard2));
-	    			trans.setUpdate(intersectStrings(currentUpdate1, currentUpdate2));
+	    			Transition trans = createTransition(source,target,currentLabel1,
+	    					intersectStrings(currentGuard1, currentGuard2),
+	    					intersectStrings(currentUpdate1, currentUpdate2));
 	    			mTransitionMerge.add(trans);
 	    			// add incoming/outgoing transitions to locations
 	    			source.addOutgoingTransition(trans);
@@ -225,15 +221,9 @@ public class ParallelCompositionGenerator {
 	    			Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
 	    			// Create 2 transitions
 	    			// s1,s2 ---> s1,t2
-	    			Transition srcTar1 = new Transition(source, target1);
-	    			srcTar1.setGuard(currentGuard2);
-	    			srcTar1.setUpdate(currentUpdate2);
-	    			srcTar1.setLabel(currentLabel2);
+	    			Transition srcTar1 = createTransition(source, target1, currentLabel2, currentGuard2, currentUpdate2);
 	    			// s1,s2 ---> t1,s2
-	    			Transition srcTar2 = new Transition(source, target2);
-	    			srcTar2.setGuard(currentGuard1);
-	    			srcTar2.setUpdate(currentUpdate1);
-	    			srcTar2.setLabel(currentLabel1);
+	    			Transition srcTar2 = createTransition(source, target2, currentLabel1, currentGuard1, currentUpdate1);
 	    			// incoming /outgoing transitions
 	    			if(source.getId() != target1.getId() && !mGlobalLabels.contains(srcTar1.getLabel())){
 	    				source.addOutgoingTransition(srcTar1);
@@ -251,11 +241,33 @@ public class ParallelCompositionGenerator {
 	    			break;
 	    		}
 			}		
-		}
-		
+		}		
 	}
 
-	// function that returns a location if it exsits, else it creates it
+	/**
+	 * Function that creates a transition
+	 * @param source
+	 * @param target
+	 * @param label
+	 * @param guard
+	 * @param update
+	 * @return 
+	 */
+	private Transition createTransition(Location source, Location target, String label, String guard, String update) {
+		Transition trans = new Transition(source, target);
+		trans.setLabel(label);
+		trans.setGuard(guard);
+		trans.setUpdate(update);
+		return trans;		
+	}
+
+	/**
+	 * function that returns a location if it exsits, else it creates it
+	 * @param locPair
+	 * @param loc1
+	 * @param loc2
+	 * @return
+	 */
 	private Location getLocation(String locPair, Location loc1, Location loc2) {
 		Location loc;
 		if(mCreatedLocations.containsKey(locPair)){
