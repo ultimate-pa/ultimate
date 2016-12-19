@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -78,7 +79,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	/**
 	 * @see #getModeForWindowsUsers().
 	 */
-	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
+	private static final boolean I_AM_A_POOR_WINDOWS_USER = true;
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
@@ -293,10 +294,16 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		case SMTINTERPOL:
 		case Z3_IG:
 		case CVC4_IG:
-			// current policy: use all interpolant sequences
-			final List<InterpolantsPreconditionPostcondition> allIpps =
-					IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
-			return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, allIpps, mAbstraction);
+			if (perfectIpps.isEmpty()) {
+				// if we have only imperfect interpolants, we take the first two
+				mLogger.info("Using the first two imperfect interpolant sequences");
+				return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample,
+						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction);
+			}
+			// if we have some perfect, we take one of those
+			mLogger.info("Using the first perfect interpolant sequence");
+			return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample,
+					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 			throw new AssertionError("The mode " + mode + " should be unreachable here.");
@@ -332,7 +339,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);
 		}
-
 		return result;
 	}
 
