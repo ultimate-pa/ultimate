@@ -39,25 +39,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
- * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
+ * {@link IRefinementStrategy} that first tries {@code CVC4} in bitvector mode, then {@code}, and finally
+ * {@link SMTInterpol}.
  * <p>
  * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class CamelRefinementStrategy extends PenguinRefinementStrategy {
-	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
+public class WolfRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
+	public WolfRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation assertionOrderModulation,
-			final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
@@ -65,35 +64,18 @@ public class CamelRefinementStrategy extends PenguinRefinementStrategy {
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-//		list.add(Track.MATHSAT_FPBP);
-		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
-//		list.add(Track.SMTINTERPOL_FP);
+		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord())) {
+			list.add(Track.MATHSAT_FP);	
+		} else {
+			list.add(Track.CVC4_FP);
+		}
 		list.add(Track.Z3_FP);
-//		list.add(Track.CVC4_FPBP);
+//		list.add(Track.Z3_NESTED_INTERPOLANTS);
 		return list.iterator();
 	}
 	
 	@Override
 	protected String getCvc4Logic() {
-		return LOGIC_CVC4_DEFAULT;
+		return LOGIC_CVC4_BITVECTORS;
 	}
-	
-	
-	
-//	@Override
-//	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-//			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-//		if (!hasNextInterpolantGeneratorAvailable()) {
-//			return false;
-//		}
-//		
-//		/*
-//		 * current policy: stop after finding at least one perfect interpolant sequence or at least two interpolant
-//		 * sequences in total
-//		 */
-//		if (!perfectIpps.isEmpty()) {
-//			return false;
-//		}
-//		return imperfectIpps.size() < 1;
-//	}
 }

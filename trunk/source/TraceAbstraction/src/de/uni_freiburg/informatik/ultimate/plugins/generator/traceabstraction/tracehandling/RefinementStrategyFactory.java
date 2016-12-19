@@ -135,6 +135,10 @@ public class RefinementStrategyFactory {
 				return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
 						mAssertionOrderModulation,
 						counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
+			case WOLF:
+				return new WolfRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+						mAssertionOrderModulation,
+						counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 			case TAIPAN:
 				return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
 						mAssertionOrderModulation, counterexample, abstraction, iteration, benchmark);

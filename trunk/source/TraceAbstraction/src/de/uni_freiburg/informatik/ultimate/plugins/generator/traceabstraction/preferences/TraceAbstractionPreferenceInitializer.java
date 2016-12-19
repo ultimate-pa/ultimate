@@ -409,6 +409,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		WALRUS,
 		
 		CAMEL,
+		WOLF,
 	}
 	
 	/**

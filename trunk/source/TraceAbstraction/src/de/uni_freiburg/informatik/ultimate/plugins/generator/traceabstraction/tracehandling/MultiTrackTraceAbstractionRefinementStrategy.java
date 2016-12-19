@@ -83,10 +83,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		 * SMTInterpol with tree interpolation.
 		 */
 		SMTINTERPOL_TREE_INTERPOLANTS,
+		SMTINTERPOL_FP,
 		/**
 		 * Z3 with forward and backward predicates.
 		 */
 		Z3_FPBP,
+		Z3_FP,
 		/**
 		 * Z3 with Craig interpolation.
 		 */
@@ -95,10 +97,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		 * CVC4 with forward and backward predicates.
 		 */
 		CVC4_FPBP,
+		CVC4_FP,
 		/**
 		 * MathSAT with forward and backward predicates.
 		 */
 		MATHSAT_FPBP,
+		MATHSAT_FP,
 	}
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
@@ -298,6 +302,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 			case MATHSAT_FPBP:
 				interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
 				break;
+			case Z3_FP:
+			case SMTINTERPOL_FP:
+			case CVC4_FP:
+			case MATHSAT_FP:
+				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
+				break;
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
@@ -317,6 +327,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final String command;
 		switch (mode) {
 			case SMTINTERPOL_TREE_INTERPOLANTS:
+			case SMTINTERPOL_FP:
 				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
 				solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
@@ -336,6 +347,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				break;
 				*/
 			case Z3_FPBP:
+			case Z3_FP:
 				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
 				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
@@ -343,6 +355,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				logicForExternalSolver = LOGIC_Z3;
 				break;
 			case CVC4_FPBP:
+			case CVC4_FP:
 				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
 				solverSettings =
 						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
@@ -351,6 +364,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				logicForExternalSolver = getCvc4Logic();
 				break;
 			case MATHSAT_FPBP:
+			case MATHSAT_FP:
 				command = COMMAND_MATHSAT;
 				solverSettings =
 						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
