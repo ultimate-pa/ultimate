@@ -61,14 +61,18 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/rint_true-unreach-call.i"),
 //			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/floats-esbmc-regression/rounding_functions_true-unreach-call.i"),
 
-			//currently not debuggable, masked by de.uni_freiburg.informatik.ultimate.logic.SMTLIBException: Unsupported non-linear arithmetic
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i"),
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
+			//fixed
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum10_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum20_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum40_false-unreach-call.i"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/bitvector-loops/diamond_false-unreach-call2.i"),
 			
-			new Triple<>("AutomizerC.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-alloc-spinlock__drivers-media-dvb-core-dvb-core_true-unreach-call.cil.c"),
+			//cannot prove because cvc4, z3, and smtinterpol fail to decide a trace
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
+			
+			//still open (now oom)
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-alloc-spinlock__drivers-media-dvb-core-dvb-core_true-unreach-call.cil.c"),
 	};
 	
 	@SuppressWarnings("unchecked")
@@ -688,7 +692,7 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 	};
 
 
-	private static final Triple<String, String, String>[] INPUTS = KOJAK_NO_INTERPOLANTS;
+	private static final Triple<String, String, String>[] INPUTS = UNSOUND_TAIPAN;
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
