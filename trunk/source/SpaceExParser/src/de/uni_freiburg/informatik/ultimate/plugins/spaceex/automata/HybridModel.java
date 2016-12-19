@@ -143,12 +143,6 @@ public class HybridModel {
 		return mMergedAutomata;
 	}
 	
-	// just for tests
-	public HybridAutomaton getMerged(){
-		HybridAutomaton automaton1 = mSystems.get(0).getAutomata().get("aut1_1");
-		HybridAutomaton automaton2 = mSystems.get(0).getAutomata().get("aut2_1");
-		return mParallelCompositionGenerator.computeParallelComposition(automaton1, automaton2);
-	}
 	/**
 	 * Function that merges all Automata of a {@link HybridSystem} into one {@link HybridAutomata}
 	 * @param system
