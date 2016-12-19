@@ -72,7 +72,9 @@ public class SvcompReachBugs extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/reducercommutativity/rangesum60_false-unreach-call.i"),
 			
 			//still open (now oom)
-			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-alloc-spinlock__drivers-media-dvb-core-dvb-core_true-unreach-call.cil.c"),
+//			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__complex_emg__linux-alloc-spinlock__drivers-media-dvb-core-dvb-core_true-unreach-call.cil.c"),
+			new Triple<>("AutomizerC.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/bitvector/soft_float_2_true-unreach-call_true-no-overflow.c.cil.c"),
+			
 	};
 	
 	@SuppressWarnings("unchecked")
