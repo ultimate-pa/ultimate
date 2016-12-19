@@ -114,6 +114,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
+	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 	
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -324,6 +325,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
+		if (NON_EA_INDUCTIVITY_CHECK) {
+			final boolean inductive = new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+						new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+			if (!inductive) {
+				throw new AssertionError("not inductive"); 
+			}
+		}
 		
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
