@@ -1023,6 +1023,29 @@ public class FunctionHandler {
 			final RValue lrVal = new RValue(tmpExpr, resultType);
 
 			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.singletonList(overappFlag));
+		} else if (methodName.equals("__builtin_strlen")
+				|| methodName.equals("__builtin_strcmp")
+				) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+			// introduce fresh aux variable
+			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
+			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+			final VariableDeclaration tmpVarDecl =
+					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+			builder.addDeclaration(tmpVarDecl);
+			builder.putAuxVar(tmpVarDecl, loc);
+
+			final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+
+			final Overapprox overAppFlag = new Overapprox("builtin_strlen or builtin_strcmp", loc);
+//			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
+			builder.addOverapprox(overAppFlag);
+
+			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
+			builder.setLRVal(lrVal);
+
+			return builder.build();
 		} else if (methodName.equals("__builtin_return_address")) {
 			/*
 			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
