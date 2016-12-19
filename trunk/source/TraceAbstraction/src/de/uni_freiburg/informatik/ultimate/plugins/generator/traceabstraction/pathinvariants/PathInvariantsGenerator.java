@@ -93,7 +93,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private static final boolean USE_LIVE_VARIABLES = !false;
+	private static final boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -220,7 +220,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// The location where the nestedRun ends (i.e. the error location)
 		final BoogieIcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len - 1)).getProgramPoint();
 
-		UnmodifiableTransFormula weakestPreconditionOfLastTransition = null;
+		UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
@@ -255,11 +255,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					// if (mPredicateUnifier.getTruePredicate().equals(wpFor2ndTransition)) {
 					//
 					// } else {
-					weakestPreconditionOfLastTransition =
-							TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition, managedScript);
+					weakestPreconditionOfLastTwoTransitions = new UnmodifiableTransFormula[2];
+					weakestPreconditionOfLastTwoTransitions[0] = TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition, managedScript);
+					weakestPreconditionOfLastTwoTransitions[1] = TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor1stTransition, managedScript);
 					// transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
 					// currentLocation.getPayload(), wpAsTransformula));
-					mLogger.info("wp computed: " + weakestPreconditionOfLastTransition);
+					mLogger.info("wp computed: " + weakestPreconditionOfLastTwoTransitions[0]);
 					// }
 				}
 			}
@@ -291,7 +292,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			transitionsAsList.addAll(transitions);
 			invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, precondition,
 					postcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false,
-					null, weakestPreconditionOfLastTransition, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
+					null, weakestPreconditionOfLastTwoTransitions, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}

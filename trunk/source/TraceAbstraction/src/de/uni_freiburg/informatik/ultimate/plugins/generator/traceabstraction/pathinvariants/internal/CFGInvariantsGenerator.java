@@ -205,7 +205,7 @@ public final class CFGInvariantsGenerator {
 			final IPredicate precondition, final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
 			final boolean useLiveVariables, final Set<IProgramVar> liveVariables,
-			UnmodifiableTransFormula weakestPreconditionOfLastTransition, boolean useWeakestPrecondition,
+			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locations, transitions, precondition,
 				postcondition, startLocation, errorLocation);
@@ -234,7 +234,7 @@ public final class CFGInvariantsGenerator {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			Map<BoogieIcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, patterns, predicates, smtVars2ProgramVars, 
 					startLocation, errorLocation, locations, transitions,
-					weakestPreconditionOfLastTransition, useWeakestPrecondition, addWPToEeachDisjunct);
+					weakestPreconditionOfLastTwoTransitions, useWeakestPrecondition, addWPToEeachDisjunct);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
 			}
@@ -258,8 +258,8 @@ public final class CFGInvariantsGenerator {
 				patterns.put(location, processor.getInvariantPatternForLocation(location, round));
 			}
 			// add the weakest precondition of the last transition to each pattern
-			if (useWeakestPrecondition && weakestPreconditionOfLastTransition != null) {
-				addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTransition, addWPToEeachDisjunct);
+			if (useWeakestPrecondition && weakestPreconditionOfLastTwoTransitions != null) {
+				addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTwoTransitions, addWPToEeachDisjunct);
 			}
 			logService.info("[CFGInvariants] Built pattern map.");
 
@@ -311,10 +311,12 @@ public final class CFGInvariantsGenerator {
 	
 	private <IPT> void addWeakestPreconditinoOfLastTransitionToPatterns(final List<BoogieIcfgLocation> locations,
 			final IInvariantPatternProcessor<IPT> processor, final Map<BoogieIcfgLocation, IPT> patterns, 
-			UnmodifiableTransFormula weakestPreconditionOfLastTransition,
+			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions,
 			boolean addWPToEeachDisjunct) {
 		int numOfLocs = locations.size();
 		assert numOfLocs - 3 >= 0 : "There are not enough locations.";
+		assert weakestPreconditionOfLastTwoTransitions.length == 2 : "weakestPreconditionOfLastTwoTransitions "
+				+ "should contain exactly 2 TransFormulas";
 		// The weakest precondition of the last transition is added to the location 
 		// that is before the last trasition on the right-hand-side of the implication in the corresponding constraint  
 		IPT newPattern = null;
@@ -323,11 +325,11 @@ public final class CFGInvariantsGenerator {
 		IPT newPattern2 = null;
 		
 		if (addWPToEeachDisjunct) {
-			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTransition);
-			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTransition);
+			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[0]);
+			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[1]);
 		} else {
-			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTransition);
-			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTransition);
+			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[0]);
+			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[1]);
 		}
 				
 		// Put the new pattern into map
@@ -344,7 +346,7 @@ public final class CFGInvariantsGenerator {
 			final Map<BoogieIcfgLocation, IPT> patterns, final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, 
 			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions,
-			UnmodifiableTransFormula weakestPreconditionOfLastTransition, boolean useWeakestPrecondition,
+			UnmodifiableTransFormula weakestPreconditionOfLastTwoTransitions[], boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		// Start round
 		processor.startRound(round, false, null, true, varsFromUnsatCore);
@@ -369,8 +371,8 @@ public final class CFGInvariantsGenerator {
 		}
 		logService.info("Built (empty) pattern map");
 		// add the weakest precondition of the last transition to each pattern
-		if (useWeakestPrecondition && weakestPreconditionOfLastTransition != null) {
-			addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTransition,
+		if (useWeakestPrecondition && weakestPreconditionOfLastTwoTransitions != null) {
+			addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTwoTransitions,
 					addWPToEeachDisjunct);
 		}
 
@@ -389,7 +391,8 @@ public final class CFGInvariantsGenerator {
 			final Map<BoogieIcfgLocation, IPredicate> result = new HashMap<BoogieIcfgLocation, IPredicate>(
 					locations.size());
 			for (final BoogieIcfgLocation location : locations) {
-				result.put(location, processor.applyConfiguration(patterns.get(location)));
+				IPredicate p = processor.applyConfiguration(patterns.get(location));
+				result.put(location, p);
 			}
 			return result;
 		} else {

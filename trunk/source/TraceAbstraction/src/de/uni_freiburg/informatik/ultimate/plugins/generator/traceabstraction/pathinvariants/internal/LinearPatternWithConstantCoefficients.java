@@ -3,10 +3,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
@@ -26,12 +27,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
 	private Map<IProgramVar, AffineTerm> mProgramVars2ConstantCoefficients;
 	private Map<IProgramVar, Term> mProgramVars2TermVariables = null;
+	private AffineTerm mConstant = null;
+	private LinearInequality mLinearInequality = null;
+	private String mName = null;
 	
 	public LinearPatternWithConstantCoefficients(Script solver, Collection<IProgramVar> variables, String prefix, boolean strict,
-			Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients) {
+			Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients, AffineTerm constant) {
 		super.mFunctionGenerator = new AffineFunctionGenerator(solver, variables, prefix, true);
 		super.mStrictInequality = strict;
-		mProgramVars2ConstantCoefficients = programVarsToConstantCoefficients;		
+		mProgramVars2ConstantCoefficients = programVarsToConstantCoefficients;
+		mConstant = constant;
 	}
 	
 	@Override
@@ -39,11 +44,24 @@ public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
 		return Collections.emptyList();
 	}
 	
-	@Override
-	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
-		final LinearInequality inequality = super.mFunctionGenerator.generate(map, mProgramVars2ConstantCoefficients);
+	public void setName(String name) {
+		mName  = name;
+	}
+	
+	
+	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map, final Map<IProgramVar, Term> lastOccurrenceOfVars) {
+		Map<IProgramVar, Term> completeMap = new HashMap<>();
+		completeMap.putAll(map);
+		for (Entry<IProgramVar, Term> entry : lastOccurrenceOfVars.entrySet()) {
+			if (!map.containsKey(entry.getKey())) {
+				completeMap.put(entry.getKey(), entry.getValue());
+			}
+		}
+		final LinearInequality inequality = super.mFunctionGenerator.generate(completeMap, mProgramVars2ConstantCoefficients);
 		inequality.setStrict(super.mStrictInequality);
-		mProgramVars2TermVariables = map;
+		inequality.add(mConstant);
+		mProgramVars2TermVariables = completeMap;
+		mLinearInequality = inequality;
 		return inequality;
 	}
 	
@@ -55,7 +73,21 @@ public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
 				func.put(pv, mProgramVars2ConstantCoefficients.get(pv).getConstant().numerator());
 			}
 		}
-		func.setConstant(BigInteger.ZERO);
+		func.setConstant(mConstant.getConstant().numerator());
 		return func;
 	}
+
+	@Override
+	public String toString() {
+		if (mLinearInequality != null) {
+			if (mName != null) {
+				return mName + ": " + mLinearInequality.toString();
+			} else {
+				return mLinearInequality.toString();
+			}
+		}
+		return super.toString();
+	}
+	
+	
 }

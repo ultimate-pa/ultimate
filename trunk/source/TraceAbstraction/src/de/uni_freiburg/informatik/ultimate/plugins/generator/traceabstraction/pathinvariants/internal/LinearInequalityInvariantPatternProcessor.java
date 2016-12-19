@@ -388,14 +388,19 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<IProgramVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
 			final Collection<LinearInequality> mappedConjunct = new ArrayList<>(
 					conjunct.size());
 			for (final LinearPatternBase base : conjunct) {
-				mappedConjunct.add(base.getLinearInequality(mapping));
+				if (base instanceof LinearPatternWithConstantCoefficients) {
+					mappedConjunct.add(((LinearPatternWithConstantCoefficients)base).getLinearInequality(mapping, lastOccurrencesOfTermVariables));
+				} else {
+					mappedConjunct.add(base.getLinearInequality(mapping));
+				}
+				
 			}
 			result.add(mappedConjunct);
 		}
@@ -416,11 +421,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<IProgramVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
-				pattern, mapping);
+				pattern, mapping, lastOccurrencesOfTermVariables);
 		// 2. negate every LinearInequality, result is a cnf
 		final Collection<Collection<LinearInequality>> cnfAfterNegation = new ArrayList<>(
 				mappedPattern.size());
@@ -675,7 +680,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			conditionDNF.add(newList);
 		}
 		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(
-				pattern, primedMapping);
+				pattern, primedMapping, null);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -721,7 +726,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		final Collection<Collection<LinearInequality>> newConditionDNF = expandCnfToDnf(conditionCNF);
 
 		final Collection<Collection<LinearInequality>> PatternDNF = mapPattern(
-				pattern, primedMapping);
+				pattern, primedMapping, null);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : PatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -741,7 +746,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return term true iff the given predicate holds
 	 */
 	private Term buildPredicateTerm(
-			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
+			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate,
+			Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		final LinearTransition transition = mLinearizer.linearize(predicate.getTransition());
 		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
@@ -749,11 +755,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
-
+		
+		lastOccurrencesOfTermVariables.putAll(primedMapping);
+		
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
-				predicate.getInvStart(), unprimedMapping);
+				predicate.getInvStart(), unprimedMapping, lastOccurrencesOfTermVariables);
 		final Collection<Collection<LinearInequality>> endInvariantDNF = mapAndNegatePattern(
-				predicate.getInvEnd(), primedMapping);
+				predicate.getInvEnd(), primedMapping, lastOccurrencesOfTermVariables);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : endInvariantDNF) {
 			numberOfInequalities += conjunct.size();
@@ -820,9 +828,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern));
 		// Generate and assert term for post-condition
 		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern));
+		Map<IProgramVar, Term> lastOccurrencesOfTermVariables = new HashMap<>();
 		// Generate and assert terms for intermediate transitions
 		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
-			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate));
+			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, lastOccurrencesOfTermVariables));
 		}
 	}
 	/**
@@ -877,8 +886,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 					mEntryInvariantPattern));
 			mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition,
 					mExitInvariantPattern));
+			Map<IProgramVar, Term> lastOccurrencesOfTermVariables = new HashMap<>();
 			for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
-				mSolver.assertTerm(buildPredicateTerm(predicate));
+				mSolver.assertTerm(buildPredicateTerm(predicate, lastOccurrencesOfTermVariables));
 			}
 		} else {
 			generateAndAssertTerms(predicates);
@@ -1177,7 +1187,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				for (Term termVar : lineq.getVariables()) {
 					programVarsToConstantCoefficients.put(termVariables2ProgramVars.get(termVar), lineq.getCoefficient(termVar));
 				}
-				LinearPatternBase lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), programVarsToConstantCoefficients);
+				LinearPatternBase lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), 
+						programVarsToConstantCoefficients, lineq.getConstant());
+				
 				conjunctsFromTransFormula.add(lb);
 			}
 			result.add(conjunctsFromTransFormula);
