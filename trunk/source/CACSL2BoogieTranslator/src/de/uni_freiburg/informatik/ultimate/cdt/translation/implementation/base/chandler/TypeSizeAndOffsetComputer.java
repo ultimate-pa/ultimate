@@ -256,12 +256,12 @@ public class TypeSizeAndOffsetComputer {
  				final CType fieldType = cStruct.getFieldTypes()[i];
 
  				final Expression offset;
-// 				if (cStruct instanceof CUnion) {
-// 					offset = mExpressionTranslation.constructLiteralForIntegerType(loc, getSize_T(), BigInteger.ZERO);
-// 				} else {
+ 				if (cStruct instanceof CUnion) {
+ 					offset = mExpressionTranslation.constructLiteralForIntegerType(loc, getSize_T(), BigInteger.ZERO);
+ 				} else {
  					final SizeTValue sumOfPreceedingFields = (new SizeTValueAggregator_Add()).aggregate(loc, fieldTypeSizes);
  					offset = sumOfPreceedingFields.asExpression(loc);
-// 				}
+ 				}
  				
  				if (mPreferConstantsOverValues) {
  					final Expression fieldConstant = constructTypeSizeConstantForStructField(loc, cStruct, i);
@@ -279,11 +279,11 @@ public class TypeSizeAndOffsetComputer {
  			}
  			
  			final SizeTValueAggregator aggregator;
-// 			if (cStruct instanceof CUnion) {
-// 				aggregator = new SizeTValueAggregator_Max();
-// 			} else {
+ 			if (cStruct instanceof CUnion) {
+ 				aggregator = new SizeTValueAggregator_Max();
+ 			} else {
  				aggregator = new SizeTValueAggregator_Add();
-// 			}
+ 			}
  			return aggregator.aggregate(loc, fieldTypeSizes);
 		}
 		

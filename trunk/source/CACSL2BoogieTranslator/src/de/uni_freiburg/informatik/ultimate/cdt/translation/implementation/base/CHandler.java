@@ -3173,13 +3173,13 @@ public class CHandler implements ICHandler {
 			
 			builder.setLRVal(rightHandSideWithConversionsApplied);
 			
-			builder = assignorHavocUnionNeighbours(
-					main,
-					loc, 
-					rVal, 
-					unionFieldsToCType, 
-					rightHandSideWithConversionsApplied,
-					builder);
+//			builder = assignorHavocUnionNeighbours(
+//					main,
+//					loc, 
+//					rVal, 
+//					unionFieldsToCType, 
+//					rightHandSideWithConversionsApplied,
+//					builder);
 
 			return builder.build();
 		} else if (lrVal instanceof LocalLValue) {
