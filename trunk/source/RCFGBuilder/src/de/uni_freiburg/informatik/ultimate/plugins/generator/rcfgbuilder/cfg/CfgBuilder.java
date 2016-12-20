@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -662,6 +663,8 @@ public class CfgBuilder {
 				// transfer goto-loop annotations to the outgoing edges of child
 				for (final IcfgEdge out : child.getOutgoingEdges()) {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopEntryAnnotation.class);
+					// TODO: Where to put the LoopExitAnnotation
+					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
 				mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
@@ -686,6 +689,7 @@ public class CfgBuilder {
 					final CodeBlock edge = mCbf.copyCodeBlock((CodeBlock) grandchild, mother, target);
 					// transfer goto-loop annotations to the duplicated edges
 					ModelUtils.copyAnnotations(gotoEdge, edge, LoopEntryAnnotation.class);
+					ModelUtils.copyAnnotations(gotoEdge, edge, LoopExitAnnotation.class);
 					if (edge instanceof GotoEdge) {
 						mGotoEdges.add((GotoEdge) edge);
 					} else {

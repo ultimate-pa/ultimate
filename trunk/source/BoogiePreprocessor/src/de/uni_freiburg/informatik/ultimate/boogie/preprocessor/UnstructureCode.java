@@ -4,22 +4,22 @@
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation.LoopExitType;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -76,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  * unstructured Boogie-Code. Unstructured Boogie-Code is a sequence of Statements of the form: <quote>(Label+
  * (Assert|Assume|Assign|Havoc|Call)* (Goto|Return))+</quote> In other words, a sequence of basic blocks, each starting
  * with one or more labels followed by non-control statements and ended by a single Goto or Return statement.
- * 
+ *
  * @author Jochen Hoenicke
  * @author Christian Schilling
  * @author Matthias Heizmann
@@ -144,10 +146,10 @@ public class UnstructureCode extends BaseObserver {
 	private void unstructureBody(final Procedure proc) {
 		final Body body = proc.getBody();
 		/* Initialize member variables */
-		mFlatStatements = new LinkedList<Statement>();
+		mFlatStatements = new LinkedList<>();
 		mLabelNr = 0;
 		mReachable = true;
-		mBreakStack = new Stack<BreakInfo>();
+		mBreakStack = new Stack<>();
 		// TODO: Add label as "do not backtranslate"?
 		addLabel(new Label(proc.getLocation(), generateLabel()));
 
@@ -168,9 +170,10 @@ public class UnstructureCode extends BaseObserver {
 		/*
 		 * Check if we are inside a block and thus need to add a goto to this block
 		 */
-		// TODO Christian: add annotations? how?
 		if (mReachable && !mFlatStatements.isEmpty() && !(mFlatStatements.getLast() instanceof Label)) {
-			mFlatStatements.add(new GotoStatement(lab.getLocation(), new String[] { lab.getName() }));
+			final GotoStatement gotoStmt = new GotoStatement(lab.getLocation(), new String[] { lab.getName() });
+			ModelUtils.copyAnnotations(lab, gotoStmt);
+			mFlatStatements.add(gotoStmt);
 		}
 		mFlatStatements.add(lab);
 	}
@@ -178,7 +181,7 @@ public class UnstructureCode extends BaseObserver {
 	/**
 	 * The recursive function that converts a block (i.e. a procedure block or while block or then/else-block) into
 	 * unstructured code.
-	 * 
+	 *
 	 * @param block
 	 *            The sequence of statements in this block.
 	 */
@@ -239,7 +242,7 @@ public class UnstructureCode extends BaseObserver {
 	/**
 	 * Converts a single statement to unstructured code. This may produce many new flat statements for example if
 	 * statement is a while-loop.
-	 * 
+	 *
 	 * @param outer
 	 *            The BreakInfo of the current statement. Used for if-then and while which may implicitly jump to the
 	 *            end of the current statement.
@@ -263,7 +266,9 @@ public class UnstructureCode extends BaseObserver {
 			if (dest.destLabel == null) {
 				dest.destLabel = generateLabel();
 			}
-			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { dest.destLabel }));
+			final Statement newGotoStmt = new GotoStatement(origStmt.getLocation(), new String[] { dest.destLabel });
+			new LoopExitAnnotation(LoopExitType.BREAK).annotate(newGotoStmt);
+			postCreateStatement(origStmt, newGotoStmt);
 			mReachable = false;
 		} else if (origStmt instanceof WhileStatement) {
 			final WhileStatement stmt = (WhileStatement) origStmt;
@@ -282,10 +287,10 @@ public class UnstructureCode extends BaseObserver {
 
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
-			final ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
-					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
-					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn(),
-					stmt.getLocation().getOrigin(), true);
+			final ILocation loopLocation =
+					new BoogieLocation(stmt.getLocation().getFileName(), stmt.getLocation().getStartLine(),
+							stmt.getLocation().getEndLine(), stmt.getLocation().getStartColumn(),
+							stmt.getLocation().getEndColumn(), stmt.getLocation().getOrigin(), true);
 			addLabel(new Label(loopLocation, head));
 			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
@@ -316,10 +321,11 @@ public class UnstructureCode extends BaseObserver {
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done));
-				postCreateStatementFromCond(origStmt,
+				final AssumeStatement negatedCondStmt =
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
-						true);
+								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition()));
+				new LoopExitAnnotation(LoopExitType.WHILE).annotate(negatedCondStmt);
+				postCreateStatementFromCond(origStmt, negatedCondStmt, true);
 				mReachable = true;
 			}
 		} else if (origStmt instanceof IfStatement) {
@@ -404,12 +410,12 @@ public class UnstructureCode extends BaseObserver {
 	 * This class stores the information needed for breaking out of a block. Whenever a break to breakLabel is found, it
 	 * is replaced by a goto to destLabel. If destLabel was not set at this time a new unique label is produced. If
 	 * after analyzing a block destLabel is still not set, there is no break and the label does not need to be produced.
-	 * 
+	 *
 	 * @author hoenicke
-	 * 
+	 *
 	 */
 	private static final class BreakInfo {
-		Set<String> breakLabels = new HashSet<String>();
+		Set<String> breakLabels = new HashSet<>();
 		String destLabel;
 
 		void clear() {
