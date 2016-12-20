@@ -301,8 +301,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		// check if we are leaving a loop
-		if (mLoopDetector.isLeavingLoop(currentAction)
-				|| currentItem.isActiveLoopHead(mTransitionProvider.getTarget(currentAction))) {
+		if (currentItem.isActiveLoopHead(mTransitionProvider.getTarget(currentAction))) {
 			loopLeave(currentItem);
 		}
 	}
