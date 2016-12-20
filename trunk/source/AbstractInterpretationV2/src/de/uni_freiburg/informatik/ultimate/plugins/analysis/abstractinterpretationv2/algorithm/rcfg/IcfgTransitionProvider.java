@@ -73,6 +73,9 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 		}
 		final String proc = elem.getSucceedingProcedure();
 		final Set<?> errors = mIcfg.getProcedureErrorNodes().get(proc);
+		if (errors == null) {
+			return false;
+		}
 		return errors.contains(elem.getTarget());
 	}
 
