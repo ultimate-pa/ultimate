@@ -5,13 +5,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public interface IVPFactory<T extends IVPStateOrTfState> {
+public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
-	IVPStateOrTfStateBuilder<T> copy(T state);
+	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> copy(STATE state);
 
-	T getBottomState(Set<IProgramVar> variables);
+	STATE getBottomState(Set<IProgramVar> variables);
 
-	Set<VPNodeIdentifier> getFunctionNodesForArray(T resultState, VPArrayIdentifier firstArray);
+	Set<NODEID> getFunctionNodesForArray(STATE resultState, ARRAYID firstArray);
 
-	IVPStateOrTfStateBuilder<T> createEmptyStateBuilder(TransFormula tf); // TODO not so nice..
+	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createEmptyStateBuilder(TransFormula tf); // TODO not so nice..
 }

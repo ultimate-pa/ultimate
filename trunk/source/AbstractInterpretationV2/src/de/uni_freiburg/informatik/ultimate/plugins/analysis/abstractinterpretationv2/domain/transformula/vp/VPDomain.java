@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVar> {
 
-	private final VPPostOperator mPost;
+	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 

@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-public class VPTfState extends IVPStateOrTfState {
+public class VPTfState extends IVPStateOrTfState<VPNodeIdentifier, VPArrayIdentifier> {
 	
 	public VPTfState(
 			TransFormula tf,
@@ -47,19 +47,19 @@ public class VPTfState extends IVPStateOrTfState {
 		return false;
 	}
 
-	public EqGraphNode getEqGraphNode(Term term) {
+	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(Term term) {
 		TFEqGraphNode result = mTermToEqGraphNodeMap.get(term);
 		assert result != null;
 		return result;
 	}
 
 	@Override
-	public EqGraphNode getEqGraphNode(VPNodeIdentifier nodeIdentifier) {
+	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(VPNodeIdentifier nodeIdentifier) {
 		return getEqGraphNode(nodeIdentifier.getIdTerm());
 	}
 
 	@Override
-	public Set<EqGraphNode> getAllEqGraphNodes() {
+	public Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> getAllEqGraphNodes() {
 		return new HashSet<>(mTermToEqGraphNodeMap.values());
 	}
 

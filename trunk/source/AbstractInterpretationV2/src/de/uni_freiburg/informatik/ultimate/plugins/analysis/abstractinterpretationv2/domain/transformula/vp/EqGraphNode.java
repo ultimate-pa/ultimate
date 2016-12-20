@@ -48,23 +48,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
-public class EqGraphNode {
+public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
 	 */
-	public final VPNodeIdentifier nodeIdentifier;
-	private EqGraphNode representative;
-	private Set<EqGraphNode> reverseRepresentative;
-	private Set<EqGraphNode> ccpar;
-	private HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild;
+	public final NODEID nodeIdentifier;
+	private EqGraphNode<NODEID, ARRAYID> representative;
+	private Set<EqGraphNode<NODEID, ARRAYID>> reverseRepresentative;
+	private Set<EqGraphNode<NODEID, ARRAYID>> ccpar;
+	private HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild;
 
-	private Set<EqGraphNode> initCcpar;
-	private List<EqGraphNode> initCcchild;
+	private Set<EqGraphNode<NODEID, ARRAYID>> initCcpar;
+	private List<EqGraphNode<NODEID, ARRAYID>> initCcchild;
 
-	public EqGraphNode(EqNode eqNode) {
+	public EqGraphNode(NODEID eqNode) {
 		assert eqNode != null || this instanceof TFEqGraphNode;
-		this.nodeIdentifier = new VPNodeIdentifier(eqNode);
+//		this.nodeIdentifier = new VPNodeIdentifier(eqNode);
+		this.nodeIdentifier = eqNode;
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();
 		this.ccpar = new HashSet<>();
@@ -85,7 +86,7 @@ public class EqGraphNode {
 		initCcpar = Collections.unmodifiableSet(initCcpar);
 		
 		if (nodeIdentifier.isFunction()) {
-			VPArrayIdentifier arrayId = nodeIdentifier.getFunction();
+			ARRAYID arrayId = nodeIdentifier.getFunction();
 			assert this.ccchild.getImage(arrayId).size() == 1;
 			initCcchild = new ArrayList<>(this.ccchild.getImage(arrayId).iterator().next());
 			initCcchild = Collections.unmodifiableList(initCcchild);
@@ -107,32 +108,32 @@ public class EqGraphNode {
 		}
 	}	
 	
-	public EqGraphNode find() {
+	public EqGraphNode<NODEID, ARRAYID> find() {
 		if (this.getRepresentative().equals(this)) {
 			return this;
 		}
 		return this.getRepresentative().find();
 	}
 
-	static <T extends IVPStateOrTfState> void copyFields(
-			EqGraphNode source, EqGraphNode target, IVPStateOrTfStateBuilder<T> builder) {
+	static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> void copyFields(
+			EqGraphNode<NODEID, ARRAYID> source, EqGraphNode<NODEID, ARRAYID> target, IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		assert target.nodeIdentifier.equals(source.nodeIdentifier);
 		
 		target.setRepresentative(builder.getEqGraphNode(source.getRepresentative().nodeIdentifier));
 		
 		target.getReverseRepresentative().clear();
-		for (EqGraphNode reverseRe : source.getReverseRepresentative()) {
+		for (EqGraphNode<NODEID, ARRAYID> reverseRe : source.getReverseRepresentative()) {
 			target.getReverseRepresentative().add(builder.getEqGraphNode(reverseRe.nodeIdentifier));
 		}
 		target.getCcpar().clear();
-		for (EqGraphNode ccpar : source.getCcpar()) {
+		for (EqGraphNode<NODEID, ARRAYID> ccpar : source.getCcpar()) {
 			target.getCcpar().add(builder.getEqGraphNode(ccpar.nodeIdentifier));
 		}
 		
 		target.ccchild = new HashRelation<>();
-		for (VPArrayIdentifier arrayId : source.getCcchild().getDomain()) {
-			for (List<EqGraphNode> nodes : source.getCcchild().getImage(arrayId)) {
-				List<EqGraphNode> newList = nodes.stream()
+		for (ARRAYID arrayId : source.getCcchild().getDomain()) {
+			for (List<EqGraphNode<NODEID, ARRAYID>> nodes : source.getCcchild().getImage(arrayId)) {
+				List<EqGraphNode<NODEID, ARRAYID>> newList = nodes.stream()
 						.map(otherNode -> builder.getEqGraphNode(otherNode.nodeIdentifier))
 						.collect(Collectors.toList());
 				target.getCcchild().addPair(arrayId, newList);
@@ -140,62 +141,62 @@ public class EqGraphNode {
 		}
 	}
 
-	public EqGraphNode getRepresentative() {
+	public EqGraphNode<NODEID, ARRAYID> getRepresentative() {
 		return representative;
 	}
 
-	public void setRepresentative(EqGraphNode representative) {
+	public void setRepresentative(EqGraphNode<NODEID, ARRAYID> representative) {
 		this.representative = representative;
 		//TODO check
         // if (eqNodes are identical) then (graphnodes must be identical)
         assert this.representative.nodeIdentifier != this.nodeIdentifier || this.representative == this;
 	}
 
-	public Set<EqGraphNode> getReverseRepresentative() {
+	public Set<EqGraphNode<NODEID, ARRAYID>> getReverseRepresentative() {
 		return reverseRepresentative;
 	}
 
-	public void setReverseRepresentative(Set<EqGraphNode> reverseRepresentative) {
+	public void setReverseRepresentative(Set<EqGraphNode<NODEID, ARRAYID>> reverseRepresentative) {
 		this.reverseRepresentative = reverseRepresentative;
 	}
 
-	public void addToReverseRepresentative(EqGraphNode reverseRepresentative) {
+	public void addToReverseRepresentative(EqGraphNode<NODEID, ARRAYID> reverseRepresentative) {
 		this.reverseRepresentative.add(reverseRepresentative);
 	}
 
-	public Set<EqGraphNode> getCcpar() {
+	public Set<EqGraphNode<NODEID, ARRAYID>> getCcpar() {
 		return ccpar;
 	}
 
-	public void setCcpar(Set<EqGraphNode> ccpar) {
+	public void setCcpar(Set<EqGraphNode<NODEID, ARRAYID>> ccpar) {
 		this.ccpar = ccpar;
 	}
 
-	public void addToCcpar(EqGraphNode ccpar) {
+	public void addToCcpar(EqGraphNode<NODEID, ARRAYID> ccpar) {
 		this.ccpar.add(ccpar);
 	}
 	
-	public void addToCcpar(Set<EqGraphNode> ccpar) {
+	public void addToCcpar(Set<EqGraphNode<NODEID, ARRAYID>> ccpar) {
 		this.ccpar.addAll(ccpar);
 	}
 
-	public HashRelation<VPArrayIdentifier, List<EqGraphNode>> getCcchild() {
+	public HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> getCcchild() {
 		return ccchild;
 	}
 	
-	public void addToCcchild(VPArrayIdentifier pVorC, List<EqGraphNode> ccchild) {
+	public void addToCcchild(ARRAYID pVorC, List<EqGraphNode<NODEID, ARRAYID>> ccchild) {
 		this.ccchild.addPair(pVorC, ccchild);
 	}
 	
-	public Set<EqGraphNode> getInitCcpar() {
+	public Set<EqGraphNode<NODEID, ARRAYID>> getInitCcpar() {
 		return initCcpar;
 	}
 
-	public List<EqGraphNode> getInitCcchild() {
+	public List<EqGraphNode<NODEID, ARRAYID>> getInitCcchild() {
 		return initCcchild;
 	}
 
-	public void setInitCcchild(List<EqGraphNode> initCcchild) {
+	public void setInitCcchild(List<EqGraphNode<NODEID, ARRAYID>> initCcchild) {
 		this.initCcchild = initCcchild;
 	}
 
@@ -243,4 +244,5 @@ public class EqGraphNode {
 //	public void setCcchild(Map<Object, Object> newMap) {
 //		ccchild = newMap;
 //	}
+
 }

@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-public class VPNodeIdentifier {
+public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	
 	private final EqNode mEqNode;
 	private final Term mIdentifyingTerm;

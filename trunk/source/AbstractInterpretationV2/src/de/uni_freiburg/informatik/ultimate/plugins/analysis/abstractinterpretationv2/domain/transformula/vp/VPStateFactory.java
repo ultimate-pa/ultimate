@@ -41,14 +41,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implements IVPFactory<VPState<ACTION>> {
+public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implements IVPFactory<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
 	private final VPDomain<ACTION> mDomain;
 	private final Map<Set<IProgramVar>, VPStateBottom<ACTION>> mBottomStates = new HashMap<>();
 
 	public VPStateFactory(final VPDomain<ACTION> domain) {
 		mDomain = domain;
+	}
+
+	@Override
+	public IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst> createEmptyStateBuilder(final TransFormula tf) {
+		return createEmptyStateBuilder();
 	}
 
 	public VPStateBuilder<ACTION> createEmptyStateBuilder() {
@@ -59,18 +65,19 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 * When all EqGraphNodes for the VPState<ACTION> have been created, we can set their initCcpar and initCcchild
 		 * fields
 		 */
-		for (final EqGraphNode egn : builder.getEqNodeToEqGraphNodeMap().values()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : builder.getAllEqGraphNodes()) {
 			egn.setupNode();
 		}
 
 		/*
 		 * Generate disequality set for constants
 		 */
-		final Set<VPNodeIdentifier> literalSet = mDomain.getLiteralEqNodes().stream()
-				.map(eqNode -> new VPNodeIdentifier(eqNode)).collect(Collectors.toSet());
-		final Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqualitySet = new HashSet<>();
-		for (final VPNodeIdentifier node1 : literalSet) {
-			for (final VPNodeIdentifier node2 : literalSet) {
+//		final Set<VPNodeIdentifier> literalSet = mDomain.getLiteralEqNodes().stream()
+//				.map(eqNode -> new VPNodeIdentifier(eqNode)).collect(Collectors.toSet());
+		final Set<EqNode> literalSet = mDomain.getLiteralEqNodes();
+		final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
+		for (final EqNode node1 : literalSet) {
+			for (final EqNode node2 : literalSet) {
 				if (!node1.equals(node2)) {
 					disEqualitySet.add(new VPDomainSymmetricPair<>(node1, node2));
 				}
@@ -93,9 +100,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	public VPStateBottom<ACTION> getBottomState(final Set<IProgramVar> set) {
 		VPStateBottom<ACTION> result = mBottomStates.get(set);
 		if (result == null) {
-			final VPStateBottomBuilder<ACTION> builder = new VPStateBottomBuilder<>(mDomain);
-			builder.addVariables(set);
-			result = builder.build();
+//			final VPStateBottomBuilder<ACTION> builder = new VPStateBottomBuilder<>(mDomain);
+			result = new VPStateBottom<>(mDomain, set);
 			mBottomStates.put(set, result);
 		}
 		return result;
@@ -107,20 +113,21 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 	@Override
 	public VPStateBuilder<ACTION> copy(final VPState<ACTION> originalState) {
-		if (originalState.isBottom()) {
-			return new VPStateBottomBuilder<>(mDomain).setVars(originalState.getVariables());
-		}
+//		if (originalState.isBottom()) {
+//			return new VPStateBottomBuilder<>(mDomain).setVars(originalState.getVariables());
+//		}
+		assert !originalState.isBottom() : "no need to copy a bottom state, right?..";
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
 
 		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
-			final EqGraphNode newGraphNode = builder.getEqNodeToEqGraphNodeMap().get(eqNode);
-			final EqGraphNode oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
+			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
+			final EqGraphNode<EqNode, IProgramVarOrConst> oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode.copyFields(oldGraphNode, newGraphNode, builder);
 			assert !originalState.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
 
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : originalState.getDisEqualities()) {
+		for (final VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualities()) {
 			builder.addDisEquality(pair);
 			assert !originalState.isTop() || pair.mFst.isLiteral()
 					&& pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
@@ -185,7 +192,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1);
 				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2);
 				if (tfState.areUnEqual(id1, id2)) {
-					builder.addDisEquality(id1, id2);
+					builder.addDisEquality(eqNodeForOutVar1, eqNodeForOutVar2);
 					builder.setIsTop(false);
 				}
 			}
@@ -210,7 +217,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1);
 				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2);
 				if (tfState.areEqual(id1, id2)) {
-					resultStates = VPFactoryHelpers.addEquality(id1, id2, resultStates, this);
+					resultStates = VPFactoryHelpers.addEquality(eqNodeForOutVar1, eqNodeForOutVar2, resultStates, this);
 					builder.setIsTop(false);
 				}
 			}
@@ -221,23 +228,18 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	}
 
 	@Override
-	public Set<VPNodeIdentifier> getFunctionNodesForArray(final VPState<ACTION> state,
-			final VPArrayIdentifier firstArray) {
+	public Set<EqNode> getFunctionNodesForArray(final VPState<ACTION> state,
+			final IProgramVarOrConst firstArray) {
 		return getFunctionNodesForArray(firstArray);
 	}
 
-	public Set<VPNodeIdentifier> getFunctionNodesForArray(final VPArrayIdentifier firstArray) {
-		assert firstArray.mPvoc != null;
-		final Set<EqFunctionNode> image = mDomain.getArrayIdToEqFnNodeMap().getImage(firstArray.mPvoc);
-		return image.stream().map(node -> new VPNodeIdentifier(node)).collect(Collectors.toSet());
+	public Set<EqNode> getFunctionNodesForArray(final IProgramVarOrConst firstArray) {
+		final Set<EqFunctionNode> image = mDomain.getArrayIdToEqFnNodeMap().getImage(firstArray);
+		return image.stream().map(node -> (EqNode) node).collect(Collectors.toSet());
 	}
 
 	public VPState<ACTION> disjoinAll(final Set<VPState<ACTION>> statesForCurrentEc) {
 		return VPFactoryHelpers.disjoinAll(statesForCurrentEc, this);
 	}
 
-	@Override
-	public IVPStateOrTfStateBuilder<VPState<ACTION>> createEmptyStateBuilder(final TransFormula tf) {
-		return createEmptyStateBuilder();
-	}
 }

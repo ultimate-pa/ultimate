@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -40,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz
  *
  */
-public abstract class EqNode {
+public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
 	public abstract Term getTerm(ManagedScript s) ;
 

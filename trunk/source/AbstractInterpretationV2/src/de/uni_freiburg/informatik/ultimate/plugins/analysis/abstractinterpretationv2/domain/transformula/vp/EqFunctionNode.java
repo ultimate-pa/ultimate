@@ -55,6 +55,7 @@ public class EqFunctionNode extends EqNode {
 		this.args = args;
 	}
 	
+	@Override
 	public IProgramVarOrConst getFunction() {
 		return function;
 	}
@@ -114,6 +115,11 @@ public class EqFunctionNode extends EqNode {
 	public boolean isLiteral() {
 		// a function node is never a literal
 		return false;
+	}
+
+	@Override
+	public boolean isFunction() {
+		return true;
 	}
 	
 }

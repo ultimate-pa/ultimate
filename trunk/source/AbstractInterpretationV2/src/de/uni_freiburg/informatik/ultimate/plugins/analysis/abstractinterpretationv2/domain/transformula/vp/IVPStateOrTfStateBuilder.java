@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,9 +9,9 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
+public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
-	protected final Set<VPDomainSymmetricPair<VPNodeIdentifier>> mDisEqualitySet = new HashSet<>();
+	protected final Set<VPDomainSymmetricPair<NODEID>> mDisEqualitySet = new HashSet<>();
 
 	protected final Set<IProgramVar> mVars = new HashSet<>();
 	
@@ -18,11 +19,13 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 	
 	protected boolean mIsTop;
 	
-	abstract EqGraphNode getEqGraphNode(VPNodeIdentifier i2);
+	abstract EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID i2);
+	
+	abstract Collection<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes();
 
 	abstract T build();
 	
-	IVPStateOrTfStateBuilder<T> setIsTop(boolean b) {
+	IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> setIsTop(boolean b) {
 		mIsTop = b;
 		return this;
 	}
@@ -48,7 +51,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 		 * @param node1
 		 * @param node2
 		 */
-		protected void union(final EqGraphNode node1, final EqGraphNode node2) {
+		protected void union(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
 	
 //			final EqGraphNode graphNode1Find = find(node1);
 //			final EqGraphNode graphNode2Find = find(node2);
@@ -57,18 +60,18 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 				node2.find().addToReverseRepresentative(node1.find());
 				node1.find().setRepresentative(node2.find());
 				node2.find().addToCcpar(node1.find().getCcpar());
-				for (final Entry<VPArrayIdentifier, List<EqGraphNode>> entry : node1.find().getCcchild().entrySet()) {
+				for (final Entry<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> entry : node1.find().getCcchild().entrySet()) {
 					node2.find().getCcchild().addPair(entry.getKey(), entry.getValue());
 				}
 				
 				/*
 				 * Because of the change of representative, the disequality set also need to be updated.
 				 */
-				Set<VPDomainSymmetricPair<VPNodeIdentifier>> copyOfDisEqSet = new HashSet<>(mDisEqualitySet);
-				for (VPDomainSymmetricPair<VPNodeIdentifier> pair : copyOfDisEqSet) {
+				Set<VPDomainSymmetricPair<NODEID>> copyOfDisEqSet = new HashSet<>(mDisEqualitySet);
+				for (VPDomainSymmetricPair<NODEID> pair : copyOfDisEqSet) {
 					if (pair.contains(node1.find().nodeIdentifier)) {
-						VPNodeIdentifier first = pair.getFirst();
-						VPNodeIdentifier second = pair.getSecond();
+						NODEID first = pair.getFirst();
+						NODEID second = pair.getSecond();
 						
 						/*
 						 * TODO check: If both nodes in pair are constant, ignore it.
@@ -80,10 +83,10 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 						mDisEqualitySet.remove(pair);
 						if (first.equals(node1.find().nodeIdentifier)) {
 							mDisEqualitySet.add(
-									new VPDomainSymmetricPair<VPNodeIdentifier>(node1.find().nodeIdentifier, second));
+									new VPDomainSymmetricPair<NODEID>(node1.find().nodeIdentifier, second));
 						} else {
 							mDisEqualitySet.add(
-									new VPDomainSymmetricPair<VPNodeIdentifier>(first, node2.find().nodeIdentifier));
+									new VPDomainSymmetricPair<NODEID>(first, node2.find().nodeIdentifier));
 						}
 					}
 				}
@@ -134,15 +137,16 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 		}
 	}
 	
-	public void addDisEquality(VPNodeIdentifier id1, VPNodeIdentifier id2) {
-		mDisEqualitySet.add(new VPDomainSymmetricPair<VPNodeIdentifier>(id1, id2));
+	public void addDisEquality(NODEID id1, NODEID id2) {
+		assert !id1.equals(id2);
+		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(id1, id2));
 	}
 
-	public void addDisEquality(VPDomainSymmetricPair<VPNodeIdentifier> newDisequality) {
+	public void addDisEquality(VPDomainSymmetricPair<NODEID> newDisequality) {
 		mDisEqualitySet.add(newDisequality);
 	}
 
-	public void addDisEqualites(Set<VPDomainSymmetricPair<VPNodeIdentifier>> newDisequalities) {
+	public void addDisEqualites(Set<VPDomainSymmetricPair<NODEID>> newDisequalities) {
 		mDisEqualitySet.addAll(newDisequalities);
 	}
 
@@ -157,7 +161,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState> {
 	 */
 	boolean checkContradiction() {
 
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> disEqPair : mDisEqualitySet) {
+		for (final VPDomainSymmetricPair<NODEID> disEqPair : mDisEqualitySet) {
 			if (getEqGraphNode(disEqPair.getFirst()).find()
 					.equals(getEqGraphNode(disEqPair.getSecond()).find())) {
 				return true;

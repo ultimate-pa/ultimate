@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public class TFEqGraphNode extends EqGraphNode {
+public class TFEqGraphNode extends EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> {
 
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
@@ -14,7 +14,7 @@ public class TFEqGraphNode extends EqGraphNode {
 
 	public TFEqGraphNode(final EqNode eqNode, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Term term) {
-		super(eqNode);
+		super(new VPNodeIdentifier(eqNode));
 		mInVars = inVars;
 		mOutVars = outVars;
 		mTerm = term;

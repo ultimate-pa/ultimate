@@ -407,8 +407,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 				// TODO: fallback, think through
 				final Set<VPState<ACTION>> newStates =
-						VPFactoryHelpers.addEquality(new VPNodeIdentifier(pair.getFirst()),
-								new VPNodeIdentifier(pair.getSecond()), resultState, mDomain.getVpStateFactory());
+						VPFactoryHelpers.addEquality(pair.getFirst(),
+								pair.getSecond(), resultState, mDomain.getVpStateFactory());
 				resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 			}
 			final Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = extractDisequalitiesWithGlobals(callParam,
@@ -419,8 +419,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				// pair.getFirst(), pair.getSecond(), resultStates));
 				// TODO: fallback, think through
 				final Set<VPState<ACTION>> newStates =
-						VPFactoryHelpers.addDisEquality(new VPNodeIdentifier(pair.getFirst()),
-								new VPNodeIdentifier(pair.getSecond()), resultState, mDomain.getVpStateFactory());
+						VPFactoryHelpers.addDisEquality(pair.getFirst(),
+								pair.getSecond(), resultState, mDomain.getVpStateFactory());
 				resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 			}
 

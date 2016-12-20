@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -51,24 +52,27 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
-public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPStateOrTfState
+public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPStateOrTfState<EqNode, IProgramVarOrConst>
 		implements IAbstractState<VPState<ACTION>, ACTION, IProgramVar> {
 
 	private static final String TERM_FUNC_NAME_AND = "and";
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
 
-	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
 	private final VPDomain<ACTION> mDomain;
-	private final ManagedScript mScript;
+	final private ManagedScript mScript;
 	private Term mTerm;
+	final private VPDomainPreanalysis mPreAnalysis;
+	final private VPStateFactory<ACTION> mFactory;
 
 	/**
 	 * Constructor for bottom state only.
 	 *
 	 * @param domain
 	 */
+//	VPState(final ManagedScript script, final VPDomainPreanalysis preAnalysis, final VPStateFactory<ACTION> factory,  final Set<IProgramVar> vars) {
 	VPState(final VPDomain<ACTION> domain, final Set<IProgramVar> vars) {
 		this(Collections.emptyMap(), Collections.emptySet(), vars, domain, false);
 	}
@@ -76,15 +80,22 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	/*
 	 * Constructor to be used by VPStateFactory.createTopState() only.
 	 */
-	VPState(final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			final Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqualitySet, final Set<IProgramVar> vars,
-			final VPDomain<ACTION> domain, final boolean isTop) {
+	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
+			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, 
+			final Set<IProgramVar> vars,
+			final VPDomain<ACTION> domain, 
+//			final ManagedScript script,
+//			final VPDomainPreanalysis preAnalysis,
+//			final VPStateFactory<ACTION> factory,
+			final boolean isTop) {
 		super(disEqualitySet, isTop, vars);
 		// mVars = Collections.unmodifiableSet(vars);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		// mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
+		mPreAnalysis = mDomain.getPreAnalysis();
+		mFactory = mDomain.getVpStateFactory();
 		// mIsTop = isTop;
 
 		constructTerm();
@@ -93,18 +104,18 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	private boolean sanityCheck() {
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mFst.getEqNode())) {
+		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
+			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mFst)) {
 				return false;
 			}
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mSnd.getEqNode())) {
+			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.mSnd)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+	public Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> getEqNodeToEqGraphNodeMap() {
 		return mEqNodeToEqGraphNodeMap;
 	}
 
@@ -113,7 +124,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mDomain.getVpStateFactory().copy(this);
+		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.addVariable(variable);
 		return copy.build();
 	}
@@ -123,7 +134,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mDomain.getVpStateFactory().copy(this);
+		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.addVariables(variables);
 		return copy.build();
 	}
@@ -133,7 +144,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mDomain.getVpStateFactory().copy(this);
+		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVariable(variable);
 		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable),
 		// copy.build());
@@ -146,7 +157,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mDomain.getVpStateFactory().copy(this);
+		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVariables(variables);
 		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
 		final VPState<ACTION> result = copy.build();
@@ -173,11 +184,11 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (this.isBottom() || dominator.isBottom()) {
 			final Set<IProgramVar> newVars = new HashSet<>(mVars);
 			newVars.addAll(dominator.mVars);
-			final VPState<ACTION> resultState = new VPStateBottomBuilder<>(mDomain).setVars(newVars).build();
+			final VPState<ACTION> resultState = mFactory.getBottomState(newVars);
 			return resultState;
 		}
 
-		final VPStateBuilder<ACTION> builder = mDomain.getVpStateFactory().copy(dominator);
+		final VPStateBuilder<ACTION> builder = mFactory.copy(dominator);
 
 		builder.addVariables(mVars);
 
@@ -194,7 +205,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 				continue;
 			}
 
-			final EqNode nodeFromVar = mDomain.getPreAnalysis().getEqNode(var.getTerm(), Collections.emptyMap());
+			final EqNode nodeFromVar = mPreAnalysis.getEqNode(var.getTerm(), Collections.emptyMap());
 
 			// TODO inefficient.. (we only need edges from the tree but add the clique..)
 			final Set<EqNode> equalEqNodes = this.getEquivalentEqNodes(nodeFromVar);
@@ -208,9 +219,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 				// }
 				// resultStates.addAll(newStates);
 				// TODO: this disjoinAll-strategy is a fallback essentially --> is there something better??
-				final Set<VPState<ACTION>> states = VPFactoryHelpers.addEquality(new VPNodeIdentifier(nodeFromVar),
-						new VPNodeIdentifier(equalEqNode), resultState, mDomain.getVpStateFactory());
-				resultState = VPFactoryHelpers.disjoinAll(states, mDomain.getVpStateFactory());
+				final Set<VPState<ACTION>> states = VPFactoryHelpers.addEquality(nodeFromVar,
+						equalEqNode, resultState, mFactory);
+				resultState = VPFactoryHelpers.disjoinAll(states, mFactory);
 			}
 
 			// TODO: inefficient, again, but we have to do this also for the otherwise implicit disequalites with
@@ -223,9 +234,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 					// resultStates);
 					// resultStates.addAll(newStates);
 					final Set<VPState<ACTION>> states =
-							VPFactoryHelpers.addDisEquality(new VPNodeIdentifier(nodeFromVar),
-									new VPNodeIdentifier(unEqualNode), resultState, mDomain.getVpStateFactory());
-					resultState = VPFactoryHelpers.disjoinAll(states, mDomain.getVpStateFactory());
+							VPFactoryHelpers.addDisEquality(nodeFromVar,
+									unEqualNode, resultState, mFactory);
+					resultState = VPFactoryHelpers.disjoinAll(states, mFactory);
 				}
 			}
 		}
@@ -334,21 +345,21 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	private void constructTerm() {
 
-		final Term trueTerm = mDomain.getManagedScript().getScript().term(TERM_TRUE);
+		mScript.lock(this);
+		final Term trueTerm = mScript.term(this, TERM_TRUE);
 
 		Term disEqualityFirst;
 		Term disEqualitySecond;
 		final Set<Term> distinctTermSet = new HashSet<>();
 		Term disEquality;
 
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
+		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
 			disEqualityFirst = pair.getFirst().getTerm(mScript);
 			disEqualitySecond = pair.getSecond().getTerm(mScript);
-			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
+			distinctTermSet.add(mScript.term(this, TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
 					disEqualitySecond));
 		}
 
-		mScript.lock(this);
 
 		if (distinctTermSet.isEmpty()) {
 			disEquality = trueTerm;
@@ -364,21 +375,21 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<Term> equalityTermSet = new HashSet<>();
 		Term equality;
 
-		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
 				equalityFirst = graphNode.nodeIdentifier.getTerm(mScript);
 				equalitySecond = graphNode.getRepresentative().nodeIdentifier.getTerm(mScript);
-				equalityTermSet.add(mDomain.getManagedScript().getScript().term("=", equalityFirst, equalitySecond));
+				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
 			}
 		}
 
 		if (equalityTermSet.isEmpty()) {
 			equality = trueTerm;
 		} else if (equalityTermSet.size() == 1) {
-			equality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND,
+			equality = mScript.term(this, TERM_FUNC_NAME_AND,
 					equalityTermSet.iterator().next(), trueTerm);
 		} else {
-			equality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND,
+			equality = mScript.term(this, TERM_FUNC_NAME_AND,
 					equalityTermSet.toArray(new Term[equalityTermSet.size()]));
 		}
 
@@ -390,9 +401,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	public Set<EqNode> getEquivalenceRepresentatives() {
 		final Set<EqNode> result = new HashSet<>();
-		for (final EqGraphNode egn : mEqNodeToEqGraphNodeMap.values()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.getRepresentative() == egn) {
-				result.add(egn.nodeIdentifier.getEqNode());
+				result.add(egn.nodeIdentifier);
 			}
 		}
 		return result;
@@ -408,21 +419,21 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (node == null) {
 			return Collections.emptySet();
 		}
-		final EqGraphNode nodeGraphNode = mEqNodeToEqGraphNodeMap.get(node);
+		final EqGraphNode<EqNode, IProgramVarOrConst> nodeGraphNode = mEqNodeToEqGraphNodeMap.get(node);
 		final Set<EqNode> result = new HashSet<>();
-		for (final EqGraphNode egn : mEqNodeToEqGraphNodeMap.values()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.find() == nodeGraphNode.find()) {
-				result.add(egn.nodeIdentifier.getEqNode());
+				result.add(egn.nodeIdentifier);
 			}
 		}
 		return result;
 	}
 
-	public VPDomain<ACTION> getDomain() {
-		return mDomain;
-	}
+//	public VPDomain<ACTION> getDomain() {
+//		return mDomain;
+//	}
 
-	public boolean mayEqual(final VPNodeIdentifier accessingNode1, final VPNodeIdentifier accessingNode2) {
+	public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
 		return accessingNode1 == accessingNode2 || !getDisEqualities()
 				.contains(new VPDomainSymmetricPair<>(find(accessingNode1), find(accessingNode2)));
 	}
@@ -434,32 +445,32 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	public Set<EqNode> getUnequalNodes(final EqNode callParamNode) {
 		final Set<EqNode> result = new HashSet<>();
 
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : getDisEqualities()) {
-			if (pair.contains(new VPNodeIdentifier(callParamNode))) {
-				result.add(pair.getOther(new VPNodeIdentifier(callParamNode)).getEqNode());
+		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
+			if (pair.contains(callParamNode)) {
+				result.add(pair.getOther(callParamNode));
 			}
 		}
 		return result;
 	}
 
 	@Override
-	public EqGraphNode getEqGraphNode(final VPNodeIdentifier nodeIdentifier) {
-		return mEqNodeToEqGraphNodeMap.get(nodeIdentifier.getEqNode());
+	public EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode nodeIdentifier) {
+		return mEqNodeToEqGraphNodeMap.get(nodeIdentifier);
 	}
 
 	@Override
-	public Set<EqGraphNode> getAllEqGraphNodes() {
+	public Set<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
 		return new HashSet<>(mEqNodeToEqGraphNodeMap.values());
 	}
 
 	@Override
-	public VPNodeIdentifier find(final VPNodeIdentifier id) {
-		return mEqNodeToEqGraphNodeMap.get(id.getEqNode()).find().nodeIdentifier;
+	public EqNode find(final EqNode id) {
+		return mEqNodeToEqGraphNodeMap.get(id).find().nodeIdentifier;
 	}
 
-	public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
-		return mayEqual(new VPNodeIdentifier(accessingNode1), new VPNodeIdentifier(accessingNode2));
-	}
+//	public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
+//		return mayEqual(new VPNodeIdentifier(accessingNode1), new VPNodeIdentifier(accessingNode2));
+//	}
 
 	@Override
 	public int hashCode() {

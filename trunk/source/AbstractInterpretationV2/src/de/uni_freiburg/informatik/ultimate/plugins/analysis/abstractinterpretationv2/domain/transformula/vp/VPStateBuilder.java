@@ -12,17 +12,18 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
-		extends IVPStateOrTfStateBuilder<VPState<ACTION>> {
+		extends IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
 	protected Set<IProgramVar> mVars;
 	protected final VPDomain<ACTION> mDomain;
 	protected boolean mIsTop;
 	protected EqGraph mEqGraph;
 
-	private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	private Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
 	public VPStateBuilder(final VPDomain<ACTION> domain) {
 		mDomain = domain;
@@ -42,33 +43,33 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		/*
 		 * Create fresh EqGraphNodes from EqNodes.
 		 */
-		final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
+		final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap = new HashMap<>();
 		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
 		}
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 	}
 
-	private EqGraphNode getOrConstructEqGraphNode(final EqNode eqNode,
-			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
+	private EqGraphNode<EqNode, IProgramVarOrConst> getOrConstructEqGraphNode(final EqNode eqNode,
+			final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNode) {
 
 		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
 			return eqNodeToEqGraphNode.get(eqNode);
 		}
 
-		final EqGraphNode graphNode = new EqGraphNode(eqNode);
-		final List<EqGraphNode> argNodes = new ArrayList<>();
+		final EqGraphNode<EqNode, IProgramVarOrConst> graphNode = new EqGraphNode(eqNode);
+		final List<EqGraphNode<EqNode, IProgramVarOrConst>> argNodes = new ArrayList<>();
 
 		if (eqNode instanceof EqFunctionNode) {
 
 			for (final EqNode arg : ((EqFunctionNode) eqNode).getArgs()) {
-				final EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
+				final EqGraphNode<EqNode, IProgramVarOrConst> argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
 				// argNode.addToInitCcpar(graphNode);
 				argNode.addToCcpar(graphNode);
 				argNodes.add(argNode);
 			}
 			// graphNode.addToInitCcchild(argNodes);
-			graphNode.getCcchild().addPair(new VPArrayIdentifier(((EqFunctionNode) eqNode).getFunction()), argNodes);
+			graphNode.getCcchild().addPair(eqNode.getFunction(), argNodes);
 		}
 		eqNodeToEqGraphNode.put(eqNode, graphNode);
 		return graphNode;
@@ -79,7 +80,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		return this;
 	}
 
-	public VPStateBuilder<ACTION> setEqGraphNodes(final Map<EqNode, EqGraphNode> map) {
+	public VPStateBuilder<ACTION> setEqGraphNodes(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> map) {
 		assert map != null;
 		mEqNodeToEqGraphNodeMap = map;
 		return this;
@@ -162,9 +163,9 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		mVars.remove(pv);
 	}
 
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return mEqNodeToEqGraphNodeMap;
-	}
+//	public Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> getEqNodeToEqGraphNodeMap() {
+//		return mEqNodeToEqGraphNodeMap;
+//	}
 
 	public void addVariables(final Collection<IProgramVar> variables) {
 		mVars.addAll(variables);
@@ -174,15 +175,20 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		mVars.removeAll(variables);
 	}
 
-	public HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild(final EqGraphNode representative1) {
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
 		return representative1.find().getCcchild();
 	}
 
 	@Override
-	EqGraphNode getEqGraphNode(final VPNodeIdentifier id) {
-		assert id.getEqNode() != null;
-		final EqGraphNode result = mEqNodeToEqGraphNodeMap.get(id.getEqNode());
+	EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode id) {
+		assert id != null;
+		final EqGraphNode<EqNode, IProgramVarOrConst> result = mEqNodeToEqGraphNodeMap.get(id);
 		assert result != null;
 		return result;
+	}
+
+	@Override
+	Collection<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
+		return mEqNodeToEqGraphNodeMap.values();
 	}
 }

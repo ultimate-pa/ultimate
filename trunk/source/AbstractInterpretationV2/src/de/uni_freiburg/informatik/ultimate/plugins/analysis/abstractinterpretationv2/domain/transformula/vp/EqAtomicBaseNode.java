@@ -80,4 +80,16 @@ public class EqAtomicBaseNode extends EqNode {
 	public Set<EqNonAtomicBaseNode> getDependentNonAtomicBaseNodes() {
 		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
+	
+	
+	@Override
+	public boolean isFunction() {
+		return false;
+	}
+	
+	@Override
+	public IProgramVarOrConst getFunction() {
+		assert false : "check for isFunction() first";
+		return null;
+	}
 }

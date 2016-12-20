@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public class VpTfStateFactory implements IVPFactory<VPTfState> {
+public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
 
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -70,9 +70,9 @@ public class VpTfStateFactory implements IVPFactory<VPTfState> {
 
 		final VPTransitionStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
 
-		for (final EqGraphNode egnInOldState : state.getAllEqGraphNodes()) {
+		for (final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
 			final VPNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
-			final EqGraphNode newGraphNode = builder.getEqGraphNode(nodeId);
+			final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> newGraphNode = builder.getEqGraphNode(nodeId);
 			assert newGraphNode != null;
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
 			assert !state.isTop() || newGraphNode.getRepresentative() == newGraphNode;
@@ -117,7 +117,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState> {
 			return builder.build();
 		}
 
-		final IVPStateOrTfStateBuilder<VPTfState> builder = createEmptyStateBuilder(tf);
+		final IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		builder.setIsTop(true);
 

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState> {
+public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
 	
 	private Set<IProgramVar> mVars = new HashSet<>();
 	
@@ -229,7 +230,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			
 			assert eqFunctionNode.getArgs().size() == arrayIndex.size();
 			
-			List<EqGraphNode> argNodes = new ArrayList<>();
+			List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> argNodes = new ArrayList<>();
 
 			for (int i = 0; i < ((EqFunctionNode) eqNode).getArgs().size(); i++) {
 				Term indexTerm = arrayIndex.get(i);
@@ -306,12 +307,18 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 
 
 	@Override
-	EqGraphNode getEqGraphNode(VPNodeIdentifier i) {
+	EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(VPNodeIdentifier i) {
 		assert i.getIdTerm() != null;
 		return mTermToEqGraphNodeMap.get(i.getIdTerm());
 	}
 
 	public void addVariables(Set<IProgramVar> variables) {
 		mVars.addAll(variables);
+	}
+
+
+	@Override
+	Collection<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> getAllEqGraphNodes() {
+		return mTermToEqGraphNodeMap.values();
 	}
 }

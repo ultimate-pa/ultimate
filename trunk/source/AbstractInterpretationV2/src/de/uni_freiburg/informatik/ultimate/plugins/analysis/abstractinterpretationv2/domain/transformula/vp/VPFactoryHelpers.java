@@ -24,28 +24,28 @@ public class VPFactoryHelpers {
 	 * @param representative2
 	 * @return
 	 */
-	public static <T extends IVPStateOrTfState> Set<T> propagateDisEqualites(
-			T originalStateCopy, 
-			EqGraphNode representative1, 
-			EqGraphNode representative2,
-			IVPFactory<T> factory) {
+	public static <STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<STATE> propagateDisEqualites(
+			STATE originalStateCopy, 
+			EqGraphNode<NODEID, ARRAYID> representative1, 
+			EqGraphNode<NODEID, ARRAYID> representative2,
+			IVPFactory<STATE, NODEID, ARRAYID> factory) {
 //		assert representative1.getRepresentative() == representative1
 //				&& representative2.getRepresentative() == representative2;
 //		assert !representative1.equals(representative2);
-		Set<T> result = new HashSet<>();
+		Set<STATE> result = new HashSet<>();
 		result.add(originalStateCopy);
 		
-		HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild1 = representative1.find().getCcchild();
-		HashRelation<VPArrayIdentifier, List<EqGraphNode>> ccchild2 = representative2.find().getCcchild();
+		HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild1 = representative1.find().getCcchild();
+		HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild2 = representative2.find().getCcchild();
 		
-		for (VPArrayIdentifier arrayId : ccchild1.getDomain()) {
-			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
-				for (List<EqGraphNode> list2 : ccchild2.getImage(arrayId)) {
-					Set<T> intermediateResult = new HashSet<>(result);
+		for (ARRAYID arrayId : ccchild1.getDomain()) {
+			for (List<EqGraphNode<NODEID, ARRAYID>> list1 : ccchild1.getImage(arrayId)) {
+				for (List<EqGraphNode<NODEID, ARRAYID>> list2 : ccchild2.getImage(arrayId)) {
+					Set<STATE> intermediateResult = new HashSet<>(result);
 					result = new HashSet<>();
 					for (int i = 0; i < list1.size(); i++) {
-						EqGraphNode c1 = list1.get(i);
-						EqGraphNode c2 = list2.get(i);
+						EqGraphNode<NODEID, ARRAYID> c1 = list1.get(i);
+						EqGraphNode<NODEID, ARRAYID> c2 = list2.get(i);
 						if (originalStateCopy.containsDisEquality(c1.find().nodeIdentifier, c2.find().nodeIdentifier)) {
 							continue;
 						}
@@ -62,8 +62,8 @@ public class VPFactoryHelpers {
 		return result;
 	}
 	
-	public static <T extends IVPStateOrTfState> Set<T>  addDisEquality(
-			VPNodeIdentifier n1, VPNodeIdentifier n2, Set<T> originalStates, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T>  addDisEquality(
+			NODEID n1, NODEID n2, Set<T> originalStates, IVPFactory<T, NODEID, ARRAYID> factory) {
 		Set<T> result = new HashSet<>();
 		
 		for (T originalState : originalStates) {
@@ -73,16 +73,16 @@ public class VPFactoryHelpers {
 		return result;
 	}
 	
-	public static <T extends IVPStateOrTfState> Set<T> 
-			addDisEquality(VPNodeIdentifier i1, VPNodeIdentifier i2, T originalState, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> 
+			addDisEquality(NODEID i1, NODEID i2, T originalState, IVPFactory<T, NODEID, ARRAYID> factory) {
 		if (originalState.isBottom()) {
 			return Collections.singleton(originalState);
 		}
 
-		IVPStateOrTfStateBuilder<T> builder = factory.copy(originalState);
+		IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory.copy(originalState);
 		
-		EqGraphNode gn1 = builder.getEqGraphNode(i1);
-		EqGraphNode gn2 = builder.getEqGraphNode(i2);
+		EqGraphNode<NODEID, ARRAYID> gn1 = builder.getEqGraphNode(i1);
+		EqGraphNode<NODEID, ARRAYID> gn2 = builder.getEqGraphNode(i2);
 
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
@@ -115,18 +115,18 @@ public class VPFactoryHelpers {
 	 * @param eqNode2
 	 * @return true if contradiction is met.
 	 */
-	public static <T extends IVPStateOrTfState> Set<T> 
-			addEquality(final VPNodeIdentifier eqNode1, 
-					final VPNodeIdentifier eqNode2, 
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> 
+			addEquality(final NODEID eqNode1, 
+					final NODEID eqNode2, 
 					final T originalState, 
-					IVPFactory<T> factory) {
+					IVPFactory<T, NODEID, ARRAYID> factory) {
 		if (originalState.isBottom()) {
 			return Collections.singleton(originalState);
 		}
-		IVPStateOrTfStateBuilder<T> builder = factory.copy(originalState);
+		IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory.copy(originalState);
 
-		EqGraphNode gn1 = builder.getEqGraphNode(eqNode1);
-		EqGraphNode gn2 = builder.getEqGraphNode(eqNode2);
+		EqGraphNode<NODEID, ARRAYID> gn1 = builder.getEqGraphNode(eqNode1);
+		EqGraphNode<NODEID, ARRAYID> gn2 = builder.getEqGraphNode(eqNode2);
 		if (gn1.find() == gn2.find()) {
 			// the given identifiers are already equal in the originalState
 			return Collections.singleton(originalState);
@@ -146,12 +146,12 @@ public class VPFactoryHelpers {
 		 * Propagate disequalites
 		 */
 		Set<T> resultStates = new HashSet<>();
-		for (VPNodeIdentifier other : originalState.getDisequalities(gn1.nodeIdentifier)) {
+		for (NODEID other : originalState.getDisequalities(gn1.nodeIdentifier)) {
 			resultStates.addAll(
 					propagateDisEqualites(
 							resultState, gn1, resultState.getEqGraphNode(other), factory));
 		}
-		for (VPNodeIdentifier other : originalState.getDisequalities(gn2.nodeIdentifier)) {
+		for (NODEID other : originalState.getDisequalities(gn2.nodeIdentifier)) {
 			resultStates.addAll(
 					propagateDisEqualites(
 							resultState, gn2, resultState.getEqGraphNode(other), factory));
@@ -165,11 +165,11 @@ public class VPFactoryHelpers {
 		return resultStates;
 	}
 
-	public static <T extends IVPStateOrTfState> Set<T> addEquality(
-			final VPNodeIdentifier eqNode1, 
-			final VPNodeIdentifier eqNode2, 
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> addEquality(
+			final NODEID eqNode1, 
+			final NODEID eqNode2, 
 			final Set<T> originalStates, 
-			IVPFactory<T> factory) {
+			IVPFactory<T, NODEID, ARRAYID> factory) {
 		Set<T> result = new HashSet<>();
 		
 		for (T originalState : originalStates) {
@@ -192,7 +192,7 @@ public class VPFactoryHelpers {
 	 * @param second
 	 * @return disjoinedState
 	 */
-	public static <T extends IVPStateOrTfState> T disjoin(final T first, final T second, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> T disjoin(final T first, final T second, IVPFactory<T, NODEID, ARRAYID> factory) {
 	
 		if (first.isTop()) {
 			return first;
@@ -207,13 +207,13 @@ public class VPFactoryHelpers {
 			return first;
 		}
 	
-		IVPStateOrTfStateBuilder<T> builder = 
+		IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = 
 				factory.createEmptyStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
 		
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection)
 		 */
-		Set<VPDomainSymmetricPair<VPNodeIdentifier>> newDisequalities = new HashSet<>(first.getDisEqualities());
+		Set<VPDomainSymmetricPair<NODEID>> newDisequalities = new HashSet<>(first.getDisEqualities());
 		newDisequalities.retainAll(second.getDisEqualities());
 		builder.addDisEqualites(newDisequalities);
 		if (!newDisequalities.isEmpty()) {
@@ -236,15 +236,15 @@ public class VPFactoryHelpers {
 		 *    to the result state
 		 */
 		T disjoinedState = builder.build();
-		for (final EqGraphNode firstGraphNode : first.getAllEqGraphNodes()) {
+		for (final EqGraphNode<NODEID, ARRAYID> firstGraphNode : first.getAllEqGraphNodes()) {
 			
 			if (firstGraphNode.getRepresentative() == firstGraphNode) {
 				// no edge
 				continue;
 			}
 	
-			EqGraphNode firstGraphNodeInSecondState = second.getEqGraphNode(firstGraphNode.nodeIdentifier);
-			EqGraphNode firstGraphNodeRepresentativeInSecondState = second.getEqGraphNode(
+			EqGraphNode<NODEID, ARRAYID> firstGraphNodeInSecondState = second.getEqGraphNode(firstGraphNode.nodeIdentifier);
+			EqGraphNode<NODEID, ARRAYID> firstGraphNodeRepresentativeInSecondState = second.getEqGraphNode(
 					firstGraphNode.getRepresentative().nodeIdentifier);
 			
 			if (firstGraphNodeInSecondState.find().equals(firstGraphNodeRepresentativeInSecondState)) {
@@ -294,7 +294,7 @@ public class VPFactoryHelpers {
 		return disjoinedState;
 	}
 
-	public static <T extends IVPStateOrTfState> T disjoinAll(Set<T> resultStates, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> T disjoinAll(Set<T> resultStates, IVPFactory<T, NODEID, ARRAYID> factory) {
 		return resultStates.stream().reduce((s1, s2) -> disjoin(s1,s2, factory)).get();
 	}
 	
@@ -308,7 +308,7 @@ public class VPFactoryHelpers {
 	 * @param second
 	 * @return conjoinedState
 	 */
-	public static <T extends IVPStateOrTfState> Set<T> conjoin(T first, T second, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoin(T first, T second, IVPFactory<T, NODEID, ARRAYID> factory) {
 		if (first.equals(second)) {
 			return Collections.singleton(first);
 		}
@@ -325,20 +325,20 @@ public class VPFactoryHelpers {
 			return Collections.singleton(first);
 		}
 
-		IVPStateOrTfStateBuilder<T> builder = factory.copy(first);
+		IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory.copy(first);
 		
 		builder.addDisEqualites(second.getDisEqualities());
 
 		T conjoinedState = builder.build();
 
 		Set<T> resultStates = new HashSet<>();
-		for (final EqGraphNode otherGraphNode : second.getAllEqGraphNodes()) {
+		for (final EqGraphNode<NODEID, ARRAYID> otherGraphNode : second.getAllEqGraphNodes()) {
 			if (otherGraphNode.getRepresentative().equals(otherGraphNode)) {
 				// no (outgoing) equality edge here..
 				continue;
 			}
-			VPNodeIdentifier conStateGraphNode = otherGraphNode.nodeIdentifier;
-			VPNodeIdentifier conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
+			NODEID conStateGraphNode = otherGraphNode.nodeIdentifier;
+			NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
 			resultStates.addAll(addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory));
 		}
 //		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
@@ -353,8 +353,8 @@ public class VPFactoryHelpers {
 	 * @param addEquality
 	 * @return
 	 */
-	public static <T extends IVPStateOrTfState> Set<T> conjoinAll(
-			Set<T> set1, Set<T> set2, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoinAll(
+			Set<T> set1, Set<T> set2, IVPFactory<T, NODEID, ARRAYID> factory) {
 		Set<T> resultStates = new HashSet<>();
 		
 		for (T state1 : set1) {
@@ -367,8 +367,8 @@ public class VPFactoryHelpers {
 		return resultStates;
 	}
 	
-	public static <T extends IVPStateOrTfState> Set<T> conjoinAll(
-			List<Set<T>> sets, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoinAll(
+			List<Set<T>> sets, IVPFactory<T, NODEID, ARRAYID> factory) {
 		Set<T> result = sets.stream().reduce((set1, set2) -> conjoinAll(set1, set2, factory)).get();
 		assert result != null;
 		return result;
@@ -382,27 +382,27 @@ public class VPFactoryHelpers {
 	 * @param firstArray
 	 * @param secondArray
 	 */
-	public static <T extends IVPStateOrTfState> Set<T> arrayEquality(
-			final VPArrayIdentifier firstArray, final VPArrayIdentifier secondArray, 
-			T originalState, IVPFactory<T> factory) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> arrayEquality(
+			final ARRAYID firstArray, final ARRAYID secondArray, 
+			T originalState, IVPFactory<T, NODEID, ARRAYID> factory) {
 		return arrayEqualityWithException(firstArray, secondArray, null, null, originalState, factory);
 	}
 	
-	public static <T extends IVPStateOrTfState> Set<T> arrayEqualityWithException(
-			VPArrayIdentifier firstArray,
-			VPArrayIdentifier secondArray, 
-			VPNodeIdentifier exceptionArrayNode, 
-			VPNodeIdentifier exceptionValueNode,
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> arrayEqualityWithException(
+			ARRAYID firstArray,
+			ARRAYID secondArray, 
+			NODEID exceptionArrayNode, 
+			NODEID exceptionValueNode,
 			T state, 
-			IVPFactory<T> factory) {
+			IVPFactory<T, NODEID, ARRAYID> factory) {
 		assert (exceptionArrayNode == null) == (exceptionValueNode == null);
 		T resultState = factory.copy(state).build();
 
 		Set<T> resultStates = new HashSet<>();
-		for (final VPNodeIdentifier fnNode1 : factory.getFunctionNodesForArray(resultState, firstArray)) {
-			for (final VPNodeIdentifier fnNode2 : factory.getFunctionNodesForArray(resultState, secondArray)) {
-				EqGraphNode gn1 = resultState.getEqGraphNode(fnNode1);
-				EqGraphNode gn2 = resultState.getEqGraphNode(fnNode2);
+		for (final NODEID fnNode1 : factory.getFunctionNodesForArray(resultState, firstArray)) {
+			for (final NODEID fnNode2 : factory.getFunctionNodesForArray(resultState, secondArray)) {
+				EqGraphNode<NODEID, ARRAYID> gn1 = resultState.getEqGraphNode(fnNode1);
+				EqGraphNode<NODEID, ARRAYID> gn2 = resultState.getEqGraphNode(fnNode2);
 				
 				if (fnNode1.equals(exceptionArrayNode) || fnNode2.equals(exceptionArrayNode)) {
 					// this arrayIndex is excepted -- we will set it to exceptionValueNode instead
@@ -439,15 +439,15 @@ public class VPFactoryHelpers {
 	 * @param fnNode2
 	 * @return
 	 */
-	public static boolean congruentIgnoreFunctionSymbol(final EqGraphNode fnNode1, final EqGraphNode fnNode2) {
+	public static <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
 		//		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
 		//		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
 		assert fnNode1.nodeIdentifier.isFunction();
 		assert fnNode2.nodeIdentifier.isFunction();
 	
 		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
-			final EqGraphNode fnNode1Arg = fnNode1.getInitCcchild().get(i);
-			final EqGraphNode fnNode2Arg = fnNode2.getInitCcchild().get(i);
+			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
+			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
 			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
 				return false;
 			}
