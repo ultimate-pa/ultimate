@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 
@@ -42,6 +43,13 @@ public class RcfgLoopDetector<ACTION extends IElement, LOCATION> implements ILoo
 	public boolean isEnteringLoop(final ACTION transition) {
 		assert transition != null;
 		final LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
+		return leannot != null;
+	}
+
+	@Override
+	public boolean isLeavingLoop(final ACTION transition) {
+		assert transition != null;
+		final LoopExitAnnotation leannot = LoopExitAnnotation.getAnnotation(transition);
 		return leannot != null;
 	}
 }

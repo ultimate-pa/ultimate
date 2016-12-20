@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION, EXPRESSION> {
-	
+
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
@@ -217,7 +217,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private AbstractMultiState<STATE, ACTION, VARDECL> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp) {
-		
+
 		final AbstractMultiState<STATE, ACTION, VARDECL> preState = currentItem.getPreState();
 		final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState = currentItem.getHierachicalPreState();
 		final ACTION currentAction = currentItem.getAction();
@@ -301,7 +301,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		// check if we are leaving a loop
-		if (currentItem.isActiveLoopHead(mTransitionProvider.getTarget(currentAction))) {
+		if (mLoopDetector.isLeavingLoop(currentAction)
+				|| currentItem.isActiveLoopHead(mTransitionProvider.getTarget(currentAction))) {
 			loopLeave(currentItem);
 		}
 	}
@@ -385,7 +386,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState,
 			final IAbstractStateBinaryOperator<STATE> wideningOp) {
-		
+
 		final ACTION currentAction = currentItem.getAction();
 
 		// check if we should widen at this location before adding new successors
