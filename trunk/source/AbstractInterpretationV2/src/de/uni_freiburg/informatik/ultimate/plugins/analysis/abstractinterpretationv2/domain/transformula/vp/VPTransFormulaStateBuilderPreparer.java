@@ -36,9 +36,9 @@ public class VPTransFormulaStateBuilderPreparer {
 	
 	VPDomainPreanalysis mPreAnalysis;
 
-	private final Collection<EqNode> mAllEqNodes;
-	private final Set<EqFunctionNode> mAllEqFunctionNodes;
-	private final Set<EqNode> mAllEqNonFunctionNodes;
+//	private final Collection<EqNode> mAllEqNodes;
+//	private final Set<EqFunctionNode> mAllEqFunctionNodes;
+//	private final Set<EqNode> mAllEqNonFunctionNodes;
 	private final Set<EqNode> mAllConstantEqNodes;
 	private final Map<TransFormula, VPTransitionStateBuilder> mTransFormulaToVPTfStateBuilder = 
 			new HashMap<>();
@@ -54,12 +54,12 @@ public class VPTransFormulaStateBuilderPreparer {
 				.filter(node -> node instanceof EqFunctionNode)
 				.map(node -> (EqFunctionNode) node)
 				.collect(Collectors.toSet());
-		HashSet<EqNode> allEqNonFunctionNodes = new HashSet<>(allEqNodes);
+//		HashSet<EqNode> allEqNonFunctionNodes = new HashSet<>(allEqNodes);
 		allEqFunctionNodes.removeAll(allEqFunctionNodes);
 
-		mAllEqNodes = Collections.unmodifiableCollection(allEqNodes);
-		mAllEqFunctionNodes = Collections.unmodifiableSet(allEqFunctionNodes);
-		mAllEqNonFunctionNodes = Collections.unmodifiableSet(allEqNonFunctionNodes);
+//		mAllEqNodes = Collections.unmodifiableCollection(allEqNodes);
+//		mAllEqFunctionNodes = Collections.unmodifiableSet(allEqFunctionNodes);
+//		mAllEqNonFunctionNodes = Collections.unmodifiableSet(allEqNonFunctionNodes);
 		
 		
 		Set<EqNode> allConstantEqNodes = 
@@ -125,6 +125,7 @@ public class VPTransFormulaStateBuilderPreparer {
 	private void handleTransFormula(TransFormula tf) {
 		VPTransitionStateBuilder vptsb = new VPTransitionStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
 		
+		assert vptsb.isTopConsistent();
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
 	
@@ -132,6 +133,7 @@ public class VPTransFormulaStateBuilderPreparer {
 	VPTransitionStateBuilder getVPTfStateBuilder(TransFormula tf) {
 		VPTransitionStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
 		assert result != null : "we should have a VPTransitionStateBuidler for every Transformula in the program";
+		assert result.isTopConsistent();
 		return result;
 	}
 

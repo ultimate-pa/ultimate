@@ -42,9 +42,11 @@ public class VPTfState extends IVPStateOrTfState<VPNodeIdentifier, VPArrayIdenti
 			Set<IProgramVar> vars) {
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
-		mTermToNodeId = termToNodeId;
-		mNodeIdToEqGraphNode = nodeIdToEqGraphNode;
-		mArrayIdToFunctionNodes = arrayIdToFunctionNodes;
+		mTermToNodeId = Collections.unmodifiableMap(termToNodeId);
+		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
+		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy();
+		
+		assert isTopConsistent();
 	}
 
 	private final TransFormula mTransFormula;

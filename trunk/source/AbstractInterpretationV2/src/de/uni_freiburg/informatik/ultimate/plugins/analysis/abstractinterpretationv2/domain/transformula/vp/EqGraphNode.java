@@ -139,6 +139,9 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 				target.getCcchild().addPair(arrayId, newList);
 			}
 		}
+		
+		
+		assert !builder.mIsTop || target.getRepresentative() == target;
 	}
 
 	public EqGraphNode<NODEID, ARRAYID> getRepresentative() {

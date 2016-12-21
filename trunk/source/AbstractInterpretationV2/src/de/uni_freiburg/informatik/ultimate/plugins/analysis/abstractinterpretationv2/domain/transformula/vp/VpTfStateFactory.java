@@ -71,6 +71,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		assert !state.isBottom();
 
 		final VPTransitionStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		builder.setIsTop(state.isTop());
 
 		for (final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
 			final VPNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
@@ -88,7 +89,6 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 		builder.addVars(new HashSet<>(state.getVariables()));
 
-		builder.setIsTop(state.isTop());
 
 //		assert builder.mVars.equals(state.getVariables());
 		return builder;
@@ -110,8 +110,11 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	@Override
 	public VPTransitionStateBuilder createEmptyStateBuilder(final TransFormula tf) {
 		 VPTransitionStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
-
-		 return new VPTransitionStateBuilder(vanillaBuilder);
+		 assert vanillaBuilder.isTopConsistent();
+		 
+		 VPTransitionStateBuilder result = new VPTransitionStateBuilder(vanillaBuilder);
+		 assert result.isTopConsistent();
+		 return result;
 	}
 
 	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
@@ -131,8 +134,11 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		builder.setIsTop(true);
 
 		for (final Entry<IProgramVar, TermVariable> inVar1 : tf.getInVars().entrySet()) {
+			if (inVar1.getKey().getTerm().getSort().isArraySort()) {
+				continue;
+			}
 			for (final Entry<IProgramVar, TermVariable> inVar2 : tf.getInVars().entrySet()) {
-				if (inVar1.getKey().getTerm().getSort().isArraySort()) {
+				if (inVar2.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
 
@@ -155,8 +161,11 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		resultStates.add(stateWithDisEqualitiesAdded);
 
 		for (final Entry<IProgramVar, TermVariable> inVar1 : tf.getInVars().entrySet()) {
+			if (inVar1.getKey().getTerm().getSort().isArraySort()) {
+				continue;
+			}
 			for (final Entry<IProgramVar, TermVariable> inVar2 : tf.getInVars().entrySet()) {
-				if (inVar1.getKey().getTerm().getSort().isArraySort()) {
+				if (inVar2.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
 				final VPNodeIdentifier id1 = builder.getNodeId(inVar1.getValue());

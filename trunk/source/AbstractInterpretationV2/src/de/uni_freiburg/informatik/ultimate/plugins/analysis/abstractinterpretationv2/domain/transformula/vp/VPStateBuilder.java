@@ -18,25 +18,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		extends IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
-	protected Set<IProgramVar> mVars;
 	protected final VPDomain<ACTION> mDomain;
-	protected boolean mIsTop;
-	protected EqGraph mEqGraph;
 
 	private Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
 	public VPStateBuilder(final VPDomain<ACTION> domain) {
 		mDomain = domain;
-		mEqGraph = new EqGraph();
 		createEqGraphNodes();
-		mVars = new HashSet<>();
 	}
 
 	protected VPStateBuilder(final VPDomain<ACTION> domain, final boolean dontCreateEqGraphNodes) {
 		assert dontCreateEqGraphNodes;
 		mDomain = domain;
-		mEqGraph = new EqGraph();
-		mVars = new HashSet<>();
 	}
 
 	private void createEqGraphNodes() {
@@ -73,11 +66,6 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 		eqNodeToEqGraphNode.put(eqNode, graphNode);
 		return graphNode;
-	}
-
-	public VPStateBuilder<ACTION> setVars(final Set<IProgramVar> vars) {
-		mVars = new HashSet<>(vars);
-		return this;
 	}
 
 	public VPStateBuilder<ACTION> setEqGraphNodes(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> map) {
@@ -155,25 +143,25 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	//// }
 	// }
 
-	public void addVariable(final IProgramVar pv) {
-		mVars.add(pv);
-	}
+//	public void addVariable(final IProgramVar pv) {
+//		mVars.add(pv);
+//	}
 
-	public void removeVariable(final IProgramVar pv) {
-		mVars.remove(pv);
-	}
+//	public void removeVariable(final IProgramVar pv) {
+//		mVars.remove(pv);
+//	}
 
 //	public Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> getEqNodeToEqGraphNodeMap() {
 //		return mEqNodeToEqGraphNodeMap;
 //	}
 
-	public void addVariables(final Collection<IProgramVar> variables) {
-		mVars.addAll(variables);
-	}
-
-	public void removeVariables(final Collection<IProgramVar> variables) {
-		mVars.removeAll(variables);
-	}
+//	public void addVariables(final Collection<IProgramVar> variables) {
+//		mVars.addAll(variables);
+//	}
+//
+//	public void removeVariables(final Collection<IProgramVar> variables) {
+//		mVars.removeAll(variables);
+//	}
 
 	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
 		return representative1.find().getCcchild();

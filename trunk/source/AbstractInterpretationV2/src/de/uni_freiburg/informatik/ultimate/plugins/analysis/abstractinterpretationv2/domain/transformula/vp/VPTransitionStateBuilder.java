@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -22,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
 	
@@ -48,6 +45,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> tfegn : getAllEqGraphNodes()) {
 			tfegn.setupNode();
 		}
+		assert isTopConsistent();
 	}
 
 	
@@ -56,13 +54,37 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	 * @param builder
 	 */
 	public VPTransitionStateBuilder(VPTransitionStateBuilder builder) {
+		super(builder);
+		assert builder.isTopConsistent();
+		mTransFormula = builder.mTransFormula;
 		mVars = new HashSet<>(builder.mVars);
+		// the nodeIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
 		mTermToNodeId = new HashMap<>(builder.mTermToNodeId);
-		mNodeIdToEqGraphNode = new HashMap<>(builder.mNodeIdToEqGraphNode);
 		mNonAuxVarNodeIds = builder.mNonAuxVarNodeIds.copy();
 		mAuxVarNodeIds = new HashMap<>(builder.mAuxVarNodeIds);
 		mArrayIdToFunctionNodes = builder.mArrayIdToFunctionNodes.copy();
-		mTransFormula = builder.mTransFormula;
+		
+		// nodes need to be deepcopied..
+		mNodeIdToEqGraphNode = new HashMap<>();
+		for (Entry<VPNodeIdentifier, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> en : builder.mNodeIdToEqGraphNode.entrySet()) {
+			EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState = en.getValue();
+			final VPNodeIdentifier nodeId = en.getKey();
+			final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> newGraphNode = 
+					new EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>(nodeId);
+			assert newGraphNode != null;
+			mNodeIdToEqGraphNode.put(nodeId, newGraphNode);
+			assert !builder.mIsTop || newGraphNode.getRepresentative() == newGraphNode;		
+		}
+
+		for (Entry<VPNodeIdentifier, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> en : builder.mNodeIdToEqGraphNode.entrySet()) {
+			EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState = en.getValue();
+			final VPNodeIdentifier nodeId = en.getKey();
+			final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> newGraphNode = 
+					this.getEqGraphNode(nodeId);
+			EqGraphNode.copyFields(egnInOldState, newGraphNode, this);
+		}
+
+		assert isTopConsistent();
 	}
 
 
@@ -185,6 +207,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		assert egn2 != null;
 		
 		merge(egn1, egn2);
+		assert isTopConsistent();
 	}
 	
 	private EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getOrConstructEqGraphNode(
@@ -286,6 +309,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		assert mArrayIdToFunctionNodes != null;
 		assert mDisEqualitySet != null;
 		assert mVars != null;
+		assert isTopConsistent();
 		return new VPTfState(
 				mTransFormula, 
 				mNodeIdToEqGraphNode,

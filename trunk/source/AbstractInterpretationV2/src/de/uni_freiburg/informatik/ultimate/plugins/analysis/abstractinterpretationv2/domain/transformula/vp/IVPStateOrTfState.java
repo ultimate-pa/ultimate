@@ -83,4 +83,22 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 	abstract public Set<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes();
 	
 	abstract public NODEID find(NODEID id);
+	
+	protected boolean isTopConsistent() {
+		if (!mIsTop) {
+			return true;
+		}
+		for (VPDomainSymmetricPair<NODEID> pair : mDisEqualitySet) {
+			if (!pair.mFst.isLiteral() || !pair.mSnd.isLiteral()) {
+				return false;
+			}
+		}
+		
+		for (EqGraphNode<NODEID, ARRAYID> egn : getAllEqGraphNodes()) {
+			if (egn.getRepresentative() != egn) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

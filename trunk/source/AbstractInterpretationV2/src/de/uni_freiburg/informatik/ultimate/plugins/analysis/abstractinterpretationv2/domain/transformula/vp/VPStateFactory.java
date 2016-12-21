@@ -89,7 +89,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 * The set of tracked variables (as exposed to the fixpointengine) is empty, initially.
 		 */
 		final Set<IProgramVar> vars = new HashSet<>();
-		builder.setVars(vars);
+		builder.addVars(vars);
 
 		builder.setIsTop(true);
 
@@ -108,7 +108,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	}
 
 	public VPState<ACTION> getTopState(final Set<IProgramVar> vars) {
-		return createEmptyStateBuilder().setVars(vars).build();
+		return createEmptyStateBuilder().addVars(vars).build();
 	}
 
 	@Override
@@ -119,6 +119,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		assert !originalState.isBottom() : "no need to copy a bottom state, right?..";
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
+		builder.setIsTop(originalState.isTop());
 
 		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
@@ -133,9 +134,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 					&& pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
 		}
 
-		builder.setVars(new HashSet<>(originalState.getVariables()));
+		builder.addVars(originalState.getVariables());
 
-		builder.setIsTop(originalState.isTop());
 
 		assert builder.mVars.equals(originalState.getVariables());
 		return builder;
@@ -170,12 +170,12 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 		if (tfState.isTop()) {
 			final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
-			builder.addVariables(tfState.getVariables());
+			builder.addVars(tfState.getVariables());
 			return builder.build();
 		}
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
-		builder.setVars(tfState.getVariables());
+		builder.addVars(tfState.getVariables());
 		builder.setIsTop(true);
 
 		for (final Entry<IProgramVar, TermVariable> outVar1 : tf.getOutVars().entrySet()) {

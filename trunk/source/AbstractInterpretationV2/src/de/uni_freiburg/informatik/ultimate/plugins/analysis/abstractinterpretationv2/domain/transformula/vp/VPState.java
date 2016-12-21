@@ -101,6 +101,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		constructTerm();
 
 		assert sanityCheck();
+		assert isTopConsistent();
 	}
 
 	private boolean sanityCheck() {
@@ -125,7 +126,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			return this;
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
-		copy.addVariable(variable);
+		copy.addVars(Collections.singleton(variable));
 		return copy.build();
 	}
 
@@ -135,7 +136,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			return this;
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
-		copy.addVariables(variables);
+		copy.addVars(variables);
 		return copy.build();
 	}
 
@@ -145,7 +146,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			return this;
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
-		copy.removeVariable(variable);
+		copy.removeVars(Collections.singleton(variable));
 		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable),
 		// copy.build());
 		final VPState<ACTION> result = copy.build();
@@ -158,7 +159,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			return this;
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
-		copy.removeVariables(variables);
+		copy.removeVars(variables);
 		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
 		final VPState<ACTION> result = copy.build();
 		return result;
@@ -190,7 +191,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 		final VPStateBuilder<ACTION> builder = mFactory.copy(dominator);
 
-		builder.addVariables(mVars);
+		builder.addVars(mVars);
 
 		builder.setIsTop(isTop() && dominator.isTop());
 
