@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,12 +8,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 
 public class VPDomainHelpers {
 	// public static IProgramVar getIProgramVarFromTermVariable(TermVariable tv, TransFormula tf) {
@@ -117,5 +121,31 @@ public class VPDomainHelpers {
 			return outvarPv;
 		}
 		return null;
+	}
+	
+		/**
+	 * Only keeps those entries in the given map whose value is a free variable in the given Term.
+	 */
+	public static Map<IProgramVar, TermVariable> projectToTerm(Map<IProgramVar, TermVariable> xVars, Term term) {
+		Map<IProgramVar, TermVariable> result = new HashMap<>();
+		for (Entry<IProgramVar, TermVariable> en : xVars.entrySet()) {
+			if (Arrays.asList(term.getFreeVars()).contains(en.getValue())) {
+				result.put(en.getKey(), en.getValue());
+			}
+		}
+		return result;
+	}
+	
+	public static Term getArrayTerm(ApplicationTerm at) {
+		if (at.getFunction().getName().equals("select")) {
+			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			return mds.getArray();
+		} else if (at.getFunction().getName().equals("store")) {
+			MultiDimensionalStore mds = new MultiDimensionalStore(at);
+			return mds.getArray();
+		} else {
+			assert false;
+			return null;
+		}
 	}
 }

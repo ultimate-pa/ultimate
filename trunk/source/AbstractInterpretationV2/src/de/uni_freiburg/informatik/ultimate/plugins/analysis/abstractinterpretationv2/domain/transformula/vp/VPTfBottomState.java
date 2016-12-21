@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPTfBottomState extends VPTfState {
 
 	public VPTfBottomState(Set<IProgramVar> vars) {
-		super(null, Collections.emptyMap(), new HashRelation<VPArrayIdentifier, VPNodeIdentifier>(), 
+		super(null, Collections.emptyMap(), Collections.emptyMap(), new HashRelation<VPArrayIdentifier, VPNodeIdentifier>(), 
 				Collections.emptySet(),false, vars);
 	}
 

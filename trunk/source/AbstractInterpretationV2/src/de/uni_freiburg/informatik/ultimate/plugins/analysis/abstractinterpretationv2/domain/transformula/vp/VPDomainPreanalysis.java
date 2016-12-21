@@ -517,6 +517,9 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 	
+	public EqNode getEqNode(IProgramVarOrConst pvoc) {
+		return getEqNode(pvoc.getTerm(), Collections.emptyMap());
+	}
 	
 	public VPDomainPreanalysisSettings getSettings() {
 		return mSettings;

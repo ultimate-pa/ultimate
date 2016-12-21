@@ -8,11 +8,12 @@ public class VPArrayIdentifier {
 	IProgramVarOrConst mPvoc;
 	Term mTerm;
 	
-	public VPArrayIdentifier(IProgramVarOrConst pvoc) {
-		mPvoc = pvoc;
-	}
+//	public VPArrayIdentifier(IProgramVarOrConst pvoc) {
+//		mPvoc = pvoc;
+//	}
 
 	public VPArrayIdentifier(Term term) {
+		assert term != null;
 		mTerm = term;
 	}
 

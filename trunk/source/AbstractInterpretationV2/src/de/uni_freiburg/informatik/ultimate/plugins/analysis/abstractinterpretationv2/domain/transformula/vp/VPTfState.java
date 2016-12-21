@@ -15,57 +15,77 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class VPTfState extends IVPStateOrTfState<VPNodeIdentifier, VPArrayIdentifier> {
 	
-	public VPTfState(
-			TransFormula tf,
-			Map<Term, TFEqGraphNode> termToEqGraphNodeMap,
+	private Map<Term, VPNodeIdentifier> mTermToNodeId;
+
+
+
+//	public VPTfState(
+//			TransFormula tf,
+//			Map<Term, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> termToEqGraphNodeMap,
+//			HashRelation<VPArrayIdentifier, VPNodeIdentifier> arrayIdToFunctionNodes,
+//			Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqs, 
+//			boolean isTop, 
+//			Set<IProgramVar> vars) {
+//		super(disEqs, isTop, vars);
+//		mTransFormula = tf;
+//		mTermToEqGraphNodeMap = Collections.unmodifiableMap(termToEqGraphNodeMap);
+//		mEqNodeToInVarsToOutVarsToEqGraphNode = null; // TODO
+//		mArrayIdToFunctionNodes = arrayIdToFunctionNodes;
+//	}
+
+	public VPTfState(TransFormula tf,
+			Map<VPNodeIdentifier, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> nodeIdToEqGraphNode,
+			Map<Term, VPNodeIdentifier> termToNodeId,
 			HashRelation<VPArrayIdentifier, VPNodeIdentifier> arrayIdToFunctionNodes,
 			Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqs, 
 			boolean isTop, 
 			Set<IProgramVar> vars) {
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
-		mTermToEqGraphNodeMap = Collections.unmodifiableMap(termToEqGraphNodeMap);
-		mEqNodeToInVarsToOutVarsToEqGraphNode = null; // TODO
+		mTermToNodeId = termToNodeId;
+		mNodeIdToEqGraphNode = nodeIdToEqGraphNode;
 		mArrayIdToFunctionNodes = arrayIdToFunctionNodes;
 	}
 
 	private final TransFormula mTransFormula;
-	private final Map<Term, TFEqGraphNode> mTermToEqGraphNodeMap;
-	private final NestedMap3<EqNode, 
-		Map<IProgramVar, TermVariable>, 
-		Map<IProgramVar, TermVariable>, 
-		TFEqGraphNode> mEqNodeToInVarsToOutVarsToEqGraphNode;
+//	private final Map<Term, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> mTermToEqGraphNodeMap;
+//	private final NestedMap3<EqNode, 
+//		Map<IProgramVar, TermVariable>, 
+//		Map<IProgramVar, TermVariable>, 
+//		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> mEqNodeToInVarsToOutVarsToEqGraphNode;
 	private final HashRelation<VPArrayIdentifier, VPNodeIdentifier> mArrayIdToFunctionNodes;
+	private Map<VPNodeIdentifier, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> mNodeIdToEqGraphNode = new HashMap<>();
 
 
 
 	public boolean tracksTerm(Term term) {
-		return mTermToEqGraphNodeMap.containsKey(term);
+		return mTermToNodeId.containsKey(term);
 	}
 
 	public boolean isBottom() {
 		return false;
 	}
 
-	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(Term term) {
-		TFEqGraphNode result = mTermToEqGraphNodeMap.get(term);
-		assert result != null;
-		return result;
-	}
+//	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(Term term) {
+//		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mTermToEqGraphNodeMap.get(term);
+//		assert result != null;
+//		return result;
+//	}
 
 	@Override
 	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(VPNodeIdentifier nodeIdentifier) {
-		return getEqGraphNode(nodeIdentifier.getIdTerm());
+//		return getEqGraphNode(nodeIdentifier.getIdTerm());
+		return mNodeIdToEqGraphNode.get(nodeIdentifier);
 	}
 
 	@Override
 	public Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> getAllEqGraphNodes() {
-		return new HashSet<>(mTermToEqGraphNodeMap.values());
+		return new HashSet<>(mNodeIdToEqGraphNode.values());
 	}
 
 	@Override
 	public VPNodeIdentifier find(VPNodeIdentifier id) {
-		return mTermToEqGraphNodeMap.get(id.getIdTerm()).find().nodeIdentifier;
+		return mNodeIdToEqGraphNode.get(id).find().nodeIdentifier;
 	}
 
 	public Set<VPNodeIdentifier> getFunctionNodesForArray(VPArrayIdentifier array) {
@@ -74,5 +94,9 @@ public class VPTfState extends IVPStateOrTfState<VPNodeIdentifier, VPArrayIdenti
 
 	public TransFormula getTransFormula() {
 		return mTransFormula;
+	}
+	
+	public VPNodeIdentifier getNodeId(Term t) {
+		return mTermToNodeId.get(t);
 	}
 }

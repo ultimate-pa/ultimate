@@ -179,18 +179,27 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		builder.setIsTop(true);
 
 		for (final Entry<IProgramVar, TermVariable> outVar1 : tf.getOutVars().entrySet()) {
+			if (outVar1.getKey().getTerm().getSort().isArraySort()) {
+				continue;
+			}
 			for (final Entry<IProgramVar, TermVariable> outVar2 : tf.getOutVars().entrySet()) {
-				if (outVar1.getKey().getTerm().getSort().isArraySort()) {
+				if (outVar2.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
+
 				final EqNode eqNodeForOutVar1 =
-						mDomain.getPreAnalysis().getEqNode(outVar1.getKey().getTerm(), Collections.emptyMap());
+						mDomain.getPreAnalysis().getEqNode(outVar1.getKey());
 				final EqNode eqNodeForOutVar2 =
-						mDomain.getPreAnalysis().getEqNode(outVar2.getKey().getTerm(), Collections.emptyMap());
+						mDomain.getPreAnalysis().getEqNode(outVar2.getKey());
 				assert eqNodeForOutVar1 != null;
 				assert eqNodeForOutVar2 != null;
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1);
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2);
+				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1, 
+						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar1.getValue()),
+						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar1.getValue()));
+				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2, 
+						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar2.getValue()),
+						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar2.getValue()));
+
 				if (tfState.areUnEqual(id1, id2)) {
 					builder.addDisEquality(eqNodeForOutVar1, eqNodeForOutVar2);
 					builder.setIsTop(false);
@@ -204,8 +213,11 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		resultStates.add(stateWithDisEqualitiesAdded);
 
 		for (final Entry<IProgramVar, TermVariable> outVar1 : tf.getOutVars().entrySet()) {
+			if (outVar1.getKey().getTerm().getSort().isArraySort()) {
+				continue;
+			}
 			for (final Entry<IProgramVar, TermVariable> outVar2 : tf.getOutVars().entrySet()) {
-				if (outVar1.getKey().getTerm().getSort().isArraySort()) {
+				if (outVar2.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
 				final EqNode eqNodeForOutVar1 =
@@ -214,8 +226,13 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 						mDomain.getPreAnalysis().getEqNode(outVar2.getKey().getTerm(), Collections.emptyMap());
 				assert eqNodeForOutVar1 != null;
 				assert eqNodeForOutVar2 != null;
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1);
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2);
+				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1, 
+						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar1.getValue()),
+						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar1.getValue()));
+				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2, 
+						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar2.getValue()),
+						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar2.getValue()));
+
 				if (tfState.areEqual(id1, id2)) {
 					resultStates = VPFactoryHelpers.addEquality(eqNodeForOutVar1, eqNodeForOutVar2, resultStates, this);
 					builder.setIsTop(false);

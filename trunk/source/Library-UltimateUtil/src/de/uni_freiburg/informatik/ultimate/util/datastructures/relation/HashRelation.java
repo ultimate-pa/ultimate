@@ -48,4 +48,17 @@ public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 		return new HashSet<R>();
 	}
 
+	
+	public HashRelation<D, R> copy() {
+		HashRelation<D, R> result = new HashRelation<>();
+		
+		for (D dElement : this.getDomain()) {
+			for (R rElement : this.getImage(dElement)) {
+				result.addPair(dElement, rElement);
+			}
+		}
+		
+		return result;
+	}
+
 }

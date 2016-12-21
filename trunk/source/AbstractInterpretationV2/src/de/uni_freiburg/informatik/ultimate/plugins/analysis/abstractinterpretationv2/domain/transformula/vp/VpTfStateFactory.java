@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,12 +30,12 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 	public Set<VPTfState> addEquality(final Term t1, final Term t2, final VPTfState state) {
 		final Set<VPTfState> result =
-				VPFactoryHelpers.addEquality(new VPNodeIdentifier(t1), new VPNodeIdentifier(t2), state, this);
+				VPFactoryHelpers.addEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
 		return result;
 	}
 
 	public Set<VPTfState> addDisequality(final Term t1, final Term t2, final VPTfState state) {
-		return VPFactoryHelpers.addDisEquality(new VPNodeIdentifier(t1), new VPNodeIdentifier(t2), state, this);
+		return VPFactoryHelpers.addDisEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
 	}
 
 	public Set<VPTfState> conjoin(final VPTfState state1, final VPTfState state2) {
@@ -52,8 +53,9 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	public Set<VPTfState> handleArrayEqualityWithException(final TermVariable newArray, final Term oldArray,
 			final ApplicationTerm storeTerm, final Term value, final VPTfState tfPreState) {
 		return VPFactoryHelpers.arrayEqualityWithException(new VPArrayIdentifier(newArray),
-				new VPArrayIdentifier(oldArray), tfPreState.getEqGraphNode(storeTerm).nodeIdentifier, // TODO: not nice
-				tfPreState.getEqGraphNode(value).nodeIdentifier, // TODO: not nice
+				new VPArrayIdentifier(oldArray), 
+				tfPreState.getNodeId(storeTerm),
+				tfPreState.getNodeId(value),
 				tfPreState, this);
 	}
 
@@ -101,9 +103,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		return result;
 	}
 
+	/**
+	 * Obtain the vanilla builder for the given TransFormula, make a (deep) copy of it
+	 * and return it.
+	 */
 	@Override
 	public VPTransitionStateBuilder createEmptyStateBuilder(final TransFormula tf) {
-		return mTfStatePreparer.getVPTfStateBuilder(tf);
+		 VPTransitionStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
+
+		 return new VPTransitionStateBuilder(vanillaBuilder);
 	}
 
 	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
@@ -117,7 +125,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 			return builder.build();
 		}
 
-		final IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> builder = createEmptyStateBuilder(tf);
+//		final IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> builder = createEmptyStateBuilder(tf);
+		final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		builder.setIsTop(true);
 
@@ -126,9 +135,14 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 				if (inVar1.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(inVar1.getValue());
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(inVar2.getValue());
-				if (state.areUnEqual(id1, id2)) {
+
+				final VPNodeIdentifier id1 = builder.getNodeId(inVar1.getValue());
+				final VPNodeIdentifier id2 = builder.getNodeId(inVar2.getValue());
+
+				final EqNode eqn1 = mPreAnalysis.getEqNode(inVar1.getKey());
+				final EqNode eqn2 = mPreAnalysis.getEqNode(inVar2.getKey());
+
+				if (state.areUnEqual(eqn1, eqn2)) {
 					builder.addDisEquality(id1, id2);
 					builder.setIsTop(false);
 				}
@@ -145,9 +159,13 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 				if (inVar1.getKey().getTerm().getSort().isArraySort()) {
 					continue;
 				}
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(inVar1.getValue());
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(inVar2.getValue());
-				if (state.areEqual(id1, id2)) {
+				final VPNodeIdentifier id1 = builder.getNodeId(inVar1.getValue());
+				final VPNodeIdentifier id2 = builder.getNodeId(inVar2.getValue());
+				
+				final EqNode eqn1 = mPreAnalysis.getEqNode(inVar1.getKey());
+				final EqNode eqn2 = mPreAnalysis.getEqNode(inVar2.getKey());
+				
+				if (state.areEqual(eqn1, eqn2)) {
 					resultStates = VPFactoryHelpers.addEquality(id1, id2, resultStates, this);
 					builder.setIsTop(false);
 				}

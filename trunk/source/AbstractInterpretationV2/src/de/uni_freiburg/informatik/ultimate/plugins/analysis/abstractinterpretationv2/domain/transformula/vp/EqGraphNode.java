@@ -62,10 +62,10 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	private Set<EqGraphNode<NODEID, ARRAYID>> initCcpar;
 	private List<EqGraphNode<NODEID, ARRAYID>> initCcchild;
 
-	public EqGraphNode(NODEID eqNode) {
-		assert eqNode != null || this instanceof TFEqGraphNode;
+	public EqGraphNode(NODEID id) {
+		assert id != null;
 //		this.nodeIdentifier = new VPNodeIdentifier(eqNode);
-		this.nodeIdentifier = eqNode;
+		this.nodeIdentifier = id;
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();
 		this.ccpar = new HashSet<>();
