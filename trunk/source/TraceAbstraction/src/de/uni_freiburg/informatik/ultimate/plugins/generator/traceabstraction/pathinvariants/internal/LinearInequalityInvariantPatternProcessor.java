@@ -148,7 +148,12 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	private final BoogieIcfgLocation mErrorLocation;
 	
 	private static final boolean PRINT_CONSTRAINTS = false;
-
+	
+	/**
+	 * Maps a location to a set of program variables which are <i> live </i> at that location.
+	 */
+	private Map<BoogieIcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
+	private final boolean mUseLiveVariables;
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
 	 * 
@@ -234,6 +239,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
 			final boolean useVarsFromUnsatCore,
+			final boolean useLiveVars,
+			final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, csToolkit);
@@ -264,13 +271,14 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		mAnnotTermCounter = 0;
 		mAnnotTerm2OriginalTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
+		mLocs2LiveVariables = locs2LiveVariables;
+		mUseLiveVariables = useLiveVars;
 	}
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables, 
-			final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
+	public void startRound(final int round, final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
 
 		resetSettings();
 		mPatternVariables.clear();
@@ -294,9 +302,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			mPatternCoefficients.addAll(mPrecondition.getOutVars().keySet());
 			mPatternCoefficients.addAll(mPostcondition.getInVars().keySet());
 			mPatternCoefficients.addAll(mPostcondition.getOutVars().keySet());
-			if (useLiveVariables) {
-				mPatternCoefficients.retainAll(liveVariables);
-			}
 			mLogger.info( "[LIIPP] Linearization complete.");
 		}
 		if (useVarsFromUnsatCore && varsFromUnsatCore != null) {
@@ -1092,6 +1097,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final int[] dimensions = mStrategy.getDimensions(location, round);
 			// Build invariant pattern
 			final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(dimensions[0]);
+			Set<IProgramVar> variablesForThisPattern = mPatternCoefficients;
+			if (mUseLiveVariables) {
+				// Remove all variables that are not live
+				variablesForThisPattern.retainAll(mLocs2LiveVariables.get(location));
+			}
 			for (int i = 0; i < dimensions[0]; i++) {
 				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
 						dimensions[1]);
@@ -1104,7 +1114,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 					}
 					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase (
-								mSolver, mPatternCoefficients, newPrefix(), strict);
+								mSolver, variablesForThisPattern, newPrefix(), strict);
 						Collection<Term> params = inequality.getVariables();
 						mPatternVariables.addAll(params);
 						conjunction.add(inequality);

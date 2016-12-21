@@ -60,8 +60,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * 
 	 * @param round the round that is entered
 	 */
-	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables,
-			final boolean useVarsFromUsatCore, final Set<IProgramVar> varsFromUnsatCore);
+	public void startRound(final int round, final boolean useVarsFromUsatCore, final Set<IProgramVar> varsFromUnsatCore);
 
 	/**
 	 * Returns an invariant pattern for the given location.

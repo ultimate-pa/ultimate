@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -65,6 +67,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
+	private boolean mUseLiveVariables;
+	private Map<BoogieIcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -86,6 +90,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints,
+			final boolean useLiveVars,
+			final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
@@ -100,6 +106,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
+		mUseLiveVariables = useLiveVars;
+		mLocs2LiveVariables = locs2LiveVariables;
+		
 	}
 
 	/**
@@ -161,7 +170,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final BoogieIcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
-				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique,
+				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mLocs2LiveVariables, mSimplificationTechnique,
 				mXnfConversionTechnique);
 	}
 

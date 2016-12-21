@@ -204,7 +204,7 @@ public final class CFGInvariantsGenerator {
 			final List<IcfgInternalAction> transitions,
 			final IPredicate precondition, final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
-			final boolean useLiveVariables, final Set<IProgramVar> liveVariables,
+			final boolean useLiveVariables, final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locations, transitions, precondition,
@@ -246,7 +246,7 @@ public final class CFGInvariantsGenerator {
 			}
 
 			// Start round
-			processor.startRound(round, useLiveVariables, liveVariables, useVariablesFromUnsatCore, varsFromUnsatCore);
+			processor.startRound(round, useVariablesFromUnsatCore, varsFromUnsatCore);
 			logService.info("[CFGInvariants] Round " + round + " started");
 
 			// Build pattern map
@@ -325,17 +325,17 @@ public final class CFGInvariantsGenerator {
 		IPT newPattern2 = null;
 		
 		if (addWPToEeachDisjunct) {
-			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[0]);
-			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[1]);
+			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
+			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
 		} else {
-			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[0]);
-			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[1]);
+			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
+			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
 		}
 				
 		// Put the new pattern into map
-		patterns.put(locations.get(numOfLocs - 3), newPattern);
+		patterns.put(locations.get(numOfLocs - 2), newPattern);
 		// Put the new pattern into map
-		patterns.put(locations.get(numOfLocs - 2), newPattern2);
+		patterns.put(locations.get(numOfLocs - 3), newPattern2);
 	}
 
 	/**
@@ -349,7 +349,7 @@ public final class CFGInvariantsGenerator {
 			UnmodifiableTransFormula weakestPreconditionOfLastTwoTransitions[], boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		// Start round
-		processor.startRound(round, false, null, true, varsFromUnsatCore);
+		processor.startRound(round, true, varsFromUnsatCore);
 		logService.info("Pre-round with empty patterns for intermediate locations started...");
 
 		// Build pattern map
