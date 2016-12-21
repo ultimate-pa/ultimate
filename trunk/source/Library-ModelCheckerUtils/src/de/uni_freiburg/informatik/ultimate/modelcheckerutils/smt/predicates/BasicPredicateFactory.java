@@ -154,6 +154,9 @@ public class BasicPredicateFactory {
 
 	public AbstractStatePredicate newAbstractStatePredicate(final IAbstractState<?, ?, ?> abstractState,
 			final IAbstractPostOperator<?, ?, ?> postOperator) {
+		assert abstractState != null;
+		assert postOperator != null;
+
 		final Term stateTerm = abstractState.getTerm(mScript);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(stateTerm, mScript, mSymbolTable);
 		return new AbstractStatePredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(),
