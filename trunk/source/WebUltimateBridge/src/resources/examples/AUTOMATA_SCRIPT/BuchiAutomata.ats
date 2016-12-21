@@ -1,0 +1,65 @@
+// Example that demonstrates how to use Buchi automata in this automata library
+// Author: Matthias Heizmann, Christian Schilling
+// Date: 2016-12-20
+
+
+// Declare a Buchi automaton called "nba_infA".
+FiniteAutomaton nba_infA = (
+     alphabet = {A B},
+     states = {q0 q1},
+     initialStates = {q0},
+     finalStates = {q1},
+     transitions = {
+         (q0 A q1)
+         (q0 B q0)
+         (q1 A q1)
+         (q1 B q0)
+     }
+);
+
+// Declare the infinite word (aka omega word) where the third symbol is 'B' 
+// and all other symbols are 'A'.
+//     w = A A A B A A A A ...
+// In this automata library we cannot represent all omega words but only 
+// "lasso words". These are words of the form u.v^ω, i.e., words that consist
+// of a finite prefix 'u' which is followed by an infinite repetition of the 
+// word 'v'.
+// The omega word w is a lasso word. We can write it as u.v^ω, where the 
+// prefix 'u' is AAB and the infinite repeated part 'v' is the word A.
+// We declare this omega word using the following notation.
+LassoWord omega_1 = [A A B, A];
+
+// Our acceptance check for Büchi automata shows that the omega word omega_1
+// is accepted by the Büchi automaton nba_infA.
+boolean acceptance1 = BuchiAccepts(nba_infA, omega_1);
+print(acceptance1);
+
+
+// Declare another Buchi automaton called "nba_infB".
+FiniteAutomaton nba_infB = (
+     alphabet = {A B},
+     states = {q0 q1},
+     initialStates = {q0},
+     finalStates = {q1},
+     transitions = {
+         (q0 B q1)
+         (q0 A q0)
+         (q1 B q1)
+         (q1 A q0)
+     }
+);
+
+
+// The omega word omega_1 is not accepted by nba_infB.
+print(BuchiAccepts(nba_infB, omega_1));
+
+// Construct the intersection of nba_infA and nba_infB.
+FiniteAutomaton intersec = BuchiIntersect(nba_infA, nba_infB);
+print(intersec);
+
+// Check if the intersection is emtpy.
+print(BuchiIsEmpty(intersec));
+
+// Find some word that is accepted by intersec.
+LassoWord omega_2 = getAcceptedLassoWord(intersec);
+print(omega_2);
