@@ -71,7 +71,9 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 		
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
-		tools.add(new Tool(PrefStrings.s_blockencoding));
+//		TODO 2016-12-21 Matthias: Enable Blockencoding again after the 
+//		backtranslation works.
+//		tools.add(new Tool(PrefStrings.s_blockencoding));
 		tools.add(new Tool(PrefStrings.s_buchiautomizer));
 		
 		return tools;
