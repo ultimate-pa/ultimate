@@ -21,57 +21,57 @@ public class TermCodeBuilder {
 	
 	//-------------Static-----------------
 	
-	public static String code(Term term){
+	public static String code(final Term term){
 		return new TermCodeBuilder().buildCode(term);
 	}
 	
 	//------------Object-------------------
 	
-	private Set<Sort> sorts = new HashSet<>();
-	private Set<ConstantTerm> constants = new HashSet<>();
-	private Set<TermVariable> vars = new HashSet<>();
-	private Set<FunctionSymbol> funs = new HashSet<>();
+	private final Set<Sort> sorts = new HashSet<>();
+	private final Set<ConstantTerm> constants = new HashSet<>();
+	private final Set<TermVariable> vars = new HashSet<>();
+	private final Set<FunctionSymbol> funs = new HashSet<>();
 	
-	public String buildCode(Term term){
-		StringBuilder sb = new StringBuilder();
+	public String buildCode(final Term term){
+		final StringBuilder sb = new StringBuilder();
 		
 		collect(term);
 		
 		//the sorts
 		sb.append("//Sorts\n");
-		for(Sort sort : sorts){
+		for(final Sort sort : sorts){
 			if(!sort.isInternal()){
 				throw new UnsupportedOperationException("Sorry, I can only give you code for internal sorts");
 			}
-			String s = "Sort sort_"+sort.getName()+" = script.sort(\""+sort.getName()+"\");\n";
+			final String s = "Sort sort_"+sort.getName()+" = script.sort(\""+sort.getName()+"\");\n";
 			sb.append(s);
 		}
 		sb.append("\n");
 		
 		//the constants
 		sb.append("//Constants\n");
-		for(ConstantTerm constant : constants){
-			Object con = constant.getValue();
+		for(final ConstantTerm constant : constants){
+			final Object con = constant.getValue();
 				
 			if(con instanceof Rational){
-				Rational iCon = (Rational) con;
-				String s = "Term con_" + iCon.hashCode() + " = Rational.valueOf(new BigInteger(\""+iCon.numerator().toString()+"\"),new BigInteger(\""+iCon.denominator().toString()+"\")).toTerm(sort_"+constant.getSort().getName()+");\n";
+				final Rational iCon = (Rational) con;
+				final String s = "Term con_" + iCon.hashCode() + " = Rational.valueOf(new BigInteger(\""+iCon.numerator().toString()+"\"),new BigInteger(\""+iCon.denominator().toString()+"\")).toTerm(sort_"+constant.getSort().getName()+");\n";
 				sb.append(s);
 				
 			}else if(con instanceof BigInteger){
-				BigInteger iCon = (BigInteger) con;
-				String s = "Term con_" + iCon.hashCode() + " = script.numeral(\""+iCon.toString()+"\");\n";
+				final BigInteger iCon = (BigInteger) con;
+				final String s = "Term con_" + iCon.hashCode() + " = script.numeral(\""+iCon.toString()+"\");\n";
 				sb.append(s);
 			
 			}else if (con instanceof BigDecimal){
-				BigDecimal iCon = (BigDecimal) con;
-				String s = "Term con_" + iCon.hashCode() + " = script.decimal(\""+iCon.toString()+"\");\n";
+				final BigDecimal iCon = (BigDecimal) con;
+				final String s = "Term con_" + iCon.hashCode() + " = script.decimal(\""+iCon.toString()+"\");\n";
 				sb.append(s);
 				
 			}else if (con instanceof QuotedObject){
-				QuotedObject iCon = (QuotedObject) con;
+				final QuotedObject iCon = (QuotedObject) con;
 				if(iCon.getValue() instanceof String){
-					String s = "Term con_" + iCon.hashCode() + " = script.string(\""+iCon.getValue()+"\");\n";
+					final String s = "Term con_" + iCon.hashCode() + " = script.string(\""+iCon.getValue()+"\");\n";
 					sb.append(s);
 					
 				}else{
@@ -85,8 +85,8 @@ public class TermCodeBuilder {
 		
 		//the vars
 		sb.append("//Vars\n");
-		for(TermVariable var : vars){
-			String s = "TermVariable var_" + var.getName() + " = script.variable(\"" + var.getName() + "\", sort_" + var.getSort().getName() + ");\n";
+		for(final TermVariable var : vars){
+			final String s = "TermVariable " + buildJavaVariableName(var) + " = script.variable(\"" + var.getName() + "\", sort_" + var.getSort().getName() + ");\n";
 			sb.append(s);
 		}
 		sb.append("\n");
@@ -94,12 +94,12 @@ public class TermCodeBuilder {
 		
 		//the functions
 		sb.append("//Functions\n");
-		for(FunctionSymbol fun : funs){
+		for(final FunctionSymbol fun : funs){
 			if(fun.isIntern()) {
 				continue;
 			}
 			
-			StringBuilder param = new StringBuilder();
+			final StringBuilder param = new StringBuilder();
 			param.append("new Sort[]{");
 			if(fun.getParameterSorts().length>0){
 				param.append("sort_" + fun.getParameterSorts()[0]);
@@ -110,7 +110,7 @@ public class TermCodeBuilder {
 			}
 			param.append("}");
 			
-			String s = "script.declareFun(\"" + fun.getName() + "\", " + param.toString() + ", sort_" + fun.getReturnSort().getName() + ");\n";
+			final String s = "script.declareFun(\"" + fun.getName() + "\", " + param.toString() + ", sort_" + fun.getReturnSort().getName() + ");\n";
 			sb.append(s);
 		}
 
@@ -123,83 +123,83 @@ public class TermCodeBuilder {
 		return sb.toString();
 	}
 	
-	private void collect(Term term){
+	private void collect(final Term term){
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm iTerm = (ApplicationTerm) term;
+			final ApplicationTerm iTerm = (ApplicationTerm) term;
 			sorts.add(iTerm.getSort());
-			for (Sort sort : iTerm.getFunction().getParameterSorts()) {
+			for (final Sort sort : iTerm.getFunction().getParameterSorts()) {
 				sorts.add(sort);
 			}
 			funs.add(iTerm.getFunction());
 			
-			for (Term t : iTerm.getParameters()) {
+			for (final Term t : iTerm.getParameters()) {
 				collect(t);
 			}
 			
 		} else if (term instanceof LetTerm) {
-			LetTerm iTerm = (LetTerm) term;
+			final LetTerm iTerm = (LetTerm) term;
 			sorts.add(iTerm.getSort());
-			for (TermVariable t : iTerm.getVariables()) {
+			for (final TermVariable t : iTerm.getVariables()) {
 				sorts.add(t.getSort()); //eventuell getDeclaredSort();
 			}
-			for(TermVariable t : iTerm.getVariables()){
+			for(final TermVariable t : iTerm.getVariables()){
 				vars.add(t);
 			}
 			
-			for (Term t : iTerm.getValues()) {
+			for (final Term t : iTerm.getValues()) {
 				collect(t);
 			}
 			collect(iTerm.getSubTerm());
 			
 		} else if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm iTerm = (AnnotatedTerm) term;
+			final AnnotatedTerm iTerm = (AnnotatedTerm) term;
 			collect(iTerm.getSubterm());
 			
 		} else if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula iTerm = (QuantifiedFormula) term;
+			final QuantifiedFormula iTerm = (QuantifiedFormula) term;
 			sorts.add(iTerm.getSort());
-			for (TermVariable t : iTerm.getVariables()) {
+			for (final TermVariable t : iTerm.getVariables()) {
 				sorts.add(t.getSort()); //eventuell getDeclaredSort();
 			}
-			for(TermVariable t : iTerm.getVariables()){
+			for(final TermVariable t : iTerm.getVariables()){
 				vars.add(t);
 			}
 			
 			collect(iTerm.getSubformula());
 			
 		} else if (term instanceof ConstantTerm) {
-			ConstantTerm iTerm = (ConstantTerm) term;
+			final ConstantTerm iTerm = (ConstantTerm) term;
 			sorts.add(iTerm.getSort());
 			constants.add(iTerm);
 
 		} else if (term instanceof TermVariable) {
-			TermVariable iTerm = (TermVariable) term;
+			final TermVariable iTerm = (TermVariable) term;
 			sorts.add(iTerm.getSort()); //eventuell getDeclaredSort();
 			vars.add(iTerm);
 		}
 	}
 	
-	private String buildTerm(Term term){
-		StringBuilder sb = new StringBuilder();
+	private String buildTerm(final Term term){
+		final StringBuilder sb = new StringBuilder();
 		if (term instanceof ApplicationTerm) {
-			ApplicationTerm iTerm = (ApplicationTerm) term;
+			final ApplicationTerm iTerm = (ApplicationTerm) term;
 			
 			sb.append("script.term(\"" + iTerm.getFunction().getName() + "\"");
-			for(Term t : iTerm.getParameters()){
+			for(final Term t : iTerm.getParameters()){
 				sb.append(", "+buildTerm(t));
 			}
 			sb.append(")");
 		} else if (term instanceof LetTerm) {
-			LetTerm iTerm = (LetTerm) term;
+			final LetTerm iTerm = (LetTerm) term;
 			
 			sb.append("script.let(");
 			
 			
 			sb.append("new TermVariable[]{");
 			if(iTerm.getVariables().length>0){
-				sb.append("var_" + iTerm.getVariables()[0].getName());
+				sb.append(buildJavaVariableName(iTerm.getVariables()[0]));
 				for (int i = 1; i < iTerm.getVariables().length; i++) {
-					sb.append(", var_" + iTerm.getVariables()[0].getName());
+					sb.append(", " + buildJavaVariableName(iTerm.getVariables()[0]));
 				}
 			}
 			sb.append("}, new Term[]{");
@@ -213,20 +213,20 @@ public class TermCodeBuilder {
 			sb.append("}, " + buildTerm(iTerm.getSubTerm()) + ")");
 			
 		} else if (term instanceof AnnotatedTerm) {
-			AnnotatedTerm iTerm = (AnnotatedTerm) term;
+			final AnnotatedTerm iTerm = (AnnotatedTerm) term;
 			
 			sb.append(buildTerm(iTerm.getSubterm()));
 
 		} else if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula iTerm = (QuantifiedFormula) term;
+			final QuantifiedFormula iTerm = (QuantifiedFormula) term;
 			
 			sb.append("script.quantifier(" + iTerm.getQuantifier() + ", ");
 			
 			sb.append("new TermVariable[]{");
 			if(iTerm.getVariables().length > 0){
-				sb.append("var_"+ iTerm.getVariables()[0].getName());
+				sb.append(buildJavaVariableName(iTerm.getVariables()[0]));
 				for (int i = 0; i < iTerm.getVariables().length; i++) {
-					sb.append(", var_"+ iTerm.getVariables()[0].getName());
+					sb.append(", "+ buildJavaVariableName(iTerm.getVariables()[0]));
 				}
 			}
 			sb.append("}, ");
@@ -235,16 +235,22 @@ public class TermCodeBuilder {
 			sb.append(")");
 
 		} else if (term instanceof ConstantTerm) {
-			ConstantTerm iTerm = (ConstantTerm) term;
+			final ConstantTerm iTerm = (ConstantTerm) term;
 			
 			sb.append("con_" + iTerm.getValue().hashCode());
 			
 		} else if (term instanceof TermVariable) {
-			TermVariable iTerm = (TermVariable) term;
+			final TermVariable iTerm = (TermVariable) term;
 
-			sb.append("var_"+ iTerm.getName());
+			sb.append(buildJavaVariableName(iTerm));
 		}
 		return sb.toString();
+	}
+	
+	private static String buildJavaVariableName(final TermVariable tv) {
+		//TODO 2016-12-21 Matthias: Think about better escaping
+		return "var_" + tv.getName().replaceAll("[.()#~]", "");
+		
 	}
 
 }
