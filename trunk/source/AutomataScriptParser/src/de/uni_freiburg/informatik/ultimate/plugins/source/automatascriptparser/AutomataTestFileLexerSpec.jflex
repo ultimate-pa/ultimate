@@ -93,6 +93,8 @@ StringCharacter = [^\r\n\"\\]
   "Word"                           { m_LastToken = m_CurToken; m_CurToken = "Word"; return symbol(sym.WORD); }
   /* NestedWord */
   "NestedWord"                           { m_LastToken = m_CurToken; m_CurToken = "NestedWord"; return symbol(sym.NESTED_WORD); }
+    /* LassoWord */
+  "LassoWord"                          { m_LastToken = m_CurToken; m_CurToken = "LassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
   /* NestedLassoWord */
   "NestedLassoWord"                          { m_LastToken = m_CurToken; m_CurToken = "NestedLassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
 
