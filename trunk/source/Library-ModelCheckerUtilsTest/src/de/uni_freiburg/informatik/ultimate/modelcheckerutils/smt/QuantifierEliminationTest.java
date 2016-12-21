@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
@@ -52,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMoc
 public class QuantifierEliminationTest {
 	
 	private IUltimateServiceProvider mServices;
-	private Script mScript;
+	private Script script;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	
@@ -61,42 +63,43 @@ public class QuantifierEliminationTest {
 		mServices = new UltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		try {
-			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, new ToolchainStorage(), "z3");
+			script = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, new ToolchainStorage(), "z3");
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
 //		script = new SMTInterpol();
-		mMgdScript = new ManagedScript(mServices, mScript);
+		mMgdScript = new ManagedScript(mServices, script);
 
-		mScript.setLogic(Logics.ALL);
+		script.setLogic(Logics.ALL);
 	}
 	
 	@Test
 	public void varStilThereBug(){
 		
 		
-		final Sort sort_Bool = mScript.sort("Bool");
-		final Sort sort_Array = mScript.sort("Array");
-		final Sort sort_Int = mScript.sort("Int");
+		//Sorts
+		final Sort sort_Bool = script.sort("Bool");
+		final Sort sort_Int = script.sort("Int");
+		final Sort sort_Array = script.sort("Array", sort_Int, sort_Int);
 
 		//Constants
-		final Term con_0 = mScript.numeral("0");
-		final Term con_1 = mScript.numeral("1");
+		final Term con_0 = script.numeral("0");
+		final Term con_1 = script.numeral("1");
 
 		//Vars
-		final TermVariable oldValid33 = mScript.variable("v_old(#valid)_33", sort_Array);
-		final TermVariable valid = mScript.variable("#valid", sort_Array);
-		final TermVariable varValid = mScript.variable("old(#valid)", sort_Array);
-		final TermVariable base = mScript.variable("v_entry_point_~array~7.base_21", sort_Int);
+		final TermVariable var_v_oldvalid_88 = script.variable("v_old(#valid)_88", sort_Array);
+		final TermVariable var_v_valid_207 = script.variable("v_#valid_207", sort_Array);
+		final TermVariable var_v_probe3_6_p9base_40 = script.variable("v_probe3_6_~p~9.base_40", sort_Int);
+		final TermVariable var_valid = script.variable("#valid", sort_Array);
+		final TermVariable var_oldvalid = script.variable("old(#valid)", sort_Array);
 
 		//Functions
 
 		//term
-		final Term term = mScript.term("or", mScript.term("=", valid, oldValid33), mScript.quantifier(0, new TermVariable[]{base, base}, mScript.term("and", mScript.term("not", mScript.term("=", mScript.term("store", mScript.term("store", varValid, base, con_1), base, con_0), oldValid33)), mScript.term("=", mScript.term("select", varValid, base), con_0), mScript.term("not", mScript.term("=", base, con_0)))));
-		
-		
-		
-		
+		final Term term = script.quantifier(1, new TermVariable[]{var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88}, script.term("or", script.term("not", script.term("and", script.quantifier(1, new TermVariable[]{var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40}, script.term("or", script.term("=", var_v_oldvalid_88, script.term("store", script.term("store", var_v_valid_207, var_v_probe3_6_p9base_40, con_1), var_v_probe3_6_p9base_40, con_0)), script.term("=", var_v_probe3_6_p9base_40, con_0), script.term("not", script.term("=", script.term("select", var_v_valid_207, var_v_probe3_6_p9base_40), con_0)))), script.term("=", var_oldvalid, var_v_valid_207))), script.term("=", var_valid, var_v_oldvalid_88)));
+
+		PartialQuantifierElimination.tryToEliminate(mServices, mServices.getLoggingService().getLogger("lol"), mMgdScript, term, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	
 		
 		
 		
