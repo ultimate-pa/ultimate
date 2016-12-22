@@ -14,7 +14,7 @@ define("ace/mode/automata_script", ["require", "exports", "module", "ace/lib/oop
             f = a("ace/mode/doc_comment_highlight_rules").DocCommentHighlightRules,
             g = a("ace/mode/text_highlight_rules").TextHighlightRules,
             h = function() {
-                var a = e.arrayToMap("assert|FiniteAutomaton|NestedWordAutomaton|Word|NestedLassoWord|NestedWord|print|boolean|bool|break|bv0|bv1|bv2|bv3|bv4|bv4|bv5|bv6|bv7|bv8|bv9|call|complete|const|else|ensures|exists|false|finite|forall|free|function|goto|havoc|if|implementation|int|invariant|modifies|old|procedure|requires|return|returns|true|type|unique|var|where|while".split("|")),
+                var a = e.arrayToMap("assert|FiniteAutomaton|NestedWordAutomaton|Word|LassoWord|NestedLassoWord|NestedWord|print|boolean|bool|break|bv0|bv1|bv2|bv3|bv4|bv4|bv5|bv6|bv7|bv8|bv9|call|complete|const|else|ensures|exists|false|finite|forall|free|function|goto|havoc|if|implementation|int|invariant|modifies|old|procedure|requires|return|returns|true|type|unique|var|where|while".split("|")),
                     b = e.arrayToMap("NULL".split("|"));
                 this.$rules = {
                     start: [{
