@@ -217,4 +217,9 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		}
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return "Builder:\n" + this.build().toString();
+	}
 }

@@ -29,9 +29,10 @@ public class VPFactoryHelpers {
 			EqGraphNode<NODEID, ARRAYID> representative1, 
 			EqGraphNode<NODEID, ARRAYID> representative2,
 			IVPFactory<STATE, NODEID, ARRAYID> factory) {
-//		assert representative1.getRepresentative() == representative1
-//				&& representative2.getRepresentative() == representative2;
-//		assert !representative1.equals(representative2);
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: propagateDisEqualities(..)");
+		}
+		
 		Set<STATE> result = new HashSet<>();
 		result.add(originalStateCopy);
 		
@@ -65,6 +66,9 @@ public class VPFactoryHelpers {
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T>  addDisEquality(
 			NODEID n1, NODEID n2, Set<T> originalStates, IVPFactory<T, NODEID, ARRAYID> factory) {
 		Set<T> result = new HashSet<>();
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
+		}
 		
 		for (T originalState : originalStates) {
 			result.addAll(addDisEquality(n1, n2, originalState, factory));
@@ -75,6 +79,9 @@ public class VPFactoryHelpers {
 	
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> 
 			addDisEquality(NODEID i1, NODEID i2, T originalState, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
+		}
 		if (originalState.isBottom()) {
 			return Collections.singleton(originalState);
 		}
@@ -120,6 +127,9 @@ public class VPFactoryHelpers {
 					final NODEID eqNode2, 
 					final T originalState, 
 					IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: addEquality(..)");
+		}
 		if (originalState.isBottom()) {
 			return Collections.singleton(originalState);
 		}
@@ -136,8 +146,10 @@ public class VPFactoryHelpers {
 		builder.setIsTop(false);
 		boolean contradiction = builder.checkContradiction();
 		if (contradiction) {
-			return Collections.singleton(
+			Set<T> result = Collections.singleton(
 					factory.getBottomState(originalState.getVariables()));
+			assert result.stream().filter(element -> element == null).count() == 0;
+			return result;
 		}
 		
 		T resultState = builder.build();
@@ -158,10 +170,12 @@ public class VPFactoryHelpers {
 		}
 	
 		if (resultStates.isEmpty()) {
+			assert resultState != null;
 			return Collections.singleton(resultState);
 		}
 
 //		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
+		assert resultStates.stream().filter(element -> element == null).count() == 0;
 		return resultStates;
 	}
 
@@ -170,6 +184,10 @@ public class VPFactoryHelpers {
 			final NODEID eqNode2, 
 			final Set<T> originalStates, 
 			IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: addEquality(..)");
+		}
+
 		Set<T> result = new HashSet<>();
 		
 		for (T originalState : originalStates) {
@@ -193,7 +211,10 @@ public class VPFactoryHelpers {
 	 * @return disjoinedState
 	 */
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> T disjoin(final T first, final T second, IVPFactory<T, NODEID, ARRAYID> factory) {
-	
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: disjoin(..)");
+		}
+
 		if (first.isTop()) {
 			return first;
 		}
@@ -295,6 +316,9 @@ public class VPFactoryHelpers {
 	}
 
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> T disjoinAll(Set<T> resultStates, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: disjoinAll(..)");
+		}
 		return resultStates.stream().reduce((s1, s2) -> disjoin(s1,s2, factory)).get();
 	}
 	
@@ -309,6 +333,10 @@ public class VPFactoryHelpers {
 	 * @return conjoinedState
 	 */
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoin(T first, T second, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: conjoin(..)");
+		}
+
 		if (first.equals(second)) {
 			return Collections.singleton(first);
 		}
@@ -332,6 +360,7 @@ public class VPFactoryHelpers {
 		T conjoinedState = builder.build();
 
 		Set<T> resultStates = new HashSet<>();
+		resultStates.add(conjoinedState);
 		for (final EqGraphNode<NODEID, ARRAYID> otherGraphNode : second.getAllEqGraphNodes()) {
 			if (otherGraphNode.getRepresentative().equals(otherGraphNode)) {
 				// no (outgoing) equality edge here..
@@ -339,9 +368,14 @@ public class VPFactoryHelpers {
 			}
 			NODEID conStateGraphNode = otherGraphNode.nodeIdentifier;
 			NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
-			resultStates.addAll(addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory));
+			resultStates.addAll(
+					conjoinAll(
+							addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory), 
+							resultStates, 
+							factory));
 		}
 //		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
+		assert !resultStates.isEmpty();
 		return resultStates;
 	}
 	
@@ -355,6 +389,9 @@ public class VPFactoryHelpers {
 	 */
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoinAll(
 			Set<T> set1, Set<T> set2, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: conjoinAll(..)");
+		}
 		Set<T> resultStates = new HashSet<>();
 		
 		for (T state1 : set1) {
@@ -363,14 +400,18 @@ public class VPFactoryHelpers {
 				resultStates.addAll(conjoin(state1, state2, factory));
 			}
 		}
-		
+		assert !resultStates.isEmpty();
 		return resultStates;
 	}
 	
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> conjoinAll(
 			List<Set<T>> sets, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: conjoinAll(..)");
+		}
 		Set<T> result = sets.stream().reduce((set1, set2) -> conjoinAll(set1, set2, factory)).get();
 		assert result != null;
+		assert !result.isEmpty();
 		return result;
 	}
 
@@ -385,20 +426,28 @@ public class VPFactoryHelpers {
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> arrayEquality(
 			final ARRAYID firstArray, final ARRAYID secondArray, 
 			T originalState, IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: arrayEquality(..)");
+		}
 		return arrayEqualityWithException(firstArray, secondArray, null, null, originalState, factory);
 	}
 	
-	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> arrayEqualityWithException(
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+					Set<T> arrayEqualityWithException(
 			ARRAYID firstArray,
 			ARRAYID secondArray, 
 			NODEID exceptionArrayNode, 
 			NODEID exceptionValueNode,
 			T state, 
 			IVPFactory<T, NODEID, ARRAYID> factory) {
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: arrayEqualityWithException(..)");
+		}
 		assert (exceptionArrayNode == null) == (exceptionValueNode == null);
 		T resultState = factory.copy(state).build();
 
 		Set<T> resultStates = new HashSet<>();
+		resultStates.add(resultState);
 		for (final NODEID fnNode1 : factory.getFunctionNodesForArray(resultState, firstArray)) {
 			for (final NODEID fnNode2 : factory.getFunctionNodesForArray(resultState, secondArray)) {
 				EqGraphNode<NODEID, ARRAYID> gn1 = resultState.getEqGraphNode(fnNode1);

@@ -35,6 +35,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.xml.soap.Node;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -47,9 +50,13 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 	private final VPDomain<ACTION> mDomain;
 	private final Map<Set<IProgramVar>, VPStateBottom<ACTION>> mBottomStates = new HashMap<>();
+	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
+	private VPDomainPreanalysis mPreAnalysis;
 
-	public VPStateFactory(final VPDomain<ACTION> domain) {
+	public VPStateFactory(final VPDomain<ACTION> domain, final VPTransFormulaStateBuilderPreparer tfPreparer) {
 		mDomain = domain;
+		mTfPreparer = tfPreparer;
+		mPreAnalysis = domain.getPreAnalysis();
 	}
 
 	@Override
@@ -173,36 +180,53 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			builder.addVars(tfState.getVariables());
 			return builder.build();
 		}
+		
+		/*
+		 * strategy:
+		 * we first add disequalites from the transition state
+		 *  --> without the presence of equalities they induce no propagations, so we can work on one builder
+		 * then we add equalities from the transition state
+		 */
+		
+		/*
+		 * We are projecting the state to what it says about 
+		 *  - outVars of the given TransFormula tf
+		 *  - constants
+		 */
+		Set<EqNode> outVarsAndConstantEqNodes = new HashSet<>();
+		for (IProgramVar pv : tf.getOutVars().keySet()) {
+			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
+			if (pvEqnode != null) {
+				outVarsAndConstantEqNodes.add(pvEqnode);
+			}
+		}
+		outVarsAndConstantEqNodes.addAll(mTfPreparer.getAllConstantEqNodes());
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
 		builder.addVars(tfState.getVariables());
-		builder.setIsTop(true);
 
-		for (final Entry<IProgramVar, TermVariable> outVar1 : tf.getOutVars().entrySet()) {
-			if (outVar1.getKey().getTerm().getSort().isArraySort()) {
-				continue;
-			}
-			for (final Entry<IProgramVar, TermVariable> outVar2 : tf.getOutVars().entrySet()) {
-				if (outVar2.getKey().getTerm().getSort().isArraySort()) {
-					continue;
-				}
-
-				final EqNode eqNodeForOutVar1 =
-						mDomain.getPreAnalysis().getEqNode(outVar1.getKey());
-				final EqNode eqNodeForOutVar2 =
-						mDomain.getPreAnalysis().getEqNode(outVar2.getKey());
-				assert eqNodeForOutVar1 != null;
-				assert eqNodeForOutVar2 != null;
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1, 
-						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar1.getValue()),
-						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar1.getValue()));
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2, 
-						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar2.getValue()),
-						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar2.getValue()));
+		for (final EqNode outNode1 : outVarsAndConstantEqNodes) {
+			for (final EqNode outNode2 : outVarsAndConstantEqNodes) {
+				VPNodeIdentifier id1;
+				VPNodeIdentifier id2;
+//				if (outNode1.isConstant()) {
+//					id1 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
+//				} else {
+					id1 = new VPNodeIdentifier(outNode1, 
+							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
+							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
+//				}
+//				if (outNode2.isConstant()) {
+//					id2 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
+//				} else {
+					id2 = new VPNodeIdentifier(outNode2, 
+							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
+							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
+//				}
 
 				if (tfState.areUnEqual(id1, id2)) {
-					builder.addDisEquality(eqNodeForOutVar1, eqNodeForOutVar2);
-					builder.setIsTop(false);
+					builder.addDisEquality(outNode1, outNode2);
+//					builder.setIsTop(false);
 				}
 			}
 		}
@@ -212,30 +236,27 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		Set<VPState<ACTION>> resultStates = new HashSet<>();
 		resultStates.add(stateWithDisEqualitiesAdded);
 
-		for (final Entry<IProgramVar, TermVariable> outVar1 : tf.getOutVars().entrySet()) {
-			if (outVar1.getKey().getTerm().getSort().isArraySort()) {
-				continue;
-			}
-			for (final Entry<IProgramVar, TermVariable> outVar2 : tf.getOutVars().entrySet()) {
-				if (outVar2.getKey().getTerm().getSort().isArraySort()) {
-					continue;
-				}
-				final EqNode eqNodeForOutVar1 =
-						mDomain.getPreAnalysis().getEqNode(outVar1.getKey().getTerm(), Collections.emptyMap());
-				final EqNode eqNodeForOutVar2 =
-						mDomain.getPreAnalysis().getEqNode(outVar2.getKey().getTerm(), Collections.emptyMap());
-				assert eqNodeForOutVar1 != null;
-				assert eqNodeForOutVar2 != null;
-				final VPNodeIdentifier id1 = new VPNodeIdentifier(eqNodeForOutVar1, 
-						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar1.getValue()),
-						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar1.getValue()));
-				final VPNodeIdentifier id2 = new VPNodeIdentifier(eqNodeForOutVar2, 
-						VPDomainHelpers.projectToTerm(tf.getInVars(), outVar2.getValue()),
-						VPDomainHelpers.projectToTerm(tf.getOutVars(), outVar2.getValue()));
+		for (final EqNode outNode1 : outVarsAndConstantEqNodes) {
+			for (final EqNode outNode2 : outVarsAndConstantEqNodes) {
+				VPNodeIdentifier id1;
+				VPNodeIdentifier id2;
+//				if (outNode1.isConstant()) {
+//					id1 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
+//				} else {
+					id1 = new VPNodeIdentifier(outNode1, 
+							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
+							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
+//				}
+//				if (outNode2.isConstant()) {
+//					id2 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
+//				} else {
+					id2 = new VPNodeIdentifier(outNode2, 
+							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
+							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
+//				}
 
 				if (tfState.areEqual(id1, id2)) {
-					resultStates = VPFactoryHelpers.addEquality(eqNodeForOutVar1, eqNodeForOutVar2, resultStates, this);
-					builder.setIsTop(false);
+					resultStates = VPFactoryHelpers.addEquality(outNode1, outNode2, resultStates, this);
 				}
 			}
 		}
@@ -259,4 +280,13 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		return VPFactoryHelpers.disjoinAll(statesForCurrentEc, this);
 	}
 
+	@Override
+	public ILogger getLogger() {
+		return mDomain.getLogger();
+	}
+	
+	@Override
+	public boolean isDebugMode() {
+		return mDomain.isDebugMode();
+	}
 }

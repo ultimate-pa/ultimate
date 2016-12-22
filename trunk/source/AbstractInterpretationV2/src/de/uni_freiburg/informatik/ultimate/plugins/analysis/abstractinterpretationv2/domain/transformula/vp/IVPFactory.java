@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -14,4 +15,8 @@ public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NO
 	Set<NODEID> getFunctionNodesForArray(STATE resultState, ARRAYID firstArray);
 
 	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createEmptyStateBuilder(TransFormula tf); // TODO not so nice..
+	
+	ILogger getLogger();
+	
+	boolean isDebugMode();
 }

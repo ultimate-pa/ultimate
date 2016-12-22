@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -96,9 +97,10 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 	@Override
 	public VPTfState getBottomState(final Set<IProgramVar> variables) {
-		final VPTfBottomState result = mVarsToBottomState.get(variables);
+		VPTfBottomState result = mVarsToBottomState.get(variables);
 		if (result == null) {
-
+			result = new VPTfBottomState(variables);
+			mVarsToBottomState.put(variables, result);
 		}
 		return result;
 	}
@@ -128,29 +130,31 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 			return builder.build();
 		}
 
-//		final IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> builder = createEmptyStateBuilder(tf);
 		final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
-		builder.setIsTop(true);
-
-		for (final Entry<IProgramVar, TermVariable> inVar1 : tf.getInVars().entrySet()) {
-			if (inVar1.getKey().getTerm().getSort().isArraySort()) {
-				continue;
+		
+		Set<EqNode> inVarsAndConstantEqNodes = new HashSet<>();
+		for (IProgramVar pv : tf.getInVars().keySet()) {
+			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
+			if (pvEqnode != null) {
+				inVarsAndConstantEqNodes.add(pvEqnode);
 			}
-			for (final Entry<IProgramVar, TermVariable> inVar2 : tf.getInVars().entrySet()) {
-				if (inVar2.getKey().getTerm().getSort().isArraySort()) {
-					continue;
-				}
+		}
+		inVarsAndConstantEqNodes.addAll(mTfStatePreparer.getAllConstantEqNodes());
 
-				final VPNodeIdentifier id1 = builder.getNodeId(inVar1.getValue());
-				final VPNodeIdentifier id2 = builder.getNodeId(inVar2.getValue());
-
-				final EqNode eqn1 = mPreAnalysis.getEqNode(inVar1.getKey());
-				final EqNode eqn2 = mPreAnalysis.getEqNode(inVar2.getKey());
-
-				if (state.areUnEqual(eqn1, eqn2)) {
+		for (final EqNode inNode1 : inVarsAndConstantEqNodes) {
+			for (final EqNode inNode2 : inVarsAndConstantEqNodes) {
+				VPNodeIdentifier id1;
+				VPNodeIdentifier id2;
+				id1 = new VPNodeIdentifier(inNode1, 
+						VPDomainHelpers.projectToVars(tf.getInVars(), inNode1.getVariables()),
+						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode1.getVariables()));
+				id2 = new VPNodeIdentifier(inNode2, 
+						VPDomainHelpers.projectToVars(tf.getInVars(), inNode2.getVariables()),
+						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode2.getVariables()));
+		
+				if (state.areUnEqual(inNode1, inNode2)) {
 					builder.addDisEquality(id1, id2);
-					builder.setIsTop(false);
 				}
 			}
 		}
@@ -160,23 +164,19 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		Set<VPTfState> resultStates = new HashSet<>();
 		resultStates.add(stateWithDisEqualitiesAdded);
 
-		for (final Entry<IProgramVar, TermVariable> inVar1 : tf.getInVars().entrySet()) {
-			if (inVar1.getKey().getTerm().getSort().isArraySort()) {
-				continue;
-			}
-			for (final Entry<IProgramVar, TermVariable> inVar2 : tf.getInVars().entrySet()) {
-				if (inVar2.getKey().getTerm().getSort().isArraySort()) {
-					continue;
-				}
-				final VPNodeIdentifier id1 = builder.getNodeId(inVar1.getValue());
-				final VPNodeIdentifier id2 = builder.getNodeId(inVar2.getValue());
+		for (final EqNode inNode1 : inVarsAndConstantEqNodes) {
+			for (final EqNode inNode2 : inVarsAndConstantEqNodes) {
+				VPNodeIdentifier id1;
+				VPNodeIdentifier id2;
+				id1 = new VPNodeIdentifier(inNode1, 
+						VPDomainHelpers.projectToVars(tf.getInVars(), inNode1.getVariables()),
+						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode1.getVariables()));
+				id2 = new VPNodeIdentifier(inNode2, 
+						VPDomainHelpers.projectToVars(tf.getInVars(), inNode2.getVariables()),
+						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode2.getVariables()));
 				
-				final EqNode eqn1 = mPreAnalysis.getEqNode(inVar1.getKey());
-				final EqNode eqn2 = mPreAnalysis.getEqNode(inVar2.getKey());
-				
-				if (state.areEqual(eqn1, eqn2)) {
+				if (state.areEqual(inNode1, inNode2)) {
 					resultStates = VPFactoryHelpers.addEquality(id1, id2, resultStates, this);
-					builder.setIsTop(false);
 				}
 			}
 		}
@@ -188,5 +188,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	@Override
 	public Set<VPNodeIdentifier> getFunctionNodesForArray(final VPTfState tfState, final VPArrayIdentifier firstArray) {
 		return tfState.getFunctionNodesForArray(firstArray);
+	}
+	
+	@Override
+	public ILogger getLogger() {
+		return mPreAnalysis.getLogger();
+	}
+
+	@Override
+	public boolean isDebugMode() {
+		return mPreAnalysis.isDebugMode();
 	}
 }

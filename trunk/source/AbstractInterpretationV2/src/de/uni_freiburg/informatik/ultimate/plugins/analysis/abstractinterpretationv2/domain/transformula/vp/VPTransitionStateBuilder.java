@@ -360,4 +360,5 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	public VPNodeIdentifier getNodeId(Term value) {
 		return mTermToNodeId.get(value);
 	}
+
 }

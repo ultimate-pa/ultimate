@@ -101,4 +101,20 @@ public class VPTfState extends IVPStateOrTfState<VPNodeIdentifier, VPArrayIdenti
 	public VPNodeIdentifier getNodeId(Term t) {
 		return mTermToNodeId.get(t);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("VPTfState\n");
+		sb.append("vars: " + mVars.toString() +"\n");
+		sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
+		sb.append("Graph:\n");
+		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egn : getAllEqGraphNodes()) {
+			if (egn.getRepresentative() != egn) {
+				sb.append(egn.toString() + "\n");
+			}
+		}
+		sb.append("DisEqualities:" + getDisEqualities() + "\n");
+		return sb.toString();
+	}
 }

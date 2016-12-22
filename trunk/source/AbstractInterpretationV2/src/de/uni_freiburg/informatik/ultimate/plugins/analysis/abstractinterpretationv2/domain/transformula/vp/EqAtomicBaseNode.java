@@ -49,9 +49,11 @@ public class EqAtomicBaseNode extends EqNode {
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
 	public EqAtomicBaseNode(IProgramVarOrConst bv) {
-		super(bv.isGlobal(), !(bv instanceof IProgramVar));
+		super(bv.isGlobal(), 
+				!(bv instanceof IProgramVar));
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
+		mVariables = bv instanceof IProgramVar ? Collections.singleton((IProgramVar) bv) : Collections.emptySet();
 	}
 	
 	public String toString() {

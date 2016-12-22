@@ -27,8 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -53,6 +56,14 @@ public class EqFunctionNode extends EqNode {
 				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
 		this.function = function;
 		this.args = args;
+		Set<IProgramVar> vars = new HashSet<>();
+		if (function instanceof IProgramVar) {
+			vars.add((IProgramVar) function);
+		}
+		for (EqNode arg : args) {
+			vars.addAll(arg.getVariables());
+		}
+		mVariables = Collections.unmodifiableSet(vars);
 	}
 	
 	@Override

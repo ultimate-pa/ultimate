@@ -302,7 +302,19 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public String toLogString() {
-		return "VPState<ACTION>:\n" + mTerm.toString();
+//		return "VPState<ACTION>:\n" + mTerm.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("VPState\n");
+		sb.append("vars: " + mVars.toString() +"\n");
+		sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
+		sb.append("Graph:\n");
+		for (EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
+			if (egn.getRepresentative() != egn) {
+				sb.append(egn.toString() + "\n");
+			}
+		}
+		sb.append("DisEqualities:" + getDisEqualities() + "\n");
+		return sb.toString();
 
 		// final StringBuilder sb = new StringBuilder();
 		//

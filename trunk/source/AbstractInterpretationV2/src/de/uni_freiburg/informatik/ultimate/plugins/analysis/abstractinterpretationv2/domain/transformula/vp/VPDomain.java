@@ -67,6 +67,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IIcfgSymbolTable mSymboltable;
 	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
+	private final boolean mDebugMode;
 
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis,
@@ -80,9 +81,10 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
-		mVpStateFactory = new VPStateFactory<>(this);
+		mVpStateFactory = new VPStateFactory<>(this, tfPreparer);
 		mTfStateFactory = new VpTfStateFactory(tfPreparer, preAnalysis);
 		mPost = new VPPostOperator(script, services, this);
+		mDebugMode = mPreAnalysis.isDebugMode();
 	}
 
 	@Override
@@ -179,5 +181,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	public VPState<ACTION> createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
+	}
+
+	public boolean isDebugMode() {
+		return mDebugMode;
 	}
 }

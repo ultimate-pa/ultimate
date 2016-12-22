@@ -92,6 +92,8 @@ public class VPDomainPreanalysis {
 	private final HashRelation<IProgramVarOrConst, EqNode> mArrayToAccessingEqNodes = new HashRelation<>();
 	private final ILogger mLogger;
 
+	private final boolean mIsDebugMode = true;
+
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
@@ -550,6 +552,14 @@ public class VPDomainPreanalysis {
 			Map<IProgramVar, TermVariable> outVars) {
 		return isArrayTracked(lhs, 
 				VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(inVars, outVars));
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
+	}
+
+	public boolean isDebugMode() {
+		return mIsDebugMode;
 	}
 }
 

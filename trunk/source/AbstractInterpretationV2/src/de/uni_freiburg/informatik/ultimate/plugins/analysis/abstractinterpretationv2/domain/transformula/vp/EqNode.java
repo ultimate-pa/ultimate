@@ -27,11 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -43,22 +45,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
-	public abstract Term getTerm(ManagedScript s) ;
-
-	public abstract boolean isLiteral();
-
-	
 	EqNode(boolean isGlobal, boolean isConstant) {
 		mIsGlobal = isGlobal;
 		mIsConstant = isConstant;
+//		mVariables = Collections.unmodifiableSet(new HashSet<>(variables));
 	}
+
+	protected Set<IProgramVar> mVariables;
 	
 	/**
 	 * Is true iff this EqNode's term only uses global program symbols.
 	 */
-	final boolean mIsGlobal;
+	protected final boolean mIsGlobal;
 	
-	final boolean mIsConstant;
+	protected final boolean mIsConstant;
 	
 
 	Set<EqNode> mParents = new HashSet<>();
@@ -75,6 +75,8 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 		mParents.add(parent);
 	}
 
+	public abstract boolean isLiteral();
+
 	/**
 	 * Is true iff this EqNode's term only uses global program symbols.
 	 */
@@ -86,4 +88,10 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 	public boolean isConstant() {
 		return mIsConstant;
 	}
+
+	public Set<IProgramVar> getVariables() {
+		return mVariables;
+	}
+
+	public abstract Term getTerm(ManagedScript s) ;
 }

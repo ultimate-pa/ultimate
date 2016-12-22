@@ -147,8 +147,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 				final Set<VPTfState> orList = new HashSet<>();
 				for (final Term t : appTerm.getParameters()) {
-					// FIXME: (by DD) are you sure about term instead of t here?
-					orList.addAll(handleTransition(tfPreState, term, tf, false));
+					orList.addAll(handleTransition(tfPreState, t, tf, false));
 				}
 				assert !orList.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);

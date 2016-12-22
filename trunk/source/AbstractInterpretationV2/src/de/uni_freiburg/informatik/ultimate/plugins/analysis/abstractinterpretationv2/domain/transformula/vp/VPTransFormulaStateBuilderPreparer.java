@@ -137,4 +137,7 @@ public class VPTransFormulaStateBuilderPreparer {
 		return result;
 	}
 
+	public Set<EqNode> getAllConstantEqNodes() {
+		return mAllConstantEqNodes;
+	}
 }

@@ -148,4 +148,15 @@ public class VPDomainHelpers {
 			return null;
 		}
 	}
+
+	public static Map<IProgramVar, TermVariable> projectToVars(Map<IProgramVar, TermVariable> toBeProjected,
+			Set<IProgramVar> projection) {
+		Map<IProgramVar, TermVariable> result = new HashMap<>();
+		for (Entry<IProgramVar, TermVariable> en : toBeProjected.entrySet()) {
+			if (projection.contains(en.getKey())) {
+				result.put(en.getKey(), en.getValue());
+			}
+		}
+		return result;
+	}
 }
