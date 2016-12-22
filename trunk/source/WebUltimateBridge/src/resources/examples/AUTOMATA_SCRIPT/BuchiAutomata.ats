@@ -19,12 +19,12 @@ FiniteAutomaton nba_infA = (
 
 // Declare the infinite word (aka omega word) where the third symbol is 'B' 
 // and all other symbols are 'A'.
-//     w = A A A B A A A A ...
+//     w = A A B A A A A A ...
 // In this automata library we cannot represent all omega words but only 
-// "lasso words". These are words of the form u.v^ω, i.e., words that consist
+// "lasso words". These are words of the form u.v^\omega, i.e., words that consist
 // of a finite prefix 'u' which is followed by an infinite repetition of the 
 // word 'v'.
-// The omega word w is a lasso word. We can write it as u.v^ω, where the 
+// The omega word w is a lasso word. We can write it as u.v^\omega, where the 
 // prefix 'u' is AAB and the infinite repeated part 'v' is the word A.
 // We declare this omega word using the following notation.
 LassoWord omega_1 = [A A B, A];
