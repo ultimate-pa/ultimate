@@ -54,17 +54,13 @@ public class EqAtomicBaseNode extends EqNode {
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
 		mVariables = bv instanceof IProgramVar ? Collections.singleton((IProgramVar) bv) : Collections.emptySet();
+		mTerm = bv.getTerm();
 	}
 	
 	public String toString() {
 		return mVarOrConst.toString();
 	}
 
-	@Override
-	public Term getTerm(ManagedScript s) {
-		return mVarOrConst.getTerm();
-	}
-	
 	@Override
 	public boolean isLiteral() {
 		return mIsLiteral;

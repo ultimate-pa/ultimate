@@ -63,6 +63,8 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
 	Set<EqNode> mParents = new HashSet<>();
 
+	protected Term mTerm;
+
 	/**
 	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument of").
 	 * Can be used to obtain initial ccParents for the corresponding EqGraphNode.
@@ -93,5 +95,7 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 		return mVariables;
 	}
 
-	public abstract Term getTerm(ManagedScript s) ;
+	public Term getTerm() {
+		return mTerm;
+	}
 }

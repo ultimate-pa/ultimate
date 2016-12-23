@@ -49,7 +49,7 @@ public class EqFunctionNode extends EqNode {
 	private final IProgramVarOrConst function;
 	private final List<EqNode> args;
 
-	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args) {
+	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args, ManagedScript script) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
@@ -64,6 +64,8 @@ public class EqFunctionNode extends EqNode {
 			vars.addAll(arg.getVariables());
 		}
 		mVariables = Collections.unmodifiableSet(vars);
+
+		mTerm = restoreMultidimensionalSelect(script, function, args);
 	}
 	
 	@Override
@@ -90,10 +92,9 @@ public class EqFunctionNode extends EqNode {
 //				&& this.args.equals(efn.args);
 	}
 
-	@Override
-	public Term getTerm(ManagedScript script) {
-		return restoreMultidimensionalSelect(script, function, args);
-	}
+//	@Override
+//	public Term getTerm(ManagedScript script) {
+//	}
 	
 	private static Term restoreMultidimensionalSelect(ManagedScript script,
 			IProgramVarOrConst function, List<EqNode> args) {
@@ -108,7 +109,7 @@ public class EqFunctionNode extends EqNode {
 		assert args.size() > 0;
 		if (args.size() == 1) {
 			script.lock(function);
-			Term result =  script.term(function, "select", functionTerm, args.get(0).getTerm(script));
+			Term result =  script.term(function, "select", functionTerm, args.get(0).getTerm());
 			script.unlock(function);
 			return result;
 		} else {
@@ -116,7 +117,7 @@ public class EqFunctionNode extends EqNode {
 			script.lock(function);
 			Term result = script.term(function, "select", 
 					restoreMultidimensionalSelect(script, function, newArgs), 
-					args.get(args.size() - 1).getTerm(script));
+					args.get(args.size() - 1).getTerm());
 			script.unlock(function);
 			return result;
 		}

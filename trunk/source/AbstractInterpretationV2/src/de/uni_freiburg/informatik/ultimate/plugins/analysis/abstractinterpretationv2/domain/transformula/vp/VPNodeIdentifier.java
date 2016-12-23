@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	
@@ -45,6 +47,47 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		} else {
 			mFunction = null;
 		}
+		
+		assert sanityCheck();
+	}
+
+
+	private boolean sanityCheck() {
+		/*
+		 * If an IProgramVar appears both in inVars and outVars, both maps have to assign it the same TermVariable
+		 * (intuition: a VPNodeIdentifier corresponds to _one_ Term over constants and TermVariables)
+		 */
+		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+			if (mOutVars.containsKey(en.getKey())
+					&& mOutVars.get(en.getKey()) != en.getValue()) {
+				return false;
+			}
+		}
+		
+		/*
+		 * a nodeIdentifier has to be "pure" in the sense that it is either
+		 *  - "in" (i.e. there are variables that are inVars but no outVars)
+		 *  - "out" (i.e. there are variables that are outVars but no inVars)
+		 *  - "through" (i.e. all variables are both inVars and outVars)
+		 *  Than means it cannot have two variables where one is only in and one is only out. 
+		 */
+		boolean isIn = false;
+		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+			if (!mOutVars.containsKey(en.getKey())) {
+				// we have an invar that is no outVar --> this node is "in"
+				isIn = true;
+			}
+		}
+		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
+			if (!mInVars.containsKey(en.getKey())) {
+				// we have an outVar that is no inVar --> this node is "out"
+				// if it is already "in", then the sanity check fails
+				if (isIn) {
+					return false;
+				}
+			}
+		}	
+		return true;
 	}
 
 
@@ -97,53 +140,7 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		return mIsLiteral;
 	}
 	
-	@Override
-	public boolean equals(Object other) {
-		if (!(other instanceof VPNodeIdentifier)) {
-			return false;
-		}
-		VPNodeIdentifier otherNodeId = (VPNodeIdentifier) other;
-		
-//		if (this.mTerm == otherNodeId.mTerm) {
-//			return true;
-//		}
-		if (this.mEqNode == otherNodeId.mEqNode 
-				&& this.mInVars.equals(otherNodeId.mInVars)
-				&& this.mOutVars.equals(otherNodeId.mOutVars)) {
-			return true;
-		}
-		return false;
-//		
-//		if (this.mEqNode != otherNodeId.mEqNode) {
-//			return false;
-//		}
-//		
-//		if (this.mIdentifyingTerm != otherNodeId.mIdentifyingTerm) {
-//			if (this.isFunction()) {
-//				// one term might be a store, one a select
-//				Term thisArray = getArrayTerm((ApplicationTerm) this.mIdentifyingTerm);
-//				Term otherArray = getArrayTerm((ApplicationTerm) otherNodeId.mIdentifyingTerm);
-//				
-//				if (thisArray != otherArray) {
-//					return false;
-//				}
-//				
-//				ArrayIndex thisIndices = getArrayIndices((ApplicationTerm) this.mIdentifyingTerm);
-//				ArrayIndex otherIndices = getArrayIndices((ApplicationTerm) otherNodeId.mIdentifyingTerm);
-//				assert thisIndices.size() == otherIndices.size();
-//				for (int i = 0; i < thisIndices.size(); i++) {
-//					if (!new VPNodeIdentifier(thisIndices.get(i))
-//							.equals(new VPNodeIdentifier(otherIndices.get(i)))) {
-//						return false;
-//					}
-//				}
-//			} else {
-//				return false;
-//			}
-//		}
-		
-//		return true;
-	}
+	
 		
 	private ArrayIndex getArrayIndices(ApplicationTerm at) {
 		if (at.getFunction().getName().equals("select")) {
@@ -171,10 +168,29 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 //			return null;
 //		}
 	}
+	
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof VPNodeIdentifier)) {
+			return false;
+		}
+		if (this == other) {
+			return true;
+		}
+		
+		VPNodeIdentifier otherNodeId = (VPNodeIdentifier) other;
+
+		if (this.mEqNode == otherNodeId.mEqNode 
+				&& this.mInVars.equals(otherNodeId.mInVars)
+				&& this.mOutVars.equals(otherNodeId.mOutVars)) {
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public int hashCode() {
-		// TODO
-		return 0;
+		return HashUtils.hashHsieh(31, mEqNode, mInVars, mOutVars);
 	}
 }

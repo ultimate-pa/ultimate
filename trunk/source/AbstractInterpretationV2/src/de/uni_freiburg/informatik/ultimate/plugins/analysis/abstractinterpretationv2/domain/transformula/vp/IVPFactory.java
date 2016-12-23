@@ -5,6 +5,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
@@ -19,4 +20,6 @@ public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NO
 	ILogger getLogger();
 	
 	boolean isDebugMode();
+	
+	Benchmark getBenchmark();
 }

@@ -153,6 +153,10 @@ public class VPDomainHelpers {
 			Set<IProgramVar> projection) {
 		Map<IProgramVar, TermVariable> result = new HashMap<>();
 		for (Entry<IProgramVar, TermVariable> en : toBeProjected.entrySet()) {
+//			if (en.getKey().getTerm().getSort().isArraySort()) {
+//				// we keep all arrays 
+//				result.put(en.getKey(), en.getValue());
+//			}
 			if (projection.contains(en.getKey())) {
 				result.put(en.getKey(), en.getValue());
 			}

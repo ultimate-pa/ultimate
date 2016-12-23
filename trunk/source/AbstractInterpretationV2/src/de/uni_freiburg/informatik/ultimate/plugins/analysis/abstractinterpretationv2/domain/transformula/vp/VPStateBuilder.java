@@ -110,38 +110,38 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 //						new VPNodeIdentifier(node2)));
 //	}
 
-	// /**
-	// * An additional process after a function node is havoc, in order to restore the propagation.
-	// * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
-	// * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j],
-	// * which is the result of equality propagation of (i = j). This method is to restore this
-	// * information.
-	// *
-	// * @param functionNode
-	// */
-	// void restorePropagation(final EqFunctionNode functionNode) {
-	//
-	// EqNode firstIndex = functionNode.getArgs().get(0);
-	// EqGraphNode firstIndexGN = getEqNodeToEqGraphNodeMap().get(firstIndex);
-	//
-	// final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
-	// for (final EqFunctionNode fnNode : fnNodeSet) {
-	// if (find(getEqNodeToEqGraphNodeMap().get(fnNode.getArgs().get(0))).equals(find(firstIndexGN))) {
-	// if (mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode))) {
-	// merge(getEqNodeToEqGraphNodeMap().get(fnNode), getEqNodeToEqGraphNodeMap().get(functionNode));
-	// }
-	// }
-	// }
-	//
-	//// for (final EqFunctionNode fnNode1 : fnNodeSet) {
-	//// for (final EqFunctionNode fnNode2 : fnNodeSet) {
-	//// if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1),
-	// getEqNodeToEqGraphNodeMap().get(fnNode2))) {
-	//// merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
-	//// }
-	//// }
-	//// }
-	// }
+	 /**
+	 * An additional process after a function node is havoc, in order to restore the propagation.
+	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
+	 * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j],
+	 * which is the result of equality propagation of (i = j). This method is to restore this
+	 * information.
+	 *
+	 * @param functionNode
+	 */
+	 void restorePropagation(final EqFunctionNode functionNode) {
+	
+		 EqNode firstIndex = functionNode.getArgs().get(0);
+		 EqGraphNode<EqNode, IProgramVarOrConst> firstIndexGN = getEqGraphNode(firstIndex);
+
+		 final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
+		 for (final EqFunctionNode fnNode : fnNodeSet) {
+			 if (getEqGraphNode(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
+				 if (congruent(getEqGraphNode(fnNode), getEqGraphNode(functionNode))) {
+					 merge(getEqGraphNode(fnNode), getEqGraphNode(functionNode));
+				 }
+			 }
+		 }
+
+		 // for (final EqFunctionNode fnNode1 : fnNodeSet) {
+		 // for (final EqFunctionNode fnNode2 : fnNodeSet) {
+		 // if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1),
+//		 getEqNodeToEqGraphNodeMap().get(fnNode2))) {
+			 // merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
+			 // }
+			 // }
+			 // }
+	 }
 
 //	public void addVariable(final IProgramVar pv) {
 //		mVars.add(pv);
@@ -178,5 +178,9 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	Collection<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
 		return mEqNodeToEqGraphNodeMap.values();
+	}
+
+	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
+		return Collections.unmodifiableSet(mDisEqualitySet);
 	}
 }

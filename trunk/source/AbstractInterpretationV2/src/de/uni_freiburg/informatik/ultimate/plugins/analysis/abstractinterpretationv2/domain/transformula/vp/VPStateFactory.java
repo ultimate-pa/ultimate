@@ -27,9 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -45,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implements IVPFactory<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
@@ -154,13 +158,14 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	 * 
 	 * @param resultTfStates
 	 * @param tf
+	 * @param oldState the state that the tfStates should be "patched over"
 	 * @return
 	 */
-	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final UnmodifiableTransFormula tf) {
+	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final UnmodifiableTransFormula tf, VPState<ACTION> oldState) {
 		final Set<VPState<ACTION>> result = new HashSet<>();
 
 		for (final VPTfState tfState : tfStates) {
-			result.add(convertToState(tfState, tf));
+			result.add(convertToState(tfState, tf, oldState));
 		}
 
 		return result;
@@ -170,15 +175,19 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	 * (first) plan: for every two outVars, query which (dis-)equalities hold for them TODO: naive (quadratic)
 	 * implementation in the future perhaps: work on the graph directly
 	 */
-	private VPState<ACTION> convertToState(final VPTfState tfState, final UnmodifiableTransFormula tf) {
+	private VPState<ACTION> convertToState(final VPTfState tfState, final UnmodifiableTransFormula tf, VPState<ACTION> oldState) {
+		if (isDebugMode()) {
+			getLogger().debug("VPStateFactory: convertToState(..) (begin)");
+		}
 		if (tfState.isBottom()) {
 			return getBottomState(tfState.getVariables());
 		}
 
 		if (tfState.isTop()) {
-			final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
-			builder.addVars(tfState.getVariables());
-			return builder.build();
+//			final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
+//			builder.addVars(tfState.getVariables());
+//			return builder.build();
+			return oldState;
 		}
 		
 		/*
@@ -193,40 +202,56 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 *  - outVars of the given TransFormula tf
 		 *  - constants
 		 */
-		Set<EqNode> outVarsAndConstantEqNodes = new HashSet<>();
-		for (IProgramVar pv : tf.getOutVars().keySet()) {
-			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
-			if (pvEqnode != null) {
-				outVarsAndConstantEqNodes.add(pvEqnode);
+		Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
+		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
+			if (node.nodeIdentifier.getEqNode() == null) {
+				// auxvar node
+				continue;
+			}
+			if (node.nodeIdentifier.getEqNode().isConstant()) {
+				// we need to track all constants
+				outVarsAndConstantEqNodeSet.add(node);
+				continue;
+			}
+			
+			HashSet<IProgramVar> nodeVars = new HashSet<>(node.nodeIdentifier.getEqNode().getVariables());
+			nodeVars.retainAll(tf.getOutVars().keySet());
+			if (!nodeVars.isEmpty()) {
+				// we need to track all nodes that talk about at least one outvar
+				outVarsAndConstantEqNodeSet.add(node);
 			}
 		}
-		outVarsAndConstantEqNodes.addAll(mTfPreparer.getAllConstantEqNodes());
+//		for (IProgramVar pv : tf.getOutVars().keySet()) {
+//			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
+//			if (pvEqnode != null) {
+//				outVarsAndConstantEqNodes.add(pvEqnode);
+//			}
+//		}
+//		outVarsAndConstantEqNodes.addAll(mTfPreparer.getAllConstantEqNodes());
+		List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> outVarsAndConstantEqNodes = new ArrayList<>(outVarsAndConstantEqNodeSet);
 
-		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
+		final VPStateBuilder<ACTION> builder = copy(havocVariables(tf.getAssignedVars(), oldState));// TODO
 		builder.addVars(tfState.getVariables());
 
-		for (final EqNode outNode1 : outVarsAndConstantEqNodes) {
-			for (final EqNode outNode2 : outVarsAndConstantEqNodes) {
-				VPNodeIdentifier id1;
-				VPNodeIdentifier id2;
-//				if (outNode1.isConstant()) {
-//					id1 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
-//				} else {
-					id1 = new VPNodeIdentifier(outNode1, 
-							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
-							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
-//				}
-//				if (outNode2.isConstant()) {
-//					id2 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
-//				} else {
-					id2 = new VPNodeIdentifier(outNode2, 
-							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
-							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
-//				}
+		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
-				if (tfState.areUnEqual(id1, id2)) {
-					builder.addDisEquality(outNode1, outNode2);
-//					builder.setIsTop(false);
+				if (outNode1 == outNode2) {
+					// no need to disequate two identical nodes
+					continue;
+				}
+
+//				VPNodeIdentifier id1 = new VPNodeIdentifier(outNode1, 
+//						VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
+//						VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
+//				VPNodeIdentifier id2 = new VPNodeIdentifier(outNode2, 
+//						VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
+//						VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
+
+				if (tfState.areUnEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
+					builder.addDisEquality(outNode1.nodeIdentifier.getEqNode(), outNode2.nodeIdentifier.getEqNode());
 				}
 			}
 		}
@@ -236,31 +261,34 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		Set<VPState<ACTION>> resultStates = new HashSet<>();
 		resultStates.add(stateWithDisEqualitiesAdded);
 
-		for (final EqNode outNode1 : outVarsAndConstantEqNodes) {
-			for (final EqNode outNode2 : outVarsAndConstantEqNodes) {
-				VPNodeIdentifier id1;
-				VPNodeIdentifier id2;
-//				if (outNode1.isConstant()) {
-//					id1 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
-//				} else {
-					id1 = new VPNodeIdentifier(outNode1, 
-							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
-							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
-//				}
-//				if (outNode2.isConstant()) {
-//					id2 = new VPNodeIdentifier(outNode1, Collections.emptyMap(), Collections.emptyMap());
-//				} else {
-					id2 = new VPNodeIdentifier(outNode2, 
-							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
-							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
-//				}
+		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
-				if (tfState.areEqual(id1, id2)) {
-					resultStates = VPFactoryHelpers.addEquality(outNode1, outNode2, resultStates, this);
+				if (outNode1 == outNode2) {
+					// no need to equate two identical nodes
+					continue;
+				}
+//				VPNodeIdentifier id1 = new VPNodeIdentifier(outNode1, 
+//							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
+//							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
+//				VPNodeIdentifier id2 = new VPNodeIdentifier(outNode2, 
+//							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
+//							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
+
+				if (tfState.areEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
+					resultStates = VPFactoryHelpers.addEquality(
+							outNode1.nodeIdentifier.getEqNode(), 
+							outNode2.nodeIdentifier.getEqNode(), 
+							resultStates, 
+							this);
 				}
 			}
 		}
-
+		if (isDebugMode()) {
+			getLogger().debug("VPStateFactory: convertToState(..) (end)");
+		}
 		assert resultStates.size() == 1 : "??";
 		return resultStates.iterator().next();
 	}
@@ -289,4 +317,183 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	public boolean isDebugMode() {
 		return mDomain.isDebugMode();
 	}
+
+	@Override
+	public Benchmark getBenchmark() {
+		return mPreAnalysis.getBenchmark();
+	}
+	
+	
+	/**
+	 * To havoc a node. There are three main parts to handle: (1) Handling the
+	 * outgoing edge chain. (2) Handling the incoming edges. (3) Handling the
+	 * node itself.
+	 * 
+	 * @param EqGraphNode
+	 *            to be havoc
+	 */
+	public VPState<ACTION> havoc(final EqNode node, final VPState<ACTION> originalState) {
+		if (originalState.isBottom()) {
+			return originalState;
+		}
+		
+		//assert !node.isLiteral() : "cannot havoc a literal";
+		assert node.getTerm().getFreeVars().length > 0 : "cannot havoc a constant term";
+		
+		
+		VPStateBuilder<ACTION> builder = copy(originalState);
+		EqGraphNode<EqNode, IProgramVarOrConst> graphNode = builder.getEqGraphNode(node);
+		
+		// TODO: determine if state becomes top through the havoc!
+
+		// Handling the outgoing edge chain
+		final EqGraphNode<EqNode, IProgramVarOrConst> firstRepresentative = graphNode.getRepresentative();
+		EqGraphNode<EqNode, IProgramVarOrConst> nextRepresentative = firstRepresentative;
+		nextRepresentative.getReverseRepresentative().remove(graphNode);
+		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
+			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
+			for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNode.getCcchild().entrySet()) {
+				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
+			}
+			nextRepresentative = nextRepresentative.getRepresentative();
+		}
+		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
+		HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> copyOfGraphNodeCcchild = new HashRelation<>();
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNode.getCcchild().entrySet()) {
+			copyOfGraphNodeCcchild.addPair(entry.getKey(), entry.getValue());
+		}
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : copyOfGraphNodeCcchild.entrySet()) {
+			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
+		}
+
+		/*
+		 *  Handling the incoming edges (reverseRepresentative).
+		 *  Point nodes in reverseRepresentative to the representative of the node that is being havoc.
+		 *  For example, y -> x -> z. Havoc x, then we have y -> z
+		 *  But if the node that is being havoc is its own representative, 
+		 *  then point nodes in reverseRepresentative to one of them.
+		 *  For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
+		 */
+		EqGraphNode<EqNode, IProgramVarOrConst> firstReserveRepresentativeNode = null;
+		if (!graphNode.getReverseRepresentative().isEmpty()) {
+			firstReserveRepresentativeNode = graphNode.getReverseRepresentative().iterator().next();
+		}
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNode.getReverseRepresentative()) {
+			// first reset the representative of all the reverseRepresentative nodes.
+			reverseNode.setRepresentative(reverseNode);
+		}
+		
+		boolean havocNodeIsItsRepresentative = false;
+		VPState<ACTION> resultState = builder.build();
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNode.getReverseRepresentative()) {
+			// case y -> x <- z
+			if (firstRepresentative.equals(graphNode)) {
+				havocNodeIsItsRepresentative = true;
+				if (graphNode.getReverseRepresentative().size() > 1) {
+					assert firstReserveRepresentativeNode != null;
+					resultState = disjoinAll(
+								VPFactoryHelpers.addEquality(reverseNode.nodeIdentifier, firstReserveRepresentativeNode.nodeIdentifier, resultState, this));
+				}
+			} else { // case y -> x -> z
+				resultState = disjoinAll(
+						VPFactoryHelpers.addEquality(reverseNode.nodeIdentifier, firstRepresentative.nodeIdentifier, resultState, this));
+			}
+		}
+		
+		builder = copy(resultState);
+		graphNode = builder.getEqGraphNode(node);
+		
+		/*
+		 * Handling the node itself:
+		 * First update disequality set.
+		 * Then set havoc node to initial.
+		 */
+		if (havocNodeIsItsRepresentative) {
+			Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>();
+			for (VPDomainSymmetricPair<EqNode> pair : builder.getDisEqualitySet()) {
+				if (pair.contains(graphNode.nodeIdentifier)) {
+					newDisEqualitySet.add(
+							new VPDomainSymmetricPair<EqNode>(
+									pair.getOther(graphNode.nodeIdentifier), 
+									resultState.find(firstReserveRepresentativeNode.nodeIdentifier)));
+				} else {
+					newDisEqualitySet.add(pair);
+				}
+			}
+			builder.addDisEqualites(newDisEqualitySet);
+		} else {
+			// do nothing: no need to update disequality set, because if x is not representative, then x should not be in disequality set.
+		}
+//		if (graphNode.getRepresentative().equals(graphNode)) {
+//			Set<VPDomainSymmetricPair<EqNode>> newSet = 
+//					builder.getDisEqualitySet().stream()
+//					.filter(pair -> !pair.contains(node))
+//					.collect(Collectors.toSet());
+//			builder.setDisEqualites(newSet);
+//		}
+		graphNode.setNodeToInitial();
+
+		if (node instanceof EqFunctionNode) {
+			builder.restorePropagation((EqFunctionNode) node);
+		}
+		resultState = builder.build();
+		
+		// also havoc the function nodes which index had been havoc.
+		if (!graphNode.getInitCcpar().isEmpty()) {
+			for (final EqGraphNode<EqNode, IProgramVarOrConst> initCcpar : graphNode.getInitCcpar()) {
+				resultState = havoc(initCcpar.nodeIdentifier, resultState);
+			}
+		}
+		
+		/*
+		 * havoc all the non-atomic EqNodes which depend on this one
+		 */
+		if (node instanceof EqAtomicBaseNode) {
+			for (EqNonAtomicBaseNode  dependentNode : ((EqAtomicBaseNode) node).getDependentNonAtomicBaseNodes()) {
+				resultState = havoc(dependentNode, resultState);
+			}
+		}
+		
+		return resultState;
+	}
+	
+	/**
+	 * To havoc an array. All the element in this array will be havoc.
+	 * 
+	 * @param term
+	 */
+	public VPState<ACTION> havocArray(final IProgramVarOrConst array, VPState<ACTION> originalState) {
+		VPState<ACTION> resultState = copy(originalState).build();
+
+		for (final EqFunctionNode fnNode : mDomain.getArrayIdToEqFnNodeMap()
+				.getImage(array)) {
+			resultState = this.havoc(fnNode, resultState);
+		}
+		return resultState;
+	}
+
+	/**
+	 * To havoc a set of nodes. If this set contains array, it will not be havoc
+	 * here.
+	 * 
+	 * @param assignmentVars
+	 */
+	public VPState<ACTION> havocVariables(final Set<IProgramVar> assignmentVars, VPState<ACTION> originalState) {
+		VPState<ACTION> resultState = copy(originalState).build();
+		for (final IProgramVar var : assignmentVars) {
+
+			if (var.getTerm().getSort().isArraySort()) {
+				resultState = havocArray(var, resultState);
+				continue;
+			}
+
+			EqNode node = mDomain.getPreAnalysis().getEqNode(var.getTerm(), Collections.emptyMap());
+			
+			if (node != null) {
+				resultState = havoc(node, resultState);
+			}
+		}
+		return resultState;
+	}
+	
 }

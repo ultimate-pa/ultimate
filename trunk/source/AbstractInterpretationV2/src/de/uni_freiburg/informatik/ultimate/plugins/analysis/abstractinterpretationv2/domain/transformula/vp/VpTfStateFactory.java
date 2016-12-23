@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
 
@@ -119,7 +122,21 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		 return result;
 	}
 
+
+	/**
+	 * Given a VPState and a TransFormula, this
+	 *  - aquires the "vanilla" VPTfStateBuilder for the TransFormula
+	 *  - collects everything that the state knows about the inVars of the TransFormula and updates the VPTfStateBuidler accordingly
+	 * 
+	 * @param state
+	 * @param tf
+	 * @return
+	 */
 	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
+		if (isDebugMode()) {
+			getLogger().debug("VPTfStateFactory: createTfState(..) (begin)");
+		}
+
 		if (state.isBottom()) {
 			return getBottomState(state.getVariables());
 		}
@@ -133,17 +150,44 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		
-		Set<EqNode> inVarsAndConstantEqNodes = new HashSet<>();
-		for (IProgramVar pv : tf.getInVars().keySet()) {
-			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
-			if (pvEqnode != null) {
-				inVarsAndConstantEqNodes.add(pvEqnode);
+		Set<EqNode> inVarsAndConstantEqNodeSet = new HashSet<>();
+		for (EqGraphNode<EqNode, IProgramVarOrConst> node : state.getAllEqGraphNodes()) {
+			if (node.nodeIdentifier == null) {
+				assert false;
+				continue;
+			}
+			if (node.nodeIdentifier.isConstant()) {
+				// we need to track all constants
+				inVarsAndConstantEqNodeSet.add(node.nodeIdentifier);
+				continue;
+			}
+			
+			HashSet<IProgramVar> nodeVars = new HashSet<>(node.nodeIdentifier.getVariables());
+			nodeVars.retainAll(tf.getOutVars().keySet());
+			if (!nodeVars.isEmpty()) {
+				// we need to track all nodes that talk about at least one invar
+				inVarsAndConstantEqNodeSet.add(node.nodeIdentifier);
 			}
 		}
-		inVarsAndConstantEqNodes.addAll(mTfStatePreparer.getAllConstantEqNodes());
+//		for (IProgramVar pv : tf.getInVars().keySet()) {
+//			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
+//			if (pvEqnode != null) {
+//				inVarsAndConstantEqNodes.add(pvEqnode);
+//			}
+//		}
+//		inVarsAndConstantEqNodes.addAll(mTfStatePreparer.getAllConstantEqNodes());
+		
+		List<EqNode> inVarsAndConstantEqNodes = new ArrayList<>(inVarsAndConstantEqNodeSet);
 
-		for (final EqNode inNode1 : inVarsAndConstantEqNodes) {
-			for (final EqNode inNode2 : inVarsAndConstantEqNodes) {
+		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				EqNode inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqNode inNode2 = inVarsAndConstantEqNodes.get(j);
+
+				if (inNode1 == inNode2) {
+					// no need to disequate two identical nodes
+					continue;
+				}
 				VPNodeIdentifier id1;
 				VPNodeIdentifier id2;
 				id1 = new VPNodeIdentifier(inNode1, 
@@ -164,8 +208,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		Set<VPTfState> resultStates = new HashSet<>();
 		resultStates.add(stateWithDisEqualitiesAdded);
 
-		for (final EqNode inNode1 : inVarsAndConstantEqNodes) {
-			for (final EqNode inNode2 : inVarsAndConstantEqNodes) {
+		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				EqNode inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqNode inNode2 = inVarsAndConstantEqNodes.get(j);
+
+				if (inNode1 == inNode2) {
+					// no need to equate two identical nodes
+					continue;
+				}
 				VPNodeIdentifier id1;
 				VPNodeIdentifier id2;
 				id1 = new VPNodeIdentifier(inNode1, 
@@ -181,6 +232,9 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 			}
 		}
 
+		if (isDebugMode()) {
+			getLogger().debug("VPTfStateFactory: createTfState(..) (end)");
+		}
 		assert resultStates.size() == 1 : "??";
 		return resultStates.iterator().next();
 	}
@@ -198,5 +252,10 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	@Override
 	public boolean isDebugMode() {
 		return mPreAnalysis.isDebugMode();
+	}
+
+	@Override
+	public Benchmark getBenchmark() {
+		return mPreAnalysis.getBenchmark();
 	}
 }

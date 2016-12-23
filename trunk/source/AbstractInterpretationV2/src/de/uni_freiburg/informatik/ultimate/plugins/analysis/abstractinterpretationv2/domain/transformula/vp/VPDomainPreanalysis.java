@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
  * Create and collects @EqNode from ApplicationTerm (store and select)
@@ -74,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Alexander Nutz
  */
 public class VPDomainPreanalysis {
+	
+	
+	private final Benchmark mBenchmark;
 
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
@@ -99,6 +103,13 @@ public class VPDomainPreanalysis {
 		mLogger = logger;
 		mSymboltable = root.getSymboltable();
 		mSettings = new VPDomainPreanalysisSettings();
+		mBenchmark = new Benchmark();
+		mBenchmark.start(VPSFO.overallFromPreAnalysis);
+		mBenchmark.register(VPSFO.vpStateEqualsClock);
+		mBenchmark.register(VPSFO.addEqualityClock);
+		mBenchmark.register(VPSFO.propagateDisEqualitiesClock);
+		mBenchmark.register(VPSFO.applyClock);
+		mBenchmark.register(VPSFO.conjoinOverallClock);
 		process(RcfgUtils.getInitialEdges(root));
 	}
 
@@ -386,7 +397,7 @@ public class VPDomainPreanalysis {
 
 		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
 		if (result == null) {
-			result = new EqFunctionNode(function, indices);
+			result = new EqFunctionNode(function, indices, mManagedScript);
 
 			mArrayIdToFnNodes.addPair(function, result);
 
@@ -468,7 +479,7 @@ public class VPDomainPreanalysis {
 		final Set<Term> arrayIndices = new HashSet<>();
 		for (final IProgramVarOrConst array : mArrayToAccessingEqNodes.getDomain()) {
 			for (final EqNode eqNode : mArrayToAccessingEqNodes.getImage(array)) {
-				arrayIndices.add(eqNode.getTerm(mManagedScript));
+				arrayIndices.add(eqNode.getTerm());
 			}
 		}
 
@@ -560,6 +571,10 @@ public class VPDomainPreanalysis {
 
 	public boolean isDebugMode() {
 		return mIsDebugMode;
+	}
+
+	public Benchmark getBenchmark() {
+		return mBenchmark;
 	}
 }
 

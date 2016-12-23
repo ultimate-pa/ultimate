@@ -129,25 +129,25 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	}
 
 	/**
-			 * Check whether @param node1 and @param node2 are congruent.
-			 *
-			 * @param node1
-			 * @param node2
-			 * @return true if they are congruent
-			 */
-			private boolean congruent(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
-				if (!(node1.nodeIdentifier.isFunction()) || !(node2.nodeIdentifier.isFunction())) {
-					return false;
-				}
-	
-	//			final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
-	//			final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
-	
-				if (!(node1.nodeIdentifier.getFunction().equals(node2.nodeIdentifier.getFunction()))) {
-					return false;
-				}
-				return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
-			}
+	 * Check whether @param node1 and @param node2 are congruent.
+	 *
+	 * @param node1
+	 * @param node2
+	 * @return true if they are congruent
+	 */
+	protected boolean congruent(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
+		if (!(node1.nodeIdentifier.isFunction()) || !(node2.nodeIdentifier.isFunction())) {
+			return false;
+		}
+
+		//			final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
+		//			final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
+
+		if (!(node1.nodeIdentifier.getFunction().equals(node2.nodeIdentifier.getFunction()))) {
+			return false;
+		}
+		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
+	}
 
 	/* Returns the parents of all nodes in @param node's congruence class.
 	 *

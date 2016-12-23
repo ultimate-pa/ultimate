@@ -93,6 +93,8 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 
 		/*
 		 * The EqGraphNodes we need for the given TransFormula can come from four sources:
+		 *  (Paradigm: whenever the TransFormula can introduce a (dis-)equality about something, we need
+		 *   EqGraphNodes to track that.)
 		 *  1. array accesses in the TransFormula
 		 *    --> we obtain them by the extraction methods of the MultiDimensionsalX classes
 		 *  2. variables in the TransFormula (outside of array accesses)
@@ -102,7 +104,14 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		 *    (is this more than necessary? maybe not: we have to carry over all 
 		 *     relations to constants from the VPStates through the TransFormulas, even if they don't
 		 *     occur in some TransFormula)
-		 *  4. the auxVars of the Transformula
+		 *  4. the auxVars of the TransFormula
+		 *  5. Array equalities in the TransFormula
+		 *    --> for both arrays we need all the EqFunctionNodes that have the array as function
+		 *  6. Array updates in the TransFormula
+		 *    --> if there is the same array on both sides, we need the corresponding function node for both versions
+		 *    --> if there is a different array on both sides, we should treat this like an array equality
+		 *  
+		 *  
 		 */
 		
 		
@@ -186,7 +195,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			getOrConstructEqGraphNode(constantEqNode, 
 					Collections.emptyMap(), 
 					Collections.emptyMap(), 
-					constantEqNode.getTerm(preAnalysis.getManagedScript()));
+					constantEqNode.getTerm());
 		}
 		
 		/*

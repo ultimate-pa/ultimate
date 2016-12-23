@@ -367,8 +367,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		Term disEquality;
 
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
-			disEqualityFirst = pair.getFirst().getTerm(mScript);
-			disEqualitySecond = pair.getSecond().getTerm(mScript);
+			disEqualityFirst = pair.getFirst().getTerm();
+			disEqualitySecond = pair.getSecond().getTerm();
 			distinctTermSet.add(mScript.term(this, TERM_FUNC_NAME_DISTINCT, disEqualityFirst,
 					disEqualitySecond));
 		}
@@ -390,8 +390,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.nodeIdentifier.getTerm(mScript);
-				equalitySecond = graphNode.getRepresentative().nodeIdentifier.getTerm(mScript);
+				equalityFirst = graphNode.nodeIdentifier.getTerm();
+				equalitySecond = graphNode.getRepresentative().nodeIdentifier.getTerm();
 				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
 			}
 		}
@@ -492,21 +492,27 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public boolean equals(final Object obj) {
+		mPreAnalysis.getBenchmark().unpause(VPSFO.vpStateEqualsClock);
 		if (this == obj) {
+			mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 			return true;
 		}
 		if (obj == null) {
+			mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 			return false;
 		}
 		if (getClass() != obj.getClass()) {
+			mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 			return false;
 		}
 		@SuppressWarnings("unchecked")
 		final VPState<ACTION> other = (VPState<ACTION>) obj;
 		if (isEqualTo(other)) {
 			// TODO: Note that computing isEqualTo can be quite expensive!
+			mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 			return true;
 		}
+		mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 		return false;
 	}
 

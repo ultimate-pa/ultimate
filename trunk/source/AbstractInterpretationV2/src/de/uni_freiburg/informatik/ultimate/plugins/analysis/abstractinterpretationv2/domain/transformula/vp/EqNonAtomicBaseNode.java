@@ -6,16 +6,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	private final Term mTerm;
-
 	EqNonAtomicBaseNode(Term t, boolean isGlobal) {
 		super(isGlobal, t.getFreeVars().length == 0);
 		mTerm = t;
-	}
-
-	@Override
-	public Term getTerm(ManagedScript s) {
-		return mTerm;
 	}
 
 	@Override

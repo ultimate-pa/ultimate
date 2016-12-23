@@ -91,13 +91,20 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> oldState, final ACTION transition) {
+		mPreAnalysis.getBenchmark().unpause(VPSFO.applyClock);
+		
+		if (mPreAnalysis.isDebugMode()) {
+			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (begin)");
+		}
 
 		final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(transition);
 		if (tf.getOutVars().isEmpty()) {
+			mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 			return Collections.singletonList(oldState);
 		}
 
 		if (oldState.isBottom()) {
+			mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 			return Collections.singletonList(oldState);
 		}
 
@@ -114,8 +121,16 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
 
-		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf);
+		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf, oldState);
+		
+		if (mPreAnalysis.isDebugMode()) {
+			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
+			mPreAnalysis.getBenchmark().pause(VPSFO.overallFromPreAnalysis);
+			mPreAnalysis.getBenchmark().printResult(mPreAnalysis.getLogger());
+			mPreAnalysis.getBenchmark().unpause(VPSFO.overallFromPreAnalysis);
+		}	
 
+		mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 		assert VPDomainHelpers.containsNoNullElement(resultStates);
 		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		assert resultStates.size() < 50 : "TODO: merge internally";

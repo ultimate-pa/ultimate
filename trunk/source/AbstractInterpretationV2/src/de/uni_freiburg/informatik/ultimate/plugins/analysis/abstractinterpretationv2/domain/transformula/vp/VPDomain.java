@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
  * Domain of variable partition.
  *
- * Note: This domain is work in progress and does not work.
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
@@ -57,6 +57,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
+	
 
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
 
@@ -83,7 +84,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mTfPreparer = tfPreparer;
 		mVpStateFactory = new VPStateFactory<>(this, tfPreparer);
 		mTfStateFactory = new VpTfStateFactory(tfPreparer, preAnalysis);
-		mPost = new VPPostOperator(script, services, this);
+		mPost = new VPPostOperator<>(script, services, this);
 		mDebugMode = mPreAnalysis.isDebugMode();
 	}
 
@@ -185,5 +186,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public boolean isDebugMode() {
 		return mDebugMode;
+	}
+	
+	public Benchmark getVpBenchmark() {
+		return mPreAnalysis.getBenchmark();
 	}
 }

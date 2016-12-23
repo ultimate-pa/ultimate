@@ -125,7 +125,6 @@ public class VPTransFormulaStateBuilderPreparer {
 	private void handleTransFormula(TransFormula tf) {
 		VPTransitionStateBuilder vptsb = new VPTransitionStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
 		
-		assert vptsb.isTopConsistent();
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
 	
