@@ -36,6 +36,13 @@ public final class UltimateRunDefinitionGenerator {
 	private static Collection<File> getInputFiles(final File directory, final String[] fileEndings, final int offset, final int n) {
 		return TestUtil.limitFiles(TestUtil.getFiles(directory, fileEndings), offset, n);
 	}
+	
+	/**
+	 * Get input files from directory. Do not take all files but only up to n pseudorandomly selected files.
+	 */
+	private static Collection<File> getInputFilesRegex(final File directory, final String[] regexes, final int offset, final int n) {
+		return TestUtil.limitFiles(TestUtil.getFilesRegex(directory, regexes), offset, n);
+	}
 
 	/**
 	 * Get an {@link UltimateRunDefinition} from strings representing relative paths.
@@ -83,6 +90,21 @@ public final class UltimateRunDefinitionGenerator {
 		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
 				.map(a -> getInputFiles(a, fileEndings, offset, limit)).flatMap(a -> a.stream()).distinct()
 				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile)).collect(Collectors.toList());
+	}
+	
+	public static Collection<UltimateRunDefinition> getRunDefinitionsFromTrunkRegex(final String[] directories,
+			final String[] regexes, final String settings[], final String toolchain, final int offset, final int limit) {
+		final List<UltimateRunDefinition> result = new ArrayList<>();
+		for (final String directory : directories) {
+			final File toolchainFile = getFileFromToolchainDir(toolchain);
+			for (final File dirFile : getInputFilesRegex(getFileFromTrunkDir(directory), regexes, offset, limit)) {
+				for (final String setting : settings) {
+					final File settingsFile = settings == null ? null : getFileFromSettingsDir(setting);
+					result.add(new UltimateRunDefinition(dirFile, settingsFile, toolchainFile));
+				}
+			}
+		}
+		return result;
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String toolchain,
