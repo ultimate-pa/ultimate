@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 Yu-Wen Chen
+ * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
@@ -126,7 +153,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	/**
 	 * Given a VPState and a TransFormula, this
 	 *  - aquires the "vanilla" VPTfStateBuilder for the TransFormula
-	 *  - collects everything that the state knows about the inVars of the TransFormula and updates the VPTfStateBuidler accordingly
+	 *  - collects everything that the state knows about the inVars of the TransFormula and updates the VPTfStateBuidler 
+	 *    accordingly
 	 * 
 	 * @param state
 	 * @param tf
@@ -150,55 +178,27 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		
-		Set<EqNode> inVarsAndConstantEqNodeSet = new HashSet<>();
-		for (EqGraphNode<EqNode, IProgramVarOrConst> node : state.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier == null) {
-				assert false;
-				continue;
-			}
-			if (node.nodeIdentifier.isConstant()) {
-				// we need to track all constants
-				inVarsAndConstantEqNodeSet.add(node.nodeIdentifier);
-				continue;
-			}
-			
-			HashSet<IProgramVar> nodeVars = new HashSet<>(node.nodeIdentifier.getVariables());
-			nodeVars.retainAll(tf.getOutVars().keySet());
-			if (!nodeVars.isEmpty()) {
-				// we need to track all nodes that talk about at least one invar
-				inVarsAndConstantEqNodeSet.add(node.nodeIdentifier);
+		Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
+		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> node : builder.getAllEqGraphNodes()) {
+			if (node.nodeIdentifier.isInOrThrough()) {
+				
 			}
 		}
-//		for (IProgramVar pv : tf.getInVars().keySet()) {
-//			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
-//			if (pvEqnode != null) {
-//				inVarsAndConstantEqNodes.add(pvEqnode);
-//			}
-//		}
-//		inVarsAndConstantEqNodes.addAll(mTfStatePreparer.getAllConstantEqNodes());
 		
-		List<EqNode> inVarsAndConstantEqNodes = new ArrayList<>(inVarsAndConstantEqNodeSet);
+		List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> inVarsAndConstantEqNodes = new ArrayList<>(inVarsAndConstantEqNodeSet);
 
 		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqNode inNode1 = inVarsAndConstantEqNodes.get(i);
-				EqNode inNode2 = inVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
 
 				if (inNode1 == inNode2) {
 					// no need to disequate two identical nodes
 					continue;
 				}
-				VPNodeIdentifier id1;
-				VPNodeIdentifier id2;
-				id1 = new VPNodeIdentifier(inNode1, 
-						VPDomainHelpers.projectToVars(tf.getInVars(), inNode1.getVariables()),
-						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode1.getVariables()));
-				id2 = new VPNodeIdentifier(inNode2, 
-						VPDomainHelpers.projectToVars(tf.getInVars(), inNode2.getVariables()),
-						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode2.getVariables()));
 		
-				if (state.areUnEqual(inNode1, inNode2)) {
-					builder.addDisEquality(id1, id2);
+				if (state.areUnEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
+					builder.addDisEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier);
 				}
 			}
 		}
@@ -210,24 +210,16 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqNode inNode1 = inVarsAndConstantEqNodes.get(i);
-				EqNode inNode2 = inVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
 
 				if (inNode1 == inNode2) {
 					// no need to equate two identical nodes
 					continue;
 				}
-				VPNodeIdentifier id1;
-				VPNodeIdentifier id2;
-				id1 = new VPNodeIdentifier(inNode1, 
-						VPDomainHelpers.projectToVars(tf.getInVars(), inNode1.getVariables()),
-						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode1.getVariables()));
-				id2 = new VPNodeIdentifier(inNode2, 
-						VPDomainHelpers.projectToVars(tf.getInVars(), inNode2.getVariables()),
-						VPDomainHelpers.projectToVars(tf.getOutVars(), inNode2.getVariables()));
-				
-				if (state.areEqual(inNode1, inNode2)) {
-					resultStates = VPFactoryHelpers.addEquality(id1, id2, resultStates, this);
+			
+				if (state.areEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
+					resultStates = VPFactoryHelpers.addEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier, resultStates, this);
 				}
 			}
 		}

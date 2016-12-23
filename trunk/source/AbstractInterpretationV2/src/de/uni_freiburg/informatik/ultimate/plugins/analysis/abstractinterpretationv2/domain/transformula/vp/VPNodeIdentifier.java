@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 Yu-Wen Chen
+ * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collections;
@@ -6,16 +33,23 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * Identifies an EqGraphNode in a VPTfState.
+ *  - typically corresponds to a subterm of the VPTfState's TransFormula's Term
+ *   exception: when the TransFormula talks about an array, then we introduce EqGraphNodes
+ *     for all indices of that array which we track. Convention (for now?): these nodes
+ *       may have null-values in their invar/outvar maps.
+ * 
+ * @author Alexander Nutz
+ */
 public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	
 	private final EqNode mEqNode;
@@ -25,6 +59,7 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
 	private final VPArrayIdentifier mFunction;
+	private final boolean mIsInOrThrough;
 
 
 	public VPNodeIdentifier(EqNode eqNode, 
@@ -48,8 +83,37 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 			mFunction = null;
 		}
 		
+		/*
+		 * a nodeIdentifier has to be "pure" in the sense that it is either
+		 *  - "in" (i.e. there are variables that are inVars but no outVars)
+		 *  - "out" (i.e. there are variables that are outVars but no inVars)
+		 *  - "through" (i.e. all variables are both inVars and outVars)
+		 *  Than means it cannot have two variables where one is only in and one is only out. 
+		 */
+		boolean isIn = false;
+		boolean isOut = false;
+		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+			if (!mOutVars.containsKey(en.getKey())) {
+				// we have an invar that is no outVar --> this node is "in"
+				isIn = true;
+			}
+		}
+		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
+			if (!mInVars.containsKey(en.getKey())) {
+				// we have an outVar that is no inVar --> this node is "out"
+				// if it is already "in", then the sanity check fails
+				isOut = true;
+				assert !isIn;
+			}
+		}	
+		
+		mIsInOrThrough = isIn || (!isIn && !isOut);
+		
 		assert sanityCheck();
 	}
+	
+	
+	
 
 
 	private boolean sanityCheck() {
@@ -64,29 +128,7 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 			}
 		}
 		
-		/*
-		 * a nodeIdentifier has to be "pure" in the sense that it is either
-		 *  - "in" (i.e. there are variables that are inVars but no outVars)
-		 *  - "out" (i.e. there are variables that are outVars but no inVars)
-		 *  - "through" (i.e. all variables are both inVars and outVars)
-		 *  Than means it cannot have two variables where one is only in and one is only out. 
-		 */
-		boolean isIn = false;
-		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
-			if (!mOutVars.containsKey(en.getKey())) {
-				// we have an invar that is no outVar --> this node is "in"
-				isIn = true;
-			}
-		}
-		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
-			if (!mInVars.containsKey(en.getKey())) {
-				// we have an outVar that is no inVar --> this node is "out"
-				// if it is already "in", then the sanity check fails
-				if (isIn) {
-					return false;
-				}
-			}
-		}	
+
 		return true;
 	}
 
@@ -192,5 +234,10 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	@Override
 	public int hashCode() {
 		return HashUtils.hashHsieh(31, mEqNode, mInVars, mOutVars);
+	}
+
+
+	public boolean isInOrThrough() {
+		return mIsInOrThrough;
 	}
 }

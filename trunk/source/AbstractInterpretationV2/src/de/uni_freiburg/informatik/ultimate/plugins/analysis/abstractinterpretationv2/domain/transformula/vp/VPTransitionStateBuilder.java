@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 Yu-Wen Chen
+ * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
@@ -15,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -207,6 +236,36 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 					Collections.emptyMap(), 
 					auxVar);
 		}
+		
+		/*
+		 * 5. ArrayEqualities
+		 * say we have an array equality a = b
+		 * Then we need to introduce nodes for all indices that we track for both a and b, right?..
+		 *  note that the above steps may already have introduced nodes for some indices
+		 *  the index nodes introduced here have inVars and outVars in their nodeIdentifiers, however 
+		 *   those don't correspond to any TermVariable (the value of the entries is set to null)
+		 *   whether a node a[i] is an in or an out or a through-node depends on a.
+		 */
+		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(tf.getFormula());
+		for (ArrayEquality ae : arrayEqualities) {
+//			to be continued .. TODO
+		}
+
+//		preAnalysis.get
+		
+		/*
+		 * 6. ArrayUpdates
+		 * case 1: newArray and oldArray are the same IProgramVar (like in a normal array update)
+		 *   then an index node for the oldArray has been created, we may need to create one for the newArray
+		 * case 2: newArray and oldArray have a different IProgramVarOrConst
+		 *   this case is treated here like an array equality
+		 */
+		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(tf.getFormula());
+		for (ArrayUpdate au : arrayUpdates) {
+//			to be continued .. TODO
+		}
+			
+
 	}
 	
 	public void merge(Term t1, Term t2) {
