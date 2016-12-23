@@ -178,7 +178,9 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			if (SmtUtils.isFalse(succ.getFormula())) {
 				final Validity toFalse = sdecToFalse(preLin, preHier, act);
 				if (toFalse == null) {
-					// do nothing an continue with other checks
+					// we are unable to determine validity with SD checks
+					assert (sdec(preLin, preHier, act, succ) == null);
+					return Validity.UNKNOWN;
 				} else {
 					switch (toFalse) {
 						case INVALID:
