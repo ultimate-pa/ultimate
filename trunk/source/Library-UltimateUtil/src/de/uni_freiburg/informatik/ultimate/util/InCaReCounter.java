@@ -81,7 +81,7 @@ public class InCaReCounter {
 	public void add(final InCaReCounter inCaReCounter) {
 		mInternal += inCaReCounter.getInternal();
 		mCall += inCaReCounter.getCall();
-		mReturn =+ inCaReCounter.getReturn();
+		mReturn += inCaReCounter.getReturn();
 	}
 	
 	/**
