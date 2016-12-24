@@ -177,15 +177,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-		//		final ManagedScript managedScript = ;
 		mPredicateTransformer =
 				new PredicateTransformer(services, icfg.getCfgSmtToolkit().getManagedScript(), simplificationTechnique, xnfConversionTechnique);
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		//		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, icfg,
-		//				simplificationTechnique, xnfConversionTechnique,
-		//				);
 		Map<BoogieIcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg, 
 				simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
 

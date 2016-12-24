@@ -90,9 +90,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints,
-			final boolean useLiveVars,
+			final boolean useVarsFromUnsatCore,
 			final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
-			final boolean useVarsFromUnsatCore, final Settings solverSettings,
+			final boolean useLiveVars, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
 		mServices = services;

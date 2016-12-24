@@ -302,6 +302,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			mPatternCoefficients.addAll(mPrecondition.getOutVars().keySet());
 			mPatternCoefficients.addAll(mPostcondition.getInVars().keySet());
 			mPatternCoefficients.addAll(mPostcondition.getOutVars().keySet());
+			if (PRINT_CONSTRAINTS) {
+				mLogger.info("Program variables are:");
+				mLogger.info(mPatternCoefficients);
+			}
 			mLogger.info( "[LIIPP] Linearization complete.");
 		}
 		if (useVarsFromUnsatCore && varsFromUnsatCore != null) {
@@ -760,6 +764,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
+//		boolean useAllProgramVariables = true;
+//		if (useAllProgramVariables) {
+//			for (IProgramVar pv : lastOccurrencesOfTermVariables.keySet()) {
+//				if (primedMapping.get(pv) == null)
+//					primedMapping.put(pv, lastOccurrencesOfTermVariables.get(pv));
+//			}
+//		}
 		
 		lastOccurrencesOfTermVariables.putAll(primedMapping);
 		
