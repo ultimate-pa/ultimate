@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
@@ -263,16 +264,16 @@ public class CallReturnPyramideInstanceProvider {
 	private class FourWayInstanceProvider {
 		
 		private final Instance mPriorityInstance;
-		private final EnumMap<Instance, IValueConstruction<IProgramVar, TermVariable>> mInstanceProviders = new EnumMap<>(Instance.class);
+		private final EnumMap<Instance, ConstructionCache<IProgramVar, TermVariable>> mInstanceProviders = new EnumMap<>(Instance.class);
 		
 		public FourWayInstanceProvider(final Instance priorityInstance) {
 			super();
 			mPriorityInstance = priorityInstance;
 			for (final Instance instance : Instance.values()) {
 				if (instance == mPriorityInstance) {
-					mInstanceProviders.put(instance, new DefaultTermVariableProvider());
+					mInstanceProviders.put(instance, new ConstructionCache<IProgramVar, TermVariable>(new DefaultTermVariableProvider()));
 				} else {
-					mInstanceProviders.put(instance, new FreshTermVariableProvider(instance));
+					mInstanceProviders.put(instance, new ConstructionCache<IProgramVar, TermVariable>(new FreshTermVariableProvider(instance)));
 				}
 			}
 		}
@@ -281,9 +282,9 @@ public class CallReturnPyramideInstanceProvider {
 
 		private TermVariable getInstance(final IProgramVar pv, final EnumSet<Instance> allInstances) {
 			if (allInstances.contains(mPriorityInstance)) {
-				return mInstanceProviders.get(mPriorityInstance).constructValue(pv);
+				return mInstanceProviders.get(mPriorityInstance).getOrConstruct(pv);
 			} else {
-				return mInstanceProviders.get(allInstances.iterator().next()).constructValue(pv);
+				return mInstanceProviders.get(allInstances.iterator().next()).getOrConstruct(pv);
 			}
 		}
 	}
