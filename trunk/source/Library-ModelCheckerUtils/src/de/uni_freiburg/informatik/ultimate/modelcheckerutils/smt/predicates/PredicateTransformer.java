@@ -777,6 +777,36 @@ public class PredicateTransformer {
 //		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
 //	}
 	
+	
+	public Term weakestPreconditionReturn(final IPredicate returnSucc, final IPredicate callPred, 
+			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF, 
+			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
+			final Set<IProgramNonOldVar> modifiableGlobals) {
+		
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript, 
+				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_RETURN);
+		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final Term returnSuccTerm = renamePredicateToInstance(returnSucc, Instance.AFTER_RETURN, crpip);
+		final Term callTfTerm = renamePredicateToInstance(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term oldVarsAssignmentTerm = renamePredicateToInstance(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term globalVarsAssignmentTerm = renamePredicateToInstance(globalVarsAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
+		final Term returnTfTerm = renamePredicateToInstance(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
+
+		final Term result = Util.or(mScript,
+				SmtUtils.not(mScript, callTfTerm),
+				SmtUtils.not(mScript, oldVarsAssignmentTerm),
+				SmtUtils.not(mScript, globalVarsAssignmentTerm),
+				SmtUtils.not(mScript, returnTfTerm),
+				SmtUtils.not(mScript, callPredTerm),
+				returnSuccTerm);
+//				Util.and(mScript, callPredTerm, returnSuccTerm)); 
+		
+		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
+		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
+	}
+	
+	
+	
 	public Term renamePredicateToInstance(final IPredicate pred, final Instance instance, final CallReturnPyramideInstanceProvider crpip) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final IProgramVar pv : pred.getVars()) {
@@ -786,14 +816,14 @@ public class PredicateTransformer {
 		return result;
 	}
 	
-	public Term renamePredicateToInstance(final TransFormula tf, final Instance preBefore, final Instance succInstance, final CallReturnPyramideInstanceProvider crpip) {
+	public Term renamePredicateToInstance(final TransFormula tf, final Instance preInstance, final Instance succInstance, final CallReturnPyramideInstanceProvider crpip) {
 		
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			substitution.put(entry.getValue(), crpip.getInstance(entry.getKey(), succInstance));
 		}
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitution.put(entry.getValue(), crpip.getInstance(entry.getKey(), succInstance));
+			substitution.put(entry.getValue(), crpip.getInstance(entry.getKey(), preInstance));
 		}
 		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(tf.getFormula());
 		return result;
