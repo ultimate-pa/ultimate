@@ -127,9 +127,12 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
-		mStemPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mLoopPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mAcceptingPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mStemPU = stemPU;
+		mLoopPU = loopPU;
+		mAcceptingPU = loopPU;
+//		mStemPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+//		mLoopPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+//		mAcceptingPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
 		IPredicate initialPredicate;
 		if (emtpyStem) {
 			final Set<IPredicate> empty = Collections.emptySet();
