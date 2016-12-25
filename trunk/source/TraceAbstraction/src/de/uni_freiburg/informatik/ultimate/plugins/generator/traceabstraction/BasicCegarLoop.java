@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -360,10 +359,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
 				htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
 			} else {
-				final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
+				htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 						mPref.getHoareTripleChecks(), super.mCsToolkit,
-						mTraceCheckAndRefinementEngine.getPredicateUnifier());
-				htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
 						mTraceCheckAndRefinementEngine.getPredicateUnifier());
 			}
 		}
