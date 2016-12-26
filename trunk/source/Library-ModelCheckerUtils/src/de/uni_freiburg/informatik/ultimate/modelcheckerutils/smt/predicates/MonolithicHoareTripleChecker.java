@@ -338,10 +338,16 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				Integer.MIN_VALUE, null, 23, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
 		// oldVars get index 0
-		// modifiable globals get index 2
+		// modifiable globals get index 2, unless they are modified on return then they get index 1
 		// not modifiable globals get index 0
 		// other variables get index 1
-		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 23, 1, 0,
+		final Set<IProgramVar> modifiableGlobalsAssignedOnReturn = new HashSet<>();
+		for (final IProgramVar assignedVar : tfReturn.getAssignedVars()) {
+			if (modifiableGlobalsCallee.contains(assignedVar)) {
+				modifiableGlobalsAssignedOnReturn.add(assignedVar);
+			}
+		}
+		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, modifiableGlobalsAssignedOnReturn, 1, 1, 0,
 				modifiableGlobalsCallee, 2, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
 		// oldVars not renamed if modifiable
