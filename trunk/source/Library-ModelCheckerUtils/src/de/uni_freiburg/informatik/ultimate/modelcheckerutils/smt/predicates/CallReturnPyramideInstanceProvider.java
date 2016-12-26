@@ -214,7 +214,11 @@ public class CallReturnPyramideInstanceProvider {
 		@Override
 		public EnumSet<Instance> getInstancesGlobalNonOld(final IProgramNonOldVar pv) {
 			if(isModifiableByCallee(pv)) {
-				return EnumSet.of(Instance.BEFORE_RETURN);
+				if (isWrittenOnReturn(pv)) {
+					return EnumSet.of(Instance.BEFORE_RETURN);
+				} else {
+					return EnumSet.of(Instance.BEFORE_RETURN, Instance.AFTER_RETURN);
+				}
 			} else {
 				if (isWrittenOnReturn(pv)) {
 					return EnumSet.of(Instance.BEFORE_CALL, Instance.AFTER_CALL, Instance.BEFORE_RETURN);
@@ -244,7 +248,11 @@ public class CallReturnPyramideInstanceProvider {
 		@Override
 		public EnumSet<Instance> getInstancesGlobalNonOld(final IProgramNonOldVar pv) {
 			if(isModifiableByCallee(pv)) {
-				return EnumSet.of(Instance.AFTER_RETURN);
+				if (isWrittenOnReturn(pv)) {
+					return EnumSet.of(Instance.AFTER_RETURN);
+				} else {
+					return EnumSet.of(Instance.BEFORE_RETURN, Instance.AFTER_RETURN);
+				}
 			} else {
 				if (isWrittenOnReturn(pv)) {
 					return EnumSet.of(Instance.AFTER_RETURN);
