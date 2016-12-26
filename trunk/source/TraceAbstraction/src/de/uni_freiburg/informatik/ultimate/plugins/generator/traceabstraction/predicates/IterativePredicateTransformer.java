@@ -177,14 +177,16 @@ public class IterativePredicateTransformer {
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
 					callerPred = ipp.getInterpolant(callPos);
 					callGlobalVarsAssignment = nf.getGlobalVarAssignment(callPos);
-					callOldVarsAssignment = null;
+					callOldVarsAssignment = nf.getOldVarAssignment(callPos);
 					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
 				}
 				final UnmodifiableTransFormula returnTransFormula = nf.getFormulaFromNonCallPos(i);
-				spTerm = mPredicateTransformer.strongestPostcondition(
+				final String calledProcedure = mTrace.getSymbol(i).getPrecedingProcedure();
+				spTerm = mPredicateTransformer.strongestPreconditionReturn(
 						predecessor, callerPred,
 						returnTransFormula, callLocalVarsAssignment,
-						callGlobalVarsAssignment, callOldVarsAssignment);
+						callGlobalVarsAssignment, callOldVarsAssignment, 
+						mModifiedGlobals.getModifiedBoogieVars(calledProcedure));
 			} else {
 				spTerm = mPredicateTransformer.strongestPostcondition(
 						predecessor,
