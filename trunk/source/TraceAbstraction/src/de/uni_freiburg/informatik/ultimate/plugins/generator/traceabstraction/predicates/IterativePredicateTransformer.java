@@ -355,10 +355,9 @@ public class IterativePredicateTransformer {
 						callerPred = wpOfSummary;
 					}
 				}
-				wpTerm = mPredicateTransformer.weakestPrecondition(
+				wpTerm = mPredicateTransformer.weakestPreconditionReturn(
 						successor, callerPred, returnTf, callLocalVarsAssignment,
-						globalVarsAssignments, oldVarAssignments, modifiableGlobals,
-						varsOccurringBetweenCallAndReturn);
+						globalVarsAssignments, oldVarAssignments, modifiableGlobals);
 			} else {
 				wpTerm = mPredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
