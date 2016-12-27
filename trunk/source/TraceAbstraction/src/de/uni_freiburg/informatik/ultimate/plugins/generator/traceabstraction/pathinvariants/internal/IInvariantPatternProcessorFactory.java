@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * A factory producing {@link IInvariantPatternProcessor}s.
@@ -59,7 +59,7 @@ public interface IInvariantPatternProcessorFactory<IPT> {
 //	public IInvariantPatternProcessor<IPT> produce(final ControlFlowGraph cfg,
 //			final IPredicate precondition, final IPredicate postcondition);
 	
-	public IInvariantPatternProcessor<IPT> produce(final List<BoogieIcfgLocation> locations, 
+	public IInvariantPatternProcessor<IPT> produce(final List<IcfgLocation> locations, 
 		final List<IcfgInternalAction> transitions, final IPredicate precondition,
-		final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation);
+		final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation);
 }

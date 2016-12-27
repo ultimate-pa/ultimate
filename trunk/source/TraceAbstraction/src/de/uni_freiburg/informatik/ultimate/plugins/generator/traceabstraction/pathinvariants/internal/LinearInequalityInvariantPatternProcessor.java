@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -73,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
@@ -144,15 +144,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private final boolean mAlwaysStrictAndNonStrictCopies = false;
 	private Collection<TermVariable> mVarsFromUnsatCore;
-	private final BoogieIcfgLocation mStartLocation;
-	private final BoogieIcfgLocation mErrorLocation;
+	private final IcfgLocation mStartLocation;
+	private final IcfgLocation mErrorLocation;
 	
 	private static final boolean PRINT_CONSTRAINTS = false;
 	
 	/**
 	 * Maps a location to a set of program variables which are <i> live </i> at that location.
 	 */
-	private Map<BoogieIcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
+	private Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
 	private final boolean mUseLiveVariables;
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -234,13 +234,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final PredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, 
 			final Script solver,
-			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
+			final List<IcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
-			BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
+			IcfgLocation startLocation, IcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
 			final boolean useVarsFromUnsatCore,
 			final boolean useLiveVars,
-			final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables2,
 			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, csToolkit);
@@ -271,7 +271,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		mAnnotTermCounter = 0;
 		mAnnotTerm2OriginalTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
-		mLocs2LiveVariables = locs2LiveVariables;
+		mLocs2LiveVariables = mLocs2LiveVariables2;
 		mUseLiveVariables = useLiveVars;
 	}
 	/**
@@ -1087,7 +1087,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(final BoogieIcfgLocation location,
+	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(final IcfgLocation location,
 			final int round) {
 		
 //		if (mLocations.get(0).equals(location)) {
@@ -1110,8 +1110,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(dimensions[0]);
 			Set<IProgramVar> variablesForThisPattern = mPatternCoefficients;
 			if (mUseLiveVariables) {
-				// Remove all variables that are not live
-				variablesForThisPattern.retainAll(mLocs2LiveVariables.get(location));
+				Set<IProgramVar> liveVars = mLocs2LiveVariables.get(location);
+				if (liveVars != null) {
+					// Remove all variables that are not live
+					variablesForThisPattern.retainAll(liveVars);
+				}
 			}
 			for (int i = 0; i < dimensions[0]; i++) {
 				final Collection<LinearPatternBase> conjunction = new ArrayList<>(

@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  */
 public final class CFGInvariantsGenerator {
 
-	private final ILogger logService;
+	private final ILogger mLogger;
 	private final IProgressMonitorService pmService;
 	private static boolean INIT_USE_EMPTY_PATTERNS = true;
 
@@ -68,119 +68,9 @@ public final class CFGInvariantsGenerator {
 	 */
 	public CFGInvariantsGenerator(final IUltimateServiceProvider services) {
 		pmService = services.getProgressMonitorService();
-		logService = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 	}
-
-	//	/**
-	//	 * Attempts to generate an invariant map on a given {@link ControlFlowGraph} using a
-	//	 * {@link IInvariantPatternProcessor} from the given {@link IInvariantPatternProcessorFactory}.
-	//	 * 
-	//	 * The {@link IInvariantPatternProcessor} will be used for up to {@link IInvariantPatternProcessor#getMaxRounds()}
-	//	 * attempts to generate such an invariant map. If all attempts fail, this method returns null.
-	//	 * 
-	//	 * @param <IPT>
-	//	 *            Invariant Pattern Type: Type used for invariant patterns
-	//	 * @param cfg
-	//	 *            the ControlFlowGraph to generate an invariant map on
-	//	 * @param precondition
-	//	 *            the invariant on the {@link ControlFlowGraph#getEntry()} of cfg
-	//	 * @param postcondition
-	//	 *            the invariant on the {@link ControlFlowGraph#getExit()} of cfg
-	//	 * @param invPatternProcFactory
-	//	 *            the factory to produce the {@link IInvariantPatternProcessor} with
-	//	 * @return the invariant map for the locations of cfg or null if the processor failed to process its invariant
-	//	 *         patterns up to its final run.
-	//	 */
-	//	public <IPT> Map<Location, IPredicate> generateInvariantsFromCFG(final ControlFlowGraph cfg,
-	//			final IPredicate precondition, final IPredicate postcondition,
-	//			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
-	//			final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
-	//		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(cfg, precondition,
-	//				postcondition);
-	//
-	//		final Collection<Location> locations = cfg.getLocations();
-	//		logService.info("(Path)program has " + locations.size() + " locations");
-	//		final Map<Location, IPT> patterns = new HashMap<Location, IPT>(locations.size());
-	//		final Collection<Transition> transitions = cfg.getTransitions();
-	//		final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(
-	//				transitions.size() + 2);
-	//		
-	//		Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
-	//		if (useVariablesFromUnsatCore) {
-	//			// Compute map smt-variables to program variables
-	//			for (Transition t : transitions) {
-	//				// Add value-key-pairs from transitions invars to smtVars2ProgramVars
-	//				for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransFormula().getInVars().entrySet()) {
-	//					smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
-	//				}
-	//				// Add value-key-pairs from transitions outvars to smtVars2ProgramVars
-	//				for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransFormula().getOutVars().entrySet()) {
-	//					smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
-	//				}
-	//			}
-	//		}
-	//		
-	//		Set<IProgramVar> varsFromUnsatCore = null;
-	//
-	//		for (int round = 0; round < processor.getMaxRounds(); round++) {
-	//			// Die if we run into timeouts or are otherwise requested to cancel.
-	//			if (!pmService.continueProcessing()) {
-	//				throw new ToolchainCanceledException(CFGInvariantsGenerator.class);
-	//			}
-	//
-	//			// Start round
-	//			processor.startRound(round, useLiveVariables, liveVariables, useVariablesFromUnsatCore, varsFromUnsatCore);
-	//			logService.info("[CFGInvariants] Round " + round + " started");
-	//
-	//			// Build pattern map
-	//			patterns.clear();
-	//			for (final Location location : locations) {
-	//				patterns.put(location, processor.getInvariantPatternForLocation(location, round));
-	//			}
-	//			logService.info("[CFGInvariants] Built pattern map.");
-	//
-	//			// Build transition predicates
-	//			predicates.clear();
-	//			for (final Transition transition : transitions) {
-	//				final IPT invStart = patterns.get(transition.getStart());
-	//				final IPT invEnd = patterns.get(transition.getEnd());
-	//				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getTransFormula()));
-	//			}
-	//			logService.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
-	//
-	//			// Attempt to find a valid configuration
-	//			if (processor.hasValidConfiguration(predicates, round)) {
-	//				logService.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
-	//
-	//				final Map<Location, IPredicate> result = new HashMap<ControlFlowGraph.Location, IPredicate>(
-	//						locations.size());
-	//				for (final Location location : locations) {
-	//					result.put(location, processor.applyConfiguration(patterns.get(location)));
-	//				}
-	//				return result;
-	//			} else {
-	//				// If no configuration could have been found, the constraints may be unsatisfiable
-	//				if (useVariablesFromUnsatCore) {
-	//					Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
-	//					if (smtVarsFromUnsatCore != null) {
-	//						// The result in pattern processor was 'unsat'
-	//						varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
-	//						for (TermVariable smtVar : smtVarsFromUnsatCore) {
-	//							varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
-	//						}
-	//					} else {
-	//						// The result in pattern processor was 'unknown', so reset varsFromUnsatCore to null
-	//						varsFromUnsatCore = null;
-	//					}
-	//				}
-	//			}
-	//		}
-	//
-	//		logService.info(
-	//				"[CFGInvariants] No valid configuration " + "within round bound (" + processor.getMaxRounds() + ").");
-	//		return null;
-	//	}
 
 	/**
 	 * Attempts to generate an invariant map for a given CFG (pair of locations and transitions) using a
@@ -200,18 +90,18 @@ public final class CFGInvariantsGenerator {
 	 * @return the invariant map for the set of given locations or null if the processor failed to process its invariant
 	 *         patterns up to its final run.
 	 */
-	public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransitions(final List<BoogieIcfgLocation> locations, 
+	public <IPT> Map<IcfgLocation, IPredicate> generateInvariantsForTransitions(final List<IcfgLocation> locationsAsList, 
 			final List<IcfgInternalAction> transitions,
-			final IPredicate precondition, final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation,
+			final IPredicate precondition, final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
-			final boolean useLiveVariables, final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
-			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions, boolean useWeakestPrecondition,
+			final boolean useLiveVariables, final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
+			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
-		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locations, transitions, precondition,
+		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locationsAsList, transitions, precondition,
 				postcondition, startLocation, errorLocation);
 
-		logService.info("(Path)program has " + locations.size() + " locations");
-		final Map<BoogieIcfgLocation, IPT> patterns = new HashMap<BoogieIcfgLocation, IPT>(locations.size());
+		mLogger.info("(Path)program has " + locationsAsList.size() + " locations");
+		final Map<IcfgLocation, IPT> patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
 		final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(
 				transitions.size() + 2);
 
@@ -232,9 +122,9 @@ public final class CFGInvariantsGenerator {
 		Set<IProgramVar> varsFromUnsatCore = new HashSet<>();
 		if (useVariablesFromUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
-			Map<BoogieIcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, patterns, predicates, smtVars2ProgramVars, 
-					startLocation, errorLocation, locations, transitions,
-					weakestPreconditionOfLastTwoTransitions, useWeakestPrecondition, addWPToEeachDisjunct);
+			Map<IcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, patterns, predicates, smtVars2ProgramVars, 
+					startLocation, errorLocation, locationsAsList, transitions,
+					pathprogramLocs2WP, useWeakestPrecondition, addWPToEeachDisjunct);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
 			}
@@ -247,21 +137,22 @@ public final class CFGInvariantsGenerator {
 
 			// Start round
 			processor.startRound(round, useVariablesFromUnsatCore, varsFromUnsatCore);
-			logService.info("[CFGInvariants] Round " + round + " started");
+			mLogger.info("[CFGInvariants] Round " + round + " started");
 
 			// Build pattern map
 			patterns.clear();
 			// Init the entry pattern with 'true' and the exit pattern with 'false'
 			processor.initializeEntryAndExitPattern();
 
-			for (final BoogieIcfgLocation location : locations) {
+			for (final IcfgLocation location : locationsAsList) {
 				patterns.put(location, processor.getInvariantPatternForLocation(location, round));
 			}
 			// add the weakest precondition of the last transition to each pattern
-			if (useWeakestPrecondition && weakestPreconditionOfLastTwoTransitions != null) {
-				addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTwoTransitions, addWPToEeachDisjunct);
+			if (useWeakestPrecondition && pathprogramLocs2WP != null) {
+//				addWeakestPreconditinoOfLastTransitionToPatterns(locationsAsList, processor, patterns, pathprogramLocs2WP, addWPToEeachDisjunct);
+				addWP_PredicatesToInvariantPatterns(processor, patterns, pathprogramLocs2WP, addWPToEeachDisjunct);
 			}
-			logService.info("[CFGInvariants] Built pattern map.");
+			mLogger.info("[CFGInvariants] Built pattern map.");
 
 			// Build transition predicates
 			predicates.clear();
@@ -270,15 +161,15 @@ public final class CFGInvariantsGenerator {
 				final IPT invEnd = patterns.get(transition.getTarget());
 				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getTransformula()));
 			}
-			logService.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
+			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
 
 			// Attempt to find a valid configuration
 			if (processor.hasValidConfiguration(predicates, round)) {
-				logService.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
+				mLogger.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
 
-				final Map<BoogieIcfgLocation, IPredicate> result = new HashMap<BoogieIcfgLocation, IPredicate>(
-						locations.size());
-				for (final BoogieIcfgLocation location : locations) {
+				final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
+						locationsAsList.size());
+				for (final IcfgLocation location : locationsAsList) {
 					result.put(location, processor.applyConfiguration(patterns.get(location)));
 				}
 				return result;
@@ -287,13 +178,13 @@ public final class CFGInvariantsGenerator {
 				if (useVariablesFromUnsatCore) {
 					final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 					if (smtVarsFromUnsatCore != null) {
-						logService.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
+						mLogger.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
 						// The result in pattern processor was 'unsat'
 						varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 						for (final TermVariable smtVar : smtVarsFromUnsatCore) {
 							varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 						}
-						logService.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
+						mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 					} else {
 						// The result in pattern processor was 'unknown', so reset varsFromUnsatCore to null
 						varsFromUnsatCore = null;
@@ -302,62 +193,78 @@ public final class CFGInvariantsGenerator {
 			}
 		}
 
-		logService.info(
+		mLogger.info(
 				"[CFGInvariants] No valid configuration " + "within round bound (" + processor.getMaxRounds() + ").");
 		return null;
 	}
 	
-
 	
-	private <IPT> void addWeakestPreconditinoOfLastTransitionToPatterns(final List<BoogieIcfgLocation> locations,
-			final IInvariantPatternProcessor<IPT> processor, final Map<BoogieIcfgLocation, IPT> patterns, 
-			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions,
+//	private <IPT> void addWeakestPreconditinoOfLastTransitionToPatterns(final List<IcfgLocation> locations,
+//			final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns, 
+//			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions,
+//			boolean addWPToEeachDisjunct) {
+//		int numOfLocs = locations.size();
+//		assert numOfLocs - 3 >= 0 : "There are not enough locations.";
+//		assert weakestPreconditionOfLastTwoTransitions.length == 2 : "weakestPreconditionOfLastTwoTransitions "
+//				+ "should contain exactly 2 TransFormulas";
+//		// The weakest precondition of the last transition is added to the location 
+//		// that is before the last trasition on the right-hand-side of the implication in the corresponding constraint  
+//		IPT newPattern = null;
+//		// The weakest precondition of the last transition is also added to the location 
+//		// that is the starting location of last trasition on the left-hand-side of the implication in the corresponding constraint 
+//		IPT newPattern2 = null;
+//		
+//		if (addWPToEeachDisjunct) {
+//			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
+//			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
+//		} else {
+//			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
+//			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
+//		}
+//				
+//		// Put the new pattern into map
+//		patterns.put(locations.get(numOfLocs - 2), newPattern);
+//		// Put the new pattern into map
+//		patterns.put(locations.get(numOfLocs - 3), newPattern2);
+//	}
+	
+	private <IPT> void addWP_PredicatesToInvariantPatterns(final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns, 
+			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP,
 			boolean addWPToEeachDisjunct) {
-		int numOfLocs = locations.size();
-		assert numOfLocs - 3 >= 0 : "There are not enough locations.";
-		assert weakestPreconditionOfLastTwoTransitions.length == 2 : "weakestPreconditionOfLastTwoTransitions "
-				+ "should contain exactly 2 TransFormulas";
-		// The weakest precondition of the last transition is added to the location 
-		// that is before the last trasition on the right-hand-side of the implication in the corresponding constraint  
-		IPT newPattern = null;
-		// The weakest precondition of the last transition is also added to the location 
-		// that is the starting location of last trasition on the left-hand-side of the implication in the corresponding constraint 
-		IPT newPattern2 = null;
-		
+		mLogger.info("Add weakest precondition to invariant patterns.");
 		if (addWPToEeachDisjunct) {
-			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
-			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
+			for (Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : pathprogramLocs2WP.entrySet()) {
+				IPT newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(entry.getKey()), entry.getValue());
+				patterns.put(entry.getKey(), newPattern);
+			}
 		} else {
-			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
-			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
+			for (Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : pathprogramLocs2WP.entrySet()) {
+				IPT newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(entry.getKey()), entry.getValue());
+				patterns.put(entry.getKey(), newPattern);
+			}
 		}
-				
-		// Put the new pattern into map
-		patterns.put(locations.get(numOfLocs - 2), newPattern);
-		// Put the new pattern into map
-		patterns.put(locations.get(numOfLocs - 3), newPattern2);
 	}
 
 	/**
 	 * Check if you can find an invariant with empty patterns for intermediate locations.
 	 * @return
 	 */
-	private <IPT> Map<BoogieIcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
-			final Map<BoogieIcfgLocation, IPT> patterns, final Collection<InvariantTransitionPredicate<IPT>> predicates,
-			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, 
-			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions,
-			UnmodifiableTransFormula weakestPreconditionOfLastTwoTransitions[], boolean useWeakestPrecondition,
+	private <IPT> Map<IcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
+			final Map<IcfgLocation, IPT> patterns, final Collection<InvariantTransitionPredicate<IPT>> predicates,
+			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, IcfgLocation startLocation, IcfgLocation errorLocation, 
+			final List<IcfgLocation> locationsAsList, final List<IcfgInternalAction> transitions,
+			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		// Start round
 		processor.startRound(round, true, varsFromUnsatCore);
-		logService.info("Pre-round with empty patterns for intermediate locations started...");
+		mLogger.info("Pre-round with empty patterns for intermediate locations started...");
 
 		// Build pattern map
 		patterns.clear();
 		// Init the entry pattern with 'true' and the exit pattern with 'false'
 		processor.initializeEntryAndExitPattern();
 
-		for (final BoogieIcfgLocation location : locations) {
+		for (final IcfgLocation location : locationsAsList) {
 			final IPT invPattern;
 			if (location.equals(startLocation)) {
 				invPattern = processor.getEntryInvariantPattern();
@@ -369,11 +276,10 @@ public final class CFGInvariantsGenerator {
 			}
 			patterns.put(location, invPattern);
 		}
-		logService.info("Built (empty) pattern map");
+		mLogger.info("Built (empty) pattern map");
 		// add the weakest precondition of the last transition to each pattern
-		if (useWeakestPrecondition && weakestPreconditionOfLastTwoTransitions != null) {
-			addWeakestPreconditinoOfLastTransitionToPatterns(locations, processor, patterns, weakestPreconditionOfLastTwoTransitions,
-					addWPToEeachDisjunct);
+		if (useWeakestPrecondition && pathprogramLocs2WP != null) {
+			addWP_PredicatesToInvariantPatterns(processor, patterns, pathprogramLocs2WP, addWPToEeachDisjunct);
 		}
 
 		// Build transition predicates
@@ -383,14 +289,14 @@ public final class CFGInvariantsGenerator {
 			final IPT invEnd = patterns.get(transition.getTarget());
 			predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getTransformula()));
 		}
-		logService.info("Built " + predicates.size() + " transition predicates.");
+		mLogger.info("Built " + predicates.size() + " transition predicates.");
 
 		// Attempt to find a valid configuration
 		if (processor.hasValidConfiguration(predicates, round)) {
-			logService.info("Found valid " + "configuration in pre-round.");
-			final Map<BoogieIcfgLocation, IPredicate> result = new HashMap<BoogieIcfgLocation, IPredicate>(
-					locations.size());
-			for (final BoogieIcfgLocation location : locations) {
+			mLogger.info("Found valid " + "configuration in pre-round.");
+			final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
+					locationsAsList.size());
+			for (final IcfgLocation location : locationsAsList) {
 				IPredicate p = processor.applyConfiguration(patterns.get(location));
 				result.put(location, p);
 			}
@@ -399,19 +305,19 @@ public final class CFGInvariantsGenerator {
 			// If no configuration could have been found, the constraints may be unsatisfiable
 			final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 			if (smtVarsFromUnsatCore != null) {
-				logService.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
+				mLogger.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
 				// The result in pattern processor was 'unsat'
 				// varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 				for (final TermVariable smtVar : smtVarsFromUnsatCore) {
 					varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 				}
-				logService.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
+				mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 			} else {
 				// The result in pattern processor was 'unknown', so reset varsFromUnsatCore to null
 				varsFromUnsatCore = null;
 			}
 		}
-		logService.info("No valid configuration found in pre-round.");
+		mLogger.info("No valid configuration found in pre-round.");
 		return null;
 	}
 }

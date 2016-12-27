@@ -26,8 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * A simple {@link ILinearInequalityInvariantPatternStrategy}, generating
@@ -98,7 +97,7 @@ public final class LocationIndependentLinearInequalityInvariantPatternStrategy
 	 * {@inheritDoc}
 	 */
 	@Override
-	public int[] getDimensions(BoogieIcfgLocation location, int round) {
+	public int[] getDimensions(IcfgLocation location, int round) {
 		return new int[] { baseDisjuncts + round * disjunctsPerRound,
 				baseConjuncts + round * conjunctsPerRound };
 		// 2015-10-27: Use the following instead to obtain two disjuncts

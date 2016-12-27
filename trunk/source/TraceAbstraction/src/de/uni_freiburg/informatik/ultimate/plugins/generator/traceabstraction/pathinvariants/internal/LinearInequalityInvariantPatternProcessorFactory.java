@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -68,7 +69,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
 	private boolean mUseLiveVariables;
-	private Map<BoogieIcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
+	private Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -91,7 +92,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore,
-			final Map<BoogieIcfgLocation, Set<IProgramVar>> locs2LiveVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars,
 			final boolean useLiveVars, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
@@ -107,7 +108,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
 		mUseLiveVariables = useLiveVars;
-		mLocs2LiveVariables = locs2LiveVariables;
+		mLocs2LiveVariables = pathprogramLocs2LiveVars;
 		
 	}
 
@@ -165,9 +166,9 @@ public class LinearInequalityInvariantPatternProcessorFactory
 
 	@Override
 	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
-			final List<BoogieIcfgLocation> locations, final List<IcfgInternalAction> transitions,
-			final IPredicate precondition, final IPredicate postcondition, final BoogieIcfgLocation startLocation,
-			final BoogieIcfgLocation errorLocation) {
+			final List<IcfgLocation> locations, final List<IcfgInternalAction> transitions,
+			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
+			final IcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
 				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mLocs2LiveVariables, mSimplificationTechnique,

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
@@ -54,7 +55,7 @@ public interface ILinearInequalityInvariantPatternStrategy {
 	 *         "one strict inequality and one non-strict one".
 	 */
 //	public int[] getDimensions(final Location location, final int round);
-	public int[] getDimensions(final BoogieIcfgLocation location, final int round);
+	public int[] getDimensions(final IcfgLocation location, final int round);
 	
 
 	/**

@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 /**
@@ -72,7 +72,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 *            attempt; see {@link #getMaxRounds()}
 	 * @return invariant pattern for location
 	 */
-	public IPT getInvariantPatternForLocation(final BoogieIcfgLocation location,
+	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round);
 	
 	/**
