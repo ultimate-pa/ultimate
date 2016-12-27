@@ -758,21 +758,7 @@ public class PredicateTransformer {
 	}
 	
 
-	/**
-	 * return true if varsOccurringBetweenCallAndReturn contains pv or 
-	 * varsOccurringBetweenCallAndReturn is null (which means that the return
-	 * is a pending return and possibly all vars may occur before return)
-	 * @param pv
-	 * @return
-	 */
-	private boolean varOccursBetweenCallAndReturn(
-			final Set<IProgramVar> varsOccurringBetweenCallAndReturn, final IProgramVar pv) {
-		if (varsOccurringBetweenCallAndReturn == null) {
-			return true;
-		} else {
-			return varsOccurringBetweenCallAndReturn.contains(pv);
-		}
-	}
+	
 	
 	
 	
@@ -1055,97 +1041,6 @@ public class PredicateTransformer {
 			return tv;
 		}
 		
-	}
-
-
-	private enum GlobalType {
-		OLDVAR, NONOLDVAR
-	}
-
-	/**
-	 * Returns copy of map restricted to keys that are of the given GlobalType
-	 * (oldVar or nonOldVar).
-	 */
-	private Map<IProgramVar, TermVariable> restrictMap(final Map<IProgramVar, TermVariable> map, final GlobalType globalType) {
-		final Map<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>();
-		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
-			if ((globalType == GlobalType.OLDVAR) == (entry.getKey().isOldvar())) {
-				result.put(entry.getKey(), entry.getValue());
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Substitutes in the given formula the values of the given map by fresh
-	 * variables, and puts the substitution from the term variable to the same
-	 * fresh variable into the second given map. It also adds the fresh variable
-	 * to the given set.
-	 * 
-	 * @param varsToBeSubstituted
-	 *            - the occurrence of the values of this map in the given
-	 *            formula are renamed to fresh variables
-	 * @param formulaToBeSubstituted
-	 *            - the formula in which the variables should be substituted
-	 * @param varsToBeSubstitutedByFreshVars
-	 *            - map to which the substitutions from corresponding term
-	 *            variables to fresh variables should be added
-	 * @param varsToQuantify
-	 *            - set, to which the fresh variables are added
-	 * @return formulaToBeSubstituted, where the variables are substituted by
-	 *         fresh variables
-	 */
-	private Term substituteToFreshVarsAndAddToQuantify(final Map<IProgramVar, TermVariable> varsToBeSubstituted,
-			final Term formulaToBeSubstituted, final Map<TermVariable, Term> varsToBeSubstitutedByFreshVars,
-			final Set<TermVariable> varsToQuantify) {
-		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		for (final IProgramVar pv : varsToBeSubstituted.keySet()) {
-			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-			substitution.put(varsToBeSubstituted.get(pv), freshVar);
-			if (varsToBeSubstitutedByFreshVars != null) {
-				varsToBeSubstitutedByFreshVars.put(pv.getTermVariable(), freshVar);
-			}
-			if (varsToQuantify != null) {
-				varsToQuantify.add(freshVar);
-			}
-		}
-		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
-	}
-
-	/**
-	 * Substitutes in the given formula the values of the given map by the keys
-	 * of the given map. It also puts a substitution from the keys of the given
-	 * map to fresh variables into the second given map and adds the fresh
-	 * variables to the given set.
-	 * 
-	 * @param varsToBeSubstituted
-	 *            - the occurrence of the values of this map in the given
-	 *            formula are substituted by the keys of this map
-	 * @param formulaToBeSubstituted
-	 *            - the formula in which the variables should be substituted
-	 * @param varsToBeSubstitutedByFreshVars
-	 *            - map to which the substitutions from the keys of the map
-	 *            "varsToBeSubstituted" to fresh variables should be added
-	 * @param varsToQuantify
-	 *            - set, to which the fresh variables are added
-	 * @return formulaToBeSubstituted, where the variables are substituted by
-	 *         the corresponding term variables
-	 */
-	private Term substituteToRepresantativesAndAddToQuantify(final Map<IProgramVar, TermVariable> varsToBeSubstituted,
-			final Term formulaToBeSubstituted, final Map<Term, Term> varsToBeSubstitutedByFreshVars,
-			final Set<TermVariable> varsToQuantify) {
-		final Map<Term, Term> substitution = new HashMap<Term, Term>();
-		for (final IProgramVar pv : varsToBeSubstituted.keySet()) {
-			final TermVariable freshVar = constructFreshTermVariable(mMgdScript, pv);
-			substitution.put(varsToBeSubstituted.get(pv), pv.getTermVariable());
-			if (varsToBeSubstitutedByFreshVars != null) {
-				varsToBeSubstitutedByFreshVars.put(pv.getTermVariable(), freshVar);
-			}
-			if (varsToQuantify != null) {
-				varsToQuantify.add(freshVar);
-			}
-		}
-		return new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(formulaToBeSubstituted);
 	}
 	
 
