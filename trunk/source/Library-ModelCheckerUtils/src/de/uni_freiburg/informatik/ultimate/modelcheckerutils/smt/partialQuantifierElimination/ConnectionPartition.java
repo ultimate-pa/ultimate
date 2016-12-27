@@ -89,13 +89,13 @@ public class ConnectionPartition {
 		terms.add(term);
 	}
 	
-	Iterable<Set<Term>> getConnectedVariables() {
-		return new Iterable<Set<Term>>() {
+	Iterable<Set<NonTheorySymbol<?>>> getConnectedVariables() {
+		return new Iterable<Set<NonTheorySymbol<?>>>() {
 			
 			@Override
-			public Iterator<Set<Term>> iterator() {
+			public Iterator<Set<NonTheorySymbol<?>>> iterator() {
 
-				return new Iterator<Set<Term>>() {
+				return new Iterator<Set<NonTheorySymbol<?>>>() {
 					private final Iterator<NonTheorySymbol<?>> mIt = unionFind.getAllRepresentatives().iterator();;
 
 					@Override
@@ -104,9 +104,9 @@ public class ConnectionPartition {
 					}
 
 					@Override
-					public Set<Term> next() {
+					public Set<NonTheorySymbol<?>> next() {
 						final Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(mIt.next());
-						return getTermsOfConnectedVariables(eqMembers);
+						return eqMembers;
 					}
 
 					@Override

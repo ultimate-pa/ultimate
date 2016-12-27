@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -39,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Constant;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -80,33 +83,38 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		final List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
 		final List<Term> removeableTerms = new ArrayList<Term>();
 		final List<Term> unremoveableTerms = new ArrayList<Term>();
-		for (final Set<Term> connectedTerms : connection.getConnectedVariables()) {
+		for (final Set<NonTheorySymbol<?>> connectedSymbols  : connection.getConnectedVariables()) {
+			final Set<Term> connectedTerms = connection.getTermsOfConnectedVariables(connectedSymbols);
 			final Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, connectedVars, eliminatees);
-				if (SmtUtils.isTrue(simplified)) {
-					isSuperfluous = true;
-				} else if (SmtUtils.isFalse(simplified)) {
-					return new Term[] { simplified };
-				} else if (simplified == null) {
-					isSuperfluous = false;
-				} else {
-					throw new AssertionError("illegal case");
-				}
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, connectedVars, eliminatees);
-				if (SmtUtils.isFalse(simplified)) {
-					isSuperfluous = true;
-				} else if (SmtUtils.isTrue(simplified)) {
-					return new Term[] { simplified };
-				} else if (simplified == null) {
-					isSuperfluous = false;
-				} else {
-					throw new AssertionError("illegal case");
-				}
+			if (containsNonTheoryConstant(connectedSymbols)) {
+				isSuperfluous = false;
 			} else {
-				throw new AssertionError("unknown quantifier");
+				if (quantifier == QuantifiedFormula.EXISTS) {
+					final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, connectedVars, eliminatees);
+					if (SmtUtils.isTrue(simplified)) {
+						isSuperfluous = true;
+					} else if (SmtUtils.isFalse(simplified)) {
+						return new Term[] { simplified };
+					} else if (simplified == null) {
+						isSuperfluous = false;
+					} else {
+						throw new AssertionError("illegal case");
+					}
+				} else if (quantifier == QuantifiedFormula.FORALL) {
+					final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, connectedVars, eliminatees);
+					if (SmtUtils.isFalse(simplified)) {
+						isSuperfluous = true;
+					} else if (SmtUtils.isTrue(simplified)) {
+						return new Term[] { simplified };
+					} else if (simplified == null) {
+						isSuperfluous = false;
+					} else {
+						throw new AssertionError("illegal case");
+					}
+				} else {
+					throw new AssertionError("unknown quantifier");
+				}
 			}
 			if (isSuperfluous) {
 				removeableTvs.addAll(connectedVars);
@@ -168,6 +176,11 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	
 	
 	
+	private boolean containsNonTheoryConstant(final Set<NonTheorySymbol<?>> connectedSymbols) {
+		final Predicate<? super NonTheorySymbol<?>> predicate = x -> (x instanceof Constant);
+		return connectedSymbols.stream().anyMatch(predicate);
+	}
+
 	/**
 	 * Return "true" if connectedVars is a subset of quantifiedVars and the
 	 * conjunction of terms is satisfiable.
