@@ -296,7 +296,7 @@ public class IterativePredicateTransformer {
 					final Call call = (Call) mTrace.getSymbol(i);
 					final String calledMethod = call.getCallStatement().getMethodName();
 					final Set<IProgramNonOldVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
-					wpTerm = mPredicateTransformer.weakestPrecondition(
+					wpTerm = mPredicateTransformer.weakestPreconditionCall(
 							successor,
 							nf.getLocalVarAssignment(i), nf.getGlobalVarAssignment(i),
 							nf.getOldVarAssignment(i), modifiedGlobals);
