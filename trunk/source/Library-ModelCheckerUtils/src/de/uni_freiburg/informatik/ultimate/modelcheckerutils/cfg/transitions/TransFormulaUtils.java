@@ -771,14 +771,14 @@ public class TransFormulaUtils {
 				result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert (isIntraprocedural(result));
 		assert !result.getBranchEncoders().isEmpty()
-				|| predicateBasedResultCheck(services, mgdScript, xnfConversionTechnique, simplificationTechnique,
+				|| predicateBasedResultCheck(services, logger, mgdScript, xnfConversionTechnique, simplificationTechnique,
 						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable,
 						modifiableGlobalsOfCallee) : "sequentialCompositionWithCallAndReturn - incorrect result";
 		return result;
 	}
 
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
+			final ILogger logger, final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf,
@@ -807,6 +807,10 @@ public class TransFormulaUtils {
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
 		assert check1 != Validity.INVALID
 				&& check2 != Validity.INVALID : "sequentialCompositionWithCallAndReturn - incorrect result";
+		if (check1 == Validity.UNKNOWN || check2 == Validity.UNKNOWN) {
+			logger.warn("predicate-based correctness check returned UNKNOWN, "
+					+ "hence correctness of interprocedural sequential composition was not checked.");
+		}
 		return check1 != Validity.INVALID && check2 != Validity.INVALID;
 	}
 
