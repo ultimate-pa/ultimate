@@ -185,7 +185,7 @@ public class IterativePredicateTransformer {
 				spTerm = mPredicateTransformer.strongestPreconditionReturn(
 						predecessor, callerPred,
 						returnTransFormula, callLocalVarsAssignment,
-						callGlobalVarsAssignment, callOldVarsAssignment, 
+						callOldVarsAssignment, 
 						mModifiedGlobals.getModifiedBoogieVars(calledProcedure));
 			} else {
 				spTerm = mPredicateTransformer.strongestPostcondition(
@@ -359,7 +359,7 @@ public class IterativePredicateTransformer {
 				}
 				wpTerm = mPredicateTransformer.weakestPreconditionReturn(
 						successor, callerPred, returnTf, callLocalVarsAssignment,
-						globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+						oldVarAssignments, modifiableGlobals);
 			} else {
 				wpTerm = mPredicateTransformer.weakestPrecondition(
 						successor, nf.getFormulaFromNonCallPos(i));
