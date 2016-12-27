@@ -337,7 +337,8 @@ public class ParallelCompositionGenerator {
 	 * helper function to merge locations
 	 */
 	private Location mergeLocations(int id, Location loc1, Location loc2){
-		Location loc = new Location(id);
+		String locname = "loc_"+loc1.getId()+"_"+loc2.getId();
+		Location loc = new Location(id,locname);
 		loc.setFlow(intersectStrings(loc1.getFlow(),loc2.getFlow()));
 		loc.setInvariant(intersectStrings(loc1.getInvariant(),loc2.getInvariant()));
 		return loc;
