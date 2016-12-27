@@ -38,7 +38,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -393,30 +392,26 @@ public class PredicateTransformer {
 	
 	
 	
-//	public Term weakestPreconditionCall(final IPredicate callSucc, final IPredicate returnSucc, 
-//			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF, 
-//			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
-//			final Set<IProgramNonOldVar> modifiableGlobals) {
-//		
-//		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript, 
-//				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
-//		final Term callSuccTerm = renamePredicateToInstance(callSucc, Instance.AFTER_CALL, crpip);
-//		final Term returnSuccTerm = renamePredicateToInstance(returnSucc, Instance.AFTER_RETURN, crpip);
-//		final Term callTfTerm = renamePredicateToInstance(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-//		final Term oldVarsAssignmentTerm = renamePredicateToInstance(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-//		final Term globalVarsAssignmentTerm = renamePredicateToInstance(globalVarsAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
-//		final Term returnTfTerm = renamePredicateToInstance(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
-//
-//		final Term result = Util.or(mScript,
-//				SmtUtils.not(mScript, callTfTerm),
-//				SmtUtils.not(mScript, oldVarsAssignmentTerm),
-//				SmtUtils.not(mScript, globalVarsAssignmentTerm),
-//				SmtUtils.not(mScript, returnTfTerm),
-//				Util.and(mScript, callSuccTerm, returnSuccTerm)); 
-//		
-//		final Set<TermVariable> varsToQuantify = new HashSet<TermVariable>(crpip.getFreshTermVariables());
-//		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-//	}
+	public Term weakestPreconditionCall(final IPredicate callSucc, final UnmodifiableTransFormula callTF, 
+			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
+			final Set<IProgramNonOldVar> modifiableGlobals) {
+		
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript, 
+				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
+		final Term callSuccTerm = renamePredicateToInstance(callSucc, Instance.AFTER_CALL, crpip);
+		final Term callTfTerm = renameTransFormulaToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term oldVarsAssignmentTerm = renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term globalVarsAssignmentTerm = renameTransFormulaToInstances(globalVarsAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
+
+		final Term result = Util.or(mScript,
+				SmtUtils.not(mScript, callTfTerm),
+				SmtUtils.not(mScript, oldVarsAssignmentTerm),
+				SmtUtils.not(mScript, globalVarsAssignmentTerm),
+				callSuccTerm); 
+		
+		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
+		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
+	}
 	
 	
 	public Term weakestPreconditionReturn(final IPredicate returnSucc, final IPredicate callPred, 
