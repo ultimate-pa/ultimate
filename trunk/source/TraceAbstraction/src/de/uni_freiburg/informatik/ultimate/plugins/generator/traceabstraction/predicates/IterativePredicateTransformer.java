@@ -182,7 +182,7 @@ public class IterativePredicateTransformer {
 				}
 				final UnmodifiableTransFormula returnTransFormula = nf.getFormulaFromNonCallPos(i);
 				final String calledProcedure = mTrace.getSymbol(i).getPrecedingProcedure();
-				spTerm = mPredicateTransformer.strongestPreconditionReturn(
+				spTerm = mPredicateTransformer.strongestPostconditionReturn(
 						predecessor, callerPred,
 						returnTransFormula, callLocalVarsAssignment,
 						callOldVarsAssignment, 

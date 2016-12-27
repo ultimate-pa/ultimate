@@ -225,7 +225,7 @@ public class PredicateTransformer {
 
 	}
 	
-	public Term strongestPreconditionReturn(final IPredicate returnPred, final IPredicate callPred,  
+	public Term strongestPostconditionReturn(final IPredicate returnPred, final IPredicate callPred,  
 			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF, 
 			final UnmodifiableTransFormula oldVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
