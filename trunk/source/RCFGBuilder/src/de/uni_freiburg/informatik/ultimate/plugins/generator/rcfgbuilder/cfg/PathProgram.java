@@ -160,7 +160,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		}
 
 		if (mOriginalIcfg.getLoopLocations().contains(loc)) {
-			mInitialNodes.add(ppLoc);
+			mLoopLocations.add(ppLoc);
 		}
 
 		return ppLoc;
