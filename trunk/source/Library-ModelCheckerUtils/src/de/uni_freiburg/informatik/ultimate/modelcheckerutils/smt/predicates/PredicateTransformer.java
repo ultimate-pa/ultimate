@@ -28,7 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,10 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -151,57 +147,7 @@ public class PredicateTransformer {
 		return pushed;
 	}
 
-	public Term weakLocalPostconditionCall(final IPredicate p, final UnmodifiableTransFormula globalVarAssignments, final Set<IProgramNonOldVar> modifiedGlobals) {
-		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		
-		final Term renamedOldVarsAssignment;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final IProgramVar pv : globalVarAssignments.getAssignedVars()) {
-				assert (pv instanceof IProgramNonOldVar);
-				substitutionMapping.put(globalVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-			}
-			for (final Entry<IProgramVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof IProgramOldVar);
-				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
-			}
-			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
-		}
 
-		final Term renamedPredicate;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			TermVariable substituent;
-			for (final IProgramVar pv : p.getVars()) {
-				if (pv instanceof IProgramNonOldVar) {
-					if (modifiedGlobals.contains(pv)) {
-						substituent = constructFreshTermVariable(mMgdScript, pv);
-						varsToQuantify.add(substituent);
-						substitutionMapping.put(pv.getTermVariable(), substituent);
-					} else {
-						// do nothing
-					}
-				} else if (pv instanceof IProgramOldVar) {
-					substituent = constructFreshTermVariable(mMgdScript, pv);
-					varsToQuantify.add(substituent);
-					substitutionMapping.put(pv.getTermVariable(), substituent);
-				} else if (pv instanceof ILocalProgramVar) {
-					substituent = constructFreshTermVariable(mMgdScript, pv);
-					varsToQuantify.add(substituent);
-					substitutionMapping.put(pv.getTermVariable(), substituent);
-				} else {
-					throw new AssertionError();
-				}
-			}
-			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
-		}
-		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedOldVarsAssignment);
-		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
-		return pushed;
-
-	}
-	
 	
 	public Term strongestPostconditionCall(final IPredicate callPred, final UnmodifiableTransFormula localVarAssignments,
 			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, 
@@ -222,7 +168,27 @@ public class PredicateTransformer {
 		
 		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
 		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
+	}
+	
+	/**
+	 * Special post operator that we use to obtain a modular 
+	 * (interprocedural) sequence of inductive interpolants.
+	 */
+	public Term modularPostconditionCall(final IPredicate callPred,
+			final UnmodifiableTransFormula globalVarAssignments,
+			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
+		
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript, 
+				Collections.emptySet(), Collections.emptySet(), modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
+		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final Term globalVarsAssignmentTerm = renameTransFormulaToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
 
+		final Term result = Util.and(mScript,
+				globalVarsAssignmentTerm,
+				callPredTerm);
+		
+		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
+		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
 	}
 	
 	public Term strongestPostconditionReturn(final IPredicate returnPred, final IPredicate callPred,  

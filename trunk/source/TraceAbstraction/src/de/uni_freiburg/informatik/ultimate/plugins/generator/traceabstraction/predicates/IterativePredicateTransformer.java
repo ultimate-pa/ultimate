@@ -157,7 +157,7 @@ public class IterativePredicateTransformer {
 							nf.getGlobalVarAssignment(i), nf.getOldVarAssignment(i),
 							modifiedGlobals);
 				} else {
-					spTerm = mPredicateTransformer.weakLocalPostconditionCall(
+					spTerm = mPredicateTransformer.modularPostconditionCall(
 							predecessor,
 							nf.getGlobalVarAssignment(i),
 							modifiedGlobals);
