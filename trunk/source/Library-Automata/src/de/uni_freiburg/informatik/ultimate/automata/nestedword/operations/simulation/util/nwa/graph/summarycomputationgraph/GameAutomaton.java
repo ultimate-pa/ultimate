@@ -64,7 +64,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class GameAutomaton<LETTER, STATE>
 		extends NestedWordAutomatonOnDemandStateAndLetter<IGameLetter<LETTER, STATE>, IGameState> {
 
-	private final boolean mOmitSymmetricPairs = true;
+	private final boolean mInitiallyOmitSymmetricPairs = true;
+	private final boolean mAlwaysOmitSymmetricPairsWithFalseBit = false;
 
 	private final Collection<Set<STATE>> mPossibleEquivalentClasses;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
@@ -99,7 +100,7 @@ public class GameAutomaton<LETTER, STATE>
 			}
 			for (final STATE q0 : eqClass) {
 				for (final STATE q1 : eqClass) {
-					if (mOmitSymmetricPairs && q0.equals(q1)) {
+					if (mInitiallyOmitSymmetricPairs && q0.equals(q1)) {
 						// omit pair
 					} else {
 						constructInitialVertex(q0, q1);
@@ -225,6 +226,15 @@ public class GameAutomaton<LETTER, STATE>
 			final Set<STATE> spoilerSuccs, final Set<STATE> duplicatorSuccs, final boolean spoilerStateNeededInSucc) {
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> result = new HashRelation<>();
 		for (final STATE spoilerSucc : spoilerSuccs) {
+			if (duplicatorSuccs.contains(spoilerSucc)) {
+				if (mAlwaysOmitSymmetricPairsWithFalseBit && (!vertex.isB() || mOperand.isFinal(spoilerSucc))) {
+					// if "delayed bit" was not set or spoilerSucc is accepting 
+					// (which means the delayed bit would be 'false' for the successor)
+					// we make this a duplicator winning sink
+					// In fact we do not construct it.
+					continue;
+				}
+			}
 			final IGameLetter<LETTER, STATE> gameLetter =
 					getOrConstuctSuccessorGameLetter(vertex, letter, transitionType, spoilerSucc);
 			if (duplicatorSuccs.isEmpty()) {
