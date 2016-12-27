@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * are in the transitive closure of the connection relation.
  */
 public class ConnectionPartition {
-	Map<NonTheorySymbol<?>, Set<Term>> mSymbol2Terms = new HashMap<NonTheorySymbol<?>, Set<Term>>();
-	UnionFind<NonTheorySymbol<?>> unionFind = new UnionFind<NonTheorySymbol<?>>();
-	List<Term> mTermWithoutTvs = new ArrayList<Term>();
+	Map<NonTheorySymbol<?>, Set<Term>> mNonTheorySymbols2Terms = new HashMap<>();
+	UnionFind<NonTheorySymbol<?>> mUnionFind = new UnionFind<>();
+	List<Term> mTermWithoutNonTheorySymbols = new ArrayList<>();
 	
 	public ConnectionPartition(final Collection<Term> parameters) {
 		for (final Term term : parameters) {
@@ -59,21 +59,21 @@ public class ConnectionPartition {
 	private void addTerm(final Term term) {
 		final Set<NonTheorySymbol<?>> symbols = NonTheorySymbol.extractNonTheorySymbols(term);
 		if (symbols.isEmpty()) {
-			mTermWithoutTvs.add(term);
+			mTermWithoutNonTheorySymbols.add(term);
 			return;
 		}
 		NonTheorySymbol<?> last = null;
 		for (final NonTheorySymbol<?> symbol : symbols) {
 			add(term, symbol);
-			if (unionFind.find(symbol) == null) {
-				unionFind.makeEquivalenceClass(symbol);
+			if (mUnionFind.find(symbol) == null) {
+				mUnionFind.makeEquivalenceClass(symbol);
 			}
 			if (last != null) {
-				if (unionFind.find(last).equals(unionFind.find(symbol))) {
+				if (mUnionFind.find(last).equals(mUnionFind.find(symbol))) {
 					// do nothing
 					// already in same equivalence class
 				} else {
-					unionFind.union(symbol, last);
+					mUnionFind.union(symbol, last);
 				}
 			}
 			last = symbol;
@@ -81,22 +81,23 @@ public class ConnectionPartition {
 	}
 	
 	private void add(final Term term, final NonTheorySymbol<?> symbol) {
-		Set<Term> terms = mSymbol2Terms.get(symbol);
+		Set<Term> terms = mNonTheorySymbols2Terms.get(symbol);
 		if (terms == null) {
-			terms = new HashSet<Term>();
-			mSymbol2Terms.put(symbol, terms);
+			terms = new HashSet<>();
+			mNonTheorySymbols2Terms.put(symbol, terms);
 		}
 		terms.add(term);
 	}
 	
-	Iterable<Set<NonTheorySymbol<?>>> getConnectedVariables() {
+	
+	public Iterable<Set<NonTheorySymbol<?>>> getConnectedNonTheorySymbols() {
 		return new Iterable<Set<NonTheorySymbol<?>>>() {
 			
 			@Override
 			public Iterator<Set<NonTheorySymbol<?>>> iterator() {
 
 				return new Iterator<Set<NonTheorySymbol<?>>>() {
-					private final Iterator<NonTheorySymbol<?>> mIt = unionFind.getAllRepresentatives().iterator();;
+					private final Iterator<NonTheorySymbol<?>> mIt = mUnionFind.getAllRepresentatives().iterator();;
 
 					@Override
 					public boolean hasNext() {
@@ -105,7 +106,7 @@ public class ConnectionPartition {
 
 					@Override
 					public Set<NonTheorySymbol<?>> next() {
-						final Set<NonTheorySymbol<?>> eqMembers = unionFind.getEquivalenceClassMembers(mIt.next());
+						final Set<NonTheorySymbol<?>> eqMembers = mUnionFind.getEquivalenceClassMembers(mIt.next());
 						return eqMembers;
 					}
 
@@ -119,16 +120,18 @@ public class ConnectionPartition {
 		};
 	}
 	
-	Set<Term> getTermsOfConnectedVariables(final Set<NonTheorySymbol<?>> eqMembers) {
-		final Set<Term> result = new HashSet<Term>();
+	
+	public Set<Term> getTermsOfConnectedNonTheorySymbols(final Set<NonTheorySymbol<?>> eqMembers) {
+		final Set<Term> result = new HashSet<>();
 		for (final NonTheorySymbol<?> symbol : eqMembers) {
-			result.addAll(mSymbol2Terms.get(symbol));
+			result.addAll(mNonTheorySymbols2Terms.get(symbol));
 		}
 		return result;
 	}
 	
-	List<Term> getTermsWithOutTvs() {
-		return mTermWithoutTvs;
+	
+	public List<Term> getTermsWithNonTheorySymbols() {
+		return mTermWithoutNonTheorySymbols;
 	}
 	
 }

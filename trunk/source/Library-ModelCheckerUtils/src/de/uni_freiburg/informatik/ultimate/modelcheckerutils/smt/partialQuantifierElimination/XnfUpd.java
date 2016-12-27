@@ -71,7 +71,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] parameters,
 			final Set<TermVariable> eliminatees) {
-		final Set<TermVariable> occuringVars = new HashSet<TermVariable>();
+		final Set<TermVariable> occuringVars = new HashSet<>();
 		for (final Term param : parameters) {
 			occuringVars.addAll(Arrays.asList(param.getFreeVars()));
 		}
@@ -79,19 +79,19 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		eliminatees.retainAll(occuringVars);
 
 		final ConnectionPartition connection = new ConnectionPartition(Arrays.asList(parameters));
-		final List<TermVariable> removeableTvs = new ArrayList<TermVariable>();
-		final List<TermVariable> unremoveableTvs = new ArrayList<TermVariable>();
-		final List<Term> removeableTerms = new ArrayList<Term>();
-		final List<Term> unremoveableTerms = new ArrayList<Term>();
-		for (final Set<NonTheorySymbol<?>> connectedSymbols  : connection.getConnectedVariables()) {
-			final Set<Term> connectedTerms = connection.getTermsOfConnectedVariables(connectedSymbols);
-			final Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
+		final List<TermVariable> removeableTvs = new ArrayList<>();
+		final List<TermVariable> unremoveableTvs = new ArrayList<>();
+		final List<Term> removeableTerms = new ArrayList<>();
+		final List<Term> unremoveableTerms = new ArrayList<>();
+		for (final Set<NonTheorySymbol<?>> connectedSymbols  : connection.getConnectedNonTheorySymbols()) {
+			final Set<Term> connectedTerms = connection.getTermsOfConnectedNonTheorySymbols(connectedSymbols);
+			final Set<TermVariable> freeVarsOfConnectedTerms = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
 			if (containsNonTheoryConstant(connectedSymbols)) {
 				isSuperfluous = false;
 			} else {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, connectedVars, eliminatees);
+					final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
 					if (SmtUtils.isTrue(simplified)) {
 						isSuperfluous = true;
 					} else if (SmtUtils.isFalse(simplified)) {
@@ -102,7 +102,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 						throw new AssertionError("illegal case");
 					}
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, connectedVars, eliminatees);
+					final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
 					if (SmtUtils.isFalse(simplified)) {
 						isSuperfluous = true;
 					} else if (SmtUtils.isTrue(simplified)) {
@@ -117,14 +117,14 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 				}
 			}
 			if (isSuperfluous) {
-				removeableTvs.addAll(connectedVars);
+				removeableTvs.addAll(freeVarsOfConnectedTerms);
 				removeableTerms.addAll(connectedTerms);
 			} else {
-				unremoveableTvs.addAll(connectedVars);
+				unremoveableTvs.addAll(freeVarsOfConnectedTerms);
 				unremoveableTerms.addAll(connectedTerms);
 			}
 		}
-		final List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
+		final List<Term> termsWithoutTvs = connection.getTermsWithNonTheorySymbols();
 		assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
 		assert parameters.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
 		for (final Term termWithoutTvs : termsWithoutTvs) {
