@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -204,90 +204,25 @@ public class PredicateTransformer {
 	}
 	
 	
-	public Term strongestPostconditionCall(final IPredicate p, final UnmodifiableTransFormula localVarAssignments,
-			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
-		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
+	public Term strongestPostconditionCall(final IPredicate callPred, final UnmodifiableTransFormula localVarAssignments,
+			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, 
+			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
+		
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript, 
+				Collections.emptySet(), localVarAssignments.getAssignedVars(), modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
+		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final Term localVarAssignmentsTerm = renameTransFormulaToInstances(localVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term oldVarsAssignmentTerm = renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final Term globalVarsAssignmentTerm = renameTransFormulaToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
 
-			@Override
-			public TermVariable constructValue(final IProgramVar pv) {
-				final TermVariable result;
-				if (pv instanceof IProgramNonOldVar) {
-					if (modifiableGlobalsOfEndProcedure.contains(pv)) {
-						result = constructFreshTermVariable(mMgdScript, pv);
-						varsToQuantify.add(result);
-					} else {
-						result = pv.getTermVariable();
-					}
-				} else if (pv instanceof IProgramOldVar) {
-					result = constructFreshTermVariable(mMgdScript, pv);
-					varsToQuantify.add(result);
-				} else if (pv instanceof ILocalProgramVar) {
-					result = constructFreshTermVariable(mMgdScript, pv);
-					varsToQuantify.add(result);
-				} else {
-					throw new AssertionError();
-				}
-				return result;
-			}
-			
-		};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
+		final Term result = Util.and(mScript,
+				localVarAssignmentsTerm,
+				oldVarsAssignmentTerm,
+				globalVarsAssignmentTerm,
+				callPredTerm);
 		
-		final Term renamedGlobalVarAssignment;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final IProgramVar pv : globalVarAssignments.getAssignedVars()) {
-				assert (pv instanceof IProgramNonOldVar);
-				substitutionMapping.put(globalVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-			}
-			for (final Entry<IProgramVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof IProgramOldVar);
-				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
-			}
-			renamedGlobalVarAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(globalVarAssignments.getFormula());
-		}
-		
-		final Term renamedOldVarsAssignment;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final IProgramVar pv : oldVarAssignments.getAssignedVars()) {
-				assert (pv instanceof IProgramOldVar);
-				substitutionMapping.put(oldVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-			}
-			for (final Entry<IProgramVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
-				assert (entry.getKey() instanceof IProgramNonOldVar);
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
-			}
-			renamedOldVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(oldVarAssignments.getFormula());
-		}
-		
-		final Term renamedLocalVarsAssignment;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final IProgramVar pv : localVarAssignments.getAssignedVars()) {
-				assert (pv instanceof ILocalProgramVar);
-				substitutionMapping.put(localVarAssignments.getOutVars().get(pv), pv.getTermVariable());
-			}
-			for (final Entry<IProgramVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
-				substitutionMapping.put(entry.getValue(), termVariablesForPredecessor.getOrConstruct(entry.getKey()));
-			}
-			renamedLocalVarsAssignment = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(localVarAssignments.getFormula());
-		}
-		
-		final Term renamedPredicate;
-		{
-			final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (final IProgramVar pv : p.getVars()) {
-				substitutionMapping.put(pv.getTermVariable(), termVariablesForPredecessor.getOrConstruct(pv));
-			}
-			renamedPredicate = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping).transform(p.getFormula());
-		}
-		final Term sucessorTerm = Util.and(mScript, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
-				renamedGlobalVarAssignment);
-		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, sucessorTerm);
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
-		return pushed;
+		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
+		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
 
 	}
 	
