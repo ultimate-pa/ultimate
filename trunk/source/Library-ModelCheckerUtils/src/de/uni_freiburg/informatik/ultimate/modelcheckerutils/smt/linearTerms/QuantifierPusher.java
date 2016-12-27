@@ -191,6 +191,12 @@ public class QuantifierPusher extends TermTransformer {
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
 				// nothing was removed
+				
+				// 2016-12-17 Matthias TODO: 
+				// before applying distributivity bring each disjunct in 
+				// NNF (with quantifier push)
+				// if afterwards some disjunct is disjunction then re-apply 
+				// the tryToPushOverDualFiniteConnective method
 				for (int i=0; i<dualFiniteParams.length; i++) {
 					if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
 						final Term correspondingFinite = applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
