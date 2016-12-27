@@ -192,7 +192,7 @@ public class GameAutomaton<LETTER, STATE>
 					lasp.getOutgoingTransitionsForSpoiler(duplicatorState, letter);
 			final Set<STATE> duplicatorSuccs = NestedWordAutomataUtils.constructSuccessorSet(duplicatorSuccIt);
 			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter =
-					computerSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs,
+					computeSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs,
 							spoilerStateNeededInSucc);
 			succTrans.addAll(succTransForLetter);
 		}
@@ -220,7 +220,7 @@ public class GameAutomaton<LETTER, STATE>
 		}
 	}
 
-	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> computerSuccessorTransitions(
+	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> computeSuccessorTransitions(
 			final SpoilerNwaVertex<LETTER, STATE> vertex, final LETTER letter, final ETransitionType transitionType,
 			final Set<STATE> spoilerSuccs, final Set<STATE> duplicatorSuccs, final boolean spoilerStateNeededInSucc) {
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> result = new HashRelation<>();
