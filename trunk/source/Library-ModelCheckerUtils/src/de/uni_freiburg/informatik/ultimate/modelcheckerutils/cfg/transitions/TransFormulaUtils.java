@@ -798,8 +798,8 @@ public class TransFormulaUtils {
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
 		final Term beforeReturnTerm = pt.strongestPostcondition(afterCallPredicate, procedureTf);
 		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
-		Term afterReturnTerm = pt.strongestPostcondition(beforeReturnPredicate, truePredicate, returnTf, callTf,
-				globalVarsAssignment, oldVarsAssignment);
+		Term afterReturnTerm = pt.strongestPreconditionReturn(beforeReturnPredicate, truePredicate, returnTf, callTf,
+				oldVarsAssignment, modifiableGlobals);
 		afterReturnTerm = new QuantifierPusher(mgdScript, services).transform(afterReturnTerm);
 		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
