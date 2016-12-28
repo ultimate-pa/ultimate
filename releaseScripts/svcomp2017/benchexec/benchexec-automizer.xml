@@ -32,6 +32,12 @@
 	<option name="32bit"></option>
   </tasks>
 
+  <tasks name="Busybox-Memsafety">
+    <include>../../../trunk/examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
+    <propertyfile>../../../trunk/examples/svcomp/Systems_BusyBox_MemSafety.prp</propertyfile>
+	<option name="64bit"></option>
+  </tasks>
+
   <tasks name="Overflow">
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow.c.i</include>
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
