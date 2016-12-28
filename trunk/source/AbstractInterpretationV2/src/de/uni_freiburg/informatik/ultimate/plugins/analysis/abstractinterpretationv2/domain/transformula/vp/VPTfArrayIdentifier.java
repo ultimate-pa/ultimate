@@ -137,7 +137,9 @@ public class VPTfArrayIdentifier {
 
 	@Override
 	public int hashCode() {
-		return HashUtils.hashHsieh(31, mPvoc, mInVar, mOutVar, mTerm);
+//		return HashUtils.hashHsieh(31, mPvoc, mInVar, mOutVar, mTerm); // does not work as m[In|Out]Var can be null
+//		return HashUtils.hashHsieh(31, mTerm);
+		return mTerm.hashCode();
 	}
 	
 }

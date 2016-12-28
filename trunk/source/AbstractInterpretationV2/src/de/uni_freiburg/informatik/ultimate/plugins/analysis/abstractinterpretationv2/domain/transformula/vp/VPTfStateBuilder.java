@@ -539,7 +539,9 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
 			VPTfArrayIdentifier arrayId = 
-					getArrayIdentifier(term, mTransFormula);
+					getArrayIdentifier(
+							VPDomainHelpers.getArrayTerm((ApplicationTerm) term), 
+							mTransFormula);
 //					VPDomainHelpers.getArrayTerm((ApplicationTerm) term));
 			result.addToCcchild(arrayId, argNodes);
 			
@@ -658,7 +660,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		if (iTv != null) {
 			inVar = new Pair<>((IProgramVar) function, iTv);
 		}
-		TermVariable oTv = inVars.get(function);
+		TermVariable oTv = outVars.get(function);
 		if (oTv != null) {
 			outVar = new Pair<>((IProgramVar) function, oTv);
 		}
