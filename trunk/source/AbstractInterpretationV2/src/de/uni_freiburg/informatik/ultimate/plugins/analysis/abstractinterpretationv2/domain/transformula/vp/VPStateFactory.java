@@ -202,8 +202,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 *  - outVars of the given TransFormula tf
 		 *  - constants
 		 */
-		Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
-		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
+		Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
+		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
 			if (node.nodeIdentifier.getEqNode() == null) {
 				// auxvar node
 				continue;
@@ -228,15 +228,15 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 //			}
 //		}
 //		outVarsAndConstantEqNodes.addAll(mTfPreparer.getAllConstantEqNodes());
-		List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> outVarsAndConstantEqNodes = new ArrayList<>(outVarsAndConstantEqNodeSet);
+		List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes = new ArrayList<>(outVarsAndConstantEqNodeSet);
 
 		final VPStateBuilder<ACTION> builder = copy(havocVariables(tf.getAssignedVars(), oldState));// TODO
 		builder.addVars(tfState.getVariables());
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
 				if (outNode1 == outNode2) {
 					// no need to disequate two identical nodes
@@ -263,8 +263,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
 				if (outNode1 == outNode2) {
 					// no need to equate two identical nodes

@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class VPAuxVarNodeIdentifier extends VPNodeIdentifier {
+public class VPAuxVarNodeIdentifier extends VPTfNodeIdentifier {
 	
 	private final TermVariable mTv;
 	
 	public VPAuxVarNodeIdentifier(TermVariable tv) {
-		super(null, null, null);
+		super(null, null, null, null);
 		mTv = tv;
 	}
 	
@@ -48,7 +48,7 @@ public class VPAuxVarNodeIdentifier extends VPNodeIdentifier {
 	}
 
 	@Override
-	public VPArrayIdentifier getFunction() {
+	public VPTfArrayIdentifier getFunction() {
 		assert false;
 		return null;
 	}

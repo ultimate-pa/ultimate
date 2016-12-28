@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  * @author Alexander Nutz
  */
-public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
+public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier> {
 	
 	private final EqNode mEqNode;
 //	private final Term mTerm;
@@ -58,13 +58,14 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	private final Map<IProgramVar, TermVariable> mOutVars;
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
-	private final VPArrayIdentifier mFunction;
+	private final VPTfArrayIdentifier mFunction;
 	private final boolean mIsInOrThrough;
 
 
-	public VPNodeIdentifier(EqNode eqNode, 
+	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+			Map<IProgramVar, TermVariable> outVars,
+			VPTfStateBuilder tfStateBuilder) {
 		this.mEqNode = eqNode;
 //		this.mIsFunction = term instanceof ApplicationTerm 
 //				&& (((ApplicationTerm) term).getFunction().getName().equals("select")
@@ -78,7 +79,9 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		if (mIsFunction) {
 //			ApplicationTerm at = (ApplicationTerm) term;
 //			mFunction = new VPArrayIdentifier(getArrayTerm(at));
-			mFunction = getArrayIdentifier((EqFunctionNode) eqNode, inVars, outVars);
+//			mFunction = getArrayIdentifier((EqFunctionNode) eqNode, inVars, outVars);
+			mFunction = tfStateBuilder.getArrayIdentifier(
+					((EqFunctionNode) eqNode).getFunction(), inVars, outVars);
 		} else {
 			mFunction = null;
 		}
@@ -90,7 +93,7 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		 *  - "through" (i.e. all variables are both inVars and outVars)
 		 *  Than means it cannot have two variables where one is only in and one is only out. 
 		 *  
-		 *  TODO: the followign computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
+		 *  TODO: the following computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
 		 *     --> perhaps merge
 		 */
 
@@ -137,24 +140,26 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	}
 
 
-	private VPArrayIdentifier getArrayIdentifier(EqFunctionNode eqNode, 
-			Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
-		IProgramVarOrConst pvoc = eqNode.getFunction();
-		if (pvoc.getTerm() instanceof ConstantTerm || 
-				((pvoc.getTerm() instanceof ApplicationTerm) 
-						&& ((ApplicationTerm) pvoc.getTerm()).getParameters().length == 0)) {
-			return new VPArrayIdentifier(pvoc.getTerm());
-		}
-		if (inVars.containsKey(pvoc)) {
-			return new VPArrayIdentifier(inVars.get(pvoc));
-		}
-		if (outVars.containsKey(pvoc)) {
-			return new VPArrayIdentifier(outVars.get(pvoc));
-		}
-		assert false;
-		return null;
-	}
+//	private VPArrayIdentifier getArrayIdentifier(EqFunctionNode eqNode, 
+//			Map<IProgramVar, TermVariable> inVars,
+//			Map<IProgramVar, TermVariable> outVars) {
+//		IProgramVarOrConst pvoc = eqNode.getFunction();
+//		// TODO: --> perhaps write a management for array identifiers, so they are unique..
+//		return new VPArrayIdentifier(pvoc, inVars, outVars);
+////		if (pvoc.getTerm() instanceof ConstantTerm || 
+////				((pvoc.getTerm() instanceof ApplicationTerm) 
+////						&& ((ApplicationTerm) pvoc.getTerm()).getParameters().length == 0)) {
+////			return new VPArrayIdentifier(pvoc.getTerm());
+////		}
+////		if (inVars.containsKey(pvoc)) {
+////			return new VPArrayIdentifier(inVars.get(pvoc));
+////		}
+////		if (outVars.containsKey(pvoc)) {
+////			return new VPArrayIdentifier(outVars.get(pvoc));
+////		}
+////		assert false;
+////		return null;
+//	}
 
 
 	public EqNode getEqNode() {
@@ -177,7 +182,7 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		return mIsFunction;
 	}
 	
-	public VPArrayIdentifier getFunction() {
+	public VPTfArrayIdentifier getFunction() {
 		assert mIsFunction : "check isFunction() before";
 		return mFunction;
 	}
@@ -218,14 +223,14 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 	
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof VPNodeIdentifier)) {
+		if (!(other instanceof VPTfNodeIdentifier)) {
 			return false;
 		}
 		if (this == other) {
 			return true;
 		}
 		
-		VPNodeIdentifier otherNodeId = (VPNodeIdentifier) other;
+		VPTfNodeIdentifier otherNodeId = (VPTfNodeIdentifier) other;
 
 		if (this.mEqNode == otherNodeId.mEqNode 
 				&& this.mInVars.equals(otherNodeId.mInVars)

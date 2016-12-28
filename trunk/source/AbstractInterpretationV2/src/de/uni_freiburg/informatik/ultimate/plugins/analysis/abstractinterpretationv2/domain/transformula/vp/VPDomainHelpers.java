@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 
@@ -219,5 +221,22 @@ public class VPDomainHelpers {
 	
 	public enum InOutStatus {
 		IN, OUT, THROUGH, UPDATE, NONE;
+	}
+
+	/**
+	 * Returns a map that is same as the given map except that, if present, the given IProgramVar's
+	 * entry has been removed.
+	 * 
+	 * @param inVars
+	 * @param function
+	 * @return
+	 */
+	public static Map<IProgramVar, TermVariable> projectOut(Map<IProgramVar, TermVariable> inVars,
+			IProgramVarOrConst function) {
+		Map<IProgramVar, TermVariable> result = new HashMap<>(inVars);
+		if (function instanceof IProgramVar) {
+			result.remove(function);
+		}
+		return Collections.unmodifiableMap(result);
 	}
 }

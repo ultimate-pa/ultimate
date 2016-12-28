@@ -34,11 +34,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 public class VPTfBottomState extends VPTfState {
 
 	public VPTfBottomState(Set<IProgramVar> vars) {
-		super(null, Collections.emptyMap(), Collections.emptyMap(), new HashRelation<VPArrayIdentifier, VPNodeIdentifier>(), 
+		super(null, null,
+				Collections.emptyMap(), Collections.emptyMap(), 
+				new HashRelation<>(), 
 				Collections.emptySet(),false, vars);
 	}
 
@@ -63,4 +66,11 @@ public class VPTfBottomState extends VPTfState {
 		assert false : "check for bottom before asking for a Transformula";
 		return null;
 	}
+
+	@Override
+	public VPTfArrayIdentifier getArrayIdentifier(Term newArray) {
+		assert false : "check for bottom before asking for an ArrayId";
+		return null;
+	}
+	
 }

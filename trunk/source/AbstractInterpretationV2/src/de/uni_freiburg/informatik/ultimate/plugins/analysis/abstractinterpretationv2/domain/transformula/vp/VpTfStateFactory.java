@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
-public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
+public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifier, VPTfArrayIdentifier> {
 
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -83,15 +83,27 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 	public Set<VPTfState> handleArrayEqualityWithException(final TermVariable newArray, final Term oldArray,
 			final ApplicationTerm storeTerm, final Term value, final VPTfState tfPreState) {
-		return VPFactoryHelpers.arrayEqualityWithException(new VPArrayIdentifier(newArray),
-				new VPArrayIdentifier(oldArray), 
+		return VPFactoryHelpers.arrayEqualityWithException(
+//				new VPArrayIdentifier(newArray),
+//				tfPreState.getArrayIdentifier(newArray, tfPreState.getTransFormula()),
+				tfPreState.getArrayIdentifier(newArray),
+//				new VPArrayIdentifier(oldArray), 
+//				tfPreState.getArrayIdentifier(oldArray, tfPreState.getTransFormula()),
+				tfPreState.getArrayIdentifier(oldArray),
 				tfPreState.getNodeId(storeTerm),
 				tfPreState.getNodeId(value),
 				tfPreState, this);
 	}
 
 	public Set<VPTfState> handleArrayEquality(final Term lhs, final Term rhs, final VPTfState tfPreState) {
-		return VPFactoryHelpers.arrayEquality(new VPArrayIdentifier(lhs), new VPArrayIdentifier(rhs), tfPreState, this);
+		return VPFactoryHelpers.arrayEquality(
+//				tfPreState.getArrayIdentifier(lhs, tfPreState.getTransFormula()),
+				tfPreState.getArrayIdentifier(lhs),
+//				new VPArrayIdentifier(lhs), 
+//				tfPreState.getArrayIdentifier(rhs, tfPreState.getTransFormula()),
+				tfPreState.getArrayIdentifier(rhs),
+//				new VPArrayIdentifier(rhs), 
+				tfPreState, this);
 	}
 
 	@Override
@@ -104,15 +116,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
 		builder.setIsTop(state.isTop());
 
-		for (final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
-			final VPNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
-			final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> newGraphNode = builder.getEqGraphNode(nodeId);
+		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
+			final VPTfNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
+			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newGraphNode = builder.getEqGraphNode(nodeId);
 			assert newGraphNode != null;
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
 			assert !state.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
 
-		for (final VPDomainSymmetricPair<VPNodeIdentifier> pair : state.getDisEqualities()) {
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> pair : state.getDisEqualities()) {
 			builder.addDisEquality(pair);
 			assert !state.isTop() || pair.mFst.isLiteral()
 					&& pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
@@ -178,19 +190,19 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		
-		Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
-		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> node : builder.getAllEqGraphNodes()) {
+		Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
+		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : builder.getAllEqGraphNodes()) {
 			if (node.nodeIdentifier.isInOrThrough()) {
 				
 			}
 		}
 		
-		List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> inVarsAndConstantEqNodes = new ArrayList<>(inVarsAndConstantEqNodeSet);
+		List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodes = new ArrayList<>(inVarsAndConstantEqNodeSet);
 
 		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
 
 				if (inNode1 == inNode2) {
 					// no need to disequate two identical nodes
@@ -210,8 +222,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 
 		for (int i = 0; i < inVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
-				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
+				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
 
 				if (inNode1 == inNode2) {
 					// no need to equate two identical nodes
@@ -232,7 +244,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	}
 
 	@Override
-	public Set<VPNodeIdentifier> getFunctionNodesForArray(final VPTfState tfState, final VPArrayIdentifier firstArray) {
+	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(final VPTfState tfState, final VPTfArrayIdentifier firstArray) {
 		return tfState.getFunctionNodesForArray(firstArray);
 	}
 	

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class VPTransFormulaStateBuilderPreparer {
 	
@@ -70,6 +73,12 @@ public class VPTransFormulaStateBuilderPreparer {
 	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 
 			new HashMap<>();
 	private final ILogger mLogger;
+	
+//	NestedMap3<IProgramVarOrConst, 
+//			Pair<IProgramVar, TermVariable>,  
+//			Pair<IProgramVar, TermVariable>, 
+//			VPTfArrayIdentifier> mPvocToInVarToOutVarToArrayIdentifier = new NestedMap3<>();
+	
 	
 	public VPTransFormulaStateBuilderPreparer(VPDomainPreanalysis preAnalysis, IIcfg<?> root, ILogger logger) {
 		mPreAnalysis = preAnalysis;
@@ -150,7 +159,7 @@ public class VPTransFormulaStateBuilderPreparer {
 
 
 	private void handleTransFormula(TransFormula tf) {
-		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
+		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes);
 		
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
@@ -166,4 +175,44 @@ public class VPTransFormulaStateBuilderPreparer {
 	public Set<EqNode> getAllConstantEqNodes() {
 		return mAllConstantEqNodes;
 	}
+
+//	public VPTfArrayIdentifier getArrayIdentifier(Term term, TransFormula transFormula) {
+//		return getArrayIdentifier(
+//				mPreAnalysis.getIProgramVarOrConstOrLiteral(term, 
+//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(transFormula)),
+//				VPDomainHelpers.projectToTerm(transFormula.getInVars(), term),
+//				VPDomainHelpers.projectToTerm(transFormula.getOutVars(), term));
+//	}
+//
+//	/**
+//	 * 
+//	 * @param function
+//	 * @param inVars
+//	 * @param outVars
+//	 * @return
+//	 * 
+//	 * TODO should we move this to the VPTfStateBuilder, like the management for VPNodeIdenfifiers??
+//	 */
+//	public VPTfArrayIdentifier getArrayIdentifier(IProgramVarOrConst function, 
+//			Map<IProgramVar, TermVariable> inVars,
+//			Map<IProgramVar, TermVariable> outVars) {
+//		Pair<IProgramVar, TermVariable> inVar = null;;
+//		Pair<IProgramVar, TermVariable> outVar = null;;
+//		
+//		TermVariable iTv = inVars.get(function);
+//		if (iTv != null) {
+//			inVar = new Pair<>((IProgramVar) function, iTv);
+//		}
+//		TermVariable oTv = inVars.get(function);
+//		if (oTv != null) {
+//			outVar = new Pair<>((IProgramVar) function, oTv);
+//		}
+//		VPTfArrayIdentifier result = mPvocToInVarToOutVarToArrayIdentifier.get(function, inVar, outVar);
+//		
+//		if (result == null) {
+//			result = new VPTfArrayIdentifier(function, inVar, outVar);
+//			mPvocToInVarToOutVarToArrayIdentifier.put(function, inVar, outVar, result);
+//		}
+//		return result;
+//	}
 }
