@@ -59,8 +59,11 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 		}
 		return result;
 	}
+	
+
 
 	public Set<VPDomainSymmetricPair<NODEID>> getDisEqualities() {
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 		return mDisEqualitySet;
 	}
 

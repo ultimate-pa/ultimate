@@ -114,6 +114,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		assert !state.isBottom();
 
 		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		builder.setIsTop(state.isTop());
 
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
@@ -126,13 +127,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> pair : state.getDisEqualities()) {
 			builder.addDisEquality(pair);
-			assert !state.isTop() || pair.mFst.isLiteral()
-					&& pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
+//			assert !state.isTop() || pair.mFst.isLiteral()
+//					&& pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
 		}
 
 		builder.addVars(new HashSet<>(state.getVariables()));
 
 
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
+		builder.setIsTop(state.isTop());
 //		assert builder.mVars.equals(state.getVariables());
 		return builder;
 	}

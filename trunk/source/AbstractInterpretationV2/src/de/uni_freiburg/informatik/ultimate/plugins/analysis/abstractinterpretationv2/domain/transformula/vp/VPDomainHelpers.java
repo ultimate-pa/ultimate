@@ -239,4 +239,38 @@ public class VPDomainHelpers {
 		}
 		return Collections.unmodifiableMap(result);
 	}
+	
+	public static <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+			boolean disEqualitySetContainsOnlyRepresentatives(
+					Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
+					IVPStateOrTfState<NODEID, ARRAYID> state) {
+		for (VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
+			EqGraphNode<NODEID, ARRAYID> firstEgn = state.getEqGraphNode(pair.getFirst());
+			if (firstEgn.getRepresentative() != firstEgn) {
+				return false;
+			}
+			EqGraphNode<NODEID, ARRAYID> secondEgn = state.getEqGraphNode(pair.getSecond());
+			if (secondEgn.getRepresentative() != secondEgn) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+			boolean disEqualitySetContainsOnlyRepresentatives(
+					Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
+					IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
+		for (VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
+			EqGraphNode<NODEID, ARRAYID> firstEgn = builder.getEqGraphNode(pair.getFirst());
+			if (firstEgn.getRepresentative() != firstEgn) {
+				return false;
+			}
+			EqGraphNode<NODEID, ARRAYID> secondEgn = builder.getEqGraphNode(pair.getSecond());
+			if (secondEgn.getRepresentative() != secondEgn) {
+				return false;
+			}
+		}
+		return true;	
+	}
 }

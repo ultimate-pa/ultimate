@@ -100,6 +100,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	VPState<ACTION> build() {
 		assert mEqNodeToEqGraphNodeMap != null;
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 		return new VPState<>(mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
 	}
 

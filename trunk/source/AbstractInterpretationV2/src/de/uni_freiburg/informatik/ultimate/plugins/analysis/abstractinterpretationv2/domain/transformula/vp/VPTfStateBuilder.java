@@ -599,6 +599,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert mDisEqualitySet != null;
 		assert mVars != null;
 		assert isTopConsistent();
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
+
 		return new VPTfState(
 				mTransFormula, 
 				this,

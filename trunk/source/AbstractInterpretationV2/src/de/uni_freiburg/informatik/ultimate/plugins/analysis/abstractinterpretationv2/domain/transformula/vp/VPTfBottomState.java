@@ -73,4 +73,8 @@ public class VPTfBottomState extends VPTfState {
 		return null;
 	}
 	
+	@Override
+	public String toString() {
+		return "VPTfStateBottom " + mVars;
+	}
 }

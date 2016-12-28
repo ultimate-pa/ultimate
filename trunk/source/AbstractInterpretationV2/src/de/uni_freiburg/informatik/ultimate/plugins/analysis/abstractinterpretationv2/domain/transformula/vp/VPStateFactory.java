@@ -129,11 +129,13 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
 		builder.setIsTop(originalState.isTop());
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 
 		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
 			final EqGraphNode<EqNode, IProgramVarOrConst> oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode.copyFields(oldGraphNode, newGraphNode, builder);
+//			assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 			assert !originalState.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
 
@@ -147,6 +149,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 
 		assert builder.mVars.equals(originalState.getVariables());
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		return builder;
 	}
 
