@@ -83,25 +83,25 @@
   </tasks>
 
   <tasks name="Termination">
-    <include>../../../trunk/examples/svcomp/termination-15/cstrcmp_diffterm_alloca_true-termination.c.i</include>
-	<include>../../../trunk/examples/svcomp/termination-15/cstrncpy_malloc_true-termination.c.i</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-counterex1a_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/Madrid_false-termination_true-valid-memsafety.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_true-termination_true-valid-memsafety.c</include>
-	<include>../../../trunk/examples/svcomp/termination-crafted/NonTermination1_false-termination_true-valid-memsafety.c</include>
-	<include>../../../trunk/examples/svcomp/termination-libowfat/strcpy_small_true-termination.c.i</include>
-	<include>../../../trunk/examples/svcomp/termination-libowfat/strstr_true-termination.c.i</include>
-	<include>../../../trunk/examples/svcomp/termination-memory-alloca/b.10-alloca_true-termination.c.i</include>
-	<include>../../../trunk/examples/svcomp/termination-numeric/Avg_true_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-numeric/Et1_true_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-numeric/LeUserDefRec_true-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-restricted-15/NO_13_false-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-restricted-15/WhileTrueInc_false-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-restricted-15/java_Continue1_true-termination.c</include>
-    <include>../../../trunk/examples/svcomp/termination-memory-alloca/a.04-alloca_true-termination.c.i</include>
-    <include>../../../trunk/examples/svcomp/termination-restricted-15/ConvLower_false-termination.c</include>
-    <include>../../../trunk/examples/svcomp/termination-crafted/Collatz_unknown-termination.c</include>
-	<include>../../../trunk/examples/svcomp/termination-libowfat/dirname_true-termination.c.i</include>
+    <include>../../../trunk/examples/svcomp/termination-15/cstrcmp_diffterm_alloca_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-15/cstrncpy_malloc_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-counterex1a_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/Madrid_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-crafted/NonTermination1_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/strcpy_small_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/strstr_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-memory-alloca/b.10-alloca_*.i</include>
+	<include>../../../trunk/examples/svcomp/termination-numeric/Avg_true_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-numeric/Et1_true_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-numeric/LeUserDefRec_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/NO_13_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/WhileTrueInc_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-restricted-15/java_Continue1_*.c</include>
+    <include>../../../trunk/examples/svcomp/termination-memory-alloca/a.04-alloca_*.c.i</include>
+    <include>../../../trunk/examples/svcomp/termination-restricted-15/ConvLower_*.c</include>
+    <include>../../../trunk/examples/svcomp/termination-crafted/Collatz_*.c</include>
+	<include>../../../trunk/examples/svcomp/termination-libowfat/dirname_*.i</include>
     <propertyfile>../../../trunk/examples/svcomp/Termination.prp</propertyfile>
 	<option name="64bit"></option>
   </tasks>
