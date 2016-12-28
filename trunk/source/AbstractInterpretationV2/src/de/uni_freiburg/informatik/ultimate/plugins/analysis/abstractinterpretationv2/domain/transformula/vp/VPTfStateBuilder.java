@@ -92,6 +92,25 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> tfegn : getAllEqGraphNodes()) {
 			tfegn.setupNode();
 		}
+		
+		/*
+		 * Generate disequality set for constants
+		 * TODO: do this more efficiently
+		 */
+		final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqualitySet = new HashSet<>();
+		for (final VPTfNodeIdentifier node1 : mTermToNodeId.values()) {
+			for (final VPTfNodeIdentifier node2 : mTermToNodeId.values()) {
+				if (!node1.isLiteral() || !node2.isLiteral()) {
+					continue;
+				}
+				if (!node1.equals(node2)) {
+					disEqualitySet.add(new VPDomainSymmetricPair<>(node1, node2));
+				}
+			}
+		}
+		this.addDisEqualites(disEqualitySet);
+		
+		
 		assert isTopConsistent();
 	}
 
