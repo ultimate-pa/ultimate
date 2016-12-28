@@ -302,13 +302,13 @@ public class UnstructureCode extends BaseObserver {
 
 			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { body, done }));
 			postCreateStatement(origStmt, new Label(origStmt.getLocation(), body));
-			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(), stmt.getCondition());
+			if (stmt.getCondition() instanceof WildcardExpression) {
+				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
+						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			} else {
-				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
-						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
+				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(), stmt.getCondition());
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			}
