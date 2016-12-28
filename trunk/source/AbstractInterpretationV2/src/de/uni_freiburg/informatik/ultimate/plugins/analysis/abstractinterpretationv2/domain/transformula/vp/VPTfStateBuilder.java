@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -42,15 +43,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers.InOutStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
-public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
+public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPNodeIdentifier, VPArrayIdentifier> {
 	
 	private Set<IProgramVar> mVars = new HashSet<>();
 	
@@ -66,10 +69,10 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 
 	private final TransFormula mTransFormula;
 
-	public VPTransitionStateBuilder(VPDomainPreanalysis preAnalysis,
+	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
 		mTransFormula = tf;
-		createEqGraphNodes(tf, preAnalysis, allConstantEqNodes);
+		createEqGraphNodes(preAnalysis, allConstantEqNodes);
 		
 		for (EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> tfegn : getAllEqGraphNodes()) {
 			tfegn.setupNode();
@@ -82,7 +85,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	 * copy constructor
 	 * @param builder
 	 */
-	public VPTransitionStateBuilder(VPTransitionStateBuilder builder) {
+	public VPTfStateBuilder(VPTfStateBuilder builder) {
 		super(builder);
 		assert builder.isTopConsistent();
 		mTransFormula = builder.mTransFormula;
@@ -117,8 +120,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 	}
 
 
-	private void createEqGraphNodes(
-			TransFormula tf, VPDomainPreanalysis preAnalysis, Set<EqNode> allConstantEqNodes) {
+	private void createEqGraphNodes(VPDomainPreanalysis preAnalysis, Set<EqNode> allConstantEqNodes) {
 
 		/*
 		 * The EqGraphNodes we need for the given TransFormula can come from four sources:
@@ -145,13 +147,13 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		
 		
 		Map<TermVariable, IProgramVar> tvToPvMap = 
-				VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
+				VPDomainHelpers.computeProgramVarMappingFromTransFormula(mTransFormula);
 
 		/*
 		 * 1. array accesses in the TransFormula
 		 */
 		final List<MultiDimensionalSelect> mdSelectsAll =
-				MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);
+				MultiDimensionalSelect.extractSelectShallow(mTransFormula.getFormula(), false);
 		for (MultiDimensionalSelect mds : mdSelectsAll) {
 			EqNode eqNode = preAnalysis.getEqNode(mds.getSelectTerm(), tvToPvMap);
 			if (eqNode == null) {
@@ -163,12 +165,12 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			
 			getOrConstructEqGraphNode(
 					eqNode, 
-					VPDomainHelpers.projectToTerm(tf.getInVars(), selectTerm), 
-					VPDomainHelpers.projectToTerm(tf.getOutVars(), selectTerm), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), selectTerm), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), selectTerm), 
 					selectTerm);
 		}
 		final List<MultiDimensionalStore> mdStoresAll =
-				MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
+				MultiDimensionalStore.extractArrayStoresShallow(mTransFormula.getFormula());
 		for (MultiDimensionalStore mds : mdStoresAll) {
 			EqNode eqNode = preAnalysis.getEqNode(mds.getStoreTerm(), tvToPvMap);
 			if (eqNode == null) {
@@ -180,15 +182,15 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			
 			getOrConstructEqGraphNode(
 					eqNode, 
-					VPDomainHelpers.projectToTerm(tf.getInVars(), selectTerm), 
-					VPDomainHelpers.projectToTerm(tf.getOutVars(), selectTerm), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), selectTerm), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), selectTerm), 
 					selectTerm); 
 			
 			EqNode storedValueNode = preAnalysis.getEqNode(mds.getValue(), tvToPvMap);
 			getOrConstructEqGraphNode(
 					storedValueNode, 
-					VPDomainHelpers.projectToTerm(tf.getInVars(), mds.getValue()), 
-					VPDomainHelpers.projectToTerm(tf.getOutVars(), mds.getValue()), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), mds.getValue()), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), mds.getValue()), 
 					mds.getValue());
 		}
 		
@@ -205,8 +207,8 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 			
 			getOrConstructEqGraphNode(
 					varEqNode, 
-					VPDomainHelpers.projectToTerm(tf.getInVars(), en.getKey()), 
-					VPDomainHelpers.projectToTerm(tf.getOutVars(),  en.getKey()), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), en.getKey()), 
+					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(),  en.getKey()), 
 					en.getKey());
 		}
 		
@@ -216,7 +218,7 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		for (EqNode constantEqNode : allConstantEqNodes) {
 			assert constantEqNode.isConstant();
 	
-			// technical note: the constant select/store terms that occur in tf have been treated by
+			// technical note: the constant select/store terms that occur in mTransFormula have been treated by
 			//  step 1. already. -- therefore it should be ok to use EqNode.getTerm for the term argument of the 
 			//  getOrConstruct method; because say we have a constant store in this formula, it has 
 			//  already been put into the map.
@@ -230,11 +232,8 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		/*
 		 * 4. the auxVars of the TransFormula
 		 */
-		for (TermVariable auxVar : tf.getAuxVars()) {
-			getOrConstructEqGraphNode(null, 
-					Collections.emptyMap(), 
-					Collections.emptyMap(), 
-					auxVar);
+		for (TermVariable auxVar : mTransFormula.getAuxVars()) {
+			getOrConstructEqGraphNode(auxVar);
 		}
 		
 		/*
@@ -243,15 +242,24 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		 * Then we need to introduce nodes for all indices that we track for both a and b, right?..
 		 *  note that the above steps may already have introduced nodes for some indices
 		 *  the index nodes introduced here have inVars and outVars in their nodeIdentifiers, however 
-		 *   those don't correspond to any TermVariable (the value of the entries is set to null)
+		 *   those don't correspond to any TermVariable (the value of the entries is set to null right now)
 		 *   whether a node a[i] is an in or an out or a through-node depends on a.
+		 *   
+		 *  Question: Would an optimization be to only construct the function-nodes that only differ in their function?
+		 *      (e.g. if there are nodes a[i] a[j] b[j] b[k], then we only construct a[j] and b[j] because those are 
+		 *        the two nodes we need to equate, without further knowledge we may not equate a[i] and b[j])
+		 *  Answer: No. Because we might have the knowledge i = k already in our state and then we can conclude a[i] = b[k]
 		 */
-		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(tf.getFormula());
+		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(mTransFormula.getFormula());
 		for (ArrayEquality ae : arrayEqualities) {
-//			to be continued .. TODO
+			IProgramVarOrConst lhsPvoc = 
+					preAnalysis.getIProgramVarOrConstOrLiteral(ae.getLhs(), tvToPvMap);
+			constructIndexnodes(lhsPvoc, preAnalysis);
+			
+			IProgramVarOrConst rhsPvoc = 
+					preAnalysis.getIProgramVarOrConstOrLiteral(ae.getRhs(), tvToPvMap);
+			constructIndexnodes(rhsPvoc, preAnalysis);
 		}
-
-//		preAnalysis.get
 		
 		/*
 		 * 6. ArrayUpdates
@@ -260,14 +268,116 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		 * case 2: newArray and oldArray have a different IProgramVarOrConst
 		 *   this case is treated here like an array equality
 		 */
-		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(tf.getFormula());
+		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(mTransFormula.getFormula());
 		for (ArrayUpdate au : arrayUpdates) {
-//			to be continued .. TODO
+			IProgramVarOrConst newArrayPvoc = 
+					preAnalysis.getIProgramVarOrConstOrLiteral(au.getNewArray(), tvToPvMap);
+			IProgramVarOrConst oldArrayPvoc = 
+					preAnalysis.getIProgramVarOrConstOrLiteral(au.getOldArray(), tvToPvMap);
+			
+			if (newArrayPvoc == oldArrayPvoc) {
+				// case 1: newArray and oldArray are the same IProgramVar (like in a normal array update)
+				//  --> a function node for oldArray (which occurs in a store in au's formula) has already been constructed
+				//     we construct the same node except for the newArray
+				EqFunctionNode storeEqNode = (EqFunctionNode) preAnalysis.getEqNode(au.getMultiDimensionalStore().getStoreTerm(), tvToPvMap);
+				
+				Map<IProgramVar, TermVariable> resultInVars = new HashMap<>();
+				Map<IProgramVar, TermVariable> resultOutVars = new HashMap<>();
+				translateXVarsFromFunctionToIndices(storeEqNode.getArgs(), InOutStatus.OUT, mTransFormula, resultInVars, resultOutVars);
+				assert resultInVars.isEmpty();
+				
+				if (newArrayPvoc instanceof IProgramVar) {
+					// the updated array is an outVar for our new EqGraphNode, along with its indices
+					resultOutVars.put((IProgramVar) newArrayPvoc, au.getNewArray());
+				}
+				
+				getOrConstructEqGraphNode(storeEqNode, 
+						Collections.emptyMap(), 
+						resultOutVars, 
+						null);
+			} else {
+				// case 2: newArray and oldArray have a different IProgramVarOrConst
+				//  we treat this like an array equality (step 5, in createEqGraphNodes)
+				constructIndexnodes(oldArrayPvoc, preAnalysis);
+				constructIndexnodes(newArrayPvoc, preAnalysis);
+			}
 		}
 			
 
 	}
+
+
+	/**
+	 * Constructs all the index nodes for the given array
+	 * (example: say array is a, and a[i]  and a[b[j]] and a[k] occur somewhere in the program, this VPTfStateBuilder
+	 *  will get EqGraphNodes for each of these EqNodes -- their in/out properties depend on that of a in mTransFormula)
+	 * 
+	 * @param array
+	 * @param mTransFormula
+	 * @param preAnalysis
+	 */
+	private void constructIndexnodes(IProgramVarOrConst array, VPDomainPreanalysis preAnalysis) {
+		Set<EqFunctionNode> lhsFuncNodes = 
+				preAnalysis.getFunctionNodesForArray(array);
+		
+		for (EqFunctionNode funcEqNode : lhsFuncNodes) {
+			Map<IProgramVar, TermVariable> resultInVars = new HashMap<>();
+			Map<IProgramVar, TermVariable> resultOutVars = new HashMap<>();
+			InOutStatus inOutStatus = getInOutStatusOfPvoc(funcEqNode.getFunction(), mTransFormula);
+			translateXVarsFromFunctionToIndices(funcEqNode.getArgs(), inOutStatus, mTransFormula, resultInVars, resultOutVars);
+
+			getOrConstructEqGraphNode(funcEqNode, 
+					resultInVars, 
+					resultOutVars, 
+					null);//  TODO -- could also give funcEqNode.getTerm() here?...
+		}
+	}
 	
+	/**
+	 * Fills the given  [in|out]varMaps for the indices in the given EqFunctionNode according the given
+	 *  in/out/through status.
+	 * @param lhsPvoc 
+	 */
+	private static void translateXVarsFromFunctionToIndices(Collection<EqNode> indexNodes,
+			InOutStatus inOutStatus, 
+			TransFormula tf, 
+			Map<IProgramVar, TermVariable> tfInVars, 
+			Map<IProgramVar, TermVariable> tfOutVars) {
+		for (EqNode indexNode : indexNodes) {
+			for (IProgramVar pv : indexNode.getVariables()) {
+				if (inOutStatus == InOutStatus.IN 
+						|| inOutStatus == InOutStatus.THROUGH 
+						|| inOutStatus == InOutStatus.UPDATE) {
+					tfInVars.put(pv, null);
+				}
+				if (inOutStatus == InOutStatus.OUT 
+						|| inOutStatus == InOutStatus.THROUGH 
+						|| inOutStatus == InOutStatus.UPDATE) {
+					tfOutVars.put(pv, null);
+				}
+			}
+
+			if (indexNode instanceof EqFunctionNode) {
+				translateXVarsFromFunctionToIndices(((EqFunctionNode) indexNode).getArgs(), inOutStatus, tf, tfInVars, tfOutVars);
+			}
+		}
+	}
+
+
+
+	private static InOutStatus getInOutStatusOfPvoc(IProgramVarOrConst function, TransFormula tf) {
+		InOutStatus functionInOutStatus;
+		if (function instanceof IProgramVarOrConst) {
+			functionInOutStatus = VPDomainHelpers.computeInOutStatus((IProgramVar) function, tf);
+		} else {
+			// TODO: constants are like a THROUGH-variable for our purposes here, right?
+			//     (or UPDATE, as this makes no difference here)
+			functionInOutStatus = InOutStatus.THROUGH;
+		}
+		return functionInOutStatus;
+	}
+
+
 	public void merge(Term t1, Term t2) {
 		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egn1 = mNodeIdToEqGraphNode.get(mTermToNodeId.get(t1));
 		assert egn1 != null;
@@ -277,30 +387,103 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		merge(egn1, egn2);
 		assert isTopConsistent();
 	}
+
+	private EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getOrConstructEqGraphNode(TermVariable tv) {
+		// we have an AuxVar
+		VPAuxVarNodeIdentifier nodeId = getAuxVarNodeIdentifier(tv);
+		mTermToNodeId.put(tv, nodeId);
+		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeId);
+		if (result == null) {
+			result = new EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>(nodeId);
+			mNodeIdToEqGraphNode.put(nodeId, result);
+		}
+		return result;
+	}
+
+	private EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getOrConstructEqGraphNode(
+			final EqNode eqNode, 
+			final Map<IProgramVar, TermVariable> inVars, 
+			final Map<IProgramVar, TermVariable> outVars) {
+		
+		// we have a "normal" (i.e. non-AuxVar-) EqGraphNode
+		
+		VPNodeIdentifier nodeIdentifier = getNodeIdentifier(eqNode, inVars, outVars);
+
+
+		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeIdentifier);
+		if (result != null) {
+			return result;
+		}
+
+		/*
+		 * the corresponding EqGraphNode has not yet been created
+		 */
+		
+		result = new EqGraphNode<>(nodeIdentifier);
+		mNodeIdToEqGraphNode.put(nodeIdentifier, result);
+		
+		if (eqNode instanceof EqFunctionNode) {
+			EqFunctionNode eqFunctionNode = (EqFunctionNode) eqNode;
+			
+			// when @param term is null, 
+			List<Term> arrayIndex = eqFunctionNode.getArgs().stream().map(node -> node.getTerm()).collect(Collectors.toList());
+			
+			assert arrayIndex == null || eqFunctionNode.getArgs().size() == arrayIndex.size();
+			
+			List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> argNodes = new ArrayList<>();
+
+			for (int i = 0; i < ((EqFunctionNode) eqNode).getArgs().size(); i++) {
+				Term indexTerm = arrayIndex != null ? arrayIndex.get(i) : null;
+				EqNode indexEqnode = eqFunctionNode.getArgs().get(i);
+				Map<IProgramVar, TermVariable> argInVars = VPDomainHelpers.projectToTerm(inVars, term);
+				Map<IProgramVar, TermVariable> argOutVars = VPDomainHelpers.projectToTerm(outVars, term);
+				EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> argNode = getOrConstructEqGraphNode(
+						indexEqnode, 
+						argInVars, 
+						argOutVars, 
+						indexTerm); 
+
+				argNode.addToCcpar(result); // later EqGraphNode.setupNode() will make initCCPar out of this
+				argNodes.add(argNode);
+			}
+			// later EqGraphNode.setupNode() will make initCcchild out of this:
+			VPArrayIdentifier arrayId = new VPArrayIdentifier(
+					VPDomainHelpers.getArrayTerm((ApplicationTerm) term));
+			result.addToCcchild(arrayId, argNodes);
+			
+			mArrayIdToFunctionNodes.addPair(arrayId, nodeIdentifier);
+		}
+		
+		
+		return result;
+
+		
+		return null;
+	}
+		
+
 	
+	/**
+	 * 
+	 * @param eqNode
+	 * @param inVars
+	 * @param outVars
+	 * @param term given for updating mTermToEqGraphNode -- needs to be non-null for every EqGraphNode that corresponds to
+	 *             a subterm in mTransFormula (others might be introduced, for example for ArrayEqualties)
+	 * @return
+	 */
 	private EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getOrConstructEqGraphNode(
 			final EqNode eqNode, 
 			final Map<IProgramVar, TermVariable> inVars, 
 			final Map<IProgramVar, TermVariable> outVars,
 			final Term term) {
-		if (eqNode == null) {
-			// we have an AuxVar
-			assert inVars.isEmpty();
-			assert outVars.isEmpty();
-			VPAuxVarNodeIdentifier nodeId = getAuxVarNodeIdentifier((TermVariable) term);
-			mTermToNodeId.put(term, nodeId);
-			EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeId);
-			if (result == null) {
-				result = new EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>(nodeId);
-				mNodeIdToEqGraphNode.put(nodeId, result);
-			}
-			return result;
-		}
-		
+	
+		assert term != null;
 		
 		// we have a "normal" (i.e. non-AuxVar-) EqGraphNode
 		
 		VPNodeIdentifier nodeIdentifier = getNodeIdentifier(eqNode, inVars, outVars);
+
 		mTermToNodeId.put(term, nodeIdentifier);
 
 		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeIdentifier);
@@ -318,14 +501,16 @@ public class VPTransitionStateBuilder extends IVPStateOrTfStateBuilder<VPTfState
 		if (eqNode instanceof EqFunctionNode) {
 			EqFunctionNode eqFunctionNode = (EqFunctionNode) eqNode;
 			
-			ArrayIndex arrayIndex = extractArgumentsFromStoreOrSelect(term);
+			// when @param term is null, 
+			ArrayIndex arrayIndex = term != null ? extractArgumentsFromStoreOrSelect(term) : null;
+//			List<Term> arrayIndex = eqFunctionNode.getArgs().stream().map(node -> node.getTerm()).collect(Collectors.toList());
 			
-			assert eqFunctionNode.getArgs().size() == arrayIndex.size();
+			assert arrayIndex == null || eqFunctionNode.getArgs().size() == arrayIndex.size();
 			
 			List<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> argNodes = new ArrayList<>();
 
 			for (int i = 0; i < ((EqFunctionNode) eqNode).getArgs().size(); i++) {
-				Term indexTerm = arrayIndex.get(i);
+				Term indexTerm = arrayIndex != null ? arrayIndex.get(i) : null;
 				EqNode indexEqnode = eqFunctionNode.getArgs().get(i);
 				Map<IProgramVar, TermVariable> argInVars = VPDomainHelpers.projectToTerm(inVars, term);
 				Map<IProgramVar, TermVariable> argOutVars = VPDomainHelpers.projectToTerm(outVars, term);

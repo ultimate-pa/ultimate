@@ -190,4 +190,34 @@ public class VPDomainHelpers {
 		}
 		return result;
 	}
+	
+	/**
+	 * For a given IProgramVar pv and a TransFormula tf, computes whether
+	 * pv is only an InVar, only an outVar, an update or a through (e.g. used in an assume) or does not occur in tf.
+	 * @param pvoc
+	 * @param tf
+	 */
+	public static InOutStatus computeInOutStatus(IProgramVar pv, TransFormula tf) {
+		boolean isIn = tf.getInVars().containsKey(pv);
+		boolean isOut = tf.getOutVars().containsKey(pv);
+
+		if (isIn && isOut) {
+			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
+				return InOutStatus.THROUGH;
+			} else {
+				return InOutStatus.UPDATE;
+			}
+		} else if (isIn && !isOut) {
+			return InOutStatus.IN;
+		} else if (!isIn && isOut) {
+			return InOutStatus.OUT;
+		} else {
+			assert !isIn && !isOut;
+			return InOutStatus.NONE;
+		}
+	}
+	
+	public enum InOutStatus {
+		IN, OUT, THROUGH, UPDATE, NONE;
+	}
 }

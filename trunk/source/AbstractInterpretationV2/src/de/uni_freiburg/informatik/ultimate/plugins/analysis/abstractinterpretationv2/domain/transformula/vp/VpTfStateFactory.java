@@ -95,13 +95,13 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	}
 
 	@Override
-	public VPTransitionStateBuilder copy(final VPTfState state) {
+	public VPTfStateBuilder copy(final VPTfState state) {
 		// if (originalState.isBottom()) {
 		// return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
 		// }
 		assert !state.isBottom();
 
-		final VPTransitionStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
 		builder.setIsTop(state.isTop());
 
 		for (final EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
@@ -140,11 +140,11 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 	 * and return it.
 	 */
 	@Override
-	public VPTransitionStateBuilder createEmptyStateBuilder(final TransFormula tf) {
-		 VPTransitionStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
+	public VPTfStateBuilder createEmptyStateBuilder(final TransFormula tf) {
+		 VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
 		 assert vanillaBuilder.isTopConsistent();
 		 
-		 VPTransitionStateBuilder result = new VPTransitionStateBuilder(vanillaBuilder);
+		 VPTfStateBuilder result = new VPTfStateBuilder(vanillaBuilder);
 		 assert result.isTopConsistent();
 		 return result;
 	}
@@ -170,12 +170,12 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPNodeIdentifier,
 		}
 
 		if (state.isTop()) {
-			final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
+			final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
 			builder.addVariables(state.getVariables());
 			return builder.build();
 		}
 
-		final VPTransitionStateBuilder builder = createEmptyStateBuilder(tf);
+		final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
 		builder.addVars(state.getVariables());
 		
 		Set<EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();

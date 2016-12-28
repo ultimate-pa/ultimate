@@ -89,7 +89,11 @@ public class VPNodeIdentifier implements IEqNodeIdentifier<VPArrayIdentifier> {
 		 *  - "out" (i.e. there are variables that are outVars but no inVars)
 		 *  - "through" (i.e. all variables are both inVars and outVars)
 		 *  Than means it cannot have two variables where one is only in and one is only out. 
+		 *  
+		 *  TODO: the followign computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
+		 *     --> perhaps merge
 		 */
+
 		boolean isIn = false;
 		boolean isOut = false;
 		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {

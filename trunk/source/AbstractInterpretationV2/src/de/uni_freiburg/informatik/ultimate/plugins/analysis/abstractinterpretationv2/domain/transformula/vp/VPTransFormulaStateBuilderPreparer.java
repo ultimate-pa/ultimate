@@ -67,7 +67,7 @@ public class VPTransFormulaStateBuilderPreparer {
 //	private final Set<EqFunctionNode> mAllEqFunctionNodes;
 //	private final Set<EqNode> mAllEqNonFunctionNodes;
 	private final Set<EqNode> mAllConstantEqNodes;
-	private final Map<TransFormula, VPTransitionStateBuilder> mTransFormulaToVPTfStateBuilder = 
+	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 
 			new HashMap<>();
 	private final ILogger mLogger;
 	
@@ -150,14 +150,14 @@ public class VPTransFormulaStateBuilderPreparer {
 
 
 	private void handleTransFormula(TransFormula tf) {
-		VPTransitionStateBuilder vptsb = new VPTransitionStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
+		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, tf, mAllConstantEqNodes);
 		
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
 	
 	
-	VPTransitionStateBuilder getVPTfStateBuilder(TransFormula tf) {
-		VPTransitionStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
+	VPTfStateBuilder getVPTfStateBuilder(TransFormula tf) {
+		VPTfStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
 		assert result != null : "we should have a VPTransitionStateBuidler for every Transformula in the program";
 		assert result.isTopConsistent();
 		return result;

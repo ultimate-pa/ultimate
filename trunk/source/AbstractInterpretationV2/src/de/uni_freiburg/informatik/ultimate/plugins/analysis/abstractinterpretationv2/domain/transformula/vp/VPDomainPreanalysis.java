@@ -453,6 +453,10 @@ public class VPDomainPreanalysis {
 	public Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
 		return Collections.unmodifiableSet(mArrayToAccessingEqNodes.getImage(array));
 	}
+	
+	public Set<EqFunctionNode> getFunctionNodesForArray(IProgramVarOrConst array) {
+		return Collections.unmodifiableSet(mArrayIdToFnNodes.getImage(array));
+	}
 
 	/**
 	 * Called after the main run (which is initiated by the constructor)
