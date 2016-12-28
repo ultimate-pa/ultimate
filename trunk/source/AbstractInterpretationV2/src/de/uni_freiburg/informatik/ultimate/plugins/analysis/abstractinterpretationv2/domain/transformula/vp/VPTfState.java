@@ -28,41 +28,23 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayIdentifier> {
 	
 	private final Map<Term, VPTfNodeIdentifier> mTermToNodeId;
-//	private Object mPvocToInVarToOutVarToArrayIdentifier;
 	private final VPTfStateBuilder mBuilder;
+	private final TransFormula mTransFormula;
+	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
+	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 
-
-
-//	public VPTfState(
-//			TransFormula tf,
-//			Map<Term, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> termToEqGraphNodeMap,
-//			HashRelation<VPArrayIdentifier, VPNodeIdentifier> arrayIdToFunctionNodes,
-//			Set<VPDomainSymmetricPair<VPNodeIdentifier>> disEqs, 
-//			boolean isTop, 
-//			Set<IProgramVar> vars) {
-//		super(disEqs, isTop, vars);
-//		mTransFormula = tf;
-//		mTermToEqGraphNodeMap = Collections.unmodifiableMap(termToEqGraphNodeMap);
-//		mEqNodeToInVarsToOutVarsToEqGraphNode = null; // TODO
-//		mArrayIdToFunctionNodes = arrayIdToFunctionNodes;
-//	}
 
 	public VPTfState(TransFormula tf,
 			VPTfStateBuilder builder,
@@ -75,24 +57,12 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
 		mBuilder = builder;
-//		mPvocToInVarToOutVarToArrayIdentifier = pvocToInVarToOutVarToArrayIdentifier.copy(); // TODO is copy needed here?
 		mTermToNodeId = Collections.unmodifiableMap(termToNodeId);
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy(); // TODO is copy needed here?
 		
 		assert isTopConsistent();
 	}
-
-	private final TransFormula mTransFormula;
-//	private final Map<Term, EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> mTermToEqGraphNodeMap;
-//	private final NestedMap3<EqNode, 
-//		Map<IProgramVar, TermVariable>, 
-//		Map<IProgramVar, TermVariable>, 
-//		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier>> mEqNodeToInVarsToOutVarsToEqGraphNode;
-	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
-	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode = new HashMap<>();
-
-
 
 	public boolean tracksTerm(Term term) {
 		return mTermToNodeId.containsKey(term);
@@ -102,15 +72,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return false;
 	}
 
-//	public EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> getEqGraphNode(Term term) {
-//		EqGraphNode<VPNodeIdentifier, VPArrayIdentifier> result = mTermToEqGraphNodeMap.get(term);
-//		assert result != null;
-//		return result;
-//	}
-
 	@Override
 	public EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getEqGraphNode(VPTfNodeIdentifier nodeIdentifier) {
-//		return getEqGraphNode(nodeIdentifier.getIdTerm());
 		return mNodeIdToEqGraphNode.get(nodeIdentifier);
 	}
 

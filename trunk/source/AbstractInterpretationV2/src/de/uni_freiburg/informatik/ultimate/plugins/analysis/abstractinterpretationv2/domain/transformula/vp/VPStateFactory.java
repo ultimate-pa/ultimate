@@ -83,8 +83,6 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		/*
 		 * Generate disequality set for constants
 		 */
-//		final Set<VPNodeIdentifier> literalSet = mDomain.getLiteralEqNodes().stream()
-//				.map(eqNode -> new VPNodeIdentifier(eqNode)).collect(Collectors.toSet());
 		final Set<EqNode> literalSet = mDomain.getLiteralEqNodes();
 		final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
 		for (final EqNode node1 : literalSet) {

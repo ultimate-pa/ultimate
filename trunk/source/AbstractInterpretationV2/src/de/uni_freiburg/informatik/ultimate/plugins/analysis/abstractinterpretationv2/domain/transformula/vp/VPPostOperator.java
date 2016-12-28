@@ -114,9 +114,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mDomain.getLogger().debug("Original term: " + tf.getFormula());
 		mDomain.getLogger().debug("Nnf term:      " + nnfTerm);
 
-		// final Map<TermVariable, IProgramVar> tvToPvMap =
-		// VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
-
 		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
 
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
@@ -292,27 +289,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private Set<VPTfState> handleArrayUpdateTransition(final VPTfState tfPreState, final TransFormula tf,
 			final ArrayUpdate arrayUpdate, final boolean negated) {
-
-		// /*
-		// * special case: the newArray is the outVar, the oldArray the inVar of the same IProgramVar
-		// * i.e., we have something like a[i] := x;
-		// * (question: can we generalize this some more?, what if one of them is an auxVar?)
-		// * (another case might be: newArray == oldArray on TermVariable level, then this could be replaced
-		// * by a equality with select.. --> maybe does not happen.., but may be covered anyway)
-		// */
-		// if (VPDomainHelpers.getProgramVar(arrayUpdate.getNewArray(), tf)
-		// == VPDomainHelpers.getProgramVar(arrayUpdate.getOldArray(), tf)) {
-		// if (!negated) {
-		// // technical note: by our convention the EqNode of a store is that of the corresponding select
-		// Set<VPTfState> result = mTfStateFactory.addEquality(arrayUpdate.getNewArray(),
-		// arrayUpdate.getMultiDimensionalStore().getStoreTerm(),
-		// tfPreState);
-		// return result;
-		// } else {
-		//
-		// }
-		// }
-
 		if (!negated) {
 			final Set<VPTfState> result = mTfStateFactory.handleArrayEqualityWithException(arrayUpdate.getNewArray(),
 					arrayUpdate.getOldArray(), arrayUpdate.getMultiDimensionalStore().getStoreTerm(),
@@ -336,20 +312,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		// --> "it could be anywhere"..
 		return Collections.singleton(tfPreState);
 	}
-
-	// private Set<EqNode> collectDisEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState<ACTION> prestate) {
-	// return prestate.getUnequalNodes(nodeForOtherSide);
-	// }
-	//
-	// private Set<EqNode> collectEqualitiesForNodeInState(EqNode nodeForOtherSide, VPState<ACTION> prestate) {
-	// Set<EqNode> result = new HashSet<>();
-	// EqGraphNode graphNode = prestate.getEqNodeToEqGraphNodeMap().get(nodeForOtherSide);
-	// result.add(graphNode.getRepresentative().eqNode);
-	// for (EqGraphNode rr : graphNode.getReverseRepresentative()) {
-	// result.add(rr.eqNode);
-	// }
-	// return result;
-	// }
 
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> stateBeforeLeaving,
@@ -440,8 +402,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		}
 
-		// assert VPDomainHelpers.containsNoNullElement(resultStates);
-		// return new ArrayList<>(resultStates);
 		return Collections.singletonList(resultState);
 	}
 
