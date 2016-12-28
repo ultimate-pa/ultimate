@@ -136,7 +136,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// continue;
 			// }
 
-			setActiveLoopState(currentItem);
+			checkLoopState(currentItem);
 			checkReachedError(currentItem, postState, reachedErrors);
 
 			final AbstractMultiState<STATE, ACTION, VARDECL> postStateAfterWidening =
@@ -234,7 +234,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		} else {
 			// a context switch happened
 			postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
-			// TODO: it is ok if this gets bottom, but there is a bug somewhere...
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
 
@@ -293,16 +292,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return true;
 	}
 
-	private void setActiveLoopState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+	private void checkLoopState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 		// check if we are entering a loop
 		if (mLoopDetector.isEnteringLoop(currentAction)) {
-			loopEnter(currentItem);
-		}
-
-		// check if we are leaving a loop
-		if (currentItem.isActiveLoopHead(mTransitionProvider.getTarget(currentAction))) {
-			loopLeave(currentItem);
+			final LOCATION currentLoopHead = mTransitionProvider.getSource(currentAction);
+			final int loopCounterValue = currentItem.enterLoop(currentLoopHead);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessageEnterLoop(loopCounterValue, currentLoopHead, currentItem.getPreState()));
+			}
 		}
 	}
 
@@ -331,23 +329,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		mResult.reachedError(mTransitionProvider, currentItem, postState);
-	}
-
-	private void loopLeave(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
-		final int loopCounterValue = currentItem.leaveCurrentLoop();
-		if (mLogger.isDebugEnabled()) {
-			final ACTION current = currentItem.getAction();
-			final LOCATION loopHead = mTransitionProvider.getTarget(current);
-			mLogger.debug(getLogMessageLeaveLoop(loopCounterValue, loopHead));
-		}
-	}
-
-	private void loopEnter(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
-		final LOCATION currentLoopHead = mTransitionProvider.getSource(currentItem.getAction());
-		final int loopCounterValue = currentItem.enterLoop(currentLoopHead);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, currentLoopHead, currentItem.getPreState()));
-		}
 	}
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
@@ -461,11 +442,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> stackAtCallLocation =
-				currentItem.getScopeStack();
-
+		final Deque<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> scopeStack =
+				currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
-		final Optional<Long> count = stackAtCallLocation.stream().map(a -> a.getFirst()).filter(a -> a != null)
+		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
 				.filter(e -> e.getValue() > 1 || e.getKey() == currentAction).map(e -> e.getValue())
 				.reduce((a, b) -> a + b);
@@ -479,16 +459,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					+ LoggingHelper.getTransitionString(currentAction, mTransitionProvider) + " (MaxUnwindings="
 					+ mMaxUnwindings + ")");
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Stack");
-			stackAtCallLocation.stream().sequential().map(a1 -> a1.getFirst())
+			scopeStack.stream().sequential().map(a1 -> a1.getFirst())
 					.map(a2 -> a2 == null ? "[G]" : LoggingHelper.getTransitionString(a2, mTransitionProvider))
 					.map(a3 -> AbsIntPrefInitializer.TINDENT + a3).forEach(mLogger::debug);
 		}
 
-		// get all stack items in the correct order that contain only calls to the current scope
-		final List<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> relevantStackItems =
-				stackAtCallLocation.stream().sequential()
-						.filter(a -> a.getFirst() == currentAction || a.getFirst() == null)
-						.collect(Collectors.toList());
+		final List<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> relevantStackItems = scopeStack.stream()
+				.sequential().filter(a -> a.getFirst() == currentAction).collect(Collectors.toList());
 		if (relevantStackItems.isEmpty()) {
 			// there is no relevant sequence
 			return null;
@@ -499,31 +476,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			relevantStackItems.stream().sequential()
 					.map(a -> AbsIntPrefInitializer.TINDENT
 							+ (a.getFirst() == null ? "[G]" : LoggingHelper.getHashCodeString(a.getFirst())) + " "
-							+ a.getSecond().toString())
+							+ LoggingHelper.getHashCodeString(a.getSecond()) + " " + a.getSecond().toString())
 					.forEach(mLogger::debug);
 		}
 
-		final List<AbstractMultiState<STATE, ACTION, VARDECL>> orderedStates = relevantStackItems.stream().sequential()
-				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).collect(Collectors.toList());
-		if (orderedStates.isEmpty()) {
-			// this is the first occurrence of this action, so we cannot widen
-			return null;
-		}
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(
-					AbsIntPrefInitializer.DINDENT + "Ordered states " + LoggingHelper.getHashCodeString(currentAction));
-			orderedStates.stream().sequential()
-					.forEach(a -> mLogger.debug(AbsIntPrefInitializer.TINDENT + LoggingHelper.getStateString(a)));
-		}
-
 		// select the last state
-		final int idx = orderedStates.size() - 2;
-		if (idx < 0) {
-			// not enough states to widen
+		final int relevantStackSize = relevantStackItems.size();
+		// we need the state before the current state as last state
+		final int idx = relevantStackSize - 2;
+		if (relevantStackSize - mMaxUnwindings < 0 || idx < 0) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(AbsIntPrefInitializer.DINDENT + "not enough states to widen");
+			}
 			return null;
 		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> lastState = orderedStates.get(orderedStates.size() - 2);
+		final AbstractMultiState<STATE, ACTION, VARDECL> lastState = relevantStackItems.get(idx).getSecond();
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Selected " + LoggingHelper.getHashCodeString(lastState));
@@ -645,11 +612,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final AbstractMultiState<STATE, ACTION, VARDECL> state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
 				.append(" (").append(loopCounterValue).append("), saving ").append(LoggingHelper.getStateString(state));
-	}
-
-	private StringBuilder getLogMessageLeaveLoop(final int loopCounterValue, final LOCATION loopHead) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Leaving loop ").append(loopHead)
-				.append(" (").append(loopCounterValue).append(")");
 	}
 
 	private StringBuilder

@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -43,74 +44,94 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-	
+
 	private final AbstractMultiState<STATE, ACTION, VARDECL> mPreState;
 	private final ACTION mAction;
-	private final Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> mScopedStorages;
-	private final Deque<LOCATION> mActiveLoops;
-	private final Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> mLoopPairs;
+
 	private final WorklistItem<STATE, ACTION, VARDECL, LOCATION> mPredecessor;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
-	
-	private AbstractMultiState<STATE, ACTION, VARDECL> mHierachicalPreState;
-	private Deque<ScopeStackItem> mScopes;
-	
-	private WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre,
-			final AbstractMultiState<STATE, ACTION, VARDECL> hierpre, final ACTION action,
-			final Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> scopedStorages,
-			final Deque<LOCATION> activeLoops,
-			final Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> loopPairs,
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> predecessorItem,
-			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap, final Deque<ScopeStackItem> scopes) {
-		assert action != null;
-		assert pre != null : "Prestate may not be null";
-		assert summaryMap != null;
-		mHierachicalPreState = hierpre;
-		mPreState = pre;
-		mAction = action;
-		mScopedStorages = scopedStorages;
-		mActiveLoops = activeLoops;
-		mLoopPairs = loopPairs;
-		mPredecessor = predecessorItem;
-		mSummaryMap = summaryMap;
-		mScopes = scopes;
-	}
-	
+	private final Deque<ScopeStackItem> mScopes;
+
+	private ScopeStackItem mCurrentScope;
+
+	/**
+	 * Create initial {@link WorklistItem}.
+	 *
+	 * @param pre
+	 * @param action
+	 * @param globalStorage
+	 * @param summaryMap
+	 */
 	WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre, final ACTION action,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage,
 			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap) {
-		this(pre, pre, action, new ArrayDeque<>(), new ArrayDeque<>(), new HashMap<>(), null, summaryMap, null);
-		assert globalStorage != null;
-		mScopedStorages.addFirst(globalStorage);
+		mPreState = pre;
+		mAction = action;
+		mPredecessor = null;
+		mSummaryMap = summaryMap;
+		mCurrentScope = new ScopeStackItem(globalStorage, pre);
+		mScopes = new ArrayDeque<>();
+		mScopes.add(mCurrentScope);
 	}
-	
+
+	/**
+	 * Create new {@link WorklistItem} from the result of {@link IAbstractPostOperator}s apply functions.
+	 *
+	 * @param pre
+	 * @param action
+	 * @param oldItem
+	 */
 	WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre, final ACTION action,
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> oldItem) {
-		// TODO: Replace eager initialization with lazy initialization
-		this(pre, oldItem.getHierachicalPreState(), action, oldItem.getStoragesCopy(),
-				new ArrayDeque<>(oldItem.mActiveLoops), new HashMap<>(oldItem.mLoopPairs), oldItem, oldItem.mSummaryMap,
-				oldItem.getScopesCopy());
+		mPreState = pre;
+		mAction = action;
+		mPredecessor = oldItem;
+		mSummaryMap = oldItem.mSummaryMap;
+		mScopes = new ArrayDeque<>(oldItem.mScopes);
+		mCurrentScope = mScopes.peek();
 	}
-	
+
+	/**
+	 * Create new {@link WorklistItem} during a summary operation
+	 *
+	 * @param pre
+	 * @param action
+	 * @param oldItem
+	 */
+	private WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre,
+			final AbstractMultiState<STATE, ACTION, VARDECL> hierpre, final ACTION action,
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> oldItem) {
+		mPreState = pre;
+		mAction = action;
+		mPredecessor = oldItem;
+		mSummaryMap = oldItem.mSummaryMap;
+		mScopes = new ArrayDeque<>(oldItem.mScopes);
+		final ScopeStackItem oldScopeItem = mScopes.removeFirst();
+		final ScopeStackItem newScopeItem = oldScopeItem.replaceHierPreState(hierpre);
+		mScopes.addFirst(newScopeItem);
+		mCurrentScope = newScopeItem;
+	}
+
 	ACTION getAction() {
 		return mAction;
 	}
-	
+
 	AbstractMultiState<STATE, ACTION, VARDECL> getPreState() {
 		return mPreState;
 	}
-	
+
 	AbstractMultiState<STATE, ACTION, VARDECL> getHierachicalPreState() {
-		return mHierachicalPreState;
+		return mCurrentScope.getScopeHierPreState();
 	}
-	
+
 	ACTION getCurrentScope() {
-		if (mScopes == null || mScopes.isEmpty()) {
-			return null;
-		}
-		return mScopes.peek().getAction();
+		return mCurrentScope.getAction();
 	}
-	
+
+	private Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> getLoopPairs() {
+		return mCurrentScope.getLoopPairs();
+	}
+
 	/**
 	 * Has to be called whenever {@link FixpointEngine} enters a scope.
 	 *
@@ -119,14 +140,12 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	 */
 	void addScope(final ACTION scope, final AbstractMultiState<STATE, ACTION, VARDECL> postCallState) {
 		assert scope != null;
-		if (mScopes == null) {
-			mScopes = new ArrayDeque<>();
-		}
-		mScopes.addFirst(new ScopeStackItem(scope, mHierachicalPreState, postCallState));
-		mHierachicalPreState = mPreState;
-		mScopedStorages.addFirst(getCurrentStorage().createStorage(scope));
+		final ScopeStackItem newScopeStack =
+				new ScopeStackItem(scope, mPreState, postCallState, getCurrentStorage().createStorage(scope));
+		mScopes.addFirst(newScopeStack);
+		mCurrentScope = newScopeStack;
 	}
-	
+
 	/**
 	 * Has to be called whenever {@link FixpointEngine} leaves a scope. Ensures that the state storage is in the correct
 	 * state and that the summary map is updated.
@@ -143,15 +162,15 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		}
 		// called when ACTION is a return; but before the scope is changed
 		// meaning that the scope is the corresponding call, and one of its predecessors is the matching summary
-		mSummaryMap.addSummary(currentScopeItem.getScopeFirstState(), preReturnState, currentScopeItem.getAction());
+		mSummaryMap.addSummary(currentScopeItem.getScopeOldState(), preReturnState, currentScopeItem.getAction());
 		return currentScopeItem.getAction();
 	}
-	
+
 	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summary,
 			final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
 		return mSummaryMap.getSummaryPostState(summary, preState);
 	}
-	
+
 	WorklistItem<STATE, ACTION, VARDECL, LOCATION> createSummarySubstitution(
 			final AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState, final ACTION summaryAction) {
 		// facts about the state when this method is called:
@@ -163,133 +182,99 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		// - loops, scopestorage, scopes should be as if the call never happened
 		// TODO: Cleanup
 		getCurrentStorage().saveSummarySubstituion(getAction(), summaryPostState, summaryAction);
-		final AbstractMultiState<STATE, ACTION, VARDECL> hierPreState = mHierachicalPreState;
+		final AbstractMultiState<STATE, ACTION, VARDECL> hierPreState = getHierachicalPreState();
 		removeCurrentScopeWithoutSummary();
-		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> rtr =
-				new WorklistItem<>(summaryPostState, summaryAction, this);
-		rtr.mHierachicalPreState = hierPreState;
-		return rtr;
+		return new WorklistItem<>(summaryPostState, hierPreState, summaryAction, this);
 	}
-	
+
 	private ScopeStackItem removeCurrentScopeWithoutSummary() {
-		if (mScopes == null || mScopes.isEmpty()) {
-			// happens when we leave the global scope
-			return null;
-		}
-		mScopedStorages.removeFirst();
 		final ScopeStackItem rtr = mScopes.removeFirst();
-		mHierachicalPreState = rtr.getScopeHierPreState();
+		if (mScopes.isEmpty()) {
+			mCurrentScope = null;
+		} else {
+			mCurrentScope = mScopes.peekFirst();
+		}
 		return rtr;
 	}
-	
+
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getCurrentStorage() {
-		assert !mScopedStorages.isEmpty();
-		return mScopedStorages.peek();
+		return mCurrentScope.getStorage();
 	}
-	
+
 	int getScopeStackDepth() {
-		if (mScopes == null || mScopes.isEmpty()) {
-			return 0;
-		}
 		return mScopes.size();
 	}
-	
+
 	/**
 	 *
 	 * @return A {@link Deque} that contains pairs of scopes and the corresponding state storage.
 	 */
 	Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getScopeStack() {
-		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr =
-				new ArrayDeque<>();
-		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter =
-				mScopedStorages.descendingIterator();
-		// first, add the global storage
-		rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(null, storageIter.next()));
-		if (mScopes == null || mScopes.isEmpty()) {
-			return rtr;
-		}
-		
+		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr = new ArrayDeque<>();
 		final Iterator<ScopeStackItem> scopeIter = mScopes.descendingIterator();
-		
-		while (scopeIter.hasNext() && storageIter.hasNext()) {
-			rtr.add(new Pair<>(scopeIter.next().getAction(), storageIter.next()));
+		while (scopeIter.hasNext()) {
+			final ScopeStackItem current = scopeIter.next();
+			rtr.add(new Pair<>(current.getAction(), current.getStorage()));
 		}
-		assert !scopeIter.hasNext();
-		assert !storageIter.hasNext();
-		
 		return rtr;
 	}
-	
-	boolean isActiveLoopHead(final LOCATION currentLoopHead) {
-		return !mActiveLoops.isEmpty() && mActiveLoops.peek() == currentLoopHead;
-	}
-	
-	int leaveCurrentLoop() {
-		assert !mActiveLoops.isEmpty() : "Active loops is empty";
-		final LOCATION lastLoopHead = mActiveLoops.pop();
-		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> loopPair = mLoopPairs.get(lastLoopHead);
-		assert loopPair != null;
-		return loopPair.getFirst();
-	}
-	
-	int enterLoop(final LOCATION loopHead) {
-		if (mActiveLoops.isEmpty() || !mActiveLoops.peek().equals(loopHead)) {
-			mActiveLoops.push(loopHead);
+
+	Deque<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> getScopeWideningStack() {
+		final Deque<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> rtr = new ArrayDeque<>();
+		final Iterator<ScopeStackItem> scopeIter = mScopes.descendingIterator();
+		while (scopeIter.hasNext()) {
+			final ScopeStackItem current = scopeIter.next();
+			rtr.add(new Pair<>(current.getAction(), current.getScopeOldState()));
 		}
+		return rtr;
+	}
+
+	int enterLoop(final LOCATION loopHead) {
 		final AbstractMultiState<STATE, ACTION, VARDECL> prestate = getPreState();
-		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> loopPair = mLoopPairs.get(loopHead);
+		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> loopPair = getLoopPairs().get(loopHead);
 		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> newLoopPair;
 		if (loopPair == null) {
 			newLoopPair = new Pair<>(0, prestate);
 		} else {
 			newLoopPair = new Pair<>(loopPair.getFirst() + 1, prestate);
 		}
-		mLoopPairs.put(loopHead, newLoopPair);
+		getLoopPairs().put(loopHead, newLoopPair);
 		return newLoopPair.getFirst();
 	}
-	
+
 	Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> getLoopPair(final LOCATION loopHead) {
-		return mLoopPairs.get(loopHead);
+		return getLoopPairs().get(loopHead);
 	}
-	
+
 	WorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor() {
 		return mPredecessor;
 	}
-	
-	private Deque<ScopeStackItem> getScopesCopy() {
-		if (mScopes == null || mScopes.isEmpty()) {
-			return null;
-		}
-		return new ArrayDeque<>(mScopes);
-	}
-	
-	private Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> getStoragesCopy() {
-		assert !mScopedStorages.isEmpty();
-		return new ArrayDeque<>(mScopedStorages);
-	}
-	
+
 	@Override
 	public String toString() {
 		final String preStateHashCode = mPreState == null ? "?" : String.valueOf(mPreState.hashCode());
 		final StringBuilder builder = new StringBuilder().append('[').append(preStateHashCode).append("]--[")
-				.append(mAction.hashCode()).append("]--> ? (Scope={[G]");
-		if (mScopes != null) {
-			final Iterator<ScopeStackItem> iter = mScopes.descendingIterator();
-			while (iter.hasNext()) {
-				builder.append("[").append(iter.next().getAction().hashCode()).append("]");
+				.append(mAction.hashCode()).append("]--> ? (Scope={");
+		final Iterator<ScopeStackItem> iter = mScopes.descendingIterator();
+		while (iter.hasNext()) {
+			final ACTION currentAction = iter.next().getAction();
+			if (currentAction != null) {
+				builder.append(LoggingHelper.getHashCodeString(currentAction));
+			} else {
+				builder.append("[G]");
 			}
 		}
 		builder.append("})");
 		return builder.toString();
 	}
-	
+
 	String toExtendedString() {
 		return toString() + " Pre: " + LoggingHelper.getHashCodeString(mPreState) + " "
 				+ Optional.ofNullable(mPreState).map(a -> a.toLogString()).orElse("?") + " HierPre: "
-				+ LoggingHelper.getHashCodeString(mHierachicalPreState) + " "
-				+ Optional.ofNullable(mHierachicalPreState).map(a -> a.toLogString()).orElse("?");
+				+ LoggingHelper.getHashCodeString(getHierachicalPreState()) + " "
+				+ Optional.ofNullable(getHierachicalPreState()).map(a -> a.toLogString()).orElse("?");
 	}
-	
+
 	/**
 	 * Container for scope stack items.
 	 *
@@ -299,24 +284,52 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		private final ACTION mScope;
 		private final AbstractMultiState<STATE, ACTION, VARDECL> mScopeHierachicalPreState;
 		private final AbstractMultiState<STATE, ACTION, VARDECL> mScopeFirstState;
-		
+		private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStorage;
+		private final Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> mLoopPairs;
+
 		private ScopeStackItem(final ACTION action, final AbstractMultiState<STATE, ACTION, VARDECL> hierPre,
-				final AbstractMultiState<STATE, ACTION, VARDECL> scopeFirst) {
+				final AbstractMultiState<STATE, ACTION, VARDECL> scopeFirst,
+				final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage) {
 			mScope = action;
 			mScopeHierachicalPreState = hierPre;
 			mScopeFirstState = scopeFirst;
+			mStorage = storage;
+			mLoopPairs = new HashMap<>();
 		}
-		
+
+		/**
+		 * Create global storage
+		 *
+		 * @param storage
+		 * @param pre
+		 */
+		private ScopeStackItem(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
+				final AbstractMultiState<STATE, ACTION, VARDECL> pre) {
+			this(null, pre, pre, storage);
+		}
+
 		ACTION getAction() {
 			return mScope;
 		}
-		
+
 		AbstractMultiState<STATE, ACTION, VARDECL> getScopeHierPreState() {
 			return mScopeHierachicalPreState;
 		}
-		
-		AbstractMultiState<STATE, ACTION, VARDECL> getScopeFirstState() {
+
+		AbstractMultiState<STATE, ACTION, VARDECL> getScopeOldState() {
 			return mScopeFirstState;
+		}
+
+		IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getStorage() {
+			return mStorage;
+		}
+
+		Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> getLoopPairs() {
+			return mLoopPairs;
+		}
+
+		ScopeStackItem replaceHierPreState(final AbstractMultiState<STATE, ACTION, VARDECL> newHierPre) {
+			return new ScopeStackItem(getAction(), newHierPre, getScopeOldState(), getStorage());
 		}
 	}
 }
