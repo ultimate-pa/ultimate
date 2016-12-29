@@ -49,7 +49,6 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
-		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", "examples/svcomp/psyco/psyco_net_1_false-unreach-call.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__linux-drivers-clk1__drivers-net-ethernet-cadence-macb_true-unreach-call.cil.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--dvb-core--dvb-core.ko-ldv_main5_sequence_infinite_withcheck_stateful.cil.out.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-sound--core--snd-rawmidi.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"),
@@ -66,7 +65,7 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-32_7a-drivers--net--usb--r8152.ko-entry_point_true-unreach-call.cil.out.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf", "examples/svcomp/ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--scsi--megaraid--megaraid_mm.ko-entry_point_false-unreach-call.cil.out.c"),
 	};
-	
+
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
 		new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/bitvector/gcd_1_true-unreach-call_true-no-overflow.i"),
@@ -74,10 +73,10 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 		new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", "examples/svcomp/reducercommutativity/avg60_true-unreach-call.i"),
 		new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Reach-64bit-Kojak_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--v4l2-core--videobuf-dma-contig.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"),
 	};
-	
+
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
-		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "examples/svcomp/psyco/psyco_net_1_false-unreach-call.c"),
+
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-challenges/linux-3.14__linux-drivers-clk1__drivers-net-ethernet-cadence-macb_true-unreach-call.cil.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-drivers--media--dvb-core--dvb-core.ko-ldv_main5_sequence_infinite_withcheck_stateful.cil.out.c"),
 		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "examples/svcomp/ldv-consumption/32_7a_cilled_true-unreach-call_linux-3.8-rc1-32_7a-sound--core--snd-rawmidi.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"),
@@ -103,10 +102,10 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
 	}
-	
+
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 15 * 60 * 1000;
 	}
 
 	@Override
