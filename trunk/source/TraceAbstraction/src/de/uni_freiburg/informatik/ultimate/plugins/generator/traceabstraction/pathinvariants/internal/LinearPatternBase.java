@@ -27,12 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,16 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * within {@link LinearInequalityInvariantPatternProcessor}.
  * @author David Zschocke, Dirk Steinmetz, Betim Musa
  */
-public class LinearPatternBase {
-	protected AffineFunctionGenerator mFunctionGenerator;
-	protected boolean mStrictInequality;
-	
+public class LinearPatternBase extends AbstractLinearInvariantPattern {
 
-	/**
-	 * This constructor is needed so that this class can be sub-classed.
-	 */
-	protected LinearPatternBase() {
-	}
 	
 	/**
 	 * Creates a new linear inequality over a given set of {@link IProgramVar}s.
@@ -71,23 +62,12 @@ public class LinearPatternBase {
 	 *            non-strict inequality is to be generated
 	 */
 	public LinearPatternBase(final Script solver,
-			final Collection<IProgramVar> variables, final String prefix,
+			final Set<IProgramVar> variables, final String prefix,
 			final boolean strict) {
-		mFunctionGenerator = new AffineFunctionGenerator(solver, variables, prefix);
-		mStrictInequality = strict;
+		super(solver, variables, prefix, strict);
 	}
 	
-	/**
-	 * Returns a collection of terms representing one generated variable each.
-	 * 
-	 * Generated variables are coefficients for {@link IProgramVar}s and the
-	 * constant term.
-	 * 
-	 * @return collection of all variables
-	 */
-	public Collection<Term> getVariables() {
-		return mFunctionGenerator.getCoefficients();
-	}
+
 
 	/**
 	 * Returns a linear inequality corresponding to this part of the invariant,
@@ -108,14 +88,7 @@ public class LinearPatternBase {
 		return inequality;
 	}
 	
-	/**
-	 * Returns whether or not this pattern represents a strict term.
-	 * 
-	 * @return true iff the pattern represents a strict term
-	 */
-	public boolean isStrict() {
-		return mStrictInequality;
-	}
+
 	
 	/**
 	 * Returns the affine function \sumi a_ix_i corresponding to the
@@ -130,4 +103,5 @@ public class LinearPatternBase {
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
 		return mFunctionGenerator.extractAffineFunction(valuation);
 	}
+
 }

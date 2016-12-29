@@ -5,9 +5,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
@@ -24,23 +23,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
-public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
+public class LinearPatternWithConstantCoefficients extends AbstractLinearInvariantPattern {
 	private Map<IProgramVar, AffineTerm> mProgramVars2ConstantCoefficients;
 	private Map<IProgramVar, Term> mProgramVars2TermVariables = null;
 	private AffineTerm mConstant = null;
 	private LinearInequality mLinearInequality = null;
 	private String mName = null;
 	
-	public LinearPatternWithConstantCoefficients(Script solver, Collection<IProgramVar> variables, String prefix, boolean strict,
+	public LinearPatternWithConstantCoefficients(Script solver, Set<IProgramVar> variables, String prefix, boolean strict,
 			Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients, AffineTerm constant) {
+		super(solver, variables, prefix, strict);
+		assert (variables.equals(programVarsToConstantCoefficients.keySet())) : "The given set of variables must be equal to the key-set of the map programVarsToConstantCoefficients";
+		
 		super.mFunctionGenerator = new AffineFunctionGenerator(solver, variables, prefix, true);
-		super.mStrictInequality = strict;
 		mProgramVars2ConstantCoefficients = programVarsToConstantCoefficients;
 		mConstant = constant;
 	}
 	
 	@Override
-	public Collection<Term> getVariables() {
+	public Collection<Term> getCoefficients() {
 		return Collections.emptyList();
 	}
 	
@@ -49,18 +50,19 @@ public class LinearPatternWithConstantCoefficients extends LinearPatternBase {
 	}
 	
 	
-	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map, final Map<IProgramVar, Term> lastOccurrenceOfVars) {
-		Map<IProgramVar, Term> completeMap = new HashMap<>();
-		completeMap.putAll(map);
-		for (Entry<IProgramVar, Term> entry : lastOccurrenceOfVars.entrySet()) {
-			if (!map.containsKey(entry.getKey())) {
-				completeMap.put(entry.getKey(), entry.getValue());
-			}
-		}
-		final LinearInequality inequality = super.mFunctionGenerator.generate(completeMap, mProgramVars2ConstantCoefficients);
+	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
+//		Map<IProgramVar, Term> completeMap = new HashMap<>();
+//		completeMap.putAll(map);
+//		for (Entry<IProgramVar, Term> entry : lastOccurrenceOfVars.entrySet()) {
+//			if (!map.containsKey(entry.getKey())) {
+//				completeMap.put(entry.getKey(), entry.getValue());
+//			}
+//		}
+		assert (map.keySet().equals(mVariablesOfThisPattern)) : "The given map does not contain an entry for each variable of this pattern";
+		final LinearInequality inequality = super.mFunctionGenerator.generate(map, mProgramVars2ConstantCoefficients);
 		inequality.setStrict(super.mStrictInequality);
 		inequality.add(mConstant);
-		mProgramVars2TermVariables = completeMap;
+		mProgramVars2TermVariables = map;
 		mLinearInequality = inequality;
 		return inequality;
 	}
