@@ -200,6 +200,10 @@ public class BuchiCegarLoop {
 	private final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 
 	private static final boolean s_ReduceAbstractionSize = true;
+	/**
+	 * If set to false we crash if the call alphabet is not empty.
+	 */
+	private static final boolean ALLOW_CALLS = true;
 
 	private final boolean mDifference;
 	private final boolean mUseDoubleDeckers;
@@ -311,8 +315,12 @@ public class BuchiCegarLoop {
 		mBuchiRefinementSettingSequence = new ArrayList<>();
 		switch (mInterpolantAutomaton) {
 		case TwoStage:
+//			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+//					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true));
 			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, false));
+//			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+//					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, true, true, false, false));
 			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
@@ -623,8 +631,9 @@ public class BuchiCegarLoop {
 				}
 			}
 		} catch (final AutomataOperationCanceledException e) {
-			throw new ToolchainCanceledException(getClass(),
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"minimizing (" + mAutomataMinimization + ") automaton with " + mAbstraction.size() + " states");
+			throw new ToolchainCanceledException(e, rti);
 		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
@@ -724,6 +733,9 @@ public class BuchiCegarLoop {
 			acceptingNodes = allNodes;
 		}
 		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mRootAnnot, mDefaultStateFactory, acceptingNodes);
+		if (!ALLOW_CALLS && !mAbstraction.getCallAlphabet().isEmpty()) {
+			throw new AssertionError("Calls are not allowed in this debugging mode");
+		}
 	}
 
 	private void refineFinite(final LassoChecker lassoChecker) throws AutomataOperationCanceledException {
@@ -756,7 +768,7 @@ public class BuchiCegarLoop {
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
 
-		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
+		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
