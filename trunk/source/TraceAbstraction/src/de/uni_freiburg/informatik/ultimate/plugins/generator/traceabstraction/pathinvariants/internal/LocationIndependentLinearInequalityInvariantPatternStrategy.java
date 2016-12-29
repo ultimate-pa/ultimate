@@ -26,7 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.util.Collection;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A simple {@link ILinearInequalityInvariantPatternStrategy}, generating
@@ -34,14 +38,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * increasing number of conjunctions of a increasing number of inequalities over
  * all program variables.
  */
-public final class LocationIndependentLinearInequalityInvariantPatternStrategy
-		implements ILinearInequalityInvariantPatternStrategy {
+public abstract class LocationIndependentLinearInequalityInvariantPatternStrategy
+		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<LinearPatternBase>>> {
 
 	private final int baseDisjuncts;
 	private final int baseConjuncts;
 	private final int disjunctsPerRound;
 	private final int conjunctsPerRound;
 	private final int maxRounds;
+	Set<IProgramVar> mAllProgramVariables;
+	Set<IProgramVar> mPatternVariables;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -61,16 +67,20 @@ public final class LocationIndependentLinearInequalityInvariantPatternStrategy
 	 * @param maxRounds
 	 *            maximal number of rounds to be announced by
 	 *            {@link #getMaxRounds()}.
+	 * @param patternVariables 
+	 * @param allProgramVariables 
 	 */
 	public LocationIndependentLinearInequalityInvariantPatternStrategy(
 			final int baseDisjuncts, final int baseConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound,
-			final int maxRounds) {
+			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables) {
 		this.baseConjuncts = baseConjuncts;
 		this.baseDisjuncts = baseDisjuncts;
 		this.disjunctsPerRound = disjunctsPerRound;
 		this.conjunctsPerRound = conjunctsPerRound;
 		this.maxRounds = maxRounds;
+		mAllProgramVariables = allProgramVariables;
+		mPatternVariables = patternVariables;
 	}
 
 //	/**

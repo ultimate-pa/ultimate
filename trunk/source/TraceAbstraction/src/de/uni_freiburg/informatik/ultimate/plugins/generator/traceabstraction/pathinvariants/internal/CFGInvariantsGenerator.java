@@ -199,34 +199,6 @@ public final class CFGInvariantsGenerator {
 	}
 	
 	
-//	private <IPT> void addWeakestPreconditinoOfLastTransitionToPatterns(final List<IcfgLocation> locations,
-//			final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns, 
-//			UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions,
-//			boolean addWPToEeachDisjunct) {
-//		int numOfLocs = locations.size();
-//		assert numOfLocs - 3 >= 0 : "There are not enough locations.";
-//		assert weakestPreconditionOfLastTwoTransitions.length == 2 : "weakestPreconditionOfLastTwoTransitions "
-//				+ "should contain exactly 2 TransFormulas";
-//		// The weakest precondition of the last transition is added to the location 
-//		// that is before the last trasition on the right-hand-side of the implication in the corresponding constraint  
-//		IPT newPattern = null;
-//		// The weakest precondition of the last transition is also added to the location 
-//		// that is the starting location of last trasition on the left-hand-side of the implication in the corresponding constraint 
-//		IPT newPattern2 = null;
-//		
-//		if (addWPToEeachDisjunct) {
-//			newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
-//			newPattern2 = processor.addTransFormulaToEachConjunctInPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
-//		} else {
-//			newPattern = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 2)), weakestPreconditionOfLastTwoTransitions[0]);
-//			newPattern2 = processor.addTransFormulaAsAdditionalDisjunctToPattern(patterns.get(locations.get(numOfLocs - 3)), weakestPreconditionOfLastTwoTransitions[1]);
-//		}
-//				
-//		// Put the new pattern into map
-//		patterns.put(locations.get(numOfLocs - 2), newPattern);
-//		// Put the new pattern into map
-//		patterns.put(locations.get(numOfLocs - 3), newPattern2);
-//	}
 	
 	private <IPT> void addWP_PredicatesToInvariantPatterns(final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns, 
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP,

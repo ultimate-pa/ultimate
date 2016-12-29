@@ -93,7 +93,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
 	// program to
 	// the predecessor of the predecessor of the error location.
-	private static final boolean USE_WEAKEST_PRECONDITION = false;
+	private static final boolean USE_WEAKEST_PRECONDITION = !false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.

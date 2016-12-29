@@ -26,7 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -109,4 +117,121 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 //		return predicateUnifier.getOrConstructPredicate(TermVarsProc
 //				.computeTermVarsProc(term, csToolkit.getBoogie2Smt()));
 //	}
+	
+	protected static Term constructZero(final Script script, final Sort sort) {
+		if (sort.getRealSort().getName().equals("Int")) {
+			return script.numeral(BigInteger.ZERO);
+		} else if (sort.getRealSort().getName().equals("Real")) {
+			return script.decimal(BigDecimal.ZERO);
+		} else {
+			throw new IllegalArgumentException("unsupported sort " + sort);
+		}
+	}
+	
+	/**
+	 * Given two disjunctions a and b of conjunctions, this method calculates a
+	 * new disjunction of conjunctions equivalent to a /\ b
+	 * @param a the first dnf
+	 * @param b the second dnf
+	 * @param <E> the type of the literals in the dnf
+	 * @return a new dnf equivalent to a /\ b
+	 */
+	protected static <E> Collection<Collection<E>> expandConjunctionSingle(
+			final Collection<Collection<E>> a, final Collection<Collection<E>> b) {
+		final Collection<Collection<E>> result = new ArrayList<>();
+		for (final Collection<E> aItem : a) {
+			for (final Collection<E> bItem : b) {
+				final Collection<E> resultItem = new ArrayList<>();
+				resultItem.addAll(aItem);
+				resultItem.addAll(bItem);
+				result.add(resultItem);
+			}
+		}
+		return result;
+	}
+	
+
+	/**
+	 * Calculates a DNF of the conjunction of an arbitrary set of DNFs.
+	 * 
+	 * @param <E> the type of the literals in the dnfs
+	 * 
+	 * @param dnfs
+	 *            DNFs to conjunct together
+	 * @return DNF representing the conjunction of the DNFs provided, returns
+	 *         NULL if no DNFs were given.
+	 */
+	protected static <E> Collection<Collection<E>> expandConjunction(
+			final Collection<Collection<E>>... dnfs) {
+		boolean firstElement = true;
+		Collection<Collection<E>> expandedDnf = null;
+		for (final Collection<Collection<E>> currentDnf : dnfs) {
+			if (firstElement) {
+				expandedDnf = currentDnf;
+				firstElement = false;
+			} else {
+				expandedDnf = expandConjunctionSingle(currentDnf, expandedDnf);
+			}
+		}
+		return expandedDnf;
+	}
+	
+	/**
+	 * Transforms a cnf (given as two nested Collections of atoms (usually linear inequalites))
+	 * into dnf (given as two nested Collections of atoms (usually linear inequalites)).
+	 * @param <E> type of the atoms
+	 * 
+	 * @param cnf
+	 *            the collection of conjuncts consisting of disjuncts of linear
+	 *            inequalities
+	 * @return a dnf (Collection of disjuncts consisting of conjuncts of linear
+	 *         inequalities), equivalent to the given cnf
+	 */
+	protected static <E> Collection<Collection<E>> expandCnfToDnf(
+			final Collection<Collection<E>> cnf) {
+		if (cnf.isEmpty()) {
+			final Collection<E> empty = Collections.emptyList();
+			return Collections.singleton(empty);
+		}
+		boolean firstElement = true;
+		Collection<Collection<E>> expandedDnf = null;
+		for (final Collection<E> conjunct : cnf) {
+			if (firstElement) {
+				expandedDnf = new ArrayList<>();
+				for(final E e : conjunct){
+					final Collection<E> conjunctSingleton = new ArrayList<>();
+					conjunctSingleton.add(e);
+					expandedDnf.add(conjunctSingleton);
+				}
+				firstElement = false;
+			} else {
+				expandedDnf = expandCnfToDnfSingle(expandedDnf, conjunct);
+			}
+		}
+		assert expandedDnf != null;
+		return expandedDnf;
+	}
+	
+	/**
+	 * Performs a single expandation, meaning transforming
+	 * conjunct /\ dnf to an equivalent dnf
+	 * @param dnf the dnf the conjunct is conjuncted to
+	 * @param conjunct the conjunct that is conjuncted to the dnf
+	 * @param <E> : the type of Literals in the cnf/dnf
+	 * @return a new dnf equivalent to conjunct /\ dnf
+	 */
+	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
+			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
+		final Collection<Collection<E>> result = new ArrayList<>();
+		for (final Collection<E> disjunct : dnf) {
+			for (final E item : conjunct) {
+				final Collection<E> resultItem = new ArrayList<>();
+				resultItem.addAll(disjunct);
+				resultItem.add(item);
+				result.add(resultItem);
+			}
+		}
+		return result;
+
+	}
 }
