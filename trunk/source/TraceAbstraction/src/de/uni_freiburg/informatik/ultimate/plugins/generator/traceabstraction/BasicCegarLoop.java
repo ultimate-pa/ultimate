@@ -139,7 +139,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final RefinementStrategyFactory mRefinementStrategyFactory;
 	
-	protected boolean mFallbackToFpIfInterprocedural = true;
+	protected boolean mFallbackToFpIfInterprocedural = false;
 	protected HoareAnnotationFragments mHaf;
 	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementEngine;
