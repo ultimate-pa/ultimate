@@ -59,6 +59,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
  */
 public class QuantifierPusher extends TermTransformer {
 	
+	public enum PqeTechniques {
+		ONLY_DER,
+		ALL_LOCAL,
+	}
+	
 	private enum SubformulaClassification { 
 		CORRESPONDING_FINITE_CONNECTIVE,
 		DUAL_FINITE_CONNECTIVE,
@@ -70,11 +75,23 @@ public class QuantifierPusher extends TermTransformer {
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
+	private final PqeTechniques mPqeTechniques;
+	/**
+	 * Try to apply distributivity rules to get connectives over which we
+	 * can push quantifiers. E.g. if we have a formula or the form (A && (B || C))
+	 * we cannot directly push an existential quantifier. We can apply 
+	 * distributivity, obtain (A && B) || (A && C) and can now push the 
+	 * existential quantifier one step further.
+	 */
+	private final boolean mApplyDistributivity;
 
-	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services) {
+	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services, 
+			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques) {
 		mServices = services;
 		mMgdScript = script;
 		mScript = script.getScript();
+		mApplyDistributivity = applyDistributivity;
+		mPqeTechniques = quantifierEliminationTechniques;
 	}
 
 	@Override
@@ -191,16 +208,17 @@ public class QuantifierPusher extends TermTransformer {
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
 				// nothing was removed
-				
-				// 2016-12-17 Matthias TODO: 
-				// before applying distributivity bring each disjunct in 
-				// NNF (with quantifier push)
-				// if afterwards some disjunct is disjunction then re-apply 
-				// the tryToPushOverDualFiniteConnective method
-				for (int i=0; i<dualFiniteParams.length; i++) {
-					if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
-						final Term correspondingFinite = applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
-						return correspondingFinite;
+				if (mApplyDistributivity) {
+					// 2016-12-17 Matthias TODO: 
+					// before applying distributivity bring each disjunct in 
+					// NNF (with quantifier push)
+					// if afterwards some disjunct is disjunction then re-apply 
+					// the tryToPushOverDualFiniteConnective method
+					for (int i=0; i<dualFiniteParams.length; i++) {
+						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
+							final Term correspondingFinite = applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
+							return correspondingFinite;
+						}
 					}
 				}
 				// failed to apply distributivity,  return original
@@ -247,10 +265,21 @@ public class QuantifierPusher extends TermTransformer {
 			final Term[] dualFiniteParams) throws AssertionError {
 		final int numberOfEliminateesBefore = eliminatees.size();
 		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
-		elimtechniques.add(new XnfDer(mMgdScript, mServices));
-		elimtechniques.add(new XnfIrd(mMgdScript, mServices));
-		elimtechniques.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-		elimtechniques.add(new XnfUpd(mMgdScript, mServices));
+		switch (mPqeTechniques) {
+		case ALL_LOCAL: {
+			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
+			elimtechniques.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+			elimtechniques.add(new XnfUpd(mMgdScript, mServices));
+			break;
+		}
+		case ONLY_DER: {
+			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			break;
+		}
+		default:
+			throw new AssertionError("unknown value " + mPqeTechniques);
+		}
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
 			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
@@ -322,7 +351,7 @@ public class QuantifierPusher extends TermTransformer {
 		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
 		assert (quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()));
-		final Term quantifiedSubFormulaPushed = (new QuantifierPusher(mMgdScript, mServices)).transform(quantifiedSubFormula);
+		final Term quantifiedSubFormulaPushed = (new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)).transform(quantifiedSubFormula);
 		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
 		return update;
 	}

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -82,7 +83,7 @@ public class PartialQuantifierElimination {
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-		final Term pushed = new QuantifierPusher(mgdScript, services).transform(nnf);
+		final Term pushed = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(nnf);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
 		final QuantifierSequence qs = new QuantifierSequence(mgdScript.getScript(), pnf);
 		final Term matrix = qs.getInnerTerm();
@@ -104,7 +105,7 @@ public class PartialQuantifierElimination {
 				throw tce;
 			}
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
-			result = new QuantifierPusher(mgdScript, services).transform(result);
+			result = new QuantifierPusher(mgdScript, services, true , PqeTechniques.ONLY_DER).transform(result);
 		}
 		return result;
 	}
@@ -249,7 +250,7 @@ public class PartialQuantifierElimination {
 		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed = new QuantifierPusher(mgdScript, services).transform(quantified);
+		final Term pushed = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(quantified);
 		final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 //		final Term pnf = new Nnf(script, services, freshTermVariableConstructor, QuantifierHandling.PULL).transform(pushed);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);

@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -500,7 +501,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.EXISTS,
 					nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices).transform(projectedT);
+			// apply only a parsimonious quantifier elimination,
+			// we use a quantifier elimination postprocessor later
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER).transform(projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -522,7 +525,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.FORALL,
 					nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices).transform(projectedT);
+			// apply only a parsimonious quantifier elimination,
+			// we use a quantifier elimination postprocessor later
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER).transform(projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.CallReturnPyramideInstanceProvider.Instance;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
@@ -138,12 +139,17 @@ public class PredicateTransformer {
 		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula).transform(tf.getFormula());
 		final Term renamedPredecessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForPredecessor).transform(p.getFormula());
 			
-		final Term result = Util.and(mScript, renamedTransFormula, renamedPredecessor);
+		final Term resultBody = Util.and(mScript, renamedTransFormula, renamedPredecessor);
 
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
+		return constructQuantifiedFormula(Script.EXISTS, varsToQuantify, resultBody);
+	}
+
+	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
+			final Term resultBody) {
+		final Term quantified = SmtUtils.quantifier(mScript, quantifier, varsToQuantify, resultBody);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER).transform(quantified);
 		return pushed;
 	}
 
@@ -165,9 +171,7 @@ public class PredicateTransformer {
 				oldVarsAssignmentTerm,
 				globalVarsAssignmentTerm,
 				callPredTerm);
-		
-		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
-		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
+		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
 	}
 	
 	/**
@@ -186,9 +190,7 @@ public class PredicateTransformer {
 		final Term result = Util.and(mScript,
 				globalVarsAssignmentTerm,
 				callPredTerm);
-		
-		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
-		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
+		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
 	}
 	
 	public Term strongestPostconditionReturn(final IPredicate returnPred, final IPredicate callPred,  
@@ -210,9 +212,7 @@ public class PredicateTransformer {
 				returnTfTerm,
 				callPredTerm,
 				returnPredTerm);
-		
-		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
-		return SmtUtils.quantifier(mScript, Script.EXISTS, varsToQuantify, result);
+		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
 	}
 
 	public Term weakestPrecondition(final IPredicate p, final UnmodifiableTransFormula tf) {
@@ -263,9 +263,7 @@ public class PredicateTransformer {
 		final Term result = Util.or(mScript, SmtUtils.not(mScript, renamedTransFormula), renamedSuccessor);
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
-		final Term quantified = SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
-		final Term pushed = new QuantifierPusher(mMgdScript, mServices).transform(quantified);
-		return pushed;
+		return constructQuantifiedFormula(Script.FORALL, varsToQuantify, result);
 	}
 
 	public Term weakestPreconditionCall(final IPredicate callSucc, final UnmodifiableTransFormula callTF, 
@@ -284,9 +282,7 @@ public class PredicateTransformer {
 				SmtUtils.not(mScript, oldVarsAssignmentTerm),
 				SmtUtils.not(mScript, globalVarsAssignmentTerm),
 				callSuccTerm); 
-		
-		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
-		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
+		return constructQuantifiedFormula(Script.FORALL, crpip.getFreshTermVariables(), result);
 	}
 	
 	
@@ -309,9 +305,7 @@ public class PredicateTransformer {
 				SmtUtils.not(mScript, returnTfTerm),
 				SmtUtils.not(mScript, callPredTerm),
 				returnSuccTerm);
-		
-		final Set<TermVariable> varsToQuantify = new HashSet<>(crpip.getFreshTermVariables());
-		return SmtUtils.quantifier(mScript, Script.FORALL, varsToQuantify, result);
+		return constructQuantifiedFormula(Script.FORALL, crpip.getFreshTermVariables(), result);
 	}
 	
 	

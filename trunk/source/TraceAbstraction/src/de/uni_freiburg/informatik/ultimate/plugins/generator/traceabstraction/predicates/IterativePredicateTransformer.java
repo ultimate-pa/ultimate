@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
@@ -249,7 +250,7 @@ public class IterativePredicateTransformer {
 				// A small evaluation that I did today (using Z3) shows that
 				// there is not much difference between both variants.
 				resultTerm = new QuantifierPusher(mMgdScript,
-						mServices).transform(lessQuantifier);
+						mServices, false, PqeTechniques.ONLY_DER).transform(lessQuantifier);
 //				resultTerm = new PrenexNormalForm(mBoogie2SMT.getScript(),
 //									mBoogie2SMT.getVariableManager()).transform(lessQuantifier);
 			}
