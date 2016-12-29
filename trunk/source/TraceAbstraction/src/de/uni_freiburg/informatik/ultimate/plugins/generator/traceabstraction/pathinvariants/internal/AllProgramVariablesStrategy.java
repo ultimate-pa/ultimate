@@ -26,12 +26,12 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 	}
 
 	@Override
-	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
 			final int[] dimensions = getDimensions(location, round);
 			// Build invariant pattern
-			final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(dimensions[0]);
+			final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
 			for (int i = 0; i < dimensions[0]; i++) {
-				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
+				final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 						dimensions[1]);
 				for (int j = 0; j < dimensions[1]; j++) {
 					final boolean[] invariantPatternCopies;
@@ -43,7 +43,7 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase (
 								solver, mAllProgramVariables, prefix, strict);
-						Collection<Term> params = inequality.getVariables();
+						Collection<Term> params = inequality.getCoefficients();
 						mPatternCoefficients.addAll(params);
 						conjunction.add(inequality);
 					}
@@ -54,9 +54,14 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 	}
 
 	@Override
-	public IPredicate applyConfiguration(Collection<Collection<LinearPatternBase>> pattern) {
+	public IPredicate applyConfiguration(Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
+		return mAllProgramVariables;
 	}
 
 }

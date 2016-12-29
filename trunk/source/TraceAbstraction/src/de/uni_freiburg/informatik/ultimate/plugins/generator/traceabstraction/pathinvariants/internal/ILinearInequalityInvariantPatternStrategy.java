@@ -28,9 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -70,7 +72,7 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * @return invariant pattern for location
 	 */
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
-			final int round, Script solver, String prefix);
+			final int round, final Script solver, final String prefix);
 	
 	/**
 	 * Applies the configuration found with
@@ -98,5 +100,8 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * @return maximal number of attempts to re-generate the invariant map
 	 */
 	public int getMaxRounds();
+	
+	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location,
+			final int round);
 
 }

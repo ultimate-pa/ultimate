@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * all program variables.
  */
 public abstract class LocationIndependentLinearInequalityInvariantPatternStrategy
-		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<LinearPatternBase>>> {
+		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
 
 	private final int baseDisjuncts;
 	private final int baseConjuncts;

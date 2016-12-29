@@ -69,12 +69,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractLinearInvariantPattern;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AllProgramVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearPatternBase;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -94,7 +96,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
 	// program to
 	// the predecessor of the predecessor of the error location.
-	private static final boolean USE_WEAKEST_PRECONDITION = !false;
+	private static final boolean USE_WEAKEST_PRECONDITION = false;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
@@ -133,13 +135,22 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 			final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<Term> axioms) {
-		final ILinearInequalityInvariantPatternStrategy strategy =
-				new AllProgramVariablesStrategy(1, 1, 1, 1, 5, null, null);
+			final Collection<Term> axioms,
+			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy) {
+//		 = getStrategy(useVarsFromUnsatCore, useLiveVars);
+				
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, pathprogramLocs2LiveVars, useLiveVars, solverSettings, simplicationTechnique,
 				xnfConversionTechnique, axioms);
+	}
+
+
+	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> getStrategy(
+			boolean useVarsFromUnsatCore, boolean useLiveVars, Set<IProgramVar> allProgramVariables) {
+		// TODO Auto-generated method stub
+		
+		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables);
 	}
 
 
@@ -379,9 +390,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		
 		IcfgLocation startLocation = (new ArrayList<IcfgLocation>(pathProgram.getInitialNodes())).get(0);
 		IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
-
-		final List<IcfgLocation> locationsAsList = extractLocationsFromPathProgram(pathProgram);
-		final List<IcfgInternalAction> transitionsAsList = extractTransitionsFromPathProgram(pathProgram);
+		List<IcfgLocation> locationsAsList = new ArrayList<>();
+		List<IcfgInternalAction> transitionsAsList = new ArrayList<>();
+		Set<IProgramVar> allProgramVars = new HashSet<>();
+		// Get locations, transitions and program variables from the path program
+		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList, allProgramVars);
+		
 
 		mLogger.info("[PathInvariants] Built projected CFG, " + locationsAsList.size() + " states and " + transitionsAsList.size()
 		+ " transitions.");
@@ -395,9 +409,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			pathprogramLocs2WP = computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript());
 		}
 
+		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy = getStrategy(useVarsFromUnsatCore, USE_LIVE_VARIABLES, allProgramVars);
 		IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage, mPredicateUnifier, icfg.getCfgSmtToolkit(),
 				useNonlinearConstraints, useVarsFromUnsatCore, USE_LIVE_VARIABLES, pathprogramLocs2LiveVars, solverSettings, simplificationTechnique,
-				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms());
+				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices);
@@ -412,7 +427,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return invariants;
 	}
 
-	private List<IcfgInternalAction> extractTransitionsFromPathProgram(IIcfg<IcfgLocation> pathProgram) {
+	private static void extractLocationsTransitionsAndVariablesFromPathProgram(IIcfg<IcfgLocation> pathProgram, List<IcfgLocation> locationsOfPP, 
+			List<IcfgInternalAction> transitionsOfPP,
+			Set<IProgramVar> allVariablesFromPP) {
 		LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
 		locs2visit.addAll(pathProgram.getInitialNodes());
 		LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
@@ -425,29 +442,34 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					if (!(e instanceof IInternalAction)) {
 						throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 					}
-					edges.addLast(new IcfgInternalAction(e.getSource(), e.getTarget(), e.getPayload(), ((IInternalAction)e).getTransformula()));
+					UnmodifiableTransFormula tf = ((IInternalAction)e).getTransformula();
+					allVariablesFromPP.addAll(tf.getInVars().keySet());
+					allVariablesFromPP.addAll(tf.getOutVars().keySet());
+					edges.addLast(new IcfgInternalAction(e.getSource(), e.getTarget(), e.getPayload(), tf));
 				}
 			}
 		}
-		return edges;
+		locationsOfPP.addAll(visitedLocs);
+		transitionsOfPP.addAll(edges);
+//		return edges;
 	}
 
-	private List<IcfgLocation> extractLocationsFromPathProgram(IIcfg<IcfgLocation> pathProgram) {
-		LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
-		locs2visit.addAll(pathProgram.getInitialNodes());
-		LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
-		while (!locs2visit.isEmpty()) {
-			IcfgLocation loc = locs2visit.removeFirst();
-			if (visitedLocs.add(loc)) {
-				for (IcfgEdge e : loc.getOutgoingEdges()) {
-					locs2visit.addLast(e.getTarget());
-				}
-			}
-		}
-		
-		
-		return new ArrayList<IcfgLocation>(visitedLocs);
-	}
+//	private List<IcfgLocation> extractLocationsFromPathProgram(IIcfg<IcfgLocation> pathProgram) {
+//		LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
+//		locs2visit.addAll(pathProgram.getInitialNodes());
+//		LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
+//		while (!locs2visit.isEmpty()) {
+//			IcfgLocation loc = locs2visit.removeFirst();
+//			if (visitedLocs.add(loc)) {
+//				for (IcfgEdge e : loc.getOutgoingEdges()) {
+//					locs2visit.addLast(e.getTarget());
+//				}
+//			}
+//		}
+//		
+//		
+//		return new ArrayList<IcfgLocation>(visitedLocs);
+//	}
 
 
 

@@ -48,14 +48,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Factory producing {@link LinearInequalityInvariantPatternProcessor}s.
  */
 public class LinearInequalityInvariantPatternProcessorFactory
-		implements IInvariantPatternProcessorFactory<Collection<Collection<LinearPatternBase>>> {
+		implements IInvariantPatternProcessorFactory<Collection<Collection<AbstractLinearInvariantPattern>>> {
 
 	protected final IUltimateServiceProvider mServices;
 	protected final IToolchainStorage mStorage;
@@ -63,7 +62,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final PredicateUnifier predUnifier;
 	protected final CfgSmtToolkit mCsToolkit;
-	protected final ILinearInequalityInvariantPatternStrategy strategy;
+	protected final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
@@ -90,7 +89,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 */
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
-			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints,
+			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore,
 			final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars,
 			final boolean useLiveVars, final Settings solverSettings,
@@ -165,7 +164,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	}
 
 	@Override
-	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
+	public IInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> produce(
 			final List<IcfgLocation> locations, final List<IcfgInternalAction> transitions,
 			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
 			final IcfgLocation errorLocation) {

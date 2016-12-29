@@ -159,7 +159,7 @@ public final class CFGInvariantsGenerator {
 			for (final IcfgInternalAction transition : transitions) {
 				final IPT invStart = patterns.get(transition.getSource());
 				final IPT invEnd = patterns.get(transition.getTarget());
-				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getTransformula()));
+				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), transition.getTransformula()));
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
 
@@ -259,7 +259,7 @@ public final class CFGInvariantsGenerator {
 		for (final IcfgInternalAction transition : transitions) {
 			final IPT invStart = patterns.get(transition.getSource());
 			final IPT invEnd = patterns.get(transition.getTarget());
-			predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getTransformula()));
+			predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), transition.getTransformula()));
 		}
 		mLogger.info("Built " + predicates.size() + " transition predicates.");
 

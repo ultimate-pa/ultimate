@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class LinearInequalityInvariantPatternProcessor
 extends
-AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> {
+AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> {
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
@@ -111,7 +111,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final Script mSolver;
-	private final ILinearInequalityInvariantPatternStrategy<Collection<Collection<LinearPatternBase>>> mStrategy;
+	private final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> mStrategy;
 	private final LinearTransition mPrecondition;
 	private final LinearTransition mPostcondition;
 	private final CachedTransFormulaLinearizer mLinearizer;
@@ -130,8 +130,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private final Set<IProgramVar> mPatternCoefficients;
 	private Map<Term, Rational> mValuation;
-	private Collection<Collection<LinearPatternBase>> mEntryInvariantPattern;
-	private Collection<Collection<LinearPatternBase>> mExitInvariantPattern;
+	private Collection<Collection<AbstractLinearInvariantPattern>> mEntryInvariantPattern;
+	private Collection<Collection<AbstractLinearInvariantPattern>> mExitInvariantPattern;
 	private int mPrefixCounter;
 	private int mCurrentRound;
 	private int mMaxRounds;
@@ -306,19 +306,19 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return transformed pattern, equivalent to the pattern under the mapping
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
-			final Collection<Collection<LinearPatternBase>> pattern,
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern,
 			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
-		for (final Collection<LinearPatternBase> conjunct : pattern) {
+		for (final Collection<AbstractLinearInvariantPattern> conjunct : pattern) {
 			final Collection<LinearInequality> mappedConjunct = new ArrayList<>(
 					conjunct.size());
-			for (final LinearPatternBase base : conjunct) {
-				if (base instanceof LinearPatternWithConstantCoefficients) {
-					mappedConjunct.add(((LinearPatternWithConstantCoefficients)base).getLinearInequality(mapping, lastOccurrencesOfTermVariables));
-				} else {
+			for (final AbstractLinearInvariantPattern base : conjunct) {
+//				if (base instanceof LinearPatternWithConstantCoefficients) {
+//					mappedConjunct.add(((LinearPatternWithConstantCoefficients)base).getLinearInequality(mapping, lastOccurrencesOfTermVariables));
+//				} else {
 					mappedConjunct.add(base.getLinearInequality(mapping));
-				}
+//				}
 				
 			}
 			result.add(mappedConjunct);
@@ -339,7 +339,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 *         mapping
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
-			final Collection<Collection<LinearPatternBase>> pattern,
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern,
 			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
@@ -415,10 +415,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @param mapping
 	 *            mapping to add auxiliary terms to
 	 */
-	protected void completeMapping(final Map<IProgramVar, Term> mapping) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping, final Set<IProgramVar> patternCoefficients) {
 		final String prefix = newPrefix() + "replace_";
 		int index = 0;
-		for (final IProgramVar coefficient : mPatternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -467,10 +467,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return equivalence term
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
-			final Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern, IcfgLocation startLocation) {
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
-		completeMapping(primedMapping);
+		completeMapping(primedMapping, mStrategy.getPatternVariablesForLocation(startLocation, mCurrentRound));
 
 		final Collection<List<LinearInequality>> conditionDNF_ = condition
 				.getPolyhedra();
@@ -507,10 +507,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return equivalence term
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
-			final Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern, IcfgLocation errorLocation) {
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
-		completeMapping(primedMapping);
+		completeMapping(primedMapping, mStrategy.getPatternVariablesForLocation(errorLocation, mCurrentRound));
 
 		final Collection<List<LinearInequality>> conditionCNF_ = condition
 				.getPolyhedra();
@@ -537,6 +537,14 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 
 		return transformNegatedConjunction(newConditionDNF, PatternDNF);
 	}
+	
+	private static void completePatternVariablesMapping(Map<IProgramVar, Term> mapToComplete, Set<IProgramVar> varsShouldBeInMap, Map<IProgramVar, Term> mapToCompleteWith) {
+		for (IProgramVar var : varsShouldBeInMap) {
+			if (!mapToComplete.containsKey(var)) {
+				mapToComplete.put(var, mapToCompleteWith.get(var));
+			}
+		}
+	}
 
 	/**
 	 * Generates a {@link Term} that is true iff the given
@@ -547,15 +555,22 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return term true iff the given predicate holds
 	 */
 	private Term buildPredicateTerm(
-			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate,
+			final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate,
 			Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
 		final LinearTransition transition = mLinearizer.linearize(predicate.getTransition());
 		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
-		completeMapping(unprimedMapping);
+		lastOccurrencesOfTermVariables.putAll(unprimedMapping);
+//		completeMapping(unprimedMapping);
+		completePatternVariablesMapping(unprimedMapping, mStrategy.getPatternVariablesForLocation(predicate.getSourceLocation(), mCurrentRound),
+				lastOccurrencesOfTermVariables);
+		
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
-		completeMapping(primedMapping, unprimedMapping);
+		lastOccurrencesOfTermVariables.putAll(primedMapping);
+		completePatternVariablesMapping(primedMapping, mStrategy.getPatternVariablesForLocation(predicate.getTargetLocation(), mCurrentRound),
+				lastOccurrencesOfTermVariables);
+//		completeMapping(primedMapping, unprimedMapping);
 //		boolean useAllProgramVariables = true;
 //		if (useAllProgramVariables) {
 //			for (IProgramVar pv : lastOccurrencesOfTermVariables.keySet()) {
@@ -564,7 +579,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 //			}
 //		}
 		
-		lastOccurrencesOfTermVariables.putAll(primedMapping);
+//		lastOccurrencesOfTermVariables.putAll(primedMapping);
 		
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
 				predicate.getInvStart(), unprimedMapping, lastOccurrencesOfTermVariables);
@@ -608,13 +623,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @param predicates - represent the transitions of the path program
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
-	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
+	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
 		mSolver.assertTerm(buildImplicationTerm(mPrecondition,
-				mEntryInvariantPattern));
+				mEntryInvariantPattern, mStartLocation));
 		mSolver.assertTerm(buildBackwardImplicationTerm(mPostcondition,
-				mExitInvariantPattern));
+				mExitInvariantPattern, mErrorLocation));
 		Map<IProgramVar, Term> lastOccurrencesOfTermVariables = new HashMap<>();
-		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			mSolver.assertTerm(buildPredicateTerm(predicate, lastOccurrencesOfTermVariables));
 		}
 	}
@@ -650,14 +665,14 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @param predicates - represent the transitions of the path program
 	 * @author Betim Musa (musab@informatik.uni-freiburg.de)
 	 */
-	private void generateAndAnnotateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
+	private void generateAndAnnotateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates) {
 		// Generate and assert term for precondition
-		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern));
+		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(mPrecondition, mEntryInvariantPattern, mStartLocation));
 		// Generate and assert term for post-condition
-		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern));
+		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(mPostcondition, mExitInvariantPattern, mErrorLocation));
 		Map<IProgramVar, Term> lastOccurrencesOfTermVariables = new HashMap<>();
 		// Generate and assert terms for intermediate transitions
-		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, lastOccurrencesOfTermVariables));
 		}
 	}
@@ -704,7 +719,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	@Override
 	public boolean hasValidConfiguration(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
+			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
 			final int round) {
 		mLogger.info( "[LIIPP] Start generating terms.");
 
@@ -785,7 +800,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	@Override
 	protected Term getTermForPattern(
-			final Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
 		final Map<IProgramVar, Term> definitionMap = new HashMap<IProgramVar, Term>(
 				mPatternCoefficients.size());
 		for (final IProgramVar coefficient : mPatternCoefficients) {
@@ -795,10 +810,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
-		for (final Collection<LinearPatternBase> conjunct : pattern) {
+		for (final Collection<AbstractLinearInvariantPattern> conjunct : pattern) {
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
-			for (final LinearPatternBase inequality : conjunct) {
+			for (final AbstractLinearInvariantPattern inequality : conjunct) {
 				inequalities.add(inequality.getLinearInequality(definitionMap)
 						.asTerm(mSolver));
 			}
@@ -815,16 +830,32 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * the pattern, valuated with the values from this.valuation
 	 */
 	protected Term getValuatedTermForPattern(
-			final Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
 		final Script script = mCsToolkit.getManagedScript().getScript();
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
-		for (final Collection<LinearPatternBase> conjunct : pattern) {
+		for (final Collection<AbstractLinearInvariantPattern> conjunct : pattern) {
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
-			for (final LinearPatternBase inequality : conjunct) {
+			for (final AbstractLinearInvariantPattern inequality : conjunct) {
+				Map<Term, Rational> valuation = null;
+				try {
+					if (mSimplifySatisfyingAssignment) {
+						valuation = ModelExtractionUtils.getSimplifiedAssignment(
+								mSolver, inequality.getCoefficients(), mLogger, mServices);
+					} else {
+						valuation = ModelExtractionUtils.getValuation(mSolver,
+								inequality.getCoefficients());
+					}
+				}
+				catch (TermException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					mLogger.error("Getting values for coefficients for current pattern failed." +  inequality.toString());
+				}
+				
 				final Term affineFunctionTerm = inequality.getAffineFunction(
-						mValuation).asTerm(script);
+						valuation).asTerm(script);
 				if (inequality.isStrict()) {
 					inequalities.add(SmtUtils.less(script, 
 							constructZero(script, affineFunctionTerm.getSort()),
@@ -882,7 +913,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 
 	@Override
 	public IPredicate applyConfiguration(
-			final Collection<Collection<LinearPatternBase>> pattern) {
+			final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
 		final Term term = getValuatedTermForPattern(pattern);
 		return predicateUnifier.getOrConstructPredicate(term);
 	}
@@ -891,7 +922,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(final IcfgLocation location,
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(final IcfgLocation location,
 			final int round) {
 		
 		if (mStartLocation.equals(location)) {
@@ -943,41 +974,41 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	@Override
 	public void initializeEntryAndExitPattern() {
 		// entry invariant pattern should be equivalent to true, so we create an empty conjunction
-		final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+		final Collection<AbstractLinearInvariantPattern> emptyConjunction = Collections.emptyList();
 		mEntryInvariantPattern = Collections.singleton(emptyConjunction);
 		
 		// exit pattern is equivalent to false, we create an empty disjunction
 		mExitInvariantPattern = Collections.emptyList();
 	}
 	@Override		
-	public Collection<Collection<LinearPatternBase>> getEntryInvariantPattern() {
+	public Collection<Collection<AbstractLinearInvariantPattern>> getEntryInvariantPattern() {
 		return mEntryInvariantPattern;
 	}
 	@Override	
-	public Collection<Collection<LinearPatternBase>> getExitInvariantPattern() {
+	public Collection<Collection<AbstractLinearInvariantPattern>> getExitInvariantPattern() {
 		return mExitInvariantPattern;
 	}
 	@Override
-	public Collection<Collection<LinearPatternBase>> getEmptyInvariantPattern() {
-		final Collection<Collection<LinearPatternBase>> emptyInvPattern;
+	public Collection<Collection<AbstractLinearInvariantPattern>> getEmptyInvariantPattern() {
+		final Collection<Collection<AbstractLinearInvariantPattern>> emptyInvPattern;
 		// empty invariant pattern should be equivalent to true, so we create an empty conjunction
-		final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+		final Collection<AbstractLinearInvariantPattern> emptyConjunction = Collections.emptyList();
 		emptyInvPattern = Collections.singleton(emptyConjunction);
 		return emptyInvPattern;
 	}
 	
 	
 	@Override
-	public Collection<Collection<LinearPatternBase>> addTransFormulaToEachConjunctInPattern(final Collection<Collection<LinearPatternBase>> pattern, 
+	public Collection<Collection<AbstractLinearInvariantPattern>> addTransFormulaToEachConjunctInPattern(final Collection<Collection<AbstractLinearInvariantPattern>> pattern, 
 			final UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
-		Collection<Collection<LinearPatternBase>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
-		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
+		Collection<Collection<AbstractLinearInvariantPattern>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
+		Collection<Collection<AbstractLinearInvariantPattern>> result = new ArrayList<>();
 		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
-		for (Collection<LinearPatternBase> conjunctsInPattern : pattern) {
-			for (Collection<LinearPatternBase> conjunctsInTransFormula : transFormulaAsLinIneqs) {
-				Collection<LinearPatternBase> newConjuncts = new ArrayList<>();
+		for (Collection<AbstractLinearInvariantPattern> conjunctsInPattern : pattern) {
+			for (Collection<AbstractLinearInvariantPattern> conjunctsInTransFormula : transFormulaAsLinIneqs) {
+				Collection<AbstractLinearInvariantPattern> newConjuncts = new ArrayList<>();
 				newConjuncts.addAll(conjunctsInPattern);
 				newConjuncts.addAll(conjunctsInTransFormula);
 				result.add(newConjuncts);
@@ -987,22 +1018,22 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		return result;
 	}
 	
-	private Collection<Collection<LinearPatternBase>> convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
+	private Collection<Collection<AbstractLinearInvariantPattern>> convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
 		Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();
 		termVariables2ProgramVars.putAll(tf.getInVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
 		termVariables2ProgramVars.putAll(tf.getOutVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));
 		
 		// Transform the transformula into a disjunction of conjunctions, where each conjunct is a LinearInequality
 		List<List<LinearInequality>> linearinequalities = mLinearizer.linearize(tf).getPolyhedra();
-		Collection<Collection<LinearPatternBase>> result = new ArrayList<>(linearinequalities.size());
+		Collection<Collection<AbstractLinearInvariantPattern>> result = new ArrayList<>(linearinequalities.size());
 		for (List<LinearInequality> lineqs : linearinequalities) {
-			Collection<LinearPatternBase> conjunctsFromTransFormula = new ArrayList<LinearPatternBase>(linearinequalities.size());
+			Collection<AbstractLinearInvariantPattern> conjunctsFromTransFormula = new ArrayList<AbstractLinearInvariantPattern>(linearinequalities.size());
 			for (LinearInequality lineq : lineqs) {
 				Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients = new HashMap<>();
 				for (Term termVar : lineq.getVariables()) {
 					programVarsToConstantCoefficients.put(termVariables2ProgramVars.get(termVar), lineq.getCoefficient(termVar));
 				}
-				LinearPatternBase lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), 
+				LinearPatternWithConstantCoefficients lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), 
 						programVarsToConstantCoefficients, lineq.getConstant());
 				
 				conjunctsFromTransFormula.add(lb);
@@ -1013,12 +1044,12 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	}
 	
 	
-	public Collection<Collection<LinearPatternBase>> addTransFormulaAsAdditionalDisjunctToPattern(Collection<Collection<LinearPatternBase>> pattern, 
+	public Collection<Collection<AbstractLinearInvariantPattern>> addTransFormulaAsAdditionalDisjunctToPattern(Collection<Collection<AbstractLinearInvariantPattern>> pattern, 
 			UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
-		Collection<Collection<LinearPatternBase>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
-		Collection<Collection<LinearPatternBase>> result = new ArrayList<>();
+		Collection<Collection<AbstractLinearInvariantPattern>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
+		Collection<Collection<AbstractLinearInvariantPattern>> result = new ArrayList<>();
 		
 		result.addAll(pattern);
 		// Add conjuncts from transformula as additional disjuncts

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -44,6 +45,8 @@ public class InvariantTransitionPredicate<IPT> {
 	private final IPT invStart;
 	private final IPT invEnd;
 	private final UnmodifiableTransFormula transition;
+	private final IcfgLocation mSourceLocation;
+	private final IcfgLocation mTargetLocation;
 
 	/**
 	 * Creates a invariant transition predicate from two given invariant
@@ -56,11 +59,13 @@ public class InvariantTransitionPredicate<IPT> {
 	 * @param transition
 	 *            the TransFormula describing the transition's behavior
 	 */
-	public InvariantTransitionPredicate(final IPT invStart, final IPT invEnd,
+	public InvariantTransitionPredicate(final IPT invStart, final IPT invEnd, IcfgLocation sourceLocation, IcfgLocation targetLocation,
 			final UnmodifiableTransFormula transition) {
 		this.invStart = invStart;
 		this.invEnd = invEnd;
 		this.transition = transition;
+		mSourceLocation = sourceLocation;
+		mTargetLocation = targetLocation;
 	}
 
 	/**
@@ -88,5 +93,13 @@ public class InvariantTransitionPredicate<IPT> {
 	 */
 	public final UnmodifiableTransFormula getTransition() {
 		return transition;
+	}
+	
+	public final IcfgLocation getSourceLocation () {
+		return mSourceLocation;
+	}
+	
+	public final IcfgLocation getTargetLocation() {
+		return mTargetLocation;
 	}
 }
