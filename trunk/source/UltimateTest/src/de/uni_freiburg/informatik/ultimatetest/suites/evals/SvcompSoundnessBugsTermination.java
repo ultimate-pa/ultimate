@@ -43,19 +43,14 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SvcompTerminationBugs extends AbstractEvalTestSuite {
+public class SvcompSoundnessBugsTermination extends AbstractEvalTestSuite {
 
 	// @formatter:off
-	
-	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] INPUTS = new Triple[] {
-		//new
-		new Triple<>("BuchiAutomizerCInline.xml", "svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf", "examples/svcomp/loops/while_infinite_loop_4_false-unreach-call_true-termination.i"),
 		new Triple<>("BuchiAutomizerCInline.xml", "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf", "examples/svcomp/termination-memory-linkedlists/cll_search-alloca_true-termination.c.i"),
 		new Triple<>("BuchiAutomizerCInline.xml", "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf", "examples/svcomp/termination-memory-linkedlists/nondet_ll_search-alloca_true-termination.c.i"),
 	};
-
 	// @formatter:on
 
 	@Override

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
@@ -43,14 +44,13 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SvcompOverflowBugs extends AbstractEvalTestSuite {
+public class SvcompSoundnessBugsOverflow extends AbstractEvalTestSuite {
 
 	// @formatter:off
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
-			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Overflow-32bit-Kojak_Default.epf", "examples/svcomp/recursive/recHanoi02_true-unreach-call_true-no-overflow_true-termination.c"),
-			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Overflow-32bit-Kojak_Default.epf", "examples/svcomp/recursive/recHanoi03_true-unreach-call_true-no-overflow_true-termination.c"),
+
 	};
 	
 	@SuppressWarnings("unchecked")
@@ -61,14 +61,11 @@ public class SvcompOverflowBugs extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
 
-		//new
-		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf", "examples/svcomp/recursive/recHanoi02_true-unreach-call_true-no-overflow_true-termination.c"),
-		new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf", "examples/svcomp/recursive/recHanoi03_true-unreach-call_true-no-overflow_true-termination.c"),
 	};
-
 	// @formatter:on
 
-	private static final Triple<String, String, String>[] INPUTS = UNSOUND_AUTOMIZER;
+	private static final Triple<String, String, String>[] INPUTS =
+			CoreUtil.concatAll(UNSOUND_KOJAK, UNSOUND_TAIPAN, UNSOUND_AUTOMIZER);
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
