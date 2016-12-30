@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	EqNonAtomicBaseNode(Term t, boolean isGlobal) {
+	public EqNonAtomicBaseNode(Term t, boolean isGlobal) {
 		super(isGlobal, t.getFreeVars().length == 0);
 		mTerm = t;
 	}

@@ -25,13 +25,13 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -40,62 +40,54 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 /**
  * 
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
- * @author Alexander Nutz
  *
  */
-public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
-
-	EqNode(boolean isGlobal, boolean isConstant) {
-		mIsGlobal = isGlobal;
-		mIsConstant = isConstant;
-//		mVariables = Collections.unmodifiableSet(new HashSet<>(variables));
-	}
-
-	protected Set<IProgramVar> mVariables;
+public class EqAtomicBaseNode extends EqNode {
 	
-	/**
-	 * Is true iff this EqNode's term only uses global program symbols.
-	 */
-	protected final boolean mIsGlobal;
-	
-	protected final boolean mIsConstant;
-	
+	private final IProgramVarOrConst mVarOrConst;
+	private final boolean mIsLiteral;
+	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	Set<EqNode> mParents = new HashSet<>();
-
-	protected Term mTerm;
-
-	/**
-	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument of").
-	 * Can be used to obtain initial ccParents for the corresponding EqGraphNode.
-	 */
-	Set<EqNode> getParents() {
-		return mParents;
+	public EqAtomicBaseNode(IProgramVarOrConst bv) {
+		super(bv.isGlobal(), 
+				!(bv instanceof IProgramVar));
+		mVarOrConst = bv;
+		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
+		mVariables = bv instanceof IProgramVar ? Collections.singleton((IProgramVar) bv) : Collections.emptySet();
+		mTerm = bv.getTerm();
 	}
 	
-	void addParent(EqNode parent) {
-		mParents.add(parent);
+	public String toString() {
+		return mVarOrConst.toString();
 	}
 
-	public abstract boolean isLiteral();
+	@Override
+	public boolean isLiteral() {
+		return mIsLiteral;
+	}
 
-	/**
-	 * Is true iff this EqNode's term only uses global program symbols.
-	 */
-	public boolean isGlobal() {
-		return mIsGlobal;
+	@Override
+	public boolean equals(Object other) {
+		return other == this;
+	}
+
+	public void addDependentNonAtomicBaseNode(EqNonAtomicBaseNode node) {
+		mDependentNonAtomicNodes.add(node);
+	}
+
+	public Set<EqNonAtomicBaseNode> getDependentNonAtomicBaseNodes() {
+		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
 	
 	
-	public boolean isConstant() {
-		return mIsConstant;
+	@Override
+	public boolean isFunction() {
+		return false;
 	}
-
-	public Set<IProgramVar> getVariables() {
-		return mVariables;
-	}
-
-	public Term getTerm() {
-		return mTerm;
+	
+	@Override
+	public IProgramVarOrConst getFunction() {
+		assert false : "check for isFunction() first";
+		return null;
 	}
 }
