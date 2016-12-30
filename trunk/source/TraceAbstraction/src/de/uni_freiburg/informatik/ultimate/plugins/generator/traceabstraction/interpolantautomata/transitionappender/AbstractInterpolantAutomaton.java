@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * Superclass for interpolant automata that are build on-demand. An interpolant automaton is an automaton
@@ -108,21 +109,20 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 */
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
-			final IPredicate falseState, final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			final ILogger logger) {
+			final IPredicate falseState, final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton) {
 		super();
 		mServices = services;
-		mLogger = logger;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mIHoareTripleChecker = hoareTripleChecker;
 		mIaFalseState = falseState;
-		mInputInterpolantAutomaton = interpolantAutomaton;
+		mInputInterpolantAutomaton = inputInterpolantAutomaton;
 		mInSucComp = new InternalSuccessorComputationHelper();
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				interpolantAutomaton.getInternalAlphabet(), interpolantAutomaton.getCallAlphabet(), interpolantAutomaton.getReturnAlphabet(),
-				interpolantAutomaton.getStateFactory());
+				inputInterpolantAutomaton.getInternalAlphabet(), inputInterpolantAutomaton.getCallAlphabet(), inputInterpolantAutomaton.getReturnAlphabet(),
+				inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {

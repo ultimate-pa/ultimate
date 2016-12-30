@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -76,14 +75,13 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
-			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
 			final PredicateUnifier predicateUnifier,
-			final ILogger logger, final boolean conservativeSuccessorCandidateSelection,
-			final boolean secondChance) {
-		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, interpolantAutomaton, logger);
+			final boolean conservativeSuccessorCandidateSelection, final boolean secondChance) {
+		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
-		final Collection<IPredicate> allPredicates = interpolantAutomaton.getStates();
+		final Collection<IPredicate> allPredicates = inputInterpolantAutomaton.getStates();
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
@@ -98,8 +96,8 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 				mNonTrivialPredicates.add(state);
 				// the following two lines are important if not (only)
 				// true/false are initial/final states of the automaton.
-				final boolean isInitial = interpolantAutomaton.isInitial(state);
-				final boolean isFinal = interpolantAutomaton.isFinal(state);
+				final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
+				final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
 				mAlreadyConstrucedAutomaton.addState(isInitial, isFinal, state);
 			}
 		}

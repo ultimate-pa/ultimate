@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -53,10 +52,9 @@ public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpol
 	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final PredicateUnifier predicateUnifier,
-			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			final ILogger logger) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton) {
 		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, predicateUnifier.getFalsePredicate(),
-				interpolantAutomaton, logger);
+				inputInterpolantAutomaton);
 		mPredicateUnifier = predicateUnifier;
 		mIaTrueState = predicateUnifier.getTruePredicate();
 	}

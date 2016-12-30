@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
@@ -220,7 +219,7 @@ public class BuchiCegarLoop {
 	private final InterpolationTechnique mInterpolation;
 
 	private final RefineBuchi mRefineBuchi;
-	private final List<RefineBuchi.RefinementSetting> mBuchiRefinementSettingSequence;
+	private final List<BuchiInterpolantAutomatonConstructionStyle> mBuchiRefinementSettingSequence;
 
 	private final Minimization mAutomataMinimization;
 
@@ -317,30 +316,30 @@ public class BuchiCegarLoop {
 		case TwoStage:
 //			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 //					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, false));
 //			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
 //					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, true, true, false, false));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
 		case Staged:
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(BuchiInterpolantAutomaton.Deterministic,
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
 					true, false, false, false, false));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(BuchiInterpolantAutomaton.Deterministic,
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
 					true, true, false, false, false));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
 					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
 		case LassoAutomaton:
 		case EagerNondeterminism:
 		case ScroogeNondeterminism:
 		case Deterministic:
-			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(mInterpolantAutomaton, mBouncerStem,
+			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(mInterpolantAutomaton, mBouncerStem,
 					mBouncerLoop, mScroogeNondeterminismStem, mScroogeNondeterminismLoop, mCannibalizeLoop));
 			break;
 		default:
@@ -646,11 +645,11 @@ public class BuchiCegarLoop {
 //				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 //				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 //				mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
-		for (final RefinementSetting rs : mBuchiRefinementSettingSequence) {
+		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBuchiRefinementSettingSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
 			try {
-				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,
+				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, constructionStyle,
 						lassoChecker.getBinaryStatePredicateManager(), mCsToolkitWithRankVars.getModifiableGlobalsTable(), mInterpolation, mBenchmarkGenerator,
 						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
@@ -669,7 +668,7 @@ public class BuchiCegarLoop {
 							mRefineBuchi.getInterpolAutomatonUsedInRefinement());
 				}
 				mBenchmarkGenerator.announceSuccessfullRefinementStage(stage);
-				switch (rs.getInterpolantAutomaton()) {
+				switch (constructionStyle.getInterpolantAutomaton()) {
 				case Deterministic:
 				case LassoAutomaton:
 					mMDBenchmark.reportDeterminsticModule(mIteration,
@@ -772,8 +771,8 @@ public class BuchiCegarLoop {
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-				mCsToolkitWithRankVars, htc, mInterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger,
-				false, false);
+				mCsToolkitWithRankVars, htc, mInterpolAutomaton, traceChecker.getPredicateUnifier(), false,
+				false);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<>(
 				determinized, true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;

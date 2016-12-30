@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -137,68 +136,6 @@ public class RefineBuchi {
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
-	class RefinementSetting {
-		private final BuchiInterpolantAutomaton mInterpolantAutomaton;
-		private final boolean mBouncerStem;
-		private final boolean mBouncerLoop;
-		private final boolean mScroogeNondeterminismStem;
-		private final boolean mScroogeNondeterminismLoop;
-		private final boolean mCannibalizeLoop;
-
-		public RefinementSetting(final BuchiInterpolantAutomaton interpolantAutomaton, final boolean bouncerStem, final boolean bouncerLoop,
-				final boolean scroogeNondeterminismStem, final boolean scroogeNondeterminismLoop, final boolean cannibalizeLoop) {
-			super();
-			mInterpolantAutomaton = interpolantAutomaton;
-			mBouncerStem = bouncerStem;
-			mBouncerLoop = bouncerLoop;
-			mScroogeNondeterminismStem = scroogeNondeterminismStem;
-			mScroogeNondeterminismLoop = scroogeNondeterminismLoop;
-			mCannibalizeLoop = cannibalizeLoop;
-		}
-
-		public BuchiInterpolantAutomaton getInterpolantAutomaton() {
-			return mInterpolantAutomaton;
-		}
-
-		public boolean isBouncerStem() {
-			return mBouncerStem;
-		}
-
-		public boolean isBouncerLoop() {
-			return mBouncerLoop;
-		}
-
-		public boolean isScroogeNondeterminismStem() {
-			return mScroogeNondeterminismStem;
-		}
-
-		public boolean isScroogeNondeterminismLoop() {
-			return mScroogeNondeterminismLoop;
-		}
-
-		public boolean cannibalizeLoop() {
-			return mCannibalizeLoop;
-		}
-		
-		public boolean isAlwaysSemiDeterministic() {
-			return !isScroogeNondeterminismLoop();
-		}
-		
-		@Override
-		public String toString() {
-			return "RefinementSetting [mInterpolantAutomaton="
-					+ mInterpolantAutomaton + ", mBouncerStem="
-					+ mBouncerStem + ", mBouncerLoop=" + mBouncerLoop
-					+ ", mScroogeNondeterminismStem="
-					+ mScroogeNondeterminismStem
-					+ ", mScroogeNondeterminismLoop="
-					+ mScroogeNondeterminismLoop + ", mCannibalizeLoop="
-					+ mCannibalizeLoop + "]";
-		}
-
-
-	}
-
 	public INestedWordAutomatonSimple<CodeBlock, IPredicate> getInterpolAutomatonUsedInRefinement() {
 		return mInterpolAutomatonUsedInRefinement;
 	}
@@ -209,7 +146,7 @@ public class RefineBuchi {
 
 	INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
-			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final RefinementSetting setting,
+			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BinaryStatePredicateManager bspm, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction)
@@ -273,64 +210,11 @@ public class RefineBuchi {
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true, bhtc)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton, mCounterexample.getNestedLassoWord()))
 				.getResult();
-		switch (setting.getInterpolantAutomaton()) {
-		case LassoAutomaton:
-			mInterpolAutomatonUsedInRefinement = mInterpolAutomaton;
-			break;
-		case EagerNondeterminism:
-			if (!mInterpolAutomaton.getStates().contains(pu.getTruePredicate())) {
-				mInterpolAutomaton.addState(false, false, pu.getTruePredicate());
-			}
-			if (!mInterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
-				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
-			}
-			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mCsToolkit,
-					bhtc, mInterpolAutomaton, pu, mLogger, false, true);
-			break;
-		case ScroogeNondeterminism:
-		case Deterministic:
-			Set<IPredicate> stemInterpolantsForRefinement;
-			if (BuchiCegarLoop.emptyStem(mCounterexample)) {
-				stemInterpolantsForRefinement = Collections.emptySet();
-			} else {
-				if (setting.cannibalizeLoop()) {
-					stemInterpolantsForRefinement = pu.cannibalizeAll(false, stemInterpolants);
-				} else {
-					stemInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(stemInterpolants));
-				}
-			}
-			Set<IPredicate> loopInterpolantsForRefinement;
-			if (setting.cannibalizeLoop()) {
-				try {
-					loopInterpolantsForRefinement = pu.cannibalizeAll(false, loopInterpolants);
-					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
-
-					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
-							mCsToolkit, interpolation, 
-							mServices,
-							mSimplificationTechnique, mXnfConversionTechnique);
-					loopInterpolantsForRefinement = lc.getResult();
-				} catch (final ToolchainCanceledException tce) {
-					final String taskDescription = "loop cannibalization";
-					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
-					throw tce;
-				}
-			} else {
-				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
-				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
-			}
-
-			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mCsToolkit, mPredicateFactory, bspm, bhtc,
-					BuchiCegarLoop.emptyStem(mCounterexample), stemInterpolantsForRefinement,
-					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(mCounterexample) ? null
-							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), setting.isScroogeNondeterminismStem(),
-					setting.isScroogeNondeterminismLoop(), setting.isBouncerStem(),
-					setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
-					mServices, mSimplificationTechnique, mXnfConversionTechnique, mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), mInterpolAutomaton);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown automaton");
-		}
+		
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction = buildBuchiInterpolantAutomatonForOnDemandConstruction(
+				mCounterexample, setting, bspm, interpolation, stem, loop, pu, stemInterpolants, loopInterpolants,
+				mInterpolAutomaton, bhtc);
+		mInterpolAutomatonUsedInRefinement = buchiInterpolantAutomatonForOnDemandConstruction;
 		final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
@@ -461,9 +345,78 @@ public class RefineBuchi {
 		}
 		return newAbstraction;
 	}
+
+	private INestedWordAutomatonSimple<CodeBlock, IPredicate> buildBuchiInterpolantAutomatonForOnDemandConstruction(
+			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample,
+			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle, final BinaryStatePredicateManager bspm,
+			final InterpolationTechnique interpolation, final NestedWord<CodeBlock> stem,
+			final NestedWord<CodeBlock> loop, final PredicateUnifier pu, final IPredicate[] stemInterpolants,
+			final IPredicate[] loopInterpolants, final NestedWordAutomaton<CodeBlock, IPredicate> mInterpolAutomaton,
+			final BuchiHoareTripleChecker bhtc) {
+		INestedWordAutomatonSimple<CodeBlock, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction;
+		switch (biaConstructionStyle.getInterpolantAutomaton()) {
+		case LassoAutomaton:
+			buchiInterpolantAutomatonForOnDemandConstruction = mInterpolAutomaton;
+			break;
+		case EagerNondeterminism:
+			if (!mInterpolAutomaton.getStates().contains(pu.getTruePredicate())) {
+				mInterpolAutomaton.addState(false, false, pu.getTruePredicate());
+			}
+			if (!mInterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
+				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
+			}
+			buchiInterpolantAutomatonForOnDemandConstruction = new NondeterministicInterpolantAutomaton(mServices, mCsToolkit,
+					bhtc, mInterpolAutomaton, pu, false, true);
+			break;
+		case ScroogeNondeterminism:
+		case Deterministic:
+			Set<IPredicate> stemInterpolantsForRefinement;
+			if (BuchiCegarLoop.emptyStem(mCounterexample)) {
+				stemInterpolantsForRefinement = Collections.emptySet();
+			} else {
+				if (biaConstructionStyle.cannibalizeLoop()) {
+					stemInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(stemInterpolants));
+				} else {
+					stemInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(stemInterpolants));
+				}
+			}
+			Set<IPredicate> loopInterpolantsForRefinement;
+			if (biaConstructionStyle.cannibalizeLoop()) {
+				try {
+					loopInterpolantsForRefinement = pu.cannibalizeAll(false, Arrays.asList(loopInterpolants));
+					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
+
+					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
+							mCsToolkit, interpolation, 
+							mServices,
+							mSimplificationTechnique, mXnfConversionTechnique);
+					loopInterpolantsForRefinement = lc.getResult();
+				} catch (final ToolchainCanceledException tce) {
+					final String taskDescription = "loop cannibalization";
+					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+					throw tce;
+				}
+			} else {
+				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
+				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
+			}
+
+			buchiInterpolantAutomatonForOnDemandConstruction = new BuchiInterpolantAutomatonBouncer(mCsToolkit, mPredicateFactory, bspm, bhtc,
+					BuchiCegarLoop.emptyStem(mCounterexample), stemInterpolantsForRefinement,
+					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(mCounterexample) ? null
+							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), biaConstructionStyle.isScroogeNondeterminismStem(),
+					biaConstructionStyle.isScroogeNondeterminismLoop(), biaConstructionStyle.isBouncerStem(),
+					biaConstructionStyle.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
+					mServices, mInterpolAutomaton);
+			break;
+		default:
+			throw new UnsupportedOperationException("unknown automaton");
+		}
+		return buchiInterpolantAutomatonForOnDemandConstruction;
+	}
 	
 	private INestedWordAutomaton<CodeBlock, IPredicate> nsbcDifference(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		final BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
@@ -476,7 +429,7 @@ public class RefineBuchi {
 	}
 
 	private INestedWordAutomaton<CodeBlock, IPredicate> rankBasedOptimization(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final RefinementSetting setting,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer, final FkvOptimization optimization)
 					throws AutomataLibraryException {
@@ -574,7 +527,7 @@ public class RefineBuchi {
 	}
 
 	private void finishComputation(final INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton,
-			final RefinementSetting setting) {
+			final BuchiInterpolantAutomatonConstructionStyle setting) {
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
 			// do nothing

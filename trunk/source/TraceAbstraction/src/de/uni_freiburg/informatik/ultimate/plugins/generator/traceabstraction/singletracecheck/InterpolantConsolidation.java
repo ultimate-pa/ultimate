@@ -155,7 +155,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized =
 				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, mHoareTripleChecker, interpolantAutomaton,
-						mPredicateUnifier, mLogger, false, false // PREDICATE_ABSTRACTION_CANNIBALIZE
+						mPredicateUnifier, false, false // PREDICATE_ABSTRACTION_CANNIBALIZE
 																						// = false (default)
 				);
 

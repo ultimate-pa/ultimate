@@ -181,7 +181,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		
 		final DeterministicInterpolantAutomaton determinized =
 				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, mInterpolAutomaton,
-						mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger, false, false);
+						mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =

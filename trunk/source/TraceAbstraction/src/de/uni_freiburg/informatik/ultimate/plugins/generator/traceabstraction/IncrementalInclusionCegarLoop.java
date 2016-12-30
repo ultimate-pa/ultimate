@@ -239,8 +239,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 				final DeterministicInterpolantAutomaton determinized =
 						new DeterministicInterpolantAutomaton(mServices, mCsToolkit, edgeChecker, mInterpolAutomaton,
-								mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger,
-								conservativeSuccessorCandidateSelection, cannibalize);
+								mTraceCheckAndRefinementEngine.getPredicateUnifier(), conservativeSuccessorCandidateSelection,
+								cannibalize);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
 				mInterpolantAutomata.add(determinized);
@@ -262,8 +262,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 				final NondeterministicInterpolantAutomaton nondet =
 						new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, edgeChecker, mInterpolAutomaton,
-								mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger,
-								conservativeSuccessorCandidateSelection, secondChance);
+								mTraceCheckAndRefinementEngine.getPredicateUnifier(), conservativeSuccessorCandidateSelection,
+								secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
 				mInterpolantAutomata.add(nondet);

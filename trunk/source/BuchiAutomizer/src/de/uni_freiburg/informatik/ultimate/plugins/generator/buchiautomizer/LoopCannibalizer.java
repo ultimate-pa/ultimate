@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -126,7 +127,7 @@ public class LoopCannibalizer {
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
 						loopInterpolants = traceChecker.getInterpolants();
-						final Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, loopInterpolants);
+						final Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, Arrays.asList(loopInterpolants));
 						mResultPredicates.addAll(cannibalized);
 					} else {
 						mLogger.info("termination argument not suffcient for all loop shiftings");

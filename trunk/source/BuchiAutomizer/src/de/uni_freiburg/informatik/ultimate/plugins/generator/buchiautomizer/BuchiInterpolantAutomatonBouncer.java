@@ -37,11 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -105,27 +102,19 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private final PredicateUnifier mLoopPU;
 	private final PredicateUnifier mAcceptingPU;
 
-	private final IUltimateServiceProvider mServices;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	private final PredicateFactory mPredicateFactory;
 
-	public BuchiInterpolantAutomatonBouncer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final BinaryStatePredicateManager bspm,
-			final BuchiHoareTripleChecker bhtc, final boolean emtpyStem, final Set<IPredicate> stemInterpolants,
-			final Set<IPredicate> loopInterpolants, final CodeBlock hondaEntererStem, final CodeBlock hondaEntererLoop,
-			final boolean scroogeNondeterminismStem, final boolean scroogeNondeterminismLoop,
-			final boolean hondaBouncerStem, final boolean hondaBouncerLoop, final PredicateFactoryForInterpolantAutomata predicateFactoryFia,
-			final PredicateUnifier stemPU, final PredicateUnifier loopPU, final IPredicate falsePredicate,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable, 
-			final NestedWordAutomaton<CodeBlock, IPredicate> alphabetProvider) {
-		super(services, csToolkit, bhtc, false, falsePredicate, alphabetProvider, services.getLoggingService().getLogger(
-				Activator.PLUGIN_ID));
-		mServices = services;
+	public BuchiInterpolantAutomatonBouncer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final BinaryStatePredicateManager bspm, final BuchiHoareTripleChecker bhtc, final boolean emtpyStem,
+			final Set<IPredicate> stemInterpolants, final Set<IPredicate> loopInterpolants,
+			final CodeBlock hondaEntererStem, final CodeBlock hondaEntererLoop, final boolean scroogeNondeterminismStem,
+			final boolean scroogeNondeterminismLoop, final boolean hondaBouncerStem, final boolean hondaBouncerLoop,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryFia, final PredicateUnifier stemPU,
+			final PredicateUnifier loopPU, final IPredicate falsePredicate, final IUltimateServiceProvider services,
+			final NestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton) {
+		super(services, csToolkit, bhtc, false, falsePredicate, inputInterpolantAutomaton);
 		mPredicateFactory = predicateFactory;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
 		mStemPU = stemPU;
 		mLoopPU = loopPU;

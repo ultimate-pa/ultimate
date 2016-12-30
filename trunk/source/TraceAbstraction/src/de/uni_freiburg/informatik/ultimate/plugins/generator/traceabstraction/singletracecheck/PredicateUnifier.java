@@ -761,7 +761,7 @@ public class PredicateUnifier {
 		return result.toArray(new Term[result.size()]);
 	}
 
-	public Set<IPredicate> cannibalizeAll(final boolean splitNumericEqualities, final IPredicate... predicates) {
+	public Set<IPredicate> cannibalizeAll(final boolean splitNumericEqualities, final Collection<IPredicate> predicates) {
 		final Set<IPredicate> result = new HashSet<>();
 		for (final IPredicate pred : predicates) {
 			result.addAll(cannibalize(splitNumericEqualities, pred.getFormula()));

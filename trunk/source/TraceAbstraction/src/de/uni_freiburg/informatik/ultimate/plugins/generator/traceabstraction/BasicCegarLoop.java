@@ -510,7 +510,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 			final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
 					mCsToolkit, htc, inputInterpolantAutomaton, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
-					mLogger, conservativeSuccessorCandidateSelection, cannibalize);
+					conservativeSuccessorCandidateSelection, cannibalize);
 			result = determinized;
 		}
 			break;
@@ -522,7 +522,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 			final NondeterministicInterpolantAutomaton nondet =
 					new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-							predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
+							predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 			result = nondet;
 		}
 			break;
