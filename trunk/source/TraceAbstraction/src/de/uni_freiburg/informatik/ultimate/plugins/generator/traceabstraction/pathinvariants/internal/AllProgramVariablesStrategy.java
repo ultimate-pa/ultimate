@@ -17,41 +17,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  */
 public class AllProgramVariablesStrategy extends LocationIndependentLinearInequalityInvariantPatternStrategy {
 	
-	private final Collection<Term> mPatternCoefficients;
+//	private final Collection<Term> mPatternCoefficients;
 
 	public AllProgramVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables) {
 		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, patternVariables);
-		mPatternCoefficients = new ArrayList<>();
+//		mPatternCoefficients = new ArrayList<>();
 	}
 
-	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
-			final int[] dimensions = getDimensions(location, round);
-			// Build invariant pattern
-			final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
-			for (int i = 0; i < dimensions[0]; i++) {
-				final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
-						dimensions[1]);
-				for (int j = 0; j < dimensions[1]; j++) {
-					final boolean[] invariantPatternCopies;
-//					if (mAlwaysStrictAndNonStrictCopies ) {
-//						invariantPatternCopies = new boolean[] { false, true }; 
-//					} else {
-						invariantPatternCopies = new boolean[] { false };
-//					}
-					for (final boolean strict : invariantPatternCopies) {
-						final LinearPatternBase inequality = new LinearPatternBase (
-								solver, mAllProgramVariables, prefix + "_" + newPrefix(), strict);
-						Collection<Term> params = inequality.getCoefficients();
-						mPatternCoefficients.addAll(params);
-						conjunction.add(inequality);
-					}
-				}
-				disjunction.add(conjunction);
-			}
-			return disjunction;
-	}
+
 
 	@Override
 	public IPredicate applyConfiguration(Collection<Collection<AbstractLinearInvariantPattern>> pattern) {

@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearPatternBase;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LiveVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -101,7 +102,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private static final boolean USE_LIVE_VARIABLES = false;
+	private static final boolean USE_LIVE_VARIABLES = !false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -137,8 +138,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms,
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy) {
-//		 = getStrategy(useVarsFromUnsatCore, useLiveVars);
-				
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, pathprogramLocs2LiveVars, useLiveVars, solverSettings, simplicationTechnique,
@@ -147,10 +146,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> getStrategy(
-			boolean useVarsFromUnsatCore, boolean useLiveVars, Set<IProgramVar> allProgramVariables) {
+			boolean useVarsFromUnsatCore, boolean useLiveVars, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		// TODO Auto-generated method stub
 		
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables);
+		if (useLiveVars) {
+			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+		} else {
+			return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables);
+		}
 	}
 
 
@@ -403,13 +406,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		if (USE_LIVE_VARIABLES) {
 			pathprogramLocs2LiveVars  = computeLiveVariablesForPathProgram(pathProgram);
+			// At the initial location no variable is live
+			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
 		}
 		Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP = null;
 		if (USE_WEAKEST_PRECONDITION) {
 			pathprogramLocs2WP = computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript());
 		}
 
-		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy = getStrategy(useVarsFromUnsatCore, USE_LIVE_VARIABLES, allProgramVars);
+		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy = getStrategy(useVarsFromUnsatCore, USE_LIVE_VARIABLES, allProgramVars,
+				pathprogramLocs2LiveVars);
 		IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage, mPredicateUnifier, icfg.getCfgSmtToolkit(),
 				useNonlinearConstraints, useVarsFromUnsatCore, USE_LIVE_VARIABLES, pathprogramLocs2LiveVars, solverSettings, simplificationTechnique,
 				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
