@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -84,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -206,19 +204,14 @@ public class BuchiCegarLoop {
 	private final boolean mDifference;
 	private final boolean mUseDoubleDeckers;
 	private final BuchiComplementationConstruction mComplementationConstruction;
-	private final BuchiInterpolantAutomaton mInterpolantAutomaton;
-	private final boolean mBouncerStem;
-	private final boolean mBouncerLoop;
-	private final boolean mScroogeNondeterminismStem;
-	private final boolean mScroogeNondeterminismLoop;
-	private final boolean mCannibalizeLoop;
+
 	private final boolean mConstructTermcompProof;
 	private final TermcompProofBenchmark mTermcompProofBenchmark;
 
 	private final InterpolationTechnique mInterpolation;
 
 	private final RefineBuchi mRefineBuchi;
-	private final List<BuchiInterpolantAutomatonConstructionStyle> mBuchiRefinementSettingSequence;
+	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
 
 	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
 	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
@@ -278,29 +271,16 @@ public class BuchiCegarLoop {
 
 		mUseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
 		mDifference = baPref.getBoolean(PreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
-		mInterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BUCHI_INTERPOLANT_AUTOMATON,
-				BuchiInterpolantAutomaton.class);
+
 		mComplementationConstruction = baPref.getEnum(PreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 				BuchiComplementationConstruction.class);
-		mBouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BOUNCER_STEM);
-		mBouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BOUNCER_LOOP);
-		mScroogeNondeterminismStem = baPref.getBoolean(PreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_STEM);
-		mScroogeNondeterminismLoop = baPref.getBoolean(PreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_LOOP);
-		if ((mScroogeNondeterminismStem || mScroogeNondeterminismLoop)
-				&& mInterpolantAutomaton != BuchiInterpolantAutomaton.ScroogeNondeterminism) {
-			throw new IllegalArgumentException("illegal combination of settings");
-		}
-		if ((!mScroogeNondeterminismStem && !mScroogeNondeterminismLoop)
-				&& mInterpolantAutomaton == BuchiInterpolantAutomaton.ScroogeNondeterminism) {
-			throw new IllegalArgumentException("illegal combination of settings");
-		}
+
 		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
 				PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
 				Minimization.class);
 		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
 				PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
 				Minimization.class);
-		mCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CANNIBALIZE_LOOP);
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
 
@@ -312,43 +292,14 @@ public class BuchiCegarLoop {
 			mTermcompProofBenchmark = null;
 		}
 
-		mRefineBuchi = new RefineBuchi(mRootAnnot, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(), mDifference, mDefaultStateFactory,
+		mRefineBuchi = new RefineBuchi(mRootAnnot, mCsToolkitWithRankVars, predicateFactory, 
+				mPref.dumpAutomata(), mDifference, mDefaultStateFactory,
 				mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(), mPref.getAutomataFormat(),
 				mInterpolation, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
-		mBuchiRefinementSettingSequence = new ArrayList<>();
-		switch (mInterpolantAutomaton) {
-		case TwoStage:
-//			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
-//					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
-					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, false));
-//			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
-//					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, true, true, false, false));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
-					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
-			break;
-		case Staged:
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
-					true, false, false, false, false));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.Deterministic,
-					true, true, false, false, false));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
-					BuchiInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
-					BuchiInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(
-					BuchiInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
-			break;
-		case LassoAutomaton:
-		case EagerNondeterminism:
-		case ScroogeNondeterminism:
-		case Deterministic:
-			mBuchiRefinementSettingSequence.add(new BuchiInterpolantAutomatonConstructionStyle(mInterpolantAutomaton, mBouncerStem,
-					mBouncerLoop, mScroogeNondeterminismStem, mScroogeNondeterminismLoop, mCannibalizeLoop));
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown automaton");
-		}
+		final BuchiInterpolantAutomatonConstructionStrategy biaConstructionStrategy = baPref.getEnum(
+				PreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
+				BuchiInterpolantAutomatonConstructionStrategy.class);
+		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
 	}
 
 	NestedLassoRun<CodeBlock, IPredicate> getCounterexample() {
@@ -647,7 +598,7 @@ public class BuchiCegarLoop {
 //				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 //				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
 //				mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
-		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBuchiRefinementSettingSequence) {
+		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
 			try {

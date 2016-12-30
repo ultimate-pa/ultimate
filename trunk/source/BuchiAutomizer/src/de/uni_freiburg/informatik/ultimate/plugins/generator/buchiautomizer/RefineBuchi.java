@@ -211,10 +211,9 @@ public class RefineBuchi {
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton, mCounterexample.getNestedLassoWord()))
 				.getResult();
 		
-		final INestedWordAutomatonSimple<CodeBlock, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction = buildBuchiInterpolantAutomatonForOnDemandConstruction(
+		mInterpolAutomatonUsedInRefinement = buildBuchiInterpolantAutomatonForOnDemandConstruction(
 				mCounterexample, setting, bspm, interpolation, stem, loop, pu, stemInterpolants, loopInterpolants,
 				mInterpolAutomaton, bhtc);
-		mInterpolAutomatonUsedInRefinement = buchiInterpolantAutomatonForOnDemandConstruction;
 		final IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;

@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiInterpolantAutomatonConstructionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -49,6 +50,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
 	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
+	public static final String LABEL_BIA_CONSTRUCTION_STRATEGY = "Buchi interpolant automaton construction strategy";
+	public static final BuchiInterpolantAutomatonConstructionStrategy DEF_BIA_CONSTRUCTION_STRATEGY = 
+			BuchiInterpolantAutomatonConstructionStrategy.RHODODENDRON;
 	public static final String LABEL_BUCHI_INTERPOLANT_AUTOMATON = "Buchi interpolant automaton";
 	public static final String LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION = "Buchi complementation construction";
 	public static final String LABEL_BOUNCER_STEM = "Bouncer stem";
@@ -114,6 +118,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DETERMINIZATION_ON_DEMAND, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 						BuchiComplementationConstruction.Ncsb, PreferenceType.Combo, BuchiComplementationConstruction.values()),
+				new UltimatePreferenceItem<>(LABEL_BIA_CONSTRUCTION_STRATEGY, DEF_BIA_CONSTRUCTION_STRATEGY,
+						PreferenceType.Combo, BuchiInterpolantAutomatonConstructionStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.Staged,
 						PreferenceType.Combo, BuchiInterpolantAutomaton.values()),
 				new UltimatePreferenceItem<>(LABEL_BOUNCER_STEM, true, PreferenceType.Boolean),
