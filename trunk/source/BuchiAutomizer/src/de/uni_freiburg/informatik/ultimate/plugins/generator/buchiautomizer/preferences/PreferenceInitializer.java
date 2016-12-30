@@ -75,8 +75,12 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DEF_DUMP_SCRIPT_PATH = "";
 	public static final String LABEL_CONSTRUCT_TERMCOMP_PROOF = "Construct termination proof for TermComp";
 	public static final String LABEL_SIMPLIFY = "Try to simplify termination arguments";
-	public static final String LABEL_AUTOMATA_MINIMIZATION = "Automata minimization";
-	private static final Minimization DEF_AUTOMATA_MINIMIZATION = Minimization.MINIMIZE_SEVPA;
+	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT = 
+			"Automata minimization after feasibility-based refinement";
+	public static final String LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT = 
+			"Automata minimization after rank-based refinement";
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT = Minimization.MINIMIZE_SEVPA;
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT = Minimization.MINIMIZE_SEVPA;
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
@@ -139,7 +143,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_CONSTRUCT_TERMCOMP_PROOF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_TRY_TWOFOLD_REFINEMENT, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION, DEF_AUTOMATA_MINIMIZATION,
+				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT, 
+						DEF_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
+						PreferenceType.Combo, Minimization.values()),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT, 
+						DEF_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
 						PreferenceType.Combo, Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_USE_OLD_MAP_ELIMINATION, DEF_USE_OLD_MAP_ELIMINATION,
 						"Use either Matthias' (old) or Frank's (new) implementation of a map elimination algorithm",

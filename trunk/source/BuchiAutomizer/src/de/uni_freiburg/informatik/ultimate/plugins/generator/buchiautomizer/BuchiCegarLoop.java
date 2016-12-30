@@ -198,7 +198,6 @@ public class BuchiCegarLoop {
 
 	private final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 
-	private static final boolean s_ReduceAbstractionSize = true;
 	/**
 	 * If set to false we crash if the call alphabet is not empty.
 	 */
@@ -221,7 +220,8 @@ public class BuchiCegarLoop {
 	private final RefineBuchi mRefineBuchi;
 	private final List<BuchiInterpolantAutomatonConstructionStyle> mBuchiRefinementSettingSequence;
 
-	private final Minimization mAutomataMinimization;
+	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
+	private final Minimization mAutomataMinimizationAfterRankBasedRefinement;
 
 	private NonTerminationArgument mNonterminationArgument;
 
@@ -294,7 +294,11 @@ public class BuchiCegarLoop {
 				&& mInterpolantAutomaton == BuchiInterpolantAutomaton.ScroogeNondeterminism) {
 			throw new IllegalArgumentException("illegal combination of settings");
 		}
-		mAutomataMinimization = baPref.getEnum(PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION,
+		mAutomataMinimizationAfterFeasbilityBasedRefinement = baPref.getEnum(
+				PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
+				Minimization.class);
+		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
+				PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT,
 				Minimization.class);
 		mCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CANNIBALIZE_LOOP);
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
@@ -479,17 +483,17 @@ public class BuchiCegarLoop {
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 
-					if (s_ReduceAbstractionSize) {
-						reduceAbstractionSize();
-					}
+					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 
 					refineFinite(lassoChecker);
 					mInfeasible++;
+					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 				}
 					break;
 				case REFINE_FINITE:
 					refineFinite(lassoChecker);
 					mInfeasible++;
+					reduceAbstractionSize(mAutomataMinimizationAfterFeasbilityBasedRefinement);
 					break;
 
 				case REFINE_BUCHI:
@@ -509,6 +513,7 @@ public class BuchiCegarLoop {
 					final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
+					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
 					break;
 				case REPORT_UNKNOWN:
 					mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
@@ -539,10 +544,6 @@ public class BuchiCegarLoop {
 				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 				// s_Logger.info("Interpolant automaton has " +
 				// mRefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
-
-				if (s_ReduceAbstractionSize) {
-					reduceAbstractionSize();
-				}
 
 				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
 					mArtifactAutomaton = mAbstraction;
@@ -584,11 +585,12 @@ public class BuchiCegarLoop {
 	}
 
 	/**
+	 * @param automataMinimization 
 	 * @throws AutomataOperationCanceledException
 	 * @throws AutomataLibraryException
 	 * @throws AssertionError
 	 */
-	private void reduceAbstractionSize() throws AutomataOperationCanceledException, AssertionError {
+	private void reduceAbstractionSize(final Minimization automataMinimization) throws AutomataOperationCanceledException, AssertionError {
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
 			mAbstraction = (new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices),
@@ -617,7 +619,7 @@ public class BuchiCegarLoop {
 				AutomataMinimization<BoogieIcfgLocation, ISLPredicate> am;
 				try {
 					am = new AutomataMinimization<>(mServices,
-							mAbstraction, mAutomataMinimization, false,
+							mAbstraction, automataMinimization, false,
 							mIteration, mStateFactoryForRefinement, -1, null,
 							mInterpolAutomaton, -1, mPredicateFactoryResultChecking, locProvider, false);
 				} catch (final AutomataMinimizationTimeout e) {
@@ -631,7 +633,7 @@ public class BuchiCegarLoop {
 			}
 		} catch (final AutomataOperationCanceledException e) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-					"minimizing (" + mAutomataMinimization + ") automaton with " + mAbstraction.size() + " states");
+					"minimizing (" + automataMinimization + ") automaton with " + mAbstraction.size() + " states");
 			throw new ToolchainCanceledException(e, rti);
 		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
