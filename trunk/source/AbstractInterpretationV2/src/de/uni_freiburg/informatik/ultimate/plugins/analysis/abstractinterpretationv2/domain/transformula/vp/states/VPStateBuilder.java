@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +38,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqFunctionNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
@@ -98,7 +104,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	VPState<ACTION> build() {
+	public VPState<ACTION> build() {
 		assert mEqNodeToEqGraphNodeMap != null;
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 		return new VPState<>(mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
@@ -139,7 +145,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode id) {
+	public EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode id) {
 		assert id != null;
 		final EqGraphNode<EqNode, IProgramVarOrConst> result = mEqNodeToEqGraphNodeMap.get(id);
 		assert result != null;

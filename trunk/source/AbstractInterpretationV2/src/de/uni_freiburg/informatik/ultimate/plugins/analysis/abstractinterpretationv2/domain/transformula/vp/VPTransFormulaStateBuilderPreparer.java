@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -165,7 +166,7 @@ public class VPTransFormulaStateBuilderPreparer {
 	}
 	
 	
-	VPTfStateBuilder getVPTfStateBuilder(TransFormula tf) {
+	public VPTfStateBuilder getVPTfStateBuilder(TransFormula tf) {
 		VPTfStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
 		assert result != null : "we should have a VPTransitionStateBuidler for every Transformula in the program";
 		assert result.isTopConsistent();

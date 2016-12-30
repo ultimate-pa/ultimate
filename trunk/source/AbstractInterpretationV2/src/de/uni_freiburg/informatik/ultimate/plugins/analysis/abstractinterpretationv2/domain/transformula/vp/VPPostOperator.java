@@ -56,6 +56,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VpTfStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -165,58 +170,9 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);
 				return orList;
 			} else if (applicationName == "=") {
-				/*
-				 * case "ArrayEquality"
-				 */
-				{
-					final List<ArrayEquality> aeqs =
-							new ArrayEqualityExtractor(new Term[] { appTerm }).getArrayEqualities();
-					if (!aeqs.isEmpty()) {
-						assert aeqs.size() == 1 : "?";
-						if (!mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getLhs(), tf.getInVars(),
-								tf.getOutVars())
-								|| !mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getRhs(), tf.getInVars(),
-										tf.getOutVars())) {
-							return Collections.singleton(tfPreState);
-						}
-
-						// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-						final Set<VPTfState> result =
-								handleArrayEqualityTransition(tfPreState, tf, aeqs.get(0), negated);
-						assert !result.isEmpty();
-						// assert VPDomainHelpers.allStatesHaveSameVariables(result);
-						return result;
-					}
-				}
-
-				/*
-				 * case "ArrayUpdate"
-				 */
-				{
-					final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
-					if (!aus.isEmpty()) {
-						assert aus.size() == 1 : "?";
-						if (!mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getNewArray(), tf.getInVars(),
-								tf.getOutVars())
-								|| !mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tf.getInVars(),
-										tf.getOutVars())) {
-							return Collections.singleton(tfPreState);
-						}
-
-						// we have an array update
-						final Set<VPTfState> result = handleArrayUpdateTransition(tfPreState, tf, aus.get(0), negated);
-						assert !result.isEmpty();
-						// assert VPDomainHelpers.allStatesHaveSameVariables(result);
-						return result;
-					}
-				}
-
-				/*
-				 * case "two terms we track are equated"
-				 */
-				final Set<VPTfState> resultStates = handleBasicEquality(tfPreState, tf, appTerm, negated);
-				// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
-				return resultStates;
+				return handleEqualitySubterm(tfPreState, tf, negated, 
+						appTerm.getParameters()[0], 
+						appTerm.getParameters()[1]);
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
 				final Set<VPTfState> result = handleTransition(tfPreState, appTerm.getParameters()[0], tf, !negated);
@@ -268,6 +224,85 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		assert false : "missed a case?";
 		return Collections.singleton(tfPreState);
+	}
+
+	/**
+	 * 
+	 * @param tfPreState
+	 * @param tf
+	 * @param negated
+	 * @param appTerm the subterm of the current transformula that this method should apply to the preState
+	 * @return
+	 */
+	private Set<VPTfState> handleEqualitySubterm(final VPTfState tfPreState, final TransFormula tf,
+			final boolean negated, final Term lhs, final Term rhs) {
+		if (lhs.getSort().isArraySort()) {
+			// two arrays are equated
+			IArrayWrapper lhsWrapper = null; // TODO
+			IArrayWrapper rhsWrapper = null;
+			
+			
+		} else {
+			// two "normal" terms are equated
+			
+			IElementWrapper lhsWrapper = null; // TODO
+			IElementWrapper rhsWrapper = null;
+		}
+
+		
+		return null; //TODO
+//		/*
+//		 * case "ArrayEquality"
+//		 */
+//		{
+//			final List<ArrayEquality> aeqs =
+//					new ArrayEqualityExtractor(new Term[] { appTerm }).getArrayEqualities();
+//			if (!aeqs.isEmpty()) {
+//				assert aeqs.size() == 1 : "?";
+//				if (!mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getLhs(), tf.getInVars(),
+//						tf.getOutVars())
+//						|| !mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getRhs(), tf.getInVars(),
+//								tf.getOutVars())) {
+//					return Collections.singleton(tfPreState);
+//				}
+//
+//				// we have an array equality (i.e. something like (= a b) where a,b are arrays)
+//				final Set<VPTfState> result =
+//						handleArrayEqualityTransition(tfPreState, tf, aeqs.get(0), negated);
+//				assert !result.isEmpty();
+//				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
+//				return result;
+//			}
+//		}
+//
+//		/*
+//		 * case "ArrayUpdate"
+//		 */
+//		{
+//			final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
+//			if (!aus.isEmpty()) {
+//				assert aus.size() == 1 : "?";
+//				if (!mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getNewArray(), tf.getInVars(),
+//						tf.getOutVars())
+//						|| !mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tf.getInVars(),
+//								tf.getOutVars())) {
+//					return Collections.singleton(tfPreState);
+//				}
+//
+//				// we have an array update
+//				final Set<VPTfState> result = handleArrayUpdateTransition(tfPreState, tf, aus.get(0), negated);
+//				assert !result.isEmpty();
+//				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
+//				return result;
+//			}
+//		}
+//
+//		/*
+//		 * case "two terms we track are equated"
+//		 */
+//		final Set<VPTfState> resultStates = handleBasicEquality(tfPreState, tf, appTerm, negated);
+//		// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
+//		return resultStates;
 	}
 
 	private Set<VPTfState> handleBasicEquality(final VPTfState tfPreState, final TransFormula tf,

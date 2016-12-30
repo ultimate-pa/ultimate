@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,6 +33,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 
 public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	
@@ -119,7 +123,7 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 			return true;
 		}
 		for (VPDomainSymmetricPair<NODEID> pair : mDisEqualitySet) {
-			if (!pair.mFst.isLiteral() || !pair.mSnd.isLiteral()) {
+			if (!pair.getFirst().isLiteral() || !pair.getSecond().isLiteral()) {
 				return false;
 			}
 		}

@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -173,12 +174,16 @@ public class VPDomainPreanalysis {
 		 * handle selects in the formula
 		 */
 		final List<MultiDimensionalSelect> mdSelectsAll =
-				MultiDimensionalSelect.extractSelectShallow(formulaWithNormalizedVariables, false);
+				MultiDimensionalSelect.extractSelectDeep(formulaWithNormalizedVariables, false);
 		final List<MultiDimensionalSelect> mdSelectsFiltered =
 				mSettings.trackAllArrays() ?
 						mdSelectsAll :
 							mdSelectsAll.stream()
-							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(mds.getArray())))
+							.filter(mds -> isArrayTracked(
+									getOrConstructBoogieVarOrConst(
+											mds.getArray() instanceof ApplicationTerm ?
+													VPDomainHelpers.getArrayTerm((ApplicationTerm) mds.getArray()) :
+														mds.getArray())))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
 			constructEqNode(mds);
@@ -188,12 +193,15 @@ public class VPDomainPreanalysis {
 		 * handle stores in the formula
 		 */
 		final List<MultiDimensionalStore> mdStoresAll =
-				MultiDimensionalStore.extractArrayStoresShallow(formulaWithNormalizedVariables);
+				MultiDimensionalStore.extractArrayStoresDeep(formulaWithNormalizedVariables);
 		final List<MultiDimensionalStore> mdStoresFiltered =
 				mSettings.trackAllArrays() ?
 						mdStoresAll :
 							mdStoresAll.stream()
-							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(mds.getArray())))
+							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(
+									mds.getArray() instanceof ApplicationTerm ?
+													VPDomainHelpers.getArrayTerm((ApplicationTerm) mds.getArray()) :
+														mds.getArray())))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalStore mds : mdStoresFiltered) {
 			constructEqNode(mds);

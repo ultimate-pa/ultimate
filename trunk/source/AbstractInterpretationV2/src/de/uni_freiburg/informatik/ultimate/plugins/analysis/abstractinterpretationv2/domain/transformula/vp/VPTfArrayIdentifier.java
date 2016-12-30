@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *  - what identifies an array in a VPState --> an IProgramVarOrConst (an EqNode in case of the VPNodeIdentifier)
  *  - inVar and outVar mappings --> here, pairs suffice
  *  
- *  in principle it is possible to reconstruct a term from these, which occurs in the given TransFormula we
+ *  in principle it is possible to reconstruct a term from these, which occurs in the TransFormula we
  *  created this identifier for.
  *  
  * 
  * @author Alexander Nutz
  */
-public class VPTfArrayIdentifier {
+public class VPTfArrayIdentifier implements IArrayWrapper {
 	
 	IProgramVarOrConst mPvoc;
 	Pair<IProgramVar, TermVariable> mInVar;

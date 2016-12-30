@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -50,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  * @author Alexander Nutz
  */
-public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier> {
+public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, IElementWrapper {
 	
 	private final EqNode mEqNode;
 //	private final Term mTerm;

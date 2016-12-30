@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import org.eclipse.osgi.internal.loader.ModuleClassLoader.GenerationProtectionDomain;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -117,7 +119,7 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		return this.getRepresentative().find();
 	}
 
-	static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> void copyFields(
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> void copyFields(
 			EqGraphNode<NODEID, ARRAYID> source, EqGraphNode<NODEID, ARRAYID> target, IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		assert target.nodeIdentifier.equals(source.nodeIdentifier);
 		
@@ -125,11 +127,11 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		target.setRepresentative(targetRepresentative);
 		if (target != targetRepresentative) {
 			// we may have to update a disequality such that it talks about the representative
-			HashSet<VPDomainSymmetricPair<NODEID>> diseqsetcopy = new HashSet<>(builder.mDisEqualitySet);
+			HashSet<VPDomainSymmetricPair<NODEID>> diseqsetcopy = new HashSet<>(builder.getDisEqualitySet());
 			for (VPDomainSymmetricPair<NODEID> diseq : diseqsetcopy) {
 				if (diseq.contains(target.nodeIdentifier)) {
-					builder.mDisEqualitySet.remove(diseq);
-					builder.mDisEqualitySet.add(
+					builder.getDisEqualitySet().remove(diseq);
+					builder.getDisEqualitySet().add(
 							new VPDomainSymmetricPair<NODEID>(
 									targetRepresentative.nodeIdentifier, 
 									diseq.getOther(target.nodeIdentifier)));
@@ -157,7 +159,7 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		}
 		
 		
-		assert !builder.mIsTop || target.getRepresentative() == target;
+		assert !builder.isTop() || target.getRepresentative() == target;
 	}
 
 	public EqGraphNode<NODEID, ARRAYID> getRepresentative() {

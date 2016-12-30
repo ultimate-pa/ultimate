@@ -25,9 +25,10 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,6 +38,10 @@ import org.eclipse.osgi.internal.loader.ModuleClassLoader.GenerationProtectionDo
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 
 public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
@@ -64,7 +69,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		mVars = new HashSet<>();
 	}
 
-	abstract EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID i2);
+	public abstract EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID i2);
 	
 	abstract Collection<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes();
 
@@ -264,12 +269,12 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		return false;
 	}
 	
-	protected boolean isTopConsistent() {
+	public boolean isTopConsistent() {
 		if (!mIsTop) {
 			return true;
 		}
 		for (VPDomainSymmetricPair<NODEID> pair : mDisEqualitySet) {
-			if (!pair.mFst.isLiteral() || !pair.mSnd.isLiteral()) {
+			if (!pair.getFirst().isLiteral() || !pair.getSecond().isLiteral()) {
 				return false;
 			}
 		}
@@ -285,5 +290,13 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	@Override
 	public String toString() {
 		return "Builder:\n" + this.build().toString();
+	}
+
+	public Set<VPDomainSymmetricPair<NODEID>> getDisEqualitySet() {
+		return Collections.unmodifiableSet(mDisEqualitySet);
+	}
+
+	public boolean isTop() {
+		return mIsTop;
 	}
 }
