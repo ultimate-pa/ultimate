@@ -280,6 +280,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
 		mAnnotTerm2OriginalTerm = new HashMap<>();
+		// Reset settings of strategy
+		mStrategy.resetSettings();
 	}
 
 	/**

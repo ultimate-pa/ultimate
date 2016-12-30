@@ -104,4 +104,6 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location,
 			final int round);
 
+	public void resetSettings();
+
 }

@@ -46,8 +46,9 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	private final int disjunctsPerRound;
 	private final int conjunctsPerRound;
 	private final int maxRounds;
-	Set<IProgramVar> mAllProgramVariables;
-	Set<IProgramVar> mPatternVariables;
+	protected final Set<IProgramVar> mAllProgramVariables;
+	protected final Set<IProgramVar> mPatternVariables;
+	protected int mPrefixCounter;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -81,6 +82,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		this.maxRounds = maxRounds;
 		mAllProgramVariables = allProgramVariables;
 		mPatternVariables = patternVariables;
+		mPrefixCounter = 0;
 	}
 
 //	/**
@@ -113,6 +115,14 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		// 2015-10-27: Use the following instead to obtain two disjuncts
 		// consisting of one strict-nonstrict conjunction pair each. 
 //		return new int[] { 2, 1};
+	}
+	
+	public void resetSettings() {
+		mPrefixCounter = 0;
+	}
+	
+	protected String newPrefix() {
+		return Integer.toString(mPrefixCounter++);
 	}
 
 }

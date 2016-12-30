@@ -42,7 +42,7 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 //					}
 					for (final boolean strict : invariantPatternCopies) {
 						final LinearPatternBase inequality = new LinearPatternBase (
-								solver, mAllProgramVariables, prefix, strict);
+								solver, mAllProgramVariables, prefix + "_" + newPrefix(), strict);
 						Collection<Term> params = inequality.getCoefficients();
 						mPatternCoefficients.addAll(params);
 						conjunction.add(inequality);
