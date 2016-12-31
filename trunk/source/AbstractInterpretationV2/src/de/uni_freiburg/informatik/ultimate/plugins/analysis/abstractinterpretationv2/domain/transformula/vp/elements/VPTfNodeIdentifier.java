@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  * @author Alexander Nutz
  */
-public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, IElementWrapper {
+public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, ISingleElementWrapper {
 	
 	private final EqNode mEqNode;
 //	private final Term mTerm;
@@ -250,5 +251,14 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 
 	public boolean isInOrThrough() {
 		return mIsInOrThrough;
+	}
+
+
+
+
+
+	@Override
+	public Set<ISingleElementWrapper> getElements() {
+		return Collections.singleton(this);
 	}
 }

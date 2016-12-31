@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IArrayWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ISingleElementWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.WrapperFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
@@ -245,15 +248,29 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			IArrayWrapper rhsWrapper = null;
 			
 			
+			Set<VPTfState> resultStates = new HashSet<>();
+			return resultStates;
 		} else {
 			// two "normal" terms are equated
 			
-			IElementWrapper lhsWrapper = null; // TODO
-			IElementWrapper rhsWrapper = null;
-		}
+			Set<ISingleElementWrapper> lhsWrappers = WrapperFactory.wrapElement(lhs).getElements();
+			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs).getElements();
+			
+			Set<VPTfState> resultStates = new HashSet<>();
+			
+			for (ISingleElementWrapper lhsW : lhsWrappers) {
+				for (ISingleElementWrapper rhsW : rhsWrappers) {
+					// add side conditions
+					
+					// if state becomes bottom, drop it
+					
+					// add (dis)equality
 
-		
-		return null; //TODO
+				}
+			}
+			
+			return resultStates;
+		}
 //		/*
 //		 * case "ArrayEquality"
 //		 */

@@ -1,9 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.Collection;
+import java.util.Set;
 
 public interface IElementWrapper {
 	
-//	public Collection<IElementWrapper> getElements();
+	public Set<ISingleElementWrapper> getElements();
 
+//	public WrapperSideCondition getSideCondition();
 }

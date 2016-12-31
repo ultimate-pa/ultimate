@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author Alexander Nutz
  */
-public class VPTfArrayIdentifier implements IArrayWrapper {
+public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 	
 	IProgramVarOrConst mPvoc;
 	Pair<IProgramVar, TermVariable> mInVar;

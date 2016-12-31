@@ -703,4 +703,13 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		}
 		return result;
 	}
+	
+	public VPDomainPreanalysis getPreAnalysis() {
+		return mPreAnalysis;
+	}
+
+
+	public TransFormula getTransFormula() {
+		return mTransFormula;
+	}
 }
