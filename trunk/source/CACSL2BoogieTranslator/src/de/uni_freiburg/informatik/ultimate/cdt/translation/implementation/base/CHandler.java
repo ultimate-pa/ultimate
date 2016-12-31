@@ -77,6 +77,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -963,11 +964,24 @@ public class CHandler implements ICHandler {
 					// the innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
 					final int intSizeFactor;
 					if (arrDecl.getInitializer() != null) {
-						assert arrDecl.getInitializer() instanceof IASTEqualsInitializer;
-						final IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
-						assert eqInit.getInitializerClause() instanceof IASTInitializerList;
-						final IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
-						intSizeFactor = initList.getSize();
+						if (arrDecl.getInitializer() instanceof IASTEqualsInitializer) {
+							intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) arrDecl.getInitializer());
+						} else {
+							throw new UnsupportedOperationException("expected IASTEqualsInitializer");
+						}
+					} else if (resType.cType instanceof CFunction) {
+						// if we have an array of function pointers,
+						// the initializer is stored in the parent node
+						// 2016-12-31 Matthias: I think this is only a workaround.
+						// What if we do not have an array of function pointers
+						// but an arrray of pointers to function pointers? Then
+						// we probably have to check the parent of the parent
+						final IASTFunctionDeclarator fundecl = (IASTFunctionDeclarator) arrDecl.getParent();
+						if (fundecl.getInitializer() != null) {
+							intSizeFactor = computeSizeOfInitializer((IASTEqualsInitializer) fundecl.getInitializer());	
+						} else {
+							throw new UnsupportedOperationException("expected initializer");
+						}
 					} else {
 						// we have an incomplete array type without an initializer --
 						// this may happen in a function parameter..
@@ -1033,6 +1047,7 @@ public class CHandler implements ICHandler {
 			final IASTExpression expr = ((IASTFieldDeclarator) node).getBitFieldSize();
 			bitfieldSize = Integer.parseInt(expr.getRawSignature());
 		} else {
+			// we use -1 to indicate that this is no bitfield
 			bitfieldSize = -1;
 		}
 		if (node.getNestedDeclarator() != null) {
@@ -1051,6 +1066,14 @@ public class CHandler implements ICHandler {
 				node.getName().toString(), node.getInitializer(), variableLengthArrayAuxVarInitializer,
 				newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
+	}
+
+	private int computeSizeOfInitializer(final IASTEqualsInitializer equalsInitializer) {
+		final int intSizeFactor;
+		assert equalsInitializer.getInitializerClause() instanceof IASTInitializerList;
+		final IASTInitializerList initList = (IASTInitializerList) equalsInitializer.getInitializerClause();
+		intSizeFactor = initList.getSize();
+		return intSizeFactor;
 	}
 
 	@Override
@@ -3147,7 +3170,7 @@ public class CHandler implements ICHandler {
 
 		// add the assignment statement
 		if (lrVal instanceof HeapLValue) {
-			ExpressionResultBuilder builder = new ExpressionResultBuilder()
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder()
 					.addDeclarations(declOld)
 					.addStatements(stmtOld)
 					.addOverapprox(overapprOld)
