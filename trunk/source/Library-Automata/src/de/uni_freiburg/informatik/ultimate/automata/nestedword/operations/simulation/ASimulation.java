@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -63,47 +63,38 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Abstract class for simulations which can be used for <b>reducing buechi
- * automaton</b>.<br/>
+ * Abstract class for simulations which can be used for <b>reducing buechi automaton</b>.<br/>
  * <br/>
  * 
- * The simulation sets a {@link AGameGraph} object up that is based on the
- * original buechi automaton. It then simulates the game, explained in
- * {@link AGameGraph}, and calculates so called progress measure for every
- * vertex of the graph.<br/>
- * The simulation does so by comparing vertices with their neighbors and
- * choosing the optimal transition based on which player is at turn.
- * <i>Duplicator</i> wants to decrease the progress measure, which is done by
- * visiting vertices with priority 0, and <i>Spoiler</i> wants to increase it by
- * visiting odd priorities.<br/>
+ * The simulation sets a {@link AGameGraph} object up that is based on the original buechi automaton. It then simulates
+ * the game, explained in {@link AGameGraph}, and calculates so called progress measure for every vertex of the graph.
+ * <br/>
+ * The simulation does so by comparing vertices with their neighbors and choosing the optimal transition based on which
+ * player is at turn. <i>Duplicator</i> wants to decrease the progress measure, which is done by visiting vertices with
+ * priority 0, and <i>Spoiler</i> wants to increase it by visiting odd priorities.<br/>
  * <br/>
  * 
- * For correctness its important that the inputed automaton has <b>no dead
- * ends</b> nor <b>duplicate transitions</b>.<br/>
+ * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>.
+ * <br/>
  * <br/>
  * 
- * The exact conditions are determined by the type of game graph. If, for a
- * vertex (q0, q1), the progress measure does not reach infinity we say q1
- * simulates q0.<br/>
- * This simulation information can then be used for buechi reduction. In some
- * types of simulation such simulating states can be merged without changing the
- * underlying language.<br/>
+ * The exact conditions are determined by the type of game graph. If, for a vertex (q0, q1), the progress measure does
+ * not reach infinity we say q1 simulates q0.<br/>
+ * This simulation information can then be used for buechi reduction. In some types of simulation such simulating states
+ * can be merged without changing the underlying language.<br/>
  * <br/>
  * 
- * After starting the simulation, its result can be accessed by using
- * {@link #getResult()}.<br/>
+ * After starting the simulation, its result can be accessed by using {@link #getResult()}.<br/>
  * <br/>
  * 
- * For game graphs see {@link AGameGraph}, for information on the magic infinity
- * bound see {@link AGameGraph#getGlobalInfinity()}.<br/>
+ * For game graphs see {@link AGameGraph}, for information on the magic infinity bound see
+ * {@link AGameGraph#getGlobalInfinity()}.<br/>
  * <br/>
  * 
- * The simulation process runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b>
- * space where n is the amount of states and k the amount of transitions from
- * the inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
- * and Schuller</i>.
+ * The simulation process runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where n is the amount of states and k
+ * the amount of transitions from the inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation relations, parity games, and state space reduction for büchi
+ * automata</i> by <i>Etessami, Wilke and Schuller</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -141,50 +132,43 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	private final IStateFactory<STATE> mStateFactory;
 	/**
-	 * If the simulation calculation should be optimized using SCC, Strongly
-	 * Connected Components.
+	 * If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 */
 	private boolean mUseSCCs;
 	/**
-	 * Comparator that compares two given vertices by their progress measure
-	 * whereas a higher measure gets favored before a smaller.<br/>
-	 * This is used to implement the @link {@link #mWorkingList working list} as
-	 * a priority queue that first works vertices with high measures.
+	 * Comparator that compares two given vertices by their progress measure whereas a higher measure gets favored
+	 * before a smaller.<br/>
+	 * This is used to implement the @link {@link #mWorkingList working list} as a priority queue that first works
+	 * vertices with high measures.
 	 */
 	private final VertexPmReverseComparator<LETTER, STATE> mVertexComp;
 	/**
-	 * The internal working list of the simulation that, in general, gets
-	 * initiated with vertices that have priority 1. It contains vertices that
-	 * benefit from a progress measure update of its neighbors and therefore
-	 * they need to be updated itself.<br/>
-	 * The list is implemented as priority queue that first works vertices with
-	 * the highest progress measure.
+	 * The internal working list of the simulation that, in general, gets initiated with vertices that have priority 1.
+	 * It contains vertices that benefit from a progress measure update of its neighbors and therefore they need to be
+	 * updated itself.<br/>
+	 * The list is implemented as priority queue that first works vertices with the highest progress measure.
 	 */
 	private PriorityQueue<Vertex<LETTER, STATE>> mWorkingList;
 
 	/**
-	 * Creates a new simulation that initiates all needed data structures and
-	 * fields.
+	 * Creates a new simulation that initiates all needed data structures and fields.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param simType
 	 *            Type of the simulation implementing.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final ESimulationType simType)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
 		mUseSCCs = useSCCs;
@@ -197,14 +181,12 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Starts the simulation that calculates the corresponding progress measures
-	 * to all vertices of the underlying game graph. After that it uses that
-	 * information to possible reduce the inputed buechi automaton and finally
-	 * assigns the result which then can be accessed by {@link #getResult()}.
+	 * Starts the simulation that calculates the corresponding progress measures to all vertices of the underlying game
+	 * graph. After that it uses that information to possible reduce the inputed buechi automaton and finally assigns
+	 * the result which then can be accessed by {@link #getResult()}.
 	 * 
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void doSimulation() throws AutomataOperationCanceledException {
 		mPerformance.startTimeMeasure(ETimeMeasure.OVERALL);
@@ -212,14 +194,15 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		if (mUseSCCs) { // calculate reduction with SCC
 			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
-			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(
-					getGameGraph());
+			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
+					new DefaultStronglyConnectedComponentFactory<>();
+			final GameGraphSuccessorProvider<LETTER, STATE> succProvider =
+					new GameGraphSuccessorProvider<>(getGameGraph());
 			mSccComp = new SccComputation<>(mLogger, succProvider, sccFactory, getGameGraph().getSize(),
 					getGameGraph().getVertices());
 
-			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					mSccComp.getSCCs()).iterator();
+			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
+					new LinkedList<>(mSccComp.getSCCs()).iterator();
 			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
@@ -241,8 +224,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
-				EMultipleDataOption.ADDITIVE);
+		final long durationGraph =
+				mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
@@ -358,8 +341,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given vertex to the working list and updates its own working list
-	 * flag.
+	 * Adds a given vertex to the working list and updates its own working list flag.
 	 * 
 	 * @param vertex
 	 *            Vertex to add
@@ -370,23 +352,19 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Calculates the best neighbor measure for a given vertex based on its
-	 * local infinity and its containing SCC.<br/>
+	 * Calculates the best neighbor measure for a given vertex based on its local infinity and its containing SCC.<br/>
 	 * <br/>
 	 * 
-	 * If the vertex has no successors the corresponding player looses,
-	 * <i>infinity</i> is returned for a {@link DuplicatorVertex} and 0 for a
+	 * If the vertex has no successors the corresponding player looses, <i>infinity</i> is returned for a
+	 * {@link DuplicatorVertex} and 0 for a {@link SpoilerVertex}.<br/>
+	 * For a {@link DuplicatorVertex} the minimal progress measure of its successor is returned, maximal for a
 	 * {@link SpoilerVertex}.<br/>
-	 * For a {@link DuplicatorVertex} the minimal progress measure of its
-	 * successor is returned, maximal for a {@link SpoilerVertex}.<br/>
-	 * The returned value then gets decreased based on the priority of the given
-	 * vertex.
+	 * The returned value then gets decreased based on the priority of the given vertex.
 	 * 
 	 * @param vertex
 	 *            The given vertex to calculate for
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
+	 *            The local infinity in the containing SCC or global infinity if not used
 	 * @param scc
 	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The best neighbor measure of the vertex
@@ -437,7 +415,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		// the push-over edges.
 		if (considerPushOverEdges) {
 			// Care for concurrent modification exception
-			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
+			successorsToConsider = new HashSet<>(successorsToConsider);
 			successorsToConsider.addAll(considerablePushOverSuccessors);
 		}
 		for (final Vertex<LETTER, STATE> succ : successorsToConsider) {
@@ -458,15 +436,13 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Calculates the number of successors a vertex has that represent the best
-	 * choice for it to go at.<br/>
+	 * Calculates the number of successors a vertex has that represent the best choice for it to go at.<br/>
 	 * This is represented by the best neighbor measure of the vertex.
 	 * 
 	 * @param vertex
 	 *            The vertex to calculate for
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
+	 *            The local infinity in the containing SCC or global infinity if not used
 	 * @param scc
 	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The neighbor counter of the vertex
@@ -505,7 +481,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		// the push-over edges.
 		if (considerPushOverEdges) {
 			// Care for concurrent modification exception
-			successorsToConsider = new HashSet<Vertex<LETTER, STATE>>(successorsToConsider);
+			successorsToConsider = new HashSet<>(successorsToConsider);
 			successorsToConsider.addAll(considerablePushOverSuccessors);
 		}
 		for (final Vertex<LETTER, STATE> succ : successorsToConsider) {
@@ -518,18 +494,16 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Calculates the local infinity bound of a given SCC. Which is the number
-	 * of vertices in the SCC that have priority 1, plus one.<br/>
-	 * In contrast to the {@link AGameGraph#getGlobalInfinity() global infinity
-	 * of a game graph} this can be used to locally optimize the simulation
-	 * calculation of a single SCC. This is because we can already be sure that
-	 * we can visit the corresponding vertices infinite times after visiting
-	 * them the local bound often.
+	 * Calculates the local infinity bound of a given SCC. Which is the number of vertices in the SCC that have priority
+	 * 1, plus one.<br/>
+	 * In contrast to the {@link AGameGraph#getGlobalInfinity() global infinity of a game graph} this can be used to
+	 * locally optimize the simulation calculation of a single SCC. This is because we can already be sure that we can
+	 * visit the corresponding vertices infinite times after visiting them the local bound often.
 	 * 
 	 * @param scc
 	 *            The SCC to calculate the local infinity for
-	 * @return A, for the SCC, local optimal upper bound for infinity which is
-	 *         the number of vertices in the SCC that have priority 1, plus one.
+	 * @return A, for the SCC, local optimal upper bound for infinity which is the number of vertices in the SCC that
+	 *         have priority 1, plus one.
 	 */
 	protected int calculateInfinityOfSCC(final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
 		int localInfinity = 0;
@@ -550,21 +524,17 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Decreases a given number based on a given index and a local infinity.
-	 * <br/>
-	 * The global infinity bound gets returned if the number has reached the
-	 * local infinity bound. The number itself gets returned if the index is not
-	 * zero and 0 if it is zero.
+	 * Decreases a given number based on a given index and a local infinity. <br/>
+	 * The global infinity bound gets returned if the number has reached the local infinity bound. The number itself
+	 * gets returned if the index is not zero and 0 if it is zero.
 	 * 
 	 * @param index
 	 *            The index to reduce to
 	 * @param vector
 	 *            The number to reduce
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
-	 * @return Global infinity if reached local infinity, the inputed number if
-	 *         index is not zero and 0 if it is.
+	 *            The local infinity in the containing SCC or global infinity if not used
+	 * @return Global infinity if reached local infinity, the inputed number if index is not zero and 0 if it is.
 	 */
 	protected int decreaseVector(final int index, final int vector, final int localInfinity) {
 		// Always return global infinity if greater than local infinity
@@ -579,21 +549,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * The actual simulation calculation algorithm which simulates the
-	 * corresponding game defined by the type of {@link AGameGraph}.<br/>
-	 * When finished the progress measures of given vertices determine a
-	 * simulation relation that is used for reducing buechi automata.<br/>
-	 * For a given vertex (q0, q1) we shall say q1 simulates q0 if its progress
-	 * measure did not reach infinity.
+	 * The actual simulation calculation algorithm which simulates the corresponding game defined by the type of
+	 * {@link AGameGraph}.<br/>
+	 * When finished the progress measures of given vertices determine a simulation relation that is used for reducing
+	 * buechi automata.<br/>
+	 * For a given vertex (q0, q1) we shall say q1 simulates q0 if its progress measure did not reach infinity.
 	 * 
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
+	 *            The local infinity in the containing SCC or global infinity if not used
 	 * @param scc
 	 *            The containing SCC or <tt>null</tt> if not used
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws AutomataOperationCanceledException {
@@ -633,8 +600,8 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
 			// the changes of the working vertex
-			final boolean considerPushOverPredecessors = v.getPM(scc, globalInfinity) == globalInfinity
-					&& game.hasPushOverPredecessors(v);
+			final boolean considerPushOverPredecessors =
+					v.getPM(scc, globalInfinity) == globalInfinity && game.hasPushOverPredecessors(v);
 			if (!game.hasPredecessors(v) && !considerPushOverPredecessors) {
 				continue;
 			}
@@ -644,9 +611,9 @@ public abstract class ASimulation<LETTER, STATE> {
 			if (considerPushOverPredecessors) {
 				// Care for concurrent modification exception
 				if (predecessorsToConsider != null) {
-					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+					predecessorsToConsider = new HashSet<>(predecessorsToConsider);
 				} else {
-					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>();
+					predecessorsToConsider = new HashSet<>();
 				}
 				// TODO There is a problem with push-over edges not being
 				// considered in the SCC optimization.
@@ -713,22 +680,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the timer used for responding to timeouts and operation
-	 * cancellation.
+	 * Gets the timer used for responding to timeouts and operation cancellation.
 	 * 
-	 * @return The timer used for responding to timeouts and operation
-	 *         cancellation.
+	 * @return The timer used for responding to timeouts and operation cancellation.
 	 */
 	protected IProgressAwareTimer getProgressTimer() {
 		return mProgressTimer;
 	}
 
 	/**
-	 * Gets the object that is used for computing the SCCs of a given buechi
-	 * automaton.
+	 * Gets the object that is used for computing the SCCs of a given buechi automaton.
 	 * 
-	 * @return The object that is used for computing the SCCs of a given buechi
-	 *         automaton.
+	 * @return The object that is used for computing the SCCs of a given buechi automaton.
 	 */
 	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
 		return mSccComp;
@@ -744,23 +707,20 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Increases a given number by using a given index and a local infinity.
-	 * <br/>
-	 * Returning the global infinity if number has reached the local infinity
-	 * bound, a decreased vector for a index that is not one.<br/>
-	 * For a index of one it increases the given number and returns it or global
-	 * infinity if reached the local infinity bound.
+	 * Increases a given number by using a given index and a local infinity. <br/>
+	 * Returning the global infinity if number has reached the local infinity bound, a decreased vector for a index that
+	 * is not one.<br/>
+	 * For a index of one it increases the given number and returns it or global infinity if reached the local infinity
+	 * bound.
 	 * 
 	 * @param index
 	 *            The given index to increase from
 	 * @param vector
 	 *            The number to increase
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
-	 * @return Global infinity if reached local infinity, the inputed number if
-	 *         index is two, 0 if it is zero and increased by one if the index
-	 *         it is one.
+	 *            The local infinity in the containing SCC or global infinity if not used
+	 * @return Global infinity if reached local infinity, the inputed number if index is two, 0 if it is zero and
+	 *         increased by one if the index it is one.
 	 */
 	protected int increaseVector(final int index, final int vector, final int localInfinity) {
 		// Always return global infinity if greater than local infinity
@@ -780,18 +740,16 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Initializes a given vertex for the current simulation calculation by
-	 * possibly adding it to the working list and initializing its values.<br/>
+	 * Initializes a given vertex for the current simulation calculation by possibly adding it to the working list and
+	 * initializing its values.<br/>
 	 * Used by {@link #initSimulation(int, Set)}.
 	 * 
 	 * @param vertex
 	 *            Vertex to initialize
 	 * @param localInfinity
-	 *            The local infinity bound of the used SCC or global infinity if
-	 *            not used
+	 *            The local infinity bound of the used SCC or global infinity if not used
 	 * @param scc
-	 *            The currently for simulation used SCC or <tt>null</tt> if not
-	 *            used
+	 *            The currently for simulation used SCC or <tt>null</tt> if not used
 	 */
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
@@ -804,8 +762,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		// * this vertex is a dead end duplicator vertex, or
 		// * this vertex has priority 1.
 		//
-		final boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
-				localInfinity, scc);
+		final boolean doesChangeWithUpdate =
+				vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex, localInfinity, scc);
 
 		// Possibly add vertex to working list
 		if (isDeadEnd || doesChangeWithUpdate) {
@@ -826,19 +784,16 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * If the simulation calculation gets optimized by using SCC, Strongly
-	 * Connected Components.
+	 * If the simulation calculation gets optimized by using SCC, Strongly Connected Components.
 	 * 
-	 * @return True if the simulation calculation gets optimized by using SCC,
-	 *         false if not.
+	 * @return True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
 	protected boolean isUsingSCCs() {
 		return mUseSCCs;
 	}
 
 	/**
-	 * Retrieves and removes the head of the working list. Also updates the
-	 * working list flag of the vertex.
+	 * Retrieves and removes the head of the working list. Also updates the working list flag of the vertex.
 	 * 
 	 * @return The head of the working list, or <tt>null</tt> if it is empty.
 	 */
@@ -851,8 +806,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Retrieves general performance data of the input and output automaton.
-	 * Saves the data in the current internal performance object.
+	 * Retrieves general performance data of the input and output automaton. Saves the data in the current internal
+	 * performance object.
 	 */
 	protected void retrieveGeneralAutomataPerformance() {
 		final AGameGraph<LETTER, STATE> graph = getGameGraph();
@@ -899,20 +854,17 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Sets the result of the simulation calculation, a possible reduced buechi
-	 * automaton.
+	 * Sets the result of the simulation calculation, a possible reduced buechi automaton.
 	 * 
 	 * @param result
-	 *            The result of the simulation calculation, a possible reduced
-	 *            buechi automaton.
+	 *            The result of the simulation calculation, a possible reduced buechi automaton.
 	 */
 	protected void setResult(final INestedWordAutomaton<LETTER, STATE> result) {
 		mResult = result;
 	}
 
 	/**
-	 * Sets the object that is used for computing the SCCs of a given buechi
-	 * automaton.
+	 * Sets the object that is used for computing the SCCs of a given buechi automaton.
 	 * 
 	 * @param sccComp
 	 *            The object to set.
@@ -923,41 +875,36 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Sets if the simulation calculation should be optimized using SCC,
-	 * Strongly Connected Components or not.
+	 * Sets if the simulation calculation should be optimized using SCC, Strongly Connected Components or not.
 	 * 
 	 * @param useSCCs
-	 *            True if the simulation calculation gets optimized by using
-	 *            SCC, false if not.
+	 *            True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
 	protected void setUseSCCs(final boolean useSCCs) {
 		mUseSCCs = useSCCs;
 	}
 
 	/**
-	 * Gets called after the simulation was run but before the resulting
-	 * automaton gets generated. Provides a hook for manipulating simulation
-	 * results.
+	 * Gets called after the simulation was run but before the resulting automaton gets generated. Provides a hook for
+	 * manipulating simulation results.
 	 * 
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected void simulationHook() throws AutomataOperationCanceledException {
 		// The default implementation is to do nothing
 	}
 
 	/**
-	 * Calculates the progress measure of a given vertex by trying to increase
-	 * it, based on its best neighbor measure and priority.<br/>
-	 * If the returned value has increased the vertex can make a better move
-	 * than in its previous run and should be updated.
+	 * Calculates the progress measure of a given vertex by trying to increase it, based on its best neighbor measure
+	 * and priority.<br/>
+	 * If the returned value has increased the vertex can make a better move than in its previous run and should be
+	 * updated.
 	 * 
 	 * @param v
 	 *            The vertex to update
 	 * @param localInfinity
-	 *            The local infinity in the containing SCC or global infinity if
-	 *            not used
+	 *            The local infinity in the containing SCC or global infinity if not used
 	 * @param scc
 	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The possible increased progress measure

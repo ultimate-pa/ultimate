@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair;
@@ -59,20 +59,16 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Simulation that realizes <b>fair simulation</b> for reduction of a given
- * buechi automaton.<br/>
+ * Simulation that realizes <b>fair simulation</b> for reduction of a given buechi automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * 
- * For more information on the type of simulation see {@link FairGameGraph}.
- * <br/>
+ * For more information on the type of simulation see {@link FairGameGraph}. <br/>
  * <br/>
  * 
- * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
- * where n is the amount of states and k the amount of transitions from the
- * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
- * <i>Gurumurthy, Bloem and Somenzi</i>.
+ * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space where n is the amount of states and k the
+ * amount of transitions from the inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation minimization</i> by <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
@@ -84,9 +80,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
-	 * Saves a change on the <i>BEff value</i> of a given vertex in the current
-	 * {@link GameGraphChanges} object if there currently is no such value
-	 * stored.
+	 * Saves a change on the <i>BEff value</i> of a given vertex in the current {@link GameGraphChanges} object if there
+	 * currently is no such value stored.
 	 * 
 	 * @param vertex
 	 *            Vertex to save change
@@ -103,9 +98,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Saves a change on the <i>C value</i> of a given vertex in the current
-	 * {@link GameGraphChanges} object if there currently is no such value
-	 * stored.
+	 * Saves a change on the <i>C value</i> of a given vertex in the current {@link GameGraphChanges} object if there
+	 * currently is no such value stored.
 	 * 
 	 * @param vertex
 	 *            Vertex to save change
@@ -122,9 +116,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Saves a change on the <i>Progress measure value</i> of a given vertex in
-	 * the current {@link GameGraphChanges} object if there currently is no such
-	 * value stored.
+	 * Saves a change on the <i>Progress measure value</i> of a given vertex in the current {@link GameGraphChanges}
+	 * object if there currently is no such value stored.
 	 * 
 	 * @param vertex
 	 *            Vertex to save change
@@ -141,8 +134,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * If the simulation process itself should log detailed debugging
-	 * information.
+	 * If the simulation process itself should log detailed debugging information.
 	 */
 	private final boolean mDebugSimulation = false;
 	/**
@@ -150,18 +142,15 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private int mAmountOfSCCs;
 	/**
-	 * True if currently attempting to do changes on the game graph, false if
-	 * not. Used to tell {@link #efficientLiftingAlgorithm(int, Set)} to re use
-	 * information of previous simulation runs and to store information about
-	 * changes in order to be able to undo them.
+	 * True if currently attempting to do changes on the game graph, false if not. Used to tell
+	 * {@link #efficientLiftingAlgorithm(int, Set)} to re use information of previous simulation runs and to store
+	 * information about changes in order to be able to undo them.
 	 */
 	private boolean mAttemptingChanges;
 	/**
-	 * The game graph changes object that is currently used to store information
-	 * about made changes. Used by {@link #efficientLiftingAlgorithm(int, Set)}
-	 * to store its changes since it can not access it by another way because of
-	 * the interface. Assign <tt>null</tt> to indicate that changes should not
-	 * be stored.
+	 * The game graph changes object that is currently used to store information about made changes. Used by
+	 * {@link #efficientLiftingAlgorithm(int, Set)} to store its changes since it can not access it by another way
+	 * because of the interface. Assign <tt>null</tt> to indicate that changes should not be stored.
 	 */
 	private GameGraphChanges<LETTER, STATE> mCurrentChanges;
 	/**
@@ -177,65 +166,56 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private final ILogger mLogger;
 	/**
-	 * Stores all currently known {@link SpoilerVertex} objects that indicate
-	 * simulation is not possible and are non trivial. This are vertices with a
-	 * progress measure that reached infinity and where q1 is not equals q2 for
-	 * the representation (q1, q2) because these are trivial simulations.<br/>
-	 * The set is used to abort the simulation early whenever a previous
-	 * possible simulation gets removed due to a game graph change.
+	 * Stores all currently known {@link SpoilerVertex} objects that indicate simulation is not possible and are non
+	 * trivial. This are vertices with a progress measure that reached infinity and where q1 is not equals q2 for the
+	 * representation (q1, q2) because these are trivial simulations.<br/>
+	 * The set is used to abort the simulation early whenever a previous possible simulation gets removed due to a game
+	 * graph change.
 	 */
 	private Set<SpoilerVertex<LETTER, STATE>> mNotSimulatingNonTrivialVertices;
 	/**
-	 * Contains all vertices that are currently poked from a neighbor SCC,
-	 * Strongly Connected Component, if used.<br/>
-	 * Poked vertices need to be added to the working list and calculate their
-	 * update by ignoring the bounds of its own SCC as soon as its their turn
-	 * because a successor of a neighboring SCC has reached infinity.
+	 * Contains all vertices that are currently poked from a neighbor SCC, Strongly Connected Component, if used.<br/>
+	 * Poked vertices need to be added to the working list and calculate their update by ignoring the bounds of its own
+	 * SCC as soon as its their turn because a successor of a neighboring SCC has reached infinity.
 	 */
 	private HashSet<Vertex<LETTER, STATE>> mPokedFromNeighborSCC;
 	/**
-	 * A collection of sets which contains states of the buechi automaton that
-	 * may be merge-able. States which are not in the same set are definitely
-	 * not merge-able which is used as an optimization for the simulation.
+	 * A collection of sets which contains states of the buechi automaton that may be merge-able. States which are not
+	 * in the same set are definitely not merge-able which is used as an optimization for the simulation.
 	 */
 	private final Map<STATE, Set<STATE>> mPossibleEquivalenceClasses;
 
 	/**
-	 * True if the simulation was aborted early because its already known that
-	 * the underlying language did change, false if not.
+	 * True if the simulation was aborted early because its already known that the underlying language did change, false
+	 * if not.
 	 */
 	private boolean mSimulationWasAborted;
 
 	/**
-	 * Creates a new fair simulation with a given fair game graph that tries to
-	 * reduce the given buechi automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
+	 * Creates a new fair simulation with a given fair game graph that tries to reduce the given buechi automaton using
+	 * <b>fair simulation</b>.<br/>
+	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
+	 * .
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param possibleEquivalenceClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the buechi automaton that may be merge-able. States
+	 *            which are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @param game
 	 *            The fair game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalenceClasses,
@@ -257,34 +237,29 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given buechi
-	 * automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
+	 * Creates a new fair simulation that tries to reduce the given buechi automaton using <b>fair simulation</b>.<br/>
+	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
 	 * 
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
+	 * .
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
@@ -342,8 +317,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
-				EMultipleDataOption.ADDITIVE);
+		final long durationGraph =
+				performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
@@ -436,33 +411,28 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Does a single simulation calculation run. After it has finished the
-	 * progress measure of all game graph vertices can be used to determine a
-	 * simulation relation used for buechi reduction.<br/>
-	 * Can also be used to validate a attempted change, if simulation did not
-	 * get aborted the change is valid.
+	 * Does a single simulation calculation run. After it has finished the progress measure of all game graph vertices
+	 * can be used to determine a simulation relation used for buechi reduction.<br/>
+	 * Can also be used to validate a attempted change, if simulation did not get aborted the change is valid.
 	 * 
 	 * @param changes
-	 *            Object to store made changes in, <tt>null</tt> if changes
-	 *            should not get stored
-	 * @return False if simulation was aborted because the underlying language
-	 *         changed, true if not.
+	 *            Object to store made changes in, <tt>null</tt> if changes should not get stored
+	 * @return False if simulation was aborted because the underlying language changed, true if not.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes)
 			throws AutomataOperationCanceledException {
 		if (isUsingSCCs()) {
 			mPokedFromNeighborSCC = new HashSet<>();
 			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
-			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
+			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
+					new DefaultStronglyConnectedComponentFactory<>();
 			final GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(mGame);
-			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					mLogger, succProvider, sccFactory, mGame.getSize(), mGame.getVertices()));
+			setSccComp(new SccComputation<>(mLogger, succProvider, sccFactory, mGame.getSize(), mGame.getVertices()));
 
-			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					getSccComp().getSCCs()).iterator();
+			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
+					new LinkedList<>(getSccComp().getSCCs()).iterator();
 			getSimulationPerformance().stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
 				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
@@ -491,15 +461,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Initializes the simulation by adding the correct vertices to the working
-	 * list and initializing their corresponding values.
+	 * Initializes the simulation by adding the correct vertices to the working list and initializing their
+	 * corresponding values.
 	 * 
 	 * @param localInfinity
-	 *            The local infinity bound of the used SCC or global infinity if
-	 *            not used
+	 *            The local infinity bound of the used SCC or global infinity if not used
 	 * @param scc
-	 *            The currently for simulation used SCC or <tt>null</tt> if not
-	 *            used
+	 *            The currently for simulation used SCC or <tt>null</tt> if not used
 	 */
 	private void initSimulation(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {
 		mSimulationWasAborted = false;
@@ -522,12 +490,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns {@link SpoilerVertex} object that define states <b>(q0, q1)</b>
-	 * which are candidates for merge.<br/>
+	 * Returns {@link SpoilerVertex} object that define states <b>(q0, q1)</b> which are candidates for merge.<br/>
 	 * <br/>
-	 * To be more precise, <b>(q0, q1)</b> if <b>q1 fair simulates q0</b> and
-	 * <b>q0 fair simulates q1</b> which is indicated by a progress measure less
-	 * than global infinity. Such states may can be merged with not changing the
+	 * To be more precise, <b>(q0, q1)</b> if <b>q1 fair simulates q0</b> and <b>q0 fair simulates q1</b> which is
+	 * indicated by a progress measure less than global infinity. Such states may can be merged with not changing the
 	 * language.
 	 * 
 	 * @return Buechi states that are candidates for merge.
@@ -555,13 +521,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Processes a given collection of possible equivalent classes into a data
-	 * structure that has a faster access for single states.
+	 * Processes a given collection of possible equivalent classes into a data structure that has a faster access for
+	 * single states.
 	 * 
 	 * @param possibleEquivalenceClasses
 	 *            Collection to process
-	 * @return Data structure with a fast access for state to its equivalent
-	 *         class
+	 * @return Data structure with a fast access for state to its equivalent class
 	 */
 	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalenceClasses) {
 		Map<STATE, Set<STATE>> result;
@@ -583,21 +548,17 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Returns buechi transitions that are candidates for removal.<br/>
 	 * <br/>
-	 * To be more precise, transitions <b>q1 -a-> q2</b> where <b>q1 -a-> q3</b>
-	 * exists and <b>q3 fair simulates q2</b>. Such transitions may be redundant
-	 * and not change the language if removed.
+	 * To be more precise, transitions <b>q1 -a-> q2</b> where <b>q1 -a-> q3</b> exists and <b>q3 fair simulates q2</b>.
+	 * Such transitions may be redundant and not change the language if removed.
 	 * 
 	 * @param exclusiveSet
-	 *            Set of {@link SpoilerVertex} objects <b>(q2, q3)</b> that
-	 *            define simulations that should not get considered for
-	 *            candidate generation. In general this are vertices that get
-	 *            merged, such transitions would get removed in the merging
-	 *            process anyway.
-	 * @return Buechi transitions that are candidates for removal and the
-	 *         corresponding simulating state <i>q3</i>.
+	 *            Set of {@link SpoilerVertex} objects <b>(q2, q3)</b> that define simulations that should not get
+	 *            considered for candidate generation. In general this are vertices that get merged, such transitions
+	 *            would get removed in the merging process anyway.
+	 * @return Buechi transitions that are candidates for removal and the corresponding simulating state <i>q3</i>.
 	 */
-	private HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates(
-			final Set<SpoilerVertex<LETTER, STATE>> exclusiveSet) {
+	private HashSet<Quad<STATE, LETTER, STATE, STATE>>
+			transitionCandidates(final Set<SpoilerVertex<LETTER, STATE>> exclusiveSet) {
 		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = new HashSet<>();
 		final Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = mGame.getSpoilerVertices();
 		for (final SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
@@ -627,22 +588,19 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Validates a given change by re running a single simulation calculation
-	 * and comparing its results to the previous.<br/>
-	 * If the change is valid <tt>null</tt> gets returned, if not an extended
-	 * fair game graph changes object gets returned that includes the previous
-	 * changes and also the changes made in the simulation calculation used for
+	 * Validates a given change by re running a single simulation calculation and comparing its results to the previous.
+	 * <br/>
+	 * If the change is valid <tt>null</tt> gets returned, if not an extended fair game graph changes object gets
+	 * returned that includes the previous changes and also the changes made in the simulation calculation used for
 	 * verification.
 	 * 
 	 * @param changes
 	 *            Made changes to validate
-	 * @return A game graph changes object that has all made changes stored if
-	 *         the attempted change is not valid or <tt>null</tt> if it is
-	 *         valid. Can be used to undo changes by using
+	 * @return A game graph changes object that has all made changes stored if the attempted change is not valid or
+	 *         <tt>null</tt> if it is valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private FairGameGraphChanges<LETTER, STATE> validateChange(FairGameGraphChanges<LETTER, STATE> changes)
 			throws AutomataOperationCanceledException {
@@ -662,20 +620,17 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Attempts the simulated merge of two given buechi states and returns
-	 * whether the change is valid or not.
+	 * Attempts the simulated merge of two given buechi states and returns whether the change is valid or not.
 	 * 
 	 * @param firstState
 	 *            First state to merge
 	 * @param secondState
 	 *            Second state to merge
-	 * @return A game graph changes object that has all made changes stored if
-	 *         the attempted change is not valid or <tt>null</tt> if it is
-	 *         valid. Can be used to undo changes by using
+	 * @return A game graph changes object that has all made changes stored if the attempted change is not valid or
+	 *         <tt>null</tt> if it is valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
 			throws AutomataOperationCanceledException {
@@ -713,8 +668,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Attempts the simulated removal of an buechi transition and returns
-	 * whether the change is valid or not.
+	 * Attempts the simulated removal of an buechi transition and returns whether the change is valid or not.
 	 * 
 	 * @param src
 	 *            Source of the transition
@@ -723,15 +677,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * @param dest
 	 *            Destination of the transition
 	 * @param invoker
-	 *            State that invoked the transition removal. In general this is
-	 *            the state that simulates the transition.
-	 * @return A game graph changes object that has all made changes stored if
-	 *         the attempted change is not valid or <tt>null</tt> if it is
-	 *         valid. Can be used to undo changes by using
+	 *            State that invoked the transition removal. In general this is the state that simulates the transition.
+	 * @return A game graph changes object that has all made changes stored if the attempted change is not valid or
+	 *         <tt>null</tt> if it is valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
 			final STATE dest, final STATE invoker) throws AutomataOperationCanceledException {
@@ -741,14 +692,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Proceeds with following simulations to validate which states can be
-	 * merged and which transitions can be removed.
+	 * Proceeds with following simulations to validate which states can be merged and which transitions can be removed.
 	 * 
 	 * @param performance
 	 *            Performance object used
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected void doFollowingSimulation(final SimulationPerformance performance)
 			throws AutomataOperationCanceledException {
@@ -787,8 +736,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// Pair and mirrored pair are no candidates
 				// for transition removal
 				noTransitionCandidates.add(mergeCandidate);
-				final SpoilerVertex<LETTER, STATE> mirroredCandidate = mGame.getSpoilerVertex(rightState, leftState,
-						false);
+				final SpoilerVertex<LETTER, STATE> mirroredCandidate =
+						mGame.getSpoilerVertex(rightState, leftState, false);
 				if (mirroredCandidate != null) {
 					noTransitionCandidates.add(mirroredCandidate);
 				}
@@ -803,8 +752,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		}
 
 		// Remove redundant transitions
-		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(
-				noTransitionCandidates);
+		final HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates =
+				transitionCandidates(noTransitionCandidates);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Size of transition candidates: " + transitionCandidates.size());
@@ -906,8 +855,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				mLogger.debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
 			}
 
-			final int currentProgressMeasure = increaseVector(mGame.getPriority(workingVertex), workingVertex.getBEff(),
-					localInfinity);
+			final int currentProgressMeasure =
+					increaseVector(mGame.getPriority(workingVertex), workingVertex.getBEff(), localInfinity);
 			workingVertex.setPM(currentProgressMeasure);
 			savePmChange(workingVertex, oldProgressMeasure, mCurrentChanges);
 
@@ -918,9 +867,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// If vertex now defines a non trivial non possible simulation
 			if (currentProgressMeasure >= mGlobalInfinity) {
 				final boolean isAuxiliaryVertex = workingVertex.getQ0() == null || workingVertex.getQ1() == null;
-				if (workingVertex.isSpoilerVertex() && !isAuxiliaryVertex && !workingVertex.getQ0().equals(workingVertex.getQ1())) {
-					final boolean wasAdded = mNotSimulatingNonTrivialVertices
-							.add((SpoilerVertex<LETTER, STATE>) workingVertex);
+				if (workingVertex.isSpoilerVertex() && !isAuxiliaryVertex
+						&& !workingVertex.getQ0().equals(workingVertex.getQ1())) {
+					final boolean wasAdded =
+							mNotSimulatingNonTrivialVertices.add((SpoilerVertex<LETTER, STATE>) workingVertex);
 					if (mAttemptingChanges && wasAdded) {
 						// Abort simulation since progress measure
 						// has changed on a non trivial vertex
@@ -953,9 +903,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			if (considerPushOverPredecessors) {
 				// Care for concurrent modification exception
 				if (predecessorsToConsider != null) {
-					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>(predecessorsToConsider);
+					predecessorsToConsider = new HashSet<>(predecessorsToConsider);
 				} else {
-					predecessorsToConsider = new HashSet<Vertex<LETTER, STATE>>();
+					predecessorsToConsider = new HashSet<>();
 				}
 				// TODO There is a problem with push-over edges not being
 				// considered in the SCC optimization.
@@ -975,8 +925,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				// which is a 1-distance neighbor of SCC, is interested
 				boolean pokePossible = false;
 				if (isUsingSCCs() && !scc.contains(pred)) {
-					final boolean hasNewlyReachedInfinity = currentProgressMeasure >= localInfinity
-							&& oldProgressMeasure < localInfinity;
+					final boolean hasNewlyReachedInfinity =
+							currentProgressMeasure >= localInfinity && oldProgressMeasure < localInfinity;
 					pokePossible = hasNewlyReachedInfinity && !mPokedFromNeighborSCC.contains(pred);
 
 					if (mDebugSimulation) {
@@ -1000,7 +950,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 					// best choice previously and it has no better
 					// alternative now
 					if (pred.isDuplicatorVertex() && (decreaseVector(mGame.getPriority(pred), oldProgressMeasure,
-							localInfinity) == pred.getBEff() || (pokePossible && pred.getBEff() == 0))) {
+							localInfinity) == pred.getBEff() || pokePossible && pred.getBEff() == 0)) {
 
 						// If trying to use a vertex outside of the SCC make
 						// sure the neighbor counter was initialized
@@ -1092,8 +1042,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#initWorkingListAndCWithVertex(de.uni_freiburg.
-	 * informatik.ultimate.automata.nwalibrary.operations.buchiReduction.
-	 * vertices.Vertex, int, java.util.Set)
+	 * informatik.ultimate.automata.nwalibrary.operations.buchiReduction. vertices.Vertex, int, java.util.Set)
 	 */
 	@Override
 	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
@@ -1108,8 +1057,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		final boolean isPokedVertex = isUsingSCCs() && mPokedFromNeighborSCC.contains(vertex);
 		final boolean isNonTrivialAddedVertex = mAttemptingChanges && mCurrentChanges != null
 				&& mCurrentChanges.isAddedVertex(vertex) && mGame.getPriority(vertex) != 0;
-		final boolean isVertexInvolvedInEdgeChanges = mAttemptingChanges && mCurrentChanges != null
-				&& mCurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
+		final boolean isVertexInvolvedInEdgeChanges =
+				mAttemptingChanges && mCurrentChanges != null && mCurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
 
 		// Possibly add vertex to working list
 		if (isDeadEnd || hasPriorityOne || isPokedVertex || isNonTrivialAddedVertex || isVertexInvolvedInEdgeChanges) {
