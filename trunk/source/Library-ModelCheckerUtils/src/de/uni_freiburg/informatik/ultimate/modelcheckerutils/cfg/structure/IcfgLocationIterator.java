@@ -43,33 +43,34 @@ import java.util.stream.StreamSupport;
  *
  */
 public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<LOC> {
-	
+
 	private final Deque<LOC> mWorklist;
 	private final Set<LOC> mFinished;
-	
+
 	public IcfgLocationIterator(final LOC location) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.add(location);
 	}
-	
+
 	public IcfgLocationIterator(final Collection<LOC> locations) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(locations);
 	}
-	
+
 	public IcfgLocationIterator(final IIcfg<LOC> icfg) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(icfg.getInitialNodes());
 	}
-	
+
 	@Override
 	public boolean hasNext() {
 		return !mWorklist.isEmpty();
 	}
-	
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public LOC next() {
 		final LOC current = mWorklist.removeFirst();
@@ -77,7 +78,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 				.forEachOrdered(mWorklist::add);
 		return current;
 	}
-	
+
 	public Stream<LOC> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
 	}
