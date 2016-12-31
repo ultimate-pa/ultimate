@@ -19,42 +19,45 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.scc;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Computes strongly connected components (SCCs) of a graph. 
- * Implementation of Tarjan SCC algorithm. 
- * {@link http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm}
- * @param <NODE> Type of objects that represent nodes of the graph.
- * @param <COMP> Type of objects that represent strongly connected components.
+ * Computes strongly connected components (SCCs) of a graph. Implementation of Tarjan SCC algorithm. See
+ * <a href="http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">Wikipedia</a>.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @param <NODE>
+ *            Type of objects that represent nodes of the graph.
+ * @param <COMP>
+ *            Type of objects that represent strongly connected components.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>> {
 
 	private final ILogger mLogger;
-	
+
 	private final IStronglyConnectedComponentFactory<NODE, COMP> mSccFactory;
 	protected final ISuccessorProvider<NODE> mSuccessorProvider;
-	
+
 	/**
 	 * Number of all states to which the SCC computation is applied.
 	 */
@@ -62,90 +65,77 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	/**
 	 * Number of vertices that have been processed so far.
 	 */
-	int mIndex = 0;
+	protected int mIndex = 0;
 	/**
 	 * Vertices that have not yet been assigned to any SCC.
 	 */
-	protected final StackHashSet<NODE> mNoScc = new StackHashSet<NODE>();
+	protected final StackHashSet<NODE> mNoScc = new StackHashSet<>();
 	/**
-	 * Assigns to each vertex v the number of vertices that have been
-	 * processed before in this algorithm. This number is called the index
-	 * of v.
+	 * Assigns to each vertex v the number of vertices that have been processed before in this algorithm. This number is
+	 * called the index of v.
 	 */
-	protected final Map<NODE, Integer> mIndices = new HashMap<NODE, Integer>();
-	protected final Map<NODE, Integer> mLowLinks = new HashMap<NODE, Integer>();
-	protected final ArrayList<COMP> mBalls = new ArrayList<COMP>();
-	protected final ArrayList<COMP> mSCCs = new ArrayList<COMP>();
+	protected final Map<NODE, Integer> mIndices = new HashMap<>();
+	protected final Map<NODE, Integer> mLowLinks = new HashMap<>();
+	protected final ArrayList<COMP> mBalls = new ArrayList<>();
+	protected final ArrayList<COMP> mSCCs = new ArrayList<>();
 	private int mNumberOfNonBallSCCs = 0;
 
-	
-
-
-	public SccComputation(ILogger logger,
-			ISuccessorProvider<NODE> successorProvider,
-			IStronglyConnectedComponentFactory<NODE, COMP> sccFac,
-			int numberOfAllNodes,
-			Set<NODE> startNodes) {
+	public SccComputation(final ILogger logger, final ISuccessorProvider<NODE> successorProvider,
+			final IStronglyConnectedComponentFactory<NODE, COMP> sccFac, final int numberOfAllNodes,
+			final Set<NODE> startNodes) {
 		super();
 		mLogger = logger;
 		mSccFactory = sccFac;
 		mSuccessorProvider = successorProvider;
 		mNumberOfAllStates = numberOfAllNodes;
-		
+
 		for (final NODE node : startNodes) {
 			if (!mIndices.containsKey(node)) {
 				strongconnect(node);
 			}
 		}
-		assert (automatonPartitionedBySCCs());
-		mLogger.info("Graph consists of " + getBalls().size() + 
-				" InCaSumBalls and " + mNumberOfNonBallSCCs
-				+ " non ball SCCs. Number of states in SCCs "
-				+ mNumberOfAllStates + ".");
+		assert automatonPartitionedBySCCs();
+		mLogger.info("Graph consists of " + getBalls().size() + " InCaSumBalls and " + mNumberOfNonBallSCCs
+				+ " non ball SCCs. Number of states in SCCs " + mNumberOfAllStates + ".");
 	}
 
-
-	public interface IStronglyConnectedComponentFactory<NODE, C extends StronglyConnectedComponent<NODE>> {
-			public C constructNewSCComponent();
-	}
-	
-	public interface ISuccessorProvider<NODE> {
-		public Iterator<NODE> getSuccessors(NODE node);
-	}
-
+	/**
+	 * @return a {@link Collection} of "ball" SCCs. A ball SCC is a SCC with at least one edge. I.e., this method
+	 *         returns the subset of {@link #getSCCs()} that excludes all trivial SCCs that consist of only one vertex
+	 *         that itself is disconnected.
+	 */
 	public Collection<COMP> getBalls() {
 		return Collections.unmodifiableList(mBalls);
 	}
-	
+
 	/**
-	 * @return a list of all SCCs (ball SCCs and non-ball SCCs). If SCC a is
-	 * reachable from SCC b, then SCC a occurs in this list before SCC b
-	 * (reverse topological order with respect to reachability).
+	 * @return a list of all SCCs (ball SCCs and non-ball SCCs). If SCC a is reachable from SCC b, then SCC a occurs in
+	 *         this list before SCC b (reverse topological order with respect to reachability).
 	 */
 	public List<COMP> getSCCs() {
 		return Collections.unmodifiableList(mSCCs);
 	}
 
-	protected void strongconnect(NODE v) {
-		assert (!mIndices.containsKey(v));
-		assert (!mLowLinks.containsKey(v));
+	protected void strongconnect(final NODE v) {
+		assert !mIndices.containsKey(v);
+		assert !mLowLinks.containsKey(v);
 		mIndices.put(v, mIndex);
 		mLowLinks.put(v, mIndex);
 		mIndex++;
 		this.mNoScc.push(v);
-		
+
 		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(v);
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			final NODE succCont = it.next();
 			processSuccessor(v, succCont);
 		}
-	
+
 		if (mLowLinks.get(v).equals(mIndices.get(v))) {
 			establishNewComponent(v);
 		}
 	}
 
-	protected void establishNewComponent(NODE v) {
+	protected void establishNewComponent(final NODE v) {
 		NODE w;
 		final COMP scc = mSccFactory.constructNewSCComponent();
 		do {
@@ -161,7 +151,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 	}
 
-	private void processSuccessor(NODE v, NODE w) {
+	private void processSuccessor(final NODE v, final NODE w) {
 		if (!mIndices.containsKey(w)) {
 			strongconnect(w);
 			updateLowlink(v, mLowLinks.get(w));
@@ -170,26 +160,25 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 	}
 
-	protected void updateLowlink(NODE node, int newValueCandidate) {
+	protected void updateLowlink(final NODE node, final int newValueCandidate) {
 		final int min = Math.min(mLowLinks.get(node), newValueCandidate);
 		mLowLinks.put(node, min);
 	}
 
-	boolean isBall(StronglyConnectedComponent<NODE> scc) {
+	boolean isBall(final StronglyConnectedComponent<NODE> scc) {
 		if (scc.getNumberOfStates() == 1) {
 			final NODE cont = scc.getRootNode();
 			final Iterator<NODE> it = mSuccessorProvider.getSuccessors(cont);
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				final NODE succCont = it.next();
 				if (cont.equals(succCont)) {
 					return true;
 				}
 			}
 			return false;
-		} else {
-			assert scc.getNumberOfStates() > 1;
-			return true;
 		}
+		assert scc.getNumberOfStates() > 1;
+		return true;
 	}
 
 	/**
@@ -203,39 +192,46 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 			max = Math.max(max, scc.getNumberOfStates());
 		}
 		mLogger.debug("The biggest SCC has " + max + " vertices.");
-		final boolean sameNumberOfVertices = (statesInAllBalls + mNumberOfNonBallSCCs == mNumberOfAllStates);
+		final boolean sameNumberOfVertices = statesInAllBalls + mNumberOfNonBallSCCs == mNumberOfAllStates;
 		return sameNumberOfVertices;
 	}
 
-
 	/**
-	 * Stack and Set in one object. Elements that are already contained 
-	 * must not be added.
+	 * Stack and Set in one object. Elements that are already contained must not be added.
+	 * 
 	 * @author Matthias Heizmann
 	 *
 	 */
-	class StackHashSet<NODE> {
-		private final Stack<NODE> mStack = new Stack<>();
+	static class StackHashSet<NODE> {
+		private final Deque<NODE> mStack = new ArrayDeque<>();
 		private final Set<NODE> mSet = new HashSet<>();
-		
+
 		public NODE pop() {
 			final NODE node = mStack.pop();
 			mSet.remove(node);
 			return node;
 		}
-		
-		public void push(NODE node) {
+
+		public void push(final NODE node) {
 			mStack.push(node);
 			final boolean modified = mSet.add(node);
 			if (!modified) {
 				throw new IllegalArgumentException("Illegal to add element twice " + node);
 			}
 		}
-		
-		public boolean contains(NODE node) {
+
+		public boolean contains(final NODE node) {
 			return mSet.contains(node);
 		}
 	}
 
+	@FunctionalInterface
+	public interface IStronglyConnectedComponentFactory<NODE, C extends StronglyConnectedComponent<NODE>> {
+		C constructNewSCComponent();
+	}
 
+	@FunctionalInterface
+	public interface ISuccessorProvider<NODE> {
+		Iterator<NODE> getSuccessors(NODE node);
+	}
 }

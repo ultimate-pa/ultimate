@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.scc;
@@ -31,23 +31,17 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Non-recursive implementation of {@link SccComputation} that uses the default
- * strongly connected components.
+ * Non-recursive implementation of {@link SccComputation} that uses the default strongly connected components.
+ * 
  * @author Matthias Heizmann
  *
  * @param <NODE>
  */
-public class DefaultSccComputation<NODE> extends
-		SccComputationNonRecursive<NODE, StronglyConnectedComponent<NODE>> {
+public class DefaultSccComputation<NODE> extends SccComputationNonRecursive<NODE, StronglyConnectedComponent<NODE>> {
 
-	public DefaultSccComputation(
-			ILogger logger,
-			ISuccessorProvider<NODE> successorProvider,
-			int numberOfAllNodes, Set<NODE> startNodes) {
-		super(logger, successorProvider, 
-				new DefaultStronglyConnectedComponentFactory<NODE>(), 
-				numberOfAllNodes, startNodes);
+	public DefaultSccComputation(final ILogger logger, final ISuccessorProvider<NODE> successorProvider,
+			final int numberOfAllNodes, final Set<NODE> startNodes) {
+		super(logger, successorProvider, new DefaultStronglyConnectedComponentFactory<NODE>(), numberOfAllNodes,
+				startNodes);
 	}
-	
-
 }

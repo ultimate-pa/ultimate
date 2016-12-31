@@ -19,39 +19,39 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.scc;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Non-recursive implementation of {@link SccComputation}.
+ * 
  * @author Matthias Heizmann
  *
  * @param <NODE>
  */
-public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComponent<NODE>> extends SccComputation<NODE, COMP> {
-	
-	public SccComputationNonRecursive(
-			ILogger logger,
-			ISuccessorProvider<NODE> successorProvider,
-			IStronglyConnectedComponentFactory<NODE, COMP> sccFac,
-			int numberOfAllNodes, Set<NODE> startNodes) {
+public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComponent<NODE>>
+		extends SccComputation<NODE, COMP> {
+
+	public SccComputationNonRecursive(final ILogger logger, final ISuccessorProvider<NODE> successorProvider,
+			final IStronglyConnectedComponentFactory<NODE, COMP> sccFac, final int numberOfAllNodes,
+			final Set<NODE> startNodes) {
 		super(logger, successorProvider, sccFac, numberOfAllNodes, startNodes);
 	}
-	
-	
+
 	@Override
-	protected void strongconnect(NODE v) {
-		final Stack<TodoStackElement> todoStack = new Stack<>();
+	protected void strongconnect(final NODE v) {
+		final Deque<TodoStackElement> todoStack = new ArrayDeque<>();
 		todoStack.push(new TodoStackElement(v, null));
 		while (!todoStack.isEmpty()) {
 			final TodoStackElement todoStackElement = todoStack.pop();
@@ -79,8 +79,7 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 		}
 	}
 
-
-	private void doSetLowlink(NODE node, NODE predecessor) {
+	private void doSetLowlink(final NODE node, final NODE predecessor) {
 		if (mLowLinks.get(node).equals(mIndices.get(node))) {
 			establishNewComponent(node);
 		}
@@ -91,10 +90,9 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 		}
 	}
 
-
-	private void doGetSuccessors(NODE node, Stack<TodoStackElement> todoStack) {
+	private void doGetSuccessors(final NODE node, final Deque<TodoStackElement> todoStack) {
 		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(node);
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			final NODE succ = it.next();
 			if (mIndices.containsKey(succ)) {
 				if (mNoScc.contains(succ)) {
@@ -106,29 +104,31 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 		}
 	}
 
-
-	private void doIndex(NODE node) {
-		assert (!mIndices.containsKey(node));
-		assert (!mLowLinks.containsKey(node));
+	private void doIndex(final NODE node) {
+		assert !mIndices.containsKey(node);
+		assert !mLowLinks.containsKey(node);
 		mIndices.put(node, mIndex);
 		mLowLinks.put(node, mIndex);
 		mIndex++;
 		mNoScc.push(node);
 	}
 
+	enum NextTask {
+		INDEX, GET_SUCCESSORS, SET_LOWLINK
+	}
 
-	enum NextTask { INDEX, GET_SUCCESSORS, SET_LOWLINK };
 	private class TodoStackElement {
-		
 		private final NODE mNode;
 		private NextTask mTask;
 		private final NODE mPredecessor;
-		public TodoStackElement(NODE node, NODE predecessor) {
+
+		public TodoStackElement(final NODE node, final NODE predecessor) {
 			super();
 			mNode = node;
 			mTask = NextTask.INDEX;
 			mPredecessor = predecessor;
 		}
+
 		public void reportTaskAccomplished() {
 			switch (mTask) {
 			case INDEX:
@@ -143,20 +143,22 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 				throw new AssertionError();
 			}
 		}
+
 		public NODE getNode() {
 			return mNode;
 		}
+
 		public NextTask getTask() {
 			return mTask;
 		}
+
 		public NODE getPredecessor() {
 			return mPredecessor;
 		}
+
 		@Override
 		public String toString() {
-			return "TodoStackElement [mNode=" + mNode + ", mTask=" + mTask
-					+ ", mPredecessor=" + mPredecessor + "]";
+			return "TodoStackElement [mNode=" + mNode + ", mTask=" + mTask + ", mPredecessor=" + mPredecessor + "]";
 		}
-		
 	}
 }

@@ -32,6 +32,7 @@ import java.util.Set;
 
 /**
  * StronglyConnectedComponent used in {@link SccComputation}.
+ * 
  * @author Matthias Heizmann
  *
  * @param <NODE>
@@ -39,7 +40,7 @@ import java.util.Set;
 public class StronglyConnectedComponent<NODE> {
 
 	protected NODE mRootNode;
-	protected final Set<NODE> mNodes = new HashSet<NODE>();
+	protected final Set<NODE> mNodes = new HashSet<>();
 
 	public int getNumberOfStates() {
 		return mNodes.size();
@@ -50,13 +51,12 @@ public class StronglyConnectedComponent<NODE> {
 	}
 
 	/**
-	 * @return The {@link StateContainer}s of all states that are
-	 * contained in this SCC.
+	 * @return The {@link StateContainer}s of all states that are contained in this SCC.
 	 */
 	public Set<NODE> getNodes() {
 		return Collections.unmodifiableSet(mNodes);
 	}
-	
+
 	public void addNode(final NODE node) {
 		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
@@ -64,7 +64,7 @@ public class StronglyConnectedComponent<NODE> {
 		final boolean notAlreadyContained = mNodes.add(node);
 		assert notAlreadyContained : "nodes must not be added twice";
 	}
-	
+
 	public void setRootNode(final NODE rootNode) {
 		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
@@ -76,8 +76,5 @@ public class StronglyConnectedComponent<NODE> {
 	public String toString() {
 		return String.valueOf(mNodes);
 	}
-	
-	
-	
 
 }
