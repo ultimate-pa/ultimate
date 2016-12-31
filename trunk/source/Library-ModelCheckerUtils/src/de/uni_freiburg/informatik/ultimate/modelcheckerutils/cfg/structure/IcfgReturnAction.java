@@ -41,10 +41,10 @@ public class IcfgReturnAction extends AbstractIcfgAction
 	private static final long serialVersionUID = -3769742545108313891L;
 	private final UnmodifiableTransFormula mAssignmentOfReturn;
 	private final UnmodifiableTransFormula mLocalVarsAssignment;
-	private final IcfgCallAction mCorrespondingCall;
+	private final IIcfgCallTransition<IcfgLocation> mCorrespondingCall;
 
 	public IcfgReturnAction(final IcfgLocation source, final IcfgLocation target,
-			final IcfgCallAction correspondingCall, final IPayload payload,
+			final IIcfgCallTransition<IcfgLocation> correspondingCall, final IPayload payload,
 			final UnmodifiableTransFormula assignmentOfReturn,
 			final UnmodifiableTransFormula localVarsAssignmentOfCall) {
 		super(source, target, payload);
@@ -64,7 +64,7 @@ public class IcfgReturnAction extends AbstractIcfgAction
 	}
 
 	@Override
-	public IcfgCallAction getCorrespondingCall() {
+	public IIcfgCallTransition<IcfgLocation> getCorrespondingCall() {
 		return mCorrespondingCall;
 	}
 }
