@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -394,7 +394,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		IcfgLocation startLocation = (new ArrayList<IcfgLocation>(pathProgram.getInitialNodes())).get(0);
 		IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
 		List<IcfgLocation> locationsAsList = new ArrayList<>();
-		List<IcfgInternalAction> transitionsAsList = new ArrayList<>();
+		List<IcfgInternalTransition> transitionsAsList = new ArrayList<>();
 		Set<IProgramVar> allProgramVars = new HashSet<>();
 		// Get locations, transitions and program variables from the path program
 		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList, allProgramVars);
@@ -434,12 +434,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private static void extractLocationsTransitionsAndVariablesFromPathProgram(IIcfg<IcfgLocation> pathProgram, List<IcfgLocation> locationsOfPP, 
-			List<IcfgInternalAction> transitionsOfPP,
+			List<IcfgInternalTransition> transitionsOfPP,
 			Set<IProgramVar> allVariablesFromPP) {
 		LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
 		locs2visit.addAll(pathProgram.getInitialNodes());
 		LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
-		LinkedList<IcfgInternalAction> edges = new LinkedList<>();
+		LinkedList<IcfgInternalTransition> edges = new LinkedList<>();
 		while (!locs2visit.isEmpty()) {
 			IcfgLocation loc = locs2visit.removeFirst();
 			if (visitedLocs.add(loc)) {
@@ -451,7 +451,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					UnmodifiableTransFormula tf = ((IInternalAction)e).getTransformula();
 					allVariablesFromPP.addAll(tf.getInVars().keySet());
 					allVariablesFromPP.addAll(tf.getOutVars().keySet());
-					edges.addLast(new IcfgInternalAction(e.getSource(), e.getTarget(), e.getPayload(), tf));
+					edges.addLast(new IcfgInternalTransition(e.getSource(), e.getTarget(), e.getPayload(), tf));
 				}
 			}
 		}
@@ -503,7 +503,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	private Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
-		final LinkedHashSet<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
+		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 
 		for (int i = 0; i < len; i++) {
@@ -515,7 +515,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				}
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) run.getSymbol(i - 1)).getTransformula();
-				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
+				transitions.add(new IcfgInternalTransition(previousLocation, currentLocation, currentLocation.getPayload(),
 						transFormula));
 			}
 			previousLocation = currentLocation;

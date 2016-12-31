@@ -30,23 +30,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link ICallAction} in an ICFG.
+ * Generic implementation of a {@link IInternalAction} in an ICFG.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class IcfgCallAction extends AbstractIcfgAction implements IIcfgCallTransition<IcfgLocation> {
-	private static final long serialVersionUID = 277117187386915562L;
-	private final UnmodifiableTransFormula mLocalVarsAssignment;
+public class IcfgInternalTransition extends AbstractIcfgTransition implements IIcfgInternalTransition<IcfgLocation> {
+	private static final long serialVersionUID = -4893486021673688404L;
+	private final UnmodifiableTransFormula mTransFormula;
 
-	public IcfgCallAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula localVarsAssignment) {
+	public IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
+			final UnmodifiableTransFormula transFormula) {
 		super(source, target, payload);
-		mLocalVarsAssignment = localVarsAssignment;
+		mTransFormula = transFormula;
 	}
 
 	@Override
-	public UnmodifiableTransFormula getLocalVarsAssignment() {
-		return mLocalVarsAssignment;
+	public UnmodifiableTransFormula getTransformula() {
+		return mTransFormula;
 	}
 }

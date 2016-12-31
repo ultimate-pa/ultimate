@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
- * Abstract superclass of *IcfgAction.
+ * Abstract superclass of *IcfgTransition.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbstractIcfgAction extends IcfgEdge implements IIcfgTransition<IcfgLocation> {
+public abstract class AbstractIcfgTransition extends IcfgEdge {
 	private static final long serialVersionUID = 2115527505602304364L;
 
-	public AbstractIcfgAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload) {
+	public AbstractIcfgTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload) {
 		super(source, target, payload);
 	}
 

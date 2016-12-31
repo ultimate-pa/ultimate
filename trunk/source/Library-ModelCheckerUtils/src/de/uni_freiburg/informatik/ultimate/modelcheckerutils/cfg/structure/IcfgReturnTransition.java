@@ -30,23 +30,41 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link IInternalAction} in an ICFG.
+ * Generic implementation of a {@link IReturnAction} in an ICFG.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgInternalAction extends AbstractIcfgAction implements IIcfgLocalTransition<IcfgLocation> {
-	private static final long serialVersionUID = -4893486021673688404L;
-	private final UnmodifiableTransFormula mTransFormula;
+public class IcfgReturnTransition extends AbstractIcfgTransition
+		implements IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> {
+	private static final long serialVersionUID = -3769742545108313891L;
+	private final UnmodifiableTransFormula mAssignmentOfReturn;
+	private final UnmodifiableTransFormula mLocalVarsAssignment;
+	private final IIcfgCallTransition<IcfgLocation> mCorrespondingCall;
 
-	public IcfgInternalAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula) {
+	public IcfgReturnTransition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgCallTransition<IcfgLocation> correspondingCall, final IPayload payload,
+			final UnmodifiableTransFormula assignmentOfReturn,
+			final UnmodifiableTransFormula localVarsAssignmentOfCall) {
 		super(source, target, payload);
-		mTransFormula = transFormula;
+		mCorrespondingCall = correspondingCall;
+		mAssignmentOfReturn = assignmentOfReturn;
+		mLocalVarsAssignment = localVarsAssignmentOfCall;
 	}
 
 	@Override
-	public UnmodifiableTransFormula getTransformula() {
-		return mTransFormula;
+	public UnmodifiableTransFormula getAssignmentOfReturn() {
+		return mAssignmentOfReturn;
+	}
+
+	@Override
+	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
+		return mLocalVarsAssignment;
+	}
+
+	@Override
+	public IIcfgCallTransition<IcfgLocation> getCorrespondingCall() {
+		return mCorrespondingCall;
 	}
 }

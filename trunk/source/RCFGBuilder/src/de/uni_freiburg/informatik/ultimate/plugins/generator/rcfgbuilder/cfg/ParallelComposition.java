@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgLocalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 /**
  * Edge in a recursive control flow graph that represents a set of CodeBlocks of which only one is executed.
  */
-public class ParallelComposition extends CodeBlock implements IIcfgLocalTransition<IcfgLocation> {
+public class ParallelComposition extends CodeBlock implements IIcfgInternalTransition<IcfgLocation> {
 
 	private static final long serialVersionUID = -221110423926589618L;
 	private final List<CodeBlock> mCodeBlocks;
