@@ -102,7 +102,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	/**
 	 * @return a {@link Collection} of "ball" SCCs. A ball SCC is a SCC with at least one edge. I.e., this method
 	 *         returns the subset of {@link #getSCCs()} that excludes all trivial SCCs that consist of only one vertex
-	 *         that itself is disconnected.
+	 *         that itself are disconnected.
 	 */
 	public Collection<COMP> getBalls() {
 		return Collections.unmodifiableList(mBalls);
