@@ -32,19 +32,24 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -52,126 +57,192 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Example IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
  * transformulas of an {@link IIcfg} with a new instance.
+ * 
+ * @param <INLOC>
+ *            The type of the locations of the old IIcfg.
+ * @param <OUTLOC>
+ *            The type of the locations of the transformed IIcfg.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgTransformer {
+public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
-	private final IIcfg<?> mResultIcfg;
+	private final IIcfg<OUTLOC> mResultIcfg;
 	private final ManagedScript mManagedScript;
-	private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
+	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
+	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
+	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
+	private final IBacktranslationTracker mBacktranslationTracker;
 
-	public IcfgTransformer(final ILogger logger, final IIcfg<?> originalIcfg) {
-		mLogger = logger;
-		mManagedScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
+	public IcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier) {
+		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
+		mLogger = Objects.requireNonNull(logger);
+		mLocationFactory = Objects.requireNonNull(funLocFac);
+		mManagedScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mOldLoc2NewLoc = new HashMap<>();
-		mResultIcfg = transform(originalIcfg);
+		mOldCalls2NewCalls = new HashMap<>();
+		mBacktranslationTracker = backtranslationTracker;
+
+		// perform transformation last
+		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
+				Objects.requireNonNull(outLocationClass));
 	}
 
-	private IIcfg<?> transform(final IIcfg<? extends IcfgLocation> originalIcfg) {
-		final IIcfg<?> resultIcfg = createEmptyIcfg(originalIcfg);
+	@SuppressWarnings("unchecked")
+	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
+			final Class<OUTLOC> outLocationClass) {
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
 		final IIcfgSymbolTable origSymbolTable = originalIcfg.getSymboltable();
 		final ReplacementVarFactory fac = new ReplacementVarFactory(resultIcfg.getCfgSmtToolkit(), false);
 
-		final Set<? extends IcfgLocation> init = originalIcfg.getInitialNodes();
-		final Deque<IcfgLocation> open = new ArrayDeque<>(init);
-		final Set<IcfgLocation> closed = new HashSet<>();
+		final Set<INLOC> init = originalIcfg.getInitialNodes();
+		final Deque<INLOC> open = new ArrayDeque<>(init);
+		final Set<INLOC> closed = new HashSet<>();
 
 		while (!open.isEmpty()) {
-			final IcfgLocation current = open.removeFirst();
+			final INLOC current = open.removeFirst();
 			if (!closed.add(current)) {
 				continue;
 			}
 
-			final IcfgLocation newSource = createNewLocation(originalIcfg, resultIcfg, current);
-			for (final IcfgEdge currentEdge : current.getOutgoingEdges()) {
-				final IcfgLocation newTarget = createNewLocation(originalIcfg, resultIcfg, current);
-				final IcfgEdge newEdge;
-				if (currentEdge instanceof IInternalAction) {
-					newEdge = createNewInternalAction(newSource, newTarget, (IInternalAction) currentEdge,
-							origSymbolTable, fac);
-				} else if (currentEdge instanceof ICallAction) {
-					newEdge =
-							createNewCallAction(newSource, newTarget, (ICallAction) currentEdge, origSymbolTable, fac);
-				} else if (currentEdge instanceof IReturnAction) {
-					// TODO: Fix return creation (replace null with new call
-					newEdge = createNewReturnAction(newSource, newTarget, null, (IReturnAction) currentEdge,
-							origSymbolTable, fac);
+			final OUTLOC newSource = createNewLocation(originalIcfg, resultIcfg, current);
+			for (final IcfgEdge oldTransition : current.getOutgoingEdges()) {
+				final OUTLOC newTarget = createNewLocation(originalIcfg, resultIcfg, current);
+				final IcfgEdge newTransition;
+				if (oldTransition instanceof IIcfgInternalTransition) {
+					newTransition = createNewLocalTransition(newSource, newTarget,
+							(IIcfgInternalTransition<INLOC>) oldTransition, origSymbolTable, fac);
+				} else if (oldTransition instanceof IIcfgCallTransition) {
+					newTransition = createNewCallTransition(newSource, newTarget,
+							(IIcfgCallTransition<INLOC>) oldTransition, origSymbolTable, fac);
+				} else if (oldTransition instanceof IIcfgReturnTransition) {
+					newTransition = createNewReturnTransition(newSource, newTarget,
+							(IIcfgReturnTransition<INLOC, ?>) oldTransition, origSymbolTable, fac);
 				} else {
-					throw new IllegalArgumentException("Unknown edge type " + currentEdge.getClass().getSimpleName());
+					throw new IllegalArgumentException("Unknown edge type " + oldTransition.getClass().getSimpleName());
 				}
-				newSource.addOutgoing(newEdge);
-				newTarget.addIncoming(newEdge);
+				newSource.addOutgoing(newTransition);
+				newTarget.addIncoming(newTransition);
+				mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
 			}
 		}
 
 		return resultIcfg;
 	}
 
-	private IcfgEdge createNewReturnAction(final IcfgLocation source, final IcfgLocation target,
-			final IcfgCallAction correspondingCall, final IReturnAction edge, final IIcfgSymbolTable origSymbolTable,
+	private IcfgReturnTransition createNewReturnTransition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgReturnTransition<INLOC, ?> oldTransition, final IIcfgSymbolTable origSymbolTable,
 			final ReplacementVarFactory fac) {
+		final IIcfgCallTransition<INLOC> oldCorrespondingCall = oldTransition.getCorrespondingCall();
+		final IcfgCallTransition newCorrespondingCall = mOldCalls2NewCalls.get(oldCorrespondingCall);
+		assert newCorrespondingCall != null : "The Icfg has been traversed out of order (found return before having found the corresponding call)";
 		final UnmodifiableTransFormula retAssign =
-				getFreshTransFormula(origSymbolTable, fac, edge.getAssignmentOfReturn());
+				getTransformedTransFormula(origSymbolTable, fac, oldTransition.getAssignmentOfReturn());
 		final UnmodifiableTransFormula localVarAssign =
-				getFreshTransFormula(origSymbolTable, fac, edge.getLocalVarsAssignmentOfCall());
-		return new IcfgReturnAction(source, target, correspondingCall, null, retAssign, localVarAssign);
+				getTransformedTransFormula(origSymbolTable, fac, oldTransition.getLocalVarsAssignmentOfCall());
+		final IcfgReturnTransition rtr = new IcfgReturnTransition(source, target, newCorrespondingCall,
+				getPayloadIfAvailable(oldTransition), retAssign, localVarAssign);
+		return rtr;
 	}
 
-	private IcfgEdge createNewCallAction(final IcfgLocation source, final IcfgLocation target, final ICallAction edge,
-			final IIcfgSymbolTable origSymbolTable, final ReplacementVarFactory fac) {
+	private IcfgCallTransition createNewCallTransition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgCallTransition<INLOC> oldTransition, final IIcfgSymbolTable origSymbolTable,
+			final ReplacementVarFactory fac) {
 		final UnmodifiableTransFormula unmodTf =
-				getFreshTransFormula(origSymbolTable, fac, edge.getLocalVarsAssignment());
-		return new IcfgCallAction(source, target, null, unmodTf);
+				getTransformedTransFormula(origSymbolTable, fac, oldTransition.getLocalVarsAssignment());
+		final IcfgCallTransition rtr =
+				new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf);
+		// cache the created call for usage during return creation
+		mOldCalls2NewCalls.put(oldTransition, rtr);
+		return rtr;
 	}
 
-	private IcfgEdge createNewInternalAction(final IcfgLocation source, final IcfgLocation target,
-			final IInternalAction edge, final IIcfgSymbolTable origSymbolTable, final ReplacementVarFactory fac) {
-		final UnmodifiableTransFormula unmodTf = getFreshTransFormula(origSymbolTable, fac, edge.getTransformula());
-		return new IcfgInternalAction(source, target, null, unmodTf);
+	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgInternalTransition<INLOC> oldTransition, final IIcfgSymbolTable origSymbolTable,
+			final ReplacementVarFactory fac) {
+		final UnmodifiableTransFormula unmodTf =
+				getTransformedTransFormula(origSymbolTable, fac, oldTransition.getTransformula());
+		return new IcfgInternalTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf);
 	}
 
-	private UnmodifiableTransFormula getFreshTransFormula(final IIcfgSymbolTable origSymbolTable,
-			final ReplacementVarFactory fac, final TransFormula tf) {
+	private UnmodifiableTransFormula getTransformedTransFormula(final IIcfgSymbolTable origSymbolTable,
+			final ReplacementVarFactory repVarFac, final TransFormula oldTransFormula) {
 		final ExampleLoopAccelerationTransformulaTransformer transformer =
-				new ExampleLoopAccelerationTransformulaTransformer(mLogger, mManagedScript, origSymbolTable, fac, tf);
+				new ExampleLoopAccelerationTransformulaTransformer(mLogger, mManagedScript, origSymbolTable, repVarFac,
+						oldTransFormula);
 		final TransFormula newTransformula = transformer.getTransformationResult();
-		final UnmodifiableTransFormula unmodTf = TransFormulaBuilder.constructCopy(mManagedScript, newTransformula,
-				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
-		return unmodTf;
+		return TransFormulaBuilder.constructCopy(mManagedScript, newTransformula, Collections.emptySet(),
+				Collections.emptySet(), Collections.emptyMap());
 	}
 
-	private IcfgLocation createNewLocation(final IIcfg<? extends IcfgLocation> originalIcfg, final IIcfg<?> resultIcfg,
-			final IcfgLocation current) {
-		final IcfgLocation alreadyCreated = mOldLoc2NewLoc.get(current);
+	private static IPayload getPayloadIfAvailable(final IElement elem) {
+		if (elem == null) {
+			return null;
+		}
+		if (elem.hasPayload()) {
+			return elem.getPayload();
+		}
+		return null;
+	}
+
+	private OUTLOC createNewLocation(final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg,
+			final INLOC oldLoc) {
+		final OUTLOC alreadyCreated = mOldLoc2NewLoc.get(oldLoc);
 		if (alreadyCreated != null) {
+			// was already created, no need to re-add to the result icfg
 			return alreadyCreated;
 		}
 
-		final String proc = current.getProcedure();
-		final IcfgLocation fresh = new IcfgLocation(current.getDebugIdentifier(), proc);
+		final String proc = oldLoc.getProcedure();
+		final OUTLOC freshLoc = mLocationFactory.createLocation(oldLoc, oldLoc.getDebugIdentifier(), proc);
 
-		// TODO: Insert in appropriate maps of resultIcfg
-		// final boolean isErrorLoc = originalIcfg.getProcedureErrorNodes().get(proc).contains(current);
+		// determine attributes of location
+		final boolean isInitial = originalIcfg.getInitialNodes().contains(oldLoc);
+		final Set<INLOC> errorLocs = originalIcfg.getProcedureErrorNodes().get(proc);
+		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
+		final boolean isProcEntry = oldLoc.equals(originalIcfg.getProcedureEntryNodes().get(proc));
+		final boolean isProcExit = oldLoc.equals(originalIcfg.getProcedureExitNodes().get(proc));
+		final boolean isLoopLocation = originalIcfg.getLoopLocations().contains(oldLoc);
+
+		// add fresh location to resultIcfg
+		resultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
 
 		// cache created IcfgLocation
-		mOldLoc2NewLoc.put(current, fresh);
+		mOldLoc2NewLoc.put(oldLoc, freshLoc);
 
-		return fresh;
+		return freshLoc;
 	}
 
-	private IIcfg<?> createEmptyIcfg(final IIcfg<?> originalIcfg) {
-		// TODO: Build BaseIcfg implementation and create a new, empty IIcfg instance.
-		return originalIcfg;
-	}
-
-	public IIcfg<?> getResult() {
+	public IIcfg<OUTLOC> getResult() {
 		return mResultIcfg;
+	}
+
+	/**
+	 * Interface that describes a factory which creates locations for an {@link IIcfg} based on an old location.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * 
+	 * @param <INLOC>
+	 *            The type of the old locations.
+	 * @param <OUTLOC>
+	 *            The type of locations that should be produced.
+	 */
+	@FunctionalInterface
+	public static interface ILocationFactory<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+		OUTLOC createLocation(final INLOC oldLocation, final String debugIdentifier, final String procedure);
+	}
+
+	@FunctionalInterface
+	public static interface IBacktranslationTracker {
+		void rememberRelation(final IIcfgTransition<?> oldTransition, final IIcfgTransition<?> newTransition);
 	}
 
 }
