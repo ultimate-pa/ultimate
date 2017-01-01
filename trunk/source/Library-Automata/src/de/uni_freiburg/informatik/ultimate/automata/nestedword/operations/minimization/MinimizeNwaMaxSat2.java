@@ -102,10 +102,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private static final boolean WRITE_TO_STD_OUT = false;
 	
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
-	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private final boolean mUseFinalStateConstraints;
+	private Settings<STATE> mSettings;
+	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
+	private Iterable<Set<STATE>> mInitialPartition;
 	
 	// if true, we can omit transitivity clauses
 	private final boolean mOperandHasNoReturns;
@@ -114,12 +115,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private int mNumberClausesTransitions;
 	private int mNumberClausesTransitionsNondeterministic;
 	private int mNumberClausesTransitivity;
-	/**
-	 * This flag can also be set for nondeterministic automata.
-	 * However, the results might not be satisfactory: all successors have to be
-	 * be similar in this case.
-	 */
-	private final boolean mUseTransitionHornClauses;
 	
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
@@ -142,11 +137,11 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true, Collections.singleton(operand.getStates()));
+		this(services, stateFactory, operand, Collections.singleton(operand.getStates()), new Settings<>());
 	}
 	
 	/**
-	 * Constructor with an initial partition and option for backmapping.
+	 * Constructor with an initial partition.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -154,98 +149,55 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 *            state factory
 	 * @param operand
 	 *            input nested word automaton
-	 * @param addMapOldState2newState
-	 *            add map 'old state -> new state'
-	 * @param partitionPairsWrapper
-	 *            wrapper for initial partition and list of inequalities
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final PartitionPairsWrapper<STATE> partitionPairsWrapper) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, addMapOldState2newState, partitionPairsWrapper.getPartition());
-	}
-	
-	/**
-	 * Constructor with an initial partition and option for backmapping.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @param addMapOldState2newState
-	 *            add map 'old state -> new state'
-	 * @param initialPartition
-	 *            We only try to merge states that are in one of the equivalence
-	 *            classes
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, addMapOldState2newState,
-				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getPartition(),
-				true, false, false, true, false, false);
-	}
-	
-	/**
-	 * Constructor that can be called by other classes of the automata library.
-	 * It is not intended to be called by the automata script interpreter
-	 * because there is too much input required.
-	 * 
-	 * @param addMapOldState2newState
-	 *            add map 'old state -> new state'
-	 * @param useFinalStateConstraints
-	 *            add constraints that final and non-final states cannot be
-	 *            merged
 	 * @param initialPartition
 	 *            We only try to merge states that are in one of the blocks.
+	 * @param settings
+	 *            settings wrapper
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
+			final Settings<STATE> settings) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand,
+				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getResult(), settings);
+	}
+	
+	/**
+	 * Full constructor.
+	 * 
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
 	 * @param operand
 	 *            input nested word automaton
-	 * @param useTransitionHornClauses
-	 *            use Horn clauses for transitions (preliminary results good for
-	 *            nondeterministic automata)
-	 * @param useHornSolver
-	 *            use old Horn solver
-	 * @param useTransitivityGenerator
-	 *            use a transitivity generator
-	 * @param usePathCompression
-	 *            use path compression in the transitivity generator
-	 * @param useExternalSolver
-	 *            {@code true} iff external partial Max-SAT solver should be used
+	 * @param partitionPairsWrapper
+	 *            result from {@link LookaheadPartitionConstructor}
+	 * @param settings
+	 *            settings wrapper
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	@SuppressWarnings("resource")
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final Iterable<Set<STATE>> initialPartition, final boolean useFinalStateConstraints,
-			final boolean useTransitionHornClauses, final boolean useHornSolver, final boolean useTransitivityGenerator,
-			final boolean usePathCompression, final boolean useExternalSolver)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionPairsWrapper<STATE> partitionPairsWrapper, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
-		// if (!new IsDeterministic<>(mServices, operand).getResult()) {
-		// throw new AssertionError("not deterministic");
-		// }
-		mUseFinalStateConstraints = useFinalStateConstraints;
-		mUseTransitionHornClauses = useTransitionHornClauses;
+		mSettings = settings;
+		
+		mInitialPartition = partitionPairsWrapper.getPartition();
+		
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : initialPartition) {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
@@ -258,13 +210,13 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				+ largestBlockInitialPartition + " states");
 		
 		// create solver
-		if (!mUseTransitionHornClauses && useHornSolver) {
+		if (!mSettings.mUseTransitionHornClauses && mSettings.mUseHornSolver) {
 			throw new IllegalArgumentException(
 					"For using the Horn solver you must use Horn clauses.");
 		}
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
 		Appendable cnfWriter = null;
-		if (useExternalSolver) {
+		if (mSettings.mUseExternalSolver) {
 			if (WRITE_TO_STD_OUT) {
 				cnfWriter = null;
 			} else {
@@ -276,16 +228,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				}
 			}
 			mSolver = new DimacsMaxSatSolver<>(mServices, cnfWriter);
-		} else if (useHornSolver) {
+		} else if (mSettings.mUseHornSolver) {
 			mSolver = new HornMaxSatSolver<>(mServices);
-		} else if (useTransitivityGenerator && !mOperandHasNoReturns) {
-			transitivityGenerator = new ScopedTransitivityGenerator<>(usePathCompression);
+		} else if (mSettings.mUseTransitivityGenerator && !mOperandHasNoReturns) {
+			transitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
 			mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
 		} else {
 			mSolver = new GeneralMaxSatSolver<>(mServices);
 		}
 		
-		feedSolver(initialPartition, transitivityGenerator);
+		feedSolver(mInitialPartition, transitivityGenerator);
 		if (cnfWriter instanceof Writer) {
 			try {
 				((Writer) cnfWriter).close();
@@ -298,7 +250,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		mTimer = System.currentTimeMillis();
 		mTimePreprocessing = mTimer - mTimePreprocessing;
 		
-		constructResult(addMapOldState2newState);
+		constructResult(mSettings.mAddMapOldState2newState);
 		
 		mTimeSolving = mTimer;
 		mTimer = System.currentTimeMillis();
@@ -439,7 +391,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				mStatePairs.put(states[i], states[j], doubleton);
 				mStatePairs.put(states[j], states[i], doubleton);
 				mSolver.addVariable(doubleton);
-				if (mUseFinalStateConstraints && (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j]))) {
+				if (mSettings.mUseFinalStateConstraints
+						&& (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j]))) {
 					setStatesDifferent(doubleton);
 					mNumberClausesAcceptance++;
 				}
@@ -495,7 +448,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			
 			final Doubleton<STATE> predDoubleton = getDoubleton(state1, state2, predPairKnowToBeSimilar);
 			
-			if (mUseTransitionHornClauses) {
+			if (mSettings.mUseTransitionHornClauses) {
 				generateTransitionConstraintInternalHorn(state1, state2, predDoubleton);
 				generateTransitionConstraintCallHorn(state1, state2, predDoubleton);
 			} else {
@@ -513,7 +466,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		// NOTE: slower iteration outside
 		for (final STATE down2 : mOperand.getDownStates(state2)) {
 			for (final STATE down1 : downStates1) {
-				if (mUseTransitionHornClauses) {
+				if (mSettings.mUseTransitionHornClauses) {
 					generateTransitionConstraintReturnHorn(state1, state2, predDoubleton, down1, down2);
 				} else {
 					generateTransitionConstraintReturnGeneral(state1, state2, predDoubleton, down1, down2);
@@ -525,7 +478,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private void generateTransitionConstraintsHelperReturn2(final STATE state1, final STATE[] downStates1) {
 		for (int k = 0; k < downStates1.length; k++) {
 			for (int l = 0; l < k; l++) {
-				if (mUseTransitionHornClauses) {
+				if (mSettings.mUseTransitionHornClauses) {
 					generateTransitionConstraintReturnHorn(state1, state1, null, downStates1[k], downStates1[l]);
 				} else {
 					generateTransitionConstraintReturnGeneral(state1, state1, null, downStates1[k], downStates1[l]);
@@ -1022,5 +975,69 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		}
 		
 		return new RunningTaskInfo(getClass(), builder.toString());
+	}
+	
+	/**
+	 * Settings wrapper that allows a lean constructor for the user.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <STATE>
+	 *            state type
+	 */
+	public static class Settings<STATE> {
+		private boolean mAddMapOldState2newState;
+		/**
+		 * Add constraints that final and non-final states cannot be merged.
+		 */
+		private boolean mUseFinalStateConstraints = true;
+		/**
+		 * Use Horn clauses for transitions. This flag can also be set for nondeterministic automata.
+		 * However, the results might not be satisfactory: all successors have to be be similar in this case.
+		 */
+		private boolean mUseTransitionHornClauses;
+		/**
+		 * Use old Horn solver.
+		 * <p>
+		 * Currently always deactivated.
+		 */
+		private final boolean mUseHornSolver = false;
+		/**
+		 * Use a transitivity generator.
+		 */
+		private boolean mUseTransitivityGenerator = true;
+		/**
+		 * Use path compression in the transitivity generator.
+		 * <p>
+		 * Currently always deactivated.
+		 */
+		private final boolean mUsePathCompression = false;
+		/**
+		 * {@code true} iff external partial Max-SAT solver should be used.
+		 */
+		private boolean mUseExternalSolver;
+		
+		public Settings() {
+			// default constructor
+		}
+		
+		public Settings<STATE> setAddMapOldState2NewState(final boolean value) {
+			mAddMapOldState2newState = value;
+			return this;
+		}
+		
+		public Settings<STATE> setFinalStateConstraints(final boolean value) {
+			mUseFinalStateConstraints = value;
+			return this;
+		}
+		
+		public Settings<STATE> setTransitivityGenerator(final boolean value) {
+			mUseTransitivityGenerator = value;
+			return this;
+		}
+		
+		public Settings<STATE> setExternalSolver(final boolean value) {
+			mUseExternalSolver = value;
+			return this;
+		}
 	}
 }

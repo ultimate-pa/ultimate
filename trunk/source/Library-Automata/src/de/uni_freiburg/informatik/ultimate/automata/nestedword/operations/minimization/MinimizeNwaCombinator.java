@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final String MAP_NOT_SUPPORTED_MESSAGE = "Map from old to new automaton is not supported with ";
-
+	
 	/**
 	 * Possible minimization methods.
 	 */
@@ -110,7 +110,8 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				break;
 			case NWA_MAX_SAT2:
 				mBackingMinimization = new MinimizeNwaMaxSat2<>(mServices, mStateFactory,
-						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, addMapOldState2newState, partition);
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, partition,
+						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState));
 				break;
 			case NWA_RAQ_DIRECT:
 				checkForNoMapping(addMapOldState2newState);
@@ -193,10 +194,9 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			throw new IllegalArgumentException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
 		}
 	}
-
+	
 	public MinimizationMethods getMode() {
 		return mMode;
 	}
-	
 	
 }

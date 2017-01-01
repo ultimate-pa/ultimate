@@ -138,13 +138,13 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<>(services,
 				operand).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<>(services,
 						operand, true).getPartition();
 				
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
@@ -155,7 +155,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<LETTER, STATE>(services, progressTimer,
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer,
 						logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
@@ -163,7 +163,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<LETTER, STATE>(services, progressTimer, logger,
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger,
 						operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
@@ -172,7 +172,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
+				method = new MinimizeSevpa<>(getServices(), operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -183,11 +183,11 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = operand;
 				} else {
-					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
+					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
 				}
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa, true,
-						partitionAndPairs);
+				method = new MinimizeNwaMaxSat2<>(services, stateFactory, operandAsNwa, partitionAndPairs,
+						new MinimizeNwaMaxSat2.Settings<>());
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

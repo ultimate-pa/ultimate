@@ -745,7 +745,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			final MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa,
-					useFinalStateConstraints, equivalenceClassesAsCollection, false, false, false, true, false, false);
+					equivalenceClassesAsCollection,
+					new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(useFinalStateConstraints));
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<>(mServices, minimizer.getResult()).getResult();
 		} else {
