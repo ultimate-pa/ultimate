@@ -9,3 +9,4 @@ Require-Bundle: Library-ModelCheckerUtils,
  Library-UltimateCore,
  Library-SMTLIB,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer
