@@ -329,24 +329,15 @@ public class RelevantVariables {
 		final ConstraintAnalysis globalVarAssignmentCa =
 				mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 		result.addAll(globalVarAssignmentCa.getConstraintOut());
-		if (isPendingCall) {
-			final ConstraintAnalysis localVarAssignmentCa =
-					mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
-			result.addAll(localVarAssignmentCa.getConstraintOut());
-			final ConstraintAnalysis oldVarAssignmentCa =
-					mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
-			result.addAll(oldVarAssignmentCa.getConstraintOut());
+
+		final ConstraintAnalysis localVarAssignmentCa =
+				mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
+		result.addAll(localVarAssignmentCa.getConstraintOut());
+		
+		final ConstraintAnalysis oldVarAssignmentCa =
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		result.addAll(oldVarAssignmentCa.getConstraintOut());
 			
-//			for (BoogieVar bv : oldVarAssignment.getInVars().keySet()) {
-//				result.add(bv);
-//			}
-//			for (BoogieVar bv : oldVarAssignment.getOutVars().keySet()) {
-//				result.add(bv);
-//			}
-//			for (BoogieVar bv : localVarAssignment.getOutVars().keySet()) {
-//				result.add(bv);
-//			}
-		}
 		return result;
 	}
 	
