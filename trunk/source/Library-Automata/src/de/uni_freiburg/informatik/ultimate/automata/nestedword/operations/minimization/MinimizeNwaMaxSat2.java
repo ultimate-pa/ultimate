@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableStatus;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -67,14 +69,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * MAX-SAT based minimization for NWAs. This operation is a re-implementation of
- * Jens' bachelor thesis. Its main purpose is to test the
- * {@link HornMaxSatSolver}. For small deterministic NWAs it should produce small
- * results efficiently. For larger NWAs it runs out of memory. For
- * nondeterministic NWAs it should be correct, however the size reduction will
- * be very poor for states with nondeterministic outgoing transitions. (Given a
- * pair of states q1, q2 and a letter x, then q1 and q2 are only equivalent if
- * all x-successors of q1 are equivalent to all x-successors of q2.)
+ * Partial Max-SAT based minimization for NWA.<br>
+ * It feeds an {@link AbstractMaxSatSolver} with clauses based on information from an input, e.g.,
+ * {@link ReduceNwaDirectSimulationB}. If there is no input, a {@link LookaheadPartitionConstructor} is used.
+ * <p>
+ * For small deterministic NWA it produces small results efficiently. For larger NWA it runs out of memory.
  * <p>
  * TODO For generating nondeterministic clauses, the order of the arguments
  * is not specified. Hence we might want to rearrange state1 and state2 such
