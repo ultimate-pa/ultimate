@@ -451,8 +451,15 @@ public class RelevantVariables {
 		final Set<IProgramVar> result = new HashSet<>();
 		
 		for (final IProgramVar bv : callPredRv) {
-			if (!returnTF.isHavocedOut(bv) && true) {
-				result.add(bv);
+			if (!returnTF.isHavocedOut(bv)) {
+				if (bv instanceof IProgramNonOldVar) {
+					if (!mModifiableGlobals.isModifiable((IProgramNonOldVar) bv, callee)) {
+						// add only if not modifiable
+						result.add(bv);
+					}
+				} else {
+					result.add(bv);
+				}
 			}
 		}
 		
