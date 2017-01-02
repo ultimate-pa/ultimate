@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -411,18 +412,17 @@ public class RelevantVariables {
 
 		
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
-		// remove all globals that are modifiable but not modified 
-		// (i.e., havoced by the global vars assignment)
-		alternativeResult.removeAll(globalVarAssignmentCa.getUnconstraintOut());
-//		final Iterator<IProgramVar> it = alternativeResult.iterator();
-//		while (it.hasNext()) {
-//			final IProgramVar bv = it.next();
-//			if (bv instanceof IProgramNonOldVar) {
-//				if (mModifiableGlobals.isModifiable((IProgramNonOldVar) bv, callee)) {
-//					it.remove();
-//				}
-//			}
-//		}
+		// remove all modifiable (non-old) globals
+		// they are only part of result if contained in the return pred
+		final Iterator<IProgramVar> it = alternativeResult.iterator();
+		while (it.hasNext()) {
+			final IProgramVar bv = it.next();
+			if (bv instanceof IProgramNonOldVar) {
+				if (mModifiableGlobals.isModifiable((IProgramNonOldVar) bv, callee)) {
+					it.remove();
+				}
+			}
+		}
 		
 
 //		alternativeResult.addAll(oldVarAssignmentCa.getConstraintOut());
@@ -652,12 +652,25 @@ public class RelevantVariables {
 		final Set<IProgramVar> alternativeResult = new HashSet<>();
 		
 		// add all non-old global vars that are used in the procedure
-		// and add non-old globals for all oldvars 
+		// and add non-old globals for all oldvars
+		final ConstraintAnalysis oldVarAssignmentCa =
+				mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		final ConstraintAnalysis globalVarAssignmentCa =
+				mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 		for (final IProgramVar bv : callPredRv) {
 			if (bv instanceof IProgramNonOldVar) {
-				alternativeResult.add(bv);
+				if (globalVarAssignmentCa.getUnconstraintOut().contains(bv)) {
+					// value not passed, we may omit it
+				} else {
+					alternativeResult.add(bv);
+				}
 			} else if (bv instanceof IProgramOldVar) {
-				alternativeResult.add(((IProgramOldVar) bv).getNonOldVar());
+				if (oldVarAssignmentCa.getUnconstraintOut().contains(bv)) {
+					// value not passed, we may omit it
+				} else {
+					final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
+					alternativeResult.add(pnov);
+				}
 			}
 		}
 		
@@ -668,7 +681,7 @@ public class RelevantVariables {
 		final Set<IProgramVar> result = new HashSet<>();
 		result.addAll(localVarAssignment.getInVars().keySet());
 		for (final IProgramVar bv : callPredRv) {
-			if (bv.isGlobal()) {
+			if (bv instanceof IProgramNonOldVar) {
 				if (!isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
 					result.add(bv);
 				}
@@ -726,19 +739,19 @@ public class RelevantVariables {
 		}
 		
 		for (final IProgramVar bv : oldVarAssignmentAtCall.getInVars().keySet()) {
-			if (!returnTf.isHavocedIn(bv) && true) {
+			if (!oldVarAssignmentAtCall.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		for (final IProgramVar bv : oldVarAssignmentAtCall.getOutVars().keySet()) {
-			if (!returnTf.isHavocedIn(bv) && true) {
+			if (!oldVarAssignmentAtCall.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		for (final IProgramVar bv : localVarAssignmentAtCall.getOutVars().keySet()) {
-			if (!returnTf.isHavocedIn(bv) && true) {
+			if (!localVarAssignmentAtCall.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
