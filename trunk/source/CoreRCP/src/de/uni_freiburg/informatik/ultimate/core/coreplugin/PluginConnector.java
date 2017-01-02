@@ -85,10 +85,6 @@ public class PluginConnector {
 	private final ITool mTool;
 
 	private boolean mHasPerformedChanges;
-
-	private int mCurrent;
-	private int mMax;
-
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 
@@ -111,7 +107,6 @@ public class PluginConnector {
 
 	private void init() {
 		mHasPerformedChanges = false;
-		mCurrent = mMax = 0;
 	}
 
 	public void run() throws Throwable {
@@ -124,15 +119,14 @@ public class PluginConnector {
 			mLogger.error("Tool did not select a valid model", ex);
 			throw ex;
 		}
-		mMax = models.size();
-		mCurrent = 1;
+		final int max = models.size();
+		int idx = 0;
 
-		for (int i = mMax - 1; i >= 0; --i) {
-			final ModelType currentModel = models.get(i);
+		for (final ModelType currentModel : models) {
 			mTool.setInputDefinition(currentModel);
 			final List<IObserver> observers = mTool.getObservers();
-			runTool(observers, currentModel, mMax - i - 1, mMax);
-			++mCurrent;
+			runTool(observers, currentModel, idx, max);
+			++idx;
 		}
 		mTool.finish();
 		mLogger.info("------------------------ END " + mTool.getPluginName() + "----------------------------");
@@ -166,7 +160,7 @@ public class PluginConnector {
 
 	private void runObserver(final IObserver observer, final ModelType currentModel, final IElement entryNode,
 			final int currentModelIndex, final int numberOfModels) throws Throwable {
-		logObserverRun(observer, currentModel);
+		logObserverRun(observer, currentModel, currentModelIndex, numberOfModels);
 		final IWalker walker = selectWalker(currentModel);
 		walker.addObserver(observer);
 		observer.init(currentModel, currentModelIndex, numberOfModels);
@@ -175,7 +169,7 @@ public class PluginConnector {
 		mHasPerformedChanges = mHasPerformedChanges || observer.performedChanges();
 	}
 
-	private void logObserverRun(final IObserver observer, final ModelType model) {
+	private void logObserverRun(final IObserver observer, final ModelType model, final int idx, final int max) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Executing the observer ");
 		sb.append(observer.getClass().getSimpleName());
@@ -184,9 +178,9 @@ public class PluginConnector {
 		sb.append(" for \"");
 		sb.append(model);
 		sb.append("\" (");
-		sb.append(mCurrent);
+		sb.append(idx + 1);
 		sb.append("/");
-		sb.append(mMax);
+		sb.append(max);
 		sb.append(") ...");
 		mLogger.info(sb.toString());
 	}
