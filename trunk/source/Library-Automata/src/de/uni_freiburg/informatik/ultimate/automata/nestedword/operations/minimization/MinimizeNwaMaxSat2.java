@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
@@ -66,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Partial Max-SAT based minimization for NWA.<br>
@@ -106,7 +104,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private Settings<STATE> mSettings;
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
-	private Iterable<Set<STATE>> mInitialPartition;
 	
 	// if true, we can omit transitivity clauses
 	private final boolean mOperandHasNoReturns;
@@ -188,16 +185,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		mSettings = settings;
-		
-		mInitialPartition = partitionPairsWrapper.getPartition();
+		mSettings.validate();
 		
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
+		final Iterable<Set<STATE>> initialPartition = partitionPairsWrapper.getPartition();
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
+		for (final Set<STATE> equivalenceClass : initialPartition) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
@@ -210,34 +207,41 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				+ largestBlockInitialPartition + " states");
 		
 		// create solver
-		if (!mSettings.mUseTransitionHornClauses && mSettings.mUseHornSolver) {
-			throw new IllegalArgumentException(
-					"For using the Horn solver you must use Horn clauses.");
-		}
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
 		Appendable cnfWriter = null;
-		if (mSettings.mUseExternalSolver) {
-			if (WRITE_TO_STD_OUT) {
-				cnfWriter = null;
-			} else {
-				try {
-					cnfWriter = new OutputStreamWriter(new FileOutputStream(DimacsMaxSatSolver.FILE_NAME_TMP),
-							DimacsMaxSatSolver.ENCODING);
-				} catch (final IOException e) {
-					throw new AssertionError(e);
+		switch (mSettings.mSolverMode) {
+			case EXTERNAL:
+				if (WRITE_TO_STD_OUT) {
+					cnfWriter = null;
+				} else {
+					try {
+						cnfWriter = new OutputStreamWriter(new FileOutputStream(DimacsMaxSatSolver.FILE_NAME_TMP),
+								DimacsMaxSatSolver.ENCODING);
+					} catch (final IOException e) {
+						throw new AssertionError(e);
+					}
 				}
-			}
-			mSolver = new DimacsMaxSatSolver<>(mServices, cnfWriter);
-		} else if (mSettings.mUseHornSolver) {
-			mSolver = new HornMaxSatSolver<>(mServices);
-		} else if (mSettings.mUseTransitivityGenerator && !mOperandHasNoReturns) {
-			transitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
-			mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
-		} else {
-			mSolver = new GeneralMaxSatSolver<>(mServices);
+				mSolver = new DimacsMaxSatSolver<>(mServices, cnfWriter);
+				break;
+			case HORN:
+				mSolver = new HornMaxSatSolver<>(mServices);
+				break;
+			case TRANSITIVITY:
+				if (!mOperandHasNoReturns) {
+					transitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
+					mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
+				} else {
+					mSolver = new GeneralMaxSatSolver<>(mServices);
+				}
+				break;
+			case GENERAL:
+				mSolver = new GeneralMaxSatSolver<>(mServices);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.mSolverMode);
 		}
 		
-		feedSolver(mInitialPartition, transitivityGenerator);
+		feedSolver(initialPartition, transitivityGenerator);
 		if (cnfWriter instanceof Writer) {
 			try {
 				((Writer) cnfWriter).close();
@@ -310,32 +314,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 							+ mNumberClausesTransitionsNondeterministic + ", -> transitivity: "
 							+ mNumberClausesTransitivity);
 		}
-	}
-	
-	@Override
-	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		// check language equivalence
-		final Pair<Boolean, String> result1 = checkLanguageEquivalence(stateFactory);
-		if (!result1.getFirst()) {
-			return result1;
-		}
-		
-		// if (mOperandHasNoReturns) {
-		// 	// check that direct simulation is the same for automata without calls and returns
-		// 	// TODO use new direct simulation when it also supports an initial partition
-		// 	final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
-		// 			stateFactory, mOperand, false, mInitialEquivalenceClasses);
-		// 	final int directSimulationSize = directSimulation.getResult().size();
-		// 	final int resultSize = getResult().size();
-		// 	if (resultSize != directSimulationSize) {
-		// 		return new Pair<>(Boolean.FALSE,
-		// 				String.format("The result has %d states, but the direct simulation result has %d states.",
-		// 						resultSize, directSimulationSize));
-		// 	}
-		// }
-		
-		return new Pair<>(Boolean.TRUE, "");
 	}
 	
 	@SuppressWarnings("squid:S1698")
@@ -717,13 +695,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @return doubleton of two states iff the flag is not true, null otherwise
 	 */
 	private Doubleton<STATE> getDoubleton(final STATE state1, final STATE state2, final boolean flag) {
-		final Doubleton<STATE> doubleton;
-		if (flag) {
-			doubleton = null;
-		} else {
-			doubleton = mStatePairs.get(state1, state2);
-		}
-		return doubleton;
+		return flag ? null : mStatePairs.get(state1, state2);
 	}
 	
 	private void generateBinaryTransitionConstraint(final Doubleton<STATE> predDoubleton, final STATE succState1,
@@ -784,7 +756,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private void addArbitraryLiteralClause(final Doubleton<STATE>[] negativeAtoms,
 			final Doubleton<STATE>[] positiveAtoms) {
-		assert voidOfNull(negativeAtoms) && voidOfNull(positiveAtoms) : "Array/list must be void of null elements.";
+		assert isVoidOfNull(negativeAtoms) && isVoidOfNull(positiveAtoms) : "Array/list must be void of null elements.";
 		assert (negativeAtoms.length == 1) || (negativeAtoms.length == 2) : "Always pass one or two negative atoms.";
 		if (positiveAtoms.length <= 1) {
 			// deterministic case
@@ -936,7 +908,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return doubletons.toArray(new Doubleton[doubletons.size()]);
 	}
 	
-	private static <T> boolean voidOfNull(final T[] positiveAtoms) {
+	private static <T> boolean isVoidOfNull(final T[] positiveAtoms) {
 		for (final T elem : positiveAtoms) {
 			if (elem == null) {
 				return false;
@@ -985,39 +957,58 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 *            state type
 	 */
 	public static class Settings<STATE> {
+		/**
+		 * Solver mode.
+		 * 
+		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+		 */
+		public enum SolverMode {
+			/** External solver. */
+			EXTERNAL,
+			/** Horn solver. */
+			HORN,
+			/** Solver with on-demand transitivity support. */
+			TRANSITIVITY,
+			/** General solver. */
+			GENERAL
+		}
+		
+		/**
+		 * Add mapping 'old state -> new state'.
+		 */
 		private boolean mAddMapOldState2newState;
+		/**
+		 * Solver mode.
+		 */
+		private SolverMode mSolverMode = SolverMode.TRANSITIVITY;
 		/**
 		 * Add constraints that final and non-final states cannot be merged.
 		 */
 		private boolean mUseFinalStateConstraints = true;
 		/**
-		 * Use Horn clauses for transitions. This flag can also be set for nondeterministic automata.
-		 * However, the results might not be satisfactory: all successors have to be be similar in this case.
+		 * Use Horn clauses for transitions. This flag can also be set for nondeterministic automata. However, the
+		 * results might not be satisfactory: all successors have to be similar in this case.
 		 */
 		private boolean mUseTransitionHornClauses;
-		/**
-		 * Use old Horn solver.
-		 * <p>
-		 * Currently always deactivated.
-		 */
-		private final boolean mUseHornSolver = false;
-		/**
-		 * Use a transitivity generator.
-		 */
-		private boolean mUseTransitivityGenerator = true;
 		/**
 		 * Use path compression in the transitivity generator.
 		 * <p>
 		 * Currently always deactivated.
 		 */
 		private final boolean mUsePathCompression = false;
-		/**
-		 * {@code true} iff external partial Max-SAT solver should be used.
-		 */
-		private boolean mUseExternalSolver;
 		
 		public Settings() {
 			// default constructor
+		}
+		
+		public void validate() {
+			if (mSolverMode == null) {
+				throw new IllegalArgumentException("No solver mode set.");
+			}
+			if (!mUseTransitionHornClauses && mSolverMode == SolverMode.HORN) {
+				throw new IllegalArgumentException(
+						"For using the Horn solver you must use Horn clauses.");
+			}
 		}
 		
 		public Settings<STATE> setAddMapOldState2NewState(final boolean value) {
@@ -1030,13 +1021,18 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			return this;
 		}
 		
-		public Settings<STATE> setTransitivityGenerator(final boolean value) {
-			mUseTransitivityGenerator = value;
+		public Settings<STATE> setSolverModeExternal() {
+			mSolverMode = SolverMode.EXTERNAL;
 			return this;
 		}
 		
-		public Settings<STATE> setExternalSolver(final boolean value) {
-			mUseExternalSolver = value;
+		public Settings<STATE> setSolverModeTransitivity() {
+			mSolverMode = SolverMode.TRANSITIVITY;
+			return this;
+		}
+		
+		public Settings<STATE> setSolverModeGeneral() {
+			mSolverMode = SolverMode.GENERAL;
 			return this;
 		}
 	}

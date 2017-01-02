@@ -31,7 +31,6 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaMaxSat2<
 		super(services, stateFactory, operand,
 				new LookaheadPartitionConstructor<>(services, operand, Collections.singleton(operand.getStates()),
 						true).getResult(),
-				new Settings<STATE>().setFinalStateConstraints(true).setTransitivityGenerator(false)
-						.setExternalSolver(true));
+				new Settings<STATE>().setFinalStateConstraints(true).setSolverModeExternal());
 	}
 }
