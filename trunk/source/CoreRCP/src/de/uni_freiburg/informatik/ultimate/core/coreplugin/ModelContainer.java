@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -32,21 +32,16 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 
 /**
- * This class is the general model container. It should preselect walkers and
- * perform a number of search operations on its model.
+ * This class is the general model container.
  * 
  * @author dietsch
  * @version 0.0.2
  */
 public class ModelContainer implements Serializable {
 
-	/**
-	 * long serialVersionUID
-	 */
 	private static final long serialVersionUID = -1957760572620128974L;
 
 	private final IElement mGraphRoot;
@@ -55,11 +50,10 @@ public class ModelContainer implements Serializable {
 
 	private final String mGraphName;
 
-	protected ModelContainer(IElement rootNode, ModelType type, String name) {
+	protected ModelContainer(final IElement rootNode, final ModelType type, final String name) {
 		mGraphRoot = rootNode;
 		mGraphType = type;
 		mGraphName = name;
-		init();
 	}
 
 	protected IElement getRoot() {
@@ -70,10 +64,6 @@ public class ModelContainer implements Serializable {
 		return mGraphName;
 	}
 
-	protected int getSize() {
-		return -1;
-	}
-
 	@Override
 	public String toString() {
 		return mGraphType.toString();
@@ -81,50 +71,5 @@ public class ModelContainer implements Serializable {
 
 	protected ModelType getType() {
 		return mGraphType;
-	}
-
-	private void init() {
-		mGraphType.setSize(countNodes(mGraphRoot));
-	}
-
-	protected void cleanup() {
-	}
-
-	private int countNodes(IElement root) {
-		return 0;
-	}
-
-	/**
-	 * Finds Nodes based on their annotations. Expects every parameter to be not
-	 * null! Simple recursive depth-first search.
-	 * 
-	 * @param outerAnnotationKey
-	 * @param innerAnnotationKey
-	 * @param innerAnnotationValue
-	 * @param node
-	 * @return Node with given annotation.
-	 */
-	protected static IElement findNode(String outerAnnotationKey,
-			String innerAnnotationKey, Object innerAnnotationValue,
-			IElement node) {
-		// TODO implement search with support for null values (perhaps even
-		// nodesets as return values
-		if (node.getPayload().getAnnotations().get(outerAnnotationKey)
-				.getAnnotationsAsMap().get(innerAnnotationKey)
-				.equals(innerAnnotationValue)) {
-			return node;
-		} else {
-			if (node instanceof IWalkable) {
-				IElement returnNode = null;
-				for (final IElement i : ((IWalkable) node).getSuccessors()) {
-					returnNode = findNode(outerAnnotationKey,
-							innerAnnotationKey, innerAnnotationValue, i);
-					if (returnNode != null) {
-						return returnNode;
-					}
-				}
-			}
-		}
-		return null;
 	}
 }

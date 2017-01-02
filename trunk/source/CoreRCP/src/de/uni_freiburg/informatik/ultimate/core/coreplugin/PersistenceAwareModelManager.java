@@ -35,9 +35,8 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
@@ -69,21 +68,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class PersistenceAwareModelManager implements IModelManager {
 
-	private final Map<ModelType, ModelContainer> mModelMap;
+	private final LinkedHashMap<ModelType, ModelContainer> mModelMap;
 	private final IRepository<String, ModelContainer> mRepository;
 	private final ILogger mLogger;
 	private ModelType mLastAdded;
 
 	public PersistenceAwareModelManager(final File repositoryRoot, final ILogger logger) {
 		assert logger != null;
-		mModelMap = new HashMap<>();
+		mModelMap = new LinkedHashMap<>();
 		mLogger = logger;
 		mLogger.info("Repository-Root is: " + repositoryRoot.getAbsolutePath());
 		mRepository = new SerializationRepository(repositoryRoot, mLogger);
 	}
 
-	public PersistenceAwareModelManager(final String tmp_dir, final ILogger logger) {
-		this(new File(tmp_dir), logger);
+	public PersistenceAwareModelManager(final String tmpDir, final ILogger logger) {
+		this(new File(tmpDir), logger);
 	}
 
 	/**
@@ -97,19 +96,17 @@ public class PersistenceAwareModelManager implements IModelManager {
 			return "";
 		}
 		String graphName = "";
-		if (node.hasPayload()) {
-			if (node.getPayload().hasLocation()) {
-				graphName = node.getPayload().getLocation().getFileName();
-			}
+		if (node.hasPayload() && node.getPayload().hasLocation()) {
+			graphName = node.getPayload().getLocation().getFileName();
 		}
 		if (graphName.contains(", ")) {
 			final String fileSep = ", ";
 			final String[] names = graphName.split(fileSep);
-			graphName = "";
+			final StringBuilder sb = new StringBuilder();
 			for (final String s : names) {
-				graphName += s.substring(s.lastIndexOf(File.separator) + 1) + fileSep;
+				sb.append(s.substring(s.lastIndexOf(File.separator) + 1)).append(fileSep);
 			}
-			graphName = graphName.substring(0, graphName.length() - 2);
+			graphName = sb.delete(sb.length() - 2, sb.length()).toString();
 		} else {
 			graphName = graphName.trim();
 			graphName = graphName.substring(graphName.lastIndexOf(File.separator) + 1);
@@ -118,34 +115,33 @@ public class PersistenceAwareModelManager implements IModelManager {
 	}
 
 	/**
-	 * Adds a new vault to the Chamber
+	 * Adds a new container to the in-memory model store.
 	 * 
-	 * @param vault
-	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
+	 * @param container
+	 * @return false if model is present in the in-memory store, true otherwise
 	 */
-	private boolean addItem(final ModelContainer vault) {
-		final ModelType type = vault.getType();
+	private boolean addItem(final ModelContainer container) {
+		final ModelType type = container.getType();
 		if (mModelMap.containsKey(type)) {
 			mLogger.warn("Model is already present, skipping insertion....");
 			return false;
 		}
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Inserting " + vault);
+			mLogger.debug("Inserting " + container);
 		}
-		mModelMap.put(type, vault);
+		mModelMap.put(type, container);
 		mLastAdded = type;
 		return true;
 	}
 
 	/**
-	 * Adds a new (sub)graph or (sub)tree to the Chamber
+	 * Adds a new model to the in-memory model store.
 	 * 
 	 * @param rootNode
-	 *            The node itself and all its children and so on are added as own model to the chamber (in a cyclic
-	 *            graph possibly adding the whole graph, especially the parents of this node)
+	 *            The model represented by an {@link IElement}.
 	 * @param graphtype
-	 *            The concrete type of graph this node belongs to (should this be calculated or set somehow here ? )
-	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
+	 *            The {@link ModelType} of the model
+	 * @return false if this model is already in the in-memory store, true otherwise
 	 */
 	@Override
 	public boolean addItem(final IElement rootNode, final ModelType graphtype) {
@@ -154,7 +150,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	@Override
 	public List<String> getItemNames() {
-		final ArrayList<String> names = new ArrayList<>();
+		final List<String> names = new ArrayList<>();
 		for (final ModelType t : mModelMap.keySet()) {
 			names.add(t.toString());
 		}
