@@ -42,8 +42,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -274,6 +276,59 @@ public class CoreUtil {
 	public static String convertStreamToString(final InputStream is) {
 		final Scanner s = new Scanner(is).useDelimiter("\\A");
 		return s.hasNext() ? s.next() : "";
+	}
+
+	/**
+	 * Determines if an {@link Iterable} is sorted according to the natural comparator. The order of objects that are
+	 * equal according to the natural ordering is irrelevant.
+	 * 
+	 * @param iterable
+	 *            The {@link Iterable} that should be checked.
+	 * @return true if the {@link Iterable} is sorted, false otherwise.
+	 */
+	public static <T extends Comparable<? super T>> boolean isSorted(final Iterable<T> iterable) {
+		final Iterator<T> iter = iterable.iterator();
+		if (!iter.hasNext()) {
+			// empty iterables are always sorted
+			return true;
+		}
+		T last = iter.next();
+		while (iter.hasNext()) {
+			final T current = iter.next();
+			if (last.compareTo(current) >= 0) {
+				return false;
+			}
+			last = current;
+		}
+		return true;
+	}
+
+	/**
+	 * Determines if an {@link Iterable} is sorted according to the provided {@link Comparator}omparator. The order of
+	 * objects that are equal according to the comparator is irrelevant.
+	 * 
+	 * @param iterable
+	 *            The {@link Iterable} that should be checked.
+	 * @param comparator
+	 *            The comparator that should be used for the sorting check.
+	 * @return true if the {@link Iterable} is sorted, false otherwise.
+	 */
+	public static <T extends Comparable<? super T>> boolean isSorted(final Iterable<T> iterable,
+			final Comparator<T> comparator) {
+		final Iterator<T> iter = iterable.iterator();
+		if (!iter.hasNext()) {
+			// empty iterables are always sorted
+			return true;
+		}
+		T last = iter.next();
+		while (iter.hasNext()) {
+			final T current = iter.next();
+			if (comparator.compare(last, current) >= 0) {
+				return false;
+			}
+			last = current;
+		}
+		return true;
 	}
 
 	@FunctionalInterface

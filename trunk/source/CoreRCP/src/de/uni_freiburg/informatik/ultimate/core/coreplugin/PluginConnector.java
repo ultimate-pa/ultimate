@@ -27,7 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.CFGWalker;
@@ -45,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 //@formatter:off
 /**
@@ -245,23 +249,18 @@ public class PluginConnector {
 			if (desiredToolIDs == null || desiredToolIDs.isEmpty()) {
 				break;
 			}
-			models.addAll(mModelManager.getItemKeys());
-			final List<ModelType> removeModels = new ArrayList<>();
-			for (final ModelType t : models) {
-				if (!desiredToolIDs.contains(t.getCreator())) {
-					removeModels.add(t);
-				}
-			}
-			models.removeAll(removeModels);
+			final Set<String> idSet = new HashSet<>(desiredToolIDs);
+			mModelManager.getItemKeys().stream().filter(a -> idSet.contains(a.getCreator())).forEach(models::add);
 			break;
 		default:
-			final IllegalStateException ex = new IllegalStateException("Unknown Query type");
-			mLogger.fatal("Unknown Query type", ex);
+			final IllegalStateException ex = new IllegalStateException("Unknown query type");
+			mLogger.fatal("Unknown query type", ex);
 			throw ex;
 		}
 		if (models.isEmpty()) {
 			mLogger.warn("no suitable model selected, skipping...");
 		}
+		assert CoreUtil.isSorted(models.stream().map(a -> a.getCreated()).collect(Collectors.toList()));
 		return models;
 	}
 
@@ -285,4 +284,5 @@ public class PluginConnector {
 			throw ex;
 		}
 	}
+
 }
