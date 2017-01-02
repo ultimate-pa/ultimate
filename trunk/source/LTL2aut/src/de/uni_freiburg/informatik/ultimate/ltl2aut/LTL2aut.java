@@ -108,7 +108,7 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return null;
 	}
 

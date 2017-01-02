@@ -82,7 +82,7 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		// TODO Auto-generated method stub
 		return null;
 	}

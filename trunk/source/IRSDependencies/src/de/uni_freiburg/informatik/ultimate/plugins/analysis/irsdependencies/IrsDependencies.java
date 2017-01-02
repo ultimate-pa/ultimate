@@ -66,7 +66,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return null;
 	}
 

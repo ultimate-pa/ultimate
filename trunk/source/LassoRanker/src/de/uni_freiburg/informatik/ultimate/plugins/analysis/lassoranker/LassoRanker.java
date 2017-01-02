@@ -81,7 +81,7 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
 

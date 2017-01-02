@@ -69,7 +69,7 @@ public class CookiefyPlugin implements IGenerator {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		// don't need a special tool
 		return null;
 	}

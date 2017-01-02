@@ -71,7 +71,7 @@ public class BoogiePrinter implements IOutput {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return null;
 	}
 

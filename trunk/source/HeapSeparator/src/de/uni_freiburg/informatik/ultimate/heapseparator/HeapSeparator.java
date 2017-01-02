@@ -68,7 +68,7 @@ public class HeapSeparator implements IGenerator {
 		return ModelQuery.LAST;
 	}
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		// TODO Auto-generated method stub
 		return null;
 	}

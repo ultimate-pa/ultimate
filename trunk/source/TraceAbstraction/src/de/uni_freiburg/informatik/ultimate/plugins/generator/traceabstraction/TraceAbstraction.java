@@ -76,7 +76,7 @@ public class TraceAbstraction implements IGenerator {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
 

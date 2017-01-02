@@ -82,7 +82,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
 

@@ -57,7 +57,7 @@ public class JungVisualization implements IOutput {
 	private IUltimateServiceProvider mServices;
 	
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
 	

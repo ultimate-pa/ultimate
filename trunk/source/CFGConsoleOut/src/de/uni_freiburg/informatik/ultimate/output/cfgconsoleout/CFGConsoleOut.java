@@ -42,7 +42,7 @@ public class CFGConsoleOut implements IOutput {
 	private IUltimateServiceProvider mServices;
 
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return null;
 	}
 

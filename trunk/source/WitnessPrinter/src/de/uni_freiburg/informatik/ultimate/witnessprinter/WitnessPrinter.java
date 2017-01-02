@@ -84,7 +84,7 @@ public class WitnessPrinter implements IOutput {
 	}
 	
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
 	

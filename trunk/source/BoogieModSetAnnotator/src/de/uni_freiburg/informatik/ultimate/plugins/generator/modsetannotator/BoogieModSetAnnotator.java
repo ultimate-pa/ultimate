@@ -72,7 +72,7 @@ public class BoogieModSetAnnotator implements IAnalysis {
 	 * I don't need a special tool
 	 */
 	@Override
-	public List<String> getDesiredToolID() {
+	public List<String> getDesiredToolIds() {
 		return null;
 	}
 
