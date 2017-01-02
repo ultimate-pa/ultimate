@@ -32,12 +32,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -87,7 +85,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 	 *            pattern to convert
 	 * @return converted term
 	 */
-	protected abstract Term getTermForPattern(IPT pattern);
+//	protected abstract Term getTermForPattern(IPT pattern);
 
 	/**
 	 * Provides access to a {@link TermTransformer} replacing pattern variables

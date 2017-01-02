@@ -26,13 +26,6 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 	}
 
 
-
-	@Override
-	public IPredicate applyConfiguration(Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@Override
 	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
 		return mAllProgramVariables;

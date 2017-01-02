@@ -28,12 +28,6 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 
 
 	@Override
-	public IPredicate applyConfiguration(Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
 		return mLocations2LiveVariables.get(location);
 	}

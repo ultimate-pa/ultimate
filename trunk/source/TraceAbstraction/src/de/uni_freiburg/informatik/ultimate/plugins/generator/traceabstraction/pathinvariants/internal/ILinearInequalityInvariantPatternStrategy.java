@@ -87,7 +87,7 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * @param pattern the pattern to apply the configuration to
 	 * @return the predicate representing the invariant found
 	 */
-	public IPredicate applyConfiguration(IPT pattern);
+//	public IPredicate applyConfiguration(IPT pattern);
 	
 
 	/**
