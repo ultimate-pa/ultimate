@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -118,7 +118,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final CachedTransFormulaLinearizer mLinearizer;
 
 	// New CFG
-	private final List<IcfgInternalAction> mTransitions;
+	private final List<IcfgInternalTransition> mTransitions;
 
 	/**
 	 * The pattern variables, that is the coefficients of program- and helper
@@ -194,7 +194,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final PredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, 
 			final Script solver,
-			final List<IcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
+			final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			IcfgLocation startLocation, IcfgLocation errorLocation, 
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
@@ -254,7 +254,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		if (round == 0) {
 			mLogger.info( "[LIIPP] First round, linearizing...");
 			mPatternCoefficients.clear();
-			for (final IcfgInternalAction transition : mTransitions) {
+			for (final IcfgInternalTransition transition : mTransitions) {
 				final LinearTransition lTransition = mLinearizer
 						.linearize(transition.getTransformula());
 				mPatternCoefficients.addAll(lTransition.getInVars().keySet());

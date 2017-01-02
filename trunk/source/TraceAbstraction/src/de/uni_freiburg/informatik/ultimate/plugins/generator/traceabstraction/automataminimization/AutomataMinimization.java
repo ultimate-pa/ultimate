@@ -253,8 +253,9 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		case NWA_MAX_SAT2: {
 			minimizationResult = new MinimizationResult(true, true,
 					new MinimizeNwaMaxSat2<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, computeOldState2NewStateMapping,
-					partition));
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
+					new MinimizeNwaMaxSat2.Settings<IPredicate>().
+							setAddMapOldState2NewState(computeOldState2NewStateMapping)));
 			break;
 		}
 		case RAQ_DIRECT_SIMULATION: {

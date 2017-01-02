@@ -96,4 +96,6 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	default VisualizationNode getVisualizationGraph() {
 		return IcfgGraphProvider.getVisualizationGraph(this);
 	}
+
+	Class<LOC> getLocationClass();
 }

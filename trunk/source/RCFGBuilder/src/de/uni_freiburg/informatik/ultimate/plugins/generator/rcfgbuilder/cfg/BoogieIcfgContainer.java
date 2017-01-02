@@ -231,4 +231,9 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public Set<BoogieIcfgLocation> getInitialNodes() {
 		return mInitialNodes;
 	}
+
+	@Override
+	public Class<BoogieIcfgLocation> getLocationClass() {
+		return BoogieIcfgLocation.class;
+	}
 }

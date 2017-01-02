@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  *            The type of location.
  */
 public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer implements IIcfg<LOC> {
-	
+
 	private static final long serialVersionUID = 1L;
 	private final Map<String, Map<String, LOC>> mProgramPoints;
 	private final Map<String, LOC> mEntryNodes;
@@ -59,7 +59,8 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final Set<LOC> mInitialNodes;
 	private final String mIdentifier;
-	
+	private final Class<LOC> mLocationClass;
+
 	/**
 	 * Create an empty {@link IIcfg}.
 	 *
@@ -69,24 +70,25 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 *            A {@link CfgSmtToolkit} instance that has to contain all procedures and variables that may occur in
 	 *            this {@link IIcfg}.
 	 */
-	public BasicIcfg(final String identifier, final CfgSmtToolkit cfgSmtToolkit) {
+	public BasicIcfg(final String identifier, final CfgSmtToolkit cfgSmtToolkit, final Class<LOC> locClazz) {
+		mLocationClass = Objects.requireNonNull(locClazz);
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
-		
+
 		mInitialNodes = new HashSet<>();
 		mLoopLocations = new HashSet<>();
 		mProgramPoints = new HashMap<>();
 		mEntryNodes = new HashMap<>();
 		mExitNodes = new HashMap<>();
 		mErrorNodes = new HashMap<>();
-		
+
 		// initialize all maps with the known procedures
 		for (final String proc : mCfgSmtToolkit.getProcedures()) {
 			mProgramPoints.put(proc, new HashMap<>());
 			mErrorNodes.put(proc, new HashSet<>());
 		}
 	}
-	
+
 	/**
 	 * Add a new location to this {@link IIcfg}. The location has to have a procedure that is already known by the
 	 * {@link IIcfg}. Known procedures can be obtained from {@link CfgSmtToolkit#getProcedures()} via
@@ -112,6 +114,9 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		if (loc == null) {
 			throw new IllegalArgumentException("Cannot add null location");
 		}
+		assert getLocationClass()
+				.isAssignableFrom(loc.getClass()) : "Incompatible location types. Should be subclass of "
+						+ getLocationClass() + " but is " + loc.getClass();
 		final String proc = getProcedure(loc);
 		final Map<String, LOC> name2Loc = mProgramPoints.get(proc);
 		assert name2Loc != null : "Unknown procedure";
@@ -121,7 +126,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 			return;
 		}
 		assert old == null : "Duplicate debug identifier for loc " + loc;
-		
+
 		if (isInitial) {
 			mInitialNodes.add(loc);
 		}
@@ -144,7 +149,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 			mLoopLocations.add(loc);
 		}
 	}
-	
+
 	/**
 	 * Convenience method for {@link #addLocation(IcfgLocation, boolean, boolean, boolean, boolean, boolean)} without
 	 * any true.
@@ -155,7 +160,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	public void addOrdinaryLocation(final LOC loc) {
 		addLocation(loc, false, false, false, false, false);
 	}
-	
+
 	/**
 	 * Remove the location <code>loc</code> from this {@link IIcfg} by removing it from all the maps. Note that this
 	 * does not disconnect the location (i.e., loc itself remains unchanged)
@@ -169,7 +174,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 			return false;
 		}
 		final String proc = getProcedure(loc);
-		
+
 		final Map<String, LOC> name2loc = mProgramPoints.get(proc);
 		if (name2loc == null) {
 			return false;
@@ -179,77 +184,82 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 			assert removedLoc == null : "Multiple nodes with identical debug identifier!";
 			return false;
 		}
-		
+
 		final LOC entryLoc = mEntryNodes.get(proc);
 		if (loc.equals(entryLoc)) {
 			mEntryNodes.remove(proc);
 		}
-		
+
 		final LOC exitLoc = mExitNodes.get(proc);
 		if (loc.equals(exitLoc)) {
 			mExitNodes.remove(proc);
 		}
-		
+
 		final Set<LOC> errorLocs = mErrorNodes.get(proc);
 		errorLocs.remove(loc);
-		
+
 		mLoopLocations.remove(loc);
 		mInitialNodes.remove(loc);
 		return true;
 	}
-	
+
 	private static String getProcedure(final IcfgLocation loc) {
 		final String proc = loc.getProcedure();
 		assert proc != null : "Location " + loc + " does not have a procedure";
 		return proc;
 	}
-	
+
 	@Override
 	public Map<String, Map<String, LOC>> getProgramPoints() {
 		return Collections.unmodifiableMap(mProgramPoints);
 	}
-	
+
 	@Override
 	public Map<String, LOC> getProcedureEntryNodes() {
 		return Collections.unmodifiableMap(mEntryNodes);
 	}
-	
+
 	@Override
 	public Map<String, LOC> getProcedureExitNodes() {
 		return Collections.unmodifiableMap(mExitNodes);
 	}
-	
+
 	@Override
 	public Map<String, Set<LOC>> getProcedureErrorNodes() {
 		return Collections.unmodifiableMap(mErrorNodes);
 	}
-	
+
 	@Override
 	public Set<LOC> getLoopLocations() {
 		return Collections.unmodifiableSet(mLoopLocations);
 	}
-	
+
 	@Override
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-	
+
 	@Override
 	public IIcfgSymbolTable getSymboltable() {
 		return getCfgSmtToolkit().getSymbolTable();
 	}
-	
+
 	@Override
 	public Set<LOC> getInitialNodes() {
 		return Collections.unmodifiableSet(mInitialNodes);
 	}
-	
+
 	public Set<IcfgEdge> getInitialOutgoingEdges() {
 		return getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet());
 	}
-	
+
 	@Override
 	public String getIdentifier() {
 		return mIdentifier;
+	}
+
+	@Override
+	public Class<LOC> getLocationClass() {
+		return mLocationClass;
 	}
 }

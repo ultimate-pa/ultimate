@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -44,42 +47,29 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class TraceAbstractionObserver implements IUnmanagedObserver {
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	
-	private IIcfg<BoogieIcfgLocation> mRcfgRootNode;
-	private IIcfg<BoogieIcfgLocation> mBlockEncodedRcfgRootNode;
+
+	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
 	private WitnessNode mWitnessNode;
 	private boolean mLastModel;
 	private final IToolchainStorage mStorage;
 	private ModelType mCurrentGraphType;
-	
+
 	public TraceAbstractionObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastModel = false;
+		mIcfgs = new ArrayList<>();
 	}
-	
+
 	@Override
 	public boolean process(final IElement root) {
 		if (root instanceof IIcfg<?>) {
-			if (isOriginalRcfg(mCurrentGraphType)) {
-				if (mRcfgRootNode == null) {
-					mRcfgRootNode = (IIcfg<BoogieIcfgLocation>) root;
-				} else {
-					throw new UnsupportedOperationException("two RCFG models from same source");
-				}
-			}
-			if (isBlockEncodingRcfg(mCurrentGraphType)) {
-				if (mBlockEncodedRcfgRootNode == null) {
-					mBlockEncodedRcfgRootNode = (IIcfg<BoogieIcfgLocation>) root;
-				} else {
-					throw new UnsupportedOperationException("two RCFG models from same source");
-				}
-			}
+			mIcfgs.add((IIcfg<?>) root);
 		}
 		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
 			if (mWitnessNode == null) {
@@ -90,31 +80,19 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		return false;
 	}
-	
-	private static boolean isBlockEncodingRcfg(final ModelType currentGraphType) {
-		return "de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding"
-				.equals(currentGraphType.getCreator())
-				|| "de.uni_freiburg.informatik.ultimate.plugins.blockencoding".equals(currentGraphType.getCreator());
-	}
-	
-	private static boolean isOriginalRcfg(final ModelType currentGraphType) {
-		return "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"
-				.equals(currentGraphType.getCreator());
-	}
-	
+
 	@Override
 	public void finish() {
 		if (mLastModel) {
-			final IIcfg<BoogieIcfgLocation> rcfgRootNode;
-			if (mBlockEncodedRcfgRootNode != null) {
-				rcfgRootNode = mBlockEncodedRcfgRootNode;
-			} else {
-				rcfgRootNode = mRcfgRootNode;
-			}
-			
+			@SuppressWarnings("unchecked")
+			final IIcfg<BoogieIcfgLocation> rcfgRootNode = (IIcfg<BoogieIcfgLocation>) mIcfgs.stream()
+					.filter(a -> a.getLocationClass().equals(BoogieIcfgLocation.class)).reduce((a, b) -> b)
+					.orElseThrow(UnsupportedOperationException::new);
+
 			if (rcfgRootNode == null) {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			}
+			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
 			INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
 			if (mWitnessNode == null) {
 				witnessAutomaton = null;
@@ -128,14 +106,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			mRootOfNewModel = tas.getRootOfNewModel();
 		}
 	}
-	
+
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
 	}
-	
+
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		mCurrentGraphType = modelType;
@@ -143,10 +121,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			mLastModel = true;
 		}
 	}
-	
+
 	@Override
 	public boolean performedChanges() {
 		return false;
 	}
-	
+
 }

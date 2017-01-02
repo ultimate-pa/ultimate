@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -91,7 +91,7 @@ public final class CFGInvariantsGenerator {
 	 *         patterns up to its final run.
 	 */
 	public <IPT> Map<IcfgLocation, IPredicate> generateInvariantsForTransitions(final List<IcfgLocation> locationsAsList, 
-			final List<IcfgInternalAction> transitions,
+			final List<IcfgInternalTransition> transitions,
 			final IPredicate precondition, final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
 			final boolean useLiveVariables, final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
@@ -108,7 +108,7 @@ public final class CFGInvariantsGenerator {
 		final Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
 		if (useVariablesFromUnsatCore) {
 			// Compute map smt-variables to program variables
-			for (final IcfgInternalAction t : transitions) {
+			for (final IcfgInternalTransition t : transitions) {
 				// Add value-key-pairs from transitions invars to smtVars2ProgramVars
 				for (final Map.Entry<IProgramVar, TermVariable> entry : t.getTransformula().getInVars().entrySet()) {
 					smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
@@ -156,7 +156,7 @@ public final class CFGInvariantsGenerator {
 
 			// Build transition predicates
 			predicates.clear();
-			for (final IcfgInternalAction transition : transitions) {
+			for (final IcfgInternalTransition transition : transitions) {
 				final IPT invStart = patterns.get(transition.getSource());
 				final IPT invEnd = patterns.get(transition.getTarget());
 				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), transition.getTransformula()));
@@ -225,7 +225,7 @@ public final class CFGInvariantsGenerator {
 	private <IPT> Map<IcfgLocation, IPredicate> executePreRoundWithEmptyPatterns(final IInvariantPatternProcessor<IPT> processor, int round, Set<IProgramVar> varsFromUnsatCore,
 			final Map<IcfgLocation, IPT> patterns, final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, IcfgLocation startLocation, IcfgLocation errorLocation, 
-			final List<IcfgLocation> locationsAsList, final List<IcfgInternalAction> transitions,
+			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
 		// Start round
@@ -257,7 +257,7 @@ public final class CFGInvariantsGenerator {
 
 		// Build transition predicates
 		predicates.clear();
-		for (final IcfgInternalAction transition : transitions) {
+		for (final IcfgInternalTransition transition : transitions) {
 			final IPT invStart = patterns.get(transition.getSource());
 			final IPT invEnd = patterns.get(transition.getTarget());
 			predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), transition.getTransformula()));

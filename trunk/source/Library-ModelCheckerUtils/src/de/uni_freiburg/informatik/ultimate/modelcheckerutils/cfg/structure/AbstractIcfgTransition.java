@@ -27,26 +27,27 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link ICallAction} in an ICFG.
+ * Abstract superclass of *IcfgTransition.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class IcfgCallAction extends AbstractIcfgAction implements IIcfgCallTransition<IcfgLocation> {
-	private static final long serialVersionUID = 277117187386915562L;
-	private final UnmodifiableTransFormula mLocalVarsAssignment;
+public abstract class AbstractIcfgTransition extends IcfgEdge {
+	private static final long serialVersionUID = 2115527505602304364L;
 
-	public IcfgCallAction(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula localVarsAssignment) {
+	public AbstractIcfgTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload) {
 		super(source, target, payload);
-		mLocalVarsAssignment = localVarsAssignment;
 	}
 
 	@Override
-	public UnmodifiableTransFormula getLocalVarsAssignment() {
-		return mLocalVarsAssignment;
+	public String getPrecedingProcedure() {
+		return super.getSource().getProcedure();
+	}
+
+	@Override
+	public String getSucceedingProcedure() {
+		return super.getTarget().getProcedure();
 	}
 }

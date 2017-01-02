@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IcfgTransformation
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator
+Require-Bundle: Library-UltimateCore,
+ Library-UltimateUtil,
+ Library-BoogieAST,
+ UltimateCore,
+ Library-ModelCheckerUtils,
+ BoogiePreprocessor,
+ Library-SMTLIB,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

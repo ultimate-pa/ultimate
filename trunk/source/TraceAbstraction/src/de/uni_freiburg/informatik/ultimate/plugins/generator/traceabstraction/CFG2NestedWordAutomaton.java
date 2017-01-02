@@ -55,14 +55,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CFG2NestedWordAutomaton {
 	private final IUltimateServiceProvider mServices;
-	
+
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private static final boolean mStoreHistory = false;
 	private final boolean mInterprocedural;
-	
+
 	private final ILogger mLogger;
-	
+
 	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
 		mServices = Objects.requireNonNull(services);
@@ -71,7 +71,7 @@ public class CFG2NestedWordAutomaton {
 		mPredicateFactory = Objects.requireNonNull(predicateFactory);
 		mInterprocedural = interprocedural;
 	}
-	
+
 	/**
 	 * Construct the control automata (see Trace Abstraction) for the program of rootNode. If mInterprocedural==false we
 	 * construct an automaton for each procedure otherwise we construct one nested word automaton for the whole program.
@@ -87,19 +87,19 @@ public class CFG2NestedWordAutomaton {
 		} else {
 			mLogger.info("Mode: library - executation can start in any procedure");
 		}
-		
+
 		mLogger.debug("Step: put all LocationNodes into mNodes");
 		final IcfgLocationIterator<BoogieIcfgLocation> iter = new IcfgLocationIterator<>(icfg);
 		final Set<BoogieIcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getInitialNodes();
 		final Map<BoogieIcfgLocation, IPredicate> nodes2States = new HashMap<>();
-		
+
 		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<>();
 		final Set<CodeBlock> callAlphabet = new HashSet<>();
 		final Set<CodeBlock> returnAlphabet = new HashSet<>();
-		
+
 		for (final BoogieIcfgLocation locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
@@ -126,24 +126,24 @@ public class CFG2NestedWordAutomaton {
 					} else if (edge instanceof CodeBlock) {
 						internalAlphabet.add((CodeBlock) edge);
 					} else {
-						throw new UnsupportedOperationException("unknown edge" + edge);
+						throw new UnsupportedOperationException("unknown edge " + edge);
 					}
 				}
 			}
 		}
-		
+
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
 						returnAlphabet, tAContentFactory);
-		
+
 		mLogger.debug("Step: add states");
 		// add states
 		for (final BoogieIcfgLocation locNode : allNodes) {
 			final boolean isInitial = initialNodes.contains(locNode);
 			final boolean isErrorLocation = errorLocs.contains(locNode);
-			
+
 			IPredicate automatonState;
 			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
 			if (mStoreHistory) {
@@ -152,10 +152,10 @@ public class CFG2NestedWordAutomaton {
 			} else {
 				automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
 			}
-			
+
 			nwa.addState(isInitial, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
-			
+
 			// // add transitions to the error location if correctness of the
 			// // program can be violated at locNode
 			// Map<AssumeStatement, TransFormula> violations =
@@ -170,7 +170,7 @@ public class CFG2NestedWordAutomaton {
 			// }
 			// }
 		}
-		
+
 		mLogger.debug("Step: add transitions");
 		// add transitions
 		for (final BoogieIcfgLocation locNode : allNodes) {

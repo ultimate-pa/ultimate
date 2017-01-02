@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -60,6 +60,6 @@ public interface IInvariantPatternProcessorFactory<IPT> {
 //			final IPredicate precondition, final IPredicate postcondition);
 	
 	public IInvariantPatternProcessor<IPT> produce(final List<IcfgLocation> locations, 
-		final List<IcfgInternalAction> transitions, final IPredicate precondition,
+		final List<IcfgInternalTransition> transitions, final IPredicate precondition,
 		final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation);
 }

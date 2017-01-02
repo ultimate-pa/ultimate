@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
@@ -63,7 +63,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 		super();
 		mMap = newMap();
 	}
-	
+
 	protected abstract MAP newMap();
 
 	protected abstract Set<R> newSet();
@@ -73,7 +73,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	 * 
 	 * @return if this relation did not already contain the specified pair.
 	 */
-	public boolean addPair(D domainElem, R rangeElem) {
+	public boolean addPair(final D domainElem, final R rangeElem) {
 		Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			rangeElems = newSet();
@@ -87,7 +87,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	 * 
 	 * @return true if the set contained the specified pair.
 	 */
-	public boolean removePair(D domainElem, R rangeElem) {
+	public boolean removePair(final D domainElem, final R rangeElem) {
 		final boolean result;
 		final Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
@@ -105,7 +105,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
 	 * constructs new sets if necessary.
 	 */
-	public void addAll(AbstractRelation<D, R, ?> rel) {
+	public void addAll(final AbstractRelation<D, R, ?> rel) {
 		for (final Entry<D, Set<R>> entry : rel.mMap.entrySet()) {
 			Set<R> rangeElems = mMap.get(entry.getKey());
 			if (rangeElems == null) {
@@ -119,13 +119,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	/**
 	 * @return true if the pair (domainElem, rangeElem) is contained in the relation.
 	 */
-	public boolean containsPair(D domainElem, R rangeElem) {
+	public boolean containsPair(final D domainElem, final R rangeElem) {
 		final Set<R> rangeElems = mMap.get(domainElem);
 		if (rangeElems == null) {
 			return false;
-		} else {
-			return rangeElems.contains(rangeElem);
 		}
+		return rangeElems.contains(rangeElem);
 	}
 
 	/**
@@ -139,13 +138,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	 * Returns the set of all elements r such that for a the given element domainElem, the pair (domainElem, r) is in
 	 * the relation.
 	 */
-	public Set<R> getImage(D domainElem) {
+	public Set<R> getImage(final D domainElem) {
 		final Set<R> set = mMap.get(domainElem);
 		if (set == null) {
 			return Collections.emptySet();
-		} else {
-			return Collections.unmodifiableSet(mMap.get(domainElem));
 		}
+		return Collections.unmodifiableSet(mMap.get(domainElem));
 	}
 
 	/**
@@ -162,12 +160,11 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	/**
 	 * Returns the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
 	 */
-	public int numberofPairsWithGivenDomainElement(D domainElem) {
+	public int numberofPairsWithGivenDomainElement(final D domainElem) {
 		if (getDomain().contains(domainElem)) {
 			return getImage(domainElem).size();
-		} else {
-			return 0;
 		}
+		return 0;
 	}
 
 	@Override
@@ -186,12 +183,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 		return new Set<Map.Entry<D, R>>() {
 
 			@Override
-			public boolean add(Entry<D, R> arg0) {
+			public boolean add(final Entry<D, R> arg0) {
 				return addPair(arg0.getKey(), arg0.getValue());
 			}
 
 			@Override
-			public boolean addAll(Collection<? extends Entry<D, R>> arg0) {
+			public boolean addAll(final Collection<? extends Entry<D, R>> arg0) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
@@ -200,18 +197,18 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
+			@SuppressWarnings("unchecked")
 			@Override
-			public boolean contains(Object arg0) {
+			public boolean contains(final Object arg0) {
 				if (arg0 instanceof Map.Entry) {
 					final Map.Entry<D, R> entry = (Entry<D, R>) arg0;
 					return containsPair(entry.getKey(), entry.getValue());
-				} else {
-					return false;
 				}
+				return false;
 			}
 
 			@Override
-			public boolean containsAll(Collection<?> arg0) {
+			public boolean containsAll(final Collection<?> arg0) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
@@ -264,13 +261,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 								}
 
 								@Override
-								public R setValue(R arg0) {
+								public R setValue(final R arg0) {
 									throw new UnsupportedOperationException("not yet implemented");
 								}
 							};
-						} else {
-							return null;
 						}
+						return null;
 
 					}
 
@@ -288,23 +284,23 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 				};
 			}
 
+			@SuppressWarnings("unchecked")
 			@Override
-			public boolean remove(Object arg0) {
+			public boolean remove(final Object arg0) {
 				if (arg0 instanceof Map.Entry) {
 					final Map.Entry<D, R> entry = (Entry<D, R>) arg0;
 					return removePair(entry.getKey(), entry.getValue());
-				} else {
-					return false;
 				}
+				return false;
 			}
 
 			@Override
-			public boolean removeAll(Collection<?> arg0) {
+			public boolean removeAll(final Collection<?> arg0) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
 			@Override
-			public boolean retainAll(Collection<?> arg0) {
+			public boolean retainAll(final Collection<?> arg0) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
@@ -319,11 +315,10 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 			}
 
 			@Override
-			public <T> T[] toArray(T[] a) {
+			public <T> T[] toArray(final T[] a) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
 
 		};
-
 	}
 }

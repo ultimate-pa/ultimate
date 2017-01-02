@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
@@ -40,25 +40,22 @@ public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 
 	@Override
 	protected Map<D, Set<R>> newMap() {
-		return new HashMap<D, Set<R>>();
+		return new HashMap<>();
 	}
 
 	@Override
 	protected Set<R> newSet() {
-		return new HashSet<R>();
+		return new HashSet<>();
 	}
 
-	
 	public HashRelation<D, R> copy() {
-		HashRelation<D, R> result = new HashRelation<>();
-		
-		for (D dElement : this.getDomain()) {
-			for (R rElement : this.getImage(dElement)) {
+		final HashRelation<D, R> result = new HashRelation<>();
+
+		for (final D dElement : getDomain()) {
+			for (final R rElement : getImage(dElement)) {
 				result.addPair(dElement, rElement);
 			}
 		}
-		
 		return result;
 	}
-
 }

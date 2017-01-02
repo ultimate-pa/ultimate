@@ -211,7 +211,12 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		return mLoopLocations;
 	}
 
-	private final static class PathProgramIcfgLocation extends IcfgLocation {
+	@Override
+	public Class<IcfgLocation> getLocationClass() {
+		return IcfgLocation.class;
+	}
+
+	private static final class PathProgramIcfgLocation extends IcfgLocation {
 
 		private static final long serialVersionUID = 1L;
 		private final IcfgLocation mBacking;

@@ -30,41 +30,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Generic implementation of a {@link IReturnAction} in an ICFG.
+ * Generic implementation of a {@link ICallAction} in an ICFG.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgReturnAction extends AbstractIcfgAction
-		implements IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> {
-	private static final long serialVersionUID = -3769742545108313891L;
-	private final UnmodifiableTransFormula mAssignmentOfReturn;
+public class IcfgCallTransition extends AbstractIcfgTransition implements IIcfgCallTransition<IcfgLocation> {
+	private static final long serialVersionUID = 277117187386915562L;
 	private final UnmodifiableTransFormula mLocalVarsAssignment;
-	private final IcfgCallAction mCorrespondingCall;
 
-	public IcfgReturnAction(final IcfgLocation source, final IcfgLocation target,
-			final IcfgCallAction correspondingCall, final IPayload payload,
-			final UnmodifiableTransFormula assignmentOfReturn,
-			final UnmodifiableTransFormula localVarsAssignmentOfCall) {
+	public IcfgCallTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
+			final UnmodifiableTransFormula localVarsAssignment) {
 		super(source, target, payload);
-		mCorrespondingCall = correspondingCall;
-		mAssignmentOfReturn = assignmentOfReturn;
-		mLocalVarsAssignment = localVarsAssignmentOfCall;
+		mLocalVarsAssignment = localVarsAssignment;
 	}
 
 	@Override
-	public UnmodifiableTransFormula getAssignmentOfReturn() {
-		return mAssignmentOfReturn;
-	}
-
-	@Override
-	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
+	public UnmodifiableTransFormula getLocalVarsAssignment() {
 		return mLocalVarsAssignment;
-	}
-
-	@Override
-	public IcfgCallAction getCorrespondingCall() {
-		return mCorrespondingCall;
 	}
 }

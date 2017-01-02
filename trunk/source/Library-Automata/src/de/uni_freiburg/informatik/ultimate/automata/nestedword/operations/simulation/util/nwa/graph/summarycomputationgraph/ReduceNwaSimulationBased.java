@@ -108,8 +108,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 				mResult = (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
 			} else {
 				final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
-				final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
-						!mergeFinalAndNonFinalStates, equivalenceRelation.getAllEquivalenceClasses(), false, false, false, true, false, false);
+				final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer =
+						new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
+						equivalenceRelation.getAllEquivalenceClasses(),
+						new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 				mResult = maxSatMinimizer.getResult();
 			}
 			sim.triggerComputationOfPerformanceData(mResult);
