@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,7 +84,12 @@ public class LinearPatternBase extends AbstractLinearInvariantPattern {
 	 *         to the given mapping
 	 */
 	public LinearInequality getLinearInequality(final Map<IProgramVar, Term> map) {
-		final LinearInequality inequality = mFunctionGenerator.generate(map);
+		assert (map.keySet().containsAll(mVariablesOfThisPattern)) : "The given map does not contain an entry for each variable of this pattern";
+		Map<IProgramVar, Term> vars2TermsForThisPattern = new HashMap<>(mVariablesOfThisPattern.size());
+		for (IProgramVar var : mVariablesOfThisPattern) {
+			vars2TermsForThisPattern.put(var, map.get(var));
+		}
+		final LinearInequality inequality = mFunctionGenerator.generate(vars2TermsForThisPattern);
 		inequality.setStrict(mStrictInequality);
 		return inequality;
 	}

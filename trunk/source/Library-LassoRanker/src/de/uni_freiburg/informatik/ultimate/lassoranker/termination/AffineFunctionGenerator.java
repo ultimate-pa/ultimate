@@ -140,9 +140,7 @@ public class AffineFunctionGenerator implements Serializable {
 	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars, Map<IProgramVar, AffineTerm> programVars2NumericalCoefficients ) {
 		final LinearInequality li = new LinearInequality();
 		for (final Map.Entry<IProgramVar,? extends Term> entry : vars.entrySet()) {
-//			if (mcoefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(), programVars2NumericalCoefficients.get(entry.getKey()));
-//			}
 		}
 		return li;
 	}

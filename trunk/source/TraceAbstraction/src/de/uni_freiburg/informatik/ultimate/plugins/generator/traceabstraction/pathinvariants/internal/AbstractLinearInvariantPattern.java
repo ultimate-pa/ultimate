@@ -28,6 +28,10 @@ public abstract class AbstractLinearInvariantPattern {
 	
 	protected Set<IProgramVar> mVariablesOfThisPattern;
 	
+	protected AbstractLinearInvariantPattern () {
+		
+	}
+	
 	public AbstractLinearInvariantPattern (final Script solver,
 			final Set<IProgramVar> variables, final String prefix,
 			final boolean strict) {

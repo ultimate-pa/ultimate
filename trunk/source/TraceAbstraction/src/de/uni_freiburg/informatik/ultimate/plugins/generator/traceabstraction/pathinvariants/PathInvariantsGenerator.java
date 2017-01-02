@@ -76,9 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearPatternBase;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LiveVariablesStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
@@ -102,7 +100,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private static final boolean USE_LIVE_VARIABLES = !false;
+	private static final boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -261,8 +259,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 			
 		}
-		return locs2WP.keySet().stream().collect(Collectors.toMap(loc -> loc, 
+		Map<IcfgLocation, UnmodifiableTransFormula> result = locs2WP.keySet().stream().collect(Collectors.toMap(loc -> loc, 
 				loc -> TransFormulaBuilder.constructTransFormulaFromPredicate(locs2WP.get(loc), managedScript)));
+		// remove the mapping error-location -> false from result
+		result.remove(errorloc);
+		return result;
 	}
 	
 	private IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {

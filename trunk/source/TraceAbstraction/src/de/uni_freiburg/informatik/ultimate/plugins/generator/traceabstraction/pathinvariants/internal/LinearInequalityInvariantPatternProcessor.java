@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -115,7 +116,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final LinearTransition mPrecondition;
 	private final LinearTransition mPostcondition;
 	private final CachedTransFormulaLinearizer mLinearizer;
-	//	private final ControlFlowGraph cfg;
 
 	// New CFG
 	private final List<IcfgInternalAction> mTransitions;
@@ -148,12 +148,14 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final IcfgLocation mErrorLocation;
 	
 	private static final boolean PRINT_CONSTRAINTS = false;
+	private static final boolean DEBUG_OUTPUT = false;
 	
 	/**
 	 * Maps a location to a set of program variables which are <i> live </i> at that location.
 	 */
 	private Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
 	private final boolean mUseLiveVariables;
+	private Map<Collection<Term>, Map<Term, Rational>> mCachedCoefficients2ValuesRequests;
 
 
 
@@ -194,7 +196,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final Script solver,
 			final List<IcfgLocation> locations, final List<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
-			IcfgLocation startLocation, IcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
+			IcfgLocation startLocation, IcfgLocation errorLocation, 
+			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final boolean useNonlinearConstraints,
 			final boolean useVarsFromUnsatCore,
 			final boolean useLiveVars,
@@ -231,6 +234,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		mLocs2LiveVariables = mLocs2LiveVariables2;
 		mUseLiveVariables = useLiveVars;
+		mCachedCoefficients2ValuesRequests = new HashMap<>();
 	}
 	/**
 	 * {@inheritDoc}
@@ -282,6 +286,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mAnnotTerm2OriginalTerm = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
+		// Reset the cached requests for valuations of coefficients
+		mCachedCoefficients2ValuesRequests = new HashMap<>();
 	}
 
 	/**
@@ -309,7 +315,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
 			final Collection<Collection<AbstractLinearInvariantPattern>> pattern,
-			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
+			final Map<IProgramVar, Term> mapping) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
 		for (final Collection<AbstractLinearInvariantPattern> conjunct : pattern) {
@@ -342,11 +348,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
 			final Collection<Collection<AbstractLinearInvariantPattern>> pattern,
-			final Map<IProgramVar, Term> mapping, Map<IProgramVar, Term> lastOccurrencesOfTermVariables) {
+			final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
-				pattern, mapping, lastOccurrencesOfTermVariables);
+				pattern, mapping);
 		// 2. negate every LinearInequality, result is a cnf
 		final Collection<Collection<LinearInequality>> cnfAfterNegation = new ArrayList<>(
 				mappedPattern.size());
@@ -483,7 +489,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			conditionDNF.add(newList);
 		}
 		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(
-				pattern, primedMapping, null);
+				pattern, primedMapping);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -529,7 +535,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		final Collection<Collection<LinearInequality>> newConditionDNF = expandCnfToDnf(conditionCNF);
 
 		final Collection<Collection<LinearInequality>> PatternDNF = mapPattern(
-				pattern, primedMapping, null);
+				pattern, primedMapping);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : PatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -540,10 +546,18 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		return transformNegatedConjunction(newConditionDNF, PatternDNF);
 	}
 	
-	private static void completePatternVariablesMapping(Map<IProgramVar, Term> mapToComplete, Set<IProgramVar> varsShouldBeInMap, Map<IProgramVar, Term> mapToCompleteWith) {
+	private void completePatternVariablesMapping(Map<IProgramVar, Term> mapToComplete, Set<IProgramVar> varsShouldBeInMap, Map<IProgramVar, Term> mapToCompleteWith) {
+		final String prefix = newPrefix() + "replace_";
+		int index = 0;
 		for (IProgramVar var : varsShouldBeInMap) {
 			if (!mapToComplete.containsKey(var)) {
-				mapToComplete.put(var, mapToCompleteWith.get(var));
+				if (mapToCompleteWith.get(var) != null) {
+					mapToComplete.put(var, mapToCompleteWith.get(var));
+				} else {
+					final Term replacement = SmtUtils.buildNewConstant(mSolver, prefix + var + "_" + (index++), "Real");
+					mapToComplete.put(var, replacement);
+					mapToCompleteWith.put(var, replacement);
+				}
 			}
 		}
 	}
@@ -584,15 +598,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 //		lastOccurrencesOfTermVariables.putAll(primedMapping);
 		
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
-				predicate.getInvStart(), unprimedMapping, lastOccurrencesOfTermVariables);
+				predicate.getInvStart(), unprimedMapping);
 		final Collection<Collection<LinearInequality>> endInvariantDNF = mapAndNegatePattern(
-				predicate.getInvEnd(), primedMapping, lastOccurrencesOfTermVariables);
+				predicate.getInvEnd(), primedMapping);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : endInvariantDNF) {
 			numberOfInequalities += conjunct.size();
 		}
 		mLogger.info( "[LIIPP] Got a predicate term with "
-				+ numberOfInequalities + " conjuncts");
+				+ numberOfInequalities + " conjuncts and " + primedMapping.keySet().size() + " variables.");
 		final Collection<List<LinearInequality>> transitionDNF_ = transition
 				.getPolyhedra();
 		final Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
@@ -841,19 +855,24 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 					conjunct.size());
 			for (final AbstractLinearInvariantPattern inequality : conjunct) {
 				Map<Term, Rational> valuation = null;
-				try {
-					if (mSimplifySatisfyingAssignment) {
-						valuation = ModelExtractionUtils.getSimplifiedAssignment(
-								mSolver, inequality.getCoefficients(), mLogger, mServices);
-					} else {
-						valuation = ModelExtractionUtils.getValuation(mSolver,
-								inequality.getCoefficients());
+				if (!mCachedCoefficients2ValuesRequests.containsKey(inequality.getCoefficients())) {
+					try {
+						if (mSimplifySatisfyingAssignment) {
+							valuation = ModelExtractionUtils.getSimplifiedAssignment(
+									mSolver, inequality.getCoefficients(), mLogger, mServices);
+						} else {
+							valuation = ModelExtractionUtils.getValuation(mSolver,
+									inequality.getCoefficients());
+						}
 					}
-				}
-				catch (TermException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					mLogger.error("Getting values for coefficients for current pattern failed." +  inequality.toString());
+					catch (TermException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						mLogger.error("Getting values for coefficients for current pattern failed." +  inequality.toString());
+					}
+					mCachedCoefficients2ValuesRequests.put(inequality.getCoefficients(), valuation);
+				} else {
+					valuation = mCachedCoefficients2ValuesRequests.get(inequality.getCoefficients());
 				}
 				
 				final Term affineFunctionTerm = inequality.getAffineFunction(
@@ -934,39 +953,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			assert mExitInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
 			return mExitInvariantPattern;
 		} else {
-//			final int[] dimensions = mStrategy.getDimensions(location, round);
-//			// Build invariant pattern
-//			final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(dimensions[0]);
-//			Set<IProgramVar> variablesForThisPattern = mPatternCoefficients;
-//			if (mUseLiveVariables) {
-//				Set<IProgramVar> liveVars = mLocs2LiveVariables.get(location);
-//				if (liveVars != null) {
-//					// Remove all variables that are not live
-//					variablesForThisPattern.retainAll(liveVars);
-//				}
-//			}
-//			for (int i = 0; i < dimensions[0]; i++) {
-//				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
-//						dimensions[1]);
-//				for (int j = 0; j < dimensions[1]; j++) {
-//					final boolean[] invariantPatternCopies;
-//					if (mAlwaysStrictAndNonStrictCopies ) {
-//						invariantPatternCopies = new boolean[] { false, true }; 
-//					} else {
-//						invariantPatternCopies = new boolean[] { false };
-//					}
-//					for (final boolean strict : invariantPatternCopies) {
-//						final LinearPatternBase inequality = new LinearPatternBase (
-//								mSolver, variablesForThisPattern, newPrefix(), strict);
-//						Collection<Term> params = inequality.getVariables();
-//						mPatternVariables.addAll(params);
-//						conjunction.add(inequality);
-//					}
-//				}
-//				disjunction.add(conjunction);
-//			}
-//			return disjunction;
-			return mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix());
+
+			Collection<Collection<AbstractLinearInvariantPattern>> p = mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix());
+			if (DEBUG_OUTPUT) {	mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p)); }
+			return p;
 		}
 
 	}
@@ -1005,6 +995,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final UnmodifiableTransFormula tf) {
 		assert pattern != null : "pattern must not be null";
 		assert tf != null : "TransFormula must  not be null";
+		if (DEBUG_OUTPUT) { mLogger.info("Size of pattern before adding WP: " + getSizeOfPattern(pattern)); }
 		Collection<Collection<AbstractLinearInvariantPattern>> transFormulaAsLinIneqs = convertTransFormulaToPatternsForLinearInequalities(tf);
 		Collection<Collection<AbstractLinearInvariantPattern>> result = new ArrayList<>();
 		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
@@ -1017,8 +1008,22 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			}
 			
 		}
+		if (DEBUG_OUTPUT) { mLogger.info("Size of pattern after adding WP: " + getSizeOfPattern(result));}
 		return result;
 	}
+	
+	private String getSizeOfPattern(Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
+		int totalNumOfConjuncts = 0;
+		int[] conjunctsEachDisjunct = new int[pattern.size()];
+		int totalNumOfDisjuncts = 0;
+		for (Collection<AbstractLinearInvariantPattern> conjuncts : pattern) {
+			totalNumOfConjuncts += conjuncts.size();
+			conjunctsEachDisjunct[totalNumOfDisjuncts] = conjuncts.size();
+			totalNumOfDisjuncts++;
+		}
+		return  totalNumOfDisjuncts + " disjuncts with each " + Arrays.toString(conjunctsEachDisjunct) + " conjuncts (Total: " + totalNumOfConjuncts + " cojuncts)";
+	}
+	
 	
 	private Collection<Collection<AbstractLinearInvariantPattern>> convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
 		Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();

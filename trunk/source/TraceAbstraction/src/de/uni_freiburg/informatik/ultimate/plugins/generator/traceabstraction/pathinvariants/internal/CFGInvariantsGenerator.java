@@ -206,6 +206,7 @@ public final class CFGInvariantsGenerator {
 		mLogger.info("Add weakest precondition to invariant patterns.");
 		if (addWPToEeachDisjunct) {
 			for (Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : pathprogramLocs2WP.entrySet()) {
+				mLogger.info("Loc: " + entry.getKey() +  " WP: " + entry.getValue());
 				IPT newPattern = processor.addTransFormulaToEachConjunctInPattern(patterns.get(entry.getKey()), entry.getValue());
 				patterns.put(entry.getKey(), newPattern);
 			}
