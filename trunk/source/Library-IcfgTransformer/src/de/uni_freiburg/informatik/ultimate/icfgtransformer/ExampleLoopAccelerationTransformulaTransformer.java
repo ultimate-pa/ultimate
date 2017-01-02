@@ -26,14 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.util.Collections;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -44,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class ExampleLoopAccelerationTransformulaTransformer implements ITransformulaTransformer<TransFormula> {
-	
+
 	private final ILogger mLogger;
 	private final TransFormula mResult;
-	
+
 	/**
 	 * Create an {@link ExampleLoopAccelerationTransformulaTransformer} instance.
 	 * 
@@ -71,23 +72,24 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 		mResult = transform(Objects.requireNonNull(loopBody), Objects.requireNonNull(managedScript),
 				Objects.requireNonNull(oldSymbolTable), Objects.requireNonNull(replacementVarFac));
 	}
-	
+
 	private TransFormula transform(final TransFormula loopBody, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Performing identity transformation for " + loopBody);
 		}
-		return new ModifiableTransFormula(loopBody.getFormula());
+		return TransFormulaBuilder.constructCopy(managedScript, loopBody, Collections.emptySet(),
+				Collections.emptySet(), Collections.emptyMap());
 	}
-	
+
 	@Override
 	public TransFormula getTransformationResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public String getName() {
 		return getClass().getSimpleName();
 	}
-	
+
 }

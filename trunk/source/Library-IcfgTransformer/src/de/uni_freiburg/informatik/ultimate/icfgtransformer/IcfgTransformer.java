@@ -179,6 +179,7 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 				new ExampleLoopAccelerationTransformulaTransformer(mLogger, mManagedScript, origSymbolTable, repVarFac,
 						oldTransFormula);
 		final TransFormula newTransformula = transformer.getTransformationResult();
+		// TODO: Ask Matthias why its so "expensive" to create an unmodifiable view of an existing transformula
 		return TransFormulaBuilder.constructCopy(mManagedScript, newTransformula, Collections.emptySet(),
 				Collections.emptySet(), Collections.emptyMap());
 	}
