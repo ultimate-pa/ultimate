@@ -94,12 +94,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
 	// program to
 	// the predecessor of the predecessor of the error location.
-	private static final boolean USE_WEAKEST_PRECONDITION = false;
+	private final boolean mUseWeakestPrecondition;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private static final boolean USE_LIVE_VARIABLES = false;
+	private final boolean mUseLiveVariables;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -145,7 +145,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 					final Set<IProgramVar> allProgramVariables,
 					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
-		// TODO Auto-generated method stub
 
 		if (useLiveVars) {
 			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
@@ -178,7 +177,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
+			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVariables, 
+			final boolean useWPForPathInvariants, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -189,6 +189,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mPredicateUnifier = predicateUnifier;
 		mPredicateTransformer = new PredicateTransformer(services, icfg.getCfgSmtToolkit().getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique);
+		mUseLiveVariables = useLiveVariables;
+		mUseWeakestPrecondition = useWPForPathInvariants;
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
@@ -414,21 +416,22 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				+ transitionsAsList.size() + " transitions.");
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
-		if (USE_LIVE_VARIABLES) {
+		if (mUseLiveVariables) {
 			pathprogramLocs2LiveVars = computeLiveVariablesForPathProgram(pathProgram);
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
+			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars );
 		}
 		Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP = null;
-		if (USE_WEAKEST_PRECONDITION) {
+		if (mUseWeakestPrecondition) {
 			pathprogramLocs2WP = computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript());
 		}
 
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(useVarsFromUnsatCore, USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars);
+				getStrategy(useVarsFromUnsatCore, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
 				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore,
-				USE_LIVE_VARIABLES, pathprogramLocs2LiveVars, solverSettings, simplificationTechnique,
+				mUseLiveVariables, pathprogramLocs2LiveVars, solverSettings, simplificationTechnique,
 				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants
@@ -437,7 +440,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
-				pathprogramLocs2WP, USE_WEAKEST_PRECONDITION, ADD_WP_TO_EACH_CONJUNCT);
+				pathprogramLocs2WP, mUseWeakestPrecondition, ADD_WP_TO_EACH_CONJUNCT);
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
 		return invariants;

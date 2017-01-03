@@ -79,7 +79,8 @@ public class TaCheckAndRefinementPreferences {
 	private final boolean mUseLiveVariables;
 	private final boolean mUseInterpolantConsolidation;
 	private final boolean mUseNonlinearConstraints;
-	private final boolean mUseVarsFromUnsatCore;
+	private final boolean mUseVarsFromUnsatCoreForPathInvariants;
+	private final boolean mUseWeakestPreconditionForPathInvariants;
 	
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -140,8 +141,10 @@ public class TaCheckAndRefinementPreferences {
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
 		mUseNonlinearConstraints = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
-		mUseVarsFromUnsatCore =
+		mUseVarsFromUnsatCoreForPathInvariants =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
+		mUseWeakestPreconditionForPathInvariants = 
+				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS);
 	}
 	
 	public RefinementStrategy getRefinementStrategy() {
@@ -229,7 +232,11 @@ public class TaCheckAndRefinementPreferences {
 	}
 	
 	public boolean getUseVarsFromUnsatCore() {
-		return mUseVarsFromUnsatCore;
+		return mUseVarsFromUnsatCoreForPathInvariants;
+	}
+	
+	public boolean getUseWeakestPreconditionForPathInvariants() {
+		return mUseWeakestPreconditionForPathInvariants;
 	}
 	
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {

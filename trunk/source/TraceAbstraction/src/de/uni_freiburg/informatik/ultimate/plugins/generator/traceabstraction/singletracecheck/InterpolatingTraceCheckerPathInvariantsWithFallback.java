@@ -60,6 +60,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final Settings mSolverSettings;
 	private final IIcfg<?> mIcfg;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
+	private final boolean mUseLiveVariables;
+	private final boolean mUseWPForPathInvariants;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -67,7 +69,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final Settings solverSettings,
+			final boolean useVarsFromUnsatCore, final boolean useLiveVariables, final boolean useWeakestPrecondition, final Settings solverSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final IIcfg<?> icfgContainer) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
@@ -77,6 +79,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
+		mUseLiveVariables = useLiveVariables;
+		mUseWPForPathInvariants = useWeakestPrecondition;
 		mSolverSettings = solverSettings;
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
@@ -94,7 +98,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		final PathInvariantsGenerator pathInvariantsGenerator =
 				new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(),
 						super.getPostcondition(), mPredicateUnifier, mIcfg, mUseNonlinerConstraints,
-						mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
+						mUseVarsFromUnsatCore, mUseLiveVariables, mUseWPForPathInvariants, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();

@@ -259,6 +259,8 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final IIcfg<BoogieIcfgLocation> icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
+		final boolean useLiveVariables = mPrefs.getUseLiveVariables();
+		final boolean useWeakestPrecondition = mPrefs.getUseWeakestPreconditionForPathInvariants();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getIdentifier() + "_Iteration" + mIteration;
@@ -279,7 +281,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
-				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, settings, xnfConversionTechnique,
+				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, useLiveVariables, useWeakestPrecondition, settings, xnfConversionTechnique,
 				simplificationTechnique, icfgContainer);
 	}
 	
