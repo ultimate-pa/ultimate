@@ -108,14 +108,16 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		final Set<INLOC> closed = new HashSet<>();
 
 		while (!open.isEmpty()) {
-			final INLOC current = open.removeFirst();
-			if (!closed.add(current)) {
+			final INLOC oldSource = open.removeFirst();
+			if (!closed.add(oldSource)) {
 				continue;
 			}
 
-			final OUTLOC newSource = createNewLocation(originalIcfg, resultIcfg, current);
-			for (final IcfgEdge oldTransition : current.getOutgoingEdges()) {
-				final OUTLOC newTarget = createNewLocation(originalIcfg, resultIcfg, current);
+			final OUTLOC newSource = createNewLocation(originalIcfg, resultIcfg, oldSource);
+			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+				final INLOC oldTarget = (INLOC) oldTransition.getTarget();
+				open.add(oldTarget);
+				final OUTLOC newTarget = createNewLocation(originalIcfg, resultIcfg, oldTarget);
 				final IcfgEdge newTransition;
 				if (oldTransition instanceof IIcfgInternalTransition) {
 					newTransition = createNewLocalTransition(newSource, newTarget,
