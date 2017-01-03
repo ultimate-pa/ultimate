@@ -38,6 +38,7 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -255,6 +256,22 @@ public class CACSL2BoogieBacktranslator
 				// invalid location
 				reportUnfinishedBacktranslation(
 						UNFINISHED_BACKTRANSLATION + ": Invalid location (Location is no CACSLLocation)");
+			}
+		}
+
+		// TODO: This is hacky because we get imprecise counterexamples for empty loops like BugForLoop01 -- the real
+		// reason must be the null node itself
+		// remove all ATEs where the step node is null
+		final Iterator<AtomicTraceElement<CACSLLocation>> iter = translatedATEs.iterator();
+		while (iter.hasNext()) {
+			final CACSLLocation step = iter.next().getStep();
+			if (!(step instanceof CLocation)) {
+				continue;
+			}
+			final IASTNode node = ((CLocation) step).getNode();
+			if (node == null) {
+				mLogger.warn("Removing null node from list of ATEs: " + step);
+				iter.remove();
 			}
 		}
 
