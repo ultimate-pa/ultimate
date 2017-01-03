@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,11 +38,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
@@ -74,6 +78,23 @@ public class QuantifierEliminationTest {
 	}
 	
 	@Test
+	public void prenexQuantifiedCapture() {
+		
+		final Sort sort_Int = script.sort("Int");
+		final Term seventeen = script.numeral(BigInteger.valueOf(17));
+		final Term fourtytwo = script.numeral(BigInteger.valueOf(42));
+		final TermVariable x = script.variable("x", sort_Int);
+		final Term eq1 = script.term("=", x, seventeen);
+		final Term eq2 = script.term("=", x, fourtytwo);
+		final Term qeq1 = script.quantifier(0, new TermVariable[] { x }, eq1);
+		final Term qeq2 = script.quantifier(0, new TermVariable[] { x }, eq2);
+		final Term term = script.term("and", qeq1, qeq2);
+		final Term result = new PrenexNormalForm(mMgdScript).transform(term);
+		script.assertTerm(result);
+		final LBool checkSatRes = script.checkSat();
+		Assert.assertTrue(checkSatRes == LBool.SAT);
+	}
+	
 	public void varStilThereBug(){
 		
 		
