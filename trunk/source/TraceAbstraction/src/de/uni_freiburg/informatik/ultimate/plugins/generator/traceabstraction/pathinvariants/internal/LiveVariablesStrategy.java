@@ -28,7 +28,7 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 
 
 	@Override
-	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
+	public final Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
 		return mLocations2LiveVariables.get(location);
 	}
 

@@ -130,7 +130,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	/**
 	 * For each new linear inequality there is a new unique Motzkin coefficient introduced, this map stores this relationship.
 	 */
-	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	private Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
 	
 	/**
 	 * Construct the MotzkinApplication object with a script instance.
@@ -151,7 +151,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		minequalities = new ArrayList<LinearInequality>();
 		mannotate_terms = annotate;
 		manalysis_type = termination_analysis;
-		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
+		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 	}
 	
 	/**
@@ -219,7 +219,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				String motzkinCoefficientName = s_motzkin_prefix + getInstanceNumber() + "_" + i;
 				final Term coefficient = SmtUtils.buildNewConstant(mscript, motzkinCoefficientName, "Real");
 				mcoefficients[i] = coefficient;
-				mMotzkinCoeffiecients2LinearInequalities.put(motzkinCoefficientName, li);
+				mMotzkinCoefficients2LinearInequalities.put(motzkinCoefficientName, li);
 			} else {
 				mcoefficients[i] = mscript.numeral(BigInteger.ONE);
 			}
@@ -230,8 +230,8 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Returns map from Motzkin coefficients to linear inequality.
 	 * @return
 	 */
-	public Map<String, LinearInequality> getMotzkinCoeffiecients2LinearInequalities() {
-		return mMotzkinCoeffiecients2LinearInequalities;
+	public Map<String, LinearInequality> getMotzkinCoefficients2LinearInequalities() {
+		return mMotzkinCoefficients2LinearInequalities;
 	}
 
 	/**

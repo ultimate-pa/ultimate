@@ -60,7 +60,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * 
 	 * @param round the round that is entered
 	 */
-	public void startRound(final int round, final boolean useVarsFromUsatCore, final Set<IProgramVar> varsFromUnsatCore);
+	public void startRound(final int round);
 
 	/**
 	 * Returns an invariant pattern for the given location.
@@ -74,6 +74,20 @@ public interface IInvariantPatternProcessor<IPT> {
 	 */
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round);
+	
+	
+	/**
+	 * Returns an invariant pattern for the given location, containing coefficients for each variable in the given set.
+	 * 
+	 * @param location
+	 *            the location to generate an invariant pattern for
+	 * @param round
+	 *            attempt number, initialized with 0 and increased on each
+	 *            attempt; see {@link #getMaxRounds()}
+	 * @return invariant pattern for location
+	 */
+	public IPT getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, Set<IProgramVar> vars);
 	
 	/**
 	 * Returns an empty invariant pattern that is equivalent to 'true'.
@@ -149,5 +163,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * @return the pattern, where the formula represented by the given TransFormula has been added as an additional disjunct.
 	 */
 	public IPT addTransFormulaAsAdditionalDisjunctToPattern(IPT pattern, UnmodifiableTransFormula tf);
+	
+	public Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation l, int round);
 
 }

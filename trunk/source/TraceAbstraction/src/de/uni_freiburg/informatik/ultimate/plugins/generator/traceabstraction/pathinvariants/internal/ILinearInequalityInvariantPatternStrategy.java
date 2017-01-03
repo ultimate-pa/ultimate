@@ -74,6 +74,9 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix);
 	
+	public IPT getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, final Script solver, final String prefix, Set<IProgramVar> vars);
+	
 	/**
 	 * Applies the configuration found with
 	 * {@link #hasValidConfiguration(Collection, int)} to a given invariant

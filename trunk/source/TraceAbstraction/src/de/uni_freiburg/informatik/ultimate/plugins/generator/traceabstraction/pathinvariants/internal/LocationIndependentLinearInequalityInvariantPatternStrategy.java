@@ -109,30 +109,36 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	}
 	
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
-			final int[] dimensions = getDimensions(location, round);
-			// Build invariant pattern
-			final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
-			for (int i = 0; i < dimensions[0]; i++) {
-				final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
-						dimensions[1]);
-				for (int j = 0; j < dimensions[1]; j++) {
-					final boolean[] invariantPatternCopies;
-//					if (mAlwaysStrictAndNonStrictCopies ) {
-//						invariantPatternCopies = new boolean[] { false, true }; 
-//					} else {
-						invariantPatternCopies = new boolean[] { false };
-//					}
-					for (final boolean strict : invariantPatternCopies) {
-						final LinearPatternBase inequality = new LinearPatternBase (
-								solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
-//						Collection<Term> params = inequality.getCoefficients();
-//						mPatternCoefficients.addAll(params);
-						conjunction.add(inequality);
-					}
+		return getInvariantPatternForLocation(location, round, solver, prefix, getPatternVariablesForLocation(location, round));
+	}
+	
+	@Override
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
+			int round, Script solver, String prefix, Set<IProgramVar> vars) {
+		final int[] dimensions = getDimensions(location, round);
+		// Build invariant pattern
+		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
+		for (int i = 0; i < dimensions[0]; i++) {
+			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
+					dimensions[1]);
+			for (int j = 0; j < dimensions[1]; j++) {
+				final boolean[] invariantPatternCopies;
+//				if (mAlwaysStrictAndNonStrictCopies ) {
+//					invariantPatternCopies = new boolean[] { false, true }; 
+//				} else {
+					invariantPatternCopies = new boolean[] { false };
+//				}
+				for (final boolean strict : invariantPatternCopies) {
+					final LinearPatternBase inequality = new LinearPatternBase (
+							solver, vars, prefix + "_" + newPrefix(), strict);
+//					Collection<Term> params = inequality.getCoefficients();
+//					mPatternCoefficients.addAll(params);
+					conjunction.add(inequality);
 				}
-				disjunction.add(conjunction);
 			}
-			return disjunction;
+			disjunction.add(conjunction);
+		}
+		return disjunction;
 	}
 
 	/**

@@ -98,9 +98,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private static final String ANNOT_PREFIX = "LIIPP_Annot";
 	private int mAnnotTermCounter;
 	/**
-	 * Stores the mapping from annotation of a term to the original term. It is used to restore the original terms from the unsat core.
+	 * Stores the mapping from annotation of a term to the original motzkin term. It is used to restore the original terms from the annotations in unsat core.
 	 */
-	private Map<String, Term> mAnnotTerm2OriginalTerm;
+	private Map<String, Term> mAnnotTerm2MotzkinTerm;
 	/**
 	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
 	 */
@@ -230,7 +230,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mAnnotTermCounter = 0;
-		mAnnotTerm2OriginalTerm = new HashMap<>();
+		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 //		mLocs2LiveVariables = mLocs2LiveVariables2;
 //		mUseLiveVariables = useLiveVars;
@@ -240,7 +240,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round, final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
+	public void startRound(final int round) {
 
 		resetSettings();
 //		mPatternVariables.clear();
@@ -284,7 +284,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		// Reset annotation term counter
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
-		mAnnotTerm2OriginalTerm = new HashMap<>();
+		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
 		// Reset the cached requests for valuations of coefficients
@@ -408,7 +408,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 					mSolver, analysisType, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
-			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoeffiecients2LinearInequalities());
+			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
 		}
 		return SmtUtils.and(mSolver, resultTerms);
 	}
@@ -587,13 +587,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 				transition.getInVars());
 		programVarsRecentlyOccurred.putAll(unprimedMapping);
 //		completeMapping(unprimedMapping);
-		completePatternVariablesMapping(unprimedMapping, mStrategy.getPatternVariablesForLocation(predicate.getSourceLocation(), mCurrentRound),
+		completePatternVariablesMapping(unprimedMapping, predicate.getVariablesForSourcePattern(),
 				programVarsRecentlyOccurred);
 		
 		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		programVarsRecentlyOccurred.putAll(primedMapping);
-		completePatternVariablesMapping(primedMapping, mStrategy.getPatternVariablesForLocation(predicate.getTargetLocation(), mCurrentRound),
+		completePatternVariablesMapping(primedMapping, predicate.getVariablesForTargetPattern(),
 				programVarsRecentlyOccurred);
 		if (DEBUG_OUTPUT) {
 			mLogger.info("Size of start-pattern before mapping to lin-inequalities: " + getSizeOfPattern(predicate.getInvStart()));
@@ -678,7 +678,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			// Generate unique name for this term
 			final String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter); 
 			// Store mapping termAnnotName -> original term
-			mAnnotTerm2OriginalTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
+			mAnnotTerm2MotzkinTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
 
 			final Annotation annot = new Annotation(":named", conjunctAnnotName);
 			final Term annotTerm = mSolver.annotate(conjunctsOfTerm[conjunctCounter], annot);
@@ -778,8 +778,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 				final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
 				final Set<String> motzkinVariables = new HashSet<>();
 				for (final Term t : unsatCoreAnnots) {
-					final Term origTerm = mAnnotTerm2OriginalTerm.get(t.toStringDirect());
-					motzkinVariables.addAll(getTermVariablesFromTerm(origTerm));
+					final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
+					motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
 				}
 				mVarsFromUnsatCore = new HashSet<>();
 				for (final String motzkinVar : motzkinVariables) {
@@ -974,7 +974,35 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			if (DEBUG_OUTPUT) {	mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p)); }
 			return p;
 		}
+	}
+	
+	@Override
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(final IcfgLocation location,
+			final int round, Set<IProgramVar> vars) {
+		
+		if (mStartLocation.equals(location)) {
+			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
+			return mEntryInvariantPattern;
+		} else if (mErrorLocation.equals(location)) {
+			assert mExitInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
+			return mExitInvariantPattern;
+		} else {
 
+			Collection<Collection<AbstractLinearInvariantPattern>> p = mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix(), vars);
+			if (DEBUG_OUTPUT) {	mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p)); }
+			return p;
+		}
+	}
+	
+	
+	
+//	@Override
+//	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocationWithVarsFromUnsatCore() {
+//		
+//	}
+	
+	public final Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation location, int round) {
+		return mStrategy.getPatternVariablesForLocation(location, round);
 	}
 	
 	

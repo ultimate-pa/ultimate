@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * A predicate formula representing a transition between two program points with
@@ -46,7 +49,9 @@ public class InvariantTransitionPredicate<IPT> {
 	private final IPT invEnd;
 	private final UnmodifiableTransFormula transition;
 	private final IcfgLocation mSourceLocation;
+	private final Set<IProgramVar> mVariablesForSourcePattern;
 	private final IcfgLocation mTargetLocation;
+	private final Set<IProgramVar> mVariablesForTargetPattern;
 
 	/**
 	 * Creates a invariant transition predicate from two given invariant
@@ -60,12 +65,15 @@ public class InvariantTransitionPredicate<IPT> {
 	 *            the TransFormula describing the transition's behavior
 	 */
 	public InvariantTransitionPredicate(final IPT invStart, final IPT invEnd, IcfgLocation sourceLocation, IcfgLocation targetLocation,
+			final Set<IProgramVar> varsForSourcePattern, final Set<IProgramVar> varsForTargetPattern, 
 			final UnmodifiableTransFormula transition) {
 		this.invStart = invStart;
 		this.invEnd = invEnd;
 		this.transition = transition;
 		mSourceLocation = sourceLocation;
 		mTargetLocation = targetLocation;
+		mVariablesForSourcePattern = varsForSourcePattern;
+		mVariablesForTargetPattern = varsForTargetPattern;
 	}
 
 	/**
@@ -101,5 +109,12 @@ public class InvariantTransitionPredicate<IPT> {
 	
 	public final IcfgLocation getTargetLocation() {
 		return mTargetLocation;
+	}
+	
+	public final Set<IProgramVar> getVariablesForSourcePattern() {
+		return mVariablesForSourcePattern;
+	}
+	public final Set<IProgramVar> getVariablesForTargetPattern() {
+		return mVariablesForTargetPattern;
 	}
 }
