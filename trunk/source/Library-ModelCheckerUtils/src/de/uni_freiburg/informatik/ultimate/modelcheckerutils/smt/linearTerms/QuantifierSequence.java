@@ -156,6 +156,10 @@ public class QuantifierSequence {
 		final Set<TermVariable> occurredVariables = new HashSet<>(freeVariables);
 		for (int i=0; i<quantifierSequences.length; i++) {
 			quantifierSequences[i].replace(occurredVariables, mgdScript, "prenex");
+			// add all quantified variables to occurred Variables to avoid name clashes
+			for (final QuantifiedVariables quantifiedVars : quantifierSequences[i].getQuantifierBlocks()) {
+				occurredVariables.addAll(quantifiedVars.getVariables());
+			}
 			innerTerms[i] = quantifierSequences[i].getInnerTerm();
 			if (quantifierSequences[i].getNumberOfQuantifierBlocks() > 0) {
 				integrateQuantifierBlocks(resultQuantifierBlocks, quantifierSequences[i].getQuantifierBlocks());
