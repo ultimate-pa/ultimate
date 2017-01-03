@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -41,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -53,19 +53,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class HoareAnnotationWriter {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<BoogieIcfgLocation> mRootAnnot;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationComposer mCegarLoopHoareAnnotation;
-	
+
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry given by automaton?
 	 */
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
-	
+
 	public HoareAnnotationWriter(final IIcfg<BoogieIcfgLocation> rootAnnot, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final HoareAnnotationComposer cegarLoopHoareAnnotation,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplicationTechnique,
@@ -79,14 +79,14 @@ public class HoareAnnotationWriter {
 		mPredicateTransformer = new PredicateTransformer(services, csToolkit.getManagedScript(), simplicationTechnique,
 				xnfConversionTechnique);
 	}
-	
+
 	public void addHoareAnnotationToCFG() {
 		for (final Entry<IcfgLocation, IPredicate> entry : mCegarLoopHoareAnnotation.getLoc2hoare().entrySet()) {
 			final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(entry.getKey());
 			final HoareAnnotation hoareAnnot;
 			if (taAnnot == null) {
-				hoareAnnot = mPredicateFactory.getNewHoareAnnotation((BoogieIcfgLocation) entry.getKey(),
-						mCsToolkit.getModifiableGlobalsTable());
+				hoareAnnot =
+						mPredicateFactory.getNewHoareAnnotation(entry.getKey(), mCsToolkit.getModifiableGlobalsTable());
 				hoareAnnot.annotate(entry.getKey());
 			} else {
 				hoareAnnot = taAnnot;
@@ -99,7 +99,7 @@ public class HoareAnnotationWriter {
 		// locPrecondInvariant.getThird());
 		// }
 	}
-	
+
 	/**
 	 * @param csToolkit
 	 * @param precondForContext
@@ -114,31 +114,30 @@ public class HoareAnnotationWriter {
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
-	
+
 	private void addFormulasToLocNodes(final IcfgLocation pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
 		final String locName = pp.getDebugIdentifier();
 		final BoogieIcfgLocation locNode = mRootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
-		
+
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mPredicateFactory.getNewHoareAnnotation((BoogieIcfgLocation) pp,
-					mCsToolkit.getModifiableGlobalsTable());
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobalsTable());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;
 		}
 		hoareAnnot.addInvariant(context, current);
 	}
-	
-	private static Call getCall(final ISLPredicate pred) {
-		final BoogieIcfgLocation pp = pred.getProgramPoint();
-		Call result = null;
+
+	private static IIcfgCallTransition<?> getCall(final ISLPredicate pred) {
+		final IcfgLocation pp = pred.getProgramPoint();
+		IIcfgCallTransition<?> result = null;
 		for (final IcfgEdge edge : pp.getOutgoingEdges()) {
-			if (edge instanceof Call) {
+			if (edge instanceof IIcfgCallTransition<?>) {
 				if (result == null) {
-					result = (Call) edge;
+					result = (IIcfgCallTransition<?>) edge;
 				} else {
 					throw new UnsupportedOperationException("several outgoing calls");
 				}
@@ -149,7 +148,7 @@ public class HoareAnnotationWriter {
 		}
 		return result;
 	}
-	
+
 	private static boolean containsAnOldVar(final IPredicate p) {
 		for (final IProgramVar bv : p.getVars()) {
 			if (bv.isOldvar()) {
@@ -158,5 +157,5 @@ public class HoareAnnotationWriter {
 		}
 		return false;
 	}
-	
+
 }

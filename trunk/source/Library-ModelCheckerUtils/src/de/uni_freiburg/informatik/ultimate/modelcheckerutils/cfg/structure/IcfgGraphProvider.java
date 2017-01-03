@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  *
@@ -38,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  *
  */
 public final class IcfgGraphProvider {
-	
+
 	public static <LOC extends IcfgLocation> VisualizationNode getVisualizationGraph(final IIcfg<LOC> cont) {
 		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode> artificialRoot =
 				getVirtualRoot(cont);
 		return new VisualizationNode(artificialRoot);
 	}
-	
+
 	public static <LOC extends IcfgLocation>
 			IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode>
 			getVirtualRoot(final IIcfg<LOC> cont) {
@@ -59,22 +60,27 @@ public final class IcfgGraphProvider {
 		}
 		return artificialRoot;
 	}
-	
+
 	private static final class IcfgVirtualRoot extends IcfgLocation {
-		
+
 		private static final long serialVersionUID = 7322581913329216222L;
-		
+
 		protected IcfgVirtualRoot() {
 			super("ARTIFICIAL-ROOT", "");
 		}
 	}
-	
+
 	private static final class IcfgVirtualRootEdge extends IcfgEdge {
-		
+
 		private static final long serialVersionUID = 7322581913329216222L;
-		
+
 		protected IcfgVirtualRootEdge(final IcfgLocation source, final IcfgLocation target) {
 			super(source, target, null);
+		}
+
+		@Override
+		public UnmodifiableTransFormula getTransformula() {
+			throw new UnsupportedOperationException(getClass().getSimpleName() + " does not have a transformula");
 		}
 	}
 }

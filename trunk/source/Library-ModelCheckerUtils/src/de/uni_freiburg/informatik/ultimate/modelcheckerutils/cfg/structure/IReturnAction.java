@@ -51,4 +51,8 @@ public interface IReturnAction extends IAction {
 	 */
 	UnmodifiableTransFormula getLocalVarsAssignmentOfCall();
 
+	@Override
+	default UnmodifiableTransFormula getTransformula() {
+		return getAssignmentOfReturn();
+	}
 }

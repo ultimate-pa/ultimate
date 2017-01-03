@@ -33,34 +33,35 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduc
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public final class Cfg2NetJulian extends CFG2Automaton {
-	private final PetriNetJulian<CodeBlock, IPredicate> mResult;
-	
-	public Cfg2NetJulian(final BoogieIcfgContainer rootNode, final IStateFactory<IPredicate> contentFactory,
+public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
+		extends CFG2Automaton<LETTER, PetriNetJulian<LETTER, IPredicate>> {
+	private final PetriNetJulian<LETTER, IPredicate> mResult;
+
+	public Cfg2NetJulian(final IIcfg<?> rootNode, final IStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws AutomataLibraryException {
 		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique,
 				xnfConversionTechnique);
-		
+
 		constructProcedureAutomata();
-		PetriNetJulian<CodeBlock, IPredicate> result =
+		PetriNetJulian<LETTER, IPredicate> result =
 				new PetriNetJulian<>(new AutomataLibraryServices(services), mAutomata.get(0));
 		for (int i = 1; i < mAutomata.size(); i++) {
 			result = new PrefixProduct<>(new AutomataLibraryServices(services), result, mAutomata.get(i)).getResult();
 		}
 		mResult = result;
 	}
-	
+
 	@Override
-	public PetriNetJulian<CodeBlock, IPredicate> getResult() {
+	public PetriNetJulian<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 }

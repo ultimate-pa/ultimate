@@ -58,6 +58,6 @@ public class TransFormulaBuilder {
 
 	public void addTransFormula(final CodeBlock cb, final String procId) {
 		mTransForumlaAdder.addTransitionFormulas(cb, procId, mXnfConversionTechnique, mSimplificationTechnique);
-		assert cb.getTransitionFormula() != null;
+		assert cb.getTransformula() != null;
 	}
 }

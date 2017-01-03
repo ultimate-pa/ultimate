@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
@@ -29,71 +29,43 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class UnknownState implements ISLPredicate {
 
-//	private static final long serialVersionUID = 9190582215913478152L;
-	private final BoogieIcfgLocation mProgramPoint;
+	private final IcfgLocation mProgramPoint;
 	private final int mSerialNumber;
 	private final Term mTerm;
-	
-	protected UnknownState(BoogieIcfgLocation programPoint, int serialNumber, Term term) {
+
+	protected UnknownState(final IcfgLocation programPoint, final int serialNumber, final Term term) {
 		mProgramPoint = programPoint;
 		mSerialNumber = serialNumber;
 		mTerm = term;
-		
-//		super(programPoint, serialNumber, new String[0], term, null, null);
-	}
-	
-	/**
-	 * The published attributes.  Update this and getFieldValue()
-	 * if you add new attributes.
-	 */
-	private final static String[] s_AttribFields = {
-		"ProgramPoint", "isUnknown"
-	};
-	
-//	@Override
-//	protected String[] getFieldNames() {
-//		return s_AttribFields;
-//	}
 
-//	@Override
-//	protected Object getFieldValue(String field) {
-//		if (field == "ProgramPoint")
-//			return mProgramPoint;
-//		else if (field == "isUnknown")
-//			return true;
-//		else
-//			throw new UnsupportedOperationException("Unknown field "+field);
-//	}
-	
+	}
+
 	@Override
 	public String toString() {
 		String result = mSerialNumber + "#";
 		if (mProgramPoint != null) {
 			result += mProgramPoint.getDebugIdentifier();
-		}
-		else {
+		} else {
 			result += "unknown";
 		}
 		return result;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mSerialNumber;
 	}
-	
-	
+
 	@Override
-	public BoogieIcfgLocation getProgramPoint() {
+	public IcfgLocation getProgramPoint() {
 		return mProgramPoint;
 	}
-	
-	
+
 	@Override
 	public Term getFormula() {
 		return mTerm;
@@ -113,9 +85,4 @@ public class UnknownState implements ISLPredicate {
 	public Term getClosedFormula() {
 		throw new UnsupportedOperationException();
 	}
-
-
-
-
-
 }

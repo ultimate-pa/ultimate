@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
@@ -78,13 +78,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+
 /**
- * Relevance information of a trace. Used to compute the relevant statements
- * in an Error trace that are relevant (or responsible) for the reaching the
- * error trace according to some Error Relevance criterion. Currently we have
- * two relevance criterion
- * 1) Non-Flow Sensitive
- * 2) Flow Sensitive.
+ * Relevance information of a trace. Used to compute the relevant statements in an Error trace that are relevant (or
+ * responsible) for the reaching the error trace according to some Error Relevance criterion. Currently we have two
+ * relevance criterion 1) Non-Flow Sensitive 2) Flow Sensitive.
  * 
  * @author Numair Mansur
  * @author Matthias Heizmann
@@ -102,10 +100,8 @@ public class FlowSensitiveFaultLocalizer {
 	private final IIcfgSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
 	/**
-	 * Apply quantifier elimination during the computation of pre and wp.
-	 * If set to true, there is a higher risk that we run into a timeout.
-	 * If set to false, there is a higher risk that the SMT solver returns
-	 * unknown.
+	 * Apply quantifier elimination during the computation of pre and wp. If set to true, there is a higher risk that we
+	 * run into a timeout. If set to false, there is a higher risk that the SMT solver returns unknown.
 	 */
 	private final boolean mApplyQuantifierElimination = true;
 
@@ -114,7 +110,7 @@ public class FlowSensitiveFaultLocalizer {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -130,122 +126,116 @@ public class FlowSensitiveFaultLocalizer {
 		}
 
 		if (doFlowSensitiveAnalysis) {
-			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg,
-					modifiableGlobalsTable, csToolkit);
+			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg, modifiableGlobalsTable,
+					csToolkit);
 		}
 	}
-	
-
 
 	/**
 	 * Construct RelevanceInformation array for trace.
+	 * 
 	 * @return array with empty IRelevanceInformation for each IAction in the trace.
 	 */
-	private static IRelevanceInformation[] initializeRelevanceOfTrace(
-			final IRun<CodeBlock, IPredicate, ?> counterexampleRun){
+	private static IRelevanceInformation[]
+			initializeRelevanceOfTrace(final IRun<CodeBlock, IPredicate, ?> counterexampleRun) {
 		final IRelevanceInformation[] result = new IRelevanceInformation[counterexampleRun.getLength() - 1];
 		final NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
-		for(int i = 0; i<counterexampleWord.length(); i++){
+		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
 					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false);
 			result[i] = relevancyOfAction;
 		}
 		return result;
 	}
-	
-	
+
 	/**
 	 * Compute branch-in and branch-out information from cfg.
-	 *  @param counterexample
+	 * 
+	 * @param counterexample
 	 * @param cfg
-	 * @return List of pairs, where each pair encodes an alternative path
-	 * (a path of cfg that is not part of the trace). If the pair (k,j) is
-	 * in the list this means that there is an alternative path from
-	 * position k to position j in the trace.
+	 * @return List of pairs, where each pair encodes an alternative path (a path of cfg that is not part of the trace).
+	 *         If the pair (k,j) is in the list this means that there is an alternative path from position k to position
+	 *         j in the trace.
 	 */
-	private Map<Integer, List<Integer>> computeInformationFromCFG(
-			final NestedRun<CodeBlock, IPredicate> counterexample,
-			final INestedWordAutomaton<CodeBlock, IPredicate> cfg){
-		//TODO: result of alternative computation, only used for debugging
+	private Map<Integer, List<Integer>> computeInformationFromCFG(final NestedRun<CodeBlock, IPredicate> counterexample,
+			final INestedWordAutomaton<CodeBlock, IPredicate> cfg) {
+		// TODO: result of alternative computation, only used for debugging
 		final List<int[]> result_Old = new ArrayList<>();
-		
-		//Using Better Data Structure to save graph information.
+
+		// Using Better Data Structure to save graph information.
 		final Map<Integer, List<Integer>> result = new HashMap<>();
 
-		
 		// Create a Map of Programpoints in the CFG to States of the CFG.
-		final Map <BoogieIcfgLocation,IPredicate> programPoint_StateMap = new HashMap<>();
+		final Map<IcfgLocation, IPredicate> programPointToState = new HashMap<>();
 		for (final IPredicate cfgState : cfg.getStates()) {
-			final ISLPredicate islState  = (ISLPredicate) cfgState;
-			final BoogieIcfgLocation programPoint = islState.getProgramPoint();
-			programPoint_StateMap.put(programPoint, cfgState);
+			final ISLPredicate islState = (ISLPredicate) cfgState;
+			final IcfgLocation programPoint = islState.getProgramPoint();
+			programPointToState.put(programPoint, cfgState);
 		}
-		
+
 		// For each state find out if it's a branch or not.
 		// For each state, find out if there is an outgoing branch from that state
 		// that transitions to a state which is not in the counter example.
 		// if you find such a state, then from that state. run the FINDPATHINCFG() method
 		// and find out if that path returns to a state which IS in the counterexample.
 		// If you find such a path, then that state is a branching state then you save this information for future use.
-		for(int posOfStartState = 0; posOfStartState < counterexample.getLength() - 1; posOfStartState++) {
+		for (int posOfStartState = 0; posOfStartState < counterexample.getLength() - 1; posOfStartState++) {
 			// State in consideration at the moment.
 			final IPredicate startStateInTrace = counterexample.getStateAtPosition(posOfStartState);
 			// Program point of the state under consideration.final
-			final BoogieIcfgLocation programpointOfStartStateInTrace =
-					((ISLPredicate) startStateInTrace).getProgramPoint();
-			
+			final IcfgLocation programpointOfStartStateInTrace = ((ISLPredicate) startStateInTrace).getProgramPoint();
+
 			// the startStateInCfg will be forbidden in the alternative path (FORBIDDEN STATE BUG)
-			final IPredicate startStateInCfg = programPoint_StateMap.get(programpointOfStartStateInTrace);
+			final IPredicate startStateInCfg = programPointToState.get(programpointOfStartStateInTrace);
 
-			final Set<IPredicate> possibleEndPoints = computePossibleEndpoints(
-					counterexample, programPoint_StateMap, posOfStartState);
+			final Set<IPredicate> possibleEndPoints =
+					computePossibleEndpoints(counterexample, programPointToState, posOfStartState);
 
-			final BoogieIcfgLocation programPointOfSuccInCounterexample =
-					((ISLPredicate)counterexample.getStateAtPosition(posOfStartState+1)).getProgramPoint();
-			//Immediate successors of of the state in CFG
+			final IcfgLocation programPointOfSuccInCounterexample =
+					((ISLPredicate) counterexample.getStateAtPosition(posOfStartState + 1)).getProgramPoint();
+			// Immediate successors of of the state in CFG
 			final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> immediateSuccesors =
 					cfg.internalSuccessors(startStateInCfg);
-			for(final OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
+			for (final OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
-				final BoogieIcfgLocation programPointOfImmediateSucc =
-						((ISLPredicate)immediateSuccesor).getProgramPoint();
+				final IcfgLocation programPointOfImmediateSucc = ((ISLPredicate) immediateSuccesor).getProgramPoint();
 				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
 					// do nothing, because we want to find an alternative path
 					// (i.e., path that is not in counterexample
 				} else {
-					 //For Branch in Branch Out information.
+					// For Branch in Branch Out information.
 					// Path from the successor state not in the counter example
 					// to one of the states in possibleEndPoints.
 					final NestedRun<CodeBlock, IPredicate> alternativePath =
-							findPathInCFG(immediateSuccesor,startStateInCfg, possibleEndPoints, cfg);
-					if(alternativePath != null) {
+							findPathInCFG(immediateSuccesor, startStateInCfg, possibleEndPoints, cfg);
+					if (alternativePath != null) {
 						// If such a path exists. Then that means that there is a path from the successor state
 						// that comes back to the counter example
 						// THAT MEANS WE HAVE FOUND AN out-BRANCH AT POSITION "COUNTER"
 						final IPredicate lastStateOfAlternativePath =
-								alternativePath.getStateAtPosition(alternativePath.getLength()-1);
-						
-						final List<Integer> endPosition = computeEndpointOfAlternativePath(
-								counterexample, posOfStartState, lastStateOfAlternativePath);
-						
-						for(final Integer i:endPosition){
+								alternativePath.getStateAtPosition(alternativePath.getLength() - 1);
+
+						final List<Integer> endPosition = computeEndpointOfAlternativePath(counterexample,
+								posOfStartState, lastStateOfAlternativePath);
+
+						for (final Integer i : endPosition) {
 							final int[] pair = new int[2];
-							//position OUT-BRANCH in the counterexample.
+							// position OUT-BRANCH in the counterexample.
 							pair[0] = posOfStartState;
-							pair[1] = i-1;
+							pair[1] = i - 1;
 							result_Old.add(pair);
-							
+
 							// If the Branch-In Location is not in the map, then add it.
-							if(result.get(i-1) == null ){
+							if (result.get(i - 1) == null) {
 								final List<Integer> branchInPosArray = new ArrayList<>();
 								branchInPosArray.add(posOfStartState);
-								result.put(i-1, branchInPosArray);
+								result.put(i - 1, branchInPosArray);
 							} else {
-								//It is in the map,
-								result.get(i-1).add(posOfStartState);
+								// It is in the map,
+								result.get(i - 1).add(posOfStartState);
 								// The array should be in descending order, so we can delete
 								// the elements from this array more efficiently.
-								result.get(i-1).sort(Collections.reverseOrder());
+								result.get(i - 1).sort(Collections.reverseOrder());
 							}
 						}
 					}
@@ -256,70 +246,67 @@ public class FlowSensitiveFaultLocalizer {
 	}
 
 	/**
-	 * Returns a List of locations for the occurrence of a state in the Error Trace.
-	 * There can be multiple locations, in case of a loop unrolling.
+	 * Returns a List of locations for the occurrence of a state in the Error Trace. There can be multiple locations, in
+	 * case of a loop unrolling.
 	 * 
-	 * Computing the end point (position of the IN-BRANCH) an alternative path.
-	 * Search for the last state in the trace that satisfies
-	 * the following properties.
-	 * - position in trace is larger than posOfStartState
-	 * - program point of the state coincides with
-	 * - program point of lastStateOfAlternativePath
+	 * Computing the end point (position of the IN-BRANCH) an alternative path. Search for the last state in the trace
+	 * that satisfies the following properties. - position in trace is larger than posOfStartState - program point of
+	 * the state coincides with - program point of lastStateOfAlternativePath
 	 * 
-	 * Also takes care of the case when for a state in CFG, there are more then one
-	 * Occurrences of the corresponding state in the error trace. This can happen, for example,
-	 * in the case of a loop un-rolling.
+	 * Also takes care of the case when for a state in CFG, there are more then one Occurrences of the corresponding
+	 * state in the error trace. This can happen, for example, in the case of a loop un-rolling.
 	 */
 	private static List<Integer> computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
-		final List<Integer>  endPoints = new ArrayList<>();
-		for(int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
+		final List<Integer> endPoints = new ArrayList<>();
+		for (int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
 			final IPredicate stateAtPosJ = counterexample.getStateAtPosition(j);
-			final BoogieIcfgLocation programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
-			final BoogieIcfgLocation programpointOfLastState = ((ISLPredicate)lastStateOfAlternativePath).getProgramPoint();
-			if(programpointOfLastState.equals(programpointAtPosJ)) {
+			final IcfgLocation programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
+			final IcfgLocation programpointOfLastState = ((ISLPredicate) lastStateOfAlternativePath).getProgramPoint();
+			if (programpointOfLastState.equals(programpointAtPosJ)) {
 				// position of state in the counter example where the branch ends
 				endPoints.add(j);
-				//return j;
+				// return j;
 			}
 		}
-		if(!endPoints.isEmpty()){
+		if (!endPoints.isEmpty()) {
 			return endPoints;
 		}
 		throw new AssertionError("endpoint not in trace");
 	}
 
 	/**
-	 * End points are the cfg states (resp. program points) of all successive
-	 * states (successors of currentPosition) in the trace excluding the last
-	 * state (which corresponds to the error location).
-	 * @param programPoint_StateMap map from program points to states in cfg
+	 * End points are the cfg states (resp. program points) of all successive states (successors of currentPosition) in
+	 * the trace excluding the last state (which corresponds to the error location).
+	 * 
+	 * @param programPoint_StateMap
+	 *            map from program points to states in cfg
 	 */
 	private static Set<IPredicate> computePossibleEndpoints(final NestedRun<CodeBlock, IPredicate> counterexample,
-			final Map<BoogieIcfgLocation, IPredicate> programPoint_StateMap, final int currentPosition) {
+			final Map<IcfgLocation, IPredicate> programPoint_StateMap, final int currentPosition) {
 		final Set<IPredicate> possibleEndPoints = new HashSet<>();
-		for(int j=currentPosition+1; j< counterexample.getStateSequence().size()-1; j++) {
-			//runs only up to size-1 because we do not include the last state (2 Assertion Bug)
-			possibleEndPoints.add(programPoint_StateMap.get(((ISLPredicate)counterexample.getStateAtPosition(j)).getProgramPoint()) );
+		for (int j = currentPosition + 1; j < counterexample.getStateSequence().size() - 1; j++) {
+			// runs only up to size-1 because we do not include the last state (2 Assertion Bug)
+			possibleEndPoints.add(
+					programPoint_StateMap.get(((ISLPredicate) counterexample.getStateAtPosition(j)).getProgramPoint()));
 		}
 		return possibleEndPoints;
 	}
-	
-	
+
 	/**
 	 * Computes relevance criterion variables (Unsatisfiable core , Golden Frame).
 	 * 
 	 * @param relevance
 	 */
-	private static Boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance){
+	private static Boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance) {
 		final boolean relevanceCriterionUC;
 		final boolean relevanceCriterionGF;
-		if(relevance  == ERelevanceStatus.InUnsatCore) {
+		if (relevance == ERelevanceStatus.InUnsatCore) {
 			// This is the case when the triple is unsatisfiable and the action is in the Unsatisfiable core.
 			relevanceCriterionUC = true;
 			relevanceCriterionGF = false;
-			
-		} else if(relevance == ERelevanceStatus.Sat) {
+
+		} else if (relevance == ERelevanceStatus.Sat) {
 			// The case when we have HAVOC statements. In this case the action is relevant if the triple is satisfiable.
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = true;
@@ -327,39 +314,32 @@ public class FlowSensitiveFaultLocalizer {
 			relevanceCriterionUC = false;
 			relevanceCriterionGF = false;
 		}
-		final Boolean[] relevanceCriterionVariables = new Boolean[]{relevanceCriterionUC,relevanceCriterionGF };
+		final Boolean[] relevanceCriterionVariables = new Boolean[] { relevanceCriterionUC, relevanceCriterionGF };
 		return relevanceCriterionVariables;
 	}
-	
 
-	
-	
 	private void doNonFlowSensitiveAnalysis(final NestedWord<CodeBlock> counterexampleWord,
-		final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager, final CfgSmtToolkit csToolkit) {
+			final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager,
+			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
-		
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit);
+
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP-List
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
-				mPredicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices,
-				counterexampleWord, null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
-				mSimplificationTechnique,
-				mXnfConversionTechnique, mSymbolTable);
-		
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord,
-				null, falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
-		
-		
-		
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
+				null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
+				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
+
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, null, falsePredicate,
+				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
+
 		final List<PredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, mLogger,
-							csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
+							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -367,37 +347,35 @@ public class FlowSensitiveFaultLocalizer {
 		final InterpolantsPreconditionPostcondition weakestPreconditionSequence =
 				ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true);
 		// End of the calculation
-		
-		for(int i = counterexampleWord.length()-1 ; i >= 0; i--) {
-				final IAction action = counterexampleWord.getSymbolAt(i);
-				// Calculate WP and PRE
-				final IPredicate wp = weakestPreconditionSequence.getInterpolant(i+1);
-				final IPredicate pre = mPredicateFactory.newPredicate(
-						mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i)));
-				
-				// Figure out what is the type of the statement (internal, call or Return)
-				final ERelevanceStatus relevance;
-				relevance = computeRelevance(i, action, pre, wp, null, weakestPreconditionSequence,
-						counterexampleWord, rc, csToolkit);
-				
 
-				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
-				final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
-				final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
+		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
+			final IAction action = counterexampleWord.getSymbolAt(i);
+			// Calculate WP and PRE
+			final IPredicate wp = weakestPreconditionSequence.getInterpolant(i + 1);
+			final IPredicate pre = mPredicateFactory
+					.newPredicate(mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i)));
 
-				// Adding relevance information in the array list Relevance_of_statements.
-				final RelevanceInformation ri = new RelevanceInformation(
-						Collections.singletonList(action),
-						relevanceCriterion1uc,
-						relevanceCriterion1gf, ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC(),
-						((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF());
-						
-				mRelevanceOfTrace[i] = ri;
+			// Figure out what is the type of the statement (internal, call or Return)
+			final ERelevanceStatus relevance;
+			relevance = computeRelevance(i, action, pre, wp, null, weakestPreconditionSequence, counterexampleWord, rc,
+					csToolkit);
+
+			final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
+			final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
+			final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
+
+			// Adding relevance information in the array list Relevance_of_statements.
+			final RelevanceInformation ri =
+					new RelevanceInformation(Collections.singletonList(action), relevanceCriterion1uc,
+							relevanceCriterion1gf, ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC(),
+							((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF());
+
+			mRelevanceOfTrace[i] = ri;
 		}
-		
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
-			for (int i=0; i<counterexampleWord.length(); i++) {
+			for (int i = 0; i < counterexampleWord.length(); i++) {
 				mLogger.debug(weakestPreconditionSequence.getInterpolant(i));
 				mLogger.debug(mRelevanceOfTrace[i]);
 			}
@@ -405,86 +383,86 @@ public class FlowSensitiveFaultLocalizer {
 			mLogger.debug("------------------------------------------------------------------------------------------");
 		}
 	}
-	
-	
+
 	/**
 	 * Recursively Compute the Markhor Formula of a branch.
-	 * @param startPosition - Starting location of the branch.
-	 * @param endPosition -  End location of the branch.
+	 * 
+	 * @param startPosition
+	 *            - Starting location of the branch.
+	 * @param endPosition
+	 *            - End location of the branch.
 	 */
 	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition,
 			final NestedWord<CodeBlock> counterexampleWord, final Map<Integer, List<Integer>> informationFromCFG,
-			final ManagedScript csToolkit){
-		UnmodifiableTransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(startPosition).getTransitionFormula();
-		for(int i = startPosition+1; i<= endPosition; i++){
-			boolean subBranch=false;
-			int branchOut=0;
-			int branchIn=0;
-			//Find out if the current position is a branchOut position.
-			for(final Integer brachInPosition:informationFromCFG.keySet()){
-				if(informationFromCFG.get(brachInPosition).contains(i)){
+			final ManagedScript csToolkit) {
+		UnmodifiableTransFormula combinedTransitionFormula =
+				counterexampleWord.getSymbolAt(startPosition).getTransformula();
+		for (int i = startPosition + 1; i <= endPosition; i++) {
+			boolean subBranch = false;
+			int branchOut = 0;
+			int branchIn = 0;
+			// Find out if the current position is a branchOut position.
+			for (final Integer brachInPosition : informationFromCFG.keySet()) {
+				if (informationFromCFG.get(brachInPosition).contains(i)) {
 					subBranch = true;
 					branchOut = i;
-					branchIn = brachInPosition -1;
+					branchIn = brachInPosition - 1;
 					i = branchIn;
 					break;
 				}
 			}
-			if(subBranch){
-				 // The current statement is a branch out and it's branch-in is with in the current branch.
-				final UnmodifiableTransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
-						informationFromCFG,csToolkit);
-				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						csToolkit, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
-						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,subBranchMarkhorFormula}));
-			} else{
+			if (subBranch) {
+				// The current statement is a branch out and it's branch-in is with in the current branch.
+				final UnmodifiableTransFormula subBranchMarkhorFormula =
+						computeMarkhorFormula(branchOut, branchIn, counterexampleWord, informationFromCFG, csToolkit);
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
+						false, false, false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(
+								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
+			} else {
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
-				final UnmodifiableTransFormula transitionFormula = statement.getTransitionFormula();
-				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						csToolkit, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
-						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,transitionFormula}));
+				final UnmodifiableTransFormula transitionFormula = statement.getTransformula();
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
+						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+						Arrays.asList(new UnmodifiableTransFormula[] { combinedTransitionFormula, transitionFormula }));
 			}
 		}
 		final UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula,
 				csToolkit, mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
 		return markhor;
 	}
-	
+
 	/**
 	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
-			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft,
+			final UnmodifiableTransFormula markhor, final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable){
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable) {
 
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit);
-		final IPredicate pre = mPredicateFactory.newPredicate(
-				mPredicateFactory.not(weakestPreconditionLeft));
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
+		final IPredicate pre = mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionLeft));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
 		final ERelevanceStatus relevance = rc.relevanceInternal(pre, basic,
-				mPredicateFactory.newPredicate(
-						mPredicateFactory.not(weakestPreconditionRight)));
-		
-		return (relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat);
+				mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
+
+		return relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat;
 	}
 
-	
 	/**
-	 * Computes the corresponding branch-out position for a given branch-in
-	 * position.
-	 * @param branchInList branch-in positions in descending order
-	 * @return the smallest element of the branchInList that is larger than
-	 * startLocation. Returns null if no such element exists.
+	 * Computes the corresponding branch-out position for a given branch-in position.
+	 * 
+	 * @param branchInList
+	 *            branch-in positions in descending order
+	 * @return the smallest element of the branchInList that is larger than startLocation. Returns null if no such
+	 *         element exists.
 	 */
-	private static Integer computeCorrespondingBranchOutLocation(
-			final List<Integer> branchInList, final int startLocation) {
-		assert (branchInList != null && !branchInList.isEmpty());
-		for(int i=branchInList.size()-1; i>=0; i--) {
+	private static Integer computeCorrespondingBranchOutLocation(final List<Integer> branchInList,
+			final int startLocation) {
+		assert branchInList != null && !branchInList.isEmpty();
+		for (int i = branchInList.size() - 1; i >= 0; i--) {
 			final Integer branchIn = branchInList.get(i);
 			if (branchIn > startLocation) {
 				branchInList.remove(i);
@@ -493,26 +471,23 @@ public class FlowSensitiveFaultLocalizer {
 		}
 		return null;
 	}
-	
 
-/**
- * Computes the Statements relevant to the flow sensitive analysis in the trace.
- */
+	/**
+	 * Computes the Statements relevant to the flow sensitive analysis in the trace.
+	 */
 	private void computeRelevantStatements_FlowSensitive(final NestedWord<CodeBlock> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
-			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
-			final Map<Integer, List<Integer>> informationFromCFG) {
+			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, List<Integer>> informationFromCFG) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
-		for (int position = endLocation; position >= startLocation; position--){
+		for (int position = endLocation; position >= startLocation; position--) {
 			final CodeBlock statement = counterexampleWord.getSymbol(position);
 
 			final List<Integer> branchIn = informationFromCFG.get(position);
 			final Integer branchOutPosition;
 			if (branchIn != null && !branchIn.isEmpty()) {
 				// Branch IN Statement
-				 branchOutPosition = computeCorrespondingBranchOutLocation(
-					branchIn, startLocation);
+				branchOutPosition = computeCorrespondingBranchOutLocation(branchIn, startLocation);
 			} else {
 				branchOutPosition = null;
 			}
@@ -521,171 +496,158 @@ public class FlowSensitiveFaultLocalizer {
 				final int positionBranchIn = position;
 				position = branchOutPosition;
 				final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
-						counterexampleWord,informationFromCFG, csToolkit.getManagedScript());
-				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, csToolkit.getManagedScript().getScript(),
-						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
+						counterexampleWord, informationFromCFG, csToolkit.getManagedScript());
+				final Term wpTerm =
+						computeWp(weakestPreconditionRight, markhor, csToolkit.getManagedScript().getScript(),
+								csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				// Check the relevance of the branch.
-				final boolean isRelevant = checkBranchRelevance(
-						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft,
-						weakestPreconditionRight,counterexampleWord,
-						csToolkit,modifiableGlobalsTable);
-				if(isRelevant){
+				final boolean isRelevant =
+						checkBranchRelevance(branchOutPosition, positionBranchIn, markhor, weakestPreconditionLeft,
+								weakestPreconditionRight, counterexampleWord, csToolkit, modifiableGlobalsTable);
+				if (isRelevant) {
 					// If the branch is Relevant. Recursion
-					computeRelevantStatements_FlowSensitive(
-							counterexampleWord, branchOutPosition,positionBranchIn,
-							weakestPreconditionRight,pt,rc,csToolkit,modifiableGlobalsTable,informationFromCFG);
-				} else{
+					computeRelevantStatements_FlowSensitive(counterexampleWord, branchOutPosition, positionBranchIn,
+							weakestPreconditionRight, pt, rc, csToolkit, modifiableGlobalsTable, informationFromCFG);
+				} else {
 					// Don't do anything.
-					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor + " ]");
+					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:" + markhor + " ]");
 				}
 
 			} else {
 				// The statement under consideration is NOT a BRANCH-IN Statement.
-				
-				final UnmodifiableTransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
+
+				final UnmodifiableTransFormula tf = counterexampleWord.getSymbolAt(position).getTransformula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, csToolkit.getManagedScript().getScript(),
 						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
-				final IPredicate pre = mPredicateFactory.newPredicate(
-						mPredicateFactory.not(weakestPreconditionLeft));
+				final IPredicate pre = mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionLeft));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(" ");
 					mLogger.debug("WP -- > " + weakestPreconditionRight);
 					mLogger.debug(" Statement -- > " + statement);
-					mLogger.debug("Pre --> " +  pre);
-					mLogger.debug(" " );
+					mLogger.debug("Pre --> " + pre);
+					mLogger.debug(" ");
 				}
 				final IAction action = counterexampleWord.getSymbolAt(position);
-				final ERelevanceStatus relevance = computeRelevance(position,action,pre,weakestPreconditionRight,
-						weakestPreconditionLeft,null,counterexampleWord,
-						rc,csToolkit);
+				final ERelevanceStatus relevance = computeRelevance(position, action, pre, weakestPreconditionRight,
+						weakestPreconditionLeft, null, counterexampleWord, rc, csToolkit);
 				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
-				final RelevanceInformation ri = new RelevanceInformation(
-						Collections.singletonList(action),
+				final RelevanceInformation ri = new RelevanceInformation(Collections.singletonList(action),
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1UC(),
-						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(),
-						relevanceCriterion2uc, relevanceCriterion2gf);
+						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(), relevanceCriterion2uc,
+						relevanceCriterion2gf);
 				mRelevanceOfTrace[position] = ri;
 			}
 		}
 	}
-	
+
 	/**
-	 * Computes the relevance information of a position in the trace, depending on the
-	 * type of the codeblock at that location. (IInternalAction, ICallAction, IReturnAction).
+	 * Computes the relevance information of a position in the trace, depending on the type of the codeblock at that
+	 * location. (IInternalAction, ICallAction, IReturnAction).
 	 * 
 	 * @return Relevance Information of a position in the trace.
 	 */
 	private ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
 			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
-			final NestedWord<CodeBlock> counterexampleWord,
-			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit){
+			final NestedWord<CodeBlock> counterexampleWord, final FaultLocalizationRelevanceChecker rc,
+			final CfgSmtToolkit csToolkit) {
 		ERelevanceStatus relevance;
-		if(action instanceof IInternalAction){
+		if (action instanceof IInternalAction) {
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceInternal(pre, internal,
 					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
-		}else if(action instanceof ICallAction){
+		} else if (action instanceof ICallAction) {
 			final ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceCall(pre, call,
 					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
-		}else if(action instanceof IReturnAction){
+		} else if (action instanceof IReturnAction) {
 			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
 			assert counterexampleWord.isReturnPosition(position);
 			assert !counterexampleWord.isPendingReturn(position) : "pending returns not supported";
 			final IPredicate callPredecessor;
-			if(weakestPreconditionSequence != null) {
+			if (weakestPreconditionSequence != null) {
 				// In case of Non-FlowSensitive
 				final int callPos = counterexampleWord.getCallPosition(position);
 				callPredecessor = weakestPreconditionSequence.getInterpolant(callPos);
-			} else{
-				//In case of FlowSensitive.
+			} else {
+				// In case of FlowSensitive.
 				callPredecessor = weakestPreconditionLeft;
 			}
-			
+
 			relevance = rc.relevanceReturn(pre, callPredecessor, ret,
 					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
-		} else{
-			throw new AssertionError("Unknown Action " +
-					action.getClass().getSimpleName());
+		} else {
+			throw new AssertionError("Unknown Action " + action.getClass().getSimpleName());
 		}
 		return relevance;
 	}
-	
-	
 
 	/**
 	 * Compute WP and optionally apply quantifier elimination.
 	 */
 	private Term computeWp(final IPredicate successor, final UnmodifiableTransFormula tf, final Script script,
-			final ManagedScript freshTermVariableConstructor,
-			final PredicateTransformer pt, final boolean applyQuantifierElimination) {
+			final ManagedScript freshTermVariableConstructor, final PredicateTransformer pt,
+			final boolean applyQuantifierElimination) {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
-			result = PartialQuantifierElimination.tryToEliminate(mServices,
-					mLogger, freshTermVariableConstructor, result, mSimplificationTechnique, mXnfConversionTechnique);
+			result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, freshTermVariableConstructor,
+					result, mSimplificationTechnique, mXnfConversionTechnique);
 		}
 		return result;
 	}
-	
+
 	private void doFlowSensitiveAnalysis(final NestedRun<CodeBlock, IPredicate> counterexample,
-			final INestedWordAutomaton<CodeBlock, IPredicate> cfg,
-			final ModifiableGlobalsTable modifiableGlobalsTable,
-			final CfgSmtToolkit csToolkit){
+			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
+			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg);
-		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
-		final PredicateTransformer pt = new PredicateTransformer(mServices,
-				csToolkit.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
-		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit);
+		// You should send the counter example, the CFG information and the the start of the branch and the end of the
+		// branch.
+		final PredicateTransformer pt = new PredicateTransformer(mServices, csToolkit.getManagedScript(),
+				mSimplificationTechnique, mXnfConversionTechnique);
+		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
 		final int startLocation = 0;
-		final int endLocation = counterexample.getWord().length()-1;
-		final IPredicate falsePredicate = mPredicateFactory.newPredicate(
-				csToolkit.getManagedScript().getScript().term("false"));
+		final int endLocation = counterexample.getWord().length() - 1;
+		final IPredicate falsePredicate =
+				mPredicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false"));
 
-		computeRelevantStatements_FlowSensitive(counterexample.getWord(),startLocation, endLocation,
-				falsePredicate, pt, rc, csToolkit,modifiableGlobalsTable, informationFromCFG);
+		computeRelevantStatements_FlowSensitive(counterexample.getWord(), startLocation, endLocation, falsePredicate,
+				pt, rc, csToolkit, modifiableGlobalsTable, informationFromCFG);
 	}
 
-
-
 	/**
-	 * Check if there is a path from startPoint so some element of the
-	 * possibleEndPoints set.
-	 * If yes, a NestedRun is returned, otherwise null is returned.
+	 * Check if there is a path from startPoint so some element of the possibleEndPoints set. If yes, a NestedRun is
+	 * returned, otherwise null is returned.
+	 * 
 	 * @param parent_state
 	 */
-	private NestedRun<CodeBlock, IPredicate> findPathInCFG(final IPredicate startPoint,
-			final IPredicate parent_state, final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<CodeBlock,
-			IPredicate> cfg) {
+	private NestedRun<CodeBlock, IPredicate> findPathInCFG(final IPredicate startPoint, final IPredicate parent_state,
+			final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<CodeBlock, IPredicate> cfg) {
 		try {
-			return (new IsEmpty<>(new AutomataLibraryServices(mServices), cfg,
-					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
+			return new IsEmpty<>(new AutomataLibraryServices(mServices), cfg, Collections.singleton(startPoint),
+					Collections.singleton(parent_state), possibleEndPoints).getNestedRun();
 		} catch (final AutomataOperationCanceledException e) {
 			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), null);
 			throw new ToolchainCanceledException(e, runningTaskInfo);
 		}
 	}
-	
+
 	/**
-	 * @return List of {@link RelevanceInformation}s one for each
-	 * {@link CodeBlock} in the counterexample.
+	 * @return List of {@link RelevanceInformation}s one for each {@link CodeBlock} in the counterexample.
 	 */
 	public List<IRelevanceInformation> getRelevanceInformation() {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("- - - - - - - -");
-			for(int i= 0; i <mRelevanceOfTrace.length; i++) {
-				mLogger.debug(((RelevanceInformation) mRelevanceOfTrace[i]).getActions() +
-						" | " +mRelevanceOfTrace[i].getShortString());
+			for (int i = 0; i < mRelevanceOfTrace.length; i++) {
+				mLogger.debug(((RelevanceInformation) mRelevanceOfTrace[i]).getActions() + " | "
+						+ mRelevanceOfTrace[i].getShortString());
 			}
 		}
 		return Arrays.asList(mRelevanceOfTrace);
 	}
-	
-	
+
 }

@@ -82,7 +82,7 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 
 	@Override
 	public UnmodifiableTransFormula getAssignmentOfReturn() {
-		return getTransitionFormula();
+		return getTransformula();
 	}
 
 	@Override

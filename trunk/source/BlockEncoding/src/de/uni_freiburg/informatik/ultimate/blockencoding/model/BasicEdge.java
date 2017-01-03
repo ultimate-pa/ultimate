@@ -83,14 +83,14 @@ public class BasicEdge extends
 			MinimizedNode target) {
 		super(source, target);
 		this.originalEdge = originalEdge;
-		if (originalEdge.getTransitionFormula() != null
+		if (originalEdge.getTransformula() != null
 				&& !(originalEdge instanceof Summary)) {
 			usedVariables = new HashSet<IProgramVar>();
-			usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables.addAll(originalEdge.getTransformula()
 					.getAssignedVars());
-			usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables.addAll(originalEdge.getTransformula()
 					.getInVars().keySet());
-			usedVariables.addAll(originalEdge.getTransitionFormula()
+			usedVariables.addAll(originalEdge.getTransformula()
 					.getOutVars().keySet());
 		} else {
 			usedVariables = new HashSet<IProgramVar>();
@@ -126,10 +126,10 @@ public class BasicEdge extends
 
 	@Override
 	public boolean isOldVarInvolved() {
-		if (originalEdge.getTransitionFormula() == null) {
+		if (originalEdge.getTransformula() == null) {
 			return false;
 		}
-		final UnmodifiableTransFormula tFormula = originalEdge.getTransitionFormula();
+		final UnmodifiableTransFormula tFormula = originalEdge.getTransformula();
 		return checkBoogieVarSetForOldVar(tFormula.getAssignedVars())
 				|| checkBoogieVarSetForOldVar(tFormula.getInVars().keySet())
 				|| checkBoogieVarSetForOldVar(tFormula.getOutVars().keySet());

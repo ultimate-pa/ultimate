@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
@@ -75,7 +75,7 @@ public class HoareAnnotation extends SPredicate {
 	private final boolean mFormulaHasBeenComputed = false;
 	private final List<Term> mInvariants = new ArrayList<>();
 
-	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
+	public HoareAnnotation(final IcfgLocation programPoint, final int serialNumber,
 			final PredicateFactory predicateFactory, final Script script) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
 				new HashSet<IProgramVar>(), null);

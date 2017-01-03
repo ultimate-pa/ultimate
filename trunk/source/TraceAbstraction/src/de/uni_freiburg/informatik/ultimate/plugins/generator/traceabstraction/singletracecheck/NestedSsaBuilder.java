@@ -211,7 +211,7 @@ public class NestedSsaBuilder {
 			mSsa.setPendingContext(pendingReturnPosition, pendingContextVV.getVersioneeredTerm());
 			mVariable2Constant.setPendingContext(pendingReturnPosition, pendingContextVV.getSubstitutionMapping());
 			
-			final UnmodifiableTransFormula localVarAssignment = correspondingCall.getTransitionFormula();
+			final UnmodifiableTransFormula localVarAssignment = correspondingCall.getTransformula();
 			final VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
 			

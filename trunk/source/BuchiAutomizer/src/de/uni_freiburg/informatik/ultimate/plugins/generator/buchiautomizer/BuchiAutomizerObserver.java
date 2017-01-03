@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -66,8 +66,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
@@ -107,31 +107,32 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (!(root instanceof BoogieIcfgContainer)) {
 			return false;
 		}
-		mRootAnnot = ((BoogieIcfgContainer) root);
+		mRootAnnot = (BoogieIcfgContainer) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getCfgSmtToolkit().getModifiableGlobalsTable(), mRootAnnot.getCfgSmtToolkit().getManagedScript(),
-				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mRootAnnot.getCfgSmtToolkit().getAxioms(), 
-				mRootAnnot.getCfgSmtToolkit().getProcedures());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
+		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getCfgSmtToolkit().getModifiableGlobalsTable(),
+				mRootAnnot.getCfgSmtToolkit().getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
+				mRootAnnot.getCfgSmtToolkit().getAxioms(), mRootAnnot.getCfgSmtToolkit().getProcedures());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
 				mCsToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 
-		final BuchiCegarLoop bcl = new BuchiCegarLoop(mRootAnnot, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop bcl =
+				new BuchiCegarLoop(mRootAnnot, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		final IResult benchDecomp = new BenchmarkResult<String>(Activator.PLUGIN_ID, "Constructed decomposition of program",
+		final IResult benchDecomp = new BenchmarkResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
-		final boolean constructTermcompProof = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean constructTermcompProof = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (constructTermcompProof) {
-			final IResult termcompProof = new BenchmarkResult<Double>(Activator.PLUGIN_ID,
+			final IResult termcompProof = new BenchmarkResult<>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
@@ -155,21 +156,19 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			// mRootAnnot.getBoogie2Smt().translate(term)
 			final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-			final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
+			final List<Map<IProgramVar, Rational>> states = new ArrayList<>();
 			states.add(gnta.getStateInit());
 			states.add(gnta.getStateHonda());
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<IIcfgElement, Term>(
-					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
-					initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(), gnta.getNus(),
-					getBacktranslationService(), Term.class);
+			result = new GeometricNonTerminationArgumentResult<>(honda, Activator.PLUGIN_NAME, initHondaRays.get(0),
+					initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(),
+					gnta.getNus(), getBacktranslationService(), Term.class);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			result = new FixpointNonTerminationResult<IIcfgElement, Term>(
-					honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(), ifr.getValuesAtHonda(), 
-					getBacktranslationService(), Term.class);
+			result = new FixpointNonTerminationResult<>(honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(),
+					ifr.getValuesAtHonda(), getBacktranslationService(), Term.class);
 		} else {
 			throw new IllegalArgumentException("unknown TerminationArgument");
 		}
@@ -202,8 +201,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		if (result == Result.TERMINATING) {
 			final String longDescr = "Buchi Automizer proved that your program is terminating";
-			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING,
-					longDescr);
+			final IResult reportRes =
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING, longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
 			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
@@ -215,8 +214,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
-			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN,
-					longDescr.toString());
+			final IResult reportRes =
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
 			final BoogieIcfgLocation position = mRootAnnot.getProcedureEntryNodes().values().iterator().next();
@@ -227,30 +226,28 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
 			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
-			final IResult reportRes = new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING,
-					longDescr);
+			final IResult reportRes =
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING, longDescr);
 			reportResult(reportRes);
 
 			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
-			final BoogieIcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
+			final BoogieIcfgLocation honda = (BoogieIcfgLocation) ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
-			reportResult(new BenchmarkResult<String>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
+			reportResult(new BenchmarkResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
-			final
-			IcfgProgramExecution stemPE = new IcfgProgramExecution(counterexample.getStem().getWord().asList(),
+			final IcfgProgramExecution stemPE = new IcfgProgramExecution(counterexample.getStem().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getStem().getLength()]);
 			@SuppressWarnings("unchecked")
-			final
-			IcfgProgramExecution loopPE = new IcfgProgramExecution(counterexample.getLoop().getWord().asList(),
+			final IcfgProgramExecution loopPE = new IcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			final IResult ntreportRes = new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda,
-					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
-					honda.getPayload().getLocation());
+			final IResult ntreportRes =
+					new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda, Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), stemPE, loopPE, honda.getPayload().getLocation());
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -265,7 +262,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private void reportLTLPropertyIsViolated(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
-		final BoogieIcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
+		final BoogieIcfgLocation position =
+				(BoogieIcfgLocation) ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
 		final List<CodeBlock> stem = counterexample.getStem().getWord().asList();
@@ -276,7 +274,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (isFinite) {
 			// TODO: Make some attempt at getting the values
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-			final List<CodeBlock> combined = new ArrayList<CodeBlock>();
+			final List<CodeBlock> combined = new ArrayList<>();
 			combined.addAll(stem);
 
 			// TODO: It seems that the loop is not necessary if the trace is
@@ -285,9 +283,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			// combined.addAll(loop);
 
 			@SuppressWarnings("unchecked")
-			final
-			IcfgProgramExecution cex = new IcfgProgramExecution(combined, partialProgramStateMapping,
-					new Map[combined.size()]);
+			final IcfgProgramExecution cex =
+					new IcfgProgramExecution(combined, partialProgramStateMapping, new Map[combined.size()]);
 			reportResult(new LTLFiniteCounterExampleResult<>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), cex, ltlAnnot));
 		} else {
@@ -295,16 +292,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 
 			@SuppressWarnings("unchecked")
-			final
-			IcfgProgramExecution stemPE = new IcfgProgramExecution(stem, partialProgramStateMapping,
-					new Map[stem.size()]);
+			final IcfgProgramExecution stemPE =
+					new IcfgProgramExecution(stem, partialProgramStateMapping, new Map[stem.size()]);
 			@SuppressWarnings("unchecked")
-			final
-			IcfgProgramExecution loopPE = new IcfgProgramExecution(loop, partialProgramStateMapping,
-					new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position, Activator.PLUGIN_ID,
-					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),
-					ltlAnnot.getLTLProperty()));
+			final IcfgProgramExecution loopPE =
+					new IcfgProgramExecution(loop, partialProgramStateMapping, new Map[loop.size()]);
+			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position,
+					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
+					position.getPayload().getLocation(), ltlAnnot.getLTLProperty()));
 		}
 	}
 
@@ -378,7 +373,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				boolean gevZero = true;
 				final List<Rational> lambdas = gnta.getLambdas();
 				for (int i = 0; i < gnta.getNumberOfGEVs(); ++i) {
-					lambdaZero &= (gnta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
+					lambdaZero &= gnta.getLambdas().get(i).numerator().equals(BigInteger.ZERO);
 					gevZero &= isZero(gnta.getGEVs().get(i));
 				}
 

@@ -76,7 +76,7 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 
 	@Override
 	public UnmodifiableTransFormula getLocalVarsAssignment() {
-		return getTransitionFormula();
+		return getTransformula();
 	}
 
 	@Override

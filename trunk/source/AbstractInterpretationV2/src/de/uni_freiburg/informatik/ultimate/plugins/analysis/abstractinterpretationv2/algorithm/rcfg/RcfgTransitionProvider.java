@@ -51,7 +51,8 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		return RcfgUtils.getValidCodeBlocks(target.getOutgoingEdges(), scope);
+		return RcfgUtils.getValidCodeBlocks(target.getOutgoingEdges(), scope).stream().map(a -> (CodeBlock) a)
+				.collect(Collectors.toList());
 	}
 
 	@Override

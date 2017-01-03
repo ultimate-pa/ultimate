@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -78,7 +79,10 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -88,9 +92,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
@@ -107,10 +108,10 @@ public class LassoRankerStarter {
 	private static final String LASSO_ERROR_MSG = "This is not a lasso program (a lasso program is a program "
 			+ "consisting of a stem and a loop transition)";
 
-	private final BoogieIcfgContainer mRootAnnot;
-	private final BoogieIcfgLocation mHonda;
-	private final NestedWord<CodeBlock> mStem;
-	private final NestedWord<CodeBlock> mLoop;
+	private final IIcfg<IcfgLocation> mIcfg;
+	private final IcfgLocation mHonda;
+	private final NestedWord<IIcfgTransition<IcfgLocation>> mStem;
+	private final NestedWord<IIcfgTransition<IcfgLocation>> mLoop;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IUltimateServiceProvider mServices;
@@ -118,22 +119,22 @@ public class LassoRankerStarter {
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	public LassoRankerStarter(final BoogieIcfgContainer rootNode, final IUltimateServiceProvider services,
+	public LassoRankerStarter(final IIcfg<IcfgLocation> icfg, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
-		mServices = services;
+		mIcfg = Objects.requireNonNull(icfg);
+		mServices = Objects.requireNonNull(services);
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		mRootAnnot = rootNode;
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
-		mCsToolkit = mRootAnnot.getCfgSmtToolkit();
+		mCsToolkit = mIcfg.getCfgSmtToolkit();
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 
-		AbstractLassoExtractor lassoExtractor;
+		AbstractLassoExtractor<IIcfgTransition<IcfgLocation>> lassoExtractor;
 		try {
-			lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mCsToolkit, mPredicateFactory, mLogger);
+			lassoExtractor = new LassoExtractorBuchi<>(mServices, icfg, mCsToolkit, mPredicateFactory, mLogger);
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AssertionError("timeout while searching lasso");
 			// throw new ToolchainCanceledException(this.getClass());
@@ -164,16 +165,15 @@ public class LassoRankerStarter {
 		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
-		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
+		final Term[] axioms = mIcfg.getCfgSmtToolkit().getAxioms().toArray(new Term[0]);
 		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
 		try {
-			laNT = new LassoAnalysis(mRootAnnot.getCfgSmtToolkit(), stemTF, loopTf,
-					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
-					mXnfConversionTechnique);
+			laNT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, axioms,
+					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -206,9 +206,8 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laT = null;
 		try {
-			laT = new LassoAnalysis(mRootAnnot.getCfgSmtToolkit(), stemTF, loopTf,
-					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
-					mXnfConversionTechnique);
+			laT = new LassoAnalysis(mIcfg.getCfgSmtToolkit(), stemTF, loopTf, modifiableGlobalsAtHonda, axioms,
+					preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -262,12 +261,12 @@ public class LassoRankerStarter {
 		return overapproximations;
 	}
 
-	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
+	public UnmodifiableTransFormula constructTransformula(final NestedWord<IIcfgTransition<IcfgLocation>> nw) {
 		final boolean simplify = true;
 		final boolean extPqe = true;
 		final boolean tranformToCNF = false;
 		final boolean withBranchEncoders = false;
-		final List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
+		final List<IIcfgTransition<IcfgLocation>> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 	}
@@ -366,7 +365,7 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mCsToolkit, mRootAnnot.getBoogie2SMT());
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg);
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory,
 				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);

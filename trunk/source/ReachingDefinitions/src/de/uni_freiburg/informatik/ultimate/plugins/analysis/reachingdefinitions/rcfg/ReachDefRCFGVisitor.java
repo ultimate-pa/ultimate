@@ -122,7 +122,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 			}
 			final ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
 			try {
-				final boolean gen = generator.annotate(s,edge.getTransitionFormula());
+				final boolean gen = generator.annotate(s,edge.getTransformula());
 				if (mLogger.isDebugEnabled()) {
 					final String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());

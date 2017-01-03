@@ -41,8 +41,8 @@ import java.util.function.Consumer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -82,10 +82,10 @@ public final class AbsIntUtil {
 		}
 	}
 
-	public static <LOC> void logPredicates(final Map<CodeBlock, Map<LOC, Term>> preds, final Script script,
+	public static <LOC> void logPredicates(final Map<?, Map<LOC, Term>> preds, final Script script,
 			final Consumer<String> printer) {
 		final Map<LOC, Term> predsPerLoc = new HashMap<>();
-		for (final Entry<CodeBlock, Map<LOC, Term>> entryPerBlock : preds.entrySet()) {
+		for (final Entry<?, Map<LOC, Term>> entryPerBlock : preds.entrySet()) {
 			for (final Entry<LOC, Term> entryPerLoc : entryPerBlock.getValue().entrySet()) {
 				final Term current = predsPerLoc.get(entryPerLoc.getKey());
 				if (current == null) {

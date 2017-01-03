@@ -109,8 +109,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			final CodeBlock second = pair.getSecond();
 			toRemove.add(first);
 			toRemove.add(second);
-			if (first.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE
-					|| second.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+			if (first.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
+					|| second.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				// we will remove these edges but we wont add a new one
 				continue;
 			}

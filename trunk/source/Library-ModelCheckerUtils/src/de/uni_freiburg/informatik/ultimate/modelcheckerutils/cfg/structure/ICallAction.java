@@ -42,4 +42,9 @@ public interface ICallAction extends IAction {
 	 *         executing this action.
 	 */
 	UnmodifiableTransFormula getLocalVarsAssignment();
+
+	@Override
+	default UnmodifiableTransFormula getTransformula() {
+		return getLocalVarsAssignment();
+	}
 }

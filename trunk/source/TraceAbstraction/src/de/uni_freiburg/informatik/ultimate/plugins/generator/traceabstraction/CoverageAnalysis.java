@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -37,46 +37,41 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
- * Object that will analyze a trace with respect to a sequence of ProgramPoints 
- * and a sequence of interpolants.
- * The analysis starts at the beginning of the trace. For each ProgramPoint
- * that has already appeared while traversing the trace we check if the
- * current interpolant implies the interpolant at the position of the recurring
- * ProgramPoint.
+ * Object that will analyze a trace with respect to a sequence of ProgramPoints and a sequence of interpolants. The
+ * analysis starts at the beginning of the trace. For each ProgramPoint that has already appeared while traversing the
+ * trace we check if the current interpolant implies the interpolant at the position of the recurring ProgramPoint.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class CoverageAnalysis<CL> {
-	
+
 	protected final IUltimateServiceProvider mServices;
 
-	protected final ILogger mLogger ;
-	
+	protected final ILogger mLogger;
 
 	private final List<CL> mProgramPointSequence;
 	private final PredicateUnifier mPredicateUnifier;
-	
-	private final Map<CL, List<Integer>> mProgramPoint2Occurence = 
-		new HashMap<>();
-	
+
+	private final Map<CL, List<Integer>> mProgramPoint2Occurence = new HashMap<>();
+
 	private int mUnsat;
 	private int mSat;
 	private int mUnknown;
 	private int mTrivial;
 	private int mNotchecked;
-	
+
 	protected final InterpolantsPreconditionPostcondition mIpp;
 
-	public CoverageAnalysis(final IUltimateServiceProvider services, 
-			final InterpolantsPreconditionPostcondition ipp,
+	public CoverageAnalysis(final IUltimateServiceProvider services, final InterpolantsPreconditionPostcondition ipp,
 			final List<CL> programPointSequence, final ILogger logger, final PredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = logger;
@@ -84,19 +79,19 @@ public class CoverageAnalysis<CL> {
 		mPredicateUnifier = predicateUnifier;
 		mIpp = ipp;
 	}
-	
+
 	public void analyze() {
-		assert(mProgramPointSequence.size()-2 == mIpp.getInterpolants().size());
+		assert mProgramPointSequence.size() - 2 == mIpp.getInterpolants().size();
 		preprocess();
-		
-		for (int i=0; i<mProgramPointSequence.size()-1; i++) {
+
+		for (int i = 0; i < mProgramPointSequence.size() - 1; i++) {
 
 			processCodeBlock(i);
 
 			final CL pp = mProgramPointSequence.get(i);
 			List<Integer> previousOccurrences = mProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
-				previousOccurrences = new ArrayList<Integer>();
+				previousOccurrences = new ArrayList<>();
 				mProgramPoint2Occurence.put(pp, previousOccurrences);
 			} else {
 				for (final int previousOccurrence : previousOccurrences) {
@@ -107,8 +102,8 @@ public class CoverageAnalysis<CL> {
 						// trivially covered and backedges already contained
 						mTrivial++;
 					} else {
-						final Validity lbool = mPredicateUnifier.getCoverageRelation().isCovered(
-								currentPredicate, previousPredicate);
+						final Validity lbool =
+								mPredicateUnifier.getCoverageRelation().isCovered(currentPredicate, previousPredicate);
 						processCoveringResult(i, previousOccurrence, lbool);
 						switch (lbool) {
 						case VALID:
@@ -134,14 +129,10 @@ public class CoverageAnalysis<CL> {
 		assert sumCountedOccurrences() == mProgramPointSequence.size() - 1;
 
 		postprocess();
-		
-		mLogger.info("Checked inductivity of " +
-				(mUnsat+mSat+mUnknown+mTrivial+mNotchecked) +	" backedges. " + 
-				mUnsat + " proven. " + 
-				mSat + " refuted. " + 
-				mUnknown + " times theorem prover too weak." +
-				mTrivial + " trivial." +
-				mNotchecked + " not checked.");
+
+		mLogger.info("Checked inductivity of " + (mUnsat + mSat + mUnknown + mTrivial + mNotchecked) + " backedges. "
+				+ mUnsat + " proven. " + mSat + " refuted. " + mUnknown + " times theorem prover too weak." + mTrivial
+				+ " trivial." + mNotchecked + " not checked.");
 
 	}
 
@@ -157,8 +148,8 @@ public class CoverageAnalysis<CL> {
 		// do nothing
 	}
 
-	protected void processCoveringResult(final int currentPosition,
-			final int previousOccurrence, final Validity lbool) {
+	protected void processCoveringResult(final int currentPosition, final int previousOccurrence,
+			final Validity lbool) {
 		// do nothing
 	}
 
@@ -169,48 +160,48 @@ public class CoverageAnalysis<CL> {
 	protected void preprocess() {
 		// do nothing
 	}
-	
-	
-	public static List<BoogieIcfgLocation> extractProgramPoints(final IRun<CodeBlock, IPredicate, ?> irun) {
-		final ArrayList<IPredicate> predicateSequence = 
-				((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
-		final ArrayList<BoogieIcfgLocation> result = new ArrayList<>();
+
+	public static List<IcfgLocation> extractProgramPoints(final IRun<CodeBlock, IPredicate, ?> irun) {
+		final List<IPredicate> predicateSequence = ((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
+		final List<IcfgLocation> result = new ArrayList<>();
 		for (final IPredicate p : predicateSequence) {
 			result.add(((ISLPredicate) p).getProgramPoint());
 		}
 		return result;
 	}
-	
-	
+
 	public BackwardCoveringInformation getBackwardCoveringInformation() {
-		final int potentialBackwardCoverings = (mUnsat+mSat+mUnknown+mTrivial+mNotchecked);
-		final int successfullBackwardCoverings = mUnsat+mTrivial;
+		final int potentialBackwardCoverings = mUnsat + mSat + mUnknown + mTrivial + mNotchecked;
+		final int successfullBackwardCoverings = mUnsat + mTrivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
 	}
-	
-	
-	public static Function<Object, Function<Object,Object>> s_DefaultAggregation = 
-			x -> y -> { return new BackwardCoveringInformation((BackwardCoveringInformation)x, (BackwardCoveringInformation)y); };
-	
-	
+
+	public static Function<Object, Function<Object, Object>> s_DefaultAggregation = x -> y -> {
+		return new BackwardCoveringInformation((BackwardCoveringInformation) x, (BackwardCoveringInformation) y);
+	};
+
 	public static class BackwardCoveringInformation {
 		private final int mPotentialBackwardCoverings;
 		private final int mSuccessfullBackwardCoverings;
-		
+
 		public BackwardCoveringInformation(final int potentialBackwardCoverings,
 				final int successfullBackwardCoverings) {
 			super();
 			mPotentialBackwardCoverings = potentialBackwardCoverings;
 			mSuccessfullBackwardCoverings = successfullBackwardCoverings;
 		}
-		
-		public BackwardCoveringInformation(final BackwardCoveringInformation bci1, final BackwardCoveringInformation bci2) {
+
+		public BackwardCoveringInformation(final BackwardCoveringInformation bci1,
+				final BackwardCoveringInformation bci2) {
 			mPotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
-			mSuccessfullBackwardCoverings = bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
+			mSuccessfullBackwardCoverings =
+					bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
 		}
+
 		public int getPotentialBackwardCoverings() {
 			return mPotentialBackwardCoverings;
 		}
+
 		public int getSuccessfullBackwardCoverings() {
 			return mSuccessfullBackwardCoverings;
 		}
@@ -218,14 +209,14 @@ public class CoverageAnalysis<CL> {
 		@Override
 		public String toString() {
 			return mSuccessfullBackwardCoverings + "/" + mPotentialBackwardCoverings;
-//			if (mPotentialBackwardCoverings == 0) {
-//				return "not available";
-//			} else {
-//				long result = Math.round((((double) mSuccessfullBackwardCoverings) / mPotentialBackwardCoverings) * 100);
-//				return result + "%";
-//			}
+			// if (mPotentialBackwardCoverings == 0) {
+			// return "not available";
+			// } else {
+			// long result = Math.round((((double) mSuccessfullBackwardCoverings) / mPotentialBackwardCoverings) * 100);
+			// return result + "%";
+			// }
 		}
-		
+
 	}
 
 }

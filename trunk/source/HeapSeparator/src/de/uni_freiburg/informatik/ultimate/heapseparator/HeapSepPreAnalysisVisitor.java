@@ -102,7 +102,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		
 		if (edge instanceof CodeBlock) {
 
-			UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
+			UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransformula();
 
 			List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
 			for (ArrayEquality aeq : aeqs) {
@@ -124,7 +124,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	private HashRelation<IProgramVarOrConst, IcfgLocation> findArrayAccesses(CodeBlock edge) {
 		HashRelation<IProgramVarOrConst, IcfgLocation> result = new HashRelation<>();
 		
-		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getInVars().entrySet()) {
+		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
 			IProgramVar pv = en.getKey();
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;
@@ -135,7 +135,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			// we have an array variable --> store that it occurs after the source location of the edge
 			result.addPair(pv, edge.getSource());
 		}
-		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getOutVars().entrySet()) {
+		for (Entry<IProgramVar, TermVariable> en : edge.getTransformula().getOutVars().entrySet()) {
 			IProgramVar pv = en.getKey();
 			if (!pv.getTermVariable().getSort().isArraySort()) {
 				continue;

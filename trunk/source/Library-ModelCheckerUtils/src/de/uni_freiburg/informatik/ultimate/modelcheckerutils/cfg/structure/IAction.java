@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+
 /**
  * Classes that implement this interface represent an action in an interprocedural control flow (i.e., a labeling of an
  * edge that defines the operational semantics of the edge).
@@ -43,4 +46,10 @@ public interface IAction {
 	 * @return Identifier of the procedure in which the system/program is after this action is executed.
 	 */
 	String getSucceedingProcedure();
+
+	/**
+	 * @return {@link TransFormula} which defines how the system/program's variables are modified while executing this
+	 *         action.
+	 */
+	UnmodifiableTransFormula getTransformula();
 }

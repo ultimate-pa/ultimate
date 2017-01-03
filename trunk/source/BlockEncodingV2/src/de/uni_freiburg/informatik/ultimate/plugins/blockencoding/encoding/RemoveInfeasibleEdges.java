@@ -81,7 +81,7 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 			return;
 		}
 		
-		final Infeasibility result = cb.getTransitionFormula().isInfeasible();
+		final Infeasibility result = cb.getTransformula().isInfeasible();
 		
 		switch (result) {
 		case INFEASIBLE:

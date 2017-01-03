@@ -66,11 +66,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 public class CegarLoopJulian extends BasicCegarLoop {
-	
+
 	private BranchingProcess<CodeBlock, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
-	
+
 	public CegarLoopJulian(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks timingStatistics,
 			final TAPreferences taPrefs, final Collection<BoogieIcfgLocation> errorLocs,
@@ -78,16 +78,16 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				InterpolationTechnique.Craig_TreeInterpolation, false, services, storage);
 	}
-	
+
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory =
 				new TaConcurContentFactory(mIcfgContainer.getProgramPoints(), this, super.mCsToolkit, mPredicateFactory,
 						super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian((BoogieIcfgContainer) mIcfgContainer, contentFactory,
-				mCsToolkit, mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mIcfgContainer, contentFactory, mCsToolkit,
+				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
-		
+
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
@@ -97,7 +97,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 	}
-	
+
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final PetriNetJulian<CodeBlock, IPredicate> abstraction = (PetriNetJulian<CodeBlock, IPredicate>) mAbstraction;
@@ -113,12 +113,12 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		} else {
 			throw new IllegalArgumentException();
 		}
-		
+
 		final PetriNetUnfolder<CodeBlock, IPredicate> unf = new PetriNetUnfolder<>(
 				new AutomataLibraryServices(mServices), abstraction, ord, cutOffSameTrans, !mPref.unfoldingToNet());
 		mUnfolding = unf.getFinitePrefix();
 		mCoRelationQueries += mUnfolding.getCoRelationQueries();
-		
+
 		mCounterexample = unf.getAcceptingRun();
 		if (mCounterexample == null) {
 			return true;
@@ -128,31 +128,31 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 		return false;
 	}
-	
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		PetriNetJulian<CodeBlock, IPredicate> abstraction = (PetriNetJulian<CodeBlock, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
 			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), mUnfolding).getResult();
 		}
-		
+
 		// Determinize the interpolant automaton
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> dia =
 				determinizeInterpolantAutomaton(mInterpolAutomaton);
-		
+
 		// Complement the interpolant automaton
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia =
 				new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia)
 						.getResult();
 		assert !accepts(mServices, nia, mCounterexample.getWord()) : "Complementation broken!";
 		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
-		
+
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
 		mAbstraction = new DifferenceBlackAndWhite<>(new AutomataLibraryServices(mServices), abstraction,
 				(NestedWordAutomaton<CodeBlock, IPredicate>) dia).getResult();
-		
+
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
 		// mBiggestAbstractionSize = mAbstraction.size();
@@ -160,15 +160,15 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		// abstraction.getTransitions().size();
 		// mBiggestAbstractionIteration = mIteration;
 		// }
-		
+
 		assert !acceptsPetriViaFA(mServices, mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
-		
+
 		// int[] statistic = mAbstraction.transitions();
 		// s_Logger.debug("Abstraction has " +
 		// mAbstraction.getAllStates().size() + "states, " +
 		// statistic[0] + " internal transitions " + statistic[1] +
 		// "call transitions " + statistic[2]+ " return transitions ");
-		
+
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
@@ -179,7 +179,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 		return true;
 	}
-	
+
 	protected INestedWordAutomaton<CodeBlock, IPredicate>
 			determinizeInterpolantAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException {
@@ -196,7 +196,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		default:
 			throw new UnsupportedOperationException();
 		}
-		
+
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck(mServices, dia, false, true,
 					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult() : "Not inductive";
@@ -209,12 +209,12 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		mLogger.debug("Sucessfully determinized");
 		return dia;
 	}
-	
+
 	@Override
 	protected void computeCFGHoareAnnotation() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	private static boolean acceptsPetriViaFA(final IUltimateServiceProvider services,
 			final IAutomaton<CodeBlock, IPredicate> automaton, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
@@ -223,7 +223,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
 						(IPetriNet<CodeBlock, IPredicate>) automaton).getResult();
 		return BasicCegarLoop.accepts(services, petriNetAsFA, nw);
-		
+
 	}
-	
+
 }

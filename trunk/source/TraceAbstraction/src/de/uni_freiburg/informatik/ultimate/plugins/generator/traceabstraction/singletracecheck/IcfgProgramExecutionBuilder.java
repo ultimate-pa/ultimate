@@ -84,7 +84,7 @@ public class IcfgProgramExecutionBuilder {
 	private boolean isReAssigned(final IProgramVar bv, final int position) {
 		boolean result;
 		if (mTrace.isInternalPosition(position) || mTrace.isReturnPosition(position)) {
-			final UnmodifiableTransFormula tf = mTrace.getSymbolAt(position).getTransitionFormula();
+			final UnmodifiableTransFormula tf = mTrace.getSymbolAt(position).getTransformula();
 			result = tf.getAssignedVars().contains(bv);
 		} else if (mTrace.isCallPosition(position)) {
 			final Call call = (Call) mTrace.getSymbolAt(position);

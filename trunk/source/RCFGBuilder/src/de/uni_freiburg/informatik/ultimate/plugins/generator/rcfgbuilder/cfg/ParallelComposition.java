@@ -89,7 +89,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			currentCodeblock.disconnectSource();
 			currentCodeblock.disconnectTarget();
 			prettyPrinted += "PARALLEL" + currentCodeblock.getPrettyPrintedStatements();
-			transFormulas[i] = currentCodeblock.getTransitionFormula();
+			transFormulas[i] = currentCodeblock.getTransformula();
 			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
 			final String varname = "LBE" + currentCodeblock.getSerialNumber();
 			final Sort boolSort = script.sort("Bool");
@@ -144,10 +144,4 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 	public List<CodeBlock> getCodeBlocks() {
 		return Collections.unmodifiableList(mCodeBlocks);
 	}
-
-	@Override
-	public UnmodifiableTransFormula getTransformula() {
-		return getTransitionFormula();
-	}
-
 }

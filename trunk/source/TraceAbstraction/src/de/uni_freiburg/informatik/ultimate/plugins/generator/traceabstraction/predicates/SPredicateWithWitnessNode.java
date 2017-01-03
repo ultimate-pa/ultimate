@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
@@ -29,34 +29,31 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class SPredicateWithWitnessNode extends SPredicate {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -3793267934783743767L;
 	private final WitnessNode mWitnessNode;
 	private final Integer mStutteringSteps;
-	
-	protected SPredicateWithWitnessNode(BoogieIcfgLocation programPoint,
-			int serialNumber, String[] procedures, Term term,
-			Set<IProgramVar> vars, Term closedFormula, WitnessNode witnessNode, Integer stutteringSteps) {
+
+	protected SPredicateWithWitnessNode(final IcfgLocation programPoint, final int serialNumber,
+			final String[] procedures, final Term term, final Set<IProgramVar> vars, final Term closedFormula,
+			final WitnessNode witnessNode, final Integer stutteringSteps) {
 		super(programPoint, serialNumber, procedures, term, vars, closedFormula);
 		mWitnessNode = witnessNode;
 		mStutteringSteps = stutteringSteps;
 	}
-	
+
 	@Override
 	public String toString() {
 		String result = super.mSerialNumber + "#";
 		result += "(";
-//		if (mProgramPoint != null) {
-			result += mProgramPoint.getDebugIdentifier();
-//		}
+		// if (mProgramPoint != null) {
+		result += mProgramPoint.getDebugIdentifier();
+		// }
 		result += ",";
 		result += mWitnessNode.getName();
 		result += ",";

@@ -130,7 +130,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			// get the use of the Reaching Definition
 			final CodeBlock cb = (CodeBlock) node.getNodeLabel();
 			// better would be .entrySet();
-			final Set<IProgramVar> use = cb.getTransitionFormula().getInVars().keySet();
+			final Set<IProgramVar> use = cb.getTransformula().getInVars().keySet();
 			mLogger.debug("Explain " + use.size() + " variable(s) for the statement " + cb.toString());
 			for (final IProgramVar x : use) {
 				mLogger.debug("   explain the variable " + x.toString());

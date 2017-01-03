@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -65,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class CodeBlock extends IcfgEdge implements IIcfgTransition<IcfgLocation> {
+public abstract class CodeBlock extends IcfgEdge {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
@@ -120,7 +119,7 @@ public abstract class CodeBlock extends IcfgEdge implements IIcfgTransition<Icfg
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
 	@Visualizable
-	public UnmodifiableTransFormula getTransitionFormula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return mTransitionFormula;
 	}
 

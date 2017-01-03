@@ -31,31 +31,35 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public final class Cfg2Nwa extends CFG2Automaton {
-	private final INestedWordAutomaton<CodeBlock, IPredicate> mResult;
-	
-	public Cfg2Nwa(final BoogieIcfgContainer rootNode, final IStateFactory<IPredicate> contentFactory, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+public final class Cfg2Nwa<LETTER extends IIcfgTransition<?>>
+		extends CFG2Automaton<LETTER, INestedWordAutomaton<LETTER, IPredicate>> {
+
+	private final INestedWordAutomaton<LETTER, IPredicate> mResult;
+
+	public Cfg2Nwa(final IIcfg<?> rootNode, final IStateFactory<IPredicate> contentFactory,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
-		
+		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique,
+				xnfConversionTechnique);
+
 		constructProcedureAutomata();
-		INestedWordAutomaton<CodeBlock, IPredicate> result = mAutomata.get(0);
+		INestedWordAutomaton<LETTER, IPredicate> result = mAutomata.get(0);
 		for (int i = 1; i < mAutomata.size(); i++) {
-			result = ((NestedWordAutomaton<CodeBlock, IPredicate>) result).concurrentPrefixProduct(mAutomata.get(i));
+			result = ((NestedWordAutomaton<LETTER, IPredicate>) result).concurrentPrefixProduct(mAutomata.get(i));
 		}
 		mResult = result;
 	}
-	
+
 	@Override
-	public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+	public INestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 }

@@ -36,7 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Observer for LassoRanker
@@ -61,13 +62,14 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		mStorage = storage;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		if (!(root instanceof BoogieIcfgContainer)) {
+		if (!(root instanceof IIcfg)) {
 			throw new UnsupportedOperationException(
 					"LassoRanker can only be applied to models constructed" + " by the RCFGBuilder");
 		}
-		new LassoRankerStarter((BoogieIcfgContainer) root, mServices, mStorage);
+		new LassoRankerStarter((IIcfg<IcfgLocation>) root, mServices, mStorage);
 		return false;
 	}
 

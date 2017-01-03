@@ -251,7 +251,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 				if (cb != null) {
-					mLogger.debug("<-Converted Formula->: " + cb.getTransitionFormula());
+					mLogger.debug("<-Converted Formula->: " + cb.getTransformula());
 					cb.connectSource(getReferencedNode(edge.getSource()));
 					cb.connectTarget(getReferencedNode(edge.getTarget()));
 				} else {
@@ -540,7 +540,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			throw new IllegalArgumentException(
 					"Failure while converting a" + "CodeBlock, maybe there is a new type," + "which should be added");
 		}
-		copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
+		copyOfCodeBlock.setTransitionFormula(cb.getTransformula());
 		ModelUtils.copyAnnotations(cb, copyOfCodeBlock);
 		return copyOfCodeBlock;
 	}

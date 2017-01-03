@@ -102,7 +102,7 @@ public class IcfgEdgeBuilder {
 		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, simplify, elimQuants,
 				codeblocks, mXnfConversionTechnique, mSimplificationTechnique);
 		assert sc.getTransformula() != null : "Transformula was not added although it should have been";
-		assert sc.getTransitionFormula() != null;
+		assert sc.getTransformula() != null;
 		assert sc.getTarget() != null;
 		assert sc.getSource() != null;
 		return sc;
@@ -113,7 +113,7 @@ public class IcfgEdgeBuilder {
 		final StatementSequence ss = mCbf.constructStatementSequence(source, target, statements, Origin.IMPLEMENTATION);
 		addTransFormula(ss);
 		assert ss.getTransformula() != null : "Transformula was not added although it should have been";
-		assert ss.getTransitionFormula() != null;
+		assert ss.getTransformula() != null;
 		return ss;
 	}
 	
@@ -170,7 +170,7 @@ public class IcfgEdgeBuilder {
 		} else {
 			throw new UnsupportedOperationException("Copy of " + oldEdge.getClass().getSimpleName() + " unsupported");
 		}
-		assert newEdge.getTransitionFormula() != null : "copy failed: no transformula for "
+		assert newEdge.getTransformula() != null : "copy failed: no transformula for "
 				+ newEdge.getClass().getSimpleName();
 		return newEdge;
 	}

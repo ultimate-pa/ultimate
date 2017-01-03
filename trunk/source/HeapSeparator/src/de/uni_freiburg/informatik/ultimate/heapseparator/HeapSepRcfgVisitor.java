@@ -111,7 +111,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		if (!(edge instanceof CodeBlock)) {
 			return;
 		}
-		final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
+		final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransformula();
 
 		final UnmodifiableTransFormula newTf = splitArraysInTransFormula(tf);
 

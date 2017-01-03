@@ -44,7 +44,8 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		return RcfgUtils.getValidCodeBlocks(getSuccessorActions(target), scope);
+		return RcfgUtils.getValidCodeBlocks(getSuccessorActions(target), scope).stream().map(a -> (CodeBlock) a)
+				.collect(Collectors.toList());
 	}
 
 	@Override

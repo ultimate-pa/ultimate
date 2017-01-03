@@ -768,7 +768,7 @@ public final class ProductGenerator {
 		assert productTargetLoc != null;
 		final Summary sum = mCodeblockFactory.constructSummary(productSourceLoc, productTargetLoc,
 				origSummary.getCallStatement(), false);
-		sum.setTransitionFormula(origSummary.getTransitionFormula());
+		sum.setTransitionFormula(origSummary.getTransformula());
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Created summary edge (" + productSourceLoc + ", " + productTargetLoc + ") for call "
@@ -783,7 +783,7 @@ public final class ProductGenerator {
 		assert productTargetLoc != null;
 		final Return returnEdge =
 				mCodeblockFactory.constructReturn(productSourceLoc, productTargetLoc, correspondingCall);
-		returnEdge.setTransitionFormula(origRcfgEdge.getTransitionFormula());
+		returnEdge.setTransitionFormula(origRcfgEdge.getTransformula());
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Created return edge (" + productSourceLoc + ", " + productTargetLoc + ") for call from "
 					+ correspondingCall.getSource());
@@ -799,7 +799,7 @@ public final class ProductGenerator {
 		assert productTargetLoc != null;
 		final Call call =
 				mCodeblockFactory.constructCall(productSourceLoc, productTargetLoc, origRcfgEdge.getCallStatement());
-		call.setTransitionFormula(origRcfgEdge.getTransitionFormula());
+		call.setTransitionFormula(origRcfgEdge.getTransformula());
 		mapNewEdge2OldEdge(call, origRcfgEdge);
 
 		// store all call edges in hashmap for the handling of return edges

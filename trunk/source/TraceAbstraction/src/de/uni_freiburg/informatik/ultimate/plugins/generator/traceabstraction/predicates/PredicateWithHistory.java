@@ -32,8 +32,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class PredicateWithHistory extends SPredicate {
 
@@ -41,18 +41,14 @@ public class PredicateWithHistory extends SPredicate {
 	@Visualizable
 	private final Map<Integer, Term> mHistory;
 
-	protected PredicateWithHistory(final BoogieIcfgLocation programPoint, final int serialNumber,
-			final String[] procedures, final Term formula, final Set<IProgramVar> vars, final Term closedFormula,
+	protected PredicateWithHistory(final IcfgLocation programPoint, final int serialNumber, final String[] procedures,
+			final Term formula, final Set<IProgramVar> vars, final Term closedFormula,
 			final Map<Integer, Term> history) {
 		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);
 		mHistory = history;
 	}
 
 	public Map<Integer, Term> getCopyOfHistory() {
-		final Map<Integer, Term> result = new HashMap<>();
-		for (final Integer i : mHistory.keySet()) {
-			result.put(i, mHistory.get(i));
-		}
-		return result;
+		return new HashMap<>(mHistory);
 	}
 }

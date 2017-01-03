@@ -127,12 +127,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final ArrayList<Integer> startsOfSubtreesFromDAG = new ArrayList<>();
 			final HashMap<IProgramVar, Term> varToSsaVar = new HashMap<>();
 			
-			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
+			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransformula().getInVars().keySet()) {
 				if (varToSsaVar.get(bv) == null) {
 					varToSsaVar.put(bv, buildVersion(bv));
 				}
 			}
-			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
+			for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransformula().getOutVars().keySet()) {
 				if (varToSsaVar.get(bv) == null) {
 					varToSsaVar.put(bv, buildVersion(bv));
 				}
@@ -249,10 +249,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		writtenVar = dag.getIncomingNodes().size() == 1
 				? dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() : null;
 		writtenVarSsa = varToSsaVar.get(writtenVar);
-		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet()) {
+		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransformula().getInVars().keySet()) {
 			varToSsaVarNew.put(bv, buildVersion(bv));
 		}
-		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet()) {
+		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransformula().getOutVars().keySet()) {
 			varToSsaVarNew.put(bv, buildVersion(bv));
 		}
 		
@@ -260,7 +260,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		 * in case of an assume, the variable on the incoming edge (i.e. the variable that is counted as written by this
 		 * node's statement) keeps its old version
 		 */
-		if (dag.getNodeLabel().getBlock().getTransitionFormula().getAssignedVars().isEmpty()) {
+		if (dag.getNodeLabel().getBlock().getTransformula().getAssignedVars().isEmpty()) {
 			varToSsaVarNew.put(writtenVar, writtenVarSsa);
 		}
 		
@@ -279,7 +279,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 */
 	private Term computeSsaTerm(final TraceCodeBlock nodeLabel, final IProgramVar writtenVar, final Term writtenVarSsa,
 			final HashMap<IProgramVar, Term> varToSsaVarNew, final HashMap<Term, IProgramVar> constantsToBoogieVar) {
-		final UnmodifiableTransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
+		final UnmodifiableTransFormula transFormula = nodeLabel.getBlock().getTransformula();
 		
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		
@@ -313,7 +313,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		
 		final Term substitutedTerm = new Substitution(mCsToolkit.getManagedScript().getScript(), substitutionMapping)
-				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
+				.transform(nodeLabel.getBlock().getTransformula().getFormula());
 		return substitutedTerm;
 	}
 	

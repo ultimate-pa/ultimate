@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
@@ -49,14 +48,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public final class LassoAutomatonBuilder {
+public final class LassoAutomatonBuilder<LETTER> {
 
-	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final PredicateFactory mPredicateFactory;
 
-	public LassoAutomatonBuilder(final InCaReAlphabet<CodeBlock> alphabet,
+	public LassoAutomatonBuilder(final InCaReAlphabet<LETTER> alphabet,
 			final IStateFactory<IPredicate> predicateFactoryRc, final PredicateFactory predicateFactory,
-			final NestedWord<CodeBlock> stem, final NestedWord<CodeBlock> loop, final IUltimateServiceProvider services)
+			final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final IUltimateServiceProvider services)
 			throws AutomataOperationCanceledException {
 		mPredicateFactory = predicateFactory;
 		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet.getInternalAlphabet(),
@@ -103,7 +102,7 @@ public final class LassoAutomatonBuilder {
 		}
 	}
 
-	public INestedWordAutomatonSimple<CodeBlock, IPredicate> getResult() {
+	public INestedWordAutomatonSimple<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 }

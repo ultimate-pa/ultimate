@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -41,9 +40,5 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  *
  */
 public interface IInternalAction extends IAction {
-	/**
-	 * @return {@link TransFormula} which defines how the system/program's variables are modified while executing this
-	 *         action.
-	 */
-	UnmodifiableTransFormula getTransformula();
+
 }

@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -50,9 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -66,42 +63,36 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * 
  */
 public class HoareAnnotationComposer {
-	
+
+	private static final boolean AVOID_IMPLICATIONS = true;
+	/**
+	 * What is the precondition for a context? Strongest postcondition or entry given by automaton?
+	 */
+	private static final boolean USE_ENTRY = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final HoareAnnotationFragments mHoareAnnotationFragments;
-	
+	private final HoareAnnotationFragments<?> mHoareAnnotationFragments;
+
 	private final HoareAnnotationStatisticsGenerator mHoareAnnotationStatisticsGenerator;
-	
-	/**
-	 * What is the precondition for a context? Strongest postcondition or entry given by automaton?
-	 */
-	private final boolean mUseEntry = true;
-	private final PredicateTransformer mPredicateTransformer;
-	
+
 	private final NestedMap2<IcfgLocation, IPredicate, Term> mLoc2callPred2disjunction;
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	
+
 	private int mNumberOfFragments = 0;
 	private final Map<IcfgLocation, IPredicate> mLoc2hoare;
-	
+
 	private final IPredicate mSurrogateForEmptyCallPred;
-	
-	private static final boolean s_AvoidImplications = true;
-	
-	public HoareAnnotationComposer(final IIcfg<BoogieIcfgLocation> rootAnnot, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final HoareAnnotationFragments hoareAnnotationFragments,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplicationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+
+	public HoareAnnotationComposer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final HoareAnnotationFragments<?> hoareAnnotationFragments, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
-		mPredicateTransformer = new PredicateTransformer(services, csToolkit.getManagedScript(), simplicationTechnique,
-				xnfConversionTechnique);
 		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
 		mSurrogateForEmptyCallPred =
 				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
@@ -112,9 +103,9 @@ public class HoareAnnotationComposer {
 		mHoareAnnotationStatisticsGenerator.setLocationsWithHoareAnnotation(mLoc2callPred2disjunction.keySet().size());
 		mHoareAnnotationStatisticsGenerator.setPreInvPairs(mLoc2callPred2disjunction.size());
 		mLoc2hoare = combineInter(mLoc2callPred2disjunction);
-		
+
 	}
-	
+
 	private Map<IcfgLocation, IPredicate>
 			combineInter(final NestedMap2<IcfgLocation, IPredicate, Term> loc2callPred2invariant) {
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
@@ -122,9 +113,9 @@ public class HoareAnnotationComposer {
 			final Map<IPredicate, Term> callpred2invariant = loc2callPred2invariant.get(loc);
 			final List<Term> conjuncts = new ArrayList<>(callpred2invariant.size());
 			for (final Entry<IPredicate, Term> entry : callpred2invariant.entrySet()) {
-				
+
 				final IPredicate postForCallpred;
-				if (mUseEntry || containsAnOldVar(entry.getKey())) {
+				if (USE_ENTRY || containsAnOldVar(entry.getKey())) {
 					if (entry.getKey() == mSurrogateForEmptyCallPred) {
 						postForCallpred = mSurrogateForEmptyCallPred;
 					} else {
@@ -137,20 +128,20 @@ public class HoareAnnotationComposer {
 				}
 				final Term precond = TraceAbstractionUtils.renameGlobalsToOldGlobals(postForCallpred, mServices,
 						mCsToolkit.getManagedScript());
-				
+
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("In " + loc + " holds " + entry.getValue() + " for precond " + precond);
 				}
 				Term precondImpliesInvariant =
 						Util.implies(mCsToolkit.getManagedScript().getScript(), precond, entry.getValue());
-				if (s_AvoidImplications) {
+				if (AVOID_IMPLICATIONS) {
 					precondImpliesInvariant = new Nnf(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP)
 							.transform(precondImpliesInvariant);
 				}
 				conjuncts.add(precondImpliesInvariant);
 			}
 			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
-			
+
 			final Set<IProgramVar> vars = TermVarsProc.computeTermVarsProc(conjunction,
 					mCsToolkit.getManagedScript().getScript(), mCsToolkit.getSymbolTable()).getVars();
 			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), vars,
@@ -171,7 +162,7 @@ public class HoareAnnotationComposer {
 		}
 		return result;
 	}
-	
+
 	private NestedMap2<IcfgLocation, IPredicate, Term> constructLoc2Callpred2DisjunctionMapping(
 			final HashRelation3<IcfgLocation, IPredicate, Term> loc2precond2invariantSet) {
 		final NestedMap2<IcfgLocation, IPredicate, Term> loc2precond2invariant = new NestedMap2<>();
@@ -185,7 +176,7 @@ public class HoareAnnotationComposer {
 		}
 		return loc2precond2invariant;
 	}
-	
+
 	private Term or(final Set<Term> terms) {
 		final Term disjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
 		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
@@ -195,7 +186,7 @@ public class HoareAnnotationComposer {
 		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
 		return simplificationResult.getSimplifiedTerm();
 	}
-	
+
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
@@ -203,24 +194,24 @@ public class HoareAnnotationComposer {
 	 */
 	public HashRelation3<IcfgLocation, IPredicate, Term> constructLoc2CallPred2DisjunctsMapping() {
 		final HashRelation3<IcfgLocation, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
-		
+
 		addHoareAnnotationForCallPred(loc2callpred2invariant, mSurrogateForEmptyCallPred,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
-		
+
 		for (final IPredicate callPred : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds =
+			final HashRelation<IcfgLocation, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().get(callPred);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, callPred, pp2preds);
 		}
-		
+
 		for (final IPredicate callPred : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds =
+			final HashRelation<IcfgLocation, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().get(callPred);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, callPred, pp2preds);
 		}
 		return loc2callpred2invariant;
 	}
-	
+
 	/**
 	 * Construct mapping for our three cases: - invariants for empty callpred - invariants for dead callpred -
 	 * invariants for live callpred
@@ -228,15 +219,15 @@ public class HoareAnnotationComposer {
 	 */
 	public HashRelation3<IcfgLocation, IPredicate, Term> constructMappingOld() {
 		final HashRelation3<IcfgLocation, IPredicate, Term> loc2callpred2invariant = new HashRelation3<>();
-		
+
 		final IPredicate surrogateForEmptyCallPred =
 				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
 		addHoareAnnotationForCallPred(loc2callpred2invariant, surrogateForEmptyCallPred,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
-		
+
 		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
 			IPredicate precondForContext;
-			if (mUseEntry || containsAnOldVar(context)) {
+			if (USE_ENTRY || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
 			} else {
 				// compute SP
@@ -244,14 +235,14 @@ public class HoareAnnotationComposer {
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds =
+			final HashRelation<IcfgLocation, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, precondForContext, pp2preds);
 		}
-		
+
 		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
 			IPredicate precondForContext;
-			if (mUseEntry || containsAnOldVar(context)) {
+			if (USE_ENTRY || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getCallpred2Entry().get(context);
 			} else {
 				// compute SP
@@ -259,44 +250,39 @@ public class HoareAnnotationComposer {
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, mServices,
 					mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds =
+			final HashRelation<IcfgLocation, IPredicate> pp2preds =
 					mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForCallPred(loc2callpred2invariant, precondForContext, pp2preds);
 		}
 		return loc2callpred2invariant;
 	}
-	
+
 	/**
 	 * @param loc2callPred2invariant
 	 * @param precondForContext
 	 * @param pp2preds
 	 */
-	private void addHoareAnnotationForCallPred(
+	private static <DOM extends IcfgLocation> void addHoareAnnotationForCallPred(
 			final HashRelation3<IcfgLocation, IPredicate, Term> loc2callPred2invariant,
-			final IPredicate precondForContext, final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds) {
-		for (final BoogieIcfgLocation loc : pp2preds.getDomain()) {
+			final IPredicate precondForContext, final HashRelation<DOM, IPredicate> pp2preds) {
+		for (final DOM loc : pp2preds.getDomain()) {
 			final Set<IPredicate> preds = pp2preds.getImage(loc);
 			for (final IPredicate pred : preds) {
 				loc2callPred2invariant.addTriple(loc, precondForContext, pred.getFormula());
 			}
 		}
 	}
-	
-	private boolean containsAnOldVar(final IPredicate p) {
-		for (final IProgramVar bv : p.getVars()) {
-			if (bv.isOldvar()) {
-				return true;
-			}
-		}
-		return false;
+
+	private static boolean containsAnOldVar(final IPredicate p) {
+		return p.getVars().stream().anyMatch(IProgramVar::isOldvar);
 	}
-	
+
 	public HoareAnnotationStatisticsGenerator getHoareAnnotationStatisticsGenerator() {
 		return mHoareAnnotationStatisticsGenerator;
 	}
-	
+
 	public Map<IcfgLocation, IPredicate> getLoc2hoare() {
 		return mLoc2hoare;
 	}
-	
+
 }

@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  */
 public class TraceAbstractionUtils {
-	
+
 	/**
 	 * @param <LCS>
 	 *            local control state, e.g., {@link BoogieIcfgLocation} for sequential programs or a set of
@@ -108,7 +108,7 @@ public class TraceAbstractionUtils {
 		logger.debug("Finished computation of initial partition.");
 		return partition;
 	}
-	
+
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
 			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
 			final PredicateUnifier predicateUnifier) throws AssertionError {
@@ -125,23 +125,22 @@ public class TraceAbstractionUtils {
 		}
 		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
 	}
-	
+
 	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
-			final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
-			final PredicateUnifier predicateUnifier) throws AssertionError {
-		final IHoareTripleChecker ehtc = constructEfficientHoareTripleChecker(
-				services, hoareTripleChecks, csToolkit, predicateUnifier);
+			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) throws AssertionError {
+		final IHoareTripleChecker ehtc =
+				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
 		return new CachingHoareTripleChecker_Map(services, ehtc, predicateUnifier);
 	}
-	
+
 	/**
 	 * Returns a predicate which states that old(g)=g for all global variables g that are modifiable by procedure proc
 	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
 	public static TermVarsProc getOldVarsEquality(final String proc,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final Script script) {
-		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
+		final Set<IProgramVar> vars = new HashSet<>();
 		Term term = script.term("true");
 		for (final IProgramVar bv : modifiableGlobalsTable.getModifiedBoogieVars(proc)) {
 			vars.add(bv);
@@ -156,9 +155,9 @@ public class TraceAbstractionUtils {
 		final TermVarsProc result =
 				new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars, script));
 		return result;
-		
+
 	}
-	
+
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
@@ -174,7 +173,7 @@ public class TraceAbstractionUtils {
 		if (predicateFactory.isDontCare(ps)) {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar pv : ps.getVars()) {
 			if (pv instanceof IProgramNonOldVar) {
 				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
@@ -186,7 +185,7 @@ public class TraceAbstractionUtils {
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
 	}
-	
+
 	/**
 	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
@@ -194,7 +193,7 @@ public class TraceAbstractionUtils {
 	 */
 	public static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final IProgramVar pv : ps.getVars()) {
 			if (pv instanceof IProgramNonOldVar) {
 				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
@@ -205,13 +204,13 @@ public class TraceAbstractionUtils {
 				new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(ps.getFormula());
 		return result;
 	}
-	
-	public static Set<IcfgLocation> getLocationsForWhichHoareAnnotationIsComputed(final IIcfg<BoogieIcfgLocation> root,
-			final HoareAnnotationPositions hoareAnnotationPositions) {
-		final Set<IcfgLocation> hoareAnnotationLocs = new HashSet<>();
+
+	public static <LOC extends IcfgLocation> Set<LOC> getLocationsForWhichHoareAnnotationIsComputed(
+			final IIcfg<LOC> root, final HoareAnnotationPositions hoareAnnotationPositions) {
+		final Set<LOC> hoareAnnotationLocs = new HashSet<>();
 		switch (hoareAnnotationPositions) {
 		case All:
-			for (final Entry<String, Map<String, BoogieIcfgLocation>> entry : root.getProgramPoints().entrySet()) {
+			for (final Entry<String, Map<String, LOC>> entry : root.getProgramPoints().entrySet()) {
 				hoareAnnotationLocs.addAll(entry.getValue().values());
 			}
 			break;
@@ -224,7 +223,7 @@ public class TraceAbstractionUtils {
 		}
 		return hoareAnnotationLocs;
 	}
-	
+
 	/**
 	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
 	 * globalVar in term and remove the oldvar from vars.
@@ -236,10 +235,10 @@ public class TraceAbstractionUtils {
 			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
 		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-		
+
 		final ArrayList<TermVariable> replacees = new ArrayList<>();
 		final ArrayList<Term> replacers = new ArrayList<>();
-		
+
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
@@ -250,12 +249,12 @@ public class TraceAbstractionUtils {
 				}
 			}
 		}
-		
+
 		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
 		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
 		Term result = script.let(substVars, substValues, term);
 		result = new FormulaUnLet().unlet(result);
-		
+
 		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((IProgramOldVar) bv).getNonOldVar());

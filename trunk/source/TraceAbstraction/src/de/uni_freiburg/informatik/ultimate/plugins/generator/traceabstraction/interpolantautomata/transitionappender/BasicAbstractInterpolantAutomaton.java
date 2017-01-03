@@ -75,7 +75,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpol
 			return;
 		}
 		// if the letter is already infeasible, the successor is false
-		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+		if (letter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;

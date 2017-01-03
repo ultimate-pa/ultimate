@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Auxiliary edge from the Root node to the initial LocNodes of a program.
@@ -41,13 +42,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class RootEdge extends IcfgEdge {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RootEdge(IcfgLocation source, IcfgLocation target) {
+	public RootEdge(final IcfgLocation source, final IcfgLocation target) {
 		super(source, target, new Payload());
 		setSource(source);
 		source.addOutgoing(this);
@@ -58,6 +58,11 @@ public class RootEdge extends IcfgEdge {
 	@Override
 	public String toString() {
 		return "RootEdge";
+	}
+
+	@Override
+	public UnmodifiableTransFormula getTransformula() {
+		throw new UnsupportedOperationException("RootEdge has no transformula");
 	}
 
 }

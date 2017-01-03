@@ -141,15 +141,15 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 						mTransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(call.getLocalVarsAssignment());
 					}
 				} else {
-					mTransFormulas[i] = ((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula();
+					mTransFormulas[i] = ((CodeBlock) super.getTrace().getSymbol(i)).getTransformula();
 				}
 			} else {
 				if (super.getTrace().getSymbol(i) instanceof Call) {
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
-						mTransFormulas[i] = ((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula();
+						mTransFormulas[i] = ((CodeBlock) super.getTrace().getSymbol(i)).getTransformula();
 					} else {
 						mTransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(
-								((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula());
+								((CodeBlock) super.getTrace().getSymbol(i)).getTransformula());
 					}
 					if (oldVarAssignmentAtCallInUnsatCore[i]) {
 						mOldVarsAssignmentTransFormulasAtCall.put(i, oldVarsAssignmentCache.getOldVarsAssignment(
@@ -165,7 +165,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 
 				} else {
 					mTransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(
-							((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula());
+							((CodeBlock) super.getTrace().getSymbol(i)).getTransformula());
 				}
 			}
 		}
@@ -183,7 +183,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 				Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsat_core, annot2Original,
 						conjuncts_annot, aac.getSplitEqualityMapping());
 				mTransFormulas[i] = buildTransFormulaWithRelevantConjuncts(
-						((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula(),
+						((CodeBlock) super.getTrace().getSymbol(i)).getTransformula(),
 						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 				// 2. Global Var assignment
 				conjuncts_annot = SmtUtils.getConjuncts(aaa.getAnnotatedSsa().getGlobalVarAssignment(i));
@@ -208,7 +208,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 				final Set<Term> conjunctsInUnsatCore = filterRelevantConjunctsAndRestoreEqualities(unsat_core,
 						annot2Original, conjuncts_annot, aac.getSplitEqualityMapping());
 				mTransFormulas[i] = buildTransFormulaWithRelevantConjuncts(
-						((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula(),
+						((CodeBlock) super.getTrace().getSymbol(i)).getTransformula(),
 						conjunctsInUnsatCore.toArray(new Term[conjunctsInUnsatCore.size()]));
 			}
 		}

@@ -202,11 +202,11 @@ public class LoopCannibalizer {
 
 	private boolean codeBlockContainsVarOfHondaPredicate(final CodeBlock cb) {
 		final Set<IProgramVar> hondaVars = mBspm.getHondaPredicate().getVars();
-		final Set<IProgramVar> inVars = cb.getTransitionFormula().getInVars().keySet();
+		final Set<IProgramVar> inVars = cb.getTransformula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {
 			return true;
 		}
-		final Set<IProgramVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
+		final Set<IProgramVar> outVars = cb.getTransformula().getOutVars().keySet();
 		return !Collections.disjoint(hondaVars, outVars);
 	}
 

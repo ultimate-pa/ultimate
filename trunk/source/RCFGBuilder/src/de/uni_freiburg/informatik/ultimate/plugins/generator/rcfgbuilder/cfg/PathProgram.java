@@ -322,9 +322,14 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 			final PathProgramIcfgAction other = (PathProgramIcfgAction) obj;
 			return mBacking.equals(other.mBacking);
 		}
+
+		@Override
+		public UnmodifiableTransFormula getTransformula() {
+			return mBacking.getTransformula();
+		}
 	}
 
-	private final static class PathProgramCallAction<T extends IcfgEdge & ICallAction> extends PathProgramIcfgAction<T>
+	private static final class PathProgramCallAction<T extends IcfgEdge & ICallAction> extends PathProgramIcfgAction<T>
 			implements ICallAction {
 		private static final long serialVersionUID = 1L;
 
@@ -338,7 +343,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		}
 	}
 
-	private final static class PathProgramInternalAction<T extends IcfgEdge & IInternalAction>
+	private static final class PathProgramInternalAction<T extends IcfgEdge & IInternalAction>
 			extends PathProgramIcfgAction<T> implements IInternalAction {
 		private static final long serialVersionUID = 1L;
 
@@ -352,7 +357,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		}
 	}
 
-	private final static class PathProgramReturnAction<T extends IcfgEdge & IReturnAction>
+	private static final class PathProgramReturnAction<T extends IcfgEdge & IReturnAction>
 			extends PathProgramIcfgAction<T> implements IReturnAction {
 		private static final long serialVersionUID = 1L;
 

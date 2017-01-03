@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -51,7 +52,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 	protected final ManagedScript mMgdScript;
 	protected final PredicateFactory mPredicateFactory;
 
-	public PredicateFactoryForInterpolantAutomata(final ManagedScript mgdScript, 
+	public PredicateFactoryForInterpolantAutomata(final ManagedScript mgdScript,
 			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mMgdScript = mgdScript;
@@ -134,7 +135,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		if (!(c2 instanceof ISLPredicate)) {
 			throw new IllegalArgumentException("has to be predicate with single location");
 		}
-		BoogieIcfgLocation[] programPoints;
+		IcfgLocation[] programPoints;
 		if (c1 instanceof ISLPredicate) {
 			programPoints = new BoogieIcfgLocation[2];
 			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
@@ -145,7 +146,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		final BoogieIcfgLocation c2PP = ((ISLPredicate) c2).getProgramPoint();
+		final IcfgLocation c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
 		final Term conjunction = mPredicateFactory.and(c1, c2);
 		final IMLPredicate result = mPredicateFactory.newMLPredicate(programPoints, conjunction);

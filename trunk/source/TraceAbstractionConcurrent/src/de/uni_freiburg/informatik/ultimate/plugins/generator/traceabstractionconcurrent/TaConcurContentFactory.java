@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
@@ -47,56 +48,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
 	public TaConcurContentFactory(final Map<String, Map<String, BoogieIcfgLocation>> locNodes,
-			final AbstractCegarLoop abstractCegarLoop, final CfgSmtToolkit theory, final PredicateFactory predicateFactory,
-			final boolean taPrefs,
-			final boolean hoareAnnotation,
+			final AbstractCegarLoop abstractCegarLoop, final CfgSmtToolkit theory,
+			final PredicateFactory predicateFactory, final boolean taPrefs, final boolean hoareAnnotation,
 			final boolean interprocedural) {
 		super(theory.getManagedScript(), predicateFactory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
-	
-	
+
 	@Override
-	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
-			final IPredicate c2) {
-		
-		final List<IPredicate> programPoints = new ArrayList<IPredicate>();
+	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
+
+		final List<IPredicate> programPoints = new ArrayList<>();
 		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
 			final ProdState ps1 = (ProdState) c1;
 			programPoints.addAll(ps1.getPredicates());
-		}
-		else {
+		} else {
 			programPoints.add(c1);
 		}
 		if (((SPredicate) c2).getProgramPoint() == null) {
-			assert (c2.getFormula() != null);
-//			result.and(mTheory, (Predicate) c2);
+			assert c2.getFormula() != null;
+			// result.and(mTheory, (Predicate) c2);
 		}
-		programPoints.add(c2); 
+		programPoints.add(c2);
 		return result;
 	}
 
-
-
 	@Override
-	public IPredicate getContentOnPetriNet2FiniteAutomaton(
-			final Marking<?, IPredicate> marking) {
-		final LinkedList<IPredicate> programPoints = new LinkedList<IPredicate>();
+	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
+		final LinkedList<IPredicate> programPoints = new LinkedList<>();
 		for (final Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
 		return mPredicateFactory.getNewProdState(programPoints);
 	}
-	
-
-
 
 	@Override
 	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
-		final BoogieIcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
+		final IcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
 		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
-	
 
 }

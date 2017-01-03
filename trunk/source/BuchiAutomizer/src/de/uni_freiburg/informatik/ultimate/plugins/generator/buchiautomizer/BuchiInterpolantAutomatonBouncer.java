@@ -253,7 +253,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private boolean isPredHierLetterFalse(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
 			final SuccessorComputationHelper sch) {
 		final boolean result;
-		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+		if (letter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			result = true;
 		} else if (sch.isLinearPredecessorFalse(resPred)) {
 			result = true;

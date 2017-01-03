@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -45,58 +44,50 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata {
-	
+
+	private static final boolean DEBUG_COMPUTE_HISTORY = false;
+
 	protected final IUltimateServiceProvider mServices;
-	
-	private static final boolean s_DebugComputeHistory = false;
-	
 	protected int mIteration;
-	private final Set<IcfgLocation> mHoareAnnotationProgramPoints;
-	
-	
-	public PredicateFactoryRefinement(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final PredicateFactory predicateFactory,
-							final boolean computeHoareAnnoation, 
-							final Set<IcfgLocation> hoareAnnotationLocations) {
+	private final Set<? extends IcfgLocation> mHoareAnnotationProgramPoints;
+
+	public PredicateFactoryRefinement(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final PredicateFactory predicateFactory, final boolean computeHoareAnnoation,
+			final Set<? extends IcfgLocation> hoareAnnotationLocations) {
 		super(mgdScript, predicateFactory, computeHoareAnnoation);
 		mServices = services;
-//		mMaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		mHoareAnnotationProgramPoints = hoareAnnotationLocations;
 	}
 
-	
 	@Override
 	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
-			//			assert mCsToolkit.isDontCare(p2);
+			// assert mCsToolkit.isDontCare(p2);
 			assert !mComputeHoareAnnotation;
 			return mPredicateFactory.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		} else if (p1 instanceof ISLPredicate) {
-			final BoogieIcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
+			final IcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
 				Term conjunction = mPredicateFactory.and(p1, p2);
 				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
 				final IPredicate result;
-				if (s_DebugComputeHistory) {
-					assert (p1 instanceof PredicateWithHistory);
-					final Map<Integer, Term> history = 
-							((PredicateWithHistory) p1).getCopyOfHistory();
-					history.put(mIteration,p2.getFormula());
-					result = mPredicateFactory.newPredicateWithHistory(
-							pp, conjunction, history);
+				if (DEBUG_COMPUTE_HISTORY) {
+					assert p1 instanceof PredicateWithHistory;
+					final Map<Integer, Term> history = ((PredicateWithHistory) p1).getCopyOfHistory();
+					history.put(mIteration, p2.getFormula());
+					result = mPredicateFactory.newPredicateWithHistory(pp, conjunction, history);
 				} else {
 					result = mPredicateFactory.newSPredicate(pp, conjunction);
 				}
 				return result;
-			} else {
-				return mPredicateFactory.newDontCarePredicate(pp);
 			}
+			return mPredicateFactory.newDontCarePredicate(pp);
 
 		} else {
 			throw new AssertionError("unknown predicate");
 		}
 	}
-	
+
 	@Override
 	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 		throw new AssertionError(
@@ -105,20 +96,19 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 	@Override
 	public IPredicate minimize(final Collection<IPredicate> states) {
-		assert !states.isEmpty() : "minimize empty set???"; 
+		assert !states.isEmpty() : "minimize empty set???";
 		assert sameProgramPoints(states) : "states do not have same program points";
 		final IPredicate someElement = states.iterator().next();
 		if (someElement instanceof ISLPredicate) {
-			final BoogieIcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
+			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
 				Term disjuntion = mPredicateFactory.or(false, states);
 				disjuntion = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjuntion);
 				return mPredicateFactory.newSPredicate(pp, disjuntion);
-			} else {
-				return mPredicateFactory.newDontCarePredicate(pp);
 			}
+			return mPredicateFactory.newDontCarePredicate(pp);
 		} else if (someElement instanceof IMLPredicate) {
-			final BoogieIcfgLocation[] pps = ((IMLPredicate) someElement).getProgramPoints();
+			final IcfgLocation[] pps = ((IMLPredicate) someElement).getProgramPoints();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
 				return mPredicateFactory.newMLDontCarePredicate(pps);
@@ -129,42 +119,38 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 			throw new AssertionError("unknown predicate");
 		}
 	}
-	
-	
-	private static boolean sameProgramPoints(final Collection<IPredicate> states) {
+
+	private boolean sameProgramPoints(final Collection<IPredicate> states) {
 		final Iterator<IPredicate> it = states.iterator();
 		final IPredicate firstPredicate = it.next();
 		if (firstPredicate instanceof ISLPredicate) {
-			final BoogieIcfgLocation firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
+			final IcfgLocation firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
 			while (it.hasNext()) {
-				final BoogieIcfgLocation pp = ((ISLPredicate) it.next()).getProgramPoint();
+				final IcfgLocation pp = ((ISLPredicate) it.next()).getProgramPoint();
 				if (pp != firstProgramPoint) {
 					return false;
 				}
 			}
 		} else if (firstPredicate instanceof IMLPredicate) {
-			System.out.println("Warning, check not implemented");
+			mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).warn("Check not implemented");
 		} else {
 			throw new AssertionError("unsupported predicate");
 		}
 		return true;
 	}
-	
 
 	@Override
 	public IPredicate senwa(final IPredicate entry, final IPredicate state) {
 		return mPredicateFactory.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
-	
+
 	@Override
 	public IPredicate intersectBuchi(final IPredicate s1, final IPredicate s2, final int track) {
 		return intersection(s1, s2);
 	}
 
-
 	public void setIteration(final int i) {
 		mIteration = i;
 	}
-	
 
 }

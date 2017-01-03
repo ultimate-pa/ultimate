@@ -113,7 +113,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		int newEdges = 0;
 		for (final IcfgEdge predEdge : predEdges) {
 			final CodeBlock predCB = (CodeBlock) predEdge;
-			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+			if (predCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("    already infeasible: " + predCB);
 				}
@@ -122,7 +122,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 			for (final IcfgEdge succEdge : succEdges) {
 				final CodeBlock succCB = (CodeBlock) succEdge;
 				
-				if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+				if (succCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("    already infeasible: " + succCB);
 					}

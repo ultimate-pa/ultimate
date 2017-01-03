@@ -43,24 +43,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public class CFG2NestedWordAutomaton {
-	private final IUltimateServiceProvider mServices;
+public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
+	private static final boolean STORE_HISTORY = false;
 
+	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private static final boolean mStoreHistory = false;
 	private final boolean mInterprocedural;
-
 	private final ILogger mLogger;
 
 	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural,
@@ -80,8 +79,9 @@ public class CFG2NestedWordAutomaton {
 	 *            error location of the program. If null, each state that corresponds to an error location will be
 	 *            accepting. Otherwise only the state corresponding to errorLoc will be accepting.
 	 */
-	public INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final IIcfg<BoogieIcfgLocation> icfg,
-			final IStateFactory<IPredicate> tAContentFactory, final Collection<BoogieIcfgLocation> errorLocs) {
+	@SuppressWarnings("unchecked")
+	public INestedWordAutomaton<LETTER, IPredicate> getNestedWordAutomaton(final IIcfg<? extends IcfgLocation> icfg,
+			final IStateFactory<IPredicate> tAContentFactory, final Collection<? extends IcfgLocation> errorLocs) {
 		if (icfg.getInitialNodes().size() == 1) {
 			mLogger.info("Mode: main mode - execution starts in main procedure");
 		} else {
@@ -89,44 +89,41 @@ public class CFG2NestedWordAutomaton {
 		}
 
 		mLogger.debug("Step: put all LocationNodes into mNodes");
-		final IcfgLocationIterator<BoogieIcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-		final Set<BoogieIcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
-		final Set<BoogieIcfgLocation> initialNodes = icfg.getInitialNodes();
-		final Map<BoogieIcfgLocation, IPredicate> nodes2States = new HashMap<>();
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
+		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
+		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 
 		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
-		final Set<CodeBlock> internalAlphabet = new HashSet<>();
-		final Set<CodeBlock> callAlphabet = new HashSet<>();
-		final Set<CodeBlock> returnAlphabet = new HashSet<>();
+		final Set<LETTER> internalAlphabet = new HashSet<>();
+		final Set<LETTER> callAlphabet = new HashSet<>();
+		final Set<LETTER> returnAlphabet = new HashSet<>();
 
-		for (final BoogieIcfgLocation locNode : allNodes) {
+		for (final IcfgLocation locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
-					if (edge instanceof Call) {
+					if (edge instanceof IIcfgCallTransition) {
 						if (mInterprocedural) {
-							callAlphabet.add((Call) edge);
+							callAlphabet.add((LETTER) edge);
 						}
-					} else if (edge instanceof Return) {
+					} else if (edge instanceof IIcfgReturnTransition) {
 						if (mInterprocedural) {
-							returnAlphabet.add((Return) edge);
+							returnAlphabet.add((LETTER) edge);
 						}
 					} else if (edge instanceof Summary) {
-						final Summary summaryEdge = (Summary) edge;
-						final Summary annot = summaryEdge;
-						if (annot.calledProcedureHasImplementation()) {
+						final Summary summary = (Summary) edge;
+						if (summary.calledProcedureHasImplementation()) {
 							// do nothing if analysis is interprocedural
 							// add summary otherwise
 							if (!mInterprocedural) {
-								internalAlphabet.add(annot);
+								internalAlphabet.add((LETTER) summary);
 							}
 						} else {
-							internalAlphabet.add(annot);
+							internalAlphabet.add((LETTER) summary);
 						}
-					} else if (edge instanceof CodeBlock) {
-						internalAlphabet.add((CodeBlock) edge);
 					} else {
-						throw new UnsupportedOperationException("unknown edge " + edge);
+						internalAlphabet.add((LETTER) edge);
 					}
 				}
 			}
@@ -134,19 +131,19 @@ public class CFG2NestedWordAutomaton {
 
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
-		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
+		final NestedWordAutomaton<LETTER, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
 						returnAlphabet, tAContentFactory);
 
 		mLogger.debug("Step: add states");
 		// add states
-		for (final BoogieIcfgLocation locNode : allNodes) {
+		for (final IcfgLocation locNode : allNodes) {
 			final boolean isInitial = initialNodes.contains(locNode);
 			final boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
 			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-			if (mStoreHistory) {
+			if (STORE_HISTORY) {
 				automatonState =
 						mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {
@@ -173,43 +170,39 @@ public class CFG2NestedWordAutomaton {
 
 		mLogger.debug("Step: add transitions");
 		// add transitions
-		for (final BoogieIcfgLocation locNode : allNodes) {
+		for (final IcfgLocation locNode : allNodes) {
 			final IPredicate state = nodes2States.get(locNode);
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
-					final BoogieIcfgLocation succLoc = (BoogieIcfgLocation) edge.getTarget();
+					final IcfgLocation succLoc = edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
-					if (edge instanceof Call) {
+					if (edge instanceof IIcfgCallTransition<?>) {
 						if (mInterprocedural) {
-							final CodeBlock symbol = (Call) edge;
-							nwa.addCallTransition(state, symbol, succState);
+							nwa.addCallTransition(state, (LETTER) edge, succState);
 						}
-					} else if (edge instanceof Return) {
+					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
 						if (mInterprocedural) {
-							final Return returnEdge = (Return) edge;
-							final CodeBlock symbol = returnEdge;
-							final BoogieIcfgLocation callerLocNode = returnEdge.getCallerProgramPoint();
+							final IIcfgReturnTransition<?, ?> returnEdge = (IIcfgReturnTransition<?, ?>) edge;
+							final IcfgLocation callerLocNode = returnEdge.getCallerProgramPoint();
 							if (nodes2States.containsKey(callerLocNode)) {
-								nwa.addReturnTransition(state, nodes2States.get(callerLocNode), symbol, succState);
+								nwa.addReturnTransition(state, nodes2States.get(callerLocNode), (LETTER) returnEdge,
+										succState);
 							} else {
-								mLogger.debug("Ommited insertion of " + symbol + " because callerNode" + callerLocNode
-										+ " is deadcode");
+								mLogger.debug("Ommited insertion of " + returnEdge + " because callerNode "
+										+ callerLocNode + " is deadcode");
 							}
 						}
 					} else if (edge instanceof Summary) {
 						final Summary summaryEdge = (Summary) edge;
 						if (summaryEdge.calledProcedureHasImplementation()) {
 							if (!mInterprocedural) {
-								nwa.addInternalTransition(state, summaryEdge, succState);
+								nwa.addInternalTransition(state, (LETTER) summaryEdge, succState);
 							}
 						} else {
-							nwa.addInternalTransition(state, summaryEdge, succState);
+							nwa.addInternalTransition(state, (LETTER) summaryEdge, succState);
 						}
-					} else if (edge instanceof CodeBlock) {
-						final CodeBlock symbol = (CodeBlock) edge;
-						nwa.addInternalTransition(state, symbol, succState);
 					} else {
-						throw new UnsupportedOperationException("unknown edge" + edge);
+						nwa.addInternalTransition(state, (LETTER) edge, succState);
 					}
 				}
 			}

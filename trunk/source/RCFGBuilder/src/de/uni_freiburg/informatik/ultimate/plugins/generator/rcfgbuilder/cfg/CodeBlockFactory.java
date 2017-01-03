@@ -125,24 +125,24 @@ public class CodeBlockFactory implements IStorable {
 			final BoogieIcfgLocation target) {
 		if (codeBlock instanceof Call) {
 			final Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
-			copy.setTransitionFormula(codeBlock.getTransitionFormula());
+			copy.setTransitionFormula(codeBlock.getTransformula());
 			return copy;
 		} else if (codeBlock instanceof Return) {
 			// FIXME: The return keeps its reference to the old call and thus to a possibly old Icfg
 			final Return copy = constructReturn(source, target, ((Return) codeBlock).getCorrespondingCall());
-			copy.setTransitionFormula(codeBlock.getTransitionFormula());
+			copy.setTransitionFormula(codeBlock.getTransformula());
 			return copy;
 		} else if (codeBlock instanceof StatementSequence) {
 			final List<Statement> statements = ((StatementSequence) codeBlock).getStatements();
 			final Origin origin = ((StatementSequence) codeBlock).getOrigin();
 			final StatementSequence copy = this.constructStatementSequence(source, target, statements, origin);
-			copy.setTransitionFormula(codeBlock.getTransitionFormula());
+			copy.setTransitionFormula(codeBlock.getTransformula());
 			return copy;
 		} else if (codeBlock instanceof Summary) {
 			final CallStatement callStatement = ((Summary) codeBlock).getCallStatement();
 			final boolean calledProcedureHasImplementation = ((Summary) codeBlock).calledProcedureHasImplementation();
 			final Summary copy = constructSummary(source, target, callStatement, calledProcedureHasImplementation);
-			copy.setTransitionFormula(codeBlock.getTransitionFormula());
+			copy.setTransitionFormula(codeBlock.getTransformula());
 			return copy;
 		} else if (codeBlock instanceof GotoEdge) {
 			return constructGotoEdge(source, target);
