@@ -251,8 +251,7 @@ public class IterativePredicateTransformer {
 				// there is not much difference between both variants.
 				resultTerm = new QuantifierPusher(mMgdScript,
 						mServices, false, PqeTechniques.ONLY_DER).transform(lessQuantifier);
-//				resultTerm = new PrenexNormalForm(mBoogie2SMT.getScript(),
-//									mBoogie2SMT.getVariableManager()).transform(lessQuantifier);
+//				resultTerm = new PrenexNormalForm(mMgdScript).transform(lessQuantifier);
 			}
 			final IPredicate result = mPredicateFactory.newPredicate(resultTerm);
 			return result;
