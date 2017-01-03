@@ -27,10 +27,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -140,6 +150,33 @@ public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 //		return HashUtils.hashHsieh(31, mPvoc, mInVar, mOutVar, mTerm); // does not work as m[In|Out]Var can be null
 //		return HashUtils.hashHsieh(31, mTerm);
 		return mTerm.hashCode();
+	}
+
+
+	@Override
+	public Set<ArrayWithSideCondition> getArrayWithSideConditions(VPTfState tfState) {
+		
+		Set<VPTfNodeIdentifier> functionNodeIds = tfState.getFunctionNodesForArray(this);
+
+		/*
+		 * in case of a "plain" array (i.e. one not created through a store) the mapping form
+		 * index to value is essentially the collection of function nodes for the array
+		 *  e.g. say for array a we track the indices i and j
+		 *    then the map will contain the pairs (i, a[i]) and (j, a[j])
+		 */
+		Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> indexToValue = new HashMap<>();
+		for (VPTfNodeIdentifier fnid : functionNodeIds) {
+			// obtain the indices via initCcchild
+			List<VPTfNodeIdentifier> index = 
+					tfState.getEqGraphNode(fnid).getInitCcchild().stream()
+						.map(egn -> egn.nodeIdentifier).collect(Collectors.toList());
+			
+			indexToValue.put(index, fnid);
+		}
+
+		ArrayWithSideCondition awsc = new ArrayWithSideCondition(indexToValue, 
+				Collections.emptySet(), Collections.emptySet());
+		return Collections.singleton(awsc);
 	}
 	
 }

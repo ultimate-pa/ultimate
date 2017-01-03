@@ -2,9 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
+
 public interface IElementWrapper {
 	
-	public Set<ISingleElementWrapper> getElements();
+//	public Set<IElementWrapper> getElements();
 
 //	public WrapperSideCondition getSideCondition();
+	
+	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfPreState);
 }

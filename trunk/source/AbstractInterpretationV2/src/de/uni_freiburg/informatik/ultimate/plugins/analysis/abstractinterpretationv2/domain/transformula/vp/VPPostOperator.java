@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -51,21 +51,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IArrayWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ISingleElementWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.INodeOrArrayWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.NodeIdWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.UndetermindedNodeWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.WrapperFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VpTfStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -243,33 +246,92 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private Set<VPTfState> handleEqualitySubterm(final VPTfState tfPreState, final TransFormula tf,
 			final boolean negated, final Term lhs, final Term rhs) {
 		if (lhs.getSort().isArraySort()) {
+			if (negated) {
+				// we have a disequality between arrays
+				// we cannot conclude anything from this as we never track all array indices
+				return Collections.singleton(tfPreState);
+			}
 			// two arrays are equated
-			IArrayWrapper lhsWrapper = null; // TODO
-			IArrayWrapper rhsWrapper = null;
 			
-			
-			Set<VPTfState> resultStates = new HashSet<>();
-			return resultStates;
-		} else {
-			// two "normal" terms are equated
-			
-			Set<ISingleElementWrapper> lhsWrappers = WrapperFactory.wrapElement(lhs).getElements();
-			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs).getElements();
+			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
+			IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
+			IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
 			
 			Set<VPTfState> resultStates = new HashSet<>();
-			
-			for (ISingleElementWrapper lhsW : lhsWrappers) {
-				for (ISingleElementWrapper rhsW : rhsWrappers) {
-					// add side conditions
+			for (ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState)) {
+				for (ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(tfPreState)) {
 					
-					// if state becomes bottom, drop it
+					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsArrayWSc,
+							rhsArrayWSc);
 					
-					// add (dis)equality
+					// add equalities for all the indices we track for both arrays
+					for (Entry<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> en : lhsArrayWSc.getIndexToValue().entrySet()) {
+						if (!rhsArrayWSc.getIndexToValue().containsKey(en.getKey())) {
+							// the other array does not have a value for the current index
+							// --> do nothing
+							continue;
+						}
+						
+						VPTfNodeIdentifier lhS = en.getValue();
+						VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
 
+						resultStatesForCurrentNodePair = 
+								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+										VPFactoryHelpers.addEquality(
+												lhS,
+												rhS,
+												resultStatesForCurrentNodePair, mTfStateFactory),
+										mTfStateFactory);
+					}
+
+					resultStates.addAll(resultStatesForCurrentNodePair);
 				}
 			}
 			
 			return resultStates;
+		} else {
+			// two "normal" terms are equated
+			
+			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
+			//TODO: the wrapping could be done up front in tfStatePreparer..
+			IElementWrapper lhsWrapper = WrapperFactory.wrapElement(lhs, tfStateBuilder);
+			IElementWrapper rhsWrapper = WrapperFactory.wrapElement(rhs, tfStateBuilder);
+//			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs, tfStateBuilder).getElements();
+			
+			Set<VPTfState> resultStates = new HashSet<>();
+//			
+			for (NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
+				for (NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
+					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsNodeWSc,
+							rhsNodeWSc);
+					if (lhsNodeWSc instanceof UndetermindedNodeWithSideCondition
+							|| rhsNodeWSc instanceof UndetermindedNodeWithSideCondition) {
+						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the sideconditions
+						resultStates.addAll(resultStatesForCurrentNodePair);
+						continue;
+					} 
+					
+					// add (dis)equality
+					if (!negated) {
+						resultStatesForCurrentNodePair = 
+								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+										VPFactoryHelpers.addEquality(
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory),
+										mTfStateFactory);
+					} else {
+						resultStatesForCurrentNodePair = 
+								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+										VPFactoryHelpers.addDisEquality(
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory),
+										mTfStateFactory);
+					
+					}
+					resultStates.addAll(resultStatesForCurrentNodePair);
+				}
+			}
+			
+			return resultStates;
+//			return null;
 		}
 //		/*
 //		 * case "ArrayEquality"
@@ -323,6 +385,37 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 //		final Set<VPTfState> resultStates = handleBasicEquality(tfPreState, tf, appTerm, negated);
 //		// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 //		return resultStates;
+	}
+
+	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState, INodeOrArrayWithSideCondition lhsNodeWSc,
+			INodeOrArrayWithSideCondition rhsNodeWSc) {
+		VPTfStateBuilder preStateCopy = mTfStateFactory.copy(tfPreState);
+		// add side conditions
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
+			preStateCopy.addDisEquality(de);
+		}
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> de : rhsNodeWSc.getDisEqualities()) {
+			preStateCopy.addDisEquality(de);
+		}
+		
+		Set<VPTfState> resultStatesForCurrentNodePair = new HashSet<>();
+		resultStatesForCurrentNodePair.add(preStateCopy.build());
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = 
+					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+							VPFactoryHelpers.addEquality(
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory),
+							mTfStateFactory);
+		}
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = 
+					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+							VPFactoryHelpers.addEquality(
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory),
+							mTfStateFactory);
+		}
+		// TODO: filter bottom states?
+		return resultStatesForCurrentNodePair;
 	}
 
 	private Set<VPTfState> handleBasicEquality(final VPTfState tfPreState, final TransFormula tf,

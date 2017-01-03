@@ -232,7 +232,8 @@ public class VPFactoryHelpers {
 		return resultStates;
 	}
 
-	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<T> addEquality(
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+		Set<T> addEquality(
 			final NODEID node1, 
 			final NODEID node2, 
 			final Set<T> originalStates, 

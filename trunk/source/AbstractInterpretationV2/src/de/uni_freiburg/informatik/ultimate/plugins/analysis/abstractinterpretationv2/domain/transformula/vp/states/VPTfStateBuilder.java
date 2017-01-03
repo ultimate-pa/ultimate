@@ -92,8 +92,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis,
 			VPTransFormulaStateBuilderPreparer tfStatePreparer,
-			TransFormula tf, Set<EqNode> allConstantEqNodes
-			) {
+			TransFormula tf, Set<EqNode> allConstantEqNodes) {
 		mTfStatePreparer = tfStatePreparer;
 		mPreAnalysis = preAnalysis;
 		mTransFormula = tf;
@@ -711,5 +710,9 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	public TransFormula getTransFormula() {
 		return mTransFormula;
+	}
+	
+	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(VPTfArrayIdentifier array) {
+		return mArrayIdToFunctionNodes.getImage(array);
 	}
 }

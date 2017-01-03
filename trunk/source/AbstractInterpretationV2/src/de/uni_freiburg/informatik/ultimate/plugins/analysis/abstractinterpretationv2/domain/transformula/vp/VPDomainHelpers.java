@@ -27,10 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -278,4 +281,33 @@ public class VPDomainHelpers {
 		}
 		return true;	
 	}
+	
+	/**
+	 * cross product computation
+	 * 
+	 * @param 
+	 * @return
+	 */
+	public static <T> Set<List<T>> computeCrossProduct(
+			List<Set<T>> nodesWithSideConditions) {
+
+		Set<List<T>> result = new HashSet<>();
+		result.add(new ArrayList<>());
+		for (Set<T> nwscs : nodesWithSideConditions) {
+			Set<List<T>> newResult = new HashSet<>();
+
+			for (List<T> index : result) {
+				for (T nwsc : nwscs) {
+					List<T> newIndex = new ArrayList<>(index);
+					newIndex.add(nwsc);
+					
+					newResult.add(newIndex);
+				}
+			}
+			
+			result = newResult;
+		}
+		return result;
+	}
+	
 }

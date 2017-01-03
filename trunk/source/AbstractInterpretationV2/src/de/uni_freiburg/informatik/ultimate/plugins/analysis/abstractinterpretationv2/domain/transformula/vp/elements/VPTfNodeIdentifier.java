@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  * @author Alexander Nutz
  */
-public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, ISingleElementWrapper {
+public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, IElementWrapper {
 	
 	private final EqNode mEqNode;
 //	private final Term mTerm;
@@ -63,6 +64,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	private final boolean mIsLiteral;
 	private final VPTfArrayIdentifier mFunction;
 	private final boolean mIsInOrThrough;
+
+	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
 
 
 	public VPTfNodeIdentifier(EqNode eqNode, 
@@ -88,6 +91,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		} else {
 			mFunction = null;
 		}
+		
+		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
 		
 		/*
 		 * a nodeIdentifier has to be "pure" in the sense that it is either
@@ -258,7 +263,12 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 
 
 	@Override
-	public Set<ISingleElementWrapper> getElements() {
-		return Collections.singleton(this);
+	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfState) {
+		return Collections.singleton(mNodeIdWithSideCondition);
 	}
+
+//	@Override
+//	public Set<ISingleElementWrapper> getElements() {
+//		return Collections.singleton(this);
+//	}
 }
