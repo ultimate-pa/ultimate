@@ -93,6 +93,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private final static boolean mPostProcess_FP_Predicates = false;
 
 	private final boolean mConstructForwardInterpolantSequence;
+	/**
+	 * Enables a check that is only useful for non-interprocedural sequences
+	 */
+	private static final boolean DEBUG_CHECK_SP_IMPLIES_WP = false;
 
 	private enum ConstructBackwardSequence {
 		YES, NO, IF_FP_WAS_NOT_PERFECT
@@ -343,10 +347,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		}
 
-		// Check the validity of the computed interpolants.
-		// if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
-		// checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
-		// }
+		// Do some correctness test
+		if (DEBUG_CHECK_SP_IMPLIES_WP && mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
+			checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
+		}
+		
 		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
 			final boolean omitMixedSequence = true;
 			if (omitMixedSequence) {
@@ -564,12 +569,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * weakest precondition. This check is desired, when predicates are computed twice (once via strongest post, and
 	 * once via weakest pre-condition). It ensures the correctness of the predicates.
 	 */
-	private void checkSPImpliesWP(final IPredicate[] interpolantsSP, final IPredicate[] interpolantsWP) {
+	private void checkSPImpliesWP(final List<IPredicate> interpolantsFp, final List<IPredicate> interpolantsBp) {
 		mLogger.debug("Checking implication of SP and WP...");
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mCfgManagedScript);
-		for (int i = 0; i < interpolantsSP.length; i++) {
-			final Validity result = mic.checkImplication(interpolantsSP[i], false, interpolantsWP[i], false);
-			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
+		for (int i = 0; i < interpolantsFp.size(); i++) {
+			final Validity result = mic.checkImplication(interpolantsFp.get(i), false, interpolantsBp.get(i), false);
+			mLogger.debug("SP {" + interpolantsFp.get(i) + "} ==> WP {" + interpolantsBp.get(i) + "} is "
 					+ (result == Validity.VALID ? "valid" : result == Validity.INVALID ? "not valid" : result));
 			assert result == Validity.VALID || result == Validity.UNKNOWN : "checkSPImpliesWP failed";
 		}
