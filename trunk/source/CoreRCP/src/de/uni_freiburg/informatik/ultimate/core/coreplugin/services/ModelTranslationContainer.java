@@ -70,7 +70,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 
 	}
 
-	private boolean isAllowedNext(final ITranslator<?, ?, ?, ?, ?, ?> current,
+	private static boolean isAllowedNext(final ITranslator<?, ?, ?, ?, ?, ?> current,
 			final ITranslator<?, ?, ?, ?, ?, ?> next) {
 		// source is e.g. RcfgElement, target is e.g. BoogieASTNode
 		// meaning, source is the output of the tool, target the input
@@ -92,7 +92,8 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TE> String translateExpressionToString(final TE expression, final ITranslator<?, ?, ?, ?, ?, ?> trans) {
+	private static <TE> String translateExpressionToString(final TE expression,
+			final ITranslator<?, ?, ?, ?, ?, ?> trans) {
 		final ITranslator<?, ?, ?, TE, ?, ?> last = (ITranslator<?, ?, ?, TE, ?, ?>) trans;
 		return last.targetExpressionToString(expression);
 	}
@@ -101,15 +102,14 @@ class ModelTranslationContainer implements IBacktranslationService {
 	private <TE, SE> TE translateExpression(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final SE expression) {
 		if (remaining.isEmpty()) {
 			return (TE) expression;
-		} else {
-			final ITranslator<?, ?, SE, TE, ?, ?> tmp = (ITranslator<?, ?, SE, TE, ?, ?>) remaining.pop();
-			return translateExpression(remaining, tmp.translateExpression(expression));
 		}
+		final ITranslator<?, ?, SE, TE, ?, ?> tmp = (ITranslator<?, ?, SE, TE, ?, ?>) remaining.pop();
+		return translateExpression(remaining, tmp.translateExpression(expression));
 	}
 
 	private <SE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareExpressionStack(final SE expression,
 			final Class<SE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?, ?, ?>>();
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
@@ -144,14 +144,14 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TTE> List<String> translateTraceToString(final List<TTE> trace,
+	private static <TTE> List<String> translateTraceToString(final List<TTE> trace,
 			final ITranslator<?, ?, ?, ?, ?, ?> trans) {
 		final ITranslator<?, TTE, ?, ?, ?, ?> last = (ITranslator<?, TTE, ?, ?, ?, ?>) trans;
 		return last.targetTraceToString(trace);
 	}
 
 	private <STE> Stack<ITranslator<?, ?, ?, ?, ?, ?>> prepareTranslatorStack(final Class<STE> clazz) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?, ?, ?>>();
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
@@ -175,16 +175,15 @@ class ModelTranslationContainer implements IBacktranslationService {
 			final List<STE> trace) {
 		if (remaining.isEmpty()) {
 			return (List<TTE>) trace;
-		} else {
-			final ITranslator<STE, TTE, ?, ?, ?, ?> translator = (ITranslator<STE, TTE, ?, ?, ?, ?>) remaining.pop();
-			return translateTrace(remaining, translator.translateTrace(trace));
 		}
+		final ITranslator<STE, TTE, ?, ?, ?, ?> translator = (ITranslator<STE, TTE, ?, ?, ?, ?>) remaining.pop();
+		return translateTrace(remaining, translator.translateTrace(trace));
 	}
 
 	@Override
 	public <STE, SE> IProgramExecution<?, ?>
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?, ?, ?>>();
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
@@ -211,17 +210,15 @@ class ModelTranslationContainer implements IBacktranslationService {
 			final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final IProgramExecution<STE, SE> programExecution) {
 		if (remaining.isEmpty()) {
 			return (IProgramExecution<TTE, TE>) programExecution;
-		} else {
-			final ITranslator<STE, TTE, SE, TE, ?, ?> translator =
-					(ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
-			final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
-			return translateProgramExecution(remaining, translated);
 		}
+		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
+		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
+		return translateProgramExecution(remaining, translated);
 	}
 
 	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
-		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<ITranslator<?, ?, ?, ?, ?, ?>>();
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
 		boolean canTranslate = false;
 		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
@@ -246,12 +243,11 @@ class ModelTranslationContainer implements IBacktranslationService {
 			translateCFG(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining, final IBacktranslatedCFG<SVL, STE> cfg) {
 		if (remaining.isEmpty()) {
 			return (IBacktranslatedCFG<TVL, TTE>) cfg;
-		} else {
-			final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator =
-					(ITranslator<STE, TTE, SE, TE, SVL, TVL>) remaining.pop();
-			final IBacktranslatedCFG<?, TTE> translated = translator.translateCFG(cfg);
-			return translateCFG(remaining, translated);
 		}
+		final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator =
+				(ITranslator<STE, TTE, SE, TE, SVL, TVL>) remaining.pop();
+		final IBacktranslatedCFG<?, TTE> translated = translator.translateCFG(cfg);
+		return translateCFG(remaining, translated);
 	}
 
 	@Override

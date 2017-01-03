@@ -54,12 +54,12 @@ public class AtomicTraceElement<TE> {
 	 *
 	 */
 	public enum StepInfo {
-		NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL(
-				"CALL"), PROC_RETURN("RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
+		NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL("CALL"),
+		PROC_RETURN("RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
 
 		private final String mText;
 
-		private StepInfo(final String text) {
+		StepInfo(final String text) {
 			mText = text;
 		}
 
@@ -167,7 +167,8 @@ public class AtomicTraceElement<TE> {
 		if (mStepInfo.contains(StepInfo.NONE)) {
 			rtr = mToStringFunc.toString(getTraceElement());
 		} else {
-			rtr = String.format("%s  %s", getStepInfo(), mToStringFunc.toString(getStep()), getRelevanceInformation());
+			rtr = String.format("%s %s %s", getStepInfo(), mToStringFunc.toString(getStep()),
+					getRelevanceInformation());
 		}
 		if (relInfo != null) {
 			return rtr + " " + relInfo;
