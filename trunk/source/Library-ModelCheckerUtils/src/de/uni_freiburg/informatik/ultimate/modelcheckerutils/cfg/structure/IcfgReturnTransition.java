@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
@@ -54,16 +55,19 @@ public class IcfgReturnTransition extends AbstractIcfgTransition
 	}
 
 	@Override
+	@Visualizable
 	public UnmodifiableTransFormula getAssignmentOfReturn() {
 		return mAssignmentOfReturn;
 	}
 
 	@Override
+	@Visualizable
 	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return mLocalVarsAssignment;
 	}
 
 	@Override
+	@Visualizable
 	public IIcfgCallTransition<IcfgLocation> getCorrespondingCall() {
 		return mCorrespondingCall;
 	}

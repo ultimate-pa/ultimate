@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Edge of an ICFG.
@@ -50,12 +51,14 @@ public abstract class IcfgEdge extends ModifiableMultigraphEdge<IcfgLocation, Ic
 	}
 
 	@Override
+	@Visualizable
 	public String getPrecedingProcedure() {
 		final IcfgLocation source = getSource();
 		return source == null ? null : source.getProcedure();
 	}
 
 	@Override
+	@Visualizable
 	public String getSucceedingProcedure() {
 		final IcfgLocation target = getTarget();
 		return target == null ? null : target.getProcedure();

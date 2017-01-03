@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -40,16 +41,19 @@ public interface IAction {
 	/**
 	 * @return Identifier of the procedure in which the system/program is before this action is executed.
 	 */
+	@Visualizable
 	String getPrecedingProcedure();
 
 	/**
 	 * @return Identifier of the procedure in which the system/program is after this action is executed.
 	 */
+	@Visualizable
 	String getSucceedingProcedure();
 
 	/**
 	 * @return {@link TransFormula} which defines how the system/program's variables are modified while executing this
 	 *         action.
 	 */
+	@Visualizable
 	UnmodifiableTransFormula getTransformula();
 }
