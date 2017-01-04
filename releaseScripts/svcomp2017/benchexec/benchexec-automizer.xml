@@ -53,6 +53,8 @@
     <include>../../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2_true-termination.i</include>
 	<include>../../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
 	<include>../../../trunk/examples/svcomp/float-benchs/addsub_double_exact_true-unreach-call.c</include>
+	<include>../../../trunk/examples/svcomp/floats-cbmc-regression/float-div1_true-unreach-call.i</include>
+	<include>../../../trunk/examples/svcomp/floats-esbmc-regression/fmod3_true-unreach-call.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
