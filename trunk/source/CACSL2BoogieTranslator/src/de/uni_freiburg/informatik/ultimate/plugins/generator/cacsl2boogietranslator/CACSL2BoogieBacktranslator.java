@@ -263,15 +263,19 @@ public class CACSL2BoogieBacktranslator
 		// reason must be the null node itself
 		// remove all ATEs where the step node is null
 		final Iterator<AtomicTraceElement<CACSLLocation>> iter = translatedATEs.iterator();
+		final Iterator<ProgramState<IASTExpression>> iterPs = translatedProgramStates.iterator();
 		while (iter.hasNext()) {
 			final CACSLLocation step = iter.next().getStep();
+			final ProgramState<IASTExpression> programStateAfter = iterPs.next();
 			if (!(step instanceof CLocation)) {
 				continue;
 			}
 			final IASTNode node = ((CLocation) step).getNode();
 			if (node == null) {
-				mLogger.warn("Removing null node from list of ATEs: " + step);
+				mLogger.warn(
+						"Removing null node from list of ATEs: ATE " + step + " program state " + programStateAfter);
 				iter.remove();
+				iterPs.remove();
 			}
 		}
 

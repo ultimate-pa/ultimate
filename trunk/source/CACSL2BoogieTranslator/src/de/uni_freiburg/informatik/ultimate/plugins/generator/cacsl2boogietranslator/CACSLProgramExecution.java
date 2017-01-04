@@ -46,68 +46,68 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.ViolationWitnessGenera
  * 
  */
 public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
-	
+
 	private final ProgramState<IASTExpression> mInitialState;
 	private final List<ProgramState<IASTExpression>> mProgramStates;
 	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	
+
 	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
 			final Collection<AtomicTraceElement<CACSLLocation>> trace,
 			final Collection<ProgramState<IASTExpression>> programStates, final ILogger logger,
 			final IUltimateServiceProvider services) {
 		assert trace != null;
 		assert programStates != null;
-		assert trace.size() == programStates.size();
+		assert trace.size() == programStates.size() : "Need a program state after each atomic trace element";
 		mProgramStates = new ArrayList<>(programStates);
 		mTrace = new ArrayList<>(trace);
 		mInitialState = initialState;
 		mLogger = logger;
 		mServices = services;
 	}
-	
+
 	@Override
 	public int getLength() {
 		return mTrace.size();
 	}
-	
+
 	@Override
 	public AtomicTraceElement<CACSLLocation> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
-	
+
 	@Override
 	public ProgramState<IASTExpression> getProgramState(final int i) {
 		return mProgramStates.get(i);
 	}
-	
+
 	@Override
 	public ProgramState<IASTExpression> getInitialProgramState() {
 		return mInitialState;
 	}
-	
+
 	@Override
 	public Class<IASTExpression> getExpressionClass() {
 		return IASTExpression.class;
 	}
-	
+
 	@Override
 	public Class<CACSLLocation> getTraceElementClass() {
 		return CACSLLocation.class;
 	}
-	
+
 	@Override
 	public String toString() {
 		final ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef =
 				new ProgramExecutionFormatter<>(new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
-	
+
 	@Override
 	public String getSVCOMPWitnessString() {
 		return new ViolationWitnessGenerator<>(this, new CACSLBacktranslationValueProvider(), mLogger, mServices)
 				.makeGraphMLString();
 	}
-	
+
 }
