@@ -82,7 +82,7 @@ public class WitnessAutomatonConstructor {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
-	public IElement constructWitnessAutomaton(final File file) {
+	public IElement constructWitnessAutomaton(final File file) throws FileNotFoundException, GraphIOException {
 		final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = getGraph(file);
 		if (graph == null) {
 			final String message = "Witness file is invalid";
@@ -166,20 +166,13 @@ public class WitnessAutomatonConstructor {
 		mLogger.debug("Graph has " + closed.size() + 1 + " nodes and " + edgeCount + " edges");
 	}
 
-	private DirectedSparseGraph<WitnessNode, WitnessEdge> getGraph(final File file) {
-
-		try {
-			mNodes = new HashMap<>();
-			final GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge> reader =
-					getGraphMLReader(file);
-			reader.init();
-			return reader.readGraph();
-		} catch (final FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (final GraphIOException e) {
-			e.printStackTrace();
-		}
-		return null;
+	private DirectedSparseGraph<WitnessNode, WitnessEdge> getGraph(final File file)
+			throws GraphIOException, FileNotFoundException {
+		mNodes = new HashMap<>();
+		final GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge> reader =
+				getGraphMLReader(file);
+		reader.init();
+		return reader.readGraph();
 	}
 
 	private GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge>
@@ -189,108 +182,90 @@ public class WitnessAutomatonConstructor {
 		final Transformer<NodeMetadata, WitnessNode> vertexTransformer = getVertexTransformer();
 		final Transformer<EdgeMetadata, WitnessEdge> edgeTransformer = getEdgeTransformer();
 		final Transformer<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = getHyperEdgeTransformer();
-		return new GraphMLReader2<DirectedSparseGraph<WitnessNode, WitnessEdge>, WitnessNode, WitnessEdge>(
-				new FileReader(file), graphTransformer, vertexTransformer, edgeTransformer, hyperEdgeTransformer);
+		return new GraphMLReader2<>(new FileReader(file), graphTransformer, vertexTransformer, edgeTransformer,
+				hyperEdgeTransformer);
 	}
 
-	private Transformer<HyperEdgeMetadata, WitnessEdge> getHyperEdgeTransformer() {
-		return new Transformer<HyperEdgeMetadata, WitnessEdge>() {
-			@Override
-			public WitnessEdge transform(final HyperEdgeMetadata arg0) {
-				// there should not be any hyper edges
-				return null;
-			}
-		};
+	private static Transformer<HyperEdgeMetadata, WitnessEdge> getHyperEdgeTransformer() {
+		return arg0 -> null;
 	}
 
 	private Transformer<EdgeMetadata, WitnessEdge> getEdgeTransformer() {
-		return new Transformer<EdgeMetadata, WitnessEdge>() {
-			@Override
-			public WitnessEdge transform(final EdgeMetadata data) {
+		return data -> {
 
-				final WitnessNode source = createNode(data.getSource());
-				final WitnessNode target = createNode(data.getTarget());
+			final WitnessNode source = createNode(data.getSource());
+			final WitnessNode target = createNode(data.getTarget());
 
-				final int startline = getIntProperty(data, "startline");
-				final int endline = getIntProperty(data, "endline");
+			final int startline = getIntProperty(data, "startline");
+			final int endline = getIntProperty(data, "endline");
 
-				// TODO: Calculate column from offsets
-				// final int startoffset = getIntProperty(data, "startoffset");
-				// final int endoffset = getIntProperty(data, "endoffset");
+			// TODO: Calculate column from offsets
+			// final int startoffset = getIntProperty(data, "startoffset");
+			// final int endoffset = getIntProperty(data, "endoffset");
 
-				final String orgfile = data.getProperties().get("originfile");
-				final String sourcecode = data.getProperties().get("sourcecode");
+			final String orgfile = data.getProperties().get("originfile");
+			final String sourcecode = data.getProperties().get("sourcecode");
 
-				final WitnessLocation loc = new WitnessLocation(orgfile, startline, endline);
-				final WitnessEdge edge = new WitnessEdge(source, target, data.getId(), loc, sourcecode);
+			final WitnessLocation loc = new WitnessLocation(orgfile, startline, endline);
+			final WitnessEdge edge = new WitnessEdge(source, target, data.getId(), loc, sourcecode);
 
-				//@formatter:off
-				final WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(
-						transformControlToBooleanString(data.getProperties().get("control")),
-						data.getProperties().get("enterLoopHead"),
-						data.getProperties().get("enterFunction"),
-						data.getProperties().get("returnFrom"),
-						data.getProperties().get("tokens"),
-						data.getProperties().get("assumption")
-				);
-				//@formatter:on
-				if (!annot.isEmpty()) {
-					annot.annotate(edge);
-				}
-				return edge;
+			//@formatter:off
+			final WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(
+					transformControlToBooleanString(data.getProperties().get("control")),
+					data.getProperties().get("enterLoopHead"),
+					data.getProperties().get("enterFunction"),
+					data.getProperties().get("returnFrom"),
+					data.getProperties().get("tokens"),
+					data.getProperties().get("assumption")
+			);
+			//@formatter:on
+			if (!annot.isEmpty()) {
+				annot.annotate(edge);
 			}
-
+			return edge;
 		};
 	}
 
 	private Transformer<NodeMetadata, WitnessNode> getVertexTransformer() {
-		return new Transformer<NodeMetadata, WitnessNode>() {
-			@Override
-			public WitnessNode transform(final NodeMetadata data) {
-				final WitnessNode node = createNode(data.getId());
+		return data -> {
+			final WitnessNode node = createNode(data.getId());
 
-				//@formatter:off
-				final WitnessNodeAnnotation annot = new WitnessNodeAnnotation(
-						getBoolProperty(data, "entry"),
-						getBoolProperty(data, "violation"),
-						getBoolProperty(data, "sink"),
-						data.getProperties().get("invariant")
-				);
-				//@formatter:on
+			//@formatter:off
+			final WitnessNodeAnnotation annot = new WitnessNodeAnnotation(
+					getBoolProperty(data, "entry"),
+					getBoolProperty(data, "violation"),
+					getBoolProperty(data, "sink"),
+					data.getProperties().get("invariant")
+			);
+			//@formatter:on
 
-				if (!annot.isDefault()) {
-					annot.annotate(node);
-				}
-				return node;
+			if (!annot.isDefault()) {
+				annot.annotate(node);
 			}
+			return node;
 		};
 	}
 
 	private Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>> getGraphTransformer() {
-		return new Transformer<GraphMetadata, DirectedSparseGraph<WitnessNode, WitnessEdge>>() {
+		return gm -> {
+			final String sourcecodelang = gm.getProperty("sourcecodelang");
+			final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class, gm,
+					"witness-type", WitnessGraphAnnotation.WitnessType.VIOLATION_WITNESS);
+			mGraphAnnotation = new WitnessGraphAnnotation(sourcecodelang, witnesstype);
 
-			@Override
-			public DirectedSparseGraph<WitnessNode, WitnessEdge> transform(final GraphMetadata gm) {
-				final String sourcecodelang = gm.getProperty("sourcecodelang");
-				final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class,
-						gm, "witness-type", WitnessGraphAnnotation.WitnessType.VIOLATION_WITNESS);
-				mGraphAnnotation = new WitnessGraphAnnotation(sourcecodelang, witnesstype);
-
-				final DirectedSparseGraph<WitnessNode, WitnessEdge> graph =
-						new DirectedSparseGraph<WitnessNode, WitnessEdge>();
-				for (final Entry<Object, NodeMetadata> e : gm.getNodeMap().entrySet()) {
-					graph.addVertex((WitnessNode) e.getKey());
-				}
-				for (final Entry<Object, EdgeMetadata> e : gm.getEdgeMap().entrySet()) {
-					final WitnessEdge edge = (WitnessEdge) e.getKey();
-					graph.addEdge(edge, edge.getSource(), edge.getTarget());
-				}
-				return graph;
+			final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<>();
+			for (final Entry<Object, NodeMetadata> e1 : gm.getNodeMap().entrySet()) {
+				graph.addVertex((WitnessNode) e1.getKey());
 			}
+			for (final Entry<Object, EdgeMetadata> e2 : gm.getEdgeMap().entrySet()) {
+				final WitnessEdge edge = (WitnessEdge) e2.getKey();
+				graph.addEdge(edge, edge.getSource(), edge.getTarget());
+			}
+			return graph;
 		};
 	}
 
-	private String transformControlToBooleanString(final String controlString) {
+	private static String transformControlToBooleanString(final String controlString) {
 		if (controlString == null) {
 			return null;
 		}
@@ -303,7 +278,7 @@ public class WitnessAutomatonConstructor {
 		throw new IllegalArgumentException("control cannot have this value: " + controlString);
 	}
 
-	private boolean getBoolProperty(final NodeMetadata data, final String key) {
+	private static boolean getBoolProperty(final NodeMetadata data, final String key) {
 		final String entry = data.getProperties().get(key);
 		return entry != null && Boolean.valueOf(entry);
 	}
@@ -325,7 +300,7 @@ public class WitnessAutomatonConstructor {
 		}
 	}
 
-	private int getIntProperty(final EdgeMetadata data, final String key) {
+	private static int getIntProperty(final EdgeMetadata data, final String key) {
 		final String entry = data.getProperties().get(key);
 
 		// set line to line if there is a valid line, -1 otherwise
@@ -354,5 +329,4 @@ public class WitnessAutomatonConstructor {
 	public ModelType.Type getWitnessType() {
 		return mWitnessType;
 	}
-
 }
