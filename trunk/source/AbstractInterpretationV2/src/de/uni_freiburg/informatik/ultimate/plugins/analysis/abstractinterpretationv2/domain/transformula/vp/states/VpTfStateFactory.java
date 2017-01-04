@@ -203,7 +203,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
 		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : builder.getAllEqGraphNodes()) {
 			if (node.nodeIdentifier.isInOrThrough()) {
-				
+				inVarsAndConstantEqNodeSet.add(node);
 			}
 		}
 		

@@ -154,7 +154,8 @@ public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 
 
 	@Override
-	public Set<ArrayWithSideCondition> getArrayWithSideConditions(VPTfState tfState) {
+	public Set<ArrayWithSideCondition> getArrayWithSideConditions(VPTfState tfState, 
+			Set<List<NodeIdWithSideCondition>> requestedIndices) {
 		
 		Set<VPTfNodeIdentifier> functionNodeIds = tfState.getFunctionNodesForArray(this);
 

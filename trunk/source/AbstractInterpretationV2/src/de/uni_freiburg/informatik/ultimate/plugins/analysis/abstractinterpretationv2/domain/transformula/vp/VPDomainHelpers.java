@@ -176,9 +176,19 @@ public class VPDomainHelpers {
 	public static Term getArrayTerm(ApplicationTerm at) {
 		if (at.getFunction().getName().equals("select")) {
 			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			if (mds.getArray() instanceof ApplicationTerm
+					&& (((ApplicationTerm) mds.getArray()).getFunction().getName().equals("select")
+							|| ((ApplicationTerm) mds.getArray()).getFunction().getName().equals("store"))) {
+				return getArrayTerm((ApplicationTerm) mds.getArray());
+			}
 			return mds.getArray();
 		} else if (at.getFunction().getName().equals("store")) {
 			MultiDimensionalStore mds = new MultiDimensionalStore(at);
+			if (mds.getArray() instanceof ApplicationTerm
+					&& (((ApplicationTerm) mds.getArray()).getFunction().getName().equals("select")
+							|| ((ApplicationTerm) mds.getArray()).getFunction().getName().equals("store"))) {
+				return getArrayTerm((ApplicationTerm) mds.getArray());
+			}
 			return mds.getArray();
 		} else {
 			assert false;
@@ -308,6 +318,11 @@ public class VPDomainHelpers {
 			result = newResult;
 		}
 		return result;
+	}
+
+	public static Map<IProgramVar, TermVariable> projectToTermAndVars(Map<IProgramVar, TermVariable> varMapping,
+			Term projectionTerm, Set<IProgramVar> projectionVars) {
+		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
 	}
 	
 }

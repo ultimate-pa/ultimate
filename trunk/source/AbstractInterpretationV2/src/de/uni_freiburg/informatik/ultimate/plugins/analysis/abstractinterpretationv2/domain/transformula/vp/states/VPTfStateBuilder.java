@@ -162,6 +162,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newGraphNode = 
 					this.getEqGraphNode(nodeId);
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, this);
+			
+			newGraphNode.setupNode();
 		}
 
 		assert isTopConsistent();
@@ -213,8 +215,11 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			
 			getOrConstructEqGraphNode(
 					eqNode, 
-					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), selectTerm), 
-					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), selectTerm), 
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getInVars(), selectTerm, eqNode.getVariables()), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getInVars(), eqNode.getVariables()),
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getOutVars(), selectTerm, eqNode.getVariables()), 
+//					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), selectTerm), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getOutVars(), eqNode.getVariables()), 
 					selectTerm);
 		}
 		final List<MultiDimensionalStore> mdStoresAll =
@@ -226,19 +231,27 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 				continue;
 			}
 
-			ApplicationTerm selectTerm = mds.getStoreTerm();
+			ApplicationTerm storeTerm = mds.getStoreTerm();
 			
 			getOrConstructEqGraphNode(
 					eqNode, 
-					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), selectTerm), 
-					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), selectTerm), 
-					selectTerm); 
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getInVars(), storeTerm, eqNode.getVariables()), 
+//					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), storeTerm), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getInVars(), eqNode.getVariables()), 
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getOutVars(), storeTerm, eqNode.getVariables()), 
+//					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), storeTerm), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getOutVars(), eqNode.getVariables()), 
+					storeTerm); 
 			
 			EqNode storedValueNode = preAnalysis.getEqNode(mds.getValue(), tvToPvMap);
 			getOrConstructEqGraphNode(
 					storedValueNode, 
-					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), mds.getValue()), 
-					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), mds.getValue()), 
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getInVars(), mds.getValue(), storedValueNode.getVariables()), 
+//					VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), mds.getValue()), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getInVars(), storedValueNode.getVariables()), 
+					VPDomainHelpers.projectToTermAndVars(mTransFormula.getOutVars(), mds.getValue(), storedValueNode.getVariables()), 
+//					VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), mds.getValue()), 
+//					VPDomainHelpers.projectToVars(mTransFormula.getOutVars(), storedValueNode.getVariables()), 
 					mds.getValue());
 		}
 		

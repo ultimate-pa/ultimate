@@ -94,33 +94,71 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		
 		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
 		
+//		/*
+//		 * a nodeIdentifier has to be "pure" in the sense that it is either
+//		 *  - "in" (i.e. there are variables that are inVars but no outVars)
+//		 *  - "out" (i.e. there are variables that are outVars but no inVars)
+//		 *  - "through" (i.e. all variables are both inVars and outVars)
+//		 *  Than means it cannot have two variables where one is only in and one is only out. 
+//		 *  
+//		 *  TODO: the following computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
+//		 *     --> perhaps merge
+//		 */
+//
+//		boolean isIn = false;
+//		boolean isOut = false;
+//		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+//			if (!mOutVars.containsKey(en.getKey())) {
+//				// we have an invar that is no outVar --> this node is "in"
+//				isIn = true;
+//			}
+//		}
+//		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
+//			if (!mInVars.containsKey(en.getKey())) {
+//				// we have an outVar that is no inVar --> this node is "out"
+//				// if it is already "in", then the sanity check fails
+//				isOut = true;
+//				assert !isIn;
+//			}
+//		}	
+		
 		/*
-		 * a nodeIdentifier has to be "pure" in the sense that it is either
-		 *  - "in" (i.e. there are variables that are inVars but no outVars)
-		 *  - "out" (i.e. there are variables that are outVars but no inVars)
-		 *  - "through" (i.e. all variables are both inVars and outVars)
-		 *  Than means it cannot have two variables where one is only in and one is only out. 
-		 *  
-		 *  TODO: the following computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
-		 *     --> perhaps merge
+		 * new plan: 
+		 * a node's inOutStatus is determined by its topmost symbol.
+		 *  (in a[b[i]] that would be a for example)
 		 */
-
 		boolean isIn = false;
 		boolean isOut = false;
-		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
-			if (!mOutVars.containsKey(en.getKey())) {
-				// we have an invar that is no outVar --> this node is "in"
-				isIn = true;
+		if (eqNode.mIsConstant) {
+			isIn = true;
+			isOut = true;
+		} else {
+			if (eqNode.isFunction()) {
+				final IProgramVarOrConst function = eqNode.getFunction();
+				assert function instanceof IProgramVar : "node should be constant"; 
+				
+				isIn = mInVars.containsKey(function);
+				isOut = mOutVars.containsKey(function);
+			} else {
+				/*
+				 * in case of a base node, we can just go over the variables
+				 */
+				for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+					if (!mOutVars.containsKey(en.getKey())) {
+						// we have an invar that is no outVar --> this node is "in"
+						isIn = true;
+					}
+				}
+				for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
+					if (!mInVars.containsKey(en.getKey())) {
+						// we have an outVar that is no inVar --> this node is "out"
+						// if it is already "in", then the sanity check fails
+						isOut = true;
+						assert !isIn;
+					}
+				}	
 			}
 		}
-		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
-			if (!mInVars.containsKey(en.getKey())) {
-				// we have an outVar that is no inVar --> this node is "out"
-				// if it is already "in", then the sanity check fails
-				isOut = true;
-				assert !isIn;
-			}
-		}	
 		
 		mIsInOrThrough = isIn || (!isIn && !isOut);
 		

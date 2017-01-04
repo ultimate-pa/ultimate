@@ -45,6 +45,31 @@ public class ArrayWithSideCondition implements INodeOrArrayWithSideCondition {
 	public Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> getIndexToValue() {
 		return mIndexToValue;
 	}
-	
+		@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("ArrayWithSideCondition: ");
+		
+		sb.append("index to value: " + mIndexToValue);
+
+		//sb.append("\n");
+		
+		String sep = "";
+		
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : mEqualities) {
+			sb.append(sep);
+			sb.append(eq.getFirst().getEqNode() + "=" + eq.getSecond().getEqNode());
+			sep = ", ";
+		}
+
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> deq : mDisEqualities) {
+			sb.append(sep);
+			sb.append(deq.getFirst().getEqNode() + "!=" + deq.getSecond().getEqNode());
+			sep = ", ";
+		}
+		
+		return sb.toString();
+	}
 	
 }

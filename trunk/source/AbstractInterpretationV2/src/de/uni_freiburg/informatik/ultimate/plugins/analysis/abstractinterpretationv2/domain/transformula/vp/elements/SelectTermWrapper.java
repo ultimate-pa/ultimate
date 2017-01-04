@@ -39,20 +39,27 @@ public class SelectTermWrapper implements IElementWrapper {
 	@Override
 	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfState) {
 		
-		// TODO: the method should probably given the index (or indices) of this select term so
-		//  it can prepare the anonymous array better
-		Set<ArrayWithSideCondition> arrayWscs = mArray.getArrayWithSideConditions(tfState);
+
 
 		List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndices.stream()
 				.map(elWr -> elWr.getNodeIdWithSideConditions(tfState))
 				.collect(Collectors.toList());
 		Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
-		
+
+		// TODO: the method should probably given the index (or indices) of this select term so
+		//  it can prepare the anonymous array better
+		Set<ArrayWithSideCondition> arrayWscs = mArray.getArrayWithSideConditions(tfState, combinedIndices);	
+
 		Set<NodeIdWithSideCondition> result = new HashSet<>();
 
 		for (ArrayWithSideCondition arrayWsc : arrayWscs) {
 			for (List<NodeIdWithSideCondition> indexVector : combinedIndices) {
-				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVector);
+				
+				List<VPTfNodeIdentifier> indexVectorAsNodeIds = 
+						indexVector.stream().map(niwsc -> niwsc.mNodeId).collect(Collectors.toList());
+				
+//				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVector);
+				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVectorAsNodeIds);
 				
 				// compute the new sidecondition
 				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> resultEqualities = 
@@ -75,12 +82,16 @@ public class SelectTermWrapper implements IElementWrapper {
 				} else {
 					// we don't know the array's value at the given index
 					// --> we can still return the condition under which the index is indeterminate
-					
-					
+					assert !resultEqualities.isEmpty() || !resultDisEqualities.isEmpty() : "would this be equivalent to adding nothing??";
+					result.add(
+							new UndetermindedNodeWithSideCondition(
+									resultEqualities, 
+									resultDisEqualities));
 				}
 			}
 		}
 		
+		assert !result.isEmpty();
 		return result;
 		
 //		/*
@@ -111,4 +122,16 @@ public class SelectTermWrapper implements IElementWrapper {
 //		assert false;
 //		return null;
 //	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("SelectTermWrapper:");
+		
+		sb.append(" array: " + mArray.toString());
+
+		sb.append(" index: " + mIndices.toString());
+		
+		return sb.toString();
+	}
 }

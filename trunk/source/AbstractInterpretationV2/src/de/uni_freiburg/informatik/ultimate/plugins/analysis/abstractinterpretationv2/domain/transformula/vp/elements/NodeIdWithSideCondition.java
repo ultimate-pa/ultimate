@@ -32,4 +32,31 @@ public class NodeIdWithSideCondition implements INodeOrArrayWithSideCondition {
 		return mDisEqualities;
 	}
 	
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("NodeIdWithSideCondition: ");
+		
+		sb.append(mNodeId);
+
+		//sb.append("\n");
+		
+		String sep = "";
+		
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : mEqualities) {
+			sb.append(sep);
+			sb.append(eq.getFirst().getEqNode() + "=" + eq.getSecond().getEqNode());
+			sep = ", ";
+		}
+
+		for (VPDomainSymmetricPair<VPTfNodeIdentifier> deq : mDisEqualities) {
+			sb.append(sep);
+			sb.append(deq.getFirst().getEqNode() + "!=" + deq.getSecond().getEqNode());
+			sep = ", ";
+		}
+		
+		return sb.toString();
+	}
 }

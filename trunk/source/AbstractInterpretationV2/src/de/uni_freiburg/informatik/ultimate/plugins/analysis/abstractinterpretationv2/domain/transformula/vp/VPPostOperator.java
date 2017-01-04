@@ -179,9 +179,11 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);
 				return orList;
 			} else if (applicationName == "=") {
-				return handleEqualitySubterm(tfPreState, tf, negated, 
+				Set<VPTfState> result = handleEqualitySubterm(tfPreState, tf, negated, 
 						appTerm.getParameters()[0], 
 						appTerm.getParameters()[1]);
+				assert !result.isEmpty();
+				return result;
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
 				final Set<VPTfState> result = handleTransition(tfPreState, appTerm.getParameters()[0], tf, !negated);
@@ -258,8 +260,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
 			
 			Set<VPTfState> resultStates = new HashSet<>();
-			for (ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState)) {
-				for (ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(tfPreState)) {
+			for (ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
+				for (ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
 					
 					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsArrayWSc,
 							rhsArrayWSc);
@@ -288,6 +290,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				}
 			}
 			
+			assert !resultStates.isEmpty();
 			return resultStates;
 		} else {
 			// two "normal" terms are equated
@@ -330,6 +333,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				}
 			}
 			
+			assert !resultStates.isEmpty();
 			return resultStates;
 //			return null;
 		}
