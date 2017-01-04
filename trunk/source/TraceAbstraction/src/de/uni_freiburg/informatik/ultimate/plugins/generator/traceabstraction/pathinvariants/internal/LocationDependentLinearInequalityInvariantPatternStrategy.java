@@ -58,14 +58,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		mPrefixCounter = 0;
 	}
 
-	
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
-		return getInvariantPatternForLocation(location, round, solver, prefix, getPatternVariablesForLocation(location, round));
-	}
-	
-	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
-			int round, Script solver, String prefix, Set<IProgramVar> vars) {
 		final int[] dimensions = getDimensions(location, round);
 		// Build invariant pattern
 		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
@@ -77,7 +70,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 					invariantPatternCopies = new boolean[] { false };
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
-							solver, vars, prefix + "_" + newPrefix(), strict);
+							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
 				}
 			}
@@ -85,6 +78,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		}
 		return disjunction;
 	}
+	
 
 	/**
 	 * {@inheritDoc}

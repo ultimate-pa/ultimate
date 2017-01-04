@@ -27,13 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * A strategy to generate invariant patterns composed of each a disjunction of a
@@ -106,6 +104,8 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	
 	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location,
 			final int round);
+	
+	public void changePatternSettingForLocation(final IcfgLocation location);
 
 	public void resetSettings();
 

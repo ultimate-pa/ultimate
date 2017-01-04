@@ -1,23 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 //import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 
 /**
- * 
+ * This strategy constructs invariant patterns using those program variables which are <i> live </i> at the given location.
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
 public class LiveVariablesStrategy extends LocationDependentLinearInequalityInvariantPatternStrategy {
 
-	private Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
+	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 
 	public LiveVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
 			int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables) {
@@ -26,10 +27,22 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 	}
 
 
+	@Override
+	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
+		return Collections.unmodifiableSet(mLocations2LiveVariables.get(location));
+	}
+
 
 	@Override
-	public final Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
-		return mLocations2LiveVariables.get(location);
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
+			int round, Script solver, String prefix, Set<IProgramVar> vars) {
+		throw new UnsupportedOperationException("LiveVariablesStrategy does not support this kind of pattern construction.");
+	}
+
+
+	@Override
+	public void changePatternSettingForLocation(IcfgLocation location) {
+		throw new UnsupportedOperationException("LiveVariablesStrategy does not support dynamic setting changes.");
 	}
 
 }

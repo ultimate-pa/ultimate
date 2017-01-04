@@ -29,8 +29,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -102,9 +100,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 */
 	private Map<String, Term> mAnnotTerm2MotzkinTerm;
 	/**
-	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
+	 * @see {@link MotzkinTransformation}.mMotzkinCoefficients2LinearInequalities
 	 */
-	private final Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
+	private Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
+	
+	/**
+	 * TODO:
+	 */
+	private Map<Set<LinearInequality>, Set<IcfgLocation>> mLinearInequalities2Locations;
+	
 
 	private final boolean mUseVarsFromUnsatCore;
 
@@ -117,19 +121,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final LinearTransition mPostcondition;
 	private final CachedTransFormulaLinearizer mLinearizer;
 
-	// New CFG
-//	private final List<IcfgInternalTransition> mTransitions;
-
-	/**
-	 * The pattern variables, that is the coefficients of program- and helper
-	 * variables.
-	 */
-//	private final Collection<Term> mPatternVariables;
-	/**
-	 * The pattern coefficients, that is the program- and helper variables.
-	 */
-//	private final Set<IProgramVar> mPatternCoefficients;
-//	private Map<Term, Rational> mValuation;
 	private Collection<Collection<AbstractLinearInvariantPattern>> mEntryInvariantPattern;
 	private Collection<Collection<AbstractLinearInvariantPattern>> mExitInvariantPattern;
 	private int mPrefixCounter;
@@ -147,14 +138,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final IcfgLocation mStartLocation;
 	private final IcfgLocation mErrorLocation;
 	
-	private static final boolean PRINT_CONSTRAINTS = false;
-	private static final boolean DEBUG_OUTPUT = false;
+	private static final boolean PRINT_CONSTRAINTS = !false;
+	private static final boolean DEBUG_OUTPUT = !false;
+	private static final boolean TestNewStrategy = !false;
 	
-	/**
-	 * Maps a location to a set of program variables which are <i> live </i> at that location.
-	 */
-//	private Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
-//	private final boolean mUseLiveVariables;
 	private Map<Collection<Term>, Map<Term, Rational>> mCachedCoefficients2ValuesRequests;
 
 
@@ -210,13 +197,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 				Activator.PLUGIN_ID);
 		this.mSolver = solver;
 		this.mStrategy = strategy;
-		//		this.cfg = null;
-//		mTransitions = transitions;
 		mStartLocation = startLocation;
 		mErrorLocation = errorLocation;
 
-//		mPatternVariables = new ArrayList<>();
-//		mPatternCoefficients = new HashSet<>();
 
 		mLinearizer = new CachedTransFormulaLinearizer(services, 
 				csToolkit, axioms, storage, simplicationTechnique, xnfConversionTechnique);
@@ -232,9 +215,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
-//		mLocs2LiveVariables = mLocs2LiveVariables2;
-//		mUseLiveVariables = useLiveVars;
 		mCachedCoefficients2ValuesRequests = new HashMap<>();
+		mLinearInequalities2Locations = new HashMap<>();
 	}
 	/**
 	 * {@inheritDoc}
@@ -243,37 +225,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	public void startRound(final int round) {
 
 		resetSettings();
-//		mPatternVariables.clear();
 		mEntryInvariantPattern = null;
 		mExitInvariantPattern = null;
 		mPrefixCounter = 0;
 		mCurrentRound = round;
-		// TODO: Implement usage of variables from the unsat core!!!
 		
-		// In the first round, linearize and populate
-		// {@link #patternCoefficients}.
-//		if (round == 0) {
-//			mLogger.info( "[LIIPP] First round, linearizing...");
-//			mPatternCoefficients.clear();
-//			for (final IcfgInternalTransition transition : mTransitions) {
-//				final LinearTransition lTransition = mLinearizer
-//						.linearize(transition.getTransformula());
-//				mPatternCoefficients.addAll(lTransition.getInVars().keySet());
-//				mPatternCoefficients.addAll(lTransition.getOutVars().keySet());
-//			}
-//			mPatternCoefficients.addAll(mPrecondition.getInVars().keySet());
-//			mPatternCoefficients.addAll(mPrecondition.getOutVars().keySet());
-//			mPatternCoefficients.addAll(mPostcondition.getInVars().keySet());
-//			mPatternCoefficients.addAll(mPostcondition.getOutVars().keySet());
-//			if (PRINT_CONSTRAINTS) {
-//				mLogger.info("Program variables are:");
-//				mLogger.info(mPatternCoefficients);
-//			}
-//			mLogger.info( "[LIIPP] Linearization complete.");
-//		}
-//		if (useVarsFromUnsatCore && varsFromUnsatCore != null) {
-//			mPatternCoefficients.retainAll(varsFromUnsatCore);
-//		}
 	}
 
 	/**
@@ -285,10 +241,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mAnnotTermCounter = 0;
 		// Reset map that stores the mapping from the annotated term to the original term.
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
+		// Reset map that stores motzkin coefficients to linear inequalities
+		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
 		// Reset the cached requests for valuations of coefficients
 		mCachedCoefficients2ValuesRequests = new HashMap<>();
+		mLinearInequalities2Locations = new HashMap<>();
 	}
 
 	/**
@@ -323,11 +282,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final Collection<LinearInequality> mappedConjunct = new ArrayList<>(
 					conjunct.size());
 			for (final AbstractLinearInvariantPattern base : conjunct) {
-//				if (base instanceof LinearPatternWithConstantCoefficients) {
-//					mappedConjunct.add(((LinearPatternWithConstantCoefficients)base).getLinearInequality(mapping, lastOccurrencesOfTermVariables));
-//				} else {
 					mappedConjunct.add(base.getLinearInequality(mapping));
-//				}
 				
 			}
 			result.add(mappedConjunct);
@@ -600,6 +555,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		}
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
 				predicate.getInvStart(), unprimedMapping);
+		if (TestNewStrategy) {
+			Set<LinearInequality> lineqsFromStartPattern = new HashSet<>(startInvariantDNF.size());
+			for (Collection<LinearInequality> conjunct : startInvariantDNF) {
+				lineqsFromStartPattern.addAll(conjunct);
+			}
+			Set<IcfgLocation> loc =  new HashSet<IcfgLocation>();
+			loc.add(predicate.getSourceLocation());
+			mLinearInequalities2Locations.put(lineqsFromStartPattern, loc);
+		}
 		if (DEBUG_OUTPUT) {
 			mLogger.info("Size of start-pattern after mapping to lin-inequalities: " + getSizeOfPattern(startInvariantDNF));
 			mLogger.info("Size of end-pattern before mapping to lin-inequalities: " + getSizeOfPattern(predicate.getInvEnd()));
@@ -610,12 +574,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		if (DEBUG_OUTPUT) {
 			mLogger.info("Size of end-pattern after mapping to lin-inequalities and negating: " + getSizeOfPattern(endInvariantDNF));
 		}
-//		int numberOfInequalities = 0;
-//		for (final Collection<LinearInequality> conjunct : endInvariantDNF) {
-//			numberOfInequalities += conjunct.size();
-//		}
-//		mLogger.info( "[LIIPP] Got a predicate term with "
-//				+ numberOfInequalities + " conjuncts and " + primedMapping.keySet().size() + " variables.");
+		if (TestNewStrategy) {
+			Set<LinearInequality> lineqsFromEndPattern = new HashSet<>(endInvariantDNF.size());
+			for (Collection<LinearInequality> conjunct : endInvariantDNF) {
+				lineqsFromEndPattern.addAll(conjunct);
+			}
+			Set<IcfgLocation> loc =  new HashSet<IcfgLocation>();
+			loc.add(predicate.getTargetLocation());
+			mLinearInequalities2Locations.put(lineqsFromEndPattern, loc);
+		}
 		final Collection<List<LinearInequality>> transitionDNF_ = transition
 				.getPolyhedra();
 		final Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
@@ -623,6 +590,16 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final Collection<LinearInequality> newList = new ArrayList<>();
 			newList.addAll(list);
 			transitionDNF.add(newList);
+		}
+		if (TestNewStrategy) {
+			Set<LinearInequality> lineqsFromTransition = new HashSet<>(transitionDNF.size());
+			for (Collection<LinearInequality> conjunct : transitionDNF) {
+				lineqsFromTransition.addAll(conjunct);
+			}
+			Set<IcfgLocation> loc =  new HashSet<IcfgLocation>();
+			loc.add(predicate.getSourceLocation());
+			loc.add(predicate.getTargetLocation());
+			mLinearInequalities2Locations.put(lineqsFromTransition, loc);
 		}
 		if (PRINT_CONSTRAINTS) {
 			StringBuilder sb = new StringBuilder();
@@ -782,6 +759,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 					motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
 				}
 				mVarsFromUnsatCore = new HashSet<>();
+				Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
+				Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
 				for (final String motzkinVar : motzkinVariables) {
 					final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);
 					for (final Term varInLinq : linq.getVariables()) {
@@ -795,6 +774,24 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 //						}
 
 					}
+					if (TestNewStrategy) {
+						Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet().stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
+						for (Set<LinearInequality> s : setsContainingLinq) {
+							Set<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
+							locsInUnsatCore.addAll(locs);
+							for (IcfgLocation loc : locs) {
+								if (locs2Frequency.containsKey(loc)) {
+									Integer i = locs2Frequency.get(loc);
+									locs2Frequency.put(loc, ++i);
+								} else {
+									locs2Frequency.put(loc, new Integer(0));
+								}
+							}
+						}
+					}
+				}
+				if (TestNewStrategy) {
+					mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
 				}
 			}
 			mLogger.info( "[LIIPP] No solution found.");
@@ -995,11 +992,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	}
 	
 	
-	
-//	@Override
-//	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocationWithVarsFromUnsatCore() {
-//		
-//	}
 	
 	public final Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation location, int round) {
 		return mStrategy.getPatternVariablesForLocation(location, round);

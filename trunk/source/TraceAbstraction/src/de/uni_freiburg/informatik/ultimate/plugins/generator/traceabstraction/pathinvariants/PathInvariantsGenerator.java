@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LiveVariablesStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.VarsInUnsatCoreStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
@@ -145,8 +146,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 					final Set<IProgramVar> allProgramVariables,
 					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
-
-		if (useLiveVars) {
+		if (useVarsFromUnsatCore) {
+			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+		} else if (useLiveVars) {
 			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
 		}
 		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables);

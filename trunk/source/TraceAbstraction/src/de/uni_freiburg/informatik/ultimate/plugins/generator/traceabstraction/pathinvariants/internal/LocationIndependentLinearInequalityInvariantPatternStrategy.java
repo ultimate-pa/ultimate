@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -108,13 +107,8 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		return maxRounds;
 	}
 	
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
-		return getInvariantPatternForLocation(location, round, solver, prefix, getPatternVariablesForLocation(location, round));
-	}
-	
 	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
-			int round, Script solver, String prefix, Set<IProgramVar> vars) {
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
 		final int[] dimensions = getDimensions(location, round);
 		// Build invariant pattern
 		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
@@ -123,22 +117,27 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
 				final boolean[] invariantPatternCopies;
-//				if (mAlwaysStrictAndNonStrictCopies ) {
-//					invariantPatternCopies = new boolean[] { false, true }; 
-//				} else {
-					invariantPatternCopies = new boolean[] { false };
-//				}
+				invariantPatternCopies = new boolean[] { false };
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
-							solver, vars, prefix + "_" + newPrefix(), strict);
-//					Collection<Term> params = inequality.getCoefficients();
-//					mPatternCoefficients.addAll(params);
+							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
 				}
 			}
 			disjunction.add(conjunction);
 		}
 		return disjunction;
+	}
+	
+	@Override
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
+			int round, Script solver, String prefix, Set<IProgramVar> vars) {
+		throw new UnsupportedOperationException("Location independent strategies do not support this kind of pattern construction.");
+	}
+	
+	@Override
+	public void changePatternSettingForLocation(final IcfgLocation location) {
+		throw new UnsupportedOperationException("Location independent strategies do not support dynamic setting changes.");
 	}
 
 	/**

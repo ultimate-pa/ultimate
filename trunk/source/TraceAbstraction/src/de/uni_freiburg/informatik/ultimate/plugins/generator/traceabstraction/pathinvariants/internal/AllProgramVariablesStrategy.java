@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -15,19 +13,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class AllProgramVariablesStrategy extends LocationIndependentLinearInequalityInvariantPatternStrategy {
 	
-//	private final Collection<Term> mPatternCoefficients;
-
 	public AllProgramVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables) {
 		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, patternVariables);
-//		mPatternCoefficients = new ArrayList<>();
 	}
-
 
 	@Override
 	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
 		return Collections.unmodifiableSet(mAllProgramVariables);
 	}
-
-
 }
