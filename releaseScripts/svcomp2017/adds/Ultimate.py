@@ -162,11 +162,19 @@ def runUltimate(ultimateCall, terminationMode):
 def createUltimateCall(call, arguments):
     for arg in arguments:
         if(isinstance (arg, list)):
-            for subarg in arg:
+            for subarg in flatten(arg):
                 call = call + [subarg]
         else:
             call = call + [arg]
-    return call    
+    return call 
+
+def flatten(l):
+    for el in l:
+        if isinstance(el, list) and not isinstance(el, basestring) and not isinstance(el, (str, bytes)):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el   
 
 def createWitnessPassthroughArgumentsList(printWitness, prop, architecture, cFile):
     if not printWitness:
@@ -238,7 +246,7 @@ def parseArgs():
     witness = None
     cFile = checkFile(args.file[0])
     if args.validate:
-        witness = checkFile(args.validate[0])
+        witness = args.validate[0]
     
     if(cFile == None and witness != None):
         printErr("You did not specify a C file with your witness")
@@ -256,9 +264,10 @@ def parseArgs():
     if args.validate and witness == None:
         printErr("You did specify --validate but no witness")
         sys.exit(1)
-    
-    return propertyFileName, args.architecture, args.file[0], args.full_output, args.validate
-
+    if args.validate:
+        return propertyFileName, args.architecture, [args.file[0], witness], args.full_output, args.validate
+    else:
+        return propertyFileName, args.architecture, args.file[0], args.full_output, args.validate
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
     settingsSearchString = ''
@@ -324,7 +333,7 @@ def determineMode(propertyFileName):
 
 def main():
     ultimateBin = getBinary()
-    propertyFileName, architecture, cFile, verbose, validateWitness = parseArgs()
+    propertyFileName, architecture, inputFiles, verbose, validateWitness = parseArgs()
     terminationMode, memDeref, memDerefMemtrack, overflowMode = determineMode(propertyFileName)
             
     propFileStr = open(propertyFileName, 'r').read()
@@ -334,11 +343,11 @@ def main():
     settingsArgument = getSettingsPath(False, settingsSearchString)
     witnessPassthroughArguments = createWitnessPassthroughArgumentsList(
                                     not validateWitness and not terminationMode,
-                                    propFileStr, architecture, cFile)
+                                    propFileStr, architecture, inputFiles)
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
+    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, witnessPassthroughArguments])
  
 
     # actually run Ultimate 
@@ -348,7 +357,7 @@ def main():
         # we did fail because we had to overapproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsPath(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
+        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, witnessPassthroughArguments])
         safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
