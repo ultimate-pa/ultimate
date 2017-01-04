@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -512,7 +513,7 @@ public class BinaryStatePredicateManager {
 		return geq;
 	}
 
-	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IAction> stem,
+	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
 			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		boolean result = true;
 		TraceChecker traceChecker;
@@ -535,7 +536,7 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 
-	public boolean checkRankDecrease(final NestedWord<? extends IAction> loop,
+	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		final TraceChecker traceChecker =
 				new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop,

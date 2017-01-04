@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -89,11 +90,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * 
  */
 public class NestedSsaBuilder {
-	
+
 	private final ILogger mLogger;
-	
+
 	private final Script mScript;
-	
+
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the moment.
 	 */
@@ -102,64 +103,64 @@ public class NestedSsaBuilder {
 	 * Map local or oldVar BoogieVar bv to the constant bv_j that represents bv at the moment.
 	 */
 	protected Map<IProgramVar, Term> currentLocalAndOldVarVersion;
-	
+
 	/**
 	 * Stores current versions for local or oldVar that are not visible at the moment.
 	 */
 	protected final Stack<Map<IProgramVar, Term>> mCurrentVersionStack = new Stack<>();
-	
+
 	private Integer mStartOfCallingContext;
 	private final Stack<Integer> mStartOfCallingContextStack = new Stack<>();
-	
+
 	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
-	
+
 	public Map<IProgramVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
 		return mIndexedVarRepresentative;
 	}
-	
+
 	protected final Map<Term, IProgramVar> mConstants2BoogieVar = new HashMap<>();
-	
+
 	public Map<Term, IProgramVar> getConstants2BoogieVar() {
 		return mConstants2BoogieVar;
 	}
-	
+
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mFormulas;
-	
+
 	protected final ModifiableNestedFormulas<Term, Term> mSsa;
 	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
-	
+
 	private final ModifiableGlobalsTable mModGlobVarManager;
-	
+
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
-	
+
 	public NestedFormulas<Term, Term> getSsa() {
 		return mSsa;
 	}
-	
+
 	public ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
 		return mVariable2Constant;
 	}
-	
+
 	protected String mCurrentProcedure;
-	
+
 	/**
 	 * maps position of pending context to position of pending return the positions of pending contexts are -2,-3,-4,...
 	 */
 	protected final Map<Integer, Integer> mPendingContext2PendingReturn = new HashMap<>();
-	
+
 	/**
 	 * True iff the NestedSsaBuilder has to use a different Script than the Script that was used to construct the Term
 	 * that occur in the NestedFormulas that are the input for the SSA construction.
 	 */
 	private final boolean mTransferToScriptNeeded;
 	private final TermTransferrer mTermTransferrer;
-	
+
 	/**
 	 * Counter that helps us to ensure that we construct a fresh constant for each occurrence of an aux var.
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
-	
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
+
+	public NestedSsaBuilder(final NestedWord<? extends IIcfgTransition<?>> trace, final ManagedScript csToolkit,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ILogger logger,
 			final boolean transferToScriptNeeded) {
@@ -177,7 +178,7 @@ public class NestedSsaBuilder {
 		}
 		buildSSA();
 	}
-	
+
 	protected void buildSSA() {
 		/*
 		 * Step 1: We rename the formulas in each pending context. The index starts from (-1 - numberPendingContexts)
@@ -187,61 +188,61 @@ public class NestedSsaBuilder {
 		final Set<Integer> pendingReturnsRaw = mFormulas.getTrace().getPendingReturns().keySet();
 		final Integer[] pendingReturns = pendingReturnsRaw.toArray(new Integer[pendingReturnsRaw.size()]);
 		final int numberPendingContexts = pendingReturns.length;
-		
+
 		mStartOfCallingContext = -1 - numberPendingContexts;
 		currentLocalAndOldVarVersion = new HashMap<>();
-		
+
 		for (int i = numberPendingContexts - 1; i >= 0; i--) {
 			final int pendingReturnPosition = pendingReturns[i];
 			mPendingContext2PendingReturn.put(mStartOfCallingContext, pendingReturnPosition);
 			final Return ret = (Return) mFormulas.getTrace().getSymbol(pendingReturnPosition);
 			final Call correspondingCall = ret.getCorrespondingCall();
 			mCurrentProcedure = correspondingCall.getPrecedingProcedure();
-			
+
 			reVersionModifiableGlobals();
 			if (i == numberPendingContexts - 1) {
 				reVersionModifiableOldVars();
 			} else {
 				// have already been reversioned at the last oldVarAssignment
 			}
-			
+
 			final IPredicate pendingContext = mFormulas.getPendingContext(pendingReturnPosition);
 			final VariableVersioneer pendingContextVV = new VariableVersioneer(pendingContext);
 			pendingContextVV.versionPredicate();
 			mSsa.setPendingContext(pendingReturnPosition, pendingContextVV.getVersioneeredTerm());
 			mVariable2Constant.setPendingContext(pendingReturnPosition, pendingContextVV.getSubstitutionMapping());
-			
+
 			final UnmodifiableTransFormula localVarAssignment = correspondingCall.getTransformula();
 			final VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
-			
+
 			final String calledProcedure = correspondingCall.getCallStatement().getMethodName();
 			final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
 			final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 			initOldVarsVV.versionInVars();
-			
+
 			mStartOfCallingContextStack.push(mStartOfCallingContext);
 			mStartOfCallingContext++;
 			mCurrentProcedure = calledProcedure;
 			mCurrentVersionStack.push(currentLocalAndOldVarVersion);
 			currentLocalAndOldVarVersion = new HashMap<>();
-			
+
 			/*
 			 * Parameters and oldVars of procedure form that the pending return returns get the index of the next
 			 * pending context.
 			 */
 			initOldVarsVV.versionAssignedVars(mStartOfCallingContext);
 			initLocalVarsVV.versionAssignedVars(mStartOfCallingContext);
-			
+
 			mSsa.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
 			mVariable2Constant.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getSubstitutionMapping());
 			mSsa.setLocalVarAssignmentAtPos(pendingReturnPosition, initLocalVarsVV.getVersioneeredTerm());
 			mVariable2Constant.setLocalVarAssignmentAtPos(pendingReturnPosition,
 					initLocalVarsVV.getSubstitutionMapping());
 		}
-		
+
 		assert mStartOfCallingContext == -1;
-		
+
 		/*
 		 * Step 2: We rename the formula of the precondition. We use as index -1.
 		 */
@@ -260,7 +261,7 @@ public class NestedSsaBuilder {
 		precondVV.versionPredicate();
 		mSsa.setPrecondition(precondVV.getVersioneeredTerm());
 		mVariable2Constant.setPrecondition(precondVV.getSubstitutionMapping());
-		
+
 		/*
 		 * Step 3: We rename the TransFormulas of the traces CodeBlocks
 		 */
@@ -270,7 +271,7 @@ public class NestedSsaBuilder {
 			// if (symbol instanceof GotoEdge) {
 			// throw new IllegalArgumentException(s_GotosUnsupportedMessage);
 			// }
-			
+
 			UnmodifiableTransFormula tf;
 			if (mFormulas.getTrace().isCallPosition(i)) {
 				tf = mFormulas.getLocalVarAssignment(i);
@@ -280,7 +281,7 @@ public class NestedSsaBuilder {
 			assert tf != null : "CodeBlock " + symbol + " has no TransFormula";
 			final VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
-			
+
 			if (mFormulas.getTrace().isCallPosition(i)) {
 				assert symbol instanceof Call : "current implementation supports only Call";
 				if (mFormulas.getTrace().isPendingCall(i)) {
@@ -294,21 +295,21 @@ public class NestedSsaBuilder {
 				initOldVarsVV.versionInVars();
 				mStartOfCallingContextStack.push(mStartOfCallingContext);
 				mStartOfCallingContext = i;
-				
+
 				mCurrentVersionStack.push(currentLocalAndOldVarVersion);
 				currentLocalAndOldVarVersion = new HashMap<>();
-				
+
 				initOldVarsVV.versionAssignedVars(i);
 				mSsa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
 				mVariable2Constant.setOldVarAssignmentAtPos(i, initOldVarsVV.getSubstitutionMapping());
-				
+
 				final UnmodifiableTransFormula globalVarAssignment = mFormulas.getGlobalVarAssignment(i);
 				final VariableVersioneer initGlobalVarsVV = new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
 				mSsa.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getVersioneeredTerm());
 				mVariable2Constant.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getSubstitutionMapping());
-				
+
 			}
 			if (mFormulas.getTrace().isReturnPosition(i)) {
 				final Return ret = (Return) symbol;
@@ -327,21 +328,21 @@ public class NestedSsaBuilder {
 				mVariable2Constant.setFormulaAtNonCallPos(i, tfVV.getSubstitutionMapping());
 			}
 		}
-		
+
 		/*
 		 * Step 4: We rename the postcondition.
 		 */
 		assert mCurrentVersionStack.size() == numberOfPendingCalls;
 		assert numberOfPendingCalls > 0 || mStartOfCallingContext == -1 - numberPendingContexts;
 		assert numberOfPendingCalls == 0 || numberPendingContexts == 0;
-		
+
 		final VariableVersioneer postCondVV = new VariableVersioneer(mFormulas.getPostcondition());
 		postCondVV.versionPredicate();
 		mSsa.setPostcondition(postCondVV.getVersioneeredTerm());
 		mVariable2Constant.setPostcondition(postCondVV.getSubstitutionMapping());
-		
+
 	}
-	
+
 	/**
 	 * Set new var version for all globals that are modifiable by the current procedure.
 	 */
@@ -351,7 +352,7 @@ public class NestedSsaBuilder {
 			setCurrentVarVersion(bv, mStartOfCallingContext);
 		}
 	}
-	
+
 	/**
 	 * Set new var version for all oldVars that are modifiable by the current procedure.
 	 */
@@ -362,7 +363,7 @@ public class NestedSsaBuilder {
 			setCurrentVarVersion(oldVar, mStartOfCallingContext);
 		}
 	}
-	
+
 	/**
 	 * Compute identifier of the Constant that represents the branch encoder tv at position pos.
 	 */
@@ -370,25 +371,25 @@ public class NestedSsaBuilder {
 		final String name = tv.getName() + "_" + pos;
 		return name;
 	}
-	
+
 	class VariableVersioneer {
 		private final UnmodifiableTransFormula mTF;
 		private final IPredicate mPred;
 		private final Map<Term, Term> mSubstitutionMapping = new HashMap<>();
 		private final Term mFormula;
-		
+
 		public VariableVersioneer(final UnmodifiableTransFormula tf) {
 			mTF = Objects.requireNonNull(tf);
 			mPred = null;
 			mFormula = transferToCurrentScriptIfNecessary(tf.getFormula());
 		}
-		
+
 		public VariableVersioneer(final IPredicate pred) {
 			mTF = null;
 			mPred = pred;
 			mFormula = transferToCurrentScriptIfNecessary(pred.getFormula());
 		}
-		
+
 		public void versionInVars() {
 			for (final IProgramVar bv : mTF.getInVars().keySet()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
@@ -397,7 +398,7 @@ public class NestedSsaBuilder {
 				mSubstitutionMapping.put(tv, versioneered);
 			}
 		}
-		
+
 		public void versionAssignedVars(final int currentPos) {
 			for (final IProgramVar bv : mTF.getAssignedVars()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
@@ -406,7 +407,7 @@ public class NestedSsaBuilder {
 				mSubstitutionMapping.put(tv, versioneered);
 			}
 		}
-		
+
 		public void versionBranchEncoders(final int currentPos) {
 			for (TermVariable tv : mTF.getBranchEncoders()) {
 				tv = transferToCurrentScriptIfNecessary(tv);
@@ -415,7 +416,7 @@ public class NestedSsaBuilder {
 				mSubstitutionMapping.put(tv, mScript.term(name));
 			}
 		}
-		
+
 		public void replaceAuxVars() {
 			for (TermVariable tv : mTF.getAuxVars()) {
 				tv = transferToCurrentScriptIfNecessary(tv);
@@ -426,7 +427,7 @@ public class NestedSsaBuilder {
 				mSubstitutionMapping.put(tv, freshConst);
 			}
 		}
-		
+
 		private Term constructFreshConstant(final TermVariable tv) {
 			final Integer newIndex = mConstForTvCounter.increase(tv);
 			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
@@ -434,7 +435,7 @@ public class NestedSsaBuilder {
 			mScript.declareFun(name, new Sort[0], resultSort);
 			return mScript.term(name);
 		}
-		
+
 		public void versionPredicate() {
 			for (final IProgramVar bv : mPred.getVars()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
@@ -443,20 +444,20 @@ public class NestedSsaBuilder {
 				mSubstitutionMapping.put(tv, versioneered);
 			}
 		}
-		
+
 		public Term getVersioneeredTerm() {
 			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
 			final Term result = subst.transform(mFormula);
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
 			return result;
 		}
-		
+
 		public Map<Term, Term> getSubstitutionMapping() {
 			return mSubstitutionMapping;
 		}
-		
+
 	}
-	
+
 	/**
 	 * Get the current version of BoogieVariable bv. Construct this version if it does not exist yet.
 	 */
@@ -492,7 +493,7 @@ public class NestedSsaBuilder {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Get current version for global variable. Set current var version if it has not yet been set.
 	 */
@@ -510,7 +511,7 @@ public class NestedSsaBuilder {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Set the current version of BoogieVariable bv to the constant b_index and return b_index.
 	 */
@@ -528,7 +529,7 @@ public class NestedSsaBuilder {
 		}
 		return var;
 	}
-	
+
 	/**
 	 * Build constant bv_index that represents BoogieVar bv that obtains a new value at position index.
 	 */
@@ -550,7 +551,7 @@ public class NestedSsaBuilder {
 		index2constant.put(index, constant);
 		return constant;
 	}
-	
+
 	/**
 	 * May the corresponding global var of the oldvar bv be modified in in the current calling context (according to
 	 * modifies clauses?)
@@ -580,7 +581,7 @@ public class NestedSsaBuilder {
 		}
 		return isModified;
 	}
-	
+
 	private Term transferToCurrentScriptIfNecessary(final Term term) {
 		final Term result;
 		if (mTransferToScriptNeeded) {
@@ -590,7 +591,7 @@ public class NestedSsaBuilder {
 		}
 		return result;
 	}
-	
+
 	private TermVariable transferToCurrentScriptIfNecessary(final TermVariable tv) {
 		final TermVariable result;
 		if (mTransferToScriptNeeded) {

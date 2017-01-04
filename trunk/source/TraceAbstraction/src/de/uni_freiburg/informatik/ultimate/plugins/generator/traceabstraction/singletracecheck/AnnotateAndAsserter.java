@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
@@ -46,25 +46,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AnnotateAndAsserter {
-	
+
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	
+
 	protected final ManagedScript mMgdScriptTc;
-	protected final NestedWord<? extends IAction> mTrace;
-	
+	protected final NestedWord<? extends IIcfgTransition<?>> mTrace;
+
 	protected LBool mSatisfiable;
 	protected final NestedFormulas<Term, Term> mSSA;
 	protected ModifiableNestedFormulas<Term, Term> mAnnotSSA;
-	
+
 	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
-	
+
 	protected final TraceCheckerStatisticsGenerator mTcbg;
-	
-	public AnnotateAndAsserter(final ManagedScript mgdScriptTc,
-			final NestedFormulas<Term, Term> nestedSSA,
-			final AnnotateAndAssertCodeBlocks aaacb,
-			final TraceCheckerStatisticsGenerator tcbg, final IUltimateServiceProvider services) {
+
+	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<Term, Term> nestedSSA,
+			final AnnotateAndAssertCodeBlocks aaacb, final TraceCheckerStatisticsGenerator tcbg,
+			final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
@@ -73,19 +72,19 @@ public class AnnotateAndAsserter {
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
 	}
-	
+
 	public void buildAnnotatedSsaAndAssertTerms() throws AbnormalSolverTerminationDuringFeasibilityCheck,
 			AbnormalUnknownSolverTerminationDuringFeasibilityCheck {
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
 		assert mSatisfiable == null;
-		
+
 		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
-		
+
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
-		
+
 		final Collection<Integer> callPositions = new ArrayList<>();
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
 		for (int i = 0; i < mTrace.length(); i++) {
@@ -104,28 +103,28 @@ public class AnnotateAndAsserter {
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 		}
-		
+
 		assert callPositions.containsAll(mTrace.getCallPositions());
 		assert mTrace.getCallPositions().containsAll(callPositions);
-		
+
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
 		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert mTrace.isPendingReturn(positionOfPendingReturn);
 			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertPendingContext(
-						positionOfPendingReturn, pendingContextCode);
+				final Term annotated = mAnnotateAndAssertCodeBlocks
+						.annotateAndAssertPendingContext(positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
 			}
 			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntPendingContext(
-						positionOfPendingReturn, pendingContextCode);
+				final Term annotated = mAnnotateAndAssertCodeBlocks
+						.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
-						positionOfPendingReturn, pendingContextCode);
+				final Term annotated = mAnnotateAndAssertCodeBlocks
+						.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
 				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
 			}
 			pendingContextCode++;
@@ -144,7 +143,7 @@ public class AnnotateAndAsserter {
 		mTcbg.reportnewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
-	
+
 	private static boolean isKnownException(final SMTLIBException e) {
 		final String message = e.getMessage();
 		if (message.contains(AbnormalSolverTerminationDuringFeasibilityCheck.TYPICAL_ERROR_MESSAGE)) {
@@ -155,22 +154,22 @@ public class AnnotateAndAsserter {
 		}
 		return false;
 	}
-	
+
 	public LBool isInputSatisfiable() {
 		return mSatisfiable;
 	}
-	
+
 	public NestedFormulas<Term, Term> getAnnotatedSsa() {
 		return mAnnotSSA;
 	}
-	
+
 	public static class AbnormalSolverTerminationDuringFeasibilityCheck extends Exception {
 		private static final long serialVersionUID = 1605915090440572006L;
-		
+
 		public static final String TYPICAL_ERROR_MESSAGE = "Received EOF on stdin. No stderr output.";
 		public static final String NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
 	}
-	
+
 	/**
 	 * Exception thrown in case of an abnormal solver termination which is unknown and thus should be reported to the
 	 * developer.
@@ -179,9 +178,9 @@ public class AnnotateAndAsserter {
 	 */
 	public static class AbnormalUnknownSolverTerminationDuringFeasibilityCheck extends Exception {
 		private static final long serialVersionUID = 6055606988186582091L;
-		
+
 		private final SMTLIBException mException;
-		
+
 		/**
 		 * @param exception
 		 *            Exception.
@@ -189,12 +188,12 @@ public class AnnotateAndAsserter {
 		public AbnormalUnknownSolverTerminationDuringFeasibilityCheck(final SMTLIBException exception) {
 			mException = exception;
 		}
-		
+
 		@Override
 		public String getMessage() {
 			return mException.getMessage();
 		}
-		
+
 		@Override
 		public void printStackTrace() {
 			mException.printStackTrace();

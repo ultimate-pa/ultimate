@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -84,7 +84,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * @param logger
 	 */
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
@@ -145,7 +145,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	}
 
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
@@ -293,7 +293,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
-			final NestedWord<? extends IAction> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
+			final NestedWord<? extends IIcfgTransition<?>> subtrace =
+					mTrace.getSubWord(nonPendingCall + 1, returnPosition);
 
 			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getCallStatement().getMethodName();

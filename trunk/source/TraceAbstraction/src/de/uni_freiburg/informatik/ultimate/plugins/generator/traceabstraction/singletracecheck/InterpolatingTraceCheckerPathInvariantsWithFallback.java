@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -65,13 +66,13 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedRun<? extends IAction, IPredicate> run, final CfgSmtToolkit csToolkit,
+			final NestedRun<? extends IIcfgTransition<?>, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final boolean useLiveVariables, final boolean useWeakestPrecondition, final Settings solverSettings,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfg<?> icfgContainer) {
+			final boolean useVarsFromUnsatCore, final boolean useLiveVariables, final boolean useWeakestPrecondition,
+			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, csToolkit.getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
@@ -95,10 +96,10 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
 
-		final PathInvariantsGenerator pathInvariantsGenerator =
-				new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(),
-						super.getPostcondition(), mPredicateUnifier, mIcfg, mUseNonlinerConstraints,
-						mUseVarsFromUnsatCore, mUseLiveVariables, mUseWPForPathInvariants, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
+		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage,
+				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier, mIcfg,
+				mUseNonlinerConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mUseWPForPathInvariants,
+				mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();
@@ -116,7 +117,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private static IPredicate[] fallbackInterpolantComputation() {
 		throw new UnsupportedOperationException("fallback computation not yet implemented");
 	}
-	
+
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;

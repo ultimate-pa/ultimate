@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -118,7 +119,7 @@ public class TraceChecker implements ITraceChecker {
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	protected final NestedWord<? extends IAction> mTrace;
+	protected final NestedWord<? extends IIcfgTransition<?>> mTrace;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	/**
@@ -157,7 +158,7 @@ public class TraceChecker implements ITraceChecker {
 	 *            logger
 	 */
 	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit,
@@ -167,7 +168,7 @@ public class TraceChecker implements ITraceChecker {
 	}
 
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
@@ -181,7 +182,7 @@ public class TraceChecker implements ITraceChecker {
 	 * @param services
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat,

@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  * NestedFormulas where we can set formulas after construction of the object.
@@ -65,7 +65,7 @@ public class ModifiableNestedFormulas<TF, SF> extends NestedFormulas<TF, SF> {
 	 */
 	private final Map<Integer, TF> mGlobalOldVarAssignmentAtCall = new HashMap<>();
 
-	public ModifiableNestedFormulas(final NestedWord<? extends IAction> nestedWord,
+	public ModifiableNestedFormulas(final NestedWord<? extends IIcfgTransition<?>> nestedWord,
 			final SortedMap<Integer, SF> pendingContexts) {
 		super(nestedWord, pendingContexts);
 		mTerms = (TF[]) new Object[nestedWord.length()];

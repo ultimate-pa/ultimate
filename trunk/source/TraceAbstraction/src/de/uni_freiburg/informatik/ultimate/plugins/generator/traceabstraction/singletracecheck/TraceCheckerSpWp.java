@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -116,7 +117,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private boolean mAlternatingQuantifierBailout;
 
 	public TraceCheckerSpWp(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final UnsatCores unsatCores, final boolean useLiveVariables, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier,
@@ -526,7 +527,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER).transform(projectedT);
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER)
+					.transform(projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
@@ -550,7 +552,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					nonLiveVars, pred.getFormula());
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
-			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER).transform(projectedT);
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices, false, PqeTechniques.ONLY_DER)
+					.transform(projectedT);
 			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;

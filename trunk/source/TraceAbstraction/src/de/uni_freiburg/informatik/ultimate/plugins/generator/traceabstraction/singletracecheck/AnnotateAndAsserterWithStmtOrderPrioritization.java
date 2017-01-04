@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Relation
  * Following heuristics are currently implemented: 1. Heuristic ********* General idea: First, assert all statements
  * which don't occur inside of a loop. Then, check for satisfiability. If the result of the satisfiability check is not
  * unsatisfiable, then assert the rest of the statements, and return the result of the unsatisfiability check.
- ********* 
+ *********
  * 2. Heuristic ********* General idea: Assert statements in incremental order by their depth, and check after each step
  * for satisfiability. E.g. first assert all statements with depth 0, then assert all statements at depth 1, and so on.
  * 
@@ -92,7 +92,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * Returns a set of integers containing the values {lowerBound, lowerBound + 1, ..., upperBound - 1}.
 	 */
-	private Set<Integer> getSetOfIntegerForGivenInterval(final int lowerBound, final int upperBound) {
+	private static Set<Integer> getSetOfIntegerForGivenInterval(final int lowerBound, final int upperBound) {
 		final Set<Integer> result = new HashSet<>();
 		for (int i = lowerBound; i < upperBound; i++) {
 			result.add(i);
@@ -103,7 +103,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * Returns the set difference between first set and the second set.
 	 */
-	private Set<Integer> integerSetDifference(final Set<Integer> firstSet, final Set<Integer> secondSet) {
+	private static Set<Integer> integerSetDifference(final Set<Integer> firstSet, final Set<Integer> secondSet) {
 		if (secondSet.isEmpty()) {
 			return firstSet;
 		}
@@ -122,9 +122,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * for the meaning of 'depth'). The result is stored in the map 'depth2Statements'. The partitioning is done
 	 * recursively.
 	 */
-	private void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
-			final int depth, final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt,
-			final Map<Integer, Set<Integer>> depth2Statements, final List<BoogieIcfgLocation> pps) {
+	private <LOC> void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex, final Integer upperIndex,
+			final int depth, final RelationWithTreeSet<LOC, Integer> rwt,
+			final Map<Integer, Set<Integer>> depth2Statements, final List<LOC> pps) {
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
@@ -148,7 +148,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * Add the position 'stmtPos' to the map 'depth2Statements' where the key is the given 'depth'.
 	 */
-	private void addStmtPositionToDepth(final int depth, final Map<Integer, Set<Integer>> depth2Statements,
+	private static void addStmtPositionToDepth(final int depth, final Map<Integer, Set<Integer>> depth2Statements,
 			final int stmtPos) {
 		if (depth2Statements.keySet().contains(depth)) {
 			depth2Statements.get(depth).add(stmtPos);
@@ -163,8 +163,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * 
 	 * Partition the statements of the given trace according to their depth.
 	 */
-	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(final NestedWord<? extends IAction> trace,
-			final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt, final List<BoogieIcfgLocation> pps) {
+	private <LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
+			final NestedWord<? extends IAction> trace, final RelationWithTreeSet<LOC, Integer> rwt,
+			final List<LOC> pps) {
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<>();
 
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
@@ -174,9 +175,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		final List<BoogieIcfgLocation> pps =
-				TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) mTrace);
-		final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt =
+		final List<IcfgLocation> pps = TraceCheckerUtils.getSequenceOfProgramPoints(mTrace);
+		final RelationWithTreeSet<IcfgLocation, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 
 		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
@@ -392,9 +392,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * TODO(Betim): DOcumentation!
 	 */
-	private RelationWithTreeSet<BoogieIcfgLocation, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
-			final int upperIndex, final List<BoogieIcfgLocation> pps) {
-		final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt = new RelationWithTreeSet<>();
+	private static <LOC> RelationWithTreeSet<LOC, Integer> computeRelationWithTreeSetForTrace(final int lowerIndex,
+			final int upperIndex, final List<LOC> pps) {
+		final RelationWithTreeSet<LOC, Integer> rwt = new RelationWithTreeSet<>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			rwt.addPair(pps.get(i), i);
 		}
