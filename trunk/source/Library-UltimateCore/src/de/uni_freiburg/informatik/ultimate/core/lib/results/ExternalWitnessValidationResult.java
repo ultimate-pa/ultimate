@@ -102,6 +102,5 @@ public class ExternalWitnessValidationResult implements IResult {
 	@Override
 	public String getPlugin() {
 		return mPluginId;
-	};
-
+	}
 }
