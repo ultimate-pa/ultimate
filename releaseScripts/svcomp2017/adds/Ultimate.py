@@ -18,6 +18,7 @@ errorPathFileName = 'UltimateCounterExample.errorpath'
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
 incorrectSyntaxErrorString = 'ShortDescription: Incorrect Syntax'
 typeErrorString = 'Type Error'
+witnessErrorString = 'InvalidWitnessErrorResult'
 exceptionErrorString = 'ExceptionOrErrorResult'
 safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
@@ -117,9 +118,14 @@ def runUltimate(ultimateCall, terminationMode):
             safetyResult = 'ERROR: INCORRECT SYNTAX'
         elif (line.find(typeErrorString) != -1):
             safetyResult = 'ERROR: TYPE ERROR'
+        elif (line.find(witnessErrorString) != -1):
+            safetyResult = 'ERROR: INVALID WITNESS FILE'
         elif (line.find(exceptionErrorString) != -1):
-            safetyResult = 'ERROR: ' + line[line.find(exceptionErrorString):]           
+            safetyResult = 'ERROR: ' + line[line.find(exceptionErrorString):]
+            # hack to avoid errors with floats 
+            overapprox = True           
         if (not overapprox and containsOverapproximationResult(line)):
+            safetyResult = 'UNKNOWN: Overapproximated counterexample'
             overapprox = True
         if (terminationMode):
             if (line.find(terminationTrueString) != -1):
@@ -339,7 +345,7 @@ def main():
     safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
     
     if(overapprox):
-        # we did fail because we had to overaproximate. Lets rerun with bit-precision 
+        # we did fail because we had to overapproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsPath(True, settingsSearchString)
         ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
