@@ -61,6 +61,7 @@ def searchCurrentDir(searchstring):
 
 def containsOverapproximationResult(line):
     triggers = [
+                'Reason: overapproximation of',
                 'Reason: overapproximation of bitwiseAnd',
                 'Reason: overapproximation of bitwiseOr',
                 'Reason: overapproximation of bitwiseXor',
