@@ -299,4 +299,8 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	public boolean isTop() {
 		return mIsTop;
 	}
+
+	public void removeDisEquality(VPDomainSymmetricPair<NODEID> diseq) {
+		mDisEqualitySet.remove(diseq);
+	}
 }

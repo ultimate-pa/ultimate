@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNodeIdentifier, VPTfArrayIdentifier> {
 	
-	private Set<IProgramVar> mVars = new HashSet<>();
+//	private Set<IProgramVar> mVars = new HashSet<>();
 	
 	private Map<Term, VPTfNodeIdentifier> mTermToNodeId = new HashMap<>();
 	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode = new HashMap<>();
@@ -135,7 +135,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		mPreAnalysis = builder.mPreAnalysis;
 		mTfStatePreparer = builder.mTfStatePreparer;
 		mTransFormula = builder.mTransFormula;
-		mVars = new HashSet<>(builder.mVars);
+//		mVars = new HashSet<>(builder.mVars);
 		// the arrayIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
 		mPvocToInVarToOutVarToArrayIdentifier = builder.mPvocToInVarToOutVarToArrayIdentifier;
 		// the nodeIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
@@ -640,9 +640,9 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		return mNodeIdToEqGraphNode.get(i);
 	}
 
-	public void addVariables(Set<IProgramVar> variables) {
-		mVars.addAll(variables);
-	}
+//	public void addVariables(Set<IProgramVar> variables) {
+//		mVars.addAll(variables);
+//	}
 	
 	public VPTfNodeIdentifier getNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars, 

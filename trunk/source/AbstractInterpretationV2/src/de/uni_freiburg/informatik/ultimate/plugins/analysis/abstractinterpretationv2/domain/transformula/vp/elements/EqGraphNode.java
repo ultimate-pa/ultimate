@@ -132,11 +132,9 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 			HashSet<VPDomainSymmetricPair<NODEID>> diseqsetcopy = new HashSet<>(builder.getDisEqualitySet());
 			for (VPDomainSymmetricPair<NODEID> diseq : diseqsetcopy) {
 				if (diseq.contains(target.nodeIdentifier)) {
-					builder.getDisEqualitySet().remove(diseq);
-					builder.getDisEqualitySet().add(
-							new VPDomainSymmetricPair<NODEID>(
-									targetRepresentative.nodeIdentifier, 
-									diseq.getOther(target.nodeIdentifier)));
+					builder.removeDisEquality(diseq);
+					builder.addDisEquality(targetRepresentative.nodeIdentifier, 
+									diseq.getOther(target.nodeIdentifier));
 				}
 			}
 		}

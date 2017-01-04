@@ -193,7 +193,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 
 		if (state.isTop()) {
 			final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
-			builder.addVariables(state.getVariables());
+			builder.addVars(state.getVariables());
 			return builder.build();
 		}
 

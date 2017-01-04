@@ -29,6 +29,15 @@ public class StoreTermWrapper implements IArrayWrapper {
 
 	@Override
 	public Set<ArrayWithSideCondition> getArrayWithSideConditions(VPTfState tfState, Set<List<NodeIdWithSideCondition>> requestedIndices) {
+		
+		
+		List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndex.stream()
+				.map(elWr -> elWr.getNodeIdWithSideConditions(tfState))
+				.collect(Collectors.toList());
+		Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
+
+		final Set<NodeIdWithSideCondition> valueNiwscs = mValue.getNodeIdWithSideConditions(tfState);
+
 
 		/*
 		 * Step 1:
@@ -44,13 +53,6 @@ public class StoreTermWrapper implements IArrayWrapper {
 		 * 
 		 */
 		Set<ArrayWithSideCondition> resultStep1 = new HashSet<>();
-		List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndex.stream()
-				.map(elWr -> elWr.getNodeIdWithSideConditions(tfState))
-				.collect(Collectors.toList());
-		Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
-
-		
-		final Set<NodeIdWithSideCondition> valueNiwscs = mValue.getNodeIdWithSideConditions(tfState);
 		
 		for (List<NodeIdWithSideCondition> indexVector : combinedIndices) {
 			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> indexVectorEqualities = new HashSet<>();
@@ -101,51 +103,92 @@ public class StoreTermWrapper implements IArrayWrapper {
 		Set<ArrayWithSideCondition> resultStep2 = new HashSet<>();
 		if (requestedIndices != null) {
 			assert !requestedIndices.isEmpty(); //TODO is there even a use case where requestedIndices is non-null and not a singleton?
-			
+
 			for (List<NodeIdWithSideCondition> reqIndex : requestedIndices) {
-				final List<VPTfNodeIdentifier> indexVectorAsNodeIds = 
+				final List<VPTfNodeIdentifier> reqIndexVectorNodeIds = 
 						reqIndex.stream().map(niwsc -> niwsc.mNodeId).collect(Collectors.toList());
-				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> indexVectorEqualities = collectEqualities(reqIndex);
-				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> indexVectorDisEqualities = collectDisEqualities(reqIndex);
+				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> reqIndexVectorEqualities = collectEqualities(reqIndex);
+				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> reqIndexVectorDisEqualities = collectDisEqualities(reqIndex);
+
+				for (List<NodeIdWithSideCondition> storeIndex : combinedIndices) {
+					final List<VPTfNodeIdentifier> storeIndexVectorNodeIds = 
+							storeIndex.stream().map(niwsc -> niwsc.mNodeId).collect(Collectors.toList());
+					// the sideconditions of the store index vector should have already been added to the awscs in Step 1
+					//  --> we can ignore them here (TODO: perhaps pull out that functionality into a Step 0??)
+//					Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> storeIndexVectorEqualities = collectEqualities(storeIndex);
+//					Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> storeIndexVectorDisEqualities = collectDisEqualities(storeIndex);
+					assert storeIndex.size() == reqIndex.size();
+
+					for (NodeIdWithSideCondition value : valueNiwscs) {
+						// the sideconditions of the store value should have already been added to the awscs in Step 1
+						//  --> we can ignore them here
+
+						// intuitively the main loop here -> we split each of those awscs in two (if we have one requested index and one store value)
+						for (ArrayWithSideCondition awscFromStep1 : resultStep1) { 
+							/*
+							 * say we have (select (store a i x) j), i.e., j is requested
+							 * case 1: i = j
+							 */
+							{
+								final Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> newIndexToValue = 
+										new HashMap<>(awscFromStep1.mIndexToValue);
+								newIndexToValue.put(
+										reqIndexVectorNodeIds, 
+										value.getNodeId()); // a[j] = x
+
+								Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newEqualities = 
+										new HashSet<>(awscFromStep1.getEqualities());
+								newEqualities.addAll(reqIndexVectorEqualities);
+
+								Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newDisEqualities = 
+											new HashSet<>(awscFromStep1.getDisEqualities());
+								newDisEqualities.addAll(reqIndexVectorDisEqualities);
+
+								// add "i = j" to the side condition -- i and j are vectors..
+								for (int i = 0; i < reqIndexVectorNodeIds.size(); i++) {
+									newEqualities.add(
+											new VPDomainSymmetricPair<VPTfNodeIdentifier>(
+													reqIndexVectorNodeIds.get(i), 
+													storeIndexVectorNodeIds.get(i)));
+								}
+
+								ArrayWithSideCondition case1awsc = new ArrayWithSideCondition(
+										newIndexToValue, newEqualities, newDisEqualities);
+								resultStep2.add(case1awsc);
+							}
+
+							/*
+							 * say we have (select (store a i x) j), i.e., j is requested
+							 * case 2: i != j
+							 */
+							{
+								Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> newIndexToValue = 
+										new HashMap<>(awscFromStep1.mIndexToValue);
+								
+								// add "i != j" to the side condition -- i and j are vectors.. --> we need a disjunction
+								for (int i = 0; i < reqIndex.size(); i++) {
+									Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newEqualities = 
+											new HashSet<>(awscFromStep1.getEqualities());
+									newEqualities.addAll(reqIndexVectorEqualities);
+
+									Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newDisEqualities = 
+											new HashSet<>(awscFromStep1.getDisEqualities());
+									newDisEqualities.addAll(reqIndexVectorDisEqualities);
+									newDisEqualities.add(
+											new VPDomainSymmetricPair<VPTfNodeIdentifier>(
+													reqIndexVectorNodeIds.get(i), 
+													storeIndexVectorNodeIds.get(i)));
 
 
-				for (NodeIdWithSideCondition value : valueNiwscs) {
-
-					// intuitively the main loop here -> we split each of those awscs in two (if we have one requested index and one store value)
-					for (ArrayWithSideCondition awscFromStep1 : resultStep1) { 
-						/*
-						 * say we have (select (store a i x) j), i.e., j is requested
-						 * case 1: i = j
-						 */
-						{
-							final Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> newIndexToValue = new HashMap<>(awscFromStep1.mIndexToValue);
-							newIndexToValue.put(
-									indexVectorAsNodeIds, 
-									value.getNodeId()); // a[j] = x
-
-							Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newEqualities = new HashSet<>(awscFromStep1.getEqualities());
-							//					Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newDisEqualities = new HashSet<>(awscFromStep1.getDisEqualities());
-
-
-							ArrayWithSideCondition case1awsc = new ArrayWithSideCondition(
-									newIndexToValue, newEqualities, awscFromStep1.getDisEqualities());
-							resultStep2.add(case1awsc);
-						}
-
-						/*
-						 * say we have (select (store a i x) j), i.e., j is requested
-						 * case 2: i != j
-						 */
-						{
-							Map<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> newIndexToValue = new HashMap<>(awscFromStep1.mIndexToValue);
-							//					Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newEqualities = new HashSet<>(awscFromStep1.getEqualities());
-							Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> newDisEqualities = new HashSet<>(awscFromStep1.getDisEqualities());
-
-							ArrayWithSideCondition case2awsc = new ArrayWithSideCondition(newIndexToValue, awscFromStep1.getEqualities(), newDisEqualities);
-							resultStep2.add(case2awsc);
+									ArrayWithSideCondition case2awsc = new ArrayWithSideCondition(
+											newIndexToValue, 
+											newEqualities,
+											newDisEqualities);
+									resultStep2.add(case2awsc);
+								}
+							}
 						}
 					}
-
 				}
 			}
 		} else {

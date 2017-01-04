@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -191,7 +192,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
 			}
-			if (!mVpDomain.getPreAnalysis().isArrayTracked(mds.getArray(), 
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(
+					VPDomainHelpers.getArrayTerm(mds.getArray()),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
 				continue;
@@ -200,7 +202,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			//TODO: we can't work on the normalized TermVariables like this, I think..
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							mds.getArray(), 
+							VPDomainHelpers.getArrayTerm(mds.getArray()),
 							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
 			assert oldArray != null;
 

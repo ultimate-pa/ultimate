@@ -173,7 +173,12 @@ public class VPDomainHelpers {
 		return result;
 	}
 	
-	public static Term getArrayTerm(ApplicationTerm at) {
+	public static Term getArrayTerm(Term t) {
+		if (!(t instanceof ApplicationTerm)) {
+			return t;
+		}
+		ApplicationTerm at = (ApplicationTerm) t;
+		
 		if (at.getFunction().getName().equals("select")) {
 			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
 			if (mds.getArray() instanceof ApplicationTerm

@@ -186,9 +186,7 @@ public class VPDomainPreanalysis {
 							mdSelectsAll.stream()
 							.filter(mds -> isArrayTracked(
 									getOrConstructBoogieVarOrConst(
-											mds.getArray() instanceof ApplicationTerm ?
-													VPDomainHelpers.getArrayTerm((ApplicationTerm) mds.getArray()) :
-														mds.getArray())))
+											VPDomainHelpers.getArrayTerm(mds.getArray()))))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
 			constructEqNode(mds);
@@ -204,9 +202,7 @@ public class VPDomainPreanalysis {
 						mdStoresAll :
 							mdStoresAll.stream()
 							.filter(mds -> isArrayTracked(getOrConstructBoogieVarOrConst(
-									mds.getArray() instanceof ApplicationTerm ?
-													VPDomainHelpers.getArrayTerm((ApplicationTerm) mds.getArray()) :
-														mds.getArray())))
+									VPDomainHelpers.getArrayTerm(mds.getArray()))))
 							.collect(Collectors.toList());
 		for (final MultiDimensionalStore mds : mdStoresFiltered) {
 			constructEqNode(mds);
