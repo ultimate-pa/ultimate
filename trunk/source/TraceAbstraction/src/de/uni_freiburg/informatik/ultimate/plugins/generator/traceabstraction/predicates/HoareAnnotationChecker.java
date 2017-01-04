@@ -125,6 +125,9 @@ public class HoareAnnotationChecker {
 
 				final Validity inductivity;
 				if (outEdge instanceof IIcfgInternalTransition<?>) {
+					if (outEdge instanceof Summary && ((Summary) outEdge).calledProcedureHasImplementation()) {
+						continue;
+					}
 					inductivity = mHoareTripleChecker.checkInternal(pre, (IInternalAction) outEdge, post);
 				} else if (outEdge instanceof ICallAction) {
 					inductivity = mHoareTripleChecker.checkCall(pre, (ICallAction) outEdge, post);
@@ -136,11 +139,6 @@ public class HoareAnnotationChecker {
 						continue;
 					}
 					inductivity = mHoareTripleChecker.checkReturn(pre, hierPre, (IReturnAction) outEdge, post);
-				} else if (outEdge instanceof Summary) {
-					if (((Summary) outEdge).calledProcedureHasImplementation()) {
-						continue;
-					}
-					inductivity = mHoareTripleChecker.checkInternal(pre, (IInternalAction) outEdge, post);
 				} else {
 					continue;
 				}
