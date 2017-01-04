@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+
 /**
  * A finite word, i.e., a finite sequence of symbols.
  * 
@@ -42,8 +44,8 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	/**
 	 * The word.
 	 */
-	protected LETTER[] mWord;
-	
+	protected final LETTER[] mWord;
+
 	/**
 	 * Construct word consisting of a sequence of symbols.
 	 * 
@@ -54,15 +56,14 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	public Word(final LETTER... symbols) {
 		mWord = symbols;
 	}
-	
+
 	/**
-	 * @return The length of the word is 0 for the empty word, 1 for the
-	 *         word that consists of one symbol, etc.
+	 * @return The length of the word is 0 for the empty word, 1 for the word that consists of one symbol, etc.
 	 */
 	public int length() {
 		return mWord.length;
 	}
-	
+
 	/**
 	 * A list view of the symbols.
 	 * 
@@ -71,7 +72,7 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	public List<LETTER> asList() {
 		return Arrays.asList(mWord);
 	}
-	
+
 	/**
 	 * The symbol at the given position.
 	 * 
@@ -85,27 +86,16 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		}
 		return mWord[position];
 	}
-	
+
 	/**
 	 * @param otherWord
 	 *            other word
 	 * @return concatenation 'this.otherWord'
 	 */
 	public Word<LETTER> concatenate(final Word<LETTER> otherWord) {
-		final int lengthWord1 = this.length();
-		final int lengthWord2 = otherWord.length();
-		@SuppressWarnings("unchecked")
-		final LETTER[] concatenationSymbols = (LETTER[]) new Object[lengthWord1 + lengthWord2];
-		
-		for (int i = 0; i < lengthWord1; i++) {
-			concatenationSymbols[i] = this.getSymbol(i);
-		}
-		for (int i = 0; i < lengthWord2; i++) {
-			concatenationSymbols[lengthWord1 + i] = otherWord.getSymbol(i);
-		}
-		return new Word<>(concatenationSymbols);
+		return new Word<>(CoreUtil.concatAll(mWord, otherWord.mWord));
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
@@ -116,7 +106,7 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		builder.append(']');
 		return builder.toString();
 	}
-	
+
 	@Override
 	public Iterator<LETTER> iterator() {
 		return asList().iterator();
