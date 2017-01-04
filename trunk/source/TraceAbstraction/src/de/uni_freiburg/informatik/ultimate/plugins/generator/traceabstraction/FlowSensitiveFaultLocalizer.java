@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -344,8 +345,13 @@ public class FlowSensitiveFaultLocalizer {
 		} else {
 			postprocessors = Collections.emptyList();
 		}
-		final InterpolantsPreconditionPostcondition weakestPreconditionSequence =
-				ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true);
+		InterpolantsPreconditionPostcondition weakestPreconditionSequence;
+		try {
+			weakestPreconditionSequence = ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
+		} catch (final TraceInterpolationException e) {
+			// TODO: What to do with this exception?
+			throw new RuntimeException(e);
+		}
 		// End of the calculation
 
 		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
