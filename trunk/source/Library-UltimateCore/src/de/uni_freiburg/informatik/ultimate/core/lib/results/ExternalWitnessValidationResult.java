@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ExternalWitnessValidationResult implements IResult {
+public class ExternalWitnessValidationResult extends AbstractResult {
 
-	public static enum WitnessVerificationStatus {
+	public enum WitnessVerificationStatus {
 		VERIFIED, UNVERIFIED, VERIFICATION_FAILED, INTERNAL_ERROR
 	}
 
@@ -45,13 +45,12 @@ public class ExternalWitnessValidationResult implements IResult {
 	private final String mWitness;
 	private final WitnessVerificationStatus mVerificationStatus;
 	private final WitnessVerificationStatus mExpectedVerificationStatus;
-	private final String mPluginId;
 
 	public ExternalWitnessValidationResult(final String pluginId, final IResult result, final String witness,
 			final WitnessVerificationStatus verificationStatus,
 			final WitnessVerificationStatus expectedVerificationStatus) {
+		super(pluginId);
 		// TODO: Witness string may be useless and its potentially large, so... maybe remove it?
-		mPluginId = pluginId;
 		mResult = result;
 		mWitness = witness;
 		mVerificationStatus = verificationStatus;
@@ -97,10 +96,5 @@ public class ExternalWitnessValidationResult implements IResult {
 
 	public boolean isEmpty() {
 		return mWitness == null;
-	}
-
-	@Override
-	public String getPlugin() {
-		return mPluginId;
 	}
 }

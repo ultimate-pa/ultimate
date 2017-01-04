@@ -23,17 +23,17 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.model.results;
 
-
 /**
- * Interface for the results that are produced while running a toolchain.
- * These results are shown by the frontends of ULTIMATE. 
+ * Interface for the results that are produced while running a toolchain. These results are shown by the frontends of
+ * ULTIMATE.
+ * 
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
@@ -41,26 +41,25 @@ package de.uni_freiburg.informatik.ultimate.core.model.results;
  * @date 02.01.2012
  */
 public interface IResult {
-	
+
 	/**
-	 * Plugin that derived this IResult.
+	 * @return the plugin ID of the plugin that reported this {@link IResult}.
 	 */
-	public String getPlugin();
-	
+	String getPlugin();
+
 	/**
-	 * Kind of Result, in a few words. E.g., "procedure precondition can be
-	 * violated", "ranking function found", "unsupported syntax".
+	 * @return a short description of the kind of result. E.g., "procedure precondition can be violated",
+	 *         "ranking function found", " unsupported syntax".
 	 */
-	public String getShortDescription();
-	
+	String getShortDescription();
+
 	/**
-	 * String representation of the result. Contains all information that are
-	 * not already given by
-	 * <ul>
-	 * <li> location, 
-	 * <li> short description,
-	 * <li> or objects provided by subinterfaces/subclasses
-	 * </ul>
+	 * @return a String representation of the result. Contains all information that are not already given by
+	 *         <ul>
+	 *         <li>location,
+	 *         <li>short description,
+	 *         <li>or objects provided by subinterfaces/subclasses
+	 *         </ul>
 	 */
-	public String getLongDescription();
+	String getLongDescription();
 }

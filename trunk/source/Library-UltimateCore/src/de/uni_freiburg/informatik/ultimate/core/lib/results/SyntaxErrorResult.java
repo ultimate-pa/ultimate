@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
@@ -32,18 +32,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
 
 /**
  * Report a syntax error that has been detected.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class SyntaxErrorResult extends AbstractResult 
-												implements IResultWithLocation {
-	
+public class SyntaxErrorResult extends AbstractResult implements IResultWithLocation {
+
 	private final String mLongDescription;
 	private final ILocation mLocation;
 
-	public SyntaxErrorResult(String plugin, 
-			ILocation location,
-			String longDescription) {
+	public SyntaxErrorResult(final String plugin, final ILocation location, final String longDescription) {
 		super(plugin);
 		mLocation = location;
 		mLongDescription = longDescription;
@@ -64,5 +62,4 @@ public class SyntaxErrorResult extends AbstractResult
 		return mLocation;
 	}
 
-	
 }

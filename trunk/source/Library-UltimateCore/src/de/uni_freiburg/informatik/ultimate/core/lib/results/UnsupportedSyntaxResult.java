@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
@@ -33,15 +33,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocatio
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report that some syntax is not (yet?) supported by our implementation 
- * (e.g. input is program that uses arrays but solver setting uses logic that
- * does not support arrays) .
+ * Report that some syntax is not (yet?) supported by our implementation (e.g. input is program that uses arrays but
+ * solver setting uses logic that does not support arrays) .
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class UnsupportedSyntaxResult<ELEM extends IElement> 
-						extends AbstractResult implements IResultWithLocation {
-	
+public class UnsupportedSyntaxResult<ELEM extends IElement> extends AbstractResult implements IResultWithLocation {
+
 	private final ELEM mPosition;
 	protected final IBacktranslationService mTranslatorSequence;
 	private final ILocation mLocation;
@@ -51,17 +50,16 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 	 * @param location
 	 * @param syntaxErrorType
 	 */
-	public UnsupportedSyntaxResult(ELEM position, String plugin, 
-			IBacktranslationService translatorSequence, String longDescription) {
+	public UnsupportedSyntaxResult(final ELEM position, final String plugin,
+			final IBacktranslationService translatorSequence, final String longDescription) {
 		super(plugin);
 		mPosition = position;
 		mTranslatorSequence = translatorSequence;
 		mLocation = null;
 		mLongDescription = longDescription;
 	}
-	
-	public UnsupportedSyntaxResult(String plugin, ILocation location,
-			String longDescription) {
+
+	public UnsupportedSyntaxResult(final String plugin, final ILocation location, final String longDescription) {
 		super(plugin);
 		mPosition = null;
 		mTranslatorSequence = null;
@@ -78,21 +76,18 @@ public class UnsupportedSyntaxResult<ELEM extends IElement>
 	public String getLongDescription() {
 		return mLongDescription;
 	}
-	
+
 	@Override
 	public final ILocation getLocation() {
-		assert ((mPosition == null) ^ (mLocation == null)) : 
-			"exactly one has to be non-null";
+		assert mPosition == null ^ mLocation == null : "exactly one has to be non-null";
 		if (mPosition != null) {
 			return mPosition.getPayload().getLocation();
-		} else {
-			return mLocation;
 		}
+		return mLocation;
 	}
 
 	public final ELEM getElement() {
 		return mPosition;
 	}
 
-	
 }

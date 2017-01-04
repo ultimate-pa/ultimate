@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -30,9 +30,8 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Objects of this class represent one reason why we were not able to prove
- * something. Such a reason is given as a String (its description) and
- * optionally a {@link ILocation}.
+ * Objects of this class represent one reason why we were not able to prove something. Such a reason is given as a
+ * String (its description) and optionally a {@link ILocation}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -41,7 +40,7 @@ public class UnprovabilityReason {
 	private final String mDescription;
 	private final ILocation mLocation;
 
-	public UnprovabilityReason(String description) {
+	public UnprovabilityReason(final String description) {
 		this(description, null);
 	}
 
@@ -54,8 +53,7 @@ public class UnprovabilityReason {
 	public String toString() {
 		if (mLocation == null) {
 			return mDescription;
-		} else {
-			return mDescription + " at line " + mLocation.getStartLine();
 		}
+		return mDescription + " at line " + mLocation.getStartLine();
 	}
 }
