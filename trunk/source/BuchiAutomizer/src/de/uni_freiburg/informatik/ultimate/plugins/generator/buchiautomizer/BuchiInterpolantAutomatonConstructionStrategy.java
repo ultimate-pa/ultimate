@@ -86,6 +86,20 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		}
 	},
 	
+	ASTER {
+		@Override
+		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
+			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							true, false, true, false, false),
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							true, true, true, false, false),
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							false, false, true, true, false),
+			});
+		}
+	},
+	
 	
 	SUNFLOWER {
 		@Override
@@ -93,6 +107,22 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
 					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
 							false, false, true, false, true),
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							false, true, true, false, false),
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							false, false, true, true, true),
+			});
+		}
+	},
+	
+	DANDELION {
+		@Override
+		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
+			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							true, false, true, false, true),
+					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
+							true, true, true, false, false),
 					new BuchiInterpolantAutomatonConstructionStyle(BuchiInterpolantAutomaton.ScroogeNondeterminism, 
 							false, false, true, true, true),
 			});
