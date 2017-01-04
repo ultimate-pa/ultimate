@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
@@ -29,11 +29,13 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 /**
+ * An {@link ExternalWitnessValidationResult} should be used when Ultimate runs an external witness validator and wants
+ * to report the result of this validator.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class WitnessResult implements IResult {
+public class ExternalWitnessValidationResult implements IResult {
 
 	public static enum WitnessVerificationStatus {
 		VERIFIED, UNVERIFIED, VERIFICATION_FAILED, INTERNAL_ERROR
@@ -45,7 +47,7 @@ public class WitnessResult implements IResult {
 	private final WitnessVerificationStatus mExpectedVerificationStatus;
 	private final String mPluginId;
 
-	public WitnessResult(final String pluginId, final IResult result, final String witness,
+	public ExternalWitnessValidationResult(final String pluginId, final IResult result, final String witness,
 			final WitnessVerificationStatus verificationStatus,
 			final WitnessVerificationStatus expectedVerificationStatus) {
 		// TODO: Witness string may be useless and its potentially large, so... maybe remove it?
@@ -84,12 +86,12 @@ public class WitnessResult implements IResult {
 	public WitnessVerificationStatus getVerificationStatus() {
 		return mVerificationStatus;
 	}
-	
+
 	public WitnessVerificationStatus getExpectedVerificationStatus() {
 		return mExpectedVerificationStatus;
 	}
-	
-	public IResult getAffectedResult(){
+
+	public IResult getAffectedResult() {
 		return mResult;
 	}
 

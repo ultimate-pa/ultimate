@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -130,10 +130,10 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			return SafetyCheckerOverallResult.UNSUPPORTED_SYNTAX;
 		} else if (result instanceof ExceptionOrErrorResult) {
 			return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
-		} else if (result instanceof WitnessResult) {
+		} else if (result instanceof ExternalWitnessValidationResult) {
 			// if there is a witness result it has to be verified, else it is an
 			// error
-			final WitnessResult wit = (WitnessResult) result;
+			final ExternalWitnessValidationResult wit = (ExternalWitnessValidationResult) result;
 			if (wit.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			}

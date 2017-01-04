@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResu
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -78,7 +78,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				+ "matches the given one.");
 
 		final List<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
-		final List<WitnessResult> witnesses = new ArrayList<>();
+		final List<ExternalWitnessValidationResult> witnesses = new ArrayList<>();
 		final IResultService resultService = services.getResultService();
 
 		final List<IResult> results = resultService.getResults().entrySet().stream().flatMap(a -> a.getValue().stream())
@@ -100,8 +100,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				}
 			} else if (result instanceof CounterExampleResult<?, ?, ?>) {
 				cex.add((CounterExampleResult<?, ?, ?>) result);
-			} else if (result instanceof WitnessResult) {
-				witnesses.add((WitnessResult) result);
+			} else if (result instanceof ExternalWitnessValidationResult) {
+				witnesses.add((ExternalWitnessValidationResult) result);
 			}
 		}
 
@@ -119,9 +119,9 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			return TestResult.FAIL;
 		}
 
-		final List<WitnessResult> witnessesWithCex = new ArrayList<>();
+		final List<ExternalWitnessValidationResult> witnessesWithCex = new ArrayList<>();
 		for (final IResult result : cex) {
-			final Optional<WitnessResult> witness =
+			final Optional<ExternalWitnessValidationResult> witness =
 					witnesses.stream().filter(a -> a.getAffectedResult() == result).findAny();
 			if (witness.isPresent()) {
 				witnessesWithCex.add(witness.get());
@@ -130,7 +130,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 
 		if (!witnessesWithCex.isEmpty()) {
 			// we expect witness verification for .c files to succeed
-			for (final WitnessResult witness : witnessesWithCex) {
+			for (final ExternalWitnessValidationResult witness : witnessesWithCex) {
 				if (witness.isEmpty()) {
 					setResultCategory("Empty Witness");
 					final String errorMsg = "The witness is empty: " + witness.getShortDescription();

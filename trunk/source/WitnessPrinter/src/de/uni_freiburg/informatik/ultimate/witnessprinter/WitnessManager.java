@@ -39,8 +39,8 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -173,7 +173,7 @@ public class WitnessManager {
 	private void reportWitnessResult(final String svcompWitness, final IResult cex,
 			final WitnessVerificationStatus verificationStatus, final WitnessVerificationStatus expectedStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
+				new ExternalWitnessValidationResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
 	}
 
 	private boolean checkWitness(final String svcompWitnessFile, final IResult cex, final String originalFile,
