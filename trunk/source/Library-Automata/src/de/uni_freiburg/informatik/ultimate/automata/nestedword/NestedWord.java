@@ -78,27 +78,27 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * Constant to represent internal positions in our array model of a nesting relation.
 	 */
 	public static final int INTERNAL_POSITION = -2;
-	
+
 	/**
 	 * Constant to represent pending calls in our array model of a nesting relation.
 	 */
 	public static final int PLUS_INFINITY = Integer.MAX_VALUE;
-	
+
 	/**
 	 * Constant to represent pending returns in our array model of a nesting relation.
 	 */
 	public static final int MINUS_INFINITY = Integer.MIN_VALUE;
-	
+
 	private static final String QUOTE_SPACE = "\" ";
 	private static final char QUOTE = '\"';
 	private static final String ACCESS_TO_POSITION = "Access to position ";
-	
+
 	private final int[] mNestingRelation;
-	
+
 	private Set<Integer> mCallPositions;
-	
+
 	private SortedMap<Integer, LETTER> mPendingReturns;
-	
+
 	/**
 	 * Constructor for a nested word from two arrays.
 	 * <p>
@@ -114,20 +114,20 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 *            The nesting relation of nested word.
 	 */
 	public NestedWord(final LETTER[] word, final int[] nestingRelation) {
+		super(word);
 		assert assertValidNestedWord(word, nestingRelation);
-		mWord = word;
 		mNestingRelation = nestingRelation;
 	}
-	
+
 	/**
 	 * Constructor for the empty nested word.
 	 */
 	@SuppressWarnings("unchecked")
 	public NestedWord() {
-		mWord = (LETTER[]) new Object[0];
+		super((LETTER[]) new Object[0]);
 		mNestingRelation = new int[0];
 	}
-	
+
 	/**
 	 * Constructor for the nested word of length 1 (one).
 	 * 
@@ -139,14 +139,14 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 */
 	@SuppressWarnings("unchecked")
 	public NestedWord(final LETTER letter, final int internalOrCallOrReturn) {
+		super((LETTER[]) new Object[] { letter });
 		if (!isSpecialNestingRelationIndex(internalOrCallOrReturn)) {
 			throw new IllegalArgumentException(
 					"The only position has to be either internal, pending call, or pending return.");
 		}
-		mWord = (LETTER[]) new Object[] { letter };
 		mNestingRelation = new int[] { internalOrCallOrReturn };
 	}
-	
+
 	/**
 	 * Private constructor for the nested word of only internal positions from an ordinary word.
 	 * <p>
@@ -159,15 +159,15 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 */
 	@SuppressWarnings("unchecked")
 	private NestedWord(final Word<LETTER> word) {
+		super((LETTER[]) new Object[word.length()]);
 		final int length = word.length();
-		mWord = (LETTER[]) new Object[length];
 		mNestingRelation = new int[length];
 		for (int i = 0; i < length; i++) {
 			mWord[i] = word.getSymbol(i);
 			mNestingRelation[i] = INTERNAL_POSITION;
 		}
 	}
-	
+
 	/**
 	 * Converts any {@link Word} to a nested word.
 	 * 
@@ -183,7 +183,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return new NestedWord<>(word);
 	}
-	
+
 	/**
 	 * Computes all call positions.<br>
 	 * The result is cached, so the result needs not be stored locally by a user.
@@ -196,7 +196,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return mCallPositions;
 	}
-	
+
 	/**
 	 * @return All call positions.
 	 */
@@ -209,10 +209,10 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * TODO Christian 2016-08-25: All callers directly invoke the {@link java.util.SortedMap#keySet()} method.
-	 * We could change the return value to a {@link java.util.SortedSet}.
+	 * TODO Christian 2016-08-25: All callers directly invoke the {@link java.util.SortedMap#keySet()} method. We could
+	 * change the return value to a {@link java.util.SortedSet}.
 	 * 
 	 * @return all pending return positions in a sorted order
 	 */
@@ -222,7 +222,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return mPendingReturns;
 	}
-	
+
 	private SortedMap<Integer, LETTER> computePendingReturnPositions() {
 		final SortedMap<Integer, LETTER> result = new TreeMap<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
@@ -232,7 +232,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Checks whether all entries in the nesting relation are in valid range.
 	 * <p>
@@ -247,13 +247,13 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 */
 	private static boolean nestingRelationValuesInRange(final int[] nestingRelation) {
 		for (final int content : nestingRelation) {
-			if ((content < 0 || content >= nestingRelation.length) && (!isSpecialNestingRelationIndex(content))) {
+			if ((content < 0 || content >= nestingRelation.length) && !isSpecialNestingRelationIndex(content)) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Checks whether all matching call-return entries in the nesting relation are symmetric.
 	 * <p>
@@ -275,7 +275,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Performs two checks:
 	 * <ul>
@@ -301,14 +301,14 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 				return false;
 			}
 			for (int k = i + 1; k < nestingEntry; k++) {
-				if ((nestingRelation[k] >= nestingEntry) || (nestingRelation[k] == MINUS_INFINITY)) {
+				if (nestingRelation[k] >= nestingEntry || nestingRelation[k] == MINUS_INFINITY) {
 					return false;
 				}
 			}
 		}
 		return true;
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -318,7 +318,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		assert assertBounds(position);
 		return mNestingRelation[position] >= position;
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -328,7 +328,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		assert assertBounds(position);
 		return mNestingRelation[position] == INTERNAL_POSITION;
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -338,7 +338,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		assert assertBounds(position);
 		return mNestingRelation[position] <= position && mNestingRelation[position] != INTERNAL_POSITION;
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -348,7 +348,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		assert position >= 0 && position < mWord.length;
 		return mWord[position];
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -360,7 +360,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		throw new IllegalArgumentException("Argument must be a call position.");
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -372,7 +372,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		throw new IllegalArgumentException("Argument must be a return position.");
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -381,7 +381,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public boolean isPendingCall(final int position) {
 		return mNestingRelation[position] == PLUS_INFINITY;
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -390,7 +390,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public boolean isPendingReturn(final int position) {
 		return mNestingRelation[position] == MINUS_INFINITY;
 	}
-	
+
 	/**
 	 * @return true iff the word contains pending returns.
 	 */
@@ -402,7 +402,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Creates a new nested word as a subword in the given range.
 	 * 
@@ -422,7 +422,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		if (lastIndex >= length()) {
 			throw new IllegalArgumentException("The last index must be strictly smaller than the word length.");
 		}
-		
+
 		// create nesting relation (more involved due to index changes)
 		final int[] newNestingRelation = new int[lastIndex - firstIndex + 1];
 		for (int i = firstIndex, newWordPos = 0; i <= lastIndex; ++i, ++newWordPos) {
@@ -442,20 +442,19 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 				newNestingRelation[newWordPos] = oldNestingEntry - firstIndex;
 			}
 		}
-		
+
 		// copy word
 		final LETTER[] subwordAsArray = Arrays.copyOfRange(mWord, firstIndex, lastIndex + 1);
-		
+
 		return new NestedWord<>(subwordAsArray, newNestingRelation);
 	}
-	
+
 	/**
 	 * Concatenation of nested words as described in [2].
 	 * <p>
-	 * Pending calls of the first word are 'matched' with pending
-	 * returns of the second word. E.g., concatenation of <tt>(a b, {(0,infinity)})</tt> and
-	 * <tt>(c, { (0,-infinity)}</tt> results is the nested word <tt>(a b c, {(0,2)})</tt>. The method does not change
-	 * the original words.
+	 * Pending calls of the first word are 'matched' with pending returns of the second word. E.g., concatenation of
+	 * <tt>(a b, {(0,infinity)})</tt> and <tt>(c, { (0,-infinity)}</tt> results is the nested word
+	 * <tt>(a b c, {(0,2)})</tt>. The method does not change the original words.
 	 * <p>
 	 * Implementation details:<br>
 	 * There are two pointers, one starting at the end of the first word and descending, and the other starting at the
@@ -470,7 +469,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	public NestedWord<LETTER> concatenate(final NestedWord<LETTER> nestedWord2) {
 		final LETTER[] word2 = nestedWord2.mWord;
 		final int[] nestingRelation2 = nestedWord2.mNestingRelation;
-		
+
 		// create nesting relation
 		final int[] concatNestingRelation = new int[mWord.length + word2.length];
 		int index1 = mWord.length - 1;
@@ -481,7 +480,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 				if (index2 != word2.length) {
 					index2 = findNextPendingReturn(nestingRelation2, concatNestingRelation, index2);
 				}
-				
+
 				if (index2 == word2.length) {
 					// found no pending return, stays a pending call
 					concatNestingRelation[index1] = mNestingRelation[index1];
@@ -505,15 +504,15 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 				concatNestingRelation[mWord.length + index2] = mWord.length + nestingRelation2[index2];
 			}
 		}
-		
+
 		// copy word parts
 		final LETTER[] concatWord = (LETTER[]) new Object[mWord.length + word2.length];
 		System.arraycopy(mWord, 0, concatWord, 0, mWord.length);
 		System.arraycopy(word2, 0, concatWord, mWord.length, word2.length);
-		
+
 		return new NestedWord<>(concatWord, concatNestingRelation);
 	}
-	
+
 	/**
 	 * Helper method for concatenation.
 	 * <p>
@@ -542,7 +541,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return index2out;
 	}
-	
+
 	/*
 	 * Some example Code for testing Concatenation
 	 *
@@ -553,7 +552,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * NestedWord<Character> nw2 = new NestedWord<Character>(testWord2, testRelation2); mLogger.info("Nested Word:  "+
 	 * nw.concatenate(nw2).toString());
 	 */
-	
+
 	/**
 	 * Print this nested word in style of a tagged alphabet [2].
 	 * <p>
@@ -585,7 +584,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return builder.toString();
 	}
-	
+
 	private static boolean assertValidNestedWord(final Object[] word, final int[] nestingRelation) {
 		assert word.length == nestingRelation.length : "The nesting relation must contain one entry for each letter "
 				+ "in the word.";
@@ -596,7 +595,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		assert nestingEdgesDoNotCross(nestingRelation) : "Nesting edges must not cross.";
 		return true;
 	}
-	
+
 	/**
 	 * Asserts that the given index is within the word bounds.
 	 * 
@@ -606,11 +605,11 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 */
 	private boolean assertBounds(final int index) {
 		assert 0 <= index : ACCESS_TO_POSITION + index + " not possible. The first position of a nested word is 0.";
-		assert index < mWord.length : ACCESS_TO_POSITION + index
-				+ " not possible. The last position of this word is " + (mWord.length - 1) + '.';
+		assert index < mWord.length : ACCESS_TO_POSITION + index + " not possible. The last position of this word is "
+				+ (mWord.length - 1) + '.';
 		return true;
 	}
-	
+
 	private static boolean isSpecialNestingRelationIndex(final int nestingRelationEntry) {
 		return nestingRelationEntry == INTERNAL_POSITION || nestingRelationEntry == PLUS_INFINITY
 				|| nestingRelationEntry == MINUS_INFINITY;
