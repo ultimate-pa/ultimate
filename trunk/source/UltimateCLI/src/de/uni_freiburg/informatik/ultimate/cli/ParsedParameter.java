@@ -51,25 +51,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class ParsedParameter {
-	
+
 	private final CommandLine mCli;
 	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 	private final OptionBuilder mOptionFactory;
-	
+
 	ParsedParameter(final ICore<RunDefinition> core, final CommandLine cli, final OptionBuilder optionFactory) {
 		mCore = core;
 		mCli = cli;
 		mOptionFactory = optionFactory;
 		mLogger = core.getCoreLoggingService().getControllerLogger();
 	}
-	
+
 	public void applyCliSettings(final IUltimateServiceProvider services) throws ParseException {
 		for (final Option op : mCli.getOptions()) {
 			applyCliSetting(op, services);
 		}
 	}
-	
+
 	private void applyCliSetting(final Option op, final IUltimateServiceProvider services) throws ParseException {
 		final String optName = op.getLongOpt();
 		final Pair<String, String> prefName = mOptionFactory.getUltimatePreference(optName);
@@ -82,43 +82,43 @@ public class ParsedParameter {
 				"Applying setting for plugin " + prefName.getFirst() + ": " + prefName.getSecond() + " -> " + value);
 		preferences.put(prefName.getSecond(), String.valueOf(value));
 	}
-	
+
 	public boolean isHelpRequested() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_HELP);
 	}
-	
+
 	public boolean isVersionRequested() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_VERSION);
 	}
-	
+
 	public boolean showExperimentals() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_EXPERIMENTAL);
 	}
-	
+
 	public String getSettingsFile() throws ParseException, InvalidFileArgumentException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
 		return file.getAbsolutePath();
 	}
-	
+
 	public boolean hasSettings() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_SETTINGS);
 	}
-	
+
 	public boolean hasToolchain() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
 	}
-	
+
 	public boolean hasInputFiles() {
 		return mCli.hasOption(CommandLineOptions.OPTION_NAME_INPUTFILES);
 	}
-	
+
 	public File getToolchainFile() throws ParseException, InvalidFileArgumentException {
 		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_TOOLCHAIN);
 		checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_TOOLCHAIN);
 		return file;
 	}
-	
+
 	public IToolchainData<RunDefinition> createToolchainData() throws InvalidFileArgumentException, ParseException {
 		final File toolchainFile = getToolchainFile();
 		try {
@@ -131,30 +131,30 @@ public class ParsedParameter {
 					"Toolchain file at path " + toolchainFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
 	}
-	
+
 	public File[] getInputFiles() throws InvalidFileArgumentException, ParseException {
 		final File[] inputFilesArgument = getInputFileArgument();
 		if (inputFilesArgument == null || inputFilesArgument.length == 0) {
 			throw new InvalidFileArgumentException("No input file specified");
 		}
-		
-		for (final File file : inputFilesArgument) {
-			checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_INPUTFILES);
-		}
+
+		// for (final File file : inputFilesArgument) {
+		// checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_INPUTFILES);
+		// }
 		return inputFilesArgument;
 	}
-	
+
 	private File[] getInputFileArgument() {
 		final String[] values = mCli.getOptionValues(CommandLineOptions.OPTION_NAME_INPUTFILES);
 		final File[] files = new File[values.length];
-		
+
 		for (int i = 0; i < values.length; ++i) {
 			files[i] = new File(values[i]);
 		}
-		
+
 		return files;
 	}
-	
+
 	private static void checkFileExists(final File file, final String argumentName)
 			throws InvalidFileArgumentException {
 		if (file == null) {
@@ -169,11 +169,11 @@ public class ParsedParameter {
 					+ file.getAbsolutePath() + "\": File cannot be read");
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private <T> T getParsedOption(final String optionName) throws ParseException {
 		final Object obj = mCli.getParsedOptionValue(optionName);
 		return (T) obj;
 	}
-	
+
 }
