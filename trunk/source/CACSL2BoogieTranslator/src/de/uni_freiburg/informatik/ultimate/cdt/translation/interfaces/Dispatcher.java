@@ -23,9 +23,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -193,7 +193,7 @@ public abstract class Dispatcher {
 	 *            the root node from which the translation should be started
 	 * @return the result for the given node
 	 */
-	public final Result run(DecoratorNode node) {
+	public final Result run(final DecoratorNode node) {
 		preRun(node);
 		init();
 		return dispatch(node);
@@ -228,7 +228,7 @@ public abstract class Dispatcher {
 	 * @param msg
 	 *            description.
 	 */
-	public void syntaxError(ILocation loc, String msg) {
+	public void syntaxError(final ILocation loc, final String msg) {
 		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
@@ -245,9 +245,8 @@ public abstract class Dispatcher {
 	 * @param msg
 	 *            description.
 	 */
-	public void unsupportedSyntax(ILocation loc, String msg) {
-		final UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME, loc,
-				msg);
+	public void unsupportedSyntax(final ILocation loc, final String msg) {
+		final UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<>(Activator.PLUGIN_NAME, loc, msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
@@ -261,15 +260,15 @@ public abstract class Dispatcher {
 	 * @param longDesc
 	 *            description.
 	 */
-	public void warn(ILocation loc, String longDescription) {
+	public void warn(final ILocation loc, final String longDescription) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final boolean reportUnsoundnessWarning = prefs
-				.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
+		final boolean reportUnsoundnessWarning =
+				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
 			final String shortDescription = "Unsoundness Warning";
 			mLogger.warn(shortDescription + " " + longDescription);
-			final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc, shortDescription,
-					longDescription, Severity.WARNING);
+			final GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc,
+					shortDescription, longDescription, Severity.WARNING);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		}
 	}
@@ -305,7 +304,7 @@ public abstract class Dispatcher {
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
 	 */
 	public Map<String, String> getIdentifierMapping() {
-		return (mCHandler.getSymbolTable().getIdentifierMapping());
+		return mCHandler.getSymbolTable().getIdentifierMapping();
 	}
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
@@ -325,11 +324,11 @@ public abstract class Dispatcher {
 	public IPreferenceProvider getPreferences() {
 		return mPreferences;
 	}
-	
+
 	public static final class TranslationSettings {
 		private final PointerCheckMode mDivisionByZero;
 
-		public TranslationSettings(IPreferenceProvider preferences) {
+		public TranslationSettings(final IPreferenceProvider preferences) {
 			mDivisionByZero = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO,
 					PointerCheckMode.class);
 		}
