@@ -325,7 +325,7 @@ public final class TraceAbstractionRefinementEngine
 		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
 			addForwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
 		}
-		if (traceCheckerSpWp.wasBackwardsPredicatesComputationRequested()) {
+		if (traceCheckerSpWp.wasBackwardSequenceConstructed()) {
 			addBackwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
 		}
 	}

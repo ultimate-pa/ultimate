@@ -37,6 +37,7 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -56,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.NestedFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -266,10 +269,11 @@ public class IterativePredicateTransformer {
 	 * 	sequence
 	 * @param postprocs List of postprocessors that apply to each IPredicate
 	 * after it was constructed via WP. May be empty.
+	 * @throws TraceInterpolationException 
 	 */
 	public InterpolantsPreconditionPostcondition computeWeakestPreconditionSequence(
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf, final List<PredicatePostprocessor> postprocs,
-			final boolean callPredecessorIsAlwaysFalse) {
+			final boolean callPredecessorIsAlwaysFalse, final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
 		final IPredicate[] wpSequence = new IPredicate[mTrace.length()-1];
 		final InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(
 				mPrecondition, mPostcondition, Arrays.asList(wpSequence));
@@ -342,6 +346,12 @@ public class IterativePredicateTransformer {
 						final IPredicate wpOfSummary_Predicate = constructPredicate(wpOfSummary_Term);
 						wpOfSummary =
 							applyPostprocessors(postprocs, callPos, wpOfSummary_Predicate);
+					}
+					if (alternatingQuantifierBailout) {
+						final Term pnf = new PrenexNormalForm(mMgdScript).transform(wpOfSummary.getFormula());
+						if (pnf instanceof QuantifiedFormula) {
+							throw new TraceInterpolationException(Reason.ALTERNATING_QUANTIFIER_BAILOUT);
+						}
 					}
 					callerPredicatesComputed.put(callPos, wpOfSummary);
 					if (callPredecessorIsAlwaysFalse) {
@@ -515,6 +525,21 @@ public class IterativePredicateTransformer {
 	}
 
 
+	public static class TraceInterpolationException extends Exception {
+		private static final long serialVersionUID = -3626917726747958448L;
 
+		public enum Reason { ALTERNATING_QUANTIFIER_BAILOUT }
+		private final Reason mReason;
+		
+		public TraceInterpolationException(final Reason reason) {
+			super();
+			mReason = reason;
+		}
+
+		public Reason getReason() {
+			return mReason;
+		}
+		
+	}
 
 }

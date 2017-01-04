@@ -484,7 +484,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	public List<IPredicate> getInterpolantsOfType_II() {
 		if (mInterpolatingTraceChecker instanceof TraceCheckerSpWp) {
 			final TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) mInterpolatingTraceChecker;
-			if (tcspwp.wasBackwardsPredicatesComputationRequested()) {
+			if (tcspwp.wasBackwardSequenceConstructed()) {
 				return tcspwp.getBackwardPredicates();
 			}
 			return Arrays.asList(tcspwp.getInterpolants());
@@ -538,7 +538,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		if (traceChecker instanceof TraceCheckerSpWp) {
 			final TraceCheckerSpWp tcSpWp = (TraceCheckerSpWp) traceChecker;
-			if (tcSpWp.wasForwardPredicateComputationRequested() && tcSpWp.wasBackwardsPredicatesComputationRequested()) {
+			if (tcSpWp.wasForwardPredicateComputationRequested() && tcSpWp.wasBackwardSequenceConstructed()) {
 				nwaStatesAndTransitionsAdded = true;
 				// Add states and transitions corresponding to forwards predicates
 				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceChecker.getPrecondition(),

@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -111,6 +113,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private int mNonLiveVariablesBp = 0;
 	private boolean mPerfectForwardSequence;
 	private boolean mPerfectBackwardSequence;
+	private boolean mAlternatingQuantifierBailout;
 
 	public TraceCheckerSpWp(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
@@ -130,18 +133,22 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		case ForwardPredicates:
 			mConstructForwardInterpolantSequence = true;
 			mConstructBackwardInterpolantSequence = ConstructBackwardSequence.NO;
+			mAlternatingQuantifierBailout = false;
 			break;
 		case BackwardPredicates:
 			mConstructForwardInterpolantSequence = false;
 			mConstructBackwardInterpolantSequence = ConstructBackwardSequence.YES;
+			mAlternatingQuantifierBailout = false;
 			break;
 		case FPandBP:
 			mConstructForwardInterpolantSequence = true;
 			mConstructBackwardInterpolantSequence = ConstructBackwardSequence.YES;
+			mAlternatingQuantifierBailout = false;
 			break;
 		case FPandBPonlyIfFpWasNotPerfect:
 			mConstructForwardInterpolantSequence = true;
 			mConstructBackwardInterpolantSequence = ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT;
+			mAlternatingQuantifierBailout = true;
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
@@ -179,6 +186,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return mConstructBackwardInterpolantSequence == ConstructBackwardSequence.YES
 				|| mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
 						&& !isForwardSequencePerfect();
+	}
+	
+	public boolean wasBackwardSequenceConstructed() {
+		return mInterpolantsBp != null;
 	}
 
 	public List<IPredicate> getForwardPredicates() {
@@ -311,32 +322,39 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
-				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
+				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout).getInterpolants();
+
+				assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
+						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
+						mCfgManagedScript) : "invalid Hoare triple in BP";
+
+				mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
+				mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
+						InterpolantType.Backward);
+				mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+				if (mControlLocationSequence != null) {
+					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
+							getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
+					mPerfectBackwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+					if (mPerfectBackwardSequence) {
+						mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+					}
+					mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+				}
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
-			}
-			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
-					mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
-					mCfgManagedScript) : "invalid Hoare triple in BP";
-
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
-			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
-					InterpolantType.Backward);
-			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
-			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
-						getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				mPerfectBackwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-				if (mPerfectBackwardSequence) {
-					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+			} catch (final TraceInterpolationException e) {
+				if (e.getReason() == Reason.ALTERNATING_QUANTIFIER_BAILOUT) {
+					mInterpolantsBp = null;
+				} else {
+					throw new AssertionError("unknown reason", e);
 				}
-				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
 		}
 
-		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
+		if (mConstructForwardInterpolantSequence && wasBackwardSequenceConstructed()) {
 			// Post-process forwards predicates
 			if (mPostProcess_FP_Predicates) {
 				for (int i = 0; i < mInterpolantsFp.size(); i++) {
@@ -348,11 +366,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		// Do some correctness test
-		if (DEBUG_CHECK_SP_IMPLIES_WP && mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
+		if (DEBUG_CHECK_SP_IMPLIES_WP && mConstructForwardInterpolantSequence && wasBackwardSequenceConstructed()) {
 			checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
 		}
 		
-		if (mConstructForwardInterpolantSequence && wasBackwardsPredicatesComputationRequested()) {
+		if (mConstructForwardInterpolantSequence && wasBackwardSequenceConstructed()) {
 			final boolean omitMixedSequence = true;
 			if (omitMixedSequence) {
 				mInterpolants = null;
@@ -361,7 +379,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		} else if (mConstructForwardInterpolantSequence) {
 			mInterpolants = mInterpolantsFp.toArray(new IPredicate[mInterpolantsFp.size()]);
-		} else if (wasBackwardsPredicatesComputationRequested()) {
+		} else if (wasBackwardSequenceConstructed()) {
 			mInterpolants = mInterpolantsBp.toArray(new IPredicate[mInterpolantsBp.size()]);
 		} else {
 			throw new AssertionError("illegal choice");
