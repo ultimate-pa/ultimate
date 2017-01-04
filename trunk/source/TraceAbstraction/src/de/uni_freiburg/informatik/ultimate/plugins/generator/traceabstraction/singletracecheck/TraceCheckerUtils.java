@@ -41,15 +41,16 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
@@ -65,11 +66,10 @@ public final class TraceCheckerUtils {
 	private TraceCheckerUtils() {
 		// utility class
 	}
-	
+
 	/**
-	 * Given a trace cb_0,...,cb_n returns the sequence of ProgramPoints
-	 * that corresponds to this trace. This is the sequence
-	 * pp_0,...,pp_{n+1} such that
+	 * Given a trace cb_0,...,cb_n returns the sequence of ProgramPoints that corresponds to this trace. This is the
+	 * sequence pp_0,...,pp_{n+1} such that
 	 * <ul>
 	 * <li>pp_i is the ProgramPoint before CodeBlock cb_i, and
 	 * <li>pp_{i+1} is the ProgramPoint after CodeBlock cb_i.
@@ -79,22 +79,22 @@ public final class TraceCheckerUtils {
 	 *            trace
 	 * @return sequence of program points
 	 */
-	public static List<BoogieIcfgLocation> getSequenceOfProgramPoints(final NestedWord<CodeBlock> trace) {
-		final List<BoogieIcfgLocation> result = new ArrayList<>();
-		for (final CodeBlock cb : trace) {
-			final BoogieIcfgLocation pp = (BoogieIcfgLocation) cb.getSource();
+	public static List<IcfgLocation> getSequenceOfProgramPoints(final NestedWord<? extends IIcfgTransition<?>> trace) {
+		final List<IcfgLocation> result = new ArrayList<>();
+		for (final IIcfgTransition<?> cb : trace) {
+			final IcfgLocation pp = cb.getSource();
 			result.add(pp);
 		}
-		final CodeBlock cb = trace.getSymbol(trace.length() - 1);
-		final BoogieIcfgLocation pp = (BoogieIcfgLocation) cb.getTarget();
+		final IIcfgTransition<?> cb = trace.getSymbol(trace.length() - 1);
+		final IcfgLocation pp = cb.getTarget();
 		result.add(pp);
 		return result;
 	}
-	
+
 	/**
 	 * Variant of
-	 * {@link #computeCoverageCapability(IUltimateServiceProvider, InterpolantsPreconditionPostcondition, List, ILogger,
-	 * PredicateUnifier)} where the sequence of ProgramPoints is not a parameter but computed from the trace.
+	 * {@link #computeCoverageCapability(IUltimateServiceProvider, InterpolantsPreconditionPostcondition, List, ILogger, PredicateUnifier)}
+	 * where the sequence of ProgramPoints is not a parameter but computed from the trace.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -104,31 +104,28 @@ public final class TraceCheckerUtils {
 	 *            logger
 	 * @return backward covering information
 	 */
-	public static BackwardCoveringInformation computeCoverageCapability(
-			final IUltimateServiceProvider services,
+	public static BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
 			final IInterpolantGenerator traceChecker, final ILogger logger) {
 		@SuppressWarnings("unchecked")
 		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
-		final List<BoogieIcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
+		final List<IcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker.getIpp(), programPoints, logger,
 				traceChecker.getPredicateUnifier());
 	}
-	
-	public static <CL> BackwardCoveringInformation computeCoverageCapability(
-			final IUltimateServiceProvider services,
-			final InterpolantsPreconditionPostcondition ipp,
-			final List<CL> controlLocationSequence, final ILogger logger, final PredicateUnifier predicateUnifier) {
+
+	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
+			final InterpolantsPreconditionPostcondition ipp, final List<CL> controlLocationSequence,
+			final ILogger logger, final PredicateUnifier predicateUnifier) {
 		final CoverageAnalysis<CL> ca =
 				new CoverageAnalysis<>(services, ipp, controlLocationSequence, logger, predicateUnifier);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}
-	
+
 	/***
-	 * Checks whether the given sequence of predicates is inductive.
-	 * For each i we check if {predicates[i-1]} st_i {predicates[i]} is a
-	 * valid Hoare triple. If all triples are valid, we return true.
-	 * Otherwise an exception is thrown.
+	 * Checks whether the given sequence of predicates is inductive. For each i we check if {predicates[i-1]} st_i
+	 * {predicates[i]} is a valid Hoare triple. If all triples are valid, we return true. Otherwise an exception is
+	 * thrown.
 	 * 
 	 * @param interpolants
 	 *            sequence of interpolants
@@ -166,13 +163,11 @@ public final class TraceCheckerUtils {
 		}
 		return true;
 	}
-	
+
 	/***
 	 * Similar to the method
-	 * {@link #checkInterpolantsInductivityForward(List, NestedWord, IPredicate, IPredicate, SortedMap, String,
-	 * CfgSmtToolkit, ILogger, ManagedScript)}.
-	 * But here we start from the end. This ensures that we get the last
-	 * Hoare triple that is invalid.
+	 * {@link #checkInterpolantsInductivityForward(List, NestedWord, IPredicate, IPredicate, SortedMap, String, CfgSmtToolkit, ILogger, ManagedScript)}
+	 * . But here we start from the end. This ensures that we get the last Hoare triple that is invalid.
 	 * 
 	 * @param interpolants
 	 *            sequence of interpolants
@@ -210,7 +205,7 @@ public final class TraceCheckerUtils {
 		}
 		return true;
 	}
-	
+
 	private static Validity checkInductivityAtPosition(final int pos, final InterpolantsPreconditionPostcondition ipp,
 			final NestedWord<? extends IAction> trace, final SortedMap<Integer, IPredicate> pendingContexts,
 			final IHoareTripleChecker htc, final ILogger logger) {
@@ -221,8 +216,8 @@ public final class TraceCheckerUtils {
 		if (trace.isCallPosition(pos)) {
 			assert cb instanceof ICallAction : "not Call at call position";
 			result = htc.checkCall(predecessor, (ICallAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}",
-					pos, predecessor, cb, successor, result));
+			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
+					successor, result));
 		} else if (trace.isReturnPosition(pos)) {
 			assert cb instanceof IReturnAction : "not Call at call position";
 			IPredicate hierarchicalPredecessor;
@@ -233,62 +228,57 @@ public final class TraceCheckerUtils {
 				hierarchicalPredecessor = ipp.getInterpolant(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}",
-					pos, predecessor, cb, successor, result, hierarchicalPredecessor));
+			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos,
+					predecessor, cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(pos)) {
 			assert cb instanceof IInternalAction;
 			result = htc.checkInternal(predecessor, (IInternalAction) cb, successor);
-			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}",
-					pos, predecessor, cb, successor, result));
+			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", pos, predecessor, cb,
+					successor, result));
 		} else {
 			throw new AssertionError("unsupported position");
 		}
 		return result;
 	}
-	
-	
+
 	/**
-	 * Compute some program execution for this trace (due to large block 
-	 * encoding there might be several). The resulting program execution 
-	 * does not provide any values.
-	 * This is needed e.g., in case the solver said UNKNOWN while analyzing a trace.
+	 * Compute some program execution for this trace (due to large block encoding there might be several). The resulting
+	 * program execution does not provide any values. This is needed e.g., in case the solver said UNKNOWN while
+	 * analyzing a trace.
 	 */
-	public static IcfgProgramExecution computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IcfgEdge> trace) {
+	public static IcfgProgramExecution
+			computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IcfgEdge> trace) {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
-	
+
 	/**
-	 * The sequence of interpolants returned by a TraceChecker contains neither
-	 * the precondition nor the postcondition of the trace check.
-	 * This auxiliary class allows one to access the precondition via the
-	 * index 0 and to access the postcondition via the index
-	 * interpolants.length+1 (first index after the interpolants array).
-	 * All other indices are shifted by one.
-	 * In the future we might also use negative indices to access pending
-	 * contexts (therefore you should not catch the Error throw by the
-	 * getInterpolant method).
+	 * The sequence of interpolants returned by a TraceChecker contains neither the precondition nor the postcondition
+	 * of the trace check. This auxiliary class allows one to access the precondition via the index 0 and to access the
+	 * postcondition via the index interpolants.length+1 (first index after the interpolants array). All other indices
+	 * are shifted by one. In the future we might also use negative indices to access pending contexts (therefore you
+	 * should not catch the Error throw by the getInterpolant method).
 	 */
 	public static class InterpolantsPreconditionPostcondition {
 		private final IPredicate mPrecondition;
 		private final IPredicate mPostcondition;
 		private final List<IPredicate> mInterpolants;
-		
+
 		/**
 		 * @param interpolantGenerator
 		 *            Interpolant generator.
 		 */
 		public InterpolantsPreconditionPostcondition(final IInterpolantGenerator interpolantGenerator) {
 			if (interpolantGenerator.getInterpolants() == null) {
-				throw new AssertionError("We can only build an interpolant "
-						+ "automaton for which interpolants were computed");
+				throw new AssertionError(
+						"We can only build an interpolant " + "automaton for which interpolants were computed");
 			}
 			mPrecondition = interpolantGenerator.getPrecondition();
 			mPostcondition = interpolantGenerator.getPostcondition();
 			mInterpolants = Arrays.asList(interpolantGenerator.getInterpolants());
 		}
-		
+
 		/**
 		 * @param precondition
 		 *            Precondition.
@@ -297,14 +287,14 @@ public final class TraceCheckerUtils {
 		 * @param interpolants
 		 *            sequence of interpolants
 		 */
-		public InterpolantsPreconditionPostcondition(final IPredicate precondition,
-				final IPredicate postcondition, final List<IPredicate> interpolants) {
+		public InterpolantsPreconditionPostcondition(final IPredicate precondition, final IPredicate postcondition,
+				final List<IPredicate> interpolants) {
 			super();
 			mPrecondition = precondition;
 			mPostcondition = postcondition;
 			mInterpolants = interpolants;
 		}
-		
+
 		/**
 		 * @param pos
 		 *            Position.
@@ -323,15 +313,15 @@ public final class TraceCheckerUtils {
 				throw new AssertionError("index beyond postcondition");
 			}
 		}
-		
+
 		public List<IPredicate> getInterpolants() {
 			return Collections.unmodifiableList(mInterpolants);
 		}
-		
+
 		public IPredicate getPrecondition() {
 			return mPrecondition;
 		}
-		
+
 		public IPredicate getPostcondition() {
 			return mPostcondition;
 		}

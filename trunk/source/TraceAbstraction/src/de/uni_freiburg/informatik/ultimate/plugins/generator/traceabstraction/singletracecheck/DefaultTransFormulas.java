@@ -30,8 +30,8 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,18 +43,19 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	private final OldVarsAssignmentCache mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
 
-	public OldVarsAssignmentCache getModifiableGlobalVariableManager() {
-		return mModifiableGlobalVariableManager;
-	}
-
-	public DefaultTransFormulas(final NestedWord<? extends IAction> nestedWord, final IPredicate precondition,
-			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
-			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean withBranchEncoders) {
+	public DefaultTransFormulas(final NestedWord<? extends IIcfgTransition<?>> nestedWord,
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final boolean withBranchEncoders) {
 		super(nestedWord, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
 		mModifiableGlobalVariableManager = oldVarsAssignmentCache;
 		mWithBranchEncoders = withBranchEncoders;
+	}
+
+	public OldVarsAssignmentCache getModifiableGlobalVariableManager() {
+		return mModifiableGlobalVariableManager;
 	}
 
 	public boolean hasBranchEncoders() {
