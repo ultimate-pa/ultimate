@@ -40,12 +40,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections15.Transformer;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -85,8 +84,8 @@ public class WitnessAutomatonConstructor {
 	public IElement constructWitnessAutomaton(final File file) throws FileNotFoundException, GraphIOException {
 		final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = getGraph(file);
 		if (graph == null) {
-			final String message = "Witness file is invalid";
-			final IResult res = new GenericResult(Activator.PLUGIN_ID, message, message, Severity.ERROR);
+			final IResult res = new InvalidWitnessErrorResult(Activator.PLUGIN_ID, "Witness file is invalid");
+			mWitnessType = Type.OTHER;
 			mLogger.error(res);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			mServices.getProgressMonitorService().cancelToolchain();

@@ -27,15 +27,21 @@
 package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult.InvalidWitnessReasons;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
+import edu.uci.ics.jung.io.GraphIOException;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -43,19 +49,21 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessPars
  */
 public class WitnessParser implements ISource {
 
-	private static final String[] sFileTypes = new String[] { "graphml" };
+	private static final String[] FILE_TYPES = new String[] { "graphml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
 	private ModelType.Type mWitnessType;
+	private ILogger mLogger;
 
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
-		// no toolchainstorage neededF
+		// no toolchainstorage needed
 	}
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -93,11 +101,9 @@ public class WitnessParser implements ISource {
 
 	@Override
 	public boolean parseable(final File file) {
-		if (file != null && file.exists() && file.isFile()) {
-			for (final String suffix : getFileTypes()) {
-				if (file.getName().endsWith(suffix)) {
-					return true;
-				}
+		for (final String suffix : getFileTypes()) {
+			if (file.getName().endsWith(suffix)) {
+				return true;
 			}
 		}
 		return false;
@@ -112,17 +118,25 @@ public class WitnessParser implements ISource {
 	}
 
 	@Override
-	public IElement parseAST(final File file) throws Exception {
+	public IElement parseAST(final File file) {
 		mFilename = file.getAbsolutePath();
 		final WitnessAutomatonConstructor wac = new WitnessAutomatonConstructor(mServices);
-		final IElement rtr = wac.constructWitnessAutomaton(file);
-		mWitnessType = wac.getWitnessType();
-		return rtr;
+		try {
+			final IElement rtr = wac.constructWitnessAutomaton(file);
+			mWitnessType = wac.getWitnessType();
+			return rtr;
+		} catch (final FileNotFoundException e) {
+			reportInvalidWitnessResult(e.getMessage(), InvalidWitnessReasons.FILE_NOT_FOUND);
+		} catch (final GraphIOException e) {
+			reportInvalidWitnessResult(e.getMessage(), InvalidWitnessReasons.XML_INVALID);
+		}
+		mWitnessType = Type.OTHER;
+		return null;
 	}
 
 	@Override
 	public String[] getFileTypes() {
-		return sFileTypes;
+		return FILE_TYPES;
 	}
 
 	@Override
@@ -135,4 +149,18 @@ public class WitnessParser implements ISource {
 		// no prelude necessary
 	}
 
+	/**
+	 * Report an invalid witness to Ultimate. This will cancel the toolchain.
+	 * 
+	 * @param msg
+	 *            A more detailed reason .
+	 * @param reason
+	 *            The reason for invalidity.
+	 */
+	public void reportInvalidWitnessResult(final String msg, final InvalidWitnessReasons reason) {
+		final InvalidWitnessErrorResult result = new InvalidWitnessErrorResult(Activator.PLUGIN_ID, reason, msg);
+		mLogger.error(msg);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mServices.getProgressMonitorService().cancelToolchain();
+	}
 }
