@@ -103,7 +103,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 		for (final DirectoryFileEndingsPair dfep : mDirectoryFileEndingsPairs) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), mSettings, toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), mSettings, 
+						toolchain, dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		return super.createTestCases();
