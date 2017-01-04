@@ -27,9 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -316,7 +313,6 @@ public class IterativePredicateTransformer {
 				final String calledMethod = returnCB.getCallStatement().getMethodName();
 				final Set<IProgramNonOldVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 
-				final Set<IProgramVar> varsOccurringBetweenCallAndReturn;
 				if (mTrace.isPendingReturn(i)) {
 					if (callPredecessorIsAlwaysFalse) {
 						callerPred = mFalsePredicate;
@@ -330,8 +326,6 @@ public class IterativePredicateTransformer {
 					callLocalVarsAssignment = nf.getLocalVarAssignment(i);
 					oldVarAssignments = nf.getOldVarAssignment(i);
 					globalVarsAssignments = nf.getGlobalVarAssignment(i);
-					// this is probably not yet supported
-					varsOccurringBetweenCallAndReturn = null;
 				} else {
 					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
@@ -341,7 +335,6 @@ public class IterativePredicateTransformer {
 					final ProcedureSummary summary = computeProcedureSummary(
 							mTrace, callLocalVarsAssignment, returnTf,
 							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
-					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
 					final IPredicate wpOfSummary;
 					{
 						final Term wpOfSummary_Term = mPredicateTransformer.weakestPrecondition(
@@ -414,81 +407,6 @@ public class IterativePredicateTransformer {
 
 		public UnmodifiableTransFormula getWithoutCallAndReturn() {
 			return mWithoutCallAndReturn;
-		}
-
-		/**
-		 * Returns a set that contains all variables that occur in the summary
-		 * without call and return.
-		 */
-		public Set<IProgramVar> computeVariableInInnerSummary() {
-			return new Set<IProgramVar>() {
-
-				@Override
-				public boolean add(final IProgramVar e) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean addAll(final Collection<? extends IProgramVar> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public void clear() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean contains(final Object o) {
-					return mWithoutCallAndReturn.getInVars().containsKey(o)
-							|| mWithoutCallAndReturn.getOutVars().containsKey(o);
-				}
-
-				@Override
-				public boolean containsAll(final Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean isEmpty() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public Iterator<IProgramVar> iterator() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean remove(final Object o) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean removeAll(final Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public boolean retainAll(final Collection<?> c) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public int size() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public Object[] toArray() {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public <T> T[] toArray(final T[] a) {
-					throw new UnsupportedOperationException();
-				}
-			};
 		}
 
 	}
