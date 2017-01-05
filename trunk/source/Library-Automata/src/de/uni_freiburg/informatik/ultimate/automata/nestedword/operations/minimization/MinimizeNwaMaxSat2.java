@@ -27,15 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -43,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.DimacsMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
@@ -53,21 +46,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableStatus;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
- * Partial Max-SAT based minimization for NWA.<br>
- * It feeds an {@link AbstractMaxSatSolver} with clauses based on information from an input, e.g.,
+ * Partial Max-SAT based minimization of NWA.<br>
+ * This class feeds an {@link AbstractMaxSatSolver} with clauses based on information from an input, e.g.,
  * {@link ReduceNwaDirectSimulationB}. If there is no input, a {@link LookaheadPartitionConstructor} is used.
  * <p>
- * For small deterministic NWA it produces small results efficiently. For larger NWA it runs out of memory.
+ * For small deterministic NWA it produces small results efficiently. For large NWA it runs out of memory.
  * <p>
  * TODO For generating nondeterministic clauses, the order of the arguments
  * is not specified. Hence we might want to rearrange state1 and state2 such
@@ -81,86 +71,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <T>
+ *            variable type used in the solver
  */
-public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
-	@SuppressWarnings("rawtypes")
-	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
+public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	protected static final String GENERATING_VARIABLES = "generating variables";
+	protected static final String ADDING_TRANSITION_CONSTRAINTS = "adding transition constraints";
+	protected static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
+	protected static final String SOLVER_TIMEOUT = "solving";
 	
-	private static final int THREE = 3;
-	
-	private static final String GENERATING_VARIABLES = "generating variables";
-	private static final String ADDING_TRANSITION_CONSTRAINTS = "adding transition constraints";
-	private static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
-	private static final String SOLVER_TIMEOUT = "solving";
-	
-	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
-	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private Settings<STATE> mSettings;
-	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
+	protected final NestedMap2<STATE, STATE, T> mStatePairs = new NestedMap2<>();
+	protected final Map<STATE, Set<STATE>> mState2EquivalenceClass;
+	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
+	protected final Settings<STATE> mSettings;
+	protected final AbstractMaxSatSolver<T> mSolver;
+	protected ScopedTransitivityGenerator<STATE> mTransitivityGenerator;
 	
 	// if true, we can omit transitivity clauses
-	private final boolean mOperandHasNoReturns;
+	protected final boolean mOperandHasNoReturns;
 	
-	private int mNumberClausesAcceptance;
-	private int mNumberClausesTransitions;
-	private int mNumberClausesTransitionsNondeterministic;
-	private int mNumberClausesTransitivity;
+	protected int mNumberClausesAcceptance;
+	protected int mNumberClausesTransitions;
+	protected int mNumberClausesTransitionsNondeterministic;
+	protected int mNumberClausesTransitivity;
 	
-	private final int mLargestBlockInitialPartition;
-	private final int mInitialPartitionSize;
-	
-	private long mTimer;
-	private long mTimePreprocessing;
-	private long mTimeSolving;
-	
-	private final Iterable<Set<STATE>> mInitialPartition;
+	protected long mTimer;
+	protected long mTimePreprocessing;
+	protected long mTimeSolving;
 	
 	/**
-	 * Constructor that should be called by the automata script interpreter.
-	 * 
 	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, Collections.singleton(operand.getStates()), new Settings<>());
-	}
-	
-	/**
-	 * Constructor with an initial partition.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @param initialPartition
-	 *            We only try to merge states that are in one of the blocks.
-	 * @param settings
-	 *            settings wrapper
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
-			final Settings<STATE> settings) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand,
-				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getResult(), settings);
-	}
-	
-	/**
-	 * Full constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 * @param stateFactory
 	 *            state factory
 	 * @param operand
@@ -172,38 +113,20 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final PartitionPairsWrapper<STATE> partitionPairsWrapper, final Settings<STATE> settings)
+	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		mSettings = settings;
 		mSettings.validate();
+		mState2EquivalenceClass = new HashMap<>();
 		
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
-		mInitialPartition = partitionPairsWrapper.getPartition();
-		// TODO even copy an existing HashMap?
-		mState2EquivalenceClass = new HashMap<>();
-		int largestBlockInitialPartition = 0;
-		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			for (final STATE state : equivalenceClass) {
-				mState2EquivalenceClass.put(state, equivalenceClass);
-			}
-			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
-			++initialPartitionSize;
-		}
-		mLargestBlockInitialPartition = largestBlockInitialPartition;
-		mInitialPartitionSize = initialPartitionSize;
-		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
-				+ largestBlockInitialPartition + " states");
-		
 		// create solver
-		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
-		switch (mSettings.mSolverMode) {
+		switch (mSettings.getSolverMode()) {
 			case EXTERNAL:
 				mSolver = new DimacsMaxSatSolver<>(mServices);
 				break;
@@ -211,27 +134,30 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				mSolver = new HornMaxSatSolver<>(mServices);
 				break;
 			case TRANSITIVITY:
-				if (!mOperandHasNoReturns) {
-					transitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
-					mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
-				} else {
-					mSolver = new GeneralMaxSatSolver<>(mServices);
-				}
+				mSolver = !mOperandHasNoReturns ? createTransitivitySolver() : new GeneralMaxSatSolver<>(mServices);
 				break;
 			case GENERAL:
 				mSolver = new GeneralMaxSatSolver<>(mServices);
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.mSolverMode);
+				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
 		}
-		
-		feedSolver(transitivityGenerator);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	private TransitivityGeneralMaxSatSolver createTransitivitySolver() {
+		mTransitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
+		return new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
+	}
+	
+	protected final void run() throws AutomataOperationCanceledException {
+		feedSolver();
 		
 		mTimePreprocessing = mTimer;
 		mTimer = System.currentTimeMillis();
 		mTimePreprocessing = mTimer - mTimePreprocessing;
 		
-		constructResult(mSettings.mAddMapOldState2newState);
+		constructResult(mSettings.isAddMapOldState2newState());
 		
 		mTimeSolving = mTimer;
 		mTimer = System.currentTimeMillis();
@@ -245,10 +171,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					mLargestBlockInitialPartition);
-		}
 		if (mTimePreprocessing != 0L) {
 			statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
 		}
@@ -258,6 +180,21 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
 		return statistics;
+	}
+	
+	private void feedSolver() throws AutomataOperationCanceledException {
+		generateVariablesAndAcceptingConstraints();
+		generateTransitionConstraints();
+		if (mTransitivityGenerator == null) {
+			generateTransitivityConstraints();
+		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(
+					"Number of clauses for: -> acceptance: " + mNumberClausesAcceptance + ", -> transitions: "
+							+ mNumberClausesTransitions + ", -> nondeterministic transitions: "
+							+ mNumberClausesTransitionsNondeterministic + ", -> transitivity: "
+							+ mNumberClausesTransitivity);
+		}
 	}
 	
 	private void constructResult(final boolean addMapOldState2newState)
@@ -277,518 +214,23 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 	
-	private void feedSolver(final ScopedTransitivityGenerator<STATE> transitivityGenerator)
-			throws AutomataOperationCanceledException {
-		generateVariablesAndAcceptingConstraints(transitivityGenerator);
-		generateTransitionConstraints();
-		if (transitivityGenerator == null) {
-			generateTransitivityConstraints();
-		}
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(
-					"Number of clauses for: -> acceptance: " + mNumberClausesAcceptance + ", -> transitions: "
-							+ mNumberClausesTransitions + ", -> nondeterministic transitions: "
-							+ mNumberClausesTransitionsNondeterministic + ", -> transitivity: "
-							+ mNumberClausesTransitivity);
-		}
-	}
+	protected abstract void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException;
 	
-	@SuppressWarnings("squid:S1698")
-	private boolean haveSimilarEquivalenceClass(final STATE inputState1, final STATE inputState2) {
-		// equality intended here
-		return mState2EquivalenceClass.get(inputState1) == mState2EquivalenceClass.get(inputState2);
-	}
+	protected abstract void generateTransitionConstraints() throws AutomataOperationCanceledException;
+	
+	protected abstract void generateTransitivityConstraints() throws AutomataOperationCanceledException;
+	
+	protected abstract UnionFind<STATE> constructEquivalenceClasses() throws AssertionError;
 	
 	@SuppressWarnings("unchecked")
-	private STATE[] constructStateArray(final Collection<STATE> states) {
+	protected final STATE[] constructStateArray(final Collection<STATE> states) {
 		return states.toArray((STATE[]) new Object[states.size()]);
-	}
-	
-	private UnionFind<STATE> constructEquivalenceClasses() throws AssertionError {
-		final UnionFind<STATE> resultingEquivalenceClasses;
-		resultingEquivalenceClasses = new UnionFind<>();
-		for (final Entry<Doubleton<STATE>, Boolean> entry : mSolver.getValues().entrySet()) {
-			if (entry.getValue() == null) {
-				throw new AssertionError("value not determined " + entry.getKey());
-			}
-			if (entry.getValue()) {
-				final STATE rep1 = resultingEquivalenceClasses
-						.findAndConstructEquivalenceClassIfNeeded(entry.getKey().getOneElement());
-				final STATE rep2 = resultingEquivalenceClasses
-						.findAndConstructEquivalenceClassIfNeeded(entry.getKey().getOtherElement());
-				resultingEquivalenceClasses.union(rep1, rep2);
-			} else {
-				// do nothing
-			}
-		}
-		return resultingEquivalenceClasses;
-	}
-	
-	protected void generateVariablesAndAcceptingConstraints(
-			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			final STATE[] states = constructStateArray(equivalenceClass);
-			generateVariablesHelper(transitivityGenerator, states);
-			checkTimeout(GENERATING_VARIABLES);
-		}
-	}
-	
-	private void generateVariablesHelper(final ScopedTransitivityGenerator<STATE> transitivityGenerator,
-			final STATE[] states) {
-		if (states.length <= 1) {
-			return;
-		}
-		
-		final boolean separateFinalAndNonfinalStates = mSettings.mUseFinalStateConstraints;
-		
-		for (int i = 0; i < states.length; i++) {
-			final STATE stateI = states[i];
-			
-			// add to transitivity generator
-			if (transitivityGenerator != null) {
-				transitivityGenerator.addContent(stateI);
-			}
-			
-			for (int j = 0; j < i; j++) {
-				final STATE stateJ = states[j];
-				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
-				mStatePairs.put(stateI, stateJ, doubleton);
-				mStatePairs.put(stateJ, stateI, doubleton);
-				mSolver.addVariable(doubleton);
-				
-				// separate final and nonfinal states
-				if (separateFinalAndNonfinalStates && (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ))) {
-					setStatesDifferent(doubleton);
-					mNumberClausesAcceptance++;
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Tells the solver that two states are different.
-	 */
-	@SuppressWarnings("unchecked")
-	private void setStatesDifferent(final Doubleton<STATE> doubleton) {
-		mSolver.addHornClause(new Doubleton[] { doubleton }, null);
-	}
-	
-	/**
-	 * Tells the solver that two states are different.
-	 */
-	private void setStatesDifferent(final STATE state1, final STATE state2) {
-		setStatesDifferent(mStatePairs.get(state1, state2));
-	}
-	
-	protected void generateTransitionConstraints() throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			final STATE[] states = constructStateArray(equivalenceClass);
-			for (int i = 0; i < states.length; i++) {
-				generateTransitionConstraintsHelper(states, i);
-				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintsHelper(final STATE[] states, final int firstStateIndex) {
-		final STATE state1 = states[firstStateIndex];
-		final STATE[] downStates1 = constructStateArray(mOperand.getDownStates(state1));
-		for (int j = 0; j < firstStateIndex; j++) {
-			final STATE state2 = states[j];
-			if (knownToBeDifferent(state1, state2)) {
-				// all corresponding clauses are trivially true
-				continue;
-			}
-			
-			if (!haveSameOutgoingInternalCallSymbols(state1, state2)) {
-				// not known to be different, report to the solver
-				setStatesDifferent(state1, state2);
-				
-				// all corresponding clauses are trivially true
-				continue;
-			}
-			
-			final boolean predPairKnowToBeSimilar = knownToBeSimilar(state1, state2);
-			
-			final Doubleton<STATE> predDoubleton = getDoubleton(state1, state2, predPairKnowToBeSimilar);
-			
-			if (mSettings.mUseTransitionHornClauses) {
-				generateTransitionConstraintInternalHorn(state1, state2, predDoubleton);
-				generateTransitionConstraintCallHorn(state1, state2, predDoubleton);
-			} else {
-				generateTransitionConstraintInternalGeneral(state1, state2, predDoubleton);
-				generateTransitionConstraintCallGeneral(state1, state2, predDoubleton);
-			}
-			
-			generateTransitionConstraintsHelperReturn1(state1, downStates1, state2, predDoubleton);
-		}
-		generateTransitionConstraintsHelperReturn2(state1, downStates1);
-	}
-	
-	private void generateTransitionConstraintsHelperReturn1(final STATE state1, final STATE[] downStates1,
-			final STATE state2, final Doubleton<STATE> predDoubleton) {
-		// NOTE: slower iteration outside
-		for (final STATE down2 : mOperand.getDownStates(state2)) {
-			for (final STATE down1 : downStates1) {
-				if (mSettings.mUseTransitionHornClauses) {
-					generateTransitionConstraintReturnHorn(state1, state2, predDoubleton, down1, down2);
-				} else {
-					generateTransitionConstraintReturnGeneral(state1, state2, predDoubleton, down1, down2);
-				}
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintsHelperReturn2(final STATE state1, final STATE[] downStates1) {
-		for (int k = 0; k < downStates1.length; k++) {
-			for (int l = 0; l < k; l++) {
-				if (mSettings.mUseTransitionHornClauses) {
-					generateTransitionConstraintReturnHorn(state1, state1, null, downStates1[k], downStates1[l]);
-				} else {
-					generateTransitionConstraintReturnGeneral(state1, state1, null, downStates1[k], downStates1[l]);
-				}
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintInternalHorn(
-			final STATE predState1, final STATE predState2,
-			final Doubleton<STATE> predDoubleton) {
-		for (final OutgoingInternalTransition<LETTER, STATE> trans1 : mOperand.internalSuccessors(predState1)) {
-			final STATE succState1 = trans1.getSucc();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans2 : mOperand.internalSuccessors(predState2,
-					trans1.getLetter())) {
-				final STATE succState2 = trans2.getSucc();
-				generateBinaryTransitionConstraint(predDoubleton, succState1, succState2);
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintInternalGeneral(final STATE predState1, final STATE predState2,
-			final Doubleton<STATE> predDoubleton) {
-		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-		for (final LETTER letter : mOperand.lettersInternal(predState1)) {
-			final Set<STATE> succs1 = new LinkedHashSet<>();
-			final Set<STATE> succs2 = new LinkedHashSet<>();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(predState1,
-					letter)) {
-				succs1.add(trans.getSucc());
-			}
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(predState2,
-					letter)) {
-				succs2.add(trans.getSucc());
-			}
-			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, succs1, succs2);
-		}
-	}
-	
-	private void generateTransitionConstraintCallHorn(final STATE predState1, final STATE predState2,
-			final Doubleton<STATE> predDoubleton) {
-		for (final OutgoingCallTransition<LETTER, STATE> trans1 : mOperand.callSuccessors(predState1)) {
-			final STATE succState1 = trans1.getSucc();
-			for (final OutgoingCallTransition<LETTER, STATE> trans2 : mOperand.callSuccessors(predState2,
-					trans1.getLetter())) {
-				final STATE succState2 = trans2.getSucc();
-				generateBinaryTransitionConstraint(predDoubleton, succState1, succState2);
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintCallGeneral(final STATE predState1, final STATE predState2,
-			final Doubleton<STATE> predDoubleton) {
-		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-		for (final LETTER letter : mOperand.lettersCall(predState1)) {
-			final Set<STATE> succs1 = new LinkedHashSet<>();
-			final Set<STATE> succs2 = new LinkedHashSet<>();
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState1,
-					letter)) {
-				succs1.add(trans.getSucc());
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState2,
-					letter)) {
-				succs2.add(trans.getSucc());
-			}
-			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, succs1, succs2);
-		}
-	}
-	
-	private void generateTransitionConstraintGeneralInternalCallHelperSymmetric(final Doubleton<STATE> predDoubleton,
-			final Set<STATE> succs1, final Set<STATE> succs2) {
-		final Collection<STATE> succsToRemove = new ArrayList<>();
-		
-		generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succs1, succs2, succsToRemove);
-		/*
-		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-		 * should not try to add a clause for the other direction (as it will be found out again that they are
-		 * similar).
-		 */
-		succs2.removeAll(succsToRemove);
-		
-		generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succs2, succs1, null);
-	}
-	
-	private void generateTransitionConstraintGeneralInternalCallHelperOneSide(final Doubleton<STATE> predDoubleton,
-			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succsToRemove) {
-		boolean ignoreConstraint = false;
-		for (final STATE succState1 : succs1) {
-			for (final STATE succState2 : succs2) {
-				if (knownToBeSimilar(succState1, succState2)) {
-					// clause is trivially true
-					
-					// remember this state, it needs not be checked in the other direction
-					addIfNotNull(succsToRemove, succState2);
-					
-					// continue with next state
-					ignoreConstraint = true;
-					break;
-				}
-			}
-			if (ignoreConstraint) {
-				ignoreConstraint = false;
-			} else {
-				// create new transition clause
-				generateNaryTransitionConstraint(predDoubleton, succState1, succs2);
-			}
-		}
-	}
-	
-	private void addIfNotNull(final Collection<STATE> collection, final STATE element) {
-		if (collection != null) {
-			collection.add(element);
-		}
-	}
-	
-	private void generateTransitionConstraintReturnHorn(final STATE linPredState1, final STATE linPredState2,
-			final Doubleton<STATE> linPredDoubleton, final STATE hierPredState1, final STATE hierPredState2) {
-		if (knownToBeDifferent(hierPredState1, hierPredState2)) {
-			// all corresponding clauses are trivially true
-			return;
-		}
-		
-		final Doubleton<STATE> hierPredDoubleton = getDoubletonIfNotSimilar(hierPredState1, hierPredState2);
-		if (!haveSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2)) {
-			addThreeLiteralHornClause(linPredDoubleton, hierPredDoubleton, null);
-			return;
-		}
-		// both DoubleDeckers have same outgoing return symbols
-		for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand
-				.returnSuccessorsGivenHier(linPredState1, hierPredState1)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSuccessors(linPredState2,
-					hierPredState2, trans1.getLetter())) {
-				if (knownToBeSimilar(trans1.getSucc(), trans2.getSucc())) {
-					// clause is trivially true, continue with next state
-					break;
-				}
-				final Doubleton<STATE> succDoubleton =
-						getDoubletonIfNotDifferent(trans1.getSucc(), trans2.getSucc());
-				addThreeLiteralHornClause(linPredDoubleton, hierPredDoubleton, succDoubleton);
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintReturnGeneral(final STATE linPredState1, final STATE linPredState2,
-			final Doubleton<STATE> linPredDoubleton, final STATE hierPredState1, final STATE hierPredState2) {
-		if (knownToBeDifferent(hierPredState1, hierPredState2)) {
-			// all corresponding clauses are trivially true
-			return;
-		}
-		
-		final Doubleton<STATE> hierPredDoubleton = getDoubletonIfNotSimilar(hierPredState1, hierPredState2);
-		final Set<LETTER> sameOutgoingReturnSymbols =
-				getSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2);
-		if (sameOutgoingReturnSymbols == null) {
-			addThreeLiteralHornClause(linPredDoubleton, hierPredDoubleton, null);
-		} else {
-			// both DoubleDeckers have same outgoing return symbols
-			
-			// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-			for (final LETTER letter : sameOutgoingReturnSymbols) {
-				final Set<STATE> succs1 = new LinkedHashSet<>();
-				final Set<STATE> succs2 = new LinkedHashSet<>();
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState1,
-						hierPredState1, letter)) {
-					succs1.add(trans.getSucc());
-				}
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState2,
-						hierPredState2, letter)) {
-					succs2.add(trans.getSucc());
-				}
-				generateTransitionConstraintGeneralReturnHelperSymmetric(linPredDoubleton, hierPredDoubleton, succs1,
-						succs2);
-			}
-		}
-	}
-	
-	private void generateTransitionConstraintGeneralReturnHelperSymmetric(final Doubleton<STATE> linPredDoubleton,
-			final Doubleton<STATE> hierPredDoubleton, final Set<STATE> succs1, final Set<STATE> succs2) {
-		final Collection<STATE> succsToRemove = new ArrayList<>();
-		
-		generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton, succs1, succs2,
-				succsToRemove);
-		/*
-		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-		 * should not try to add a clause for the other direction (as it will be found out again that they are
-		 * similar).
-		 */
-		succs2.removeAll(succsToRemove);
-		
-		generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton, succs2, succs1,
-				null);
-	}
-	
-	private void generateTransitionConstraintGeneralReturnHelperOneSide(final Doubleton<STATE> linPredDoubleton,
-			final Doubleton<STATE> hierPredDoubleton, final Set<STATE> succs1, final Set<STATE> succs2,
-			final Collection<STATE> succsToRemove) {
-		boolean ignore = false;
-		for (final STATE succState1 : succs1) {
-			for (final STATE succState2 : succs2) {
-				if (knownToBeSimilar(succState1, succState2)) {
-					// clause is trivially true
-					
-					addIfNotNull(succsToRemove, succState2);
-					
-					// continue with next state
-					ignore = true;
-					break;
-				}
-			}
-			if (ignore) {
-				ignore = false;
-			} else {
-				// create new transition clause
-				generateNaryTransitionConstraint(linPredDoubleton, hierPredDoubleton, succState1, succs2);
-			}
-		}
-	}
-	
-	private Doubleton<STATE> getDoubletonIfNotDifferent(final STATE state1, final STATE state2) {
-		return getDoubleton(state1, state2, knownToBeDifferent(state1, state2));
-	}
-	
-	private Doubleton<STATE> getDoubletonIfNotSimilar(final STATE state1, final STATE state2) {
-		return getDoubleton(state1, state2, knownToBeSimilar(state1, state2));
-	}
-	
-	/**
-	 * Getter for a {@link Doubleton}.
-	 * 
-	 * @param state1
-	 *            state 1
-	 * @param state2
-	 *            state 2
-	 * @param flag
-	 *            true iff null should be returned
-	 * @return doubleton of two states iff the flag is not true, null otherwise
-	 */
-	private Doubleton<STATE> getDoubleton(final STATE state1, final STATE state2, final boolean flag) {
-		return flag ? null : mStatePairs.get(state1, state2);
-	}
-	
-	private void generateBinaryTransitionConstraint(final Doubleton<STATE> predDoubleton, final STATE succState1,
-			final STATE succState2) {
-		// first check whether the clause is trivially true
-		if (knownToBeSimilar(succState1, succState2)) {
-			return;
-		}
-		
-		final Doubleton<STATE> succDoubleton = getDoubletonIfNotDifferent(succState1, succState2);
-		addTwoLiteralHornClause(predDoubleton, succDoubleton);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void generateNaryTransitionConstraint(final Doubleton<STATE> predDoubleton, final STATE succState1,
-			final Iterable<STATE> succStates2) {
-		final List<Doubleton<STATE>> succDoubletons = new ArrayList<>();
-		for (final STATE succState2 : succStates2) {
-			if (!knownToBeDifferent(succState1, succState2)) {
-				final Doubleton<STATE> succDoubleton = mStatePairs.get(succState1, succState2);
-				succDoubletons.add(succDoubleton);
-			}
-		}
-		final Doubleton<STATE>[] negativeAtoms =
-				(predDoubleton == null) ? EMPTY_LITERALS : (new Doubleton[] { predDoubleton });
-		final Doubleton<STATE>[] positiveAtoms = consArr(succDoubletons);
-		addArbitraryLiteralClause(negativeAtoms, positiveAtoms);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void generateNaryTransitionConstraint(final Doubleton<STATE> linPredDoubleton,
-			final Doubleton<STATE> hierPredDoubleton, final STATE succState1, final Iterable<STATE> succStates2) {
-		final List<Doubleton<STATE>> succDoubletons = new ArrayList<>();
-		for (final STATE succState2 : succStates2) {
-			if (!knownToBeDifferent(succState1, succState2)) {
-				final Doubleton<STATE> succDoubleton = mStatePairs.get(succState1, succState2);
-				succDoubletons.add(succDoubleton);
-			}
-		}
-		
-		final Doubleton<STATE>[] negativeAtoms;
-		if (linPredDoubleton == null) {
-			if (hierPredDoubleton == null) {
-				negativeAtoms = EMPTY_LITERALS;
-			} else {
-				negativeAtoms = new Doubleton[] { hierPredDoubleton };
-			}
-		} else {
-			if (hierPredDoubleton == null) {
-				negativeAtoms = new Doubleton[] { linPredDoubleton };
-			} else {
-				negativeAtoms = new Doubleton[] { linPredDoubleton, hierPredDoubleton };
-			}
-		}
-		final Doubleton<STATE>[] positiveAtoms = consArr(succDoubletons);
-		addArbitraryLiteralClause(negativeAtoms, positiveAtoms);
-	}
-	
-	private void addArbitraryLiteralClause(final Doubleton<STATE>[] negativeAtoms,
-			final Doubleton<STATE>[] positiveAtoms) {
-		assert isVoidOfNull(negativeAtoms) && isVoidOfNull(positiveAtoms) : "Array/list must be void of null elements.";
-		assert (negativeAtoms.length == 1) || (negativeAtoms.length == 2) : "Always pass one or two negative atoms.";
-		if (positiveAtoms.length <= 1) {
-			// deterministic case
-			final Doubleton<STATE> positiveAtom = (positiveAtoms.length == 1) ? positiveAtoms[0] : null;
-			if (negativeAtoms.length == 1) {
-				addTwoLiteralHornClause(negativeAtoms[0], positiveAtom);
-			} else {
-				addThreeLiteralHornClause(negativeAtoms[0], negativeAtoms[1], positiveAtom);
-			}
-		} else {
-			// nondeterministic case
-			mSolver.addClause(negativeAtoms, positiveAtoms);
-			mNumberClausesTransitionsNondeterministic++;
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void addTwoLiteralHornClause(final Doubleton<STATE> negativeAtom, final Doubleton<STATE> positiveAtom) {
-		if (negativeAtom == null) {
-			if (positiveAtom == null) {
-				throw new AssertionError("clause must not be empty");
-			}
-			mSolver.addHornClause(EMPTY_LITERALS, positiveAtom);
-		} else {
-			mSolver.addHornClause(new Doubleton[] { negativeAtom }, positiveAtom);
-		}
-		mNumberClausesTransitions++;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void addThreeLiteralHornClause(final Doubleton<STATE> negativeAtom1, final Doubleton<STATE> negativeAtom2,
-			final Doubleton<STATE> positiveAtom) {
-		if (negativeAtom1 == null) {
-			addTwoLiteralHornClause(negativeAtom2, positiveAtom);
-		} else if (negativeAtom2 == null) {
-			addTwoLiteralHornClause(negativeAtom1, positiveAtom);
-		} else {
-			mSolver.addHornClause(new Doubleton[] { negativeAtom1, negativeAtom2 }, positiveAtom);
-			mNumberClausesTransitions++;
-		}
 	}
 	
 	/**
 	 * @return {@code true} iff two states have the same outgoing internal and call symbols.
 	 */
-	private boolean haveSameOutgoingInternalCallSymbols(final STATE predState1, final STATE predState2) {
+	protected final boolean haveSameOutgoingInternalCallSymbols(final STATE predState1, final STATE predState2) {
 		// internal symbols
 		Set<LETTER> letters1 = mOperand.lettersInternal(predState1);
 		Set<LETTER> letters2 = mOperand.lettersInternal(predState2);
@@ -806,7 +248,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @return {@code true} iff two states have the same outgoing return symbols with respect to hierarchical
 	 *         predecessors.
 	 */
-	private boolean haveSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2,
+	protected final boolean haveSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2,
 			final STATE down2) {
 		return getSameOutgoingReturnSymbols(up1, down1, up2, down2) != null;
 	}
@@ -815,7 +257,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @return A set of letters iff the two states have the same outgoing return symbols with respect to the
 	 *         hierarchical predecessors, {@code null} otherwise.
 	 */
-	private Set<LETTER> getSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2,
+	protected final Set<LETTER> getSameOutgoingReturnSymbols(final STATE up1, final STATE down1, final STATE up2,
 			final STATE down2) {
 		final Set<LETTER> returnLetters1 = new HashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(up1, down1)) {
@@ -828,9 +270,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return returnLetters1.equals(returnLetters2) ? returnLetters1 : null;
 	}
 	
+	@SuppressWarnings("squid:S1698")
+	private boolean haveSimilarEquivalenceClass(final STATE inputState1, final STATE inputState2) {
+		// equality intended here
+		return mState2EquivalenceClass.get(inputState1) == mState2EquivalenceClass.get(inputState2);
+	}
+	
 	private VariableStatus resultFromSolver(final STATE inputState1, final STATE inputState2) {
 		assert haveSimilarEquivalenceClass(inputState1, inputState2) : "check not available";
-		final Doubleton<STATE> doubleton = mStatePairs.get(inputState1, inputState2);
+		final T doubleton = mStatePairs.get(inputState1, inputState2);
 		return mSolver.getValue(doubleton);
 	}
 	
@@ -842,7 +290,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return resultFromSolver(inputState1, inputState2) == VariableStatus.TRUE;
 	}
 	
-	private boolean knownToBeSimilar(final STATE inputState1, final STATE inputState2) {
+	protected final boolean knownToBeSimilar(final STATE inputState1, final STATE inputState2) {
 		if (inputState1.equals(inputState2)) {
 			return true;
 		}
@@ -852,48 +300,14 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return false;
 	}
 	
-	private boolean knownToBeDifferent(final STATE inputState1, final STATE inputState2) {
+	protected final boolean knownToBeDifferent(final STATE inputState1, final STATE inputState2) {
 		if (haveSimilarEquivalenceClass(inputState1, inputState2)) {
 			return solverSaysDifferent(inputState1, inputState2);
 		}
 		return true;
 	}
 	
-	protected void generateTransitivityConstraints() throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			final STATE[] states = constructStateArray(equivalenceClass);
-			generateTransitivityConstraintsHelper(states);
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void generateTransitivityConstraintsHelper(final STATE[] states) throws AutomataOperationCanceledException {
-		for (int i = 0; i < states.length; i++) {
-			for (int j = 0; j < i; j++) {
-				/*
-				 * TODO: use already computed solver information to save some time; will not safe much, because
-				 * the solver does this quickly
-				 */
-				for (int k = 0; k < j; k++) {
-					final Doubleton<STATE> doubletonIj = mStatePairs.get(states[i], states[j]);
-					final Doubleton<STATE> doubletonJk = mStatePairs.get(states[j], states[k]);
-					final Doubleton<STATE> doubletonIk = mStatePairs.get(states[i], states[k]);
-					mSolver.addHornClause(new Doubleton[] { doubletonIj, doubletonJk }, doubletonIk);
-					mSolver.addHornClause(new Doubleton[] { doubletonJk, doubletonIk }, doubletonIj);
-					mSolver.addHornClause(new Doubleton[] { doubletonIk, doubletonIj }, doubletonJk);
-					mNumberClausesTransitivity += THREE;
-				}
-				checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
-			}
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private Doubleton<STATE>[] consArr(final Collection<Doubleton<STATE>> doubletons) {
-		return doubletons.toArray(new Doubleton[doubletons.size()]);
-	}
-	
-	private static <T> boolean isVoidOfNull(final T[] positiveAtoms) {
+	protected static final <T> boolean isVoidOfNull(final T[] positiveAtoms) {
 		for (final T elem : positiveAtoms) {
 			if (elem == null) {
 				return false;
@@ -902,7 +316,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return true;
 	}
 	
-	private void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {
+	protected final void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
 			final RunningTaskInfo rti = getRunningTaskInfo(currentTask);
 			throw new AutomataOperationCanceledException(rti);
@@ -911,8 +325,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private RunningTaskInfo getRunningTaskInfo(final String currentTask) {
 		final StringBuilder builder = new StringBuilder();
-		final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-				mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
+		final String taskDescription = createTaskDescription();
 		// @formatter:off
 		builder.append(taskDescription)
 				.append(". Currently ")
@@ -933,6 +346,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		
 		return new RunningTaskInfo(getClass(), builder.toString());
 	}
+	
+	protected abstract String createTaskDescription();
 	
 	/**
 	 * Settings wrapper that allows a lean constructor for the user.
@@ -999,14 +414,30 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			}
 		}
 		
+		public boolean isAddMapOldState2newState() {
+			return mAddMapOldState2newState;
+		}
+		
 		public Settings<STATE> setAddMapOldState2NewState(final boolean value) {
 			mAddMapOldState2newState = value;
 			return this;
 		}
 		
+		public boolean getFinalStateConstraints() {
+			return mUseFinalStateConstraints;
+		}
+		
 		public Settings<STATE> setFinalStateConstraints(final boolean value) {
 			mUseFinalStateConstraints = value;
 			return this;
+		}
+		
+		public boolean getUseTransitionHornClauses() {
+			return mUseTransitionHornClauses;
+		}
+		
+		public SolverMode getSolverMode() {
+			return mSolverMode;
 		}
 		
 		/**

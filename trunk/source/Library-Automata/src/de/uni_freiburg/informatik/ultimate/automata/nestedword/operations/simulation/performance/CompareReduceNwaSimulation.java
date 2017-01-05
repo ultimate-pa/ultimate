@@ -34,10 +34,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
@@ -179,15 +179,9 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
-				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
-				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
-					operandAsNwa = operand;
-				} else {
-					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
-				}
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSat2<>(services, stateFactory, operandAsNwa, partitionAndPairs,
-						new MinimizeNwaMaxSat2.Settings<>());
+				method = new MinimizeNwaPmaxSatDoubleton<>(services, stateFactory, operand,
+						possibleEquivalenceClasses, new MinimizeNwaMaxSat2.Settings<>());
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

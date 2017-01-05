@@ -109,7 +109,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
-				mBackingMinimization = new MinimizeNwaMaxSat2<>(mServices, mStateFactory,
+				mBackingMinimization = new MinimizeNwaPmaxSatDoubleton<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, partition,
 						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState));
 				break;
@@ -140,7 +140,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ShrinkNwa<LETTER, STATE>) mBackingMinimization)
 						.getResult();
 			case NWA_MAX_SAT2:
-				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).getResult();
+				return ((MinimizeNwaPmaxSatDoubleton<LETTER, STATE>) mBackingMinimization).getResult();
 			case NWA_RAQ_DIRECT:
 				return (IDoubleDeckerAutomaton<LETTER, STATE>) ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization)
 						.getResult();
@@ -160,7 +160,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			case SHRINK_NWA:
 				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).getOldState2newState();
 			case NWA_MAX_SAT2:
-				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).getOldState2newState();
+				return ((MinimizeNwaPmaxSatDoubleton<LETTER, STATE>) mBackingMinimization).getOldState2newState();
 			case NWA_RAQ_DIRECT:
 				throw new UnsupportedOperationException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
 			case NONE:
@@ -179,7 +179,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			case SHRINK_NWA:
 				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
 			case NWA_MAX_SAT2:
-				return ((MinimizeNwaMaxSat2<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+				return ((MinimizeNwaPmaxSatDoubleton<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
 			case NWA_RAQ_DIRECT:
 				return ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
 			case NONE:

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
@@ -78,7 +79,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		
 		mLogger.info(startMessage());
 		
-		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getPartition();
+		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<>(mServices, mOperand).getPartition();
 		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() +
 				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
@@ -89,10 +90,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
 			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton;
 
-			gameAutomaton = new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
-			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
-			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, ga, mOperand);
-			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
+			gameAutomaton = new GameAutomaton<>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
+			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices, ga, mOperand);
+			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<>(mServices, ga, uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 			sim.doSimulation();
 			final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
@@ -104,12 +105,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			if (mOperand.getCallAlphabet().isEmpty()) {
 				final boolean addMapping = false;
 				final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-						new QuotientNwaConstructor<LETTER, STATE>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping );
+						new QuotientNwaConstructor<>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping );
 				mResult = (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
 			} else {
 				final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
-				final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer =
-						new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
+				final MinimizeNwaPmaxSatDoubleton<LETTER, STATE> maxSatMinimizer =
+						new MinimizeNwaPmaxSatDoubleton<>(mServices, stateFactory, mOperand,
 						equivalenceRelation.getAllEquivalenceClasses(),
 						new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 				mResult = maxSatMinimizer.getResult();
@@ -131,7 +132,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	}
 	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinninSink() {
-		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = new SpoilerNwaVertex<LETTER, STATE>(1, false, null, null, new SpoilerWinningSink<>(null));
+		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = new SpoilerNwaVertex<>(1, false, null, null, new SpoilerWinningSink<>(null));
 		return uniqueSpoilerWinningSink;
 	}
 

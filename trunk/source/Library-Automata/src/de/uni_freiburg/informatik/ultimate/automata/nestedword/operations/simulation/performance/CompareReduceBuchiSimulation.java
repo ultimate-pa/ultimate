@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
@@ -233,7 +234,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				 */
 				@Override
 				public boolean accept(final File pathname) {
-					String name = pathname.getName();
+					final String name = pathname.getName();
 					return name.startsWith(LOG_PATH_DATA) && name.endsWith(LOG_PATH_DATA_EXT);
 				}
 			};
@@ -549,7 +550,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		super(services);
 		verifyAutomatonValidity(operand);
 
-		mLoggedLines = new LinkedList<String>();
+		mLoggedLines = new LinkedList<>();
 		mOperand = operand;
 		mTimeMeasures = new LinkedHashMap<>();
 		mCountingMeasures = new LinkedHashMap<>();
@@ -562,7 +563,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			 */
 			@Override
 			public boolean accept(final File pathname) {
-				String name = pathname.getName();
+				final String name = pathname.getName();
 				return name.startsWith(LOG_PATH_DATA) && name.endsWith(LOG_PATH_DATA_EXT);
 			}
 		};
@@ -575,8 +576,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		final long simulationTimeoutMillis = SIMULATION_TIMEOUT * ComparisonTables.SECONDS_TO_MILLIS;
 
 		// Remove dead ends, a requirement of simulation
-		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
-				mServices, new RemoveDeadEnds<LETTER, STATE>(mServices, operand).getResult()).getResult();
+		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<>(
+				mServices, new RemoveDeadEnds<>(mServices, operand).getResult()).getResult();
 
 		final String automatonName = "";
 //		BufferedReader br = null;
@@ -913,7 +914,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeNwaMaxSat2) {
-			final MinimizeNwaMaxSat2<LETTER, STATE> minimizeNwaMaxSat2 = (MinimizeNwaMaxSat2<LETTER, STATE>) method;
+			final MinimizeNwaPmaxSatDoubleton<LETTER, STATE> minimizeNwaMaxSat2 =
+					(MinimizeNwaPmaxSatDoubleton<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaMaxSat2.getResult();
 			// Removed states
 			if (methodResult != null) {
@@ -1021,7 +1023,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<LETTER, STATE>(mServices, operand);
+				method = new MinimizeSevpa<>(mServices, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -1032,10 +1034,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 				} else {
-					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
+					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
 				}
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, operandAsNwa);
+				method = new MinimizeNwaPmaxSatDoubleton<>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (final AutomataOperationCanceledException e) {

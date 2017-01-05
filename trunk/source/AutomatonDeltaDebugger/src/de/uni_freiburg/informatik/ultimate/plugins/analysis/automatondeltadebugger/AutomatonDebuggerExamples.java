@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Comple
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
@@ -211,7 +211,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			final IStateFactory<STATE> factory) throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
-		return new MinimizeNwaMaxSat2<>(mServices, factory, preprocessed);
+		return new MinimizeNwaPmaxSatDoubleton<>(mServices, factory, preprocessed);
 	}
 	
 	/**

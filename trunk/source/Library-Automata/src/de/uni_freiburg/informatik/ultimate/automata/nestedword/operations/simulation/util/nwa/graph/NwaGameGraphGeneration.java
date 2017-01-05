@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
@@ -744,8 +745,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
-			final MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa,
-					equivalenceClassesAsCollection,
+			final MinimizeNwaPmaxSatDoubleton<LETTER, STATE> minimizer =
+					new MinimizeNwaPmaxSatDoubleton<>(mServices, stateFactory, mNwa, equivalenceClassesAsCollection,
 					new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(useFinalStateConstraints));
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<>(mServices, minimizer.getResult()).getResult();
@@ -1437,7 +1438,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		final boolean backwardSummaryComputation = false;
 		if (backwardSummaryComputation) {
-			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices,
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices,
 					gameAutomatonWithSummaries, mNwa);
 			for (final IGameState gameState : sc.getNeedSpoilerWinningSink()) {
 				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState)
@@ -1460,14 +1461,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				for (final Entry<IGameState, Integer> entry : game.getDuplicatorResponses().entrySet()) {
 					final SpoilerNwaVertex<LETTER, STATE> duplicatorChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) entry
 							.getKey()).getSpoilerNwaVertex();
-					duplicatorChoices.add(new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()));
+					duplicatorChoices.add(new Pair<>(duplicatorChoice.getQ1(), duplicatorChoice.isB()));
 					duplicatorChoice2Priority.put(
-							new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()),
+							new Pair<>(duplicatorChoice.getQ1(), duplicatorChoice.isB()),
 							entry.getValue());
 				}
 				addSummarizeEdge(src, spoilerChoice, duplicatorChoices);
 				final SummarizeEdge<LETTER, STATE> summaryEdge = mSrcDestToSummarizeEdges.get(src,
-						new Pair<STATE, Set<Pair<STATE, Boolean>>>(spoilerChoice, duplicatorChoices));
+						new Pair<>(spoilerChoice, duplicatorChoices));
 				for (final Entry<Pair<STATE, Boolean>, Integer> entry : duplicatorChoice2Priority.entrySet()) {
 					summaryEdge.setPriority(entry.getKey(), entry.getValue());
 				}

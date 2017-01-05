@@ -5,8 +5,7 @@ import java.util.Collections;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -14,8 +13,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * The problem instance is solved using an external solver.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE> {
+public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSatDoubleton<LETTER, STATE> {
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -28,9 +31,7 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaMaxSat2<
 	 */
 	public MinimizeNwaPmaxSatDimacs(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand,
-				new LookaheadPartitionConstructor<>(services, operand, Collections.singleton(operand.getStates()),
-						true).getResult(),
+		super(services, stateFactory, operand, Collections.singleton(operand.getStates()),
 				new Settings<STATE>().setFinalStateConstraints(true).setSolverModeExternal());
 	}
 }
