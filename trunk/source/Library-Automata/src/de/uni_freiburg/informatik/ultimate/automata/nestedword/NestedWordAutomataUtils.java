@@ -48,7 +48,7 @@ public final class NestedWordAutomataUtils {
 	private NestedWordAutomataUtils() {
 		// prevent instantiation of this class
 	}
-
+	
 	/**
 	 * Applies a function to all direct successors of a state.
 	 *
@@ -77,7 +77,7 @@ public final class NestedWordAutomataUtils {
 			}
 		}
 	}
-
+	
 	/**
 	 * @param operand
 	 *            A double decker automaton.
@@ -98,7 +98,7 @@ public final class NestedWordAutomataUtils {
 			final LETTER letter) {
 		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
 	}
-
+	
 	/**
 	 * @param iterable
 	 *            An {@link Iterable} of {@link IOutgoingTransitionlet}.
@@ -115,11 +115,11 @@ public final class NestedWordAutomataUtils {
 		final Set<STATE> result = new HashSet<>();
 		for (final E trans : iterable) {
 			result.add(trans.getSucc());
-
+			
 		}
 		return result;
 	}
-
+	
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -134,7 +134,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -149,7 +149,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-
+	
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -168,7 +168,7 @@ public final class NestedWordAutomataUtils {
 		return generateGenericMinimizationRunningTaskDescription(operand, initialPartition.size(),
 				sizeOfLargestEquivalenceClass);
 	}
-
+	
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -185,10 +185,10 @@ public final class NestedWordAutomataUtils {
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
 			final INestedWordAutomaton<LETTER, STATE> operand, final int initialPartitionSize,
 			final int sizeOfLargestBlock) {
-		return "minimizing NWA with " + operand.size() + " states" + "(initial partition has " + initialPartitionSize
-				+ " blocks, largest block has " + sizeOfLargestBlock + " states)";
+		return "minimizing NWA with " + operand.size() + " states" + " (initial partition has "
+				+ initialPartitionSize + " blocks, largest block has " + sizeOfLargestBlock + " states)";
 	}
-
+	
 	/**
 	 * Method that helps converting the return type of {@link INestedWordAutomaton#internalSuccessors(Object)} and the
 	 * other similar methods of {@link INestedWordAutomaton} to a {@link Set} of successor states.
@@ -203,34 +203,31 @@ public final class NestedWordAutomataUtils {
 		return StreamSupport.stream(iterable.spliterator(), false).map(funGetState).collect(Collectors.toSet());
 	}
 	
-	
-	public static <LETTER, STATE> Set<STATE> constructInternalSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
-			final STATE state, final LETTER letter) {
+	public static <LETTER, STATE> Set<STATE> constructInternalSuccessors(
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succInternal(state, letter);
-		} else {
-			final Function<OutgoingInternalTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
-			return getStates(nwa.internalSuccessors(state, letter), funGetState);
 		}
+		final Function<OutgoingInternalTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
+		return getStates(nwa.internalSuccessors(state, letter), funGetState);
 	}
 	
-	public static <LETTER, STATE> Set<STATE> constructCallSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
-			final STATE state, final LETTER letter) {
+	public static <LETTER, STATE> Set<STATE> constructCallSuccessors(
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succCall(state, letter);
-		} else {
-			final Function<OutgoingCallTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
-			return getStates(nwa.callSuccessors(state, letter), funGetState);
 		}
+		final Function<OutgoingCallTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
+		return getStates(nwa.callSuccessors(state, letter), funGetState);
 	}
 	
-	public static <LETTER, STATE> Set<STATE> constructReturnSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
-			final STATE lin, final STATE hier, final LETTER letter) {
+	public static <LETTER, STATE> Set<STATE> constructReturnSuccessors(
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE lin, final STATE hier,
+			final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succReturn(lin, hier, letter);
-		} else {
-			final Function<OutgoingReturnTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
-			return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
 		}
+		final Function<OutgoingReturnTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
+		return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
 	}
 }
