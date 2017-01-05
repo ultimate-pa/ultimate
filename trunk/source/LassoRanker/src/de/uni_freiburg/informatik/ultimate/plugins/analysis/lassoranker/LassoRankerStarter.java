@@ -165,7 +165,7 @@ public class LassoRankerStarter {
 		UnmodifiableTransFormula loopTf = constructTransformula(mLoop);
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
-		final Term[] axioms = mIcfg.getCfgSmtToolkit().getAxioms().toArray(new Term[0]);
+		final IPredicate axioms = mIcfg.getCfgSmtToolkit().getAxioms();
 		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 

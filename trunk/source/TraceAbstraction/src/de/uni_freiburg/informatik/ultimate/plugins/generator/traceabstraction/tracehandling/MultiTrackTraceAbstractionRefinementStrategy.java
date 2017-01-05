@@ -381,9 +381,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final ManagedScript result = new ManagedScript(services, solver);
 		
 		final TermTransferrer tt = new TermTransferrer(solver);
-		for (final Term axiom : prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms()) {
-			solver.assertTerm(tt.transform(axiom));
-		}
+		final Term axioms = prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms().getFormula();
+		solver.assertTerm(tt.transform(axioms));
 		
 		return result;
 	}

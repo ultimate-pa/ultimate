@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUser
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -58,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Class linearizing {@link UnmodifiableTransFormula}s. For improved performance and
@@ -73,7 +72,7 @@ public class CachedTransFormulaLinearizer {
 	private final IToolchainStorage mStorage;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final Term[] mAxioms;
+	private final IPredicate mAxioms;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final Map<UnmodifiableTransFormula, LinearTransition> mCache;
@@ -91,7 +90,7 @@ public class CachedTransFormulaLinearizer {
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, final IToolchainStorage storage, 
+			final CfgSmtToolkit csToolkit, final IPredicate axioms, final IToolchainStorage storage, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
@@ -100,7 +99,7 @@ public class CachedTransFormulaLinearizer {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCsToolkit = csToolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
-		mAxioms = axioms.toArray(new Term[axioms.size()]);
+		mAxioms = axioms;
 
 		mCache = new HashMap<UnmodifiableTransFormula, LinearTransition>();
 	}

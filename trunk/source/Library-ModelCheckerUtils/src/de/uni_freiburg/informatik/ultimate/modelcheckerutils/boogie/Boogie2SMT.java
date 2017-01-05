@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,7 +44,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 /**
  * Main class for the translation from Boogie to SMT. Constructs other Objects needed for this translation.
@@ -55,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class Boogie2SMT {
 
+	private static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
 
@@ -68,7 +72,7 @@ public class Boogie2SMT {
 
 	// private final ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
 
-	private final Collection<Term> mAxioms;
+	private final IPredicate mAxioms;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -98,11 +102,14 @@ public class Boogie2SMT {
 					mBoogie2SmtSymbolTable, mOperationTranslator, mScript);
 		}
 
-		mAxioms = new ArrayList<>(boogieDeclarations.getAxioms().size());
+		final ArrayList<Term> axiomList = new ArrayList<>(boogieDeclarations.getAxioms().size());
 		for (final Axiom decl : boogieDeclarations.getAxioms()) {
 			final Term term = declareAxiom(decl, mExpression2Term);
-			mAxioms.add(term);
+			axiomList.add(term);
 		}
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(SmtUtils.and(mScript.getScript(), axiomList), maScript.getScript(), mBoogie2SmtSymbolTable);
+		assert tvp.getVars().isEmpty() : "axioms must not have variables";
+		mAxioms = new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, maScript);
 
@@ -149,7 +156,7 @@ public class Boogie2SMT {
 	// return mConstOnlyIdentifierTranslator;
 	// }
 
-	public Collection<Term> getAxioms() {
+	public IPredicate getAxioms() {
 		return mAxioms;
 	}
 

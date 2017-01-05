@@ -29,18 +29,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -66,8 +62,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
-	private final Collection<Term> mAxioms;
-	private boolean mUseUnsatCoresForDynamicPatternChanges;
+	private final IPredicate mAxioms;
+	private final boolean mUseUnsatCoresForDynamicPatternChanges;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -91,7 +87,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final boolean useUnsatCoresForDynamicPatternChanges, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<Term> axioms) {
+			final IPredicate axioms) {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;

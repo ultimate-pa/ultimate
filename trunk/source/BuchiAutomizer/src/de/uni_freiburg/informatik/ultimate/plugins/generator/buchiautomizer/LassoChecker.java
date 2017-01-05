@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -183,7 +182,7 @@ public class LassoChecker {
 
 	private NonTerminationArgument mNonterminationArgument;
 
-	Collection<Term> mAxioms;
+	private final IPredicate mAxioms;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean mRemoveSuperfluousSupportingInvariants = true;
@@ -238,7 +237,7 @@ public class LassoChecker {
 	}
 
 	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final Collection<Term> axioms,
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
@@ -776,7 +775,7 @@ public class LassoChecker {
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
 				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
-						mAxioms.toArray(new Term[mAxioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+						mAxioms, constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
 						mServices,
 						mStorage, mSimplificationTechnique, mXnfConversionTechnique);
@@ -809,7 +808,7 @@ public class LassoChecker {
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
 			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
-					mAxioms.toArray(new Term[mAxioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+					mAxioms, constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
 					mServices,
 					mStorage, mSimplificationTechnique, mXnfConversionTechnique);

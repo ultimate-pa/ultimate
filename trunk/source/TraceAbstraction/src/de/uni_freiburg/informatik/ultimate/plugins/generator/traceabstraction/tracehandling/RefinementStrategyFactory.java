@@ -166,9 +166,8 @@ public class RefinementStrategyFactory {
 					"TraceCheck_Iteration" + iteration);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
-			for (final Term axiom : icfgContainer.getCfgSmtToolkit().getAxioms()) {
-				tcSolver.assertTerm(tt.transform(axiom));
-			}
+			final Term axioms = icfgContainer.getCfgSmtToolkit().getAxioms().getFormula();
+			tcSolver.assertTerm(tt.transform(axioms));
 		} else {
 			mgdScriptTc = prefs.getCfgSmtToolkit().getManagedScript();
 		}

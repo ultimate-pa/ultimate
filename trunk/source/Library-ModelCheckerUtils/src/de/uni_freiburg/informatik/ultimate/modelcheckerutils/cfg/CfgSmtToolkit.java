@@ -27,23 +27,22 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 public class CfgSmtToolkit {
 
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalsTable mModifiableGlobalsTable;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final Collection<Term> mAxioms;
+	private final IPredicate mAxioms;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final Collection<Term> axioms, final Set<String> procedures) {
+			final IIcfgSymbolTable symbolTable, final IPredicate axioms, final Set<String> procedures) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -68,7 +67,7 @@ public class CfgSmtToolkit {
 		return mSymbolTable;
 	}
 
-	public Collection<Term> getAxioms() {
+	public IPredicate getAxioms() {
 		return mAxioms;
 	}
 

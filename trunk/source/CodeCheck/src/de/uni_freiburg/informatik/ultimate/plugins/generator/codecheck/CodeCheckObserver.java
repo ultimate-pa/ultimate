@@ -456,9 +456,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					mgdScriptTracechecks = new ManagedScript(mServices, tcSolver);
 					final TermTransferrer tt = new TermTransferrer(tcSolver);
-					for (final Term axiom : mOriginalRoot.getCfgSmtToolkit().getAxioms()) {
-						tcSolver.assertTerm(tt.transform(axiom));
-					}
+					final Term axioms = mOriginalRoot.getCfgSmtToolkit().getAxioms().getFormula();
+					tcSolver.assertTerm(tt.transform(axioms));
 				} else {
 					mgdScriptTracechecks = mCsToolkit.getManagedScript();
 				}

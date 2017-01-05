@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -134,7 +135,7 @@ public class LassoAnalysis {
 	/**
 	 * The axioms regarding the transitions' constants
 	 */
-	protected final Term[] mAxioms;
+	protected final IPredicate mAxioms;
 
 	/**
 	 * The current preferences
@@ -199,7 +200,7 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
-			final Term[] axioms, final ILassoRankerPreferences preferences,
+			final IPredicate axioms, final ILassoRankerPreferences preferences,
 			final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		mServices = services;
@@ -256,7 +257,7 @@ public class LassoAnalysis {
 	 *             if the file for dumping the script cannot be opened
 	 */
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
-			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Term[] axioms,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final IPredicate axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {

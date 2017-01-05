@@ -41,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Adds axioms to the stem and loop transition
@@ -61,12 +63,12 @@ public class AddAxioms extends TransitionPreprocessor {
 	 * @param axioms
 	 *            the axioms that should be added to stem and loop
 	 */
-	public AddAxioms(final ReplacementVarFactory replacementVarFactory, final Term[] axioms) {
+	public AddAxioms(final ReplacementVarFactory replacementVarFactory, final IPredicate axioms) {
 		mReplacementVarFactory = replacementVarFactory;
-		if (axioms == null) {
-			mAxioms = new Term[0];
+		if (SmtUtils.isTrue(axioms.getFormula())) {
+			mAxioms = new Term[] { axioms.getFormula() };
 		} else {
-			mAxioms = axioms;
+			mAxioms = SmtUtils.getConjuncts(axioms.getFormula());
 		}
 		for (final Term axiom : mAxioms) {
 			// TODO: Check if the boolean parameter is correct; it was necessary to restore the build
