@@ -137,6 +137,7 @@ public class FindUndefinedBehaviourTestSuite extends AbstractTraceAbstractionTes
 
 	private static final String[] mSettings_32bit = {
 		"automizer/FindUndefinedBehaviour/svcomp-DerefFree-32bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf",
 	};
 	
 	private static final String[] mSettings_64bit = {
