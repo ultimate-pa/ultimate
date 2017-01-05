@@ -124,23 +124,23 @@ public class RefinementStrategyFactory {
 				return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
 						predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 			case PENGUIN:
-				return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+				return new PenguinRefinementStrategy(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(), predicateUnifier,
 						mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration,
 						benchmark);
 			case CAMEL:
-				return new CamelRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+				return new CamelRefinementStrategy(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(), predicateUnifier,
 						mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation, iteration,
 						benchmark);
 			case WALRUS:
-				return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+				return new WalrusRefinementStrategy(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(), predicateUnifier,
 						mAssertionOrderModulation,
 						counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 			case WOLF:
-				return new WolfRefinementStrategy(mLogger, mPrefs, mServices, predicateUnifier,
+				return new WolfRefinementStrategy(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(), predicateUnifier,
 						mAssertionOrderModulation,
 						counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
 			case TAIPAN:
-				return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, predicateUnifier, mAbsIntRunner,
+				return new TaipanRefinementStrategy(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(), predicateUnifier, mAbsIntRunner,
 						mAssertionOrderModulation, counterexample, abstraction, iteration, benchmark);
 			default:
 				throw new IllegalArgumentException(

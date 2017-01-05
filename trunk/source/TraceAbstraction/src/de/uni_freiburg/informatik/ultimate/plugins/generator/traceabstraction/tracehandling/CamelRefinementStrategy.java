@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -53,12 +54,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class CamelRefinementStrategy extends PenguinRefinementStrategy {
 	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
+			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation assertionOrderModulation,
 			final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
 			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
+		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
 				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
 	

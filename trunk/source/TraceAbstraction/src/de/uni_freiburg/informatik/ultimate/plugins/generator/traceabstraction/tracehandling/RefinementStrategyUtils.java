@@ -26,14 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 /**
@@ -48,8 +53,12 @@ public class RefinementStrategyUtils {
 
 	/**
 	 * Returns true iff word contains some float variable.
+	 * @param iPredicate 
 	 */
-	public static boolean containsFloats(final Word<? extends IAction> word) {
+	public static boolean containsFloats(final Word<? extends IAction> word, final IPredicate axioms) {
+		if (containsFloats(axioms)) {
+			return true;
+		}
 		for (final IAction action : word) {
 			boolean containsFloats = false;
 			if (action instanceof IInternalAction) {
@@ -81,6 +90,16 @@ public class RefinementStrategyUtils {
 		}
 		for (final IProgramVar outVar : transformula.getOutVars().keySet()) {
 			if (SmtUtils.isFloatingPointSort(outVar.getTermVariable().getSort())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static boolean containsFloats(final IPredicate predicate) {
+		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(predicate.getFormula(), false);
+		for (final ApplicationTerm constant : consts) {
+			if (SmtUtils.isFloatingPointSort(constant.getSort())) {
 				return true;
 			}
 		}

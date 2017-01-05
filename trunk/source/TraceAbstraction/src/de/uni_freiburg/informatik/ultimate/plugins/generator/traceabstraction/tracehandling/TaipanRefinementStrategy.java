@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -116,6 +117,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 *            Ultimate services
 	 * @param prefs
 	 *            preferences
+	 * @param cfgSmtToolkit 
 	 * @param predicateUnifier
 	 *            predicate unifier
 	 * @param absIntRunner
@@ -132,7 +134,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 *            benchmark
 	 */
 	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final PredicateUnifier predicateUnifier,
+			final TaCheckAndRefinementPreferences prefs, final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner absIntRunner, final AssertionOrderModulation assertionOrderModulation,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {

@@ -112,6 +112,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
+	protected final CfgSmtToolkit mCsToolkit;
 	private final AssertionOrderModulation mAssertionOrderModulation;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
@@ -145,6 +146,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	 *            counterexample trace
 	 * @param logger
 	 *            logger
+	 * @param cfgSmtToolkit 
 	 * @param abstraction
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
@@ -159,13 +161,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation assertionOrderModulation,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier, final AssertionOrderModulation assertionOrderModulation,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
+		mCsToolkit = cfgSmtToolkit;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
