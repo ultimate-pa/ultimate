@@ -1090,7 +1090,8 @@ public class CHandler implements ICHandler {
 		if (cId.equals("NULL")) {
 			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(CPrimitives.VOID))));
-		} else if (cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf")) {
+		} else if (!mSymbolTable.containsCSymbol(cId) && 
+				(cId.equals("NAN") || cId.equals("INFINITY") || cId.equals("inf"))) {
 			final ExpressionResult result = mExpressionTranslation.createNanOrInfinity(loc, cId);
 			return result;
 		} else if (mExpressionTranslation.isNumberClassificationMacro(cId)) {
