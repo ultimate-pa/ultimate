@@ -1096,6 +1096,8 @@ public class FunctionHandler {
 			builder.setLRVal(lrVal);
 
 			return builder.build();
+		} else if (methodName.equals("abs")) {
+			throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
