@@ -760,23 +760,30 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final RValue argument) {
 		if (floatFunction.getFunctionName().equals("sqrt")) {
 			if (!(argument.getCType() instanceof CPrimitive)
-					|| ((CPrimitive) argument.getCType()).getType() != CPrimitives.DOUBLE) {
-				throw new IllegalArgumentException();
+					|| !((CPrimitive) argument.getCType()).getType().isFloatingtype()) {
+				throw new IllegalArgumentException("can apply float operation only to floating type");
 			}
 			final CPrimitive argumentType = (CPrimitive) argument.getCType();
 			final String smtFunctionName = "fp.sqrt";
+			declareFloatingPointFunction(loc, smtFunctionName, false, true, argumentType, null, argumentType);
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
-			final CPrimitive resultType = new CPrimitive(CPrimitives.DOUBLE);
-			if (!getFunctionDeclarations().getDeclaredFunctions().containsKey(boogieFunctionName)) {
-				final Attribute[] attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, null);
-				final ASTType astResultType = mTypeHandler.cType2AstType(loc, resultType);
-				final ASTType roundingMode = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
-				final ASTType astParamType = mTypeHandler.cType2AstType(loc, argumentType);
-				mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, astResultType, roundingMode,
-						astParamType);
-			}
+			final CPrimitive resultType = (CPrimitive) argument.getCType();
 			final Expression expr = new FunctionApplication(loc, boogieFunctionName,
 					new Expression[] { getRoundingMode(), argument.getValue() });
+			return new RValue(expr, resultType);
+		} else if (floatFunction.getFunctionName().equals("fabs")) {
+			if (!(argument.getCType() instanceof CPrimitive)
+					|| !((CPrimitive) argument.getCType()).getType().isFloatingtype()) {
+				throw new IllegalArgumentException("can apply float operation only to floating type");
+			}
+			final CPrimitive argumentType = (CPrimitive) argument.getCType();
+			final String smtFunctionName = "fp.abs";
+
+			declareFloatingPointFunction(loc, smtFunctionName, false, false, argumentType, null, argumentType);
+			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
+			final CPrimitive resultType = (CPrimitive) argument.getCType();
+			final Expression expr = new FunctionApplication(loc, boogieFunctionName,
+					new Expression[] { argument.getValue() });
 			return new RValue(expr, resultType);
 		} else if (floatFunction.getFunctionName().equals("isnan")) {
 			final String smtFunctionName = "fp.isNaN";

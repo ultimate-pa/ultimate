@@ -70,6 +70,9 @@ public class FloatSupportInUltimate {
 			"isnanl",
 			"__fpclassifyl",
 			"__signbitl",
+			"fabs",
+			"fabsf",
+			"fabsl",
 	};
 	
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
@@ -102,7 +105,6 @@ public class FloatSupportInUltimate {
 			"hypot",
 			"cbrt",
 			"ceil",
-			"fabs",
 			"floor",
 			"fmod",
 			"drem",
@@ -168,7 +170,6 @@ public class FloatSupportInUltimate {
 			"hypotf",
 			"cbrtf",
 			"ceilf",
-			"fabsf",
 			"floorf",
 			"fmodf",
 			"dremf",
@@ -234,7 +235,6 @@ public class FloatSupportInUltimate {
 			"hypotl",
 			"cbrtl",
 			"ceill",
-			"fabsl",
 			"floorl",
 			"fmodl",
 			"dreml",

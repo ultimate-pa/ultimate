@@ -51,6 +51,7 @@ public class FloatFunction {
 			"isnormal", // see 7.12.3.5
 			"signbit", // see 7.12.3.6
 			"sqrt",
+			"fabs", // see 7.12.7.2
 	};
 	
 	private static final String[] TYPE_SUFFIXES = {"f", "d", "l"};
@@ -61,7 +62,7 @@ public class FloatFunction {
 	
 	
 	
-	public FloatFunction(String prefix, String function, String typeSuffix) {
+	public FloatFunction(final String prefix, final String function, final String typeSuffix) {
 		super();
 		mPrefix = prefix;
 		mFunction = function;
@@ -98,12 +99,12 @@ public class FloatFunction {
 	}
 	
 	
-	public static FloatFunction decode(String fullFunctionName) {
+	public static FloatFunction decode(final String fullFunctionName) {
 		final String withoutPrefix;
 		final String prefix;
-		if (fullFunctionName.startsWith("__")) {
+		if (fullFunctionName.startsWith(GCC_PREFIX)) {
 			withoutPrefix = fullFunctionName.substring(2);
-			prefix = "__";
+			prefix = GCC_PREFIX;
 		} else {
 			withoutPrefix = fullFunctionName;
 			prefix = "";
