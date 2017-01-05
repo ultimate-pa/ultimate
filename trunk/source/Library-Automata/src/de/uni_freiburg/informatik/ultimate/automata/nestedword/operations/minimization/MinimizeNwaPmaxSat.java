@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  *            state type
  * @see MinimizeNwaMaxSat2
  */
-public class MinimizeNwaPmaxSatDoubleton<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
+public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
 	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
 	private static final int THREE = 3;
@@ -79,7 +79,7 @@ public class MinimizeNwaPmaxSatDoubleton<LETTER, STATE> extends MinimizeNwaMaxSa
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatDoubleton(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, Collections.singleton(operand.getStates()), new Settings<>());
 	}
@@ -100,7 +100,7 @@ public class MinimizeNwaPmaxSatDoubleton<LETTER, STATE> extends MinimizeNwaMaxSa
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatDoubleton(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
 			final Settings<STATE> settings) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, initialPartition, settings, true);
@@ -124,7 +124,7 @@ public class MinimizeNwaPmaxSatDoubleton<LETTER, STATE> extends MinimizeNwaMaxSa
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatDoubleton(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
 			final Settings<STATE> settings, final boolean applyInitialPartitionPreprocessing)
 			throws AutomataOperationCanceledException {

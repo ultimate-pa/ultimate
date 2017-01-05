@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPattern;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
@@ -253,7 +253,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		}
 		case NWA_MAX_SAT2: {
 			minimizationResult = new MinimizationResult(true, true,
-					new MinimizeNwaPmaxSatDoubleton<>(autServices, predicateFactoryRefinement,
+					new MinimizeNwaPmaxSat<>(autServices, predicateFactoryRefinement,
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
 					new MinimizeNwaMaxSat2.Settings<IPredicate>().
 							setAddMapOldState2NewState(computeOldState2NewStateMapping)));

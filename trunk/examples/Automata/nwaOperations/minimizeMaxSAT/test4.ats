@@ -9,7 +9,7 @@ print(numberOfStates(nwa));
 print(numberOfStates(shrinkNwa(nwa)));
 print(numberOfStates(minimizeSevpa(nwa)));
 print(numberOfStates(minimizeNwaMaxSAT(nwa)));
-print(numberOfStates(minimizeNwaMaxSat2(nwa)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa)));
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = {"call775" "call773" "call767" "call771" "call765" "call769" "call781" "call779" "call777" },

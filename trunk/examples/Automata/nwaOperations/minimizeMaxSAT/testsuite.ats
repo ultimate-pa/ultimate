@@ -1,7 +1,7 @@
 // author: Christian Schilling (schillic@informatik.uni-freiburg.de)
 // date: 2016
 // 
-// Automata which revealed bugs for MinimizeNwaPmaxSatDoubleton.
+// Automata which revealed bugs for minimizeNwaPmaxSat.
 
 NestedWordAutomaton nwa1 = removeUnreachable(nwaUnprocessed1);
 NestedWordAutomaton nwa2 = removeUnreachable(nwaUnprocessed2);
@@ -17,19 +17,19 @@ NestedWordAutomaton nwa11 = removeUnreachable(nwaUnprocessed11);
 NestedWordAutomaton nwa12 = removeUnreachable(nwaUnprocessed12);
 NestedWordAutomaton nwa13 = removeUnreachable(nwaUnprocessed13);
 
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa1)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa2)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa3)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa4)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa5)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa6)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa7)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa8)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa9)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa10)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa11)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa12)));
-print(numberOfStates(MinimizeNwaPmaxSatDoubleton(nwa13)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa1)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa2)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa3)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa4)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa5)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa6)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa7)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa8)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa9)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa10)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa11)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa12)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa13)));
 
 NestedWordAutomaton nwaUnprocessed1 = (
 	callAlphabet = {"c" },

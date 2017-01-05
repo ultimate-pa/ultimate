@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -53,7 +53,7 @@ public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final ReduceNwaDirectSimulation<LETTER, STATE> mOldSimulation;
 	private final ReduceNwaDirectSimulationB<LETTER, STATE> mNewSimulation;
-	private final MinimizeNwaPmaxSatDoubleton<LETTER, STATE> mMaxSat;
+	private final MinimizeNwaPmaxSat<LETTER, STATE> mMaxSat;
 	
 	/**
 	 * Constructor.
@@ -74,7 +74,7 @@ public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation
 		final IDoubleDeckerAutomaton<LETTER, STATE> dd = new RemoveDeadEnds<>(mServices, mOperand).getResult();
 		mOldSimulation = new ReduceNwaDirectSimulation<>(mServices, stateFactory, dd);
 		mNewSimulation = new ReduceNwaDirectSimulationB<>(mServices, stateFactory, dd);
-		mMaxSat = new MinimizeNwaPmaxSatDoubleton<>(mServices, stateFactory, dd);
+		mMaxSat = new MinimizeNwaPmaxSat<>(mServices, stateFactory, dd);
 	}
 	
 	@Override

@@ -3,7 +3,7 @@ NestedWordAutomaton nwa = removeDeadEnds(nwaUnprocessed);
 print(numberOfStates(shrinkNwa(nwa)));
 print(numberOfStates(minimizeSevpa(nwa)));
 print(numberOfStates(minimizeNwaMaxSat(nwa)));
-print(numberOfStates(minimizeNwaMaxSat2(nwa)));
+print(numberOfStates(minimizeNwaPmaxSat(nwa)));
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = { c },

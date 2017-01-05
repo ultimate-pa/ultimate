@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatDoubleton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
@@ -914,8 +914,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeNwaMaxSat2) {
-			final MinimizeNwaPmaxSatDoubleton<LETTER, STATE> minimizeNwaMaxSat2 =
-					(MinimizeNwaPmaxSatDoubleton<LETTER, STATE>) method;
+			final MinimizeNwaPmaxSat<LETTER, STATE> minimizeNwaMaxSat2 =
+					(MinimizeNwaPmaxSat<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaMaxSat2.getResult();
 			// Removed states
 			if (methodResult != null) {
@@ -1037,7 +1037,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
 				}
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNwaPmaxSatDoubleton<>(mServices, stateFactory, operandAsNwa);
+				method = new MinimizeNwaPmaxSat<>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (final AutomataOperationCanceledException e) {
