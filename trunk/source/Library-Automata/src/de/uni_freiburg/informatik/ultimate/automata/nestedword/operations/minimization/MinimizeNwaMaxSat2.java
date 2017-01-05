@@ -27,10 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -97,8 +93,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
 	private static final String SOLVER_TIMEOUT = "solving";
 	
-	private static final boolean WRITE_TO_STD_OUT = false;
-	
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
@@ -119,6 +113,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private long mTimer;
 	private long mTimePreprocessing;
 	private long mTimeSolving;
+	
+	private final Iterable<Set<STATE>> mInitialPartition;
 	
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -176,7 +172,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	@SuppressWarnings("resource")
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final PartitionPairsWrapper<STATE> partitionPairsWrapper, final Settings<STATE> settings)
@@ -189,12 +184,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
-		final Iterable<Set<STATE>> initialPartition = partitionPairsWrapper.getPartition();
+		mInitialPartition = partitionPairsWrapper.getPartition();
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : initialPartition) {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
@@ -208,20 +203,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		
 		// create solver
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
-		Appendable cnfWriter = null;
 		switch (mSettings.mSolverMode) {
 			case EXTERNAL:
-				if (WRITE_TO_STD_OUT) {
-					cnfWriter = null;
-				} else {
-					try {
-						cnfWriter = new OutputStreamWriter(new FileOutputStream(DimacsMaxSatSolver.FILE_NAME_TMP),
-								DimacsMaxSatSolver.ENCODING);
-					} catch (final IOException e) {
-						throw new AssertionError(e);
-					}
-				}
-				mSolver = new DimacsMaxSatSolver<>(mServices, cnfWriter);
+				mSolver = new DimacsMaxSatSolver<>(mServices);
 				break;
 			case HORN:
 				mSolver = new HornMaxSatSolver<>(mServices);
@@ -241,14 +225,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.mSolverMode);
 		}
 		
-		feedSolver(initialPartition, transitivityGenerator);
-		if (cnfWriter instanceof Writer) {
-			try {
-				((Writer) cnfWriter).close();
-			} catch (final IOException e) {
-				throw new AssertionError(e);
-			}
-		}
+		feedSolver(transitivityGenerator);
 		
 		mTimePreprocessing = mTimer;
 		mTimer = System.currentTimeMillis();
@@ -300,12 +277,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 	
-	private void feedSolver(final Iterable<Set<STATE>> initialPartition,
-			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
-		generateVariablesAndAcceptingConstraints(initialPartition, transitivityGenerator);
-		generateTransitionConstraints(initialPartition);
-		if (transitivityGenerator == null && !mOperandHasNoReturns) {
-			generateTransitivityConstraints(initialPartition);
+	private void feedSolver(final ScopedTransitivityGenerator<STATE> transitivityGenerator)
+			throws AutomataOperationCanceledException {
+		generateVariablesAndAcceptingConstraints(transitivityGenerator);
+		generateTransitionConstraints();
+		if (transitivityGenerator == null) {
+			generateTransitivityConstraints();
 		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(
@@ -347,9 +324,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return resultingEquivalenceClasses;
 	}
 	
-	private void generateVariablesAndAcceptingConstraints(final Iterable<Set<STATE>> initialPartition,
+	protected void generateVariablesAndAcceptingConstraints(
 			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : initialPartition) {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			generateVariablesHelper(transitivityGenerator, states);
 			checkTimeout(GENERATING_VARIABLES);
@@ -358,19 +335,29 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private void generateVariablesHelper(final ScopedTransitivityGenerator<STATE> transitivityGenerator,
 			final STATE[] states) {
+		if (states.length <= 1) {
+			return;
+		}
+		
+		final boolean separateFinalAndNonfinalStates = mSettings.mUseFinalStateConstraints;
+		
 		for (int i = 0; i < states.length; i++) {
+			final STATE stateI = states[i];
+			
 			// add to transitivity generator
-			if ((transitivityGenerator != null) && (states.length > 1)) {
-				transitivityGenerator.addContent(states[i]);
+			if (transitivityGenerator != null) {
+				transitivityGenerator.addContent(stateI);
 			}
 			
 			for (int j = 0; j < i; j++) {
-				final Doubleton<STATE> doubleton = new Doubleton<>(states[i], states[j]);
-				mStatePairs.put(states[i], states[j], doubleton);
-				mStatePairs.put(states[j], states[i], doubleton);
+				final STATE stateJ = states[j];
+				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
+				mStatePairs.put(stateI, stateJ, doubleton);
+				mStatePairs.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
-				if (mSettings.mUseFinalStateConstraints
-						&& (mOperand.isFinal(states[i]) ^ mOperand.isFinal(states[j]))) {
+				
+				// separate final and nonfinal states
+				if (separateFinalAndNonfinalStates && (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ))) {
 					setStatesDifferent(doubleton);
 					mNumberClausesAcceptance++;
 				}
@@ -393,9 +380,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		setStatesDifferent(mStatePairs.get(state1, state2));
 	}
 	
-	private void generateTransitionConstraints(final Iterable<Set<STATE>> initialPartition)
-			throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : initialPartition) {
+	protected void generateTransitionConstraints() throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraintsHelper(states, i);
@@ -873,9 +859,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return true;
 	}
 	
-	private void generateTransitivityConstraints(final Iterable<Set<STATE>> initialPartition)
-			throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : initialPartition) {
+	protected void generateTransitivityConstraints() throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			generateTransitivityConstraintsHelper(states);
 		}
@@ -1001,6 +986,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			// default constructor
 		}
 		
+		/**
+		 * Validates the settings object for inconsistencies.
+		 */
 		public void validate() {
 			if (mSolverMode == null) {
 				throw new IllegalArgumentException("No solver mode set.");
@@ -1021,16 +1009,31 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			return this;
 		}
 		
+		/**
+		 * Sets the solver mode to {@link SolverMode#EXTERNAL}.
+		 * 
+		 * @return this
+		 */
 		public Settings<STATE> setSolverModeExternal() {
 			mSolverMode = SolverMode.EXTERNAL;
 			return this;
 		}
 		
+		/**
+		 * Sets the solver mode to {@link SolverMode#TRANSITIVITY}.
+		 * 
+		 * @return this
+		 */
 		public Settings<STATE> setSolverModeTransitivity() {
 			mSolverMode = SolverMode.TRANSITIVITY;
 			return this;
 		}
 		
+		/**
+		 * Sets the solver mode to {@link SolverMode#GENERAL}.
+		 * 
+		 * @return this
+		 */
 		public Settings<STATE> setSolverModeGeneral() {
 			mSolverMode = SolverMode.GENERAL;
 			return this;

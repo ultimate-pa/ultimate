@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -69,8 +70,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
  */
 public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private static final String LINE_SEPARATOR = System.lineSeparator();
-	public static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
-	public static final String ENCODING = "UTF-8";
+	private static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
+	private static final String ENCODING = "UTF-8";
+	private static final boolean WRITE_TO_STD_OUT = false;
 	
 	private static final String FILE_NAME = "dimacs.wcnf";
 	
@@ -95,16 +97,12 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private final String mMaxWeight;
 	
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
-	 * @param writer
-	 *            object where CNF should be written to
+	 *            Ultimate services.
 	 */
-	public DimacsMaxSatSolver(final AutomataLibraryServices services, final Appendable writer) {
+	public DimacsMaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
-		mWriter = writer;
+		mWriter = createWriter();
 		mVar2NumberString = new HashMap<>();
 		mNumber2Var = new ArrayList<>();
 		mMaxWeight = Integer.toString(Integer.MAX_VALUE) + BLANK;
@@ -147,6 +145,12 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	
 	@Override
 	public boolean solve() throws AutomataOperationCanceledException {
+		try {
+			((Writer) mWriter).close();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+		
 		fixFile();
 		
 		// run external Max-SAT solver
@@ -154,7 +158,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		commands.add(AHMAXSAT_COMMAND);
 		commands.add(FILE_NAME);
 		final ProcessBuilder pb = new ProcessBuilder(commands);
-		/* we ccould set the path via "pb.directory(...)" */
+		/* we could set the path via "pb.directory(...)" */
 		// run solver
 		final Process p;
 		try {
@@ -164,6 +168,18 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		
 		return parseResult(p.getInputStream());
+	}
+	
+	private static Writer createWriter() {
+		if (WRITE_TO_STD_OUT) {
+			return new BufferedWriter(new OutputStreamWriter(System.out));
+		}
+		
+		try {
+			return new OutputStreamWriter(new FileOutputStream(FILE_NAME_TMP), ENCODING);
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 	
 	@SuppressWarnings("squid:S1141")
