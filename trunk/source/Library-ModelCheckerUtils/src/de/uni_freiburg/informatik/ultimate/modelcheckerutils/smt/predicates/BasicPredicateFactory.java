@@ -64,7 +64,11 @@ public class BasicPredicateFactory {
 	protected final Script mScript;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
-	protected int mSerialNumberCounter;
+	/**
+	 * Serial numbers for predicates start with 1, because 0 is reserved for
+	 * the axioms.
+	 */
+	protected int mSerialNumberCounter = 1;
 	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
 	protected static final String[] NO_PROCEDURE = new String[0];
 	protected final IUltimateServiceProvider mServices;
