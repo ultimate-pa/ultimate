@@ -28,9 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -81,14 +79,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected static final String SOLVER_TIMEOUT = "solving";
 	
 	protected final NestedMap2<STATE, STATE, T> mStatePairs = new NestedMap2<>();
-	protected final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
 	protected ScopedTransitivityGenerator<STATE> mTransitivityGenerator;
-	
-	// if true, we can omit transitivity clauses
-	protected final boolean mOperandHasNoReturns;
 	
 	protected int mNumberClausesAcceptance;
 	protected int mNumberClausesTransitions;
@@ -121,9 +115,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mOperand = operand;
 		mSettings = settings;
 		mSettings.validate();
-		mState2EquivalenceClass = new HashMap<>();
-		
-		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
 		// create solver
 		switch (mSettings.getSolverMode()) {
@@ -134,7 +125,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				mSolver = new HornMaxSatSolver<>(mServices);
 				break;
 			case TRANSITIVITY:
-				mSolver = !mOperandHasNoReturns ? createTransitivitySolver() : new GeneralMaxSatSolver<>(mServices);
+				// we can omit transitivity clauses if the operand has no return transitions
+				mSolver = mOperand.getReturnAlphabet().isEmpty()
+						? new GeneralMaxSatSolver<>(mServices)
+						: createTransitivitySolver();
 				break;
 			case GENERAL:
 				mSolver = new GeneralMaxSatSolver<>(mServices);
@@ -166,20 +160,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-	}
-	
-	@Override
-	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		if (mTimePreprocessing != 0L) {
-			statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
-		}
-		if (mTimeSolving != 0L) {
-			statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
-		}
-		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
-		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
-		return statistics;
 	}
 	
 	private void feedSolver() throws AutomataOperationCanceledException {
@@ -221,6 +201,12 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected abstract void generateTransitivityConstraints() throws AutomataOperationCanceledException;
 	
 	protected abstract UnionFind<STATE> constructEquivalenceClasses() throws AssertionError;
+	
+	protected abstract boolean knownToBeSimilar(final STATE state1, final STATE state2);
+	
+	protected abstract boolean knownToBeDifferent(final STATE state1, final STATE state2);
+	
+	protected abstract String createTaskDescription();
 	
 	@SuppressWarnings("unchecked")
 	protected final STATE[] constructStateArray(final Collection<STATE> states) {
@@ -270,41 +256,9 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return returnLetters1.equals(returnLetters2) ? returnLetters1 : null;
 	}
 	
-	@SuppressWarnings("squid:S1698")
-	private boolean haveSimilarEquivalenceClass(final STATE inputState1, final STATE inputState2) {
-		// equality intended here
-		return mState2EquivalenceClass.get(inputState1) == mState2EquivalenceClass.get(inputState2);
-	}
-	
-	private VariableStatus resultFromSolver(final STATE inputState1, final STATE inputState2) {
-		assert haveSimilarEquivalenceClass(inputState1, inputState2) : "check not available";
-		final T doubleton = mStatePairs.get(inputState1, inputState2);
+	protected final VariableStatus resultFromSolver(final STATE state1, final STATE state2) {
+		final T doubleton = mStatePairs.get(state1, state2);
 		return mSolver.getValue(doubleton);
-	}
-	
-	private boolean solverSaysDifferent(final STATE inputState1, final STATE inputState2) {
-		return resultFromSolver(inputState1, inputState2) == VariableStatus.FALSE;
-	}
-	
-	private boolean solverSaysSimilar(final STATE inputState1, final STATE inputState2) {
-		return resultFromSolver(inputState1, inputState2) == VariableStatus.TRUE;
-	}
-	
-	protected final boolean knownToBeSimilar(final STATE inputState1, final STATE inputState2) {
-		if (inputState1.equals(inputState2)) {
-			return true;
-		}
-		if (haveSimilarEquivalenceClass(inputState1, inputState2)) {
-			return solverSaysSimilar(inputState1, inputState2);
-		}
-		return false;
-	}
-	
-	protected final boolean knownToBeDifferent(final STATE inputState1, final STATE inputState2) {
-		if (haveSimilarEquivalenceClass(inputState1, inputState2)) {
-			return solverSaysDifferent(inputState1, inputState2);
-		}
-		return true;
 	}
 	
 	protected static final <T> boolean isVoidOfNull(final T[] positiveAtoms) {
@@ -347,7 +301,19 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return new RunningTaskInfo(getClass(), builder.toString());
 	}
 	
-	protected abstract String createTaskDescription();
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		if (mTimePreprocessing != 0L) {
+			statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
+		}
+		if (mTimeSolving != 0L) {
+			statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
+		}
+		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
+		return statistics;
+	}
 	
 	/**
 	 * Settings wrapper that allows a lean constructor for the user.

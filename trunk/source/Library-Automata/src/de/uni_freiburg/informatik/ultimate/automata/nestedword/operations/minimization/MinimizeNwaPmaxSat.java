@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableStatus;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -48,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
- * Partial Max-SAT based minimization of NWA using symmetric pairs ({@link Doubleton}s) of states as variable type.
+ * Partial Max-SAT based minimization of NWA using {@link Doubleton}s (symmetric pairs) of states as variable type.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -63,6 +66,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
 	private static final int THREE = 3;
 	
+	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final Iterable<Set<STATE>> mInitialPartition;
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
@@ -134,6 +138,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,
 						mSettings.getFinalStateConstraints()).getPartition()
 				: initialPartition;
+		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
@@ -654,6 +659,31 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	@SuppressWarnings("unchecked")
 	private Doubleton<STATE>[] consArr(final Collection<Doubleton<STATE>> doubletons) {
 		return doubletons.toArray(new Doubleton[doubletons.size()]);
+	}
+	
+	@Override
+	protected boolean knownToBeSimilar(final STATE state1, final STATE state2) {
+		if (state1.equals(state2)) {
+			return true;
+		}
+		if (haveSimilarEquivalenceClass(state1, state2)) {
+			return resultFromSolver(state1, state2) == VariableStatus.TRUE;
+		}
+		return false;
+	}
+	
+	@Override
+	protected boolean knownToBeDifferent(final STATE state1, final STATE state2) {
+		if (haveSimilarEquivalenceClass(state1, state2)) {
+			return resultFromSolver(state1, state2) == VariableStatus.FALSE;
+		}
+		return true;
+	}
+	
+	@SuppressWarnings("squid:S1698")
+	private boolean haveSimilarEquivalenceClass(final STATE state1, final STATE state2) {
+		// equality intended here
+		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
 	
 	@Override
