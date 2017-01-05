@@ -111,7 +111,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	}
 	
 	/**
-	 * Constructor with an initial partition.
+	 * Full constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services
