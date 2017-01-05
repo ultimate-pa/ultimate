@@ -146,6 +146,8 @@ public interface IInvariantPatternProcessor<IPT> {
 	public IPT getEntryInvariantPattern();
 
 	public IPT getExitInvariantPattern();
+	
+	public void extractValuesForPatternCoefficients();
 
 	/**
 	 *

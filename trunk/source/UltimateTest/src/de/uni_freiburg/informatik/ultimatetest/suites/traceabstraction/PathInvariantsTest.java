@@ -97,8 +97,8 @@ public class PathInvariantsTest extends
 //		"examples/programs/real-life",
 //		"examples/programs/reals",
 //		"examples/programs/recursive/regression",
-//		"examples/programs/regression",
-		"examples/programs/InvariantSynthesis",
+		"examples/programs/regression",
+//		"examples/programs/InvariantSynthesis",
 //		"examples/programs/scalable",
 //		"examples/programs/toy",
 	};
@@ -117,7 +117,7 @@ public class PathInvariantsTest extends
 //		"automizer/pathInvariants/pathInvariants.epf",
 //		"automizer/pathInvariants/pathInvariantsLbe.epf",
 		"automizer/pathInvariants/pathInvariants_LinearConstraints_NO_UnsatCores.epf",
-		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
+//		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_NO_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_AND_UnsatCores.epf",
 	};

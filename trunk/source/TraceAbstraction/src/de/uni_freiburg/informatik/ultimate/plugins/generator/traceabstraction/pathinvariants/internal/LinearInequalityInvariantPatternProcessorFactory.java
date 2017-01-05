@@ -67,8 +67,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
-	private boolean mUseLiveVariables;
-	private Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables;
+	private boolean mUseUnsatCoresForDynamicPatternChanges;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -90,9 +89,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore,
-			final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars,
-			final boolean useLiveVars, final Settings solverSettings,
+			final boolean useVarsFromUnsatCore, final boolean useUnsatCoresForDynamicPatternChanges, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
 		mServices = services;
@@ -106,9 +103,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
-		mUseLiveVariables = useLiveVars;
-		mLocs2LiveVariables = pathprogramLocs2LiveVars;
-		
+		mUseUnsatCoresForDynamicPatternChanges = useUnsatCoresForDynamicPatternChanges;
 	}
 
 	/**
@@ -170,7 +165,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
-				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mLocs2LiveVariables, mSimplificationTechnique,
+				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseUnsatCoresForDynamicPatternChanges, mSimplificationTechnique,
 				mXnfConversionTechnique);
 	}
 

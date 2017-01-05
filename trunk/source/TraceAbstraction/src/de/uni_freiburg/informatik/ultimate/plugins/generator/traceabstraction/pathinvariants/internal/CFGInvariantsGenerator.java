@@ -180,6 +180,9 @@ public final class CFGInvariantsGenerator {
 
 				final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
 						locationsAsList.size());
+				// Extract the values for all pattern coefficients
+				processor.extractValuesForPatternCoefficients();
+				// Apply configuration for each pair (location, pattern) in order to obtain a predicate for each location.
 				for (final IcfgLocation location : locationsAsList) {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
@@ -251,7 +254,8 @@ public final class CFGInvariantsGenerator {
 			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP, boolean useWeakestPrecondition,
 			boolean addWPToEeachDisjunct) {
-		// Start round
+		// Start round -1 (because it's the round with empty pattern for each location)
+		round = -1;
 		processor.startRound(round);
 		mLogger.info("Pre-round with empty patterns for intermediate locations started...");
 		
@@ -296,6 +300,9 @@ public final class CFGInvariantsGenerator {
 			mLogger.info("Found valid " + "configuration in pre-round.");
 			final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
 					locationsAsList.size());
+			// Extract the values for all pattern coefficients
+			processor.extractValuesForPatternCoefficients();
+			// Apply configuration for each pair (location, pattern) in order to obtain a predicate for each location.
 			for (final IcfgLocation location : locationsAsList) {
 				IPredicate p = processor.applyConfiguration(locs2Patterns.get(location));
 				result.put(location, p);

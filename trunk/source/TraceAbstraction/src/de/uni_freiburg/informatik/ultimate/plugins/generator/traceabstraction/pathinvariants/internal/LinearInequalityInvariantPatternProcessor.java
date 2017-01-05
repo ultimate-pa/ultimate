@@ -89,6 +89,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public final class LinearInequalityInvariantPatternProcessor
 extends
 AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> {
+	
+	public enum SimplificationType {
+		NO_SIMPLIFICATION,
+		SIMPLE,
+		TWO_MODE
+	}
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
@@ -127,7 +133,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private int mCurrentRound;
 	private int mMaxRounds;
 	private final boolean mUseNonlinearConstraints; 
-	private final boolean mSimplifySatisfyingAssignment = true;
+	private final SimplificationType mSimplifySatisfyingAssignment = SimplificationType.TWO_MODE;
 	/**
 	 * If set to true, we always construct two copies of each invariant
 	 * pattern, one strict inequality and one non-strict inequality.
@@ -138,11 +144,18 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final IcfgLocation mStartLocation;
 	private final IcfgLocation mErrorLocation;
 	
-	private static final boolean PRINT_CONSTRAINTS = !false;
-	private static final boolean DEBUG_OUTPUT = !false;
-	private static final boolean TestNewStrategy = !false;
+	private static final boolean PRINT_CONSTRAINTS = false;
+	private static final boolean DEBUG_OUTPUT = false;
 	
-	private Map<Collection<Term>, Map<Term, Rational>> mCachedCoefficients2ValuesRequests;
+	/**
+	 * Contains all coefficients of all patterns from the current round.
+	 */
+	private Set<Term> mAllPatternCoefficients;
+	/**
+	 * If the current constraints are satisfiable, then this map contains the values of the pattern coefficients. 
+	 */
+	private Map<Term, Rational> mPatternCoefficients2Values;
+	private boolean mUseUnsatCoreForDynamicPatternSettingChanges;
 
 
 
@@ -186,9 +199,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			IcfgLocation startLocation, IcfgLocation errorLocation, 
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final boolean useNonlinearConstraints,
-			final boolean useVarsFromUnsatCore,
-			final boolean useLiveVars,
-			final Map<IcfgLocation, Set<IProgramVar>> mLocs2LiveVariables2,
+			final boolean useUnsatCoreVarsForPatterns,
+			final boolean useUnsatCoreForDynamicPatternSettingChanges,
 			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, csToolkit);
@@ -211,12 +223,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mCurrentRound = -1;
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
-		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
+		mUseVarsFromUnsatCore = useUnsatCoreVarsForPatterns;
+		mUseUnsatCoreForDynamicPatternSettingChanges = useUnsatCoreForDynamicPatternSettingChanges;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
-		mCachedCoefficients2ValuesRequests = new HashMap<>();
 		mLinearInequalities2Locations = new HashMap<>();
+		mAllPatternCoefficients = null;
+		mPatternCoefficients2Values = null;
+		
 	}
 	/**
 	 * {@inheritDoc}
@@ -230,6 +245,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mPrefixCounter = 0;
 		mCurrentRound = round;
 		
+		mAllPatternCoefficients = new HashSet<>();
+		mLinearInequalities2Locations = new HashMap<>();
 	}
 
 	/**
@@ -245,9 +262,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
-		// Reset the cached requests for valuations of coefficients
-		mCachedCoefficients2ValuesRequests = new HashMap<>();
-		mLinearInequalities2Locations = new HashMap<>();
+
 	}
 
 	/**
@@ -555,7 +570,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		}
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
 				predicate.getInvStart(), unprimedMapping);
-		if (TestNewStrategy) {
+		if (mUseUnsatCoreForDynamicPatternSettingChanges) {
 			Set<LinearInequality> lineqsFromStartPattern = new HashSet<>(startInvariantDNF.size());
 			for (Collection<LinearInequality> conjunct : startInvariantDNF) {
 				lineqsFromStartPattern.addAll(conjunct);
@@ -574,7 +589,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		if (DEBUG_OUTPUT) {
 			mLogger.info("Size of end-pattern after mapping to lin-inequalities and negating: " + getSizeOfPattern(endInvariantDNF));
 		}
-		if (TestNewStrategy) {
+		if (mUseUnsatCoreForDynamicPatternSettingChanges) {
 			Set<LinearInequality> lineqsFromEndPattern = new HashSet<>(endInvariantDNF.size());
 			for (Collection<LinearInequality> conjunct : endInvariantDNF) {
 				lineqsFromEndPattern.addAll(conjunct);
@@ -591,7 +606,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			newList.addAll(list);
 			transitionDNF.add(newList);
 		}
-		if (TestNewStrategy) {
+		if (mUseUnsatCoreForDynamicPatternSettingChanges) {
 			Set<LinearInequality> lineqsFromTransition = new HashSet<>(transitionDNF.size());
 			for (Collection<LinearInequality> conjunct : transitionDNF) {
 				lineqsFromTransition.addAll(conjunct);
@@ -741,10 +756,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 
 		mLogger.info( "[LIIPP] Terms generated, checking SAT.");
 		final LBool result = mSolver.checkSat();
+		mLogger.info("Check-sat result: " + result);
 		if (result == LBool.UNKNOWN) {
-			mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
-			// Prevent additional rounds
-			mMaxRounds = mCurrentRound + 1;
+//			mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
+//			// Prevent additional rounds
+//			mMaxRounds = mCurrentRound + 1;
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
@@ -774,7 +790,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 //						}
 
 					}
-					if (TestNewStrategy) {
+					if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
 						Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet().stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
 						for (Set<LinearInequality> s : setsContainingLinq) {
 							Set<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
@@ -790,7 +806,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 						}
 					}
 				}
-				if (TestNewStrategy) {
+				if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
+					locsInUnsatCore.remove(mStartLocation);
+					locsInUnsatCore.remove(mErrorLocation);
+					for (IcfgLocation loc : locsInUnsatCore) {
+						mStrategy.changePatternSettingForLocation(loc);
+						mLogger.info("changed setting for loc: " + loc);
+					}
 					mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
 				}
 			}
@@ -861,6 +883,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 */
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
+		assert mPatternCoefficients2Values != null : "Call method extractValuesForPatternCoefficients"
+				+ " before applying configurations for the patterns.";
 		final Script script = mCsToolkit.getManagedScript().getScript();
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
@@ -868,26 +892,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
 			for (final AbstractLinearInvariantPattern inequality : conjunct) {
-				Map<Term, Rational> valuation = null;
-				if (!mCachedCoefficients2ValuesRequests.containsKey(inequality.getCoefficients())) {
-					try {
-						if (mSimplifySatisfyingAssignment) {
-							valuation = ModelExtractionUtils.getSimplifiedAssignment(
-									mSolver, inequality.getCoefficients(), mLogger, mServices);
-						} else {
-							valuation = ModelExtractionUtils.getValuation(mSolver,
-									inequality.getCoefficients());
-						}
-					}
-					catch (TermException e) {
-						e.printStackTrace();
-						mLogger.error("Getting values for coefficients for current pattern failed." +  inequality.toString());
-					}
-					mCachedCoefficients2ValuesRequests.put(inequality.getCoefficients(), valuation);
-				} else {
-					valuation = mCachedCoefficients2ValuesRequests.get(inequality.getCoefficients());
+				Map<Term, Rational> valuation = new HashMap<>(inequality.getCoefficients().size());
+				for (Term coeff : inequality.getCoefficients()) {
+					valuation.put(coeff, mPatternCoefficients2Values.get(coeff));
 				}
-				
 				final Term affineFunctionTerm = inequality.getAffineFunction(
 						valuation).asTerm(script);
 				if (inequality.isStrict()) {
@@ -969,6 +977,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 
 			Collection<Collection<AbstractLinearInvariantPattern>> p = mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix());
 			if (DEBUG_OUTPUT) {	mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p)); }
+			// Add the coefficients of this pattern to the set of all coefficients
+			mAllPatternCoefficients.addAll(mStrategy.getPatternCoefficientsForLocation(location));
 			return p;
 		}
 	}
@@ -987,6 +997,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 
 			Collection<Collection<AbstractLinearInvariantPattern>> p = mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix(), vars);
 			if (DEBUG_OUTPUT) {	mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p)); }
+			// Add the coefficients of this pattern to the set of all coefficients
+			mAllPatternCoefficients.addAll(mStrategy.getPatternCoefficientsForLocation(location));
 			return p;
 		}
 	}
@@ -994,7 +1006,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	
 	
 	public final Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation location, int round) {
-		return mStrategy.getPatternVariablesForLocation(location, round);
+		if (mStartLocation.equals(location)) {
+			return Collections.emptySet();
+		} else if (mErrorLocation.equals(location)) {
+			return Collections.emptySet();
+		} else {
+			return mStrategy.getPatternVariablesForLocation(location, round);
+		}
 	}
 	
 	
@@ -1098,5 +1116,26 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		// Add conjuncts from transformula as additional disjuncts
 		result.addAll(transFormulaAsLinIneqs);
 		return result;
+	}
+	
+	
+	@Override
+	public void extractValuesForPatternCoefficients() {
+		assert mAllPatternCoefficients != null : "mAllPatternCoefficients must not be null!";
+		try {
+			if (mSimplifySatisfyingAssignment == SimplificationType.NO_SIMPLIFICATION) {
+				mPatternCoefficients2Values = ModelExtractionUtils.getValuation(mSolver, mAllPatternCoefficients);
+			} else if (mSimplifySatisfyingAssignment == SimplificationType.SIMPLE) {
+				mPatternCoefficients2Values = ModelExtractionUtils.getSimplifiedAssignment(
+						mSolver, mAllPatternCoefficients, mLogger, mServices);
+			} else {
+				mPatternCoefficients2Values = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(
+						mSolver, mAllPatternCoefficients, mLogger, mServices);
+			}
+		}
+		catch (TermException e) {
+			e.printStackTrace();
+			mLogger.error("Getting values for coefficients failed.");
+		}
 	}
 }

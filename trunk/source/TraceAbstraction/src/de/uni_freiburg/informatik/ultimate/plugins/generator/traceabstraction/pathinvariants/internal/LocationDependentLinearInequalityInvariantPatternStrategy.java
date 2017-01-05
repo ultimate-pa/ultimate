@@ -2,9 +2,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 //import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -17,13 +22,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
 	
-	private final int baseDisjuncts;
-	private final int baseConjuncts;
+	protected final int baseDisjuncts;
+	protected final int baseConjuncts;
 	private final int disjunctsPerRound;
 	private final int conjunctsPerRound;
 	private final int maxRounds;
 	protected final Set<IProgramVar> mAllProgramVariables;
 	protected int mPrefixCounter;
+	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -56,10 +62,12 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		this.maxRounds = maxRounds;
 		mAllProgramVariables = allProgramVariables;
 		mPrefixCounter = 0;
+		mLoc2PatternCoefficents = new HashMap<>();
 	}
 
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
 		final int[] dimensions = getDimensions(location, round);
+		Set<Term> patternCoefficients = new HashSet<>();
 		// Build invariant pattern
 		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
@@ -72,10 +80,13 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
+					// Add the coefficients of the inequality to our set of pattern coefficients
+					patternCoefficients.addAll(inequality.getCoefficients());
 				}
 			}
 			disjunction.add(conjunction);
 		}
+		mLoc2PatternCoefficents.put(location, patternCoefficients);
 		return disjunction;
 	}
 	
@@ -106,6 +117,12 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 	
 	protected String newPrefix() {
 		return Integer.toString(mPrefixCounter++);
+	}
+
+	@Override
+	public Set<Term> getPatternCoefficientsForLocation(IcfgLocation location) {
+		assert mLoc2PatternCoefficents.containsKey(location) : "No coefficients available for the location: " + location;
+		return Collections.unmodifiableSet(mLoc2PatternCoefficents.get(location));
 	}
 
 }

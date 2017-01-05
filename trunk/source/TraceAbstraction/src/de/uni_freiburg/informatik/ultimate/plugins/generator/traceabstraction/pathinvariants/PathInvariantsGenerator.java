@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractLinearInvariantPattern;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AllProgramVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
@@ -92,14 +93,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	// This is a safe and the simplest strategy: add the weakest precondition of the last two transitions of the path
-	// program to
-	// the predecessor of the predecessor of the error location.
+	// Indicates whether the predicates from the weakest precondition are added to the constraints or not.
 	private final boolean mUseWeakestPrecondition;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
+	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = false;
+	
 	private final boolean mUseLiveVariables;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -131,14 +132,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-			final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars, final Settings solverSettings,
+			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms,
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, pathprogramLocs2LiveVars, useLiveVars,
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES,
 				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms);
 	}
 
@@ -147,6 +147,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					final Set<IProgramVar> allProgramVariables,
 					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
+			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
+				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+			}
 			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
 		} else if (useLiveVars) {
 			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
@@ -432,8 +435,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
 				getStrategy(useVarsFromUnsatCore, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore,
-				mUseLiveVariables, pathprogramLocs2LiveVars, solverSettings, simplificationTechnique,
+				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore, solverSettings, simplificationTechnique,
 				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants

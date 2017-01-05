@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -72,24 +73,12 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix);
 	
+	public Set<Term> getPatternCoefficientsForLocation(final IcfgLocation location);
+	
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix, Set<IProgramVar> vars);
 	
-	/**
-	 * Applies the configuration found with
-	 * {@link #hasValidConfiguration(Collection, int)} to a given invariant
-	 * pattern.
-	 * 
-	 * The behaviour of this method is undefined, when the last call to
-	 * {@link #hasValidConfiguration(Collection, int)} returned false or if
-	 * {@link #hasValidConfiguration(Collection, int)} has not yet been called
-	 * at all.
-	 * 
-	 * @param pattern the pattern to apply the configuration to
-	 * @return the predicate representing the invariant found
-	 */
-//	public IPredicate applyConfiguration(IPT pattern);
-	
+
 
 	/**
 	 * Returns the maximal number of attempts to re-generate the invariant
@@ -105,6 +94,10 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location,
 			final int round);
 	
+	/**
+	 * It is used to change the pattern setting (i.e. adding conjuncts/disjuncts) for the given location.
+	 * @param location
+	 */
 	public void changePatternSettingForLocation(final IcfgLocation location);
 
 	public void resetSettings();

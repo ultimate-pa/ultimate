@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -34,6 +35,8 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	@Override
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
 			int round, Script solver, String prefix, Set<IProgramVar> varsFromUnsatCore) {
+		assert super.mLoc2PatternCoefficents != null : "Map mLoc2PatternCoefficents must not be null!";
+		Set<Term> patternCoefficients = new HashSet<>();
 		Set<IProgramVar> varsForThisPattern = new HashSet<>(getPatternVariablesForLocation(location, round));
 		if (!varsFromUnsatCore.containsAll(varsForThisPattern)) {
 			varsForThisPattern.addAll(varsFromUnsatCore);
@@ -53,10 +56,13 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, varsForThisPattern, prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
+					// Add the coefficients of the inequality to our set of pattern coefficients
+					patternCoefficients.addAll(inequality.getCoefficients());
 				}
 			}
 			disjunction.add(conjunction);
 		}
+		super.mLoc2PatternCoefficents.put(location, patternCoefficients);
 		return disjunction;
 	}
 
