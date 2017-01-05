@@ -115,33 +115,33 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mOperand = operand;
 		mSettings = settings;
 		mSettings.validate();
-		
-		// create solver
+		mSolver = createSolver();
+	}
+	
+	private AbstractMaxSatSolver<T> createSolver() {
 		switch (mSettings.getSolverMode()) {
 			case EXTERNAL:
-				mSolver = new DimacsMaxSatSolver<>(mServices);
-				break;
+				return new DimacsMaxSatSolver<>(mServices);
 			case HORN:
-				mSolver = new HornMaxSatSolver<>(mServices);
-				break;
+				return new HornMaxSatSolver<>(mServices);
 			case TRANSITIVITY:
-				// we can omit transitivity clauses if the operand has no return transitions
-				mSolver = mOperand.getReturnAlphabet().isEmpty()
-						? new GeneralMaxSatSolver<>(mServices)
-						: createTransitivitySolver();
-				break;
+				return createTransitivitySolver();
 			case GENERAL:
-				mSolver = new GeneralMaxSatSolver<>(mServices);
-				break;
+				return new GeneralMaxSatSolver<>(mServices);
 			default:
 				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
 		}
 	}
 	
-	@SuppressWarnings("rawtypes")
-	private TransitivityGeneralMaxSatSolver createTransitivitySolver() {
+	@SuppressWarnings("unchecked")
+	private AbstractMaxSatSolver<T> createTransitivitySolver() {
+		if (mOperand.getReturnAlphabet().isEmpty()) {
+			// we can omit transitivity clauses if the operand has no return transitions
+			return new GeneralMaxSatSolver<>(mServices);
+		}
+		
 		mTransitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
-		return new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
+		return (AbstractMaxSatSolver<T>) new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
 	}
 	
 	protected final void run() throws AutomataOperationCanceledException {
