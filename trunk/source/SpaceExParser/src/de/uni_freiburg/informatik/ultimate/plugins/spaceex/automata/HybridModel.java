@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Class that represents a hybrid model, consisting of multiple concurrently running hybrid automata and some system
@@ -64,9 +66,8 @@ public class HybridModel {
 	private List<HybridSystem> mSystems;
 	private Map<String,HybridAutomaton> mMergedAutomata;
 	
-	public HybridModel(final Sspaceex root, final ILogger logger) {
+	public HybridModel(final Sspaceex root, final ILogger logger,IUltimateServiceProvider services) throws Exception {
 		mLogger = logger;
-
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
@@ -106,6 +107,7 @@ public class HybridModel {
 				mMergedAutomata.put(hybAut.getName(), hybAut);
 			});			
 		}
+		SpaceExPreferenceManager mPreferenceManager = new SpaceExPreferenceManager(services, mLogger);
 	}
 
 	private HybridSystem createDefaultSystem(final Map<String, ComponentType> automata) {
