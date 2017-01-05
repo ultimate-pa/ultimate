@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
@@ -47,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Class that represents a hybrid model, consisting of multiple concurrently running hybrid automata and some system
@@ -58,15 +55,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
  *
  */
 public class HybridModel {
-
+	
 	private final ILogger mLogger;
 	private final HybridSystemFactory mHybridSystemFactory;
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private List<HybridSystem> mSystems;
-	private Map<String,HybridAutomaton> mMergedAutomata;
+	private Map<String, HybridAutomaton> mMergedAutomata;
 	
-	public HybridModel(final Sspaceex root, final ILogger logger,IUltimateServiceProvider services) throws Exception {
+	public HybridModel(final Sspaceex root, final ILogger logger) throws Exception {
 		mLogger = logger;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
@@ -74,55 +71,56 @@ public class HybridModel {
 		mSystems = new ArrayList<>();
 		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
-		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
-			        mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
-		                    + " already exists. Overwriting with new one.");
-			        return newEntry;
-		        }));
-	  		
+				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
+					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
+							+ " already exists. Overwriting with new one.");
+					return newEntry;
+				}));
+		
 		final Map<String, ComponentType> systems = root.getComponent().stream().filter(c -> !c.getBind().isEmpty())
-		        .collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
-			        mLogger.warn("A hybrid system with name " + oldEntry.getId()
-		                    + " already exists. Overwriting with new one.");
-			        return newEntry;
-		        }));
-
+				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
+					mLogger.warn("A hybrid system with name " + oldEntry.getId()
+							+ " already exists. Overwriting with new one.");
+					return newEntry;
+				}));
+		
 		if (systems.isEmpty() && automata.size() > 1) {
 			throw new UnsupportedOperationException(
-			        "If no hybrid system is specified, only one automaton is allowed to exist in the model.");
+					"If no hybrid system is specified, only one automaton is allowed to exist in the model.");
 		}
-
+		
 		if (systems.isEmpty()) {
 			HybridSystem hybsys = createDefaultSystem(automata);
 			mLogger.info("hybridsystem created:\n" + hybsys.toString());
 			mSystems.add(hybsys);
 		} else {
 			// create the systems
-			systems.forEach((id,comp)->{
+			systems.forEach((id, comp) -> {
 				mLogger.info("creating hybridsystem for system: " + id);
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 				HybridAutomaton hybAut = mergeAutomata(hybsys);
 				mMergedAutomata.put(hybAut.getName(), hybAut);
-			});			
+			});
 		}
-		SpaceExPreferenceManager mPreferenceManager = new SpaceExPreferenceManager(services, mLogger);
+		// SpaceExPreferenceManager mPreferenceManager = new SpaceExPreferenceManager(services, mLogger);
 	}
-
+	
 	private HybridSystem createDefaultSystem(final Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
-		final HybridAutomaton automaton = mHybridAutomatonFactory.createHybridAutomatonFromComponent(automatonComponent);
+		final HybridAutomaton automaton =
+				mHybridAutomatonFactory.createHybridAutomatonFromComponent(automatonComponent);
 		// set global parameters
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
-		        .map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
+				.map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
 		// set global constants
 		final Set<String> globalConstants = automaton.getGlobalConstants().stream()
-		        .map(gc -> new StringBuilder().append("system_").append(gc).toString()).collect(Collectors.toSet());
+				.map(gc -> new StringBuilder().append("system_").append(gc).toString()).collect(Collectors.toSet());
 		// set labels
 		final Set<String> labels = automaton.getLabels().stream()
-		        .map(l -> new StringBuilder().append("system_").append(l).toString()).collect(Collectors.toSet());
+				.map(l -> new StringBuilder().append("system_").append(l).toString()).collect(Collectors.toSet());
 		// set automaton map of the form (name: automaton)
 		final Map<String, HybridAutomaton> autMap = new HashMap<>();
 		autMap.put(automaton.getName(), automaton);
@@ -134,29 +132,30 @@ public class HybridModel {
 		labels.forEach(l -> automatonBind.put(l, l));
 		bindsMap.put(automaton.getName(), automatonBind);
 		return mHybridSystemFactory.createHybridSystem("system", globalParams, new HashSet<String>(), globalConstants,
-		        new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
+				new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
 	}
 	
-	public List<HybridSystem> getSystems(){
+	public List<HybridSystem> getSystems() {
 		return mSystems;
 	}
 	
-	public Map<String, HybridAutomaton> getMergedAutomata(){
+	public Map<String, HybridAutomaton> getMergedAutomata() {
 		return mMergedAutomata;
 	}
 	
 	/**
 	 * Function that merges all Automata of a {@link HybridSystem} into one {@link HybridAutomata}
+	 * 
 	 * @param system
 	 * @return
 	 */
-	public HybridAutomaton mergeAutomata(HybridSystem system){
+	public HybridAutomaton mergeAutomata(HybridSystem system) {
 		HybridAutomaton merged;
 		Collection<HybridAutomaton> automata = system.getAutomata().values();
 		HybridAutomaton aut1 = automata.iterator().next();
 		merged = aut1;
 		automata.remove(aut1);
-		while(automata.iterator().hasNext()){
+		while (automata.iterator().hasNext()) {
 			HybridAutomaton aut2 = automata.iterator().next();
 			automata.remove(aut2);
 			mLogger.info("merging: " + aut1.getName() + " and " + aut2.getName());
@@ -166,6 +165,5 @@ public class HybridModel {
 		mLogger.info(merged.toString());
 		return merged;
 	}
-	
 	
 }

@@ -31,11 +31,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
@@ -52,25 +50,25 @@ import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
  *
  */
 public class Tester {
-
-	public static void main(String[] args) throws JAXBException, IOException {
-
+	
+	public static void main(String[] args) throws Exception {
+		
 		final JAXBContext jc = JAXBContext.newInstance(ObjectFactory.class);
-
+		
 		final Unmarshaller unmarshaller = jc.createUnmarshaller();
-
+		
 		final String testfile = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n"
-		        + "<sspaceex xmlns=\"http://www-verimag.imag.fr/xml-namespaces/sspaceex\" version=\"0.2\" math=\"SpaceEx\">"
-		        + "<component id=\"aut1\">"
-		        + "<param name=\"x\" type=\"real\" local=\"false\" d1=\"1\" d2=\"1\" dynamics=\"any\" />"
-		        + "<location id=\"1\" name=\"loc1\" x=\"316.0\" y=\"129.0\" width=\"108.0\" height=\"76.0\">"
-		        + "<invariant>0 &lt;= x &lt;= 10</invariant>" + "<flow>x'==1</flow>" + "</location>" + "</component>"
-		        + "<component id=\"sys1\">" + "<bind component=\"aut1\" as=\"aut1_1\" x=\"200.0\" y=\"129.0\">"
-		        + "<map key=\"x\">x</map>" + "</bind>" + "</component>" + "</sspaceex>";
+				+ "<sspaceex xmlns=\"http://www-verimag.imag.fr/xml-namespaces/sspaceex\" version=\"0.2\" math=\"SpaceEx\">"
+				+ "<component id=\"aut1\">"
+				+ "<param name=\"x\" type=\"real\" local=\"false\" d1=\"1\" d2=\"1\" dynamics=\"any\" />"
+				+ "<location id=\"1\" name=\"loc1\" x=\"316.0\" y=\"129.0\" width=\"108.0\" height=\"76.0\">"
+				+ "<invariant>0 &lt;= x &lt;= 10</invariant>" + "<flow>x'==1</flow>" + "</location>" + "</component>"
+				+ "<component id=\"sys1\">" + "<bind component=\"aut1\" as=\"aut1_1\" x=\"200.0\" y=\"129.0\">"
+				+ "<map key=\"x\">x</map>" + "</bind>" + "</component>" + "</sspaceex>";
 		final File f = new File("../../examples/programs/spaceex/bball.xml");
-
+		
 		FileInputStream fis = null;
-
+		
 		InputStream is;
 		if (f.exists()) {
 			fis = new FileInputStream(f);
@@ -79,26 +77,26 @@ public class Tester {
 			System.out.println("File does not exist: " + f.getPath());
 			is = new ByteArrayInputStream(testfile.getBytes());
 		}
-
+		
 		final Sspaceex sx = (Sspaceex) unmarshaller.unmarshal(is);
-
+		
 		final HybridModel hs = new HybridModel(sx, new ConsoleLogger());
 		
 		final SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(hs, new ConsoleLogger());
 		
 		final Marshaller marshaller = jc.createMarshaller();
-
+		
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-
+		
 		final FileOutputStream fos = new FileOutputStream(new File("/tmp/output.xml"));
-
+		
 		marshaller.marshal(sx, System.out);
 		marshaller.marshal(sx, fos);
-
+		
 		fos.close();
 		if (fis != null) {
 			fis.close();
 		}
 	}
-
+	
 }

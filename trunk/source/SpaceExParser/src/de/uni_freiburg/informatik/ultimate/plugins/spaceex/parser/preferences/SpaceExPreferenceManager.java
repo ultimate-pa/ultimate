@@ -55,7 +55,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	public void parseConfigFile() throws Exception{
-		Properties prop = new Properties();
+	Properties prop = new Properties();
 		final FileInputStream fis = new FileInputStream(mConfigFile);
 		// load properties file
 		prop.load(fis);

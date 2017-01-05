@@ -29,45 +29,37 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.writer.SpaceExWriter;
 
 /**
  * @author Marius Greitschus
  *
  */
 public class SpaceExParser implements ISource {
-
+	
 	private final String[] mFileTypes;
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-
+	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
 	 */
@@ -75,44 +67,44 @@ public class SpaceExParser implements ISource {
 		mFileTypes = new String[] { "xml", };
 		mFileNames = new ArrayList<String>();
 	}
-
+	
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
 		// TODO Auto-generated method stub
-
+		
 	}
-
+	
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-
+	
 	@Override
 	public void init() {
 		// Auto-generated method stub
 	}
-
+	
 	@Override
 	public void finish() {
 		// Auto-generated method stub
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new SpaceExParserPreferenceInitializer();
 	}
-
+	
 	@Override
 	public boolean parseable(File[] files) {
 		for (final File f : files) {
@@ -122,23 +114,23 @@ public class SpaceExParser implements ISource {
 		}
 		return true;
 	}
-
+	
 	@Override
 	public boolean parseable(File file) {
-
+		
 		boolean knownExtension = false;
-
+		
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				knownExtension = true;
 				break;
 			}
 		}
-
+		
 		if (!knownExtension) {
 			return false;
 		}
-
+		
 		try {
 			final FileReader fr = new FileReader(file);
 			final BufferedReader br = new BufferedReader(fr);
@@ -147,7 +139,7 @@ public class SpaceExParser implements ISource {
 					mLogger.debug("The input file does not contain an opening xml tag.");
 					return false;
 				}
-
+				
 				if (!br.readLine().contains("<sspaceex")) {
 					mLogger.debug("The input file does not contain a spaceex tag.");
 					return false;
@@ -159,16 +151,16 @@ public class SpaceExParser implements ISource {
 		} catch (final IOException ioe) {
 			return false;
 		}
-
+		
 		return true;
 	}
-
+	
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public IElement parseAST(File file) throws Exception {
 		mFileNames.add(file.getName());
@@ -177,26 +169,25 @@ public class SpaceExParser implements ISource {
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
-		final HybridModel system = new HybridModel(spaceEx, mLogger,mServices);;
-
+		final HybridModel system = new HybridModel(spaceEx, mLogger);
+		;
+		
 		/*
-		final Marshaller marshaller = jaxContext.createMarshaller();
-		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		final StringWriter streamWriter = new StringWriter();
-		final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger);
-		Map<String, HybridAutomaton> mergedAutomata = system.getMergedAutomata();
-		Sspaceex root = spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get("ofOnn||controller||clock"));
-		String targetfile = "" ; // some path/filename you want
-		spaceexWriter.writeXmlToDisk(root,targetfile);
-		*/		
+		 * final Marshaller marshaller = jaxContext.createMarshaller();
+		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new
+		 * StringWriter(); final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger); Map<String, HybridAutomaton>
+		 * mergedAutomata = system.getMergedAutomata(); Sspaceex root =
+		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get("ofOnn||controller||clock")); String targetfile =
+		 * "" ; // some path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
+		 */
 		return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
-
+	
 	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
-
+	
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
@@ -207,10 +198,10 @@ public class SpaceExParser implements ISource {
 		}
 		return null;
 	}
-
+	
 	@Override
 	public void setPreludeFile(File prelude) {
 		// TODO Auto-generated method stub
-
+		
 	}
 }
