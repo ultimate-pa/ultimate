@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.HornMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableStatus;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -88,7 +87,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
-	protected ScopedTransitivityGenerator<STATE> mTransitivityGenerator;
+	protected ScopedTransitivityGenerator<T, STATE> mTransitivityGenerator;
 	
 	protected int mNumberClausesAcceptance;
 	protected int mNumberClausesTransitions;
@@ -133,23 +132,16 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			case HORN:
 				return new HornMaxSatSolver<>(mServices);
 			case TRANSITIVITY:
+				if (mOperand.getReturnAlphabet().isEmpty()) {
+					// we can omit transitivity clauses if the operand has no return transitions
+					return new GeneralMaxSatSolver<>(mServices);
+				}
 				return createTransitivitySolver();
 			case GENERAL:
 				return new GeneralMaxSatSolver<>(mServices);
 			default:
 				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
 		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private AbstractMaxSatSolver<T> createTransitivitySolver() {
-		if (mOperand.getReturnAlphabet().isEmpty()) {
-			// we can omit transitivity clauses if the operand has no return transitions
-			return new GeneralMaxSatSolver<>(mServices);
-		}
-		
-		mTransitivityGenerator = new ScopedTransitivityGenerator<>(mSettings.mUsePathCompression);
-		return (AbstractMaxSatSolver<T>) new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
 	}
 	
 	protected final void run() throws AutomataOperationCanceledException {
@@ -196,6 +188,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final UnionFind<STATE> resultingEquivalenceClasses = constructResultEquivalenceClasses();
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
+	
+	protected abstract AbstractMaxSatSolver<T> createTransitivitySolver();
 	
 	protected abstract void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException;
 	
@@ -884,6 +878,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		public Settings<STATE> setSolverModeGeneral() {
 			mSolverMode = SolverMode.GENERAL;
 			return this;
+		}
+		
+		public boolean isUsePathCompression() {
+			return mUsePathCompression;
 		}
 	}
 }

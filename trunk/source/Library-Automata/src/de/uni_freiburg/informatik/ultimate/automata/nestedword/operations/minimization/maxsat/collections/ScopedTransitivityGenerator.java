@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
-
 /**
  * This data structure can be fed with equality information and returns all fresh transitive implications. Additionally,
  * the data structure supports scoping and making scopes persistent.
@@ -21,11 +19,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * TODO Get rid of the stack class, it has only one element to encapsulate (do not forget to make methods private!).
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            type of the content wrapper in pairs (controlled by subclass)
  * @param <C>
- *            The content type. The interface uses {@link Doubleton}s of {@link C} elements.
+ *            content type
  */
-public class ScopedTransitivityGenerator<C> {
-	private final Map<C, NormalNode<C>> mContent2node;
+public abstract class ScopedTransitivityGenerator<T, C> {
+	protected final Map<C, NormalNode<C>> mContent2node;
 	
 	private final ScopeStack<C> mStack;
 	
@@ -80,20 +80,19 @@ public class ScopedTransitivityGenerator<C> {
 	 *            Content.
 	 * @return true iff content is known
 	 */
-	public boolean hasContent(final C content) {
-		return mContent2node.containsKey(content);
-	}
+	public abstract boolean hasContent(final T pair);
+	
 	/**
 	 * Makes the given contents equal and reports all inferred transitivity information in order to be consistent.
 	 * 
-	 * @param doubleton
+	 * @param pair
 	 *            the two contents which are equal
 	 * @return all transitive pairs of contents which also need to be equal
 	 */
 	@SuppressWarnings("squid:S1698")
-	public Iterable<Doubleton<C>> assertEquality(final Doubleton<C> doubleton) {
-		final NormalNode<C> root1 = find(mContent2node.get(doubleton.getOneElement()));
-		final NormalNode<C> root2 = find(mContent2node.get(doubleton.getOtherElement()));
+	public Iterable<T> assertEquality(final T pair) {
+		final NormalNode<C> root1 = find(mContent2node.get(getFirst(pair)));
+		final NormalNode<C> root2 = find(mContent2node.get(getSecond(pair)));
 		// equality is intended here
 		if (root1 == root2) {
 			// equality is already known, do nothing and report empty information
@@ -109,7 +108,7 @@ public class ScopedTransitivityGenerator<C> {
 		 */
 		final BridgeNode<C> newBridgeNode = mStack.bridgeTrees(root1, root2);
 		
-		return getTransitiveInformation(root1, root2, newBridgeNode, doubleton);
+		return getTransitiveInformation(root1, root2, newBridgeNode, pair);
 	}
 	
 	/**
@@ -135,6 +134,29 @@ public class ScopedTransitivityGenerator<C> {
 	public void addScope() {
 		mStack.addScope();
 	}
+	
+	/**
+	 * @param content1
+	 *            Content 1.
+	 * @param content2
+	 *            content 2
+	 * @return parametric pair of contents
+	 */
+	protected abstract T createPair(C content1, C content2);
+	
+	/**
+	 * @param pair
+	 *            Parametric pair.
+	 * @return first entry
+	 */
+	protected abstract C getFirst(T pair);
+	
+	/**
+	 * @param pair
+	 *            Parametric pair.
+	 * @return second entry
+	 */
+	protected abstract C getSecond(T pair);
 	
 	@SuppressWarnings("squid:S1698")
 	private NormalNode<C> find(final NormalNode<C> source) {
@@ -174,14 +196,14 @@ public class ScopedTransitivityGenerator<C> {
 	 *            root of second tree
 	 * @param newBridgeNode
 	 *            bridge node connecting the two roots
-	 * @param inputDoubleton
+	 * @param inputPair
 	 *            information which should not occur in the result
 	 * @return all transitive information
 	 */
-	private Iterable<Doubleton<C>> getTransitiveInformation(final NormalNode<C> root1, final NormalNode<C> root2,
-			final BridgeNode<C> newBridgeNode, final Doubleton<C> inputDoubleton) {
+	private Iterable<T> getTransitiveInformation(final NormalNode<C> root1, final NormalNode<C> root2,
+			final BridgeNode<C> newBridgeNode, final T inputPair) {
 		// at the moment we only have an array-based implemenation
-		return getTransitiveInformationArrays(root1, root2, newBridgeNode, inputDoubleton);
+		return getTransitiveInformationArrays(root1, root2, newBridgeNode, inputPair);
 	}
 	
 	/**
@@ -197,23 +219,23 @@ public class ScopedTransitivityGenerator<C> {
 	 *            root of second tree
 	 * @param newBridgeNode
 	 *            bridge node connecting the two roots
-	 * @param inputDoubleton
+	 * @param inputPair
 	 *            information which should not occur in the result
 	 * @return all transitive information
 	 */
-	private Iterable<Doubleton<C>> getTransitiveInformationArrays(final NormalNode<C> root1, final NormalNode<C> root2,
-			final BridgeNode<C> newBridgeNode, final Doubleton<C> inputDoubleton) {
+	private Iterable<T> getTransitiveInformationArrays(final NormalNode<C> root1, final NormalNode<C> root2,
+			final BridgeNode<C> newBridgeNode, final T inputPair) {
 		// transform trees to arrays
 		final ArrayList<C> asList1 = toArrayList(root1, newBridgeNode);
 		final ArrayList<C> asList2 = toArrayList(root2, null);
 		
 		// insert all pairs to a list
-		final List<Doubleton<C>> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
+		final List<T> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
 		for (final C content1 : asList1) {
 			for (final C content2 : asList2) {
-				final Doubleton<C> doubleton = new Doubleton<>(content1, content2);
-				if (!doubleton.equals(inputDoubleton)) {
-					result.add(doubleton);
+				final T pair = createPair(content1, content2);
+				if (!pair.equals(inputPair)) {
+					result.add(pair);
 				}
 			}
 		}

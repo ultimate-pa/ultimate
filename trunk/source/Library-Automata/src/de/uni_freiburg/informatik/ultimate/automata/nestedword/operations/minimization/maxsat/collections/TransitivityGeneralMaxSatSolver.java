@@ -1,21 +1,23 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- * MAX-SAT solver for propositional logic clauses.
+ * Partial Max-SAT solver for propositional logic clauses.
  * <p>
  * The extension toward {@link GeneralMaxSatSolver} is that transitivity clauses need not be inserted but the equivalent
  * information can be generated on demand.<br>
- * As a price, the type of variables is more specific, namely a {@link Doubleton} of some other type {@link V}.
+ * As a price, the type of variables is more specific, namely a parametric pair (type {@link T}) of some other type
+ * {@link V}.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            type of {@link V} pair wrapper
  * @param <V>
- *            type of {@link Doubleton} contents
+ *            type of contents
  */
-public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doubleton<V>> {
-	private final ScopedTransitivityGenerator<V> mTransitivityGenerator;
+public class TransitivityGeneralMaxSatSolver<T, V> extends GeneralMaxSatSolver<T> {
+	private final ScopedTransitivityGenerator<T, V> mTransitivityGenerator;
 	
 	/**
 	 * Constructor.
@@ -26,32 +28,31 @@ public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doub
 	 *            transitivity generator
 	 */
 	public TransitivityGeneralMaxSatSolver(final AutomataLibraryServices services,
-			final ScopedTransitivityGenerator<V> transitivityGenerator) {
+			final ScopedTransitivityGenerator<T, V> transitivityGenerator) {
 		super(services);
 		mTransitivityGenerator = transitivityGenerator;
 	}
 	
 	@Override
-	public void addVariable(final Doubleton<V> doubleton) {
+	public void addVariable(final T pair) {
 		// check that transitivity generator knows the variables
-		assert mTransitivityGenerator.hasContent(doubleton.getOneElement())
-				&& mTransitivityGenerator.hasContent(doubleton.getOtherElement());
-
-		super.addVariable(doubleton);
+		assert mTransitivityGenerator.hasContent(pair);
+		
+		super.addVariable(pair);
 	}
 	
 	@Override
-	protected void setVariable(final Doubleton<V> doubleton, final boolean newStatus) {
-		super.setVariable(doubleton, newStatus);
+	protected void setVariable(final T pair, final boolean newStatus) {
+		super.setVariable(pair, newStatus);
 		
-		if (! newStatus) {
+		if (!newStatus) {
 			// ignore inequality
 			return;
 		}
 		
 		// process the transitivity information here
-		final Iterable<Doubleton<V>> transitiveVariables = mTransitivityGenerator.assertEquality(doubleton);
-		for (final Doubleton<V> equalityPair : transitiveVariables) {
+		final Iterable<T> transitiveVariables = mTransitivityGenerator.assertEquality(pair);
+		for (final T equalityPair : transitiveVariables) {
 			final VariableStatus status = getCurrentVariableStatus(equalityPair);
 			switch (status) {
 				case TRUE:
@@ -83,7 +84,7 @@ public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doub
 	}
 	
 	@Override
-	protected void backtrack(final Doubleton<V> doubleton) {
+	protected void backtrack(final T doubleton) {
 		// report to transitivity generator
 		mTransitivityGenerator.revertOneScope();
 		

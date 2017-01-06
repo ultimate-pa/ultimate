@@ -37,6 +37,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -99,11 +101,6 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		super(services, stateFactory, "MinimizeNwaPmaxSatAsymmetric", operand, settings.setSolverModeGeneral());
 		mEmptyStackState = mOperand.getEmptyStackState();
 		
-		// FIXME support transitivity
-		if (mSolver instanceof TransitivityGeneralMaxSatSolver) {
-			throw new IllegalArgumentException("Transitivity is currently not supported for asymmetric variables.");
-		}
-		
 		fillMapWithInitialPairs(initialPairs);
 		
 		run();
@@ -113,6 +110,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		for (final Pair<STATE, STATE> pair : initialPairs) {
 			mStatePairs.put(pair.getFirst(), pair.getSecond(), pair);
 		}
+	}
+
+	@Override
+	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
+		mTransitivityGenerator = new ScopedTransitivityGeneratorPair<>(mSettings.isUsePathCompression());
+		return new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
 	}
 	
 	@Override
