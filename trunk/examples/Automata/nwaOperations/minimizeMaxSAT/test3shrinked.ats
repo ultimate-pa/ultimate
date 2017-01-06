@@ -1,15 +1,18 @@
-NestedWordAutomaton nwa = removeUnreachable(nwaUnprocessed);
+NestedWordAutomaton nwa = removeDeadEnds(nwaUnprocessed);
 
-// how to get this to work?
-// INestedWordAutomatonSimple resultShrinkNwa = shrinkNwa(nwa);
-// INestedWordAutomatonSimple resultMinimizeSevpa = minimizeSevpa(nwa);
-// INestedWordAutomatonSimple resultMinimizeMaxSAT = minimizeNwaMaxSAT(nwa);
+int removeDeadEnds = numberOfStates(nwa);
+int shrinkNwa = numberOfStates(shrinkNwa(nwa));
+int minimizeSevpa = numberOfStates(minimizeSevpa(nwa));
+int minimizeNwaMaxSat = numberOfStates(minimizeNwaMaxSat(nwa));
+int minimizeNwaPmaxSat = numberOfStates(minimizeNwaPmaxSat(nwa));
+int minimizeNwaPmaxSatAsymmetric = numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa));
 
-print(numberOfStates(nwa));
-print(numberOfStates(shrinkNwa(nwa)));
-print(numberOfStates(minimizeSevpa(nwa)));
-print(numberOfStates(minimizeNwaMaxSAT(nwa)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa)));
+print(removeDeadEnds);
+print(shrinkNwa);
+print(minimizeSevpa);
+print(minimizeNwaMaxSat);
+print(minimizeNwaPmaxSat);
+print(minimizeNwaPmaxSatAsymmetric);
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = {c0 c1 },

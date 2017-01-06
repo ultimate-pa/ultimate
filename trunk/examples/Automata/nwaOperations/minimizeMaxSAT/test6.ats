@@ -1,10 +1,18 @@
 NestedWordAutomaton nwa = removeDeadEnds(nwaUnprocessed);
 
-print(numberOfStates(nwa));
-print(numberOfStates(shrinkNwa(nwa)));
-print(numberOfStates(minimizeSevpa(nwa)));
-print(numberOfStates(minimizeNwaMaxSat(nwa)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa)));
+int removeDeadEnds = numberOfStates(nwa);
+int shrinkNwa = numberOfStates(shrinkNwa(nwa));
+int minimizeSevpa = numberOfStates(minimizeSevpa(nwa));
+int minimizeNwaMaxSat = numberOfStates(minimizeNwaMaxSat(nwa));
+int minimizeNwaPmaxSat = numberOfStates(minimizeNwaPmaxSat(nwa));
+int minimizeNwaPmaxSatAsymmetric = numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa));
+
+print(removeDeadEnds);
+print(shrinkNwa);
+print(minimizeSevpa);
+print(minimizeNwaMaxSat);
+print(minimizeNwaPmaxSat);
+print(minimizeNwaPmaxSatAsymmetric);
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = {"call3572" "call3570" },
