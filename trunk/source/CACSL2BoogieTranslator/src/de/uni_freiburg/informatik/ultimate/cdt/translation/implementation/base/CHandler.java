@@ -852,7 +852,7 @@ public class CHandler implements ICHandler {
 							// old solution: havoc via an auxvar, new solution (below):
 							// just malloc at the right place (much shorter for arrays and structs..)
 							((ExpressionResult) result).stmt
-									.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, llVal, loc));
+									.add(mMemoryHandler.getMallocCall(llVal, loc));
 							mMemoryHandler.addVariableToBeFreed(main,
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
@@ -872,7 +872,7 @@ public class CHandler implements ICHandler {
 							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
 							((ExpressionResult) result).stmt
-									.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, llVal, loc));
+									.add(mMemoryHandler.getMallocCall(llVal, loc));
 						}
 
 						((ExpressionResult) result).stmt.addAll(initRex.stmt);

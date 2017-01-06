@@ -358,8 +358,7 @@ public class PostProcessor {
 				for (final String id : vl.getIdentifiers()) {
 					if (main.mCHandler.isHeapVar(id)) {
 						final LocalLValue llVal = new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType());
-						initStatements.add(memoryHandler.getMallocCall(main, functionHandler,
-								llVal, currentDeclsLoc));
+						initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
 					}
 
 					//					if (initializer != null) {

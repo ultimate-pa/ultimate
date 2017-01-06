@@ -1375,7 +1375,7 @@ public class FunctionHandler {
 							// its ctype stays the same
 							new RValue(rhsId, cvar), new ArrayList<Declaration>(),
 							new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
-					stmt.add(memoryHandler.getMallocCall(main, this, llv, igLoc));
+					stmt.add(memoryHandler.getMallocCall(llv, igLoc));
 					stmt.addAll(assign.stmt);
 				} else {
 					stmt.add(

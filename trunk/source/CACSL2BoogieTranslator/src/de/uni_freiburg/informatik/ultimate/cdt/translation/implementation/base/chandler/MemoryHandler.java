@@ -1477,7 +1477,7 @@ public class MemoryHandler {
 	// return mallocRex;
 	// }
 
-	public CallStatement getMallocCall(final Dispatcher main, final FunctionHandler fh, final LocalLValue resultPointer, final ILocation loc) {
+	public CallStatement getMallocCall(final LocalLValue resultPointer, final ILocation loc) {
 		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType()),
 				((VariableLHS) resultPointer.getLHS()).getIdentifier(), loc);
 	}
@@ -1813,7 +1813,7 @@ public class MemoryHandler {
 	public ArrayList<Statement> insertMallocs(final Dispatcher main, final ArrayList<Statement> block) {
 		final ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
-			mallocs.add(this.getMallocCall(main, mFunctionHandler, llvp.llv, llvp.loc));
+			mallocs.add(this.getMallocCall(llvp.llv, llvp.loc));
 		}
 		final ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
