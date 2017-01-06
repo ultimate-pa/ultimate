@@ -104,7 +104,6 @@ public class HybridModel {
 				mMergedAutomata.put(hybAut.getName(), hybAut);
 			});
 		}
-		// SpaceExPreferenceManager mPreferenceManager = new SpaceExPreferenceManager(services, mLogger);
 	}
 	
 	private HybridSystem createDefaultSystem(final Map<String, ComponentType> automata) {
