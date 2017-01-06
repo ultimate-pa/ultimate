@@ -38,7 +38,8 @@
 								</goals>
 							</execution>
 						</executions>
-						<!-- We need to say which products will be build and assign each of them
+						<!-- We need to say which products will be build and assign each of 
+							them
 							a unique attachId (dont know why, it just is) -->
 						<configuration>
 							<formats>
@@ -56,6 +57,10 @@
 								<product>
 									<id>ReqAnalyzer</id>
 									<attachId>ReqAnalyzer</attachId>
+								</product>
+								<product>
+									<id>DeltaDebugger</id>
+									<attachId>UltimateDeltaDebugger</attachId>
 								</product>
 							</products>
 						</configuration>
