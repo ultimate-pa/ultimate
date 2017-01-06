@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -49,29 +48,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann
  *
  */
-public class StraightLineInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+public class StraightLineInterpolantAutomatonBuilder<LETTER>
+		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 	private final IUltimateServiceProvider mServices;
 
-	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
-	public StraightLineInterpolantAutomatonBuilder(IUltimateServiceProvider services,
-			InCaReAlphabet<CodeBlock> alphabet, IInterpolantGenerator interpolantGenerator,
-			PredicateFactoryForInterpolantAutomata predicateFactory) {
+	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
+			final InCaReAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
+			final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		mServices = services;
 		final InterpolantsPreconditionPostcondition ipp =
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
-		mResult = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-				alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(),
-				predicateFactory);
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
+				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
 		addStatesAndTransitions(interpolantGenerator, predicateFactory, ipp);
 	}
 
-	private void addStatesAndTransitions(IInterpolantGenerator interpolantGenerator,
-			PredicateFactoryForInterpolantAutomata predicateFactory, InterpolantsPreconditionPostcondition ipp) {
+	private void addStatesAndTransitions(final IInterpolantGenerator interpolantGenerator,
+			final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final InterpolantsPreconditionPostcondition ipp) {
 
 		mResult.addState(true, false, interpolantGenerator.getPrecondition());
 		mResult.addState(false, true, interpolantGenerator.getPostcondition());
-		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
+		final NestedWord<LETTER> trace = (NestedWord<LETTER>) interpolantGenerator.getTrace();
 		for (int i = 0; i < trace.length(); i++) {
 			final IPredicate pred = ipp.getInterpolant(i);
 			final IPredicate succ = ipp.getInterpolant(i + 1);
@@ -94,7 +94,7 @@ public class StraightLineInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	@Override
-	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 

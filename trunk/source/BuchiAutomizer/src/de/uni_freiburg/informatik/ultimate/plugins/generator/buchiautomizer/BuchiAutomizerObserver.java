@@ -3,22 +3,22 @@
  * Copyright (C) 2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -64,17 +64,17 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFi
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -93,7 +93,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private CfgSmtToolkit mCsToolkit;
 	private TAPreferences mPref;
 
-	private BoogieIcfgContainer mRootAnnot;
+	private IIcfg<?> mIcfg;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
@@ -104,23 +104,23 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		if (!(root instanceof BoogieIcfgContainer)) {
+		if (!(root instanceof IIcfg<?>)) {
 			return false;
 		}
-		mRootAnnot = (BoogieIcfgContainer) root;
+		mIcfg = (IIcfg<?>) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getCfgSmtToolkit().getModifiableGlobalsTable(),
-				mRootAnnot.getCfgSmtToolkit().getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-				mRootAnnot.getCfgSmtToolkit().getAxioms(), mRootAnnot.getCfgSmtToolkit().getProcedures());
+		mCsToolkit = new CfgSmtToolkit(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(),
+				mIcfg.getCfgSmtToolkit().getManagedScript(), mIcfg.getSymboltable(),
+				mIcfg.getCfgSmtToolkit().getAxioms(), mIcfg.getCfgSmtToolkit().getProcedures());
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
 				mCsToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 
-		final BuchiCegarLoop bcl =
-				new BuchiCegarLoop(mRootAnnot, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop<?> bcl =
+				new BuchiCegarLoop<>(mIcfg, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -154,7 +154,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
 			// mRootAnnot.getBoogie2Smt().translate(term)
-			final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
+			// final Term2Expression term2expression = mIcfg.getBoogie2SMT().getTerm2Expression();
 
 			final List<Map<IProgramVar, Rational>> states = new ArrayList<>();
 			states.add(gnta.getStateInit());
@@ -175,7 +175,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(result);
 	}
 
-	private void interpretAndReportResult(final BuchiCegarLoop bcl, final Result result) throws AssertionError {
+	private void interpretAndReportResult(final BuchiCegarLoop<?> bcl, final Result result) throws AssertionError {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
@@ -205,7 +205,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING, longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
-			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			final NestedLassoRun<?, IPredicate> counterexample = bcl.getCounterexample();
 			final StringBuilder longDescr = new StringBuilder();
 			longDescr.append("Buchi Automizer is unable to decide " + whatToProve + " for the following lasso. ");
 			longDescr.append(System.getProperty("line.separator"));
@@ -218,7 +218,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			final BoogieIcfgLocation position = mRootAnnot.getProcedureEntryNodes().values().iterator().next();
+			final IcfgLocation position = mIcfg.getProcedureEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
 			final IResult reportRes = new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
@@ -230,7 +230,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING, longDescr);
 			reportResult(reportRes);
 
-			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			final BoogieIcfgLocation honda = (BoogieIcfgLocation) ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
@@ -254,27 +254,27 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportLTLPropertyHolds(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
+	private void reportLTLPropertyHolds(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
 		final IResult result = new AllSpecificationsHoldResult(Activator.PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
 		reportResult(result);
 	}
 
-	private void reportLTLPropertyIsViolated(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
-		final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+	private void reportLTLPropertyIsViolated(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
+		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
 		final BoogieIcfgLocation position =
 				(BoogieIcfgLocation) ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
-		final List<CodeBlock> stem = counterexample.getStem().getWord().asList();
-		final List<CodeBlock> loop = counterexample.getLoop().getWord().asList();
+		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();
+		final List<? extends IIcfgTransition<?>> loop = counterexample.getLoop().getWord().asList();
 
 		final boolean isFinite = isLTLCounterExampleFinite(loop);
 
 		if (isFinite) {
 			// TODO: Make some attempt at getting the values
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
-			final List<CodeBlock> combined = new ArrayList<>();
+			final List<IIcfgTransition<?>> combined = new ArrayList<>();
 			combined.addAll(stem);
 
 			// TODO: It seems that the loop is not necessary if the trace is
@@ -303,7 +303,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private boolean isLTLCounterExampleFinite(final List<CodeBlock> loop) {
+	private boolean isLTLCounterExampleFinite(final List<?> loop) {
 		// TODO: does not work reliably
 		// boolean isFinite = true;
 		//
@@ -334,12 +334,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-
+		// not needed
 	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-
+		// not needed
 	}
 
 	@Override

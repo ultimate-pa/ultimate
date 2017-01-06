@@ -34,12 +34,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -62,7 +62,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Matthias Heizmann
  */
-public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
+public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
+		extends BasicAbstractInterpolantAutomaton<LETTER> {
 
 	protected final Set<IPredicate> mNonTrivialPredicates;
 	protected final boolean mConservativeSuccessorCandidateSelection;
@@ -75,9 +76,9 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
-			final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier,
-			final boolean conservativeSuccessorCandidateSelection, final boolean secondChance) {
+			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final PredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
+			final boolean secondChance) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
@@ -133,7 +134,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	}
 
 	@Override
-	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		Set<IPredicate> successorCandidates;
 		if (mConservativeSuccessorCandidateSelection) {
@@ -180,7 +181,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	 * Additionally, we also add all successors of the "true" state.
 	 */
 	@Override
-	protected void addInputAutomatonSuccs(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+	protected void addInputAutomatonSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		final Collection<IPredicate> succs = sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
 		copyAllButTrue(inputSuccs, succs);
@@ -208,7 +209,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 
 	@Override
 	protected void constructSuccessorsAndTransitions(final IPredicate resPred, final IPredicate resHier,
-			final CodeBlock letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+			final LETTER letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		for (final IPredicate succ : inputSuccs) {
 			sch.addTransition(resPred, resHier, letter, succ);
 		}

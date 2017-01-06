@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -63,17 +64,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CegarAbsIntRunner {
-	
+public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
+
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
 	private final CfgSmtToolkit mCsToolkit;
-	private final IIcfg<BoogieIcfgLocation> mRoot;
+	private final IIcfg<?> mRoot;
 
-	private final Set<Set<CodeBlock>> mKnownPathPrograms;
-	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
+	private final Set<Set<LETTER>> mKnownPathPrograms;
+	private IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mAbsIntResult;
 
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
@@ -83,7 +84,7 @@ public class CegarAbsIntRunner {
 	private boolean mSkipIteration;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
-			final IIcfg<BoogieIcfgLocation> root, final SimplificationTechnique simplificationTechnique,
+			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
@@ -129,10 +130,16 @@ public class CegarAbsIntRunner {
 	 * <li>The path program does not contain any loops.
 	 * </ul>
 	 */
-	public void generateFixpoints(final IRun<CodeBlock, IPredicate, ?> currentCex,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> currentAbstraction) {
+	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
+
+		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
+			// TODO: AI only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented.
+			throw new UnsupportedOperationException(
+					"AbsInt only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented");
+		}
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return;
 		}
@@ -141,7 +148,7 @@ public class CegarAbsIntRunner {
 		try {
 			mAbsIntResult = null;
 
-			final Set<CodeBlock> pathProgramSet = convertCex2Set(currentCex);
+			final Set<LETTER> pathProgramSet = convertCex2Set(currentCex);
 
 			if (!mKnownPathPrograms.add(pathProgramSet)) {
 				mSkipIteration = true;
@@ -164,15 +171,17 @@ public class CegarAbsIntRunner {
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
-				for (final CodeBlock trans : pathProgramSet) {
+				for (final LETTER trans : pathProgramSet) {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
 			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
-					AbstractInterpreter.runOnPathProgram(mRoot, currentAbstraction,
-							(NestedRun<CodeBlock, IPredicate>) currentCex, pathProgramSet, timer, mServices);
-			mAbsIntResult = result;
+					AbstractInterpreter.runOnPathProgram((IIcfg<BoogieIcfgLocation>) mRoot,
+							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
+							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
+							mServices);
+			mAbsIntResult = (IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) result;
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
 			}
@@ -181,7 +190,7 @@ public class CegarAbsIntRunner {
 		}
 	}
 
-	private static boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
+	private boolean containsLoop(final Set<LETTER> pathProgramSet) {
 		final Set<IcfgLocation> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
@@ -198,9 +207,9 @@ public class CegarAbsIntRunner {
 		return mMode == AbstractInterpretationMode.NONE;
 	}
 
-	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
-			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final IRun<CodeBlock, IPredicate, ?> currentCex) {
+	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
+			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return null;
 		}
@@ -215,17 +224,17 @@ public class CegarAbsIntRunner {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton with mode " + mMode);
-			final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> aiInterpolAutomatonBuilder;
+			final IInterpolantAutomatonBuilder<LETTER, IPredicate> aiInterpolAutomatonBuilder;
 			switch (mMode) {
 			case NONE:
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
-				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
+				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
 						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getSymboltable(), currentCex,
 						mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
-				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
+				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
 						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique, mRoot.getSymboltable());
 				break;
@@ -233,7 +242,7 @@ public class CegarAbsIntRunner {
 				throw new UnsupportedOperationException(
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
-				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
+				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
 						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mRoot.getSymboltable(),
 						mSimplificationTechnique, mXnfConversionTechnique);
 				break;
@@ -246,8 +255,8 @@ public class CegarAbsIntRunner {
 		}
 	}
 
-	private static Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
-		final Set<CodeBlock> transitions = new HashSet<>();
+	private Set<LETTER> convertCex2Set(final IRun<LETTER, IPredicate, ?> currentCex) {
+		final Set<LETTER> transitions = new HashSet<>();
 		// words count their states, so 0 is first state, length is last state
 		final int length = currentCex.getLength() - 1;
 		for (int i = 0; i < length; ++i) {

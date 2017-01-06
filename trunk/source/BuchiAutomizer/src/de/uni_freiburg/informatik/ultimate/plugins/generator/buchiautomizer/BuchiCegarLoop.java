@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -71,7 +71,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -79,14 +81,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -113,11 +111,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
-public class BuchiCegarLoop {
-	protected final ILogger mLogger;
-	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Result of CEGAR loop iteration
@@ -133,6 +127,21 @@ public class BuchiCegarLoop {
 		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING
 	}
 
+	private static final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	private static final XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
+
+	protected static final Format PRINT_AUTOMATA_LABELING = Format.ATS;
+
+	/**
+	 * If set to false we crash if the call alphabet is not empty.
+	 */
+	private static final boolean ALLOW_CALLS = true;
+
+	protected final ILogger mLogger;
+
 	/**
 	 * true iff we are run in an LTL toolchain and should report appropriate results
 	 */
@@ -143,7 +152,7 @@ public class BuchiCegarLoop {
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the
 	 */
-	protected final BoogieIcfgContainer mRootAnnot;
+	protected final IIcfg<?> mIcfg;
 
 	protected final CfgSmtToolkit mCsToolkitWithoutRankVars;
 	protected final CfgSmtToolkit mCsToolkitWithRankVars;
@@ -165,7 +174,7 @@ public class BuchiCegarLoop {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
+	protected NestedLassoRun<LETTER, IPredicate> mCounterexample;
 
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
@@ -173,15 +182,14 @@ public class BuchiCegarLoop {
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of of the program.
 	 */
-	protected INestedWordAutomaton<CodeBlock, IPredicate> mAbstraction;
+	protected INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
 
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected NestedWordAutomaton<CodeBlock, IPredicate> mInterpolAutomaton;
+	protected NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton;
 
-	protected IAutomaton<CodeBlock, IPredicate> mArtifactAutomaton;
-	protected final static Format mPrintAutomataLabeling = Format.ATS;
+	protected IAutomaton<LETTER, IPredicate> mArtifactAutomaton;
 
 	// used for the collection of statistics
 	int mInfeasible = 0;
@@ -197,11 +205,6 @@ public class BuchiCegarLoop {
 
 	private final BuchiCegarLoopBenchmarkGenerator mBenchmarkGenerator;
 
-	/**
-	 * If set to false we crash if the call alphabet is not empty.
-	 */
-	private static final boolean ALLOW_CALLS = true;
-
 	private final boolean mDifference;
 	private final boolean mUseDoubleDeckers;
 	private final BuchiComplementationConstruction mComplementationConstruction;
@@ -211,7 +214,7 @@ public class BuchiCegarLoop {
 
 	private final InterpolationTechnique mInterpolation;
 
-	private final RefineBuchi mRefineBuchi;
+	private final RefineBuchi<LETTER> mRefineBuchi;
 	private final List<BuchiInterpolantAutomatonConstructionStyle> mBiaConstructionStyleSequence;
 
 	private final Minimization mAutomataMinimizationAfterFeasbilityBasedRefinement;
@@ -226,8 +229,6 @@ public class BuchiCegarLoop {
 	private ToolchainCanceledException mToolchainCancelledException;
 	private final RankVarConstructor mRankVarConstructor;
 
-	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
-
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
 	}
@@ -236,9 +237,8 @@ public class BuchiCegarLoop {
 		return mNonterminationArgument;
 	}
 
-	public BuchiCegarLoop(final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public BuchiCegarLoop(final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert services != null;
 		mLTLMode = false;
 		mServices = services;
@@ -246,9 +246,9 @@ public class BuchiCegarLoop {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
-		mRootAnnot = rootNode;
+		mIcfg = icfg;
 		mPredicateFactory = predicateFactory;
-		mRankVarConstructor = new RankVarConstructor(rootNode);
+		mRankVarConstructor = new RankVarConstructor(icfg);
 		mCsToolkitWithoutRankVars = csToolkit;
 		mCsToolkitWithRankVars = mRankVarConstructor.getCsToolkitWithRankVariables();
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
@@ -293,7 +293,7 @@ public class BuchiCegarLoop {
 			mTermcompProofBenchmark = null;
 		}
 
-		mRefineBuchi = new RefineBuchi(mRootAnnot, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
+		mRefineBuchi = new RefineBuchi<>(mIcfg, mCsToolkitWithRankVars, predicateFactory, mPref.dumpAutomata(),
 				mDifference, mDefaultStateFactory, mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(),
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, mSimplificationTechnique,
 				mXnfConversionTechnique);
@@ -303,11 +303,11 @@ public class BuchiCegarLoop {
 		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
 	}
 
-	NestedLassoRun<CodeBlock, IPredicate> getCounterexample() {
+	NestedLassoRun<LETTER, IPredicate> getCounterexample() {
 		return mCounterexample;
 	}
 
-	static boolean emptyStem(final NestedLassoRun<CodeBlock, IPredicate> nlr) {
+	static boolean isEmptyStem(final NestedLassoRun<?, IPredicate> nlr) {
 		assert nlr.getStem().getLength() > 0;
 		return nlr.getStem().getLength() == 1;
 	}
@@ -331,7 +331,7 @@ public class BuchiCegarLoop {
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = mRootAnnot.getFilename() + "_" + mName + "Abstraction" + mIteration;
+			final String filename = mIcfg.getIdentifier() + "_" + mName + "Abstraction" + mIteration;
 			writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(), "");
 		}
 
@@ -377,26 +377,25 @@ public class BuchiCegarLoop {
 				return Result.TERMINATING;
 			}
 
-			LassoChecker lassoChecker;
+			LassoChecker<LETTER> lassoChecker;
 			try {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
-				lassoChecker = new LassoChecker(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
-						mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-						mCsToolkitWithoutRankVars.getModifiableGlobalsTable(), mRootAnnot.getBoogie2SMT().getAxioms(),
-						mBinaryStatePredicateManager, mCounterexample, generateLassoCheckerIdentifier(), mServices,
-						mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+				lassoChecker = new LassoChecker<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
+						mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
+						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
+						generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique,
+						mXnfConversionTechnique);
 				if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
 					// This allows us to verify Vincent's coolant examples
 					mLogger.info("Result of lasso check was UNKNOWN. I will concatenate loop to stem and try again.");
-					final NestedRun<CodeBlock, IPredicate> newStem =
+					final NestedRun<LETTER, IPredicate> newStem =
 							mCounterexample.getStem().concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
-					lassoChecker = new LassoChecker(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
-							mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
-							mRootAnnot.getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
+					lassoChecker = new LassoChecker<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
+							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
+							mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 							generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique,
 							mXnfConversionTechnique);
 				}
@@ -435,7 +434,7 @@ public class BuchiCegarLoop {
 									mCounterexample.getStem().getWord(), mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 
@@ -466,7 +465,7 @@ public class BuchiCegarLoop {
 									mCounterexample.getStem().getWord(), mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
 
-					final INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+					final INestedWordAutomaton<LETTER, IPredicate> newAbstraction = refineBuchi(lassoChecker);
 					mAbstraction = newAbstraction;
 					mBinaryStatePredicateManager.clearPredicates();
 					reduceAbstractionSize(mAutomataMinimizationAfterRankBasedRefinement);
@@ -506,14 +505,14 @@ public class BuchiCegarLoop {
 				}
 
 				if (mPref.dumpAutomata()) {
-					final String filename = mRootAnnot.getFilename() + "_" + "Abstraction" + mIteration;
+					final String filename = mIcfg.getIdentifier() + "_" + "Abstraction" + mIteration;
 					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
 							"");
 				}
 				final boolean newMaximumReached =
 						mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
 				if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-					final String filename = mRootAnnot.getFilename();
+					final String filename = mIcfg.getIdentifier();
 					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
 							"");
 				}
@@ -535,8 +534,8 @@ public class BuchiCegarLoop {
 	}
 
 	private Map<String, ILocation> lassoWasOverapproximated() {
-		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
-		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
+		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
+		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();
 		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(stem.asList()));
 		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(loop.asList()));
@@ -560,7 +559,7 @@ public class BuchiCegarLoop {
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
 			mAbstraction = new BuchiClosureNwa<>(new AutomataLibraryServices(mServices), mAbstraction);
-			// mAbstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(mServices, mAbstraction)).getResult();
+			// mAbstraction = (new RemoveDeadEnds<LETTER, IPredicate>(mServices, mAbstraction)).getResult();
 		} finally {
 			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		}
@@ -576,7 +575,7 @@ public class BuchiCegarLoop {
 
 			if (mAbstraction.size() > 0) {
 				final Function<ISLPredicate, IcfgLocation> locProvider = x -> x.getProgramPoint();
-				AutomataMinimization<IcfgLocation, ISLPredicate> am;
+				AutomataMinimization<IcfgLocation, ISLPredicate, LETTER> am;
 				try {
 					am = new AutomataMinimization<>(mServices, mAbstraction, automataMinimization, false, mIteration,
 							mStateFactoryForRefinement, -1, null, mInterpolAutomaton, -1,
@@ -598,7 +597,7 @@ public class BuchiCegarLoop {
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
 
-	private INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(final LassoChecker lassoChecker)
+	private INestedWordAutomaton<LETTER, IPredicate> refineBuchi(final LassoChecker<LETTER> lassoChecker)
 			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
@@ -608,7 +607,7 @@ public class BuchiCegarLoop {
 		// mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
 		for (final BuchiInterpolantAutomatonConstructionStyle constructionStyle : mBiaConstructionStyleSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
-			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
+			INestedWordAutomaton<LETTER, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, constructionStyle,
 						lassoChecker.getBinaryStatePredicateManager(),
@@ -654,7 +653,7 @@ public class BuchiCegarLoop {
 	}
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
-		final BuchiIsEmpty<CodeBlock, IPredicate> ec =
+		final BuchiIsEmpty<LETTER, IPredicate> ec =
 				new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction);
 		if (ec.getResult()) {
 			return true;
@@ -671,19 +670,19 @@ public class BuchiCegarLoop {
 	}
 
 	private void getInitialAbstraction() {
-		final CFG2NestedWordAutomaton<CodeBlock> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
+		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
 				mPref.interprocedural(), mCsToolkitWithoutRankVars, mPredicateFactory, mLogger);
-		Collection<BoogieIcfgLocation> acceptingNodes;
-		final Collection<BoogieIcfgLocation> allNodes = new HashSet<>();
-		for (final Map<String, BoogieIcfgLocation> prog2pp : mRootAnnot.getProgramPoints().values()) {
+		Collection<IcfgLocation> acceptingNodes;
+		final Collection<IcfgLocation> allNodes = new HashSet<>();
+		for (final Map<String, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 
 		// check if we run in LTL mode and set accepting states accordingly
-		if (LTLPropertyCheck.getAnnotation(mRootAnnot) != null) {
+		if (LTLPropertyCheck.getAnnotation(mIcfg) != null) {
 			mLTLMode = true;
 			acceptingNodes = new HashSet<>();
-			for (final BoogieIcfgLocation pp : allNodes) {
+			for (final IcfgLocation pp : allNodes) {
 				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
 					acceptingNodes.add(pp);
 				}
@@ -692,17 +691,17 @@ public class BuchiCegarLoop {
 			mLTLMode = false;
 			acceptingNodes = allNodes;
 		}
-		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mRootAnnot, mDefaultStateFactory, acceptingNodes);
+		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mIcfg, mDefaultStateFactory, acceptingNodes);
 		if (!ALLOW_CALLS && !mAbstraction.getCallAlphabet().isEmpty()) {
 			throw new AssertionError("Calls are not allowed in this debugging mode");
 		}
 	}
 
-	private void refineFinite(final LassoChecker lassoChecker) throws AutomataOperationCanceledException {
+	private void refineFinite(final LassoChecker<LETTER> lassoChecker) throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final InterpolatingTraceChecker traceChecker;
-		final NestedRun<CodeBlock, IPredicate> run;
-		final LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
+		final NestedRun<LETTER, IPredicate> run;
+		final LassoChecker<LETTER>.LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		if (lassoChecker.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 			// if both (stem and loop) are infeasible we take the smaller
 			// one.
@@ -731,11 +730,12 @@ public class BuchiCegarLoop {
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
 				HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
 
-		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-				mCsToolkitWithRankVars, htc, mInterpolAutomaton, traceChecker.getPredicateUnifier(), false, false);
-		final PowersetDeterminizer<CodeBlock, IPredicate> psd =
+		final DeterministicInterpolantAutomaton<LETTER> determinized =
+				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkitWithRankVars, htc, mInterpolAutomaton,
+						traceChecker.getPredicateUnifier(), false, false);
+		final PowersetDeterminizer<LETTER, IPredicate> psd =
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
-		Difference<CodeBlock, IPredicate> diff = null;
+		Difference<LETTER, IPredicate> diff = null;
 		try {
 			diff = new Difference<>(new AutomataLibraryServices(mServices), mAbstraction, determinized, psd,
 					mStateFactoryForRefinement, true);
@@ -751,7 +751,7 @@ public class BuchiCegarLoop {
 		determinized.switchToReadonlyMode();
 		if (mPref.dumpAutomata()) {
 			final String filename =
-					mRootAnnot.getFilename() + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
+					mIcfg.getIdentifier() + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
 			writeAutomatonToFile(mServices, mInterpolAutomaton, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
 					"");
 		}
@@ -759,7 +759,7 @@ public class BuchiCegarLoop {
 			mTermcompProofBenchmark.reportFiniteModule(mIteration, mRefineBuchi.getInterpolAutomatonUsedInRefinement());
 		}
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
-		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
 		mAbstraction = diff.getResult();
 		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
@@ -768,8 +768,8 @@ public class BuchiCegarLoop {
 	}
 
 	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
-			final NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
-		final CanonicalInterpolantAutomatonBuilder<? extends Object> iab =
+			final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
+		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 				new CanonicalInterpolantAutomatonBuilder<>(mServices, traceChecker.getIpp(), run.getStateSequence(),
 						new InCaReAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
 						mLogger, traceChecker.getPredicateUnifier(), run.getWord());
@@ -784,16 +784,16 @@ public class BuchiCegarLoop {
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
-		// assert((new BuchiAccepts<CodeBlock, IPredicate>(mInterpolAutomaton,
+		// assert((new BuchiAccepts<LETTER, IPredicate>(mInterpolAutomaton,
 		// mCounterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
-		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
 	}
 
 	private TerminationArgumentResult<IIcfgElement, Term> constructTAResult(
-			final TerminationArgument terminationArgument, final IcfgLocation honda, final NestedWord<CodeBlock> stem,
-			final NestedWord<CodeBlock> loop) {
+			final TerminationArgument terminationArgument, final IcfgLocation honda, final NestedWord<LETTER> stem,
+			final NestedWord<LETTER> loop) {
 		final RankingFunction rf = terminationArgument.getRankingFunction();
 		final Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
 		final Term[] supporting_invariants = new Term[si_list.size()];
@@ -809,8 +809,8 @@ public class BuchiCegarLoop {
 	}
 
 	protected static void writeAutomatonToFile(final IUltimateServiceProvider services,
-			final IAutomaton<CodeBlock, IPredicate> automaton, final String path, final String filename,
-			final Format format, final String message) {
+			final IAutomaton<?, IPredicate> automaton, final String path, final String filename, final Format format,
+			final String message) {
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(services), "nwa",
 				path + "/" + filename, format, message, automaton);
 	}
@@ -826,10 +826,10 @@ public class BuchiCegarLoop {
 	/**
 	 * Returns an Identifier that describes a lasso analysis. Right now, this is the Filename (without path prefix) of
 	 * analyzed file together with the number of the current iteration.
-	 * 
+	 *
 	 */
 	public String generateLassoCheckerIdentifier() {
-		final String pureFilename = mRootAnnot.getFilename();
+		final String pureFilename = mIcfg.getIdentifier();
 		return pureFilename + "_Iteration" + mIteration;
 	}
 
@@ -844,7 +844,7 @@ public class BuchiCegarLoop {
 		return mLTLMode;
 	}
 
-	private static boolean automatonUsesISLPredicates(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private boolean automatonUsesISLPredicates(final INestedWordAutomaton<LETTER, IPredicate> nwa) {
 		final Set<IPredicate> states = nwa.getStates();
 		if (states.isEmpty()) {
 			return true;

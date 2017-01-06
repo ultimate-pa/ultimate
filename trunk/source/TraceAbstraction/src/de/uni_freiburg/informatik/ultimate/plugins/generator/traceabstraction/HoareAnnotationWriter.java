@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class HoareAnnotationWriter {
 
 	private final IUltimateServiceProvider mServices;
-	private final IIcfg<BoogieIcfgLocation> mRootAnnot;
+	private final IIcfg<?> mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationComposer mCegarLoopHoareAnnotation;
@@ -66,12 +65,12 @@ public class HoareAnnotationWriter {
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
 
-	public HoareAnnotationWriter(final IIcfg<BoogieIcfgLocation> rootAnnot, final CfgSmtToolkit csToolkit,
+	public HoareAnnotationWriter(final IIcfg<?> icfg, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final HoareAnnotationComposer cegarLoopHoareAnnotation,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplicationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mRootAnnot = rootAnnot;
+		mIcfg = icfg;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mCegarLoopHoareAnnotation = cegarLoopHoareAnnotation;
@@ -106,8 +105,8 @@ public class HoareAnnotationWriter {
 	 * @param pp2preds
 	 */
 	private void addHoareAnnotationForContext(final CfgSmtToolkit csToolkit, final IPredicate precondForContext,
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds) {
-		for (final BoogieIcfgLocation pp : pp2preds.getDomain()) {
+			final HashRelation<IcfgLocation, IPredicate> pp2preds) {
+		for (final IcfgLocation pp : pp2preds.getDomain()) {
 			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
 			final Term tvp = mPredicateFactory.or(false, preds);
 			final IPredicate formulaForPP = mPredicateFactory.newPredicate(tvp);
@@ -118,7 +117,7 @@ public class HoareAnnotationWriter {
 	private void addFormulasToLocNodes(final IcfgLocation pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
 		final String locName = pp.getDebugIdentifier();
-		final BoogieIcfgLocation locNode = mRootAnnot.getProgramPoints().get(procName).get(locName);
+		final IcfgLocation locNode = mIcfg.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
 
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);

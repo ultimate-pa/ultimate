@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -41,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Check if each edge of automaton is inductive (resp. if inductivity can be refuted if <i>antiInductivity</i> is set).
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param assertInductivity
  *            if true, assert statements require inductivity (resp. anti-inductivity)
  */
-public class InductivityCheck {
+public class InductivityCheck<LETTER extends IAction> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -62,9 +62,9 @@ public class InductivityCheck {
 	private final int[] mYield;
 	private final boolean mResult;
 
-	public InductivityCheck(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> nwa, final boolean antiInductivity,
-			final boolean assertInductivity, final IHoareTripleChecker hoareTripleChecker) {
+	public InductivityCheck(final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, IPredicate> nwa,
+			final boolean antiInductivity, final boolean assertInductivity,
+			final IHoareTripleChecker hoareTripleChecker) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -79,7 +79,7 @@ public class InductivityCheck {
 		return mResult;
 	}
 
-	private boolean checkInductivity(final INestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private boolean checkInductivity(final INestedWordAutomaton<LETTER, IPredicate> nwa) {
 		if (mAntiInductivity) {
 			mLogger.debug("Start checking anti-inductivity of automaton");
 		} else {
@@ -97,25 +97,25 @@ public class InductivityCheck {
 		// neither proven nor refuted because there were no interpolants
 
 		for (final IPredicate state : nwa.getStates()) {
-			for (final CodeBlock cb : nwa.lettersInternal(state)) {
-				for (final OutgoingInternalTransition<CodeBlock, IPredicate> outTrans : nwa.internalSuccessors(state,
+			for (final LETTER cb : nwa.lettersInternal(state)) {
+				for (final OutgoingInternalTransition<LETTER, IPredicate> outTrans : nwa.internalSuccessors(state,
 						cb)) {
 					final Validity inductivity =
 							mHoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (final CodeBlock cb : nwa.lettersCall(state)) {
-				for (final OutgoingCallTransition<CodeBlock, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
+			for (final LETTER cb : nwa.lettersCall(state)) {
+				for (final OutgoingCallTransition<LETTER, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
 					final Validity inductivity =
 							mHoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
 					evaluateResult(inductivity, state, outTrans);
 				}
 			}
-			for (final CodeBlock cb : nwa.lettersReturn(state)) {
+			for (final LETTER cb : nwa.lettersReturn(state)) {
 				for (final IPredicate hier : nwa.hierarchicalPredecessorsOutgoing(state, cb)) {
-					for (final OutgoingReturnTransition<CodeBlock, IPredicate> outTrans : nwa.returnSuccessors(state,
-							hier, cb)) {
+					for (final OutgoingReturnTransition<LETTER, IPredicate> outTrans : nwa.returnSuccessors(state, hier,
+							cb)) {
 						final Validity inductivity =
 								mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
 						evaluateResult(inductivity, state, outTrans);

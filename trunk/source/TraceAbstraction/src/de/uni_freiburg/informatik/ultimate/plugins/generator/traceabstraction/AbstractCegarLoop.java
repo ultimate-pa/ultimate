@@ -50,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -72,8 +72,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class AbstractCegarLoop {
-	
+public abstract class AbstractCegarLoop<LETTER extends IAction> {
+
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
@@ -87,99 +87,99 @@ public abstract class AbstractCegarLoop {
 	public enum Result {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
-	
+
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
-	
+
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
 	 * Important only for debugging and debugging output written to files.
 	 */
 	private final String mName;
-	
+
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
-	protected final IIcfg<BoogieIcfgLocation> mIcfgContainer;
-	
+	protected final IIcfg<?> mIcfgContainer;
+
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final PredicateFactory mPredicateFactory;
-	
+
 	/**
 	 * Intermediate layer to encapsulate preferences.
 	 */
 	protected final TAPreferences mPref;
-	
+
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
 	 */
-	protected final Collection<BoogieIcfgLocation> mErrorLocs;
-	
+	protected final Collection<? extends IcfgLocation> mErrorLocs;
+
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
 	protected int mIteration = 0;
-	
+
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected IRun<CodeBlock, IPredicate, ?> mCounterexample;
-	
+	protected IRun<LETTER, IPredicate, ?> mCounterexample;
+
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
 	 * <ul>
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of the program.
 	 */
-	protected IAutomaton<CodeBlock, IPredicate> mAbstraction;
-	
+	protected IAutomaton<LETTER, IPredicate> mAbstraction;
+
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
 	 */
 	protected IInterpolantGenerator mInterpolantGenerator;
-	
+
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected NestedWordAutomaton<CodeBlock, IPredicate> mInterpolAutomaton;
-	
+	protected NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton;
+
 	/**
 	 * Program execution that leads to error. Only computed in the last iteration of the CEGAR loop if the program is
 	 * incorrect.
 	 */
 	protected IcfgProgramExecution mRcfgProgramExecution;
-	
+
 	// used for the collection of statistics
 	public int mInitialAbstractionSize = 0;
 	public int mNumberOfErrorLocations = 0;
-	
+
 	// used for debugging only
-	protected IAutomaton<CodeBlock, IPredicate> mArtifactAutomaton;
-	
+	protected IAutomaton<LETTER, IPredicate> mArtifactAutomaton;
+
 	protected final Format mPrintAutomataLabeling;
-	
+
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
-	
+
 	protected final IUltimateServiceProvider mServices;
 	protected final IToolchainStorage mToolchainStorage;
-	
+
 	private IRunningTaskStackProvider mRunningTaskStackProvider;
-	
+
 	protected Dumper mDumper;
 	/**
 	 * only != null if analysis result is UNKNOWN Textual explanation why result is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
-	
+
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final IIcfg<BoogieIcfgLocation> rootNode, final CfgSmtToolkit csToolkit,
+			final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<BoogieIcfgLocation> errorLocs, final ILogger logger) {
+			final Collection<? extends IcfgLocation> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -193,11 +193,11 @@ public abstract class AbstractCegarLoop {
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
 	}
-	
+
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
 		return mRunningTaskStackProvider;
 	}
-	
+
 	/**
 	 * Construct the automaton mAbstraction such that the language recognized by mAbstation is a superset of the
 	 * language of the program. The initial abstraction in our implementations will usually be an automaton that has the
@@ -206,14 +206,14 @@ public abstract class AbstractCegarLoop {
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract void getInitialAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
-	
+
 	/**
 	 * Return true iff the mAbstraction does not accept any trace.
 	 *
 	 * @throws AutomataOperationCanceledException
 	 */
 	protected abstract boolean isAbstractionCorrect() throws AutomataOperationCanceledException;
-	
+
 	/**
 	 * Determine if the trace of mCounterexample is a feasible sequence of CodeBlocks. Return
 	 * <ul>
@@ -223,13 +223,13 @@ public abstract class AbstractCegarLoop {
 	 * </ul>
 	 *
 	 * @throws AutomataOperationCanceledException
-	 * 
+	 *
 	 *             TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and
 	 *             constructInterpolantAutomaton() after {@link TreeAutomizerCEGAR} does not depend on this class
 	 *             anymore.
 	 */
 	protected abstract LBool isCounterexampleFeasible() throws AutomataOperationCanceledException;
-	
+
 	/**
 	 * Construct an automaton mInterpolantAutomaton which
 	 * <ul>
@@ -240,7 +240,7 @@ public abstract class AbstractCegarLoop {
 	 * @throws AutomataOperationCanceledException
 	 */
 	protected abstract void constructInterpolantAutomaton() throws AutomataOperationCanceledException;
-	
+
 	/**
 	 * Construct a new automaton mAbstraction such that
 	 * <ul>
@@ -254,13 +254,13 @@ public abstract class AbstractCegarLoop {
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
-	
+
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
 	 * the control flow graph with invariants.
 	 */
 	protected abstract void computeCFGHoareAnnotation();
-	
+
 	/**
 	 * Return the Artifact whose computation was requested. This artifact can be either the control flow graph, an
 	 * abstraction, an interpolant automaton, or a negated interpolant automaton. The artifact is only used for
@@ -269,19 +269,19 @@ public abstract class AbstractCegarLoop {
 	 * @return The root node of the artifact after it was transformed to an ULTIMATE model.
 	 */
 	public abstract IElement getArtifact();
-	
+
 	public int getIteration() {
 		return mIteration;
 	}
-	
+
 	public IcfgProgramExecution getRcfgProgramExecution() {
 		return mRcfgProgramExecution;
 	}
-	
+
 	public String errorLocs() {
 		return mErrorLocs.toString();
 	}
-	
+
 	public final Result iterate() {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
 		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
@@ -290,10 +290,10 @@ public abstract class AbstractCegarLoop {
 		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
-		
+
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
-		
+
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
@@ -307,7 +307,7 @@ public abstract class AbstractCegarLoop {
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
-		
+
 		if (mIteration <= mPref.watchIteration()
 				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
 			mArtifactAutomaton = mAbstraction;
@@ -319,7 +319,7 @@ public abstract class AbstractCegarLoop {
 		mInitialAbstractionSize = mAbstraction.size();
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		mNumberOfErrorLocations = mErrorLocs.size();
-		
+
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
@@ -333,14 +333,14 @@ public abstract class AbstractCegarLoop {
 			mCegarLoopBenchmark.setResult(Result.SAFE);
 			return Result.SAFE;
 		}
-		
+
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 			}
-			
+
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
@@ -363,16 +363,16 @@ public abstract class AbstractCegarLoop {
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
-			
+
 			mLogger.info("Interpolant Automaton has " + mInterpolAutomaton.getStates().size() + " states");
-			
+
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 				mArtifactAutomaton = mInterpolAutomaton;
 			}
 			if (mPref.dumpAutomata()) {
 				writeAutomatonToFile(mInterpolAutomaton, "InterpolantAutomaton_Iteration" + mIteration);
 			}
-			
+
 			try {
 				final boolean progress = refineAbstraction();
 				if (!progress) {
@@ -388,31 +388,31 @@ public abstract class AbstractCegarLoop {
 			} catch (final AutomataLibraryException e) {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
-			
+
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
-			
+
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-				assert new InductivityCheck(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						false, true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
+				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,
+						true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
 			}
-			
+
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
 				mArtifactAutomaton = mAbstraction;
 			}
-			
+
 			if (mPref.dumpAutomata()) {
 				final String filename = "Abstraction" + mIteration;
 				writeAutomatonToFile(mAbstraction, filename);
 			}
-			
+
 			final boolean newMaximumReached =
 					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
 				final String filename = mIcfgContainer.getIdentifier();
 				writeAutomatonToFile(mAbstraction, filename);
 			}
-			
+
 			boolean isAbstractionCorrect;
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
@@ -429,12 +429,12 @@ public abstract class AbstractCegarLoop {
 		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
-	
-	protected void writeAutomatonToFile(final IAutomaton<CodeBlock, IPredicate> automaton, final String filename) {
+
+	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
 				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", automaton);
 	}
-	
+
 	public static String addIndentation(final int indentation, final String s) {
 		final StringBuilder sb = new StringBuilder("");
 		for (int i = 0; i < indentation; i++) {
@@ -443,9 +443,9 @@ public abstract class AbstractCegarLoop {
 		sb.append(s);
 		return sb.toString();
 	}
-	
+
 	public UnprovabilityReason getReasonUnknown() {
 		return mReasonUnknown;
 	}
-	
+
 }

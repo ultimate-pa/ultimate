@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -85,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -97,11 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 
-public class LassoChecker {
-
-	private final ILogger mLogger;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
+public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 
 	enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
@@ -117,20 +113,26 @@ public class LassoChecker {
 
 	// ////////////////////////////// settings /////////////////////////////////
 
-	private static final boolean mSimplifyStemAndLoop = true;
+	private static final boolean SIMPLIFY_STEM_AND_LOOP = true;
+
+	/**
+	 * For debugging only. Check for termination arguments even if we found a nontermination argument. This may reveal
+	 * unsoundness bugs.
+	 */
+	private static final boolean CHECK_TERMINATION_EVEN_IF_NON_TERMINATING = false;
+
+	private static final boolean AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED = true;
+
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
 	 */
 	private final boolean mTryTwofoldRefinement;
 
-	/**
-	 * For debugging only. Check for termination arguments even if we found a nontermination argument. This may reveal
-	 * unsoundness bugs.
-	 */
-	private static final boolean s_CheckTerminationEvenIfNonterminating = false;
+	private final ILogger mLogger;
 
-	private static final boolean s_AvoidNonterminationCheckIfArraysAreContained = true;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final InterpolationTechnique mInterpolation;
 
@@ -155,7 +157,7 @@ public class LassoChecker {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	private final NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
+	private final NestedLassoRun<LETTER, IPredicate> mCounterexample;
 
 	/**
 	 * Identifier for this LassoChecker. Can be used to get unique filenames when dumping files.
@@ -178,7 +180,7 @@ public class LassoChecker {
 	private InterpolatingTraceChecker mLoopCheck;
 	private InterpolatingTraceChecker mConcatCheck;
 
-	private NestedRun<CodeBlock, IPredicate> mConcatenatedCounterexample;
+	private NestedRun<LETTER, IPredicate> mConcatenatedCounterexample;
 
 	private NonTerminationArgument mNonterminationArgument;
 
@@ -211,7 +213,7 @@ public class LassoChecker {
 		return mConcatCheck;
 	}
 
-	public NestedRun<CodeBlock, IPredicate> getConcatenatedCounterexample() {
+	public NestedRun<LETTER, IPredicate> getConcatenatedCounterexample() {
 		assert mConcatenatedCounterexample != null;
 		return mConcatenatedCounterexample;
 	}
@@ -236,9 +238,10 @@ public class LassoChecker {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
-			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
+	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
+			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws IOException {
@@ -261,9 +264,8 @@ public class LassoChecker {
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
-		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				predicateFactory, mSymbolTable,
-				simplificationTechnique, xnfConversionTechnique);
+		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), predicateFactory,
+				mSymbolTable, simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
@@ -311,9 +313,9 @@ public class LassoChecker {
 		private final ContinueDirective mContinueDirective;
 
 		public LassoCheckResult() throws IOException {
-			final NestedRun<CodeBlock, IPredicate> stem = mCounterexample.getStem();
+			final NestedRun<LETTER, IPredicate> stem = mCounterexample.getStem();
 			mLogger.info("Stem: " + stem);
-			final NestedRun<CodeBlock, IPredicate> loop = mCounterexample.getLoop();
+			final NestedRun<LETTER, IPredicate> loop = mCounterexample.getLoop();
 			mLogger.info("Loop: " + loop);
 			mStemFeasibility = checkStemFeasibility();
 			if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
@@ -397,8 +399,8 @@ public class LassoChecker {
 		}
 
 		private TraceCheckResult checkStemFeasibility() {
-			final NestedRun<CodeBlock, IPredicate> stem = mCounterexample.getStem();
-			if (BuchiCegarLoop.emptyStem(mCounterexample)) {
+			final NestedRun<LETTER, IPredicate> stem = mCounterexample.getStem();
+			if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 				return TraceCheckResult.FEASIBLE;
 			}
 			mStemCheck = checkFeasibilityAndComputeInterpolants(stem);
@@ -406,15 +408,15 @@ public class LassoChecker {
 		}
 
 		private TraceCheckResult checkLoopFeasibility() {
-			final NestedRun<CodeBlock, IPredicate> loop = mCounterexample.getLoop();
+			final NestedRun<LETTER, IPredicate> loop = mCounterexample.getLoop();
 			mLoopCheck = checkFeasibilityAndComputeInterpolants(loop);
 			return translateSatisfiabilityToFeasibility(mLoopCheck.isCorrect());
 		}
 
 		private TraceCheckResult checkConcatFeasibility() {
-			final NestedRun<CodeBlock, IPredicate> stem = mCounterexample.getStem();
-			final NestedRun<CodeBlock, IPredicate> loop = mCounterexample.getLoop();
-			final NestedRun<CodeBlock, IPredicate> concat = stem.concatenate(loop);
+			final NestedRun<LETTER, IPredicate> stem = mCounterexample.getStem();
+			final NestedRun<LETTER, IPredicate> loop = mCounterexample.getLoop();
+			final NestedRun<LETTER, IPredicate> concat = stem.concatenate(loop);
 			mConcatCheck = checkFeasibilityAndComputeInterpolants(concat);
 			if (mConcatCheck.isCorrect() == LBool.UNSAT) {
 				mConcatenatedCounterexample = concat;
@@ -436,7 +438,7 @@ public class LassoChecker {
 		}
 
 		private InterpolatingTraceChecker
-				checkFeasibilityAndComputeInterpolants(final NestedRun<CodeBlock, IPredicate> run) {
+				checkFeasibilityAndComputeInterpolants(final NestedRun<LETTER, IPredicate> run) {
 			InterpolatingTraceChecker result;
 			switch (mInterpolation) {
 			case Craig_NestedInterpolation:
@@ -446,21 +448,21 @@ public class LassoChecker {
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-						mServices, false, mPredicateUnifier, mInterpolation, true,
-						mXnfConversionTechnique, mSimplificationTechnique, null);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
+						true, mXnfConversionTechnique, mSimplificationTechnique, null);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
 			case FPandBPonlyIfFpWasNotPerfect:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mCsToolkit, /*
+						run.getWord(), mCsToolkit,
+						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-						UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
+						mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, null);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -521,9 +523,9 @@ public class LassoChecker {
 	 * Compute TransFormula that represents the stem.
 	 */
 	protected UnmodifiableTransFormula computeStemTF() {
-		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
+		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		try {
-			final UnmodifiableTransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula stemTF = computeTF(stem, SIMPLIFY_STEM_AND_LOOP, true, false);
 			if (SmtUtils.isFalse(stemTF.getFormula())) {
 				throw new AssertionError("stemTF is false but stem analysis said: feasible");
 			}
@@ -539,9 +541,9 @@ public class LassoChecker {
 	 * Compute TransFormula that represents the loop.
 	 */
 	protected UnmodifiableTransFormula computeLoopTF() {
-		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
+		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		try {
-			final UnmodifiableTransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula loopTF = computeTF(loop, SIMPLIFY_STEM_AND_LOOP, true, false);
 			if (SmtUtils.isFalse(loopTF.getFormula())) {
 				throw new AssertionError("loopTF is false but loop analysis said: feasible");
 			}
@@ -556,20 +558,19 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the NestedWord word.
 	 */
-	private UnmodifiableTransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
+	private UnmodifiableTransFormula computeTF(final NestedWord<LETTER> word, final boolean simplify,
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
-		final UnmodifiableTransFormula tf =
-				SequentialComposition.getInterproceduralTransFormula(mCsToolkit,
-						simplify, extendedPartialQuantifierElimination, toCNF, withBranchEncoders,
-						mLogger, mServices, word.asList(), mXnfConversionTechnique, mSimplificationTechnique);
+		final UnmodifiableTransFormula tf = SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify,
+				extendedPartialQuantifierElimination, toCNF, withBranchEncoders, mLogger, mServices, word.asList(),
+				mXnfConversionTechnique, mSimplificationTechnique);
 		return tf;
 	}
 
 	private boolean areSupportingInvariantsCorrect() {
-		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
+		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		mLogger.info("Stem: " + stem);
-		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
+		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
 		boolean siCorrect = true;
 		if (stem.length() == 0) {
@@ -590,7 +591,7 @@ public class LassoChecker {
 	}
 
 	private boolean isRankingFunctionCorrect() {
-		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
+		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
 		final boolean rfCorrect = mBspm.checkRankDecrease(loop, mCsToolkit.getModifiableGlobalsTable());
 		return rfCorrect;
@@ -742,8 +743,10 @@ public class LassoChecker {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
-		final String proc = ((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure(); 
-		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(proc);
+		final String proc =
+				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(proc);
 
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
@@ -767,18 +770,18 @@ public class LassoChecker {
 			return SynthesisResult.NONTERMINATING;
 		}
 
-		final boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
+		final boolean doNonterminationAnalysis =
+				!(AVOID_NONTERMINATION_CHECK_IF_ARRAYS_ARE_CONTAINED && containsArrays);
 
 		NonTerminationArgument nonTermArgument = null;
 		if (doNonterminationAnalysis) {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
-						mAxioms, constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mAxioms,
+						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
-						mServices,
-						mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+						mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				mpreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -799,7 +802,7 @@ public class LassoChecker {
 			if (withStem) {
 				mNonterminationArgument = nonTermArgument;
 			}
-			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
+			if (!CHECK_TERMINATION_EVEN_IF_NON_TERMINATING && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATING;
 			}
 		}
@@ -807,11 +810,10 @@ public class LassoChecker {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
-					mAxioms, constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda, mAxioms,
+					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
-					mServices,
-					mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 			mpreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();

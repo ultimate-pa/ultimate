@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -59,33 +60,32 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
- * Calculates "line coverage", i.e. the number of lines that are contained in an
- * automaton.
+ * Calculates "line coverage", i.e. the number of lines that are contained in an automaton.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class LineCoverageCalculator {
+public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
-	private final LineCoverageCalculator mRelative;
+	private final LineCoverageCalculator<LETTER> mRelative;
 	private final ILogger mLogger;
 	private final Set<Integer> mLinenumbers;
 
-	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton) {
+	public LineCoverageCalculator(final IUltimateServiceProvider services,
+			final IAutomaton<LETTER, IPredicate> automaton) {
 		this(services, automaton, null);
 	}
 
-	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton,
-			LineCoverageCalculator relative) {
+	public LineCoverageCalculator(final IUltimateServiceProvider services,
+			final IAutomaton<LETTER, IPredicate> automaton, final LineCoverageCalculator<LETTER> relative) {
 		mServices = services;
 		mRelative = relative;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
 		mLinenumbers = calculateLineNumbers(automaton);
 	}
 
-	public void reportCoverage(String description) {
+	public void reportCoverage(final String description) {
 		final int linecount = getLineCount();
 		final String desc = "Line coverage for " + description;
 		if (mRelative == null) {
@@ -102,7 +102,7 @@ public class LineCoverageCalculator {
 		}
 	}
 
-	private void reportResult(int current, int total, String description) {
+	private void reportResult(final int current, final int total, final String description) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new BenchmarkResult<>(Activator.PLUGIN_ID, description, new LineCoverageResult(total, current)));
 	}
@@ -111,24 +111,28 @@ public class LineCoverageCalculator {
 		return mLinenumbers.size();
 	}
 
-	private Set<Integer> calculateLineNumbers(IAutomaton<CodeBlock, IPredicate> automaton) {
+	private Set<Integer> calculateLineNumbers(final IAutomaton<LETTER, IPredicate> automaton) {
 		final Set<Integer> rtr = new HashSet<>();
 		if (automaton == null) {
 			mLogger.warn("NULL automaton has no lines");
 			return rtr;
 		}
 
-		final Set<CodeBlock> edges = getCodeblocks(automaton);
+		final Set<LETTER> edges = getCodeblocks(automaton);
 
-		for (final CodeBlock edge : edges) {
+		for (final LETTER edge : edges) {
 			if ("ULTIMATE.start".equals(edge.getPrecedingProcedure())) {
 				continue;
 			}
-			final List<Statement> statements = getStatements(edge);
+			if (!(edge instanceof CodeBlock)) {
+				throw new UnsupportedOperationException("Cannot work with edges that do not provide Boogie code");
+			}
+			final List<Statement> statements = getStatements((CodeBlock) edge);
 			for (final Statement stmt : statements) {
 				final ILocation location = getLocation(stmt);
 				if (location == null) {
-					mLogger.warn("Skipping empty location or mult-line location for statement " + BoogiePrettyPrinter.print(stmt));
+					mLogger.warn("Skipping empty location or mult-line location for statement "
+							+ BoogiePrettyPrinter.print(stmt));
 					continue;
 				}
 				addLines(rtr, location);
@@ -137,7 +141,7 @@ public class LineCoverageCalculator {
 		return rtr;
 	}
 
-	private ILocation getLocation(Statement stmt) {
+	private static ILocation getLocation(final Statement stmt) {
 		if (stmt instanceof AssumeStatement) {
 			return ((AssumeStatement) stmt).getFormula().getLocation();
 		} else if (stmt instanceof CallStatement) {
@@ -150,11 +154,11 @@ public class LineCoverageCalculator {
 		return stmt.getLocation();
 	}
 
-	private List<Statement> getStatements(CodeBlock edge) {
+	private static List<Statement> getStatements(final CodeBlock edge) {
 		return new StatementExtractor().process(edge);
 	}
 
-	private void addLines(Set<Integer> rtr, ILocation location) {
+	private static void addLines(final Set<Integer> rtr, final ILocation location) {
 		final int start = location.getStartLine();
 		final int end = location.getEndLine();
 
@@ -163,10 +167,10 @@ public class LineCoverageCalculator {
 		}
 	}
 
-	private Set<CodeBlock> getCodeblocks(IAutomaton<CodeBlock, IPredicate> automaton) {
-		final Set<CodeBlock> rtr = new HashSet<>();
+	private Set<LETTER> getCodeblocks(final IAutomaton<LETTER, IPredicate> automaton) {
+		final Set<LETTER> rtr = new HashSet<>();
 		if (automaton instanceof INestedWordAutomaton<?, ?>) {
-			final INestedWordAutomaton<CodeBlock, IPredicate> nwa = ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton);
+			final INestedWordAutomaton<LETTER, IPredicate> nwa = (INestedWordAutomaton<LETTER, IPredicate>) automaton;
 			final Deque<IPredicate> open = new ArrayDeque<>();
 			open.addAll(nwa.getInitialStates());
 			while (!open.isEmpty()) {
@@ -180,9 +184,9 @@ public class LineCoverageCalculator {
 		return rtr;
 	}
 
-	private <T extends IOutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
-			Deque<IPredicate> open, Iterable<T> iter) {
-		for (final IOutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
+	private <T extends IOutgoingTransitionlet<LETTER, IPredicate>> void addCodeblock(final Set<LETTER> rtr,
+			final Deque<IPredicate> open, final Iterable<T> iter) {
+		for (final IOutgoingTransitionlet<LETTER, IPredicate> trans : iter) {
 			if (rtr.add(trans.getLetter())) {
 				open.addFirst(trans.getSucc());
 			}
@@ -196,31 +200,31 @@ public class LineCoverageCalculator {
 		private StatementExtractor() {
 		}
 
-		public List<Statement> process(IcfgEdge edge) {
+		public List<Statement> process(final IcfgEdge edge) {
 			mStatements = new ArrayList<>();
 			visit(edge);
 			return mStatements;
 		}
 
 		@Override
-		protected void visit(ParallelComposition c) {
+		protected void visit(final ParallelComposition c) {
 			throw new UnsupportedOperationException("Cannot merge ParallelComposition");
 		}
 
 		@Override
-		protected void visit(StatementSequence c) {
+		protected void visit(final StatementSequence c) {
 			mStatements.addAll(c.getStatements());
 			super.visit(c);
 		}
 
 		@Override
-		protected void visit(Call c) {
+		protected void visit(final Call c) {
 			mStatements.add(c.getCallStatement());
 			super.visit(c);
 		}
 
 		@Override
-		protected void visit(Return c) {
+		protected void visit(final Return c) {
 			mStatements.add(c.getCallStatement());
 			super.visit(c);
 		}
@@ -231,15 +235,15 @@ public class LineCoverageCalculator {
 		private final int mMax;
 		private final int mCurrent;
 
-		private LineCoverageResult(int max, int current) {
+		private LineCoverageResult(final int max, final int current) {
 			mMax = max;
 			mCurrent = current;
 		}
 
 		@Override
 		public ICsvProvider<String> createCsvProvider() {
-			final SimpleCsvProvider<String> provider = new SimpleCsvProvider<String>(Arrays.asList(new String[] {
-					"Covered lines", "Total lines", "Line coverage", }));
+			final SimpleCsvProvider<String> provider = new SimpleCsvProvider<>(
+					Arrays.asList(new String[] { "Covered lines", "Total lines", "Line coverage", }));
 
 			final List<String> values = new ArrayList<>();
 			values.add(String.valueOf(mCurrent));
@@ -251,7 +255,7 @@ public class LineCoverageCalculator {
 		}
 
 		private double getCoverage() {
-			return ((double) mCurrent) / ((double) mMax) * 1000;
+			return (double) mCurrent / (double) mMax * 1000;
 		}
 
 		@Override

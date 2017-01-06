@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -62,10 +63,12 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
-public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	private final CfgSmtToolkit mCsToolkit;
+public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
+		implements INestedWordAutomatonSimple<LETTER, IPredicate> {
+	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
+
 	private final PredicateFactory mPredicateFactory;
-	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mControlFlowAutomaton;
+	private final INestedWordAutomatonSimple<LETTER, IPredicate> mControlFlowAutomaton;
 	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	private final NestedMap3<IPredicate, WitnessNode, Integer, ProductState> mCfg2Witness2Result = new NestedMap3<>();
@@ -73,8 +76,8 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final IPredicate mEmptyStackState;
 	private final Set<IPredicate> mInitialStates;
 	private final Set<IPredicate> mFinalStates;
-	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
-	private final WitnessLocationMatcher mWitnessLocationMatcher;
+
+	private final WitnessLocationMatcher<LETTER> mWitnessLocationMatcher;
 	private final LinkedHashSet<WitnessEdge> mBadWitnessEdges = new LinkedHashSet<>();
 	private final Set<WitnessEdge> mGoodWitnessEdges = new HashSet<>();
 
@@ -122,13 +125,12 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	public WitnessProductAutomaton(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> controlFlowAutomaton,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory) {
-		mWitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
+		mWitnessLocationMatcher = new WitnessLocationMatcher<>(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
-		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();
@@ -150,7 +152,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Set<CodeBlock> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		throw new UnsupportedOperationException("has three alphabets");
 	}
 
@@ -166,17 +168,17 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Set<CodeBlock> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return mControlFlowAutomaton.getInternalAlphabet();
 	}
 
 	@Override
-	public Set<CodeBlock> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return mControlFlowAutomaton.getCallAlphabet();
 	}
 
 	@Override
-	public Set<CodeBlock> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return mControlFlowAutomaton.getReturnAlphabet();
 	}
 
@@ -225,28 +227,28 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Set<CodeBlock> lettersInternal(final IPredicate state) {
+	public Set<LETTER> lettersInternal(final IPredicate state) {
 		final ProductState ps = mResult2Product.get(state);
 		return mControlFlowAutomaton.lettersInternal(ps.getCfgAutomatonState());
 	}
 
 	@Override
-	public Set<CodeBlock> lettersCall(final IPredicate state) {
+	public Set<LETTER> lettersCall(final IPredicate state) {
 		final ProductState ps = mResult2Product.get(state);
 		return mControlFlowAutomaton.lettersCall(ps.getCfgAutomatonState());
 	}
 
 	@Override
-	public Set<CodeBlock> lettersReturn(final IPredicate state) {
+	public Set<LETTER> lettersReturn(final IPredicate state) {
 		final ProductState ps = mResult2Product.get(state);
 		return mControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState());
 	}
 
-	public Collection<OutgoingInternalTransition<CodeBlock, IPredicate>>
-			constructInternalSuccessors(final IPredicate state, final CodeBlock letter) {
+	public Collection<OutgoingInternalTransition<LETTER, IPredicate>>
+			constructInternalSuccessors(final IPredicate state, final LETTER letter) {
 		final ProductState ps = mResult2Product.get(state);
-		final Collection<OutgoingInternalTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final OutgoingInternalTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton
+		final Collection<OutgoingInternalTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final OutgoingInternalTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.internalSuccessors(ps.getCfgAutomatonState(), letter)) {
 			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
@@ -257,25 +259,25 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(final IPredicate state,
-			final CodeBlock letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
+			final LETTER letter) {
 		return constructInternalSuccessors(state, letter);
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(final IPredicate state) {
-		final Collection<OutgoingInternalTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final CodeBlock cb : lettersInternal(state)) {
+	public Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state) {
+		final Collection<OutgoingInternalTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final LETTER cb : lettersInternal(state)) {
 			result.addAll(constructInternalSuccessors(state, cb));
 		}
 		return result;
 	}
 
-	public Collection<OutgoingCallTransition<CodeBlock, IPredicate>> constructCallSuccessors(final IPredicate state,
-			final CodeBlock letter) {
+	public Collection<OutgoingCallTransition<LETTER, IPredicate>> constructCallSuccessors(final IPredicate state,
+			final LETTER letter) {
 		final ProductState ps = mResult2Product.get(state);
-		final Collection<OutgoingCallTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final OutgoingCallTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton
+		final Collection<OutgoingCallTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final OutgoingCallTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.callSuccessors(ps.getCfgAutomatonState(), letter)) {
 			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
@@ -286,42 +288,42 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(final IPredicate state,
-			final CodeBlock letter) {
+	public Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state,
+			final LETTER letter) {
 		return constructCallSuccessors(state, letter);
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(final IPredicate state) {
-		final Collection<OutgoingCallTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final CodeBlock cb : lettersCall(state)) {
+	public Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state) {
+		final Collection<OutgoingCallTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final LETTER cb : lettersCall(state)) {
 			result.addAll(constructCallSuccessors(state, cb));
 		}
 		return result;
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessors(final IPredicate state,
-			final IPredicate hier, final CodeBlock letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessors(final IPredicate state,
+			final IPredicate hier, final LETTER letter) {
 		return constructReturnSuccessors(state, hier, letter);
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(final IPredicate state,
+	public Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessorsGivenHier(final IPredicate state,
 			final IPredicate hier) {
-		final Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final CodeBlock cb : lettersReturn(state)) {
+		final Collection<OutgoingReturnTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final LETTER cb : lettersReturn(state)) {
 			result.addAll(constructReturnSuccessors(state, hier, cb));
 		}
 		return result;
 	}
 
-	public Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> constructReturnSuccessors(final IPredicate state,
-			final IPredicate hier, final CodeBlock letter) {
+	public Collection<OutgoingReturnTransition<LETTER, IPredicate>> constructReturnSuccessors(final IPredicate state,
+			final IPredicate hier, final LETTER letter) {
 		final ProductState ps = mResult2Product.get(state);
 		final ProductState psHier = mResult2Product.get(hier);
-		final Collection<OutgoingReturnTransition<CodeBlock, IPredicate>> result = new ArrayList<>();
-		for (final OutgoingReturnTransition<CodeBlock, IPredicate> cfgOut : mControlFlowAutomaton
+		final Collection<OutgoingReturnTransition<LETTER, IPredicate>> result = new ArrayList<>();
+		for (final OutgoingReturnTransition<LETTER, IPredicate> cfgOut : mControlFlowAutomaton
 				.returnSuccessors(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState(), letter)) {
 			final Set<IPredicate> succs = computeSuccessorStates(ps, letter, cfgOut.getSucc());
 			for (final IPredicate succ : succs) {
@@ -331,18 +333,17 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return result;
 	}
 
-	private Set<IPredicate> computeSuccessorStates(final ProductState ps, final CodeBlock cb,
-			final IPredicate cfgSucc) {
+	private Set<IPredicate> computeSuccessorStates(final ProductState ps, final LETTER cb, final IPredicate cfgSucc) {
 		final Set<IPredicate> result = new LinkedHashSet<>();
 
 		final ArrayDeque<WitnessNode> wsSuccStates = new ArrayDeque<>();
 		final Set<WitnessNode> visited = new HashSet<>();
-		wsSuccStates.addAll(skipNonCodeBlockEdges(ps.getWitnessNode()));
+		wsSuccStates.addAll(skipNonLETTEREdges(ps.getWitnessNode()));
 		while (!wsSuccStates.isEmpty()) {
 			final WitnessNode ws = wsSuccStates.removeFirst();
 			for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
 					.internalSuccessors(ws)) {
-				for (final WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
+				for (final WitnessNode succ : skipNonLETTEREdges(out.getSucc())) {
 					if (!visited.contains(succ)) {
 						visited.add(succ);
 						if (isSink(out.getSucc())) {
@@ -392,16 +393,16 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return wan.isSink();
 	}
 
-	private Collection<WitnessNode> skipNonCodeBlockEdges(final WitnessNode node) {
+	private Collection<WitnessNode> skipNonLETTEREdges(final WitnessNode node) {
 		final Set<WitnessNode> result = new HashSet<>();
 		boolean hasOutgoingNodes = false;
 		for (final OutgoingInternalTransition<WitnessEdge, WitnessNode> out : mWitnessAutomaton
 				.internalSuccessors(node)) {
 			hasOutgoingNodes = true;
-			if (isCodeBlockEdge(out.getLetter())) {
+			if (isLETTEREdge(out.getLetter())) {
 				result.add(node);
 			} else {
-				result.addAll(skipNonCodeBlockEdges(out.getSucc()));
+				result.addAll(skipNonLETTEREdges(out.getSucc()));
 			}
 		}
 		if (!hasOutgoingNodes) {
@@ -410,11 +411,11 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return result;
 	}
 
-	private boolean isCodeBlockEdge(final WitnessEdge edge) {
+	private boolean isLETTEREdge(final WitnessEdge edge) {
 		return mWitnessLocationMatcher.isMatchedWitnessEdge(edge);
 	}
 
-	public boolean isCompatible(final CodeBlock cb, final WitnessEdge we) {
+	public boolean isCompatible(final IIcfgTransition<?> cb, final WitnessEdge we) {
 		if (cb instanceof Call) {
 			final Call call = (Call) cb;
 			return isCompatible(call, we);
@@ -434,7 +435,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			final Summary sum = (Summary) cb;
 			return isCompatible(sum.getCallStatement(), we);
 		} else {
-			throw new AssertionError("unknown type of CodeBlock");
+			throw new AssertionError("unknown type of LETTER");
 		}
 	}
 

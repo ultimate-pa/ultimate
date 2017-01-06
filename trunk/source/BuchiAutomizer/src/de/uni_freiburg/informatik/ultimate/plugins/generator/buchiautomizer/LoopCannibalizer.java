@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -53,31 +53,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 
 /**
- * Extract many predicates from a loop. Given a termination argument (given by a
- * honda predicate) we check for some shifts of the loop if the termination
- * argument is also sufficient compute interpolants.
- * 
+ * Extract many predicates from a loop. Given a termination argument (given by a honda predicate) we check for some
+ * shifts of the loop if the termination argument is also sufficient compute interpolants.
+ *
  * @author Matthias Heizmann
  */
-public class LoopCannibalizer {
+public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 
-	private final NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
+	private final NestedLassoRun<LETTER, IPredicate> mCounterexample;
 	private final BinaryStatePredicateManager mBspm;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CfgSmtToolkit mCsToolkit;
 	private final Set<IPredicate> mResultPredicates;
 	private final Set<IPredicate> mOriginalLoopInterpolants;
-	private final NestedWord<CodeBlock> mLoop;
+	private final NestedWord<LETTER> mLoop;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
-			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
+	public LoopCannibalizer(final NestedLassoRun<LETTER, IPredicate> counterexample,
+			final Set<IPredicate> loopInterpolants, final BinaryStatePredicateManager bspm,
+			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
@@ -89,7 +89,7 @@ public class LoopCannibalizer {
 		mPredicateUnifier = predicateUnifier;
 		mCsToolkit = csToolkit;
 		mOriginalLoopInterpolants = loopInterpolants;
-		mResultPredicates = new HashSet<IPredicate>(loopInterpolants);
+		mResultPredicates = new HashSet<>(loopInterpolants);
 		mLoop = mCounterexample.getLoop().getWord();
 		cannibalize(interpolation);
 		mLogger.info(exitMessage());
@@ -119,15 +119,16 @@ public class LoopCannibalizer {
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					final NestedWord<CodeBlock> before = mLoop.getSubWord(0, i);
-					final NestedWord<CodeBlock> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
-					final NestedWord<CodeBlock> shifted = after.concatenate(before);
+					final NestedWord<LETTER> before = mLoop.getSubWord(0, i);
+					final NestedWord<LETTER> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
+					final NestedWord<LETTER> shifted = after.concatenate(before);
 					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
 					final LBool loopCheck = traceChecker.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
 						loopInterpolants = traceChecker.getInterpolants();
-						final Set<IPredicate> cannibalized = mPredicateUnifier.cannibalizeAll(false, Arrays.asList(loopInterpolants));
+						final Set<IPredicate> cannibalized =
+								mPredicateUnifier.cannibalizeAll(false, Arrays.asList(loopInterpolants));
 						mResultPredicates.addAll(cannibalized);
 					} else {
 						mLogger.info("termination argument not suffcient for all loop shiftings");
@@ -138,37 +139,25 @@ public class LoopCannibalizer {
 		}
 	}
 
-	private InterpolatingTraceChecker getTraceChecker(final NestedWord<CodeBlock> shifted, final InterpolationTechnique interpolation) {
+	private InterpolatingTraceChecker getTraceChecker(final NestedWord<? extends IIcfgTransition<?>> shifted,
+			final InterpolationTechnique interpolation) {
 		InterpolatingTraceChecker traceChecker;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, false, mPredicateUnifier, interpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique, null);
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					mServices, false, mPredicateUnifier, interpolation, true, mXnfConversionTechnique,
+					mSimplificationTechnique, null);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					UnsatCores.CONJUNCT_LEVEL,
-					 true, mServices, false, mPredicateUnifier, interpolation,
-						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier, interpolation,
+					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -180,9 +169,8 @@ public class LoopCannibalizer {
 	}
 
 	/**
-	 * We check for new predicates if the CodeBlock at i uses a variable of the
-	 * HondaPredicate, if the CodeBlock at i is a Return or the CodeBlock at i+1
-	 * is a non-pending call.
+	 * We check for new predicates if the LETTER at i uses a variable of the HondaPredicate, if the LETTER at i is a
+	 * Return or the LETTER at i+1 is a non-pending call.
 	 */
 	private boolean checkForNewPredicates(final int i) {
 		if (codeBlockContainsVarOfHondaPredicate(mLoop.getSymbol(i))) {
@@ -200,7 +188,7 @@ public class LoopCannibalizer {
 		return false;
 	}
 
-	private boolean codeBlockContainsVarOfHondaPredicate(final CodeBlock cb) {
+	private boolean codeBlockContainsVarOfHondaPredicate(final LETTER cb) {
 		final Set<IProgramVar> hondaVars = mBspm.getHondaPredicate().getVars();
 		final Set<IProgramVar> inVars = cb.getTransformula().getInVars().keySet();
 		if (!Collections.disjoint(hondaVars, inVars)) {

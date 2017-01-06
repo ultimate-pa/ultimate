@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
-public class WitnessLocationMatcher {
+public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final Set<WitnessEdge> mPureAnnotationEdges = new HashSet<>();
@@ -61,7 +62,7 @@ public class WitnessLocationMatcher {
 	private final ArrayList<WitnessEdge> mUnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> controlFlowAutomaton,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -101,14 +102,14 @@ public class WitnessLocationMatcher {
 		}
 	}
 
-	private void matchLocations(final Set<CodeBlock> internalAlphabet) {
-		for (final CodeBlock cb : internalAlphabet) {
+	private void matchLocations(final Set<? extends IIcfgTransition<?>> internalAlphabet) {
+		for (final IIcfgTransition<?> cb : internalAlphabet) {
 			matchLocations(cb);
 		}
 
 	}
 
-	private void matchLocations(final CodeBlock cb) {
+	private void matchLocations(final IIcfgTransition<?> cb) {
 		if (cb instanceof Call) {
 			final Call call = (Call) cb;
 			matchLocations(call);

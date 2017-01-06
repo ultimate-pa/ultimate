@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 /**
@@ -52,16 +52,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPredicate> {
+public class HoareAnnotationExtractor<LETTER extends IIcfgTransition<?>>
+		extends DoubleDeckerVisitor<LETTER, IPredicate> {
 
-	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<DoubleDecker<IPredicate>>();
+	Set<DoubleDecker<IPredicate>> mReportedDoubleDeckers = new HashSet<>();
 
-	private final HoareAnnotationFragments mHoareAnnotation;
+	private final HoareAnnotationFragments<LETTER> mHoareAnnotation;
 
-	public HoareAnnotationExtractor(
-			final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final HoareAnnotationFragments haf) {
+	public HoareAnnotationExtractor(final IUltimateServiceProvider services,
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final HoareAnnotationFragments<LETTER> haf) {
 		super(new AutomataLibraryServices(services));
 		mTraversedNwa = abstraction;
 		mHoareAnnotation = haf;
@@ -102,9 +101,8 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 	protected Collection<IPredicate> visitAndGetInternalSuccessors(final DoubleDecker<IPredicate> doubleDecker) {
 		addContext(doubleDecker);
 		final IPredicate state = doubleDecker.getUp();
-		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		for (final OutgoingInternalTransition<CodeBlock, IPredicate> trans :
-				mTraversedNwa.internalSuccessors(state)) {
+		final ArrayList<IPredicate> succs = new ArrayList<>();
+		for (final OutgoingInternalTransition<LETTER, IPredicate> trans : mTraversedNwa.internalSuccessors(state)) {
 			final IPredicate succ = trans.getSucc();
 			succs.add(succ);
 		}
@@ -116,15 +114,15 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 	protected Collection<IPredicate> visitAndGetCallSuccessors(final DoubleDecker<IPredicate> doubleDecker) {
 		addContext(doubleDecker);
 		final IPredicate state = doubleDecker.getUp();
-		final Collection<CodeBlock> symbolsCall = mTraversedNwa.lettersCall(state);
+		final Collection<LETTER> symbolsCall = mTraversedNwa.lettersCall(state);
 		if (symbolsCall.size() > 1) {
 			throw new UnsupportedOperationException("Several outgoing calls not supported");
 		}
-		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
-		for (final CodeBlock symbol : symbolsCall) {
-			final Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> succIt =
+		final ArrayList<IPredicate> succs = new ArrayList<>();
+		for (final LETTER symbol : symbolsCall) {
+			final Iterator<OutgoingCallTransition<LETTER, IPredicate>> succIt =
 					mTraversedNwa.callSuccessors(state, symbol).iterator();
-			final OutgoingCallTransition<CodeBlock, IPredicate> trans = succIt.next();
+			final OutgoingCallTransition<LETTER, IPredicate> trans = succIt.next();
 			if (succIt.hasNext()) {
 				throw new UnsupportedOperationException("Several outgoing calls not supported");
 			}
@@ -140,12 +138,12 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 		addContext(doubleDecker);
 		final IPredicate state = doubleDecker.getUp();
 		final IPredicate context = doubleDecker.getDown();
-		final ArrayList<IPredicate> succs = new ArrayList<IPredicate>();
+		final ArrayList<IPredicate> succs = new ArrayList<>();
 		if (context == mTraversedNwa.getEmptyStackState()) {
 			return succs;
 		}
-		for (final OutgoingReturnTransition<CodeBlock, IPredicate> trans :
-				mTraversedNwa.returnSuccessorsGivenHier(state, context)) {
+		for (final OutgoingReturnTransition<LETTER, IPredicate> trans : mTraversedNwa.returnSuccessorsGivenHier(state,
+				context)) {
 			final IPredicate succ = trans.getSucc();
 			succs.add(succ);
 		}

@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
@@ -70,9 +70,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
-	private static final int INTERPOLANT_ACCEPTANCE_THRESHOLD = 2;
-
+public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		implements IRefinementStrategy<LETTER> {
 	/**
 	 * Possible tracks.
 	 *
@@ -82,13 +81,11 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		/**
 		 * SMTInterpol with tree interpolation.
 		 */
-		SMTINTERPOL_TREE_INTERPOLANTS,
-		SMTINTERPOL_FP,
+		SMTINTERPOL_TREE_INTERPOLANTS, SMTINTERPOL_FP,
 		/**
 		 * Z3 with forward and backward predicates.
 		 */
-		Z3_FPBP,
-		Z3_FP,
+		Z3_FPBP, Z3_FP,
 		/**
 		 * Z3 with Craig interpolation.
 		 */
@@ -96,45 +93,44 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		/**
 		 * CVC4 with forward and backward predicates.
 		 */
-		CVC4_FPBP,
-		CVC4_FP,
+		CVC4_FPBP, CVC4_FP,
 		/**
 		 * MathSAT with forward and backward predicates.
 		 */
-		MATHSAT_FPBP,
-		MATHSAT_FP,
+		MATHSAT_FPBP, MATHSAT_FP,
 	}
-	
+
+	private static final int INTERPOLANT_ACCEPTANCE_THRESHOLD = 2;
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	
-	protected final IRun<CodeBlock, IPredicate, ?> mCounterexample;
-	
+
+	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	protected final CfgSmtToolkit mCsToolkit;
-	private final AssertionOrderModulation mAssertionOrderModulation;
-	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
+	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
-	
+
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
-	
+
 	private final Iterator<Track> mInterpolationTechniques;
-	
-	private TraceCheckerConstructor mTcConstructor;
-	private TraceCheckerConstructor mPrevTcConstructor;
+
+	private TraceCheckerConstructor<LETTER> mTcConstructor;
+	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
 	private Track mNextTechnique;
-	
+
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
-	
+
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
-	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
+	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
-	
+
 	/**
 	 * @param prefs
 	 *            Preferences. pending contexts
@@ -146,7 +142,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	 *            counterexample trace
 	 * @param logger
 	 *            logger
-	 * @param cfgSmtToolkit 
+	 * @param cfgSmtToolkit
 	 * @param abstraction
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
@@ -161,8 +157,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier, final AssertionOrderModulation assertionOrderModulation,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		mServices = services;
@@ -176,32 +173,32 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		
+
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		mNextTechnique = mInterpolationTechniques.next();
 	}
-	
+
 	@Override
 	public boolean hasNextTraceChecker() {
 		return mInterpolationTechniques.hasNext();
 	}
-	
+
 	@Override
 	public void nextTraceChecker() {
 		if (mNextTechnique != null) {
 			throw new UnsupportedOperationException("Try the existing combination before advancing.");
 		}
 		mNextTechnique = mInterpolationTechniques.next();
-		
+
 		// reset trace checker, interpolant generator, and constructor
 		mTraceChecker = null;
 		mInterpolantGenerator = null;
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
-		
+
 		mLogger.info("Switched to mode " + mNextTechnique);
 	}
-	
+
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
@@ -212,14 +209,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		}
 		return mTraceChecker;
 	}
-	
+
 	@Override
 	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		if (!hasNextInterpolantGeneratorAvailable()) {
 			return false;
 		}
-		
+
 		/*
 		 * current policy: stop after finding at least one perfect interpolant sequence or at least two interpolant
 		 * sequences in total
@@ -229,16 +226,16 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		}
 		return imperfectIpps.size() < INTERPOLANT_ACCEPTANCE_THRESHOLD;
 	}
-	
+
 	protected boolean hasNextInterpolantGeneratorAvailable() {
 		return mInterpolationTechniques.hasNext();
 	}
-	
+
 	@Override
 	public void nextInterpolantGenerator() {
 		nextTraceChecker();
 	}
-	
+
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		mHasShownInfeasibilityBefore = true;
@@ -247,76 +244,76 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		}
 		return mInterpolantGenerator;
 	}
-	
+
 	@Override
-	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
+	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		// current policy: use all interpolant sequences
 		final List<InterpolantsPreconditionPostcondition> allIpps =
 				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
-		
+
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
-					new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample, allIpps, mAbstraction);
+					new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample, allIpps, mAbstraction);
 		}
 		return mInterpolantAutomatonBuilder;
 	}
-	
+
 	/**
 	 * @return iterator of different combinations.
 	 */
 	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
-	
-	private TraceCheckerConstructor constructTraceCheckerConstructor() {
+
+	private TraceCheckerConstructor<LETTER> constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
-		
+
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
-		
+
 		final AssertCodeBlockOrder assertionOrder =
 				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
-		
+
 		mNextTechnique = null;
-		
-		TraceCheckerConstructor result;
+
+		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
+			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
 					assertionOrder, interpolationTechnique, mIteration, mCegarLoopsBenchmark);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
+			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopsBenchmark);
 		}
-		
+
 		return result;
 	}
-	
+
 	private static InterpolationTechnique getInterpolationTechnique(final Track mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
-			case SMTINTERPOL_TREE_INTERPOLANTS:
-				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
-				break;
-			case Z3_NESTED_INTERPOLANTS:
-				interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
-				break;
-			case Z3_FPBP:
-			case CVC4_FPBP:
-			case MATHSAT_FPBP:
-				interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
-				break;
-			case Z3_FP:
-			case SMTINTERPOL_FP:
-			case CVC4_FP:
-			case MATHSAT_FP:
-				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
-				break;
-			default:
-				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
+		case SMTINTERPOL_TREE_INTERPOLANTS:
+			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
+			break;
+		case Z3_NESTED_INTERPOLANTS:
+			interpolationTechnique = InterpolationTechnique.Craig_NestedInterpolation;
+			break;
+		case Z3_FPBP:
+		case CVC4_FPBP:
+		case MATHSAT_FPBP:
+			interpolationTechnique = InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect;
+			break;
+		case Z3_FP:
+		case SMTINTERPOL_FP:
+		case CVC4_FP:
+		case MATHSAT_FP:
+			interpolationTechnique = InterpolationTechnique.ForwardPredicates;
+			break;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
 	}
-	
+
 	@SuppressWarnings("squid:S1151")
 	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Track mode, final boolean useTimeout) {
@@ -329,72 +326,66 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		final String logicForExternalSolver;
 		final String command;
 		switch (mode) {
-			case SMTINTERPOL_TREE_INTERPOLANTS:
-			case SMTINTERPOL_FP:
-				final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
-				solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile,
-						pathOfDumpedScript, baseNameOfDumpedScript);
-				solverMode = SolverMode.Internal_SMTInterpol;
-				logicForExternalSolver = null;
-				break;
-			case Z3_NESTED_INTERPOLANTS:
-				throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
-				/*
-				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
-				// TODO: Add external interpolator
-				String externalInterpolator = null;
-				solverSettings = new Settings(false, true, command, 0, externalInterpolator,
-						dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-				solverMode = SolverMode.External_Z3InterpolationMode;
-				logicForExternalSolver = LOGIC_Z3;
-				break;
-				*/
-			case Z3_FPBP:
-			case Z3_FP:
-				command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
-				solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-						baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_Z3;
-				break;
-			case CVC4_FPBP:
-			case CVC4_FP:
-				command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
-				solverSettings =
-						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-								baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = getCvc4Logic();
-				break;
-			case MATHSAT_FPBP:
-			case MATHSAT_FP:
-				command = COMMAND_MATHSAT;
-				solverSettings =
-						new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
-								baseNameOfDumpedScript);
-				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_MATHSAT;
-				break;
-			default:
-				throw new IllegalArgumentException(
-						"Managed script construction not supported for interpolation technique: " + mode);
+		case SMTINTERPOL_TREE_INTERPOLANTS:
+		case SMTINTERPOL_FP:
+			final long timeout = useTimeout ? TIMEOUT_SMTINTERPOL : TIMEOUT_NONE_SMTINTERPOL;
+			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.Internal_SMTInterpol;
+			logicForExternalSolver = null;
+			break;
+		case Z3_NESTED_INTERPOLANTS:
+			throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
+			/*
+			 * command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT; // TODO: Add external interpolator
+			 * String externalInterpolator = null; solverSettings = new Settings(false, true, command, 0,
+			 * externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript); solverMode =
+			 * SolverMode.External_Z3InterpolationMode; logicForExternalSolver = LOGIC_Z3; break;
+			 */
+		case Z3_FPBP:
+		case Z3_FP:
+			command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = LOGIC_Z3;
+			break;
+		case CVC4_FPBP:
+		case CVC4_FP:
+			command = useTimeout ? COMMAND_CVC4_TIMEOUT : COMMAND_CVC4_NO_TIMEOUT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = getCvc4Logic();
+			break;
+		case MATHSAT_FPBP:
+		case MATHSAT_FP:
+			command = COMMAND_MATHSAT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+			logicForExternalSolver = LOGIC_MATHSAT;
+			break;
+		default:
+			throw new IllegalArgumentException(
+					"Managed script construction not supported for interpolation technique: " + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
 				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + mIteration);
 		final ManagedScript result = new ManagedScript(services, solver);
-		
+
 		final TermTransferrer tt = new TermTransferrer(solver);
 		final Term axioms = prefs.getIcfgContainer().getCfgSmtToolkit().getAxioms().getFormula();
 		solver.assertTerm(tt.transform(axioms));
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * @return Logic string used for {@code CVC4}.
 	 */
 	protected abstract String getCvc4Logic();
-	
+
 	/**
 	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
 	 */
@@ -403,7 +394,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceChecker instanceof InterpolatingTraceChecker) {
 			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
-			
+
 			if (mPrefs.getUseInterpolantConsolidation()) {
 				try {
 					return consolidateInterpolants(interpolatingTraceChecker);
@@ -415,14 +406,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		}
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
-	
+
 	/**
 	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
 	 */
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
 		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
-		final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
+		final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), cfgSmtToolkit,
 				cfgSmtToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier,
@@ -431,12 +422,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IR
 		mCegarLoopsBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		return interpConsoli;
 	}
-	
+
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-	
+
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return mPrefs.getExceptionBlacklist();

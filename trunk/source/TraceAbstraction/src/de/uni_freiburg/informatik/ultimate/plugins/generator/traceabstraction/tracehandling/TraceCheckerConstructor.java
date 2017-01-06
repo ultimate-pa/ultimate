@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -57,17 +58,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-class TraceCheckerConstructor implements Supplier<TraceChecker> {
+class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<TraceChecker> {
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateUnifier mPredicateUnifier;
-	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
+	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final AssertCodeBlockOrder mAssertionOrder;
-	
+
 	/**
 	 * @param prefs
 	 *            Preferences.
@@ -88,12 +89,12 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 */
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final InterpolationTechnique interpolationTechnique,
+			final IRun<LETTER, IPredicate, ?> counterexample, final InterpolationTechnique interpolationTechnique,
 			final int cegarIteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		this(prefs, managedScript, services, predicateUnifier, counterexample, prefs.getAssertCodeBlocksOrder(),
 				interpolationTechnique, cegarIteration, cegarLoopBenchmark);
 	}
-	
+
 	/**
 	 * Copy constructor.
 	 *
@@ -106,11 +107,11 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 * @param benchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckerConstructor(final TraceCheckerConstructor other, final ManagedScript managedScript,
+	public TraceCheckerConstructor(final TraceCheckerConstructor<LETTER> other, final ManagedScript managedScript,
 			final InterpolationTechnique interpolationTechnique, final CegarLoopStatisticsGenerator benchmark) {
 		this(other, managedScript, other.mAssertionOrder, interpolationTechnique, benchmark);
 	}
-	
+
 	/**
 	 * Copy constructor with assertion order.
 	 *
@@ -125,13 +126,13 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 * @param benchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckerConstructor(final TraceCheckerConstructor other, final ManagedScript managedScript,
+	public TraceCheckerConstructor(final TraceCheckerConstructor<LETTER> other, final ManagedScript managedScript,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
 			final CegarLoopStatisticsGenerator benchmark) {
 		this(other.mPrefs, managedScript, other.mServices, other.mPredicateUnifier, other.mCounterexample, assertOrder,
 				interpolationTechnique, other.mIteration, benchmark);
 	}
-	
+
 	/**
 	 * Full constructor.
 	 * 
@@ -156,7 +157,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 */
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
+			final IRun<LETTER, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
 			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mPrefs = prefs;
@@ -169,7 +170,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		mIteration = cegarIteration;
 		mCegarLoopBenchmark = Objects.requireNonNull(cegarLoopBenchmark);
 	}
-	
+
 	@Override
 	public TraceChecker get() {
 		final TraceChecker traceChecker;
@@ -197,49 +198,48 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		if (traceChecker.wasTracecheckFinished()) {
 			mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
 		}
-		
+
 		if (traceChecker.getToolchainCanceledExpection() != null) {
 			throw traceChecker.getToolchainCanceledExpection();
 		} else if (mPrefs.getUseSeparateSolverForTracechecks() && traceChecker.wasTracecheckFinished()) {
 			mManagedScript.getScript().exit();
 		}
-		
+
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructDefault() {
 		final IPredicate precondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
-		
+
 		final TraceChecker traceChecker;
-		traceChecker = new TraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(), 
-				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, 
+		traceChecker = new TraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
+				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices,
 				true);
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructCraig() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final TraceChecker traceChecker;
-		traceChecker =
-				new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-						NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
-						mServices, true, mPredicateUnifier, mInterpolationTechnique, mManagedScript, true,
-						xnfConversionTechnique, simplificationTechnique, 
-						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), false);
+		traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
+				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, true, mPredicateUnifier, mInterpolationTechnique,
+				mManagedScript, true, xnfConversionTechnique, simplificationTechnique,
+				TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), false);
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructForwardBackward() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final TraceChecker traceChecker;
 		traceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
@@ -248,14 +248,14 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())));
 		return traceChecker;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private TraceChecker constructPathInvariants() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final IIcfg<BoogieIcfgLocation> icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
@@ -277,12 +277,12 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final boolean fakeNonIncrementalSolver = false;
 		final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-		
+
 		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
-				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, useLiveVariables, useWeakestPrecondition, settings, xnfConversionTechnique,
-				simplificationTechnique, icfgContainer);
+				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, useLiveVariables,
+				useWeakestPrecondition, settings, xnfConversionTechnique, simplificationTechnique, icfgContainer);
 	}
-	
+
 }

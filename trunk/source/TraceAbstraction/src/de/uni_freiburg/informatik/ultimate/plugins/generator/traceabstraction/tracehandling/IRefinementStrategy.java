@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
@@ -36,22 +35,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public interface IRefinementStrategy {
+public interface IRefinementStrategy<LETTER> {
 	String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
 	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt";
 	String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 	// 20161214 Matthias: MathSAT does not support timeouts
 	String COMMAND_MATHSAT = "mathsat";
-	
+
 	long TIMEOUT_SMTINTERPOL = 12_000L;
 	long TIMEOUT_NONE_SMTINTERPOL = 0L;
-	
+
 	String LOGIC_Z3 = "ALL";
 	String LOGIC_CVC4_DEFAULT = "AUFLIRA";
 	String LOGIC_CVC4_BITVECTORS = "AUFBV";
 	String LOGIC_MATHSAT = "ALL";
-	
+
 	/**
 	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
 	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
@@ -60,19 +59,19 @@ public interface IRefinementStrategy {
 	 * @return {@code true} iff there is another {@link TraceChecker} available and should be used
 	 */
 	boolean hasNextTraceChecker();
-	
+
 	/**
 	 * Changes the {@link TraceChecker}.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceChecker}; use
 	 * {@link #hasNextTraceChecker()} to check this.
 	 */
 	void nextTraceChecker();
-	
+
 	/**
 	 * @return The trace checker of the current combination.
 	 */
 	TraceChecker getTraceChecker();
-	
+
 	/**
 	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
 	 * strategy then decides whether it wants to and whether it can use another {@link IInterpolantGenerator}.
@@ -85,21 +84,21 @@ public interface IRefinementStrategy {
 	 */
 	boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
 			List<InterpolantsPreconditionPostcondition> imperfectIpps);
-	
+
 	/**
 	 * Changes the {@link IInterpolantGenerator}.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next {@link IInterpolantGenerator}; use
 	 * {@link #hasNextInterpolantGenerator(List, List)} to check this.
 	 */
 	void nextInterpolantGenerator();
-	
+
 	/**
 	 * This method must only be called if the {@link TraceChecker} returns {@code UNSAT}.
 	 *
 	 * @return The interpolant generator of the current combination.
 	 */
 	IInterpolantGenerator getInterpolantGenerator();
-	
+
 	/**
 	 * @param perfectIpps
 	 *            Sequences of perfect interpolants.
@@ -107,21 +106,21 @@ public interface IRefinementStrategy {
 	 *            sequences of imperfect interpolants
 	 * @return an interpolant automaton builder
 	 */
-	IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
+	IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			List<InterpolantsPreconditionPostcondition> perfectIpps,
 			List<InterpolantsPreconditionPostcondition> imperfectIpps);
-	
+
 	/**
 	 * @return Predicate unifier.
 	 */
 	PredicateUnifier getPredicateUnifier();
-	
+
 	/**
 	 * @return Object that encapsulates which exceptions are blacklisted.
 	 * @see RefinementStrategyExceptionBlacklist
 	 */
 	RefinementStrategyExceptionBlacklist getExceptionBlacklist();
-	
+
 	/**
 	 * @param list1
 	 *            First list.
@@ -132,8 +131,7 @@ public interface IRefinementStrategy {
 	static List<InterpolantsPreconditionPostcondition> wrapTwoListsInOne(
 			final List<InterpolantsPreconditionPostcondition> list1,
 			final List<InterpolantsPreconditionPostcondition> list2) {
-		final List<InterpolantsPreconditionPostcondition> allIpps =
-				new ArrayList<>(list1.size() + list2.size());
+		final List<InterpolantsPreconditionPostcondition> allIpps = new ArrayList<>(list1.size() + list2.size());
 		allIpps.addAll(list1);
 		allIpps.addAll(list2);
 		return allIpps;

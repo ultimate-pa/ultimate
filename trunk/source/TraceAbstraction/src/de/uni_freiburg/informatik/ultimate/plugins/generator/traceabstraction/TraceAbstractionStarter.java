@@ -63,7 +63,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -268,7 +269,7 @@ public class TraceAbstractionStarter {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<BoogieIcfgLocation> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
-		final BasicCegarLoop basicCegarLoop =
+		final BasicCegarLoop<?> basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
@@ -300,27 +301,27 @@ public class TraceAbstractionStarter {
 		mArtifact = basicCegarLoop.getArtifact();
 	}
 
-	private BasicCegarLoop constructCegarLoop(final String name, final IIcfg<BoogieIcfgLocation> root,
+	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<BoogieIcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<BoogieIcfgLocation> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				return new CegarLoopSWBnonRecursive(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
+				return new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
 						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices,
 						mToolchainStorage);
 			}
-			return new BasicCegarLoop(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+			return new BasicCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 		}
-		return new IncrementalInclusionCegarLoop(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+		return new IncrementalInclusionCegarLoop<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
 				taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage,
 				languageOperation);
 	}
 
 	private Result computeOverallResult(final Collection<BoogieIcfgLocation> errorLocs,
-			final BasicCegarLoop basicCegarLoop, final Result result) {
+			final BasicCegarLoop<?> basicCegarLoop, final Result result) {
 		switch (result) {
 		case SAFE:
 			reportPositiveResults(errorLocs);
@@ -384,7 +385,7 @@ public class TraceAbstractionStarter {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
@@ -407,10 +408,9 @@ public class TraceAbstractionStarter {
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
-		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
-				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
-		reportResult(uknRes);
+		final IcfgLocation errorPP = getErrorPP(pe);
+		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
+				unproabilityReasons));
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
@@ -434,10 +434,10 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 
-	public static BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
+	public static IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		return (BoogieIcfgLocation) last.getTarget();
+		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		return last.getTarget();
 	}
 
 	private boolean interpolationModeSwitchNeeded() {

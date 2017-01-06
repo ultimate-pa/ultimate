@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
@@ -109,14 +109,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		BasicCegarLoop abstractCegarLoop;
+		BasicCegarLoop<?> abstractCegarLoop;
 
 		final String name = "AllErrorsAtOnce";
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopJulian(name, rootNode, csToolkit, predicateFactory, timingStatistics,
+			abstractCegarLoop = new CegarLoopJulian<>(name, rootNode, csToolkit, predicateFactory, timingStatistics,
 					taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, csToolkit, predicateFactory,
+			abstractCegarLoop = new CegarLoopConcurrentAutomata<>(name, rootNode, csToolkit, predicateFactory,
 					timingStatistics, taPrefs, errNodesOfAllProc, mServices, mToolchainStorage);
 		} else {
 			throw new IllegalArgumentException();
@@ -133,19 +133,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		case SAFE:
 			reportPositiveResults(errNodesOfAllProc);
 			break;
-		case UNSAFE: {
-			final IcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
-			reportCounterexampleResult(pe);
+		case UNSAFE:
+			reportCounterexampleResult(abstractCegarLoop.getRcfgProgramExecution());
 			break;
-		}
 		case TIMEOUT:
 			reportTimeoutResult(errNodesOfAllProc);
 			break;
-		case UNKNOWN: {
-			final IcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
-			reportUnproveableResult(pe, null);
+		case UNKNOWN:
+			reportUnproveableResult(abstractCegarLoop.getRcfgProgramExecution(), null);
 			break;
-		}
 		default:
 			throw new IllegalArgumentException();
 		}
@@ -171,7 +167,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		if (abstractCegarLoop instanceof CegarLoopJulian) {
 			stat += " conditions ";
-			final CegarLoopJulian clj = (CegarLoopJulian) abstractCegarLoop;
+			final CegarLoopJulian<?> clj = (CegarLoopJulian<?>) abstractCegarLoop;
 			stat += "and " + clj.mBiggestAbstractionTransitions + " transitions. ";
 			stat += "Overall " + clj.mCoRelationQueries + "co-relation queries";
 		} else if (abstractCegarLoop instanceof CegarLoopConcurrentAutomata) {
@@ -236,7 +232,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
@@ -256,10 +252,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
-		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
-				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
-		reportResult(uknRes);
+		final IcfgLocation errorPP = getErrorPP(pe);
+		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
+				unproabilityReasons));
 	}
 
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
@@ -283,26 +278,23 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
-	public static BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
+	public static IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
+		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final IcfgLocation errorPP = last.getTarget();
 		return errorPP;
 	}
 

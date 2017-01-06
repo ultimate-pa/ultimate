@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,13 +34,11 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -49,10 +47,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Object that will analyze a trace with respect to a sequence of ProgramPoints and a sequence of interpolants. The
  * analysis starts at the beginning of the trace. For each ProgramPoint that has already appeared while traversing the
  * trace we check if the current interpolant implies the interpolant at the position of the recurring ProgramPoint.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class CoverageAnalysis<CL> {
+
+	public static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION = x -> y -> {
+		return new BackwardCoveringInformation((BackwardCoveringInformation) x, (BackwardCoveringInformation) y);
+	};
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -161,8 +163,8 @@ public class CoverageAnalysis<CL> {
 		// do nothing
 	}
 
-	public static List<IcfgLocation> extractProgramPoints(final IRun<CodeBlock, IPredicate, ?> irun) {
-		final List<IPredicate> predicateSequence = ((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
+	public static List<IcfgLocation> extractProgramPoints(final IRun<?, IPredicate, ? extends IPredicate> irun) {
+		final List<? extends IPredicate> predicateSequence = irun.getStateSequence();
 		final List<IcfgLocation> result = new ArrayList<>();
 		for (final IPredicate p : predicateSequence) {
 			result.add(((ISLPredicate) p).getProgramPoint());
@@ -175,10 +177,6 @@ public class CoverageAnalysis<CL> {
 		final int successfullBackwardCoverings = mUnsat + mTrivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
 	}
-
-	public static Function<Object, Function<Object, Object>> s_DefaultAggregation = x -> y -> {
-		return new BackwardCoveringInformation((BackwardCoveringInformation) x, (BackwardCoveringInformation) y);
-	};
 
 	public static class BackwardCoveringInformation {
 		private final int mPotentialBackwardCoverings;
@@ -209,14 +207,6 @@ public class CoverageAnalysis<CL> {
 		@Override
 		public String toString() {
 			return mSuccessfullBackwardCoverings + "/" + mPotentialBackwardCoverings;
-			// if (mPotentialBackwardCoverings == 0) {
-			// return "not available";
-			// } else {
-			// long result = Math.round((((double) mSuccessfullBackwardCoverings) / mPotentialBackwardCoverings) * 100);
-			// return result + "%";
-			// }
 		}
-
 	}
-
 }

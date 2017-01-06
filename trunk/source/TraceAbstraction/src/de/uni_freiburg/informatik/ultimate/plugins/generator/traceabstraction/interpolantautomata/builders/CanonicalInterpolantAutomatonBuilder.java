@@ -42,9 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -55,30 +53,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<CL>
-		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
-
-	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
+public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAnalysis<CL>
+		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 
 	private final boolean mSelfloopAtInitial = false;
 	private final boolean mSelfloopAtFinal = true;
 
-	protected final NestedWord<? extends IAction> mNestedWord;
-
-	private final CfgSmtToolkit mCsToolkit;
-
+	private final NestedWordAutomaton<LETTER, IPredicate> mIA;
+	protected final NestedWord<LETTER> mNestedWord;
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<>();
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
-			final InCaReAlphabet<CodeBlock> alphabet, final CfgSmtToolkit csToolkit,
+			final InCaReAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
 			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
-			final PredicateUnifier predicateUnifier, final NestedWord<? extends IAction> nestedWord) {
+			final PredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;
 		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
-		mCsToolkit = csToolkit;
 	}
 
 	@Override
@@ -103,13 +96,13 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 	protected void postprocess() {
 		if (mSelfloopAtInitial) {
 			final IPredicate precond = mIpp.getPrecondition();
-			for (final CodeBlock symbol : mIA.getInternalAlphabet()) {
+			for (final LETTER symbol : mIA.getInternalAlphabet()) {
 				mIA.addInternalTransition(precond, symbol, precond);
 			}
-			for (final CodeBlock symbol : mIA.getCallAlphabet()) {
+			for (final LETTER symbol : mIA.getCallAlphabet()) {
 				mIA.addCallTransition(precond, symbol, precond);
 			}
-			for (final CodeBlock symbol : mIA.getReturnAlphabet()) {
+			for (final LETTER symbol : mIA.getReturnAlphabet()) {
 				mIA.addReturnTransition(precond, precond, symbol, precond);
 				for (final Integer pos : mAlternativeCallPredecessors.keySet()) {
 					for (final IPredicate hier : mAlternativeCallPredecessors.get(pos)) {
@@ -121,13 +114,13 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 
 		if (mSelfloopAtFinal) {
 			final IPredicate postcond = mIpp.getPostcondition();
-			for (final CodeBlock symbol : mIA.getInternalAlphabet()) {
+			for (final LETTER symbol : mIA.getInternalAlphabet()) {
 				mIA.addInternalTransition(postcond, symbol, postcond);
 			}
-			for (final CodeBlock symbol : mIA.getCallAlphabet()) {
+			for (final LETTER symbol : mIA.getCallAlphabet()) {
 				mIA.addCallTransition(postcond, symbol, postcond);
 			}
-			for (final CodeBlock symbol : mIA.getReturnAlphabet()) {
+			for (final LETTER symbol : mIA.getReturnAlphabet()) {
 				mIA.addReturnTransition(postcond, postcond, symbol, postcond);
 				for (final Integer pos : mAlternativeCallPredecessors.keySet()) {
 					for (final IPredicate hier : mAlternativeCallPredecessors.get(pos)) {
@@ -154,14 +147,14 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 	}
 
 	@Override
-	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mIA;
 	}
 
 	private void addTransition(final int prePos, final int symbolPos, final int succPos) {
 		final IPredicate pred = mIpp.getInterpolant(prePos);
 		final IPredicate succ = mIpp.getInterpolant(succPos);
-		final CodeBlock symbol = (CodeBlock) mNestedWord.getSymbol(symbolPos);
+		final LETTER symbol = mNestedWord.getSymbol(symbolPos);
 		if (mNestedWord.isCallPosition(symbolPos)) {
 			mIA.addCallTransition(pred, symbol, succ);
 			if (mIpp.getInterpolant(prePos) != mIpp.getInterpolant(symbolPos)) {
@@ -186,7 +179,7 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 		alts.add(alternativeCallPredecessor);
 	}
 
-	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final CodeBlock symbol,
+	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final LETTER symbol,
 			final IPredicate succ) {
 		if (mAlternativeCallPredecessors.get(callPos) == null) {
 			return;

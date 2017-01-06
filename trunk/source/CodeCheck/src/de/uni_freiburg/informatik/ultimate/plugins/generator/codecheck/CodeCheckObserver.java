@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -481,7 +481,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					if (mGlobalSettings.isUseInterpolantconsolidation()) {
 						try {
 
-							final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
+							final InterpolantConsolidation<?> interpConsoli = new InterpolantConsolidation<>(
 									mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 									new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(errorRun.getWord()),
 									mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger,
@@ -694,7 +694,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private static String prettyPrintProgramPoint(final BoogieIcfgLocation pp) {
+	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
 		final int startLine = pp.getPayload().getLocation().getStartLine();
 		final int endLine = pp.getPayload().getLocation().getStartLine();
 		final StringBuilder sb = new StringBuilder();
@@ -838,23 +838,21 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-
-		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
-		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
-				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
-		reportResult(uknRes);
+		final IcfgLocation errorPP = getErrorPP(pe);
+		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
+				unproabilityReasons));
 	}
 
-	public BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
+	public IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
+		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final IcfgLocation errorPP = last.getTarget();
 		return errorPP;
 	}
 

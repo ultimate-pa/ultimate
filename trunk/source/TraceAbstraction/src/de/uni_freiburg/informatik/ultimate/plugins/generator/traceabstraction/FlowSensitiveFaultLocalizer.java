@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -67,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -84,14 +84,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Relevance information of a trace. Used to compute the relevant statements in an Error trace that are relevant (or
  * responsible) for the reaching the error trace according to some Error Relevance criterion. Currently we have two
  * relevance criterion 1) Non-Flow Sensitive 2) Flow Sensitive.
- * 
+ *
  * @author Numair Mansur
  * @author Matthias Heizmann
  * @author Christian Schilling
- * 
+ *
  *
  */
-public class FlowSensitiveFaultLocalizer {
+public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -106,8 +106,8 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private final boolean mApplyQuantifierElimination = true;
 
-	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
+	public FlowSensitiveFaultLocalizer(final IRun<LETTER, IPredicate, ?> counterexample,
+			final INestedWordAutomaton<LETTER, IPredicate> cfg, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
@@ -122,25 +122,24 @@ public class FlowSensitiveFaultLocalizer {
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
 		if (doNonFlowSensitiveAnalysis) {
-			doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
+			doNonFlowSensitiveAnalysis((NestedWord<LETTER>) counterexample.getWord(),
 					predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 		}
 
 		if (doFlowSensitiveAnalysis) {
-			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg, modifiableGlobalsTable,
+			doFlowSensitiveAnalysis((NestedRun<LETTER, IPredicate>) counterexample, cfg, modifiableGlobalsTable,
 					csToolkit);
 		}
 	}
 
 	/**
 	 * Construct RelevanceInformation array for trace.
-	 * 
+	 *
 	 * @return array with empty IRelevanceInformation for each IAction in the trace.
 	 */
-	private static IRelevanceInformation[]
-			initializeRelevanceOfTrace(final IRun<CodeBlock, IPredicate, ?> counterexampleRun) {
+	private IRelevanceInformation[] initializeRelevanceOfTrace(final IRun<LETTER, IPredicate, ?> counterexampleRun) {
 		final IRelevanceInformation[] result = new IRelevanceInformation[counterexampleRun.getLength() - 1];
-		final NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
+		final NestedWord<LETTER> counterexampleWord = (NestedWord<LETTER>) counterexampleRun.getWord();
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final IRelevanceInformation relevancyOfAction = new RelevanceInformation(
 					Collections.singletonList(counterexampleWord.getSymbolAt(i)), false, false, false, false);
@@ -151,15 +150,15 @@ public class FlowSensitiveFaultLocalizer {
 
 	/**
 	 * Compute branch-in and branch-out information from cfg.
-	 * 
+	 *
 	 * @param counterexample
 	 * @param cfg
 	 * @return List of pairs, where each pair encodes an alternative path (a path of cfg that is not part of the trace).
 	 *         If the pair (k,j) is in the list this means that there is an alternative path from position k to position
 	 *         j in the trace.
 	 */
-	private Map<Integer, List<Integer>> computeInformationFromCFG(final NestedRun<CodeBlock, IPredicate> counterexample,
-			final INestedWordAutomaton<CodeBlock, IPredicate> cfg) {
+	private Map<Integer, List<Integer>> computeInformationFromCFG(final NestedRun<LETTER, IPredicate> counterexample,
+			final INestedWordAutomaton<LETTER, IPredicate> cfg) {
 		// TODO: result of alternative computation, only used for debugging
 		final List<int[]> result_Old = new ArrayList<>();
 
@@ -195,9 +194,9 @@ public class FlowSensitiveFaultLocalizer {
 			final IcfgLocation programPointOfSuccInCounterexample =
 					((ISLPredicate) counterexample.getStateAtPosition(posOfStartState + 1)).getProgramPoint();
 			// Immediate successors of of the state in CFG
-			final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> immediateSuccesors =
+			final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> immediateSuccesors =
 					cfg.internalSuccessors(startStateInCfg);
-			for (final OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
+			for (final OutgoingInternalTransition<LETTER, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
 				final IcfgLocation programPointOfImmediateSucc = ((ISLPredicate) immediateSuccesor).getProgramPoint();
 				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
@@ -207,7 +206,7 @@ public class FlowSensitiveFaultLocalizer {
 					// For Branch in Branch Out information.
 					// Path from the successor state not in the counter example
 					// to one of the states in possibleEndPoints.
-					final NestedRun<CodeBlock, IPredicate> alternativePath =
+					final NestedRun<LETTER, IPredicate> alternativePath =
 							findPathInCFG(immediateSuccesor, startStateInCfg, possibleEndPoints, cfg);
 					if (alternativePath != null) {
 						// If such a path exists. Then that means that there is a path from the successor state
@@ -249,15 +248,15 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Returns a List of locations for the occurrence of a state in the Error Trace. There can be multiple locations, in
 	 * case of a loop unrolling.
-	 * 
+	 *
 	 * Computing the end point (position of the IN-BRANCH) an alternative path. Search for the last state in the trace
 	 * that satisfies the following properties. - position in trace is larger than posOfStartState - program point of
 	 * the state coincides with - program point of lastStateOfAlternativePath
-	 * 
+	 *
 	 * Also takes care of the case when for a state in CFG, there are more then one Occurrences of the corresponding
 	 * state in the error trace. This can happen, for example, in the case of a loop un-rolling.
 	 */
-	private static List<Integer> computeEndpointOfAlternativePath(final NestedRun<CodeBlock, IPredicate> counterexample,
+	private List<Integer> computeEndpointOfAlternativePath(final NestedRun<LETTER, IPredicate> counterexample,
 			final int posOfStartState, final IPredicate lastStateOfAlternativePath) {
 		final List<Integer> endPoints = new ArrayList<>();
 		for (int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
@@ -279,11 +278,11 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * End points are the cfg states (resp. program points) of all successive states (successors of currentPosition) in
 	 * the trace excluding the last state (which corresponds to the error location).
-	 * 
+	 *
 	 * @param programPoint_StateMap
 	 *            map from program points to states in cfg
 	 */
-	private static Set<IPredicate> computePossibleEndpoints(final NestedRun<CodeBlock, IPredicate> counterexample,
+	private Set<IPredicate> computePossibleEndpoints(final NestedRun<LETTER, IPredicate> counterexample,
 			final Map<IcfgLocation, IPredicate> programPoint_StateMap, final int currentPosition) {
 		final Set<IPredicate> possibleEndPoints = new HashSet<>();
 		for (int j = currentPosition + 1; j < counterexample.getStateSequence().size() - 1; j++) {
@@ -296,7 +295,7 @@ public class FlowSensitiveFaultLocalizer {
 
 	/**
 	 * Computes relevance criterion variables (Unsatisfiable core , Golden Frame).
-	 * 
+	 *
 	 * @param relevance
 	 */
 	private static Boolean[] relevanceCriterionVariables(final ERelevanceStatus relevance) {
@@ -319,7 +318,7 @@ public class FlowSensitiveFaultLocalizer {
 		return relevanceCriterionVariables;
 	}
 
-	private void doNonFlowSensitiveAnalysis(final NestedWord<CodeBlock> counterexampleWord,
+	private void doNonFlowSensitiveAnalysis(final NestedWord<LETTER> counterexampleWord,
 			final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
@@ -392,14 +391,14 @@ public class FlowSensitiveFaultLocalizer {
 
 	/**
 	 * Recursively Compute the Markhor Formula of a branch.
-	 * 
+	 *
 	 * @param startPosition
 	 *            - Starting location of the branch.
 	 * @param endPosition
 	 *            - End location of the branch.
 	 */
 	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition,
-			final NestedWord<CodeBlock> counterexampleWord, final Map<Integer, List<Integer>> informationFromCFG,
+			final NestedWord<LETTER> counterexampleWord, final Map<Integer, List<Integer>> informationFromCFG,
 			final ManagedScript csToolkit) {
 		UnmodifiableTransFormula combinedTransitionFormula =
 				counterexampleWord.getSymbolAt(startPosition).getTransformula();
@@ -426,7 +425,7 @@ public class FlowSensitiveFaultLocalizer {
 								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
 			} else {
 				// It is a normal statement.
-				final CodeBlock statement = counterexampleWord.getSymbol(i);
+				final LETTER statement = counterexampleWord.getSymbol(i);
 				final UnmodifiableTransFormula transitionFormula = statement.getTransformula();
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
 						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
@@ -443,7 +442,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor, final IPredicate weakestPreconditionLeft,
-			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
+			final IPredicate weakestPreconditionRight, final NestedWord<LETTER> counterexampleWord,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable) {
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
@@ -459,7 +458,7 @@ public class FlowSensitiveFaultLocalizer {
 
 	/**
 	 * Computes the corresponding branch-out position for a given branch-in position.
-	 * 
+	 *
 	 * @param branchInList
 	 *            branch-in positions in descending order
 	 * @return the smallest element of the branchInList that is larger than startLocation. Returns null if no such
@@ -481,13 +480,13 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Computes the Statements relevant to the flow sensitive analysis in the trace.
 	 */
-	private void computeRelevantStatements_FlowSensitive(final NestedWord<CodeBlock> counterexampleWord,
+	private void computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, List<Integer>> informationFromCFG) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
-			final CodeBlock statement = counterexampleWord.getSymbol(position);
+			final LETTER statement = counterexampleWord.getSymbol(position);
 
 			final List<Integer> branchIn = informationFromCFG.get(position);
 			final Integer branchOutPosition;
@@ -553,13 +552,13 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Computes the relevance information of a position in the trace, depending on the type of the codeblock at that
 	 * location. (IInternalAction, ICallAction, IReturnAction).
-	 * 
+	 *
 	 * @return Relevance Information of a position in the trace.
 	 */
 	private ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
 			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
-			final NestedWord<CodeBlock> counterexampleWord, final FaultLocalizationRelevanceChecker rc,
+			final NestedWord<LETTER> counterexampleWord, final FaultLocalizationRelevanceChecker rc,
 			final CfgSmtToolkit csToolkit) {
 		ERelevanceStatus relevance;
 		if (action instanceof IInternalAction) {
@@ -606,8 +605,8 @@ public class FlowSensitiveFaultLocalizer {
 		return result;
 	}
 
-	private void doFlowSensitiveAnalysis(final NestedRun<CodeBlock, IPredicate> counterexample,
-			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
+	private void doFlowSensitiveAnalysis(final NestedRun<LETTER, IPredicate> counterexample,
+			final INestedWordAutomaton<LETTER, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg);
@@ -628,11 +627,11 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Check if there is a path from startPoint so some element of the possibleEndPoints set. If yes, a NestedRun is
 	 * returned, otherwise null is returned.
-	 * 
+	 *
 	 * @param parent_state
 	 */
-	private NestedRun<CodeBlock, IPredicate> findPathInCFG(final IPredicate startPoint, final IPredicate parent_state,
-			final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<CodeBlock, IPredicate> cfg) {
+	private NestedRun<LETTER, IPredicate> findPathInCFG(final IPredicate startPoint, final IPredicate parent_state,
+			final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<LETTER, IPredicate> cfg) {
 		try {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), cfg, Collections.singleton(startPoint),
 					Collections.singleton(parent_state), possibleEndPoints).getNestedRun();
@@ -643,7 +642,7 @@ public class FlowSensitiveFaultLocalizer {
 	}
 
 	/**
-	 * @return List of {@link RelevanceInformation}s one for each {@link CodeBlock} in the counterexample.
+	 * @return List of {@link RelevanceInformation}s one for each LETTER in the counterexample.
 	 */
 	public List<IRelevanceInformation> getRelevanceInformation() {
 		if (mLogger.isDebugEnabled()) {

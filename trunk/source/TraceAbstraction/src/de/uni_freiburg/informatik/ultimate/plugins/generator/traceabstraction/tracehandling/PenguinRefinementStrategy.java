@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -52,27 +52,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class PenguinRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
+public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
 	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
-			final AssertionOrderModulation assertionOrderModulation,
-			final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample, abstraction,
-				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
+			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
+				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
-	
+
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-//		list.add(Track.MATHSAT_FPBP);
+		// list.add(Track.MATHSAT_FPBP);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_FPBP);
 		list.add(Track.CVC4_FPBP);
 		return list.iterator();
 	}
-	
+
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_DEFAULT;

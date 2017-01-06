@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
@@ -76,22 +76,22 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class TaipanRefinementStrategy implements IRefinementStrategy {
+public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
 	/**
 	 * @see #getModeForWindowsUsers().
 	 */
-	private static final boolean I_AM_A_POOR_WINDOWS_USER = true;
+	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final TaCheckAndRefinementPreferences mPrefs;
+	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final PredicateUnifier mPredicateUnifier;
-	private final CegarAbsIntRunner mAbsIntRunner;
-	private final AssertionOrderModulation mAssertionOrderModulation;
-	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
-	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
+	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
+	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final IRun<LETTER, IPredicate, ?> mCounterexample;
+	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 
 	private Mode mCurrentMode;
 
@@ -101,12 +101,12 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceCheckerConstructor mTcConstructor;
-	private TraceCheckerConstructor mPrevTcConstructor;
+	private TraceCheckerConstructor<LETTER> mTcConstructor;
+	private TraceCheckerConstructor<LETTER> mPrevTcConstructor;
 
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
-	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
+	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
@@ -117,7 +117,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 *            Ultimate services
 	 * @param prefs
 	 *            preferences
-	 * @param cfgSmtToolkit 
+	 * @param cfgSmtToolkit
 	 * @param predicateUnifier
 	 *            predicate unifier
 	 * @param absIntRunner
@@ -134,9 +134,10 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	 *            benchmark
 	 */
 	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
-			final CegarAbsIntRunner absIntRunner, final AssertionOrderModulation assertionOrderModulation,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
+			final PredicateUnifier predicateUnifier, final CegarAbsIntRunner<LETTER> absIntRunner,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mServices = services;
 		mLogger = logger;
@@ -277,7 +278,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 
 	@Override
-	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder(
+	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		if (mInterpolantAutomatonBuilder == null) {
@@ -287,7 +288,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		return mInterpolantAutomatonBuilder;
 	}
 
-	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> constructInterpolantAutomatonBuilder(
+	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
 			final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps, final Mode mode) {
 		switch (mode) {
@@ -299,12 +300,12 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			if (perfectIpps.isEmpty()) {
 				// if we have only imperfect interpolants, we take the first two
 				mLogger.info("Using the first two imperfect interpolant sequences");
-				return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample,
+				return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
 						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction);
 			}
 			// if we have some perfect, we take one of those
 			mLogger.info("Using the first perfect interpolant sequence");
-			return new MultiTrackInterpolantAutomatonBuilder(mServices, mCounterexample,
+			return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
 					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
@@ -314,7 +315,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 	}
 
-	private TraceCheckerConstructor constructTraceCheckerConstructor() {
+	private TraceCheckerConstructor<LETTER> constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 
@@ -333,12 +334,12 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
 				+ " (IT: " + interpolationTechnique + ")");
-		TraceCheckerConstructor result;
+		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
+			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
 					assertionOrder, interpolationTechnique, mIteration, mCegarLoopBenchmark);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, assertionOrder,
+			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);
 		}
 		return result;
@@ -382,8 +383,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 
 	@SuppressWarnings("squid:S1151")
-	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final Mode mode, final boolean useTimeout,
+	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
+			final TaCheckAndRefinementPreferences<LETTER> prefs, final Mode mode, final boolean useTimeout,
 			final int iteration) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
@@ -447,7 +448,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			//$FALL-THROUGH$
 		case ABSTRACT_INTERPRETATION:
 			mAbsIntRunner.generateFixpoints(mCounterexample,
-					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction);
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction);
 			return new AiRunnerWrapper();
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
@@ -472,7 +473,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 	/**
 	 * Wrapper for {@link CegarAbsIntRunner} that works like an {@link IInterpolantGenerator}.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private class AiRunnerWrapper implements IInterpolantGenerator {
@@ -493,9 +494,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			return mAbsIntRunner.hasShownInfeasibility();
 		}
 
-		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
+		public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder() {
 			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
-					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
+					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample);
 		}
 
 		@Override

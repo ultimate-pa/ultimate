@@ -37,10 +37,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.CoverageRelation;
@@ -56,7 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann
  *
  */
-public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
+public class DeterministicInterpolantAutomaton<LETTER extends IAction>
+		extends BasicAbstractInterpolantAutomaton<LETTER> {
 
 	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = new HashRelation<>();
@@ -74,9 +75,9 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 	public DeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
-			final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier,
-			final boolean conservativeSuccessorCandidateSelection, final boolean cannibalize) {
+			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final PredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
+			final boolean cannibalize) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mCannibalize = cannibalize;
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
@@ -86,8 +87,8 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 		Collection<IPredicate> allPredicates;
 		if (mCannibalize) {
-			allPredicates = mPredicateUnifier.cannibalizeAll(mSplitNumericEqualities,
-					inputInterpolantAutomaton.getStates());
+			allPredicates =
+					mPredicateUnifier.cannibalizeAll(mSplitNumericEqualities, inputInterpolantAutomaton.getStates());
 			for (final IPredicate pred : allPredicates) {
 				if (!inputInterpolantAutomaton.getStates().contains(pred)) {
 					mAlreadyConstrucedAutomaton.addState(false, false, pred);
@@ -171,7 +172,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	}
 
 	@Override
-	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		for (final IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
@@ -214,7 +215,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	 * @param inputSuccs
 	 */
 	@Override
-	protected void addInputAutomatonSuccs(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+	protected void addInputAutomatonSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		Set<IPredicate> resPredConjuncts = mResPred2InputPreds.getImage(resPred);
 		assert mCannibalize || resPredConjuncts != null;
@@ -276,7 +277,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 	@Override
 	protected void constructSuccessorsAndTransitions(final IPredicate resPred, final IPredicate resHier,
-			final CodeBlock letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+			final LETTER letter, final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		final IPredicate resSucc = getOrConstructPredicate(inputSuccs);
 		sch.addTransition(resPred, resHier, letter, resSucc);
 		sch.reportSuccsComputed(resPred, resHier, letter);

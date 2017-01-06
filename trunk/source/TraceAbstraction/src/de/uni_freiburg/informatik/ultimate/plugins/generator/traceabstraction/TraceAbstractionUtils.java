@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -77,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Provides static auxiliary methods for trace abstraction.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -91,7 +90,7 @@ public class TraceAbstractionUtils {
 	 *            local control state provider, e.g., {@link ISLPredicate}, or {@link IMLPredicate}
 	 */
 	public static <LCSP extends IPredicate, LCS> Collection<Set<IPredicate>> computePartition(
-			final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger,
+			final INestedWordAutomaton<?, IPredicate> automaton, final ILogger logger,
 			final Function<LCSP, LCS> lcsProvider) {
 		logger.debug("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
@@ -161,7 +160,7 @@ public class TraceAbstractionUtils {
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
-	 * 
+	 *
 	 * @param services
 	 * @param mgdScript
 	 * @param predicateFactory
@@ -189,7 +188,7 @@ public class TraceAbstractionUtils {
 	/**
 	 * Construct Term which represents the same set of states as ps, but where all globalVars are renamed to
 	 * oldGlobalVars.
-	 * 
+	 *
 	 */
 	public static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript) {
@@ -227,7 +226,7 @@ public class TraceAbstractionUtils {
 	/**
 	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
 	 * globalVar in term and remove the oldvar from vars.
-	 * 
+	 *
 	 * @param modifiableGlobals
 	 * @param script
 	 */

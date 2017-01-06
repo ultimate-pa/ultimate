@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,11 +46,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -63,18 +64,18 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 	private final Map<String, ILocation> mOverapproximations;
 
 	@SuppressWarnings("unchecked")
-	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
 		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
 	}
 
-	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders) {
 		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
 
-	public IcfgProgramExecution(final List<? extends IcfgEdge> trace,
+	public IcfgProgramExecution(final List<? extends IIcfgTransition<?>> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders, final List<IRelevanceInformation> relevanceInformation) {
 		assert trace != null;
@@ -86,7 +87,7 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		// statements.
 		final List<AtomicTraceElement<IcfgEdge>> atomictrace = new ArrayList<>();
 		for (int i = 0; i < trace.size(); i++) {
-			final IcfgEdge te = trace.get(i);
+			final IcfgEdge te = (IcfgEdge) trace.get(i);
 			final IRelevanceInformation ri;
 			if (relevanceInformation == null) {
 				ri = null;
@@ -206,7 +207,7 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 
 	/**
 	 * Workaround to satisfy the parameters of results.
-	 * 
+	 *
 	 * @return
 	 */
 	@Deprecated

@@ -32,11 +32,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Matthias Heizmann
  */
-public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpolantAutomaton {
+public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
+		extends AbstractInterpolantAutomaton<LETTER> {
 
 	protected final IPredicate mIaTrueState;
 	protected final PredicateUnifier mPredicateUnifier;
@@ -52,15 +53,15 @@ public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpol
 	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final PredicateUnifier predicateUnifier,
-			final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton) {
-		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, predicateUnifier.getFalsePredicate(),
-				inputInterpolantAutomaton);
+			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
+		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping,
+				predicateUnifier.getFalsePredicate(), inputInterpolantAutomaton);
 		mPredicateUnifier = predicateUnifier;
 		mIaTrueState = predicateUnifier.getTruePredicate();
 	}
 
 	@Override
-	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch) {
 		// if (linear) predecessor is false, the successor is false
 		if (sch.isLinearPredecessorFalse(resPred)) {
@@ -101,13 +102,13 @@ public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpol
 		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
 	}
 
-	protected abstract void addOtherSuccessors(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+	protected abstract void addOtherSuccessors(IPredicate resPred, IPredicate resHier, LETTER letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs);
 
-	protected abstract void addInputAutomatonSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+	protected abstract void addInputAutomatonSuccs(IPredicate resPred, IPredicate resHier, LETTER letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs);
 
-	protected abstract void constructSuccessorsAndTransitions(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+	protected abstract void constructSuccessorsAndTransitions(IPredicate resPred, IPredicate resHier, LETTER letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs);
 
 }

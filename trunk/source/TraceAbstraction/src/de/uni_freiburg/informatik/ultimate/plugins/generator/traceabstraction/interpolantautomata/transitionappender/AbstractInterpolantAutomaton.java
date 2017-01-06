@@ -51,15 +51,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * Superclass for interpolant automata that are build on-demand. An interpolant automaton is an automaton
  * <ul>
- * <li>whose letters are CodeBlocks
+ * <li>whose letters are LETTERs
  * <li>whose states are IPredicates
  * <li>whose accepting state is an IPredicate whose formula is "false"
  * <li>that has a transition (ψ, st, φ) only if the Hoare triple {ψ} st {φ} is valid.
@@ -80,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  * @author Matthias Heizmann
  *
  */
-public abstract class AbstractInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
+public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWordAutomatonSimple<LETTER, IPredicate> {
 
 	public enum Mode {
 		ON_DEMAND_CONSTRUCTION, READ_ONLY
@@ -92,15 +89,15 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final IHoareTripleChecker mIHoareTripleChecker;
 	protected final IPredicate mIaFalseState;
-	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> mAlreadyConstrucedAutomaton;
-	protected final INestedWordAutomaton<CodeBlock, IPredicate> mInputInterpolantAutomaton;
+	protected final NestedWordAutomatonCache<LETTER, IPredicate> mAlreadyConstrucedAutomaton;
+	protected final INestedWordAutomaton<LETTER, IPredicate> mInputInterpolantAutomaton;
 
 	private Mode mMode = Mode.ON_DEMAND_CONSTRUCTION;
 
 	private final InternalSuccessorComputationHelper mInSucComp;
 	private final CallSuccessorComputationHelper mCaSucComp;
 	private final ReturnSuccessorComputationHelper mReSucComp;
-	private final ISuccessorComputationBookkeeping mSuccessorComputationBookkeeping;
+	private final ISuccessorComputationBookkeeping<LETTER> mSuccessorComputationBookkeeping;
 
 	/**
 	 * @param useEfficientTotalAutomatonBookkeeping
@@ -109,7 +106,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 */
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
-			final IPredicate falseState, final INestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton) {
+			final IPredicate falseState, final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -121,8 +118,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				inputInterpolantAutomaton.getInternalAlphabet(), inputInterpolantAutomaton.getCallAlphabet(), inputInterpolantAutomaton.getReturnAlphabet(),
-				inputInterpolantAutomaton.getStateFactory());
+				inputInterpolantAutomaton.getInternalAlphabet(), inputInterpolantAutomaton.getCallAlphabet(),
+				inputInterpolantAutomaton.getReturnAlphabet(), inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {
@@ -153,7 +150,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			throw new AssertionError("already in mode ON_DEMAND_CONSTRUCTION");
 		}
 		mMode = Mode.ON_DEMAND_CONSTRUCTION;
-			mLogger.info(switchToOnDemandConstructionMessage());
+		mLogger.info(switchToOnDemandConstructionMessage());
 	}
 
 	protected abstract String startMessage();
@@ -162,8 +159,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	protected abstract String switchToOnDemandConstructionMessage();
 
-	protected abstract void computeSuccs(IPredicate state, IPredicate hier, CodeBlock ret,
-			SuccessorComputationHelper sch);
+	protected abstract void computeSuccs(IPredicate state, IPredicate hier, LETTER ret, SuccessorComputationHelper sch);
 
 	@Override
 	public final int size() {
@@ -171,7 +167,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Set<CodeBlock> getAlphabet() {
+	public final Set<LETTER> getAlphabet() {
 		return mAlreadyConstrucedAutomaton.getAlphabet();
 	}
 
@@ -184,17 +180,17 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Set<CodeBlock> getInternalAlphabet() {
+	public final Set<LETTER> getInternalAlphabet() {
 		return mAlreadyConstrucedAutomaton.getInternalAlphabet();
 	}
 
 	@Override
-	public final Set<CodeBlock> getCallAlphabet() {
+	public final Set<LETTER> getCallAlphabet() {
 		return mAlreadyConstrucedAutomaton.getCallAlphabet();
 	}
 
 	@Override
-	public final Set<CodeBlock> getReturnAlphabet() {
+	public final Set<LETTER> getReturnAlphabet() {
 		return mAlreadyConstrucedAutomaton.getReturnAlphabet();
 	}
 
@@ -224,23 +220,23 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Set<CodeBlock> lettersInternal(final IPredicate state) {
+	public final Set<LETTER> lettersInternal(final IPredicate state) {
 		return getInternalAlphabet();
 	}
 
 	@Override
-	public final Set<CodeBlock> lettersCall(final IPredicate state) {
+	public final Set<LETTER> lettersCall(final IPredicate state) {
 		return getCallAlphabet();
 	}
 
 	@Override
-	public final Set<CodeBlock> lettersReturn(final IPredicate state) {
+	public final Set<LETTER> lettersReturn(final IPredicate state) {
 		return getReturnAlphabet();
 	}
 
 	@Override
-	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(final IPredicate state,
-			final CodeBlock letter) {
+	public final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
+			final LETTER letter) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			if (!mSuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
 				computeSuccs(state, null, letter, mInSucComp);
@@ -250,10 +246,9 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>>
-			internalSuccessors(final IPredicate state) {
+	public final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			for (final CodeBlock letter : lettersInternal(state)) {
+			for (final LETTER letter : lettersInternal(state)) {
 				if (!mSuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
 					computeSuccs(state, null, letter, mInSucComp);
 				}
@@ -263,23 +258,21 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(final IPredicate state,
-			final CodeBlock letter) {
-		final Call call = (Call) letter;
+	public final Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state,
+			final LETTER letter) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!mSuccessorComputationBookkeeping.areCallSuccsComputed(state, call)) {
+			if (!mSuccessorComputationBookkeeping.areCallSuccsComputed(state, letter)) {
 				computeSuccs(state, null, letter, mCaSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.callSuccessors(state, call);
+		return mAlreadyConstrucedAutomaton.callSuccessors(state, letter);
 	}
 
 	@Override
-	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(final IPredicate state) {
+	public final Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			for (final CodeBlock letter : lettersCall(state)) {
-				final Call call = (Call) letter;
-				if (!mAlreadyConstrucedAutomaton.callSuccessors(state, call).iterator().hasNext()) {
+			for (final LETTER letter : lettersCall(state)) {
+				if (!mAlreadyConstrucedAutomaton.callSuccessors(state, letter).iterator().hasNext()) {
 					computeSuccs(state, null, letter, mCaSucComp);
 				}
 			}
@@ -288,24 +281,22 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	@Override
-	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessors(final IPredicate state,
-			final IPredicate hier, final CodeBlock letter) {
-		final Return ret = (Return) letter;
+	public final Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessors(final IPredicate state,
+			final IPredicate hier, final LETTER letter) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!mSuccessorComputationBookkeeping.areReturnSuccsComputed(state, hier, ret)) {
+			if (!mSuccessorComputationBookkeeping.areReturnSuccsComputed(state, hier, letter)) {
 				computeSuccs(state, hier, letter, mReSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, ret);
+		return mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
-	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>>
+	public final Iterable<OutgoingReturnTransition<LETTER, IPredicate>>
 			returnSuccessorsGivenHier(final IPredicate state, final IPredicate hier) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			for (final CodeBlock letter : lettersReturn(state)) {
-				final Return ret = (Return) letter;
-				if (!mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, ret).iterator().hasNext()) {
+			for (final LETTER letter : lettersReturn(state)) {
+				if (!mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()) {
 					computeSuccs(state, hier, letter, mReSucComp);
 				}
 			}
@@ -316,8 +307,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final String toString() {
 		if (mMode == Mode.READ_ONLY) {
-			return (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
-					Format.ATS, this)).getDefinitionAsString();
+			return new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
+					Format.ATS, this).getDefinitionAsString();
 		}
 		return "automaton under construction";
 	}
@@ -333,16 +324,15 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 		public abstract boolean isHierarchicalPredecessorFalse(IPredicate resPred);
 
-		public abstract void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate resSucc);
+		public abstract void addTransition(IPredicate resPred, IPredicate resHier, LETTER letter, IPredicate resSucc);
 
-		public abstract Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+		public abstract Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, LETTER letter,
 				IPredicate resSucc);
 
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
-				CodeBlock letter);
+				LETTER letter);
 
-		public abstract void reportSuccsComputed(IPredicate resPred, IPredicate resHier, CodeBlock letter);
+		public abstract void reportSuccsComputed(IPredicate resPred, IPredicate resHier, LETTER letter);
 
 	}
 
@@ -360,25 +350,25 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
 			assert resHier == null;
 			mAlreadyConstrucedAutomaton.addInternalTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter, final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+				final IPredicate inputSucc) {
 			assert resHier == null;
 			return mIHoareTripleChecker.checkInternal(resPred, (IInternalAction) letter, inputSucc);
 		}
 
 		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter) {
+				final LETTER letter) {
 			assert resHier == null;
-			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructInternalSuccessors(
-					mInputInterpolantAutomaton, resPred, letter);
+			final Collection<IPredicate> succs =
+					NestedWordAutomataUtils.constructInternalSuccessors(mInputInterpolantAutomaton, resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
@@ -386,7 +376,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final LETTER letter) {
 			assert resHier == null;
 			mSuccessorComputationBookkeeping.reportInternalSuccsComputed(resPred, letter);
 		}
@@ -407,25 +397,25 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
 			assert resHier == null;
 			mAlreadyConstrucedAutomaton.addCallTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter, final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+				final IPredicate inputSucc) {
 			assert resHier == null;
 			return mIHoareTripleChecker.checkCall(resPred, (ICallAction) letter, inputSucc);
 		}
 
 		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter) {
+				final LETTER letter) {
 			assert resHier == null;
-			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructCallSuccessors(
-						mInputInterpolantAutomaton, resPred, letter);
+			final Collection<IPredicate> succs =
+					NestedWordAutomataUtils.constructCallSuccessors(mInputInterpolantAutomaton, resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
@@ -433,9 +423,9 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final LETTER letter) {
 			assert resHier == null;
-			mSuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, (Call) letter);
+			mSuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, letter);
 		}
 
 	}
@@ -453,22 +443,22 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
 			mAlreadyConstrucedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter, final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+				final IPredicate inputSucc) {
 			return mIHoareTripleChecker.checkReturn(resPred, resHier, (IReturnAction) letter, inputSucc);
 		}
 
 		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
-				final CodeBlock letter) {
-			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructReturnSuccessors(
-					mInputInterpolantAutomaton, resPred, resHier, letter);
+				final LETTER letter) {
+			final Collection<IPredicate> succs = NestedWordAutomataUtils
+					.constructReturnSuccessors(mInputInterpolantAutomaton, resPred, resHier, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
@@ -476,8 +466,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
-			mSuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, (Return) letter);
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final LETTER letter) {
+			mSuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, letter);
 		}
 
 	}
@@ -487,74 +477,74 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 *
 	 * @author Matthias Heizmann
 	 */
-	public interface ISuccessorComputationBookkeeping {
+	public interface ISuccessorComputationBookkeeping<LETTER> {
 
 		/**
 		 * Have the internal successors of state and letter already been computed.
 		 */
-		abstract boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter);
+		boolean areInternalSuccsComputed(IPredicate state, LETTER letter);
 
 		/**
 		 * Announce that the internal successors of state and letter have been computed.
 		 */
-		abstract void reportInternalSuccsComputed(IPredicate state, CodeBlock letter);
+		void reportInternalSuccsComputed(IPredicate state, LETTER letter);
 
 		/**
 		 * Have the call successors of state and call already been computed.
 		 */
-		abstract boolean areCallSuccsComputed(IPredicate state, Call call);
+		boolean areCallSuccsComputed(IPredicate state, LETTER call);
 
 		/**
 		 * Announce that the call successors of state and call have been computed.
 		 */
-		abstract void reportCallSuccsComputed(IPredicate state, Call call);
+		void reportCallSuccsComputed(IPredicate state, LETTER call);
 
 		/**
 		 * Have the return successors of state, hier and ret already been computed.
 		 */
-		abstract boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret);
+		boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, LETTER ret);
 
 		/**
 		 * Announce that the return successors of state, hier and have been computed.
 		 */
-		abstract void reportReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret);
+		void reportReturnSuccsComputed(IPredicate state, IPredicate hier, LETTER ret);
 	}
 
 	/**
 	 * Default implementation of {@link ISuccessorComputationBookkeeping} uses a NwaCacheBookkeeping to store which
 	 * successors have already been computed.
 	 */
-	private class DefaultSuccessorComputationBookkeeping implements ISuccessorComputationBookkeeping {
+	private class DefaultSuccessorComputationBookkeeping implements ISuccessorComputationBookkeeping<LETTER> {
 
-		private final NwaCacheBookkeeping<CodeBlock, IPredicate> mResultBookkeeping = new NwaCacheBookkeeping<>();
+		private final NwaCacheBookkeeping<LETTER, IPredicate> mResultBookkeeping = new NwaCacheBookkeeping<>();
 
 		@Override
-		public boolean areInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
+		public boolean areInternalSuccsComputed(final IPredicate state, final LETTER letter) {
 			return mResultBookkeeping.isCachedInternal(state, letter);
 		}
 
 		@Override
-		public void reportInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
+		public void reportInternalSuccsComputed(final IPredicate state, final LETTER letter) {
 			mResultBookkeeping.reportCachedInternal(state, letter);
 		}
 
 		@Override
-		public boolean areCallSuccsComputed(final IPredicate state, final Call call) {
+		public boolean areCallSuccsComputed(final IPredicate state, final LETTER call) {
 			return mResultBookkeeping.isCachedCall(state, call);
 		}
 
 		@Override
-		public void reportCallSuccsComputed(final IPredicate state, final Call call) {
+		public void reportCallSuccsComputed(final IPredicate state, final LETTER call) {
 			mResultBookkeeping.reportCachedCall(state, call);
 		}
 
 		@Override
-		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
+		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
 			return mResultBookkeeping.isCachedReturn(state, hier, ret);
 		}
 
 		@Override
-		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
+		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
 			mResultBookkeeping.reportCachedReturn(state, hier, ret);
 		}
 
@@ -566,10 +556,10 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 * because there would be at least one since the automaton is total. (An automaton is total if for each state and
 	 * each letter, there is at least one outgoing transition)
 	 */
-	private class SuccessorComputationBookkeepingForTotalAutomata implements ISuccessorComputationBookkeeping {
+	private class SuccessorComputationBookkeepingForTotalAutomata implements ISuccessorComputationBookkeeping<LETTER> {
 
 		@Override
-		public boolean areInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
+		public boolean areInternalSuccsComputed(final IPredicate state, final LETTER letter) {
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succInternal(state, letter);
 			if (succs == null) {
 				return false;
@@ -578,7 +568,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public boolean areCallSuccsComputed(final IPredicate state, final Call call) {
+		public boolean areCallSuccsComputed(final IPredicate state, final LETTER call) {
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succCall(state, call);
 			if (succs == null) {
 				return false;
@@ -587,7 +577,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
+		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succReturn(state, hier, ret);
 			if (succs == null) {
 				return false;
@@ -596,17 +586,17 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void reportInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
+		public void reportInternalSuccsComputed(final IPredicate state, final LETTER letter) {
 			// do nothing, information is implicitly stored in total automaton
 		}
 
 		@Override
-		public void reportCallSuccsComputed(final IPredicate state, final Call call) {
+		public void reportCallSuccsComputed(final IPredicate state, final LETTER call) {
 			// do nothing, information is implicitly stored in total automaton
 		}
 
 		@Override
-		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
+		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
 			// do nothing, information is implicitly stored in total automaton
 		}
 

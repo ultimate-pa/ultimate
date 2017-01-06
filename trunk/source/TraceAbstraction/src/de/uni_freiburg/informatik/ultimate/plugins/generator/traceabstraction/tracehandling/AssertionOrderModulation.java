@@ -31,7 +31,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
@@ -41,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class AssertionOrderModulation {
+public class AssertionOrderModulation<LETTER> {
 
 	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS =
 			{ AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1, AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
 					AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST };
 
-	private final List<HistogramOfIterable<CodeBlock>> mHistogramHistory;
+	private final List<HistogramOfIterable<LETTER>> mHistogramHistory;
 	private int mCurrentIndex;
 
 	/**
@@ -67,9 +66,9 @@ public class AssertionOrderModulation {
 	 *            interpolation technique
 	 * @return which assertion order to use
 	 */
-	public AssertCodeBlockOrder reportAndGet(final IRun<CodeBlock, IPredicate, ?> counterexample,
+	public AssertCodeBlockOrder reportAndGet(final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
-		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
+		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
 		final AssertCodeBlockOrder result =
 				getOrderAndUpdateIndex(interpolationTechnique, traceHistogram, mHistogramHistory);
 		mHistogramHistory.add(traceHistogram);
@@ -80,8 +79,8 @@ public class AssertionOrderModulation {
 	 * Get order for current histogram history.
 	 */
 	private AssertCodeBlockOrder getOrderAndUpdateIndex(final InterpolationTechnique interpolationTechnique,
-			final HistogramOfIterable<CodeBlock> traceHistogram,
-			final List<HistogramOfIterable<CodeBlock>> histogramHistory) {
+			final HistogramOfIterable<LETTER> traceHistogram,
+			final List<HistogramOfIterable<LETTER>> histogramHistory) {
 
 		if (interpolationTechnique == null) {
 			// if we do not compute interpolants, there is no need to assert incrementally
@@ -104,8 +103,8 @@ public class AssertionOrderModulation {
 		}
 	}
 
-	private int getNewIndex(final HistogramOfIterable<CodeBlock> traceHistogram,
-			final List<HistogramOfIterable<CodeBlock>> histogramHistory) {
+	private int getNewIndex(final HistogramOfIterable<LETTER> traceHistogram,
+			final List<HistogramOfIterable<LETTER>> histogramHistory) {
 		if (histogramHistory.isEmpty()) {
 			mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
 		} else if (histogramRepeats(traceHistogram)) {
@@ -114,12 +113,12 @@ public class AssertionOrderModulation {
 		return mCurrentIndex;
 	}
 
-	private static int getInitialAssertionOrderIndex(final HistogramOfIterable<CodeBlock> traceHistogram) {
+	private int getInitialAssertionOrderIndex(final HistogramOfIterable<LETTER> traceHistogram) {
 		// Current policy: We start with the first element in the array.
 		return 0;
 	}
 
-	private boolean histogramRepeats(final HistogramOfIterable<CodeBlock> traceHistogram) {
+	private boolean histogramRepeats(final HistogramOfIterable<LETTER> traceHistogram) {
 		assert !mHistogramHistory.isEmpty();
 		/*
 		 * Current policy: The histogram repeats if the number of entries that occur more than once has increased wrt.
@@ -132,7 +131,7 @@ public class AssertionOrderModulation {
 		return sumOfPreviousRepeatingEntries < sumOfCurrentRepeatingEntries;
 	}
 
-	private static int getSumOfEntriesGreaterThanOne(final HistogramOfIterable<CodeBlock> histogram) {
+	private int getSumOfEntriesGreaterThanOne(final HistogramOfIterable<LETTER> histogram) {
 		int result = 0;
 		for (final int value : histogram.getVisualizationArray()) {
 			if (value > 1) {

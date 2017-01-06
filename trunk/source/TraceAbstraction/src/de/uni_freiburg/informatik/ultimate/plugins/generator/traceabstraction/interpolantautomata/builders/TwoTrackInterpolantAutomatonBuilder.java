@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -50,17 +49,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann
  *
  */
-public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
+public class TwoTrackInterpolantAutomatonBuilder<LETTER> implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 	private final IUltimateServiceProvider mServices;
 
-	private final NestedWord<CodeBlock> mNestedWord;
-	private final NestedWordAutomaton<CodeBlock, IPredicate> mTTIA;
+	private final NestedWord<LETTER> mNestedWord;
+	private final NestedWordAutomaton<LETTER, IPredicate> mTTIA;
 	private final CfgSmtToolkit mCsToolkit;
 	private final InterpolantsPreconditionPostcondition mInterpolantsFP;
 	private final InterpolantsPreconditionPostcondition mInterpolantsBP;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
-	private static boolean mTotalTransitions = false;
 
 	public enum Sequence {
 		FORWARD, BACKWARD
@@ -74,9 +72,10 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param abstraction
 	 * 
 	 */
-	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate, ?> nestedRun,
-			final CfgSmtToolkit csToolkit, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
-			final IPredicate preCondition, final IPredicate postCondition, final IAutomaton<CodeBlock, IPredicate> abstraction) {
+	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
+			final IRun<LETTER, IPredicate, ?> nestedRun, final CfgSmtToolkit csToolkit,
+			final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP, final IPredicate preCondition,
+			final IPredicate postCondition, final IAutomaton<LETTER, IPredicate> abstraction) {
 		mServices = services;
 		mPrecondition = preCondition;
 		mPostcondition = postCondition;
@@ -92,22 +91,22 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 		mTTIA = buildTwoTrackInterpolantAutomaton(abstraction, abstraction.getStateFactory());
 	}
 
-	private NestedWordAutomaton<CodeBlock, IPredicate> buildTwoTrackInterpolantAutomaton(
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final IStateFactory<IPredicate> tAContentFactory) {
-		final Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
-		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
-		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
+	private NestedWordAutomaton<LETTER, IPredicate> buildTwoTrackInterpolantAutomaton(
+			final IAutomaton<LETTER, IPredicate> abstraction, final IStateFactory<IPredicate> tAContentFactory) {
+		final Set<LETTER> internalAlphabet = abstraction.getAlphabet();
+		Set<LETTER> callAlphabet = new HashSet<>(0);
+		Set<LETTER> returnAlphabet = new HashSet<>(0);
 
 		if (abstraction instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstractionAsNwa =
-					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
+			final INestedWordAutomatonSimple<LETTER, IPredicate> abstractionAsNwa =
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) abstraction;
 			callAlphabet = abstractionAsNwa.getCallAlphabet();
 			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
 		}
 
-		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
-				new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), internalAlphabet,
-						callAlphabet, returnAlphabet, tAContentFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> nwa =
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
+						returnAlphabet, tAContentFactory);
 
 		// Add states, which contains the predicates computed via SP, WP.
 		addStatesAccordingToPredicates(nwa);
@@ -122,7 +121,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param nwa
 	 *            - the automaton to which the states are added
 	 */
-	private void addStatesAccordingToPredicates(final NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private void addStatesAccordingToPredicates(final NestedWordAutomaton<LETTER, IPredicate> nwa) {
 		// add initial state
 		nwa.addState(true, false, mInterpolantsFP.getInterpolant(0));
 
@@ -149,7 +148,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param nwa
 	 *            - the automaton to which the basic transition are added
 	 */
-	private void addBasicTransitions(final NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private void addBasicTransitions(final NestedWordAutomaton<LETTER, IPredicate> nwa) {
 		for (int i = 0; i < mNestedWord.length(); i++) {
 			addTransition(nwa, i, Sequence.FORWARD);
 			addTransition(nwa, i, Sequence.BACKWARD);
@@ -225,15 +224,15 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	private boolean isFalsePredicate(final IPredicate p) {
 		if (p == mPostcondition) {
 			return true;
-		} else {
-//			assert mCsToolkit.getPredicateFactory().isDontCare(p)
-//					|| !SmtUtils.isFalse(p.getFormula());
-			return false;
 		}
+		// assert mCsToolkit.getPredicateFactory().isDontCare(p)
+		// || !SmtUtils.isFalse(p.getFormula());
+		return false;
 	}
 
-	private void addTransition(final NestedWordAutomaton<CodeBlock, IPredicate> nwa, final int symbolPos, final Sequence seq) {
-		final CodeBlock symbol = mNestedWord.getSymbol(symbolPos);
+	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> nwa, final int symbolPos,
+			final Sequence seq) {
+		final LETTER symbol = mNestedWord.getSymbol(symbolPos);
 		final IPredicate succ;
 		if (seq == Sequence.FORWARD) {
 			succ = mInterpolantsFP.getInterpolant(symbolPos + 1);
@@ -275,7 +274,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	}
 
 	@Override
-	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mTTIA;
 	}
 

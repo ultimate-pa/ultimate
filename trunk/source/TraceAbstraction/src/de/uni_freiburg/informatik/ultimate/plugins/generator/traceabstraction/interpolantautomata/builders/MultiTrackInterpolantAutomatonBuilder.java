@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -54,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
-	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
-	
+public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
+	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -68,52 +67,52 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	 *            old abstraction
 	 */
 	public MultiTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final IRun<CodeBlock, IPredicate, ?> nestedRun,
+			final IRun<LETTER, IPredicate, ?> nestedRun,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
-			final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final IAutomaton<LETTER, IPredicate> abstraction) {
 		if (interpolantSequences.isEmpty()) {
 			throw new IllegalArgumentException("Empty list of interpolant sequences is not allowed.");
 		}
 		assert sequencesHaveSamePrePostconditions(
 				interpolantSequences) : "The interpolant sequences should have the same pre- and postconditions.";
-		
+
 		mResult = constructInterpolantAutomaton(services, abstraction, interpolantSequences,
 				NestedWord.nestedWord(nestedRun.getWord()), abstraction.getStateFactory());
 	}
-	
+
 	@Override
-	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
-	
-	private static NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(
-			final IUltimateServiceProvider services, final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
-			final NestedWord<CodeBlock> nestedWord, final IStateFactory<IPredicate> taContentFactory) {
-		final Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
-		final Set<CodeBlock> callAlphabet;
-		final Set<CodeBlock> returnAlphabet;
-		
+
+	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(
+			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
+			final List<InterpolantsPreconditionPostcondition> interpolantSequences, final NestedWord<LETTER> nestedWord,
+			final IStateFactory<IPredicate> taContentFactory) {
+		final Set<LETTER> internalAlphabet = abstraction.getAlphabet();
+		final Set<LETTER> callAlphabet;
+		final Set<LETTER> returnAlphabet;
+
 		if (abstraction instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstractionAsNwa =
-					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
+			final INestedWordAutomatonSimple<LETTER, IPredicate> abstractionAsNwa =
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) abstraction;
 			callAlphabet = abstractionAsNwa.getCallAlphabet();
 			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
 		} else {
 			callAlphabet = Collections.emptySet();
 			returnAlphabet = Collections.emptySet();
 		}
-		
-		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =
+
+		final NestedWordAutomaton<LETTER, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
 						returnAlphabet, taContentFactory);
-		
+
 		addStatesAccordingToPredicates(nwa, interpolantSequences, nestedWord);
 		addBasicTransitions(nwa, interpolantSequences, nestedWord);
-		
+
 		return nwa;
 	}
-	
+
 	/**
 	 * Add a state for each forward predicate and for each backward predicate.
 	 * 
@@ -124,12 +123,12 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	 * @param nestedWord
 	 *            trace along which the interpolants are constructed
 	 */
-	private static void addStatesAccordingToPredicates(final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
+	private void addStatesAccordingToPredicates(final NestedWordAutomaton<LETTER, IPredicate> nwa,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
-			final NestedWord<CodeBlock> nestedWord) {
+			final NestedWord<LETTER> nestedWord) {
 		// add initial state with precondition predicate
 		nwa.addState(true, false, interpolantSequences.get(0).getPrecondition());
-		
+
 		for (final InterpolantsPreconditionPostcondition interpolantSequence : interpolantSequences) {
 			for (int i = 1; i < nestedWord.length() + 1; i++) {
 				final IPredicate interpolant = interpolantSequence.getInterpolant(i);
@@ -139,7 +138,7 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 			}
 		}
 	}
-	
+
 	/**
 	 * @param predicate
 	 *            Predicate.
@@ -148,7 +147,7 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	private static boolean isFalsePredicate(final IPredicate predicate) {
 		return SmtUtils.isFalse(predicate.getFormula());
 	}
-	
+
 	/**
 	 * Add basic transitions in 3 steps. 1. For each predicate type add a transition from the precondition to the first
 	 * predicate. (i.e. add transition (preCondition, st_0, FP_0), add transition (preCondition, st_0, BP_0)) 2. For
@@ -164,20 +163,20 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	 * @param nestedWord
 	 *            trace along which the interpolants are constructed
 	 */
-	private static void addBasicTransitions(final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
+	private void addBasicTransitions(final NestedWordAutomaton<LETTER, IPredicate> nwa,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
-			final NestedWord<CodeBlock> nestedWord) {
+			final NestedWord<LETTER> nestedWord) {
 		for (final InterpolantsPreconditionPostcondition interpolantSequence : interpolantSequences) {
 			for (int i = 0; i < nestedWord.length(); i++) {
 				addTransition(nwa, interpolantSequence, nestedWord, i);
 			}
 		}
 	}
-	
-	private static void addTransition(final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
-			final InterpolantsPreconditionPostcondition interpolantSequence, final NestedWord<CodeBlock> nestedWord,
+
+	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> nwa,
+			final InterpolantsPreconditionPostcondition interpolantSequence, final NestedWord<LETTER> nestedWord,
 			final int symbolPos) {
-		final CodeBlock symbol = nestedWord.getSymbol(symbolPos);
+		final LETTER symbol = nestedWord.getSymbol(symbolPos);
 		final IPredicate succ = interpolantSequence.getInterpolant(symbolPos + 1);
 		if (nestedWord.isCallPosition(symbolPos)) {
 			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
@@ -198,16 +197,16 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private static boolean
 			sequencesHaveSamePrePostconditions(final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
 		final Iterator<InterpolantsPreconditionPostcondition> it = interpolantSequences.iterator();
 		final InterpolantsPreconditionPostcondition first = it.next();
-		
+
 		final IPredicate precondition = first.getPrecondition();
 		final IPredicate postcondition = first.getPostcondition();
-		
+
 		while (it.hasNext()) {
 			final InterpolantsPreconditionPostcondition sequence = it.next();
 			if (precondition != sequence.getPrecondition() || postcondition != sequence.getPostcondition()) {

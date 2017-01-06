@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -75,122 +74,120 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  *
- * Objects of this class perform a single automata minimization operation
- * and provide the results of this operation.
+ * Objects of this class perform a single automata minimization operation and provide the results of this operation.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
- * @param <LCS> local control state, e.g., {@link BoogieIcfgLocation} for sequential
- * programs or a set of {@link BoogieIcfgLocation}s for parallel programs.
- * @param <LCSP> local control state provider, e.g., {@link ISLPredicate}, or
- * {@link IMLPredicate}
+ * @param <LCS>
+ *            local control state, e.g., {@link BoogieIcfgLocation} for sequential programs or a set of
+ *            {@link BoogieIcfgLocation}s for parallel programs.
+ * @param <LCSP>
+ *            local control state provider, e.g., {@link ISLPredicate}, or {@link IMLPredicate}
  */
-public class AutomataMinimization<LCS, LCSP extends IPredicate> {
-	
+public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
+
 	private final ILogger mLogger;
 	private final MinimizationResult mMinimizationResult;
-	private final IDoubleDeckerAutomaton<CodeBlock, IPredicate> mMinimizedAutomaton;
+	private final IDoubleDeckerAutomaton<LETTER, IPredicate> mMinimizedAutomaton;
 	private final Map<IPredicate, IPredicate> mOldState2newState;
 	private final AutomataMinimizationStatisticsGenerator mStatistics;
 
-
 	public AutomataMinimization(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> operand,
-			final Minimization minimization, final boolean computeOldState2NewStateMapping,
-			final int iteration, final IStateFactory<IPredicate> predicateFactoryRefinement,
-			final int minimizeEveryKthIteration,
-			final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> storedRawInterpolantAutomata,
-			final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,
-			final int minimizationTimeout,
-			final IStateFactory<IPredicate> resultCheckPredFac,
-			final Function<LCSP, LCS> lcsProvider, final boolean initialPartitionSeparatesFinalsAndNonfinals)
-					throws AutomataMinimizationTimeout {
-		
+			final INestedWordAutomaton<LETTER, IPredicate> operand, final Minimization minimization,
+			final boolean computeOldState2NewStateMapping, final int iteration,
+			final IStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
+			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
+			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
+			final IStateFactory<IPredicate> resultCheckPredFac, final Function<LCSP, LCS> lcsProvider,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataMinimizationTimeout {
+
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final long startTime = System.nanoTime();
-		
-		final Collection<Set<IPredicate>> partition = TraceAbstractionUtils.computePartition(operand, mLogger, lcsProvider);
 
-			// output of minimization
-			
-			final AutomataLibraryServices autServices = new AutomataLibraryServices(services);
-			try {
-				mMinimizationResult = doMinimizationOperation(operand, minimization,
-						computeOldState2NewStateMapping, iteration, predicateFactoryRefinement, minimizeEveryKthIteration,
-						storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices,
-						initialPartitionSeparatesFinalsAndNonfinals);
-				// postprocessing after minimization
-				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
-				if (mMinimizationResult.wasNewAutomatonBuilt()) {
-					// extract result
-					try {
-						assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac) : "incorrect minimization result for " + minimization;
-					} catch (final AutomataOperationCanceledException e) {
-						throw e;
-					} catch (final AutomataLibraryException e) {
-						throw new AssertionError(e);
-					}
-					
-					if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
-						/**
-						 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
-						 */
-						// DoubleDecker information already present in output
-						newAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput().getResult();
-						// (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						// newAbstractionRaw.getResult())).getResult();
-					} else {
-						// compute DoubleDecker information
-						newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
-								mMinimizationResult.getRawMinimizationOutput().getResult())).getResult();
-					}
+		final Collection<Set<IPredicate>> partition =
+				TraceAbstractionUtils.computePartition(operand, mLogger, lcsProvider);
 
-					// extract Hoare annotation
-					if (computeOldState2NewStateMapping) {
-						if (!(mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwa)) {
-							throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
-						}
-						final AbstractMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
-								(AbstractMinimizeNwa<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput();
-						mOldState2newState = minimizeOpCast.getOldState2newState();
-					} else {
-						mOldState2newState = null;
-					}
+		// output of minimization
 
-					// use result
-					mMinimizedAutomaton = newAbstraction;
+		final AutomataLibraryServices autServices = new AutomataLibraryServices(services);
+		try {
+			mMinimizationResult = doMinimizationOperation(operand, minimization, computeOldState2NewStateMapping,
+					iteration, predicateFactoryRefinement, minimizeEveryKthIteration, storedRawInterpolantAutomata,
+					interpolAutomaton, minimizationTimeout, partition, autServices,
+					initialPartitionSeparatesFinalsAndNonfinals);
+			// postprocessing after minimization
+			final IDoubleDeckerAutomaton<LETTER, IPredicate> newAbstraction;
+			if (mMinimizationResult.wasNewAutomatonBuilt()) {
+				// extract result
+				try {
+					assert mMinimizationResult.getRawMinimizationOutput()
+							.checkResult(resultCheckPredFac) : "incorrect minimization result for " + minimization;
+				} catch (final AutomataOperationCanceledException e) {
+					throw e;
+				} catch (final AutomataLibraryException e) {
+					throw new AssertionError(e);
+				}
 
+				if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
+					/**
+					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
+					 */
+					// DoubleDecker information already present in output
+					newAbstraction = (IDoubleDeckerAutomaton<LETTER, IPredicate>) mMinimizationResult
+							.getRawMinimizationOutput().getResult();
+					// (new RemoveUnreachable<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+					// newAbstractionRaw.getResult())).getResult();
 				} else {
-					mMinimizedAutomaton = null;
+					// compute DoubleDecker information
+					newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
+							mMinimizationResult.getRawMinimizationOutput().getResult())).getResult();
+				}
+
+				// extract Hoare annotation
+				if (computeOldState2NewStateMapping) {
+					if (!(mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwa)) {
+						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+					}
+					final AbstractMinimizeNwa<LETTER, IPredicate> minimizeOpCast =
+							(AbstractMinimizeNwa<LETTER, IPredicate>) mMinimizationResult.getRawMinimizationOutput();
+					mOldState2newState = minimizeOpCast.getOldState2newState();
+				} else {
 					mOldState2newState = null;
 				}
-			} catch (final AutomataOperationCanceledException aoce) {
-				final long automataMinimizationTime = System.nanoTime() - startTime;
-				mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime,
-						true, false, 0);
-				throw new AutomataMinimizationTimeout(aoce, mStatistics);
-			}
-			final long statesRemovedByMinimization;
-			if (mMinimizationResult.wasNewAutomatonBuilt()) {
-				statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
+
+				// use result
+				mMinimizedAutomaton = newAbstraction;
+
 			} else {
-				statesRemovedByMinimization = 0;
+				mMinimizedAutomaton = null;
+				mOldState2newState = null;
 			}
+		} catch (final AutomataOperationCanceledException aoce) {
 			final long automataMinimizationTime = System.nanoTime() - startTime;
-			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime,
-					mMinimizationResult.wasMinimizationAttempted(), statesRemovedByMinimization > 0, statesRemovedByMinimization);
+			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, true, false, 0);
+			throw new AutomataMinimizationTimeout(aoce, mStatistics);
+		}
+		final long statesRemovedByMinimization;
+		if (mMinimizationResult.wasNewAutomatonBuilt()) {
+			statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
+		} else {
+			statesRemovedByMinimization = 0;
+		}
+		final long automataMinimizationTime = System.nanoTime() - startTime;
+		mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime,
+				mMinimizationResult.wasMinimizationAttempted(), statesRemovedByMinimization > 0,
+				statesRemovedByMinimization);
 	}
 
-
-
-	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<CodeBlock, IPredicate> operand,
+	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
 			final IStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
-			final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> storedRawInterpolantAutomata,
-			final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, final int minimizationTimeout,
+			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
+			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final Collection<Set<IPredicate>> partition, final AutomataLibraryServices autServices,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException, AssertionError {
-		
+
 		final MinimizationResult minimizationResult;
 		switch (minimization) {
 		case MINIMIZE_SEVPA: {
@@ -202,13 +199,13 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		case SHRINK_NWA: {
 			minimizationResult = new MinimizationResult(true, true,
 					new ShrinkNwa<>(autServices, predicateFactoryRefinement, operand, partition,
-					computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0,
-					false, false, true, initialPartitionSeparatesFinalsAndNonfinals));
+							computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false,
+							0, false, false, true, initialPartitionSeparatesFinalsAndNonfinals));
 			break;
 		}
 		case NWA_COMBINATOR_PATTERN: {
-			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaPattern<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
+			final IMinimizeNwa<LETTER, IPredicate> minNwa = new MinimizeNwaPattern<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, iteration);
 			// it can happen that no minimization took place
 			final boolean newAutomatonWasBuilt = (minNwa != operand);
@@ -216,8 +213,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			break;
 		}
 		case NWA_COMBINATOR_EVERY_KTH: {
-			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaPattern<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
+			final IMinimizeNwa<LETTER, IPredicate> minNwa = new MinimizeNwaPattern<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, minimizeEveryKthIteration, iteration);
 			// it can happen that no minimization took place
 			final boolean newAutomatonWasBuilt = (minNwa != operand);
@@ -227,23 +224,21 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		case NWA_OVERAPPROXIMATION: {
 			assert storedRawInterpolantAutomata != null;
 			storedRawInterpolantAutomata.add(interpolAutomaton);
-			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaOverapproximation<>(autServices,
-					predicateFactoryRefinement, operand, partition, computeOldState2NewStateMapping, minimizationTimeout,
-					storedRawInterpolantAutomata);
+			final IMinimizeNwa<LETTER, IPredicate> minNwa =
+					new MinimizeNwaOverapproximation<>(autServices, predicateFactoryRefinement, operand, partition,
+							computeOldState2NewStateMapping, minimizationTimeout, storedRawInterpolantAutomata);
 			final boolean newAutomatonWasBuilt = (minNwa != operand);
 			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa);
 			throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
 		}
 		case DFA_HOPCROFT_ARRAYS: {
-			minimizationResult = new MinimizationResult(true, true,
-					new MinimizeDfaHopcroftArrays<>(autServices, operand,
-					predicateFactoryRefinement, partition, computeOldState2NewStateMapping));
+			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftArrays<>(autServices,
+					operand, predicateFactoryRefinement, partition, computeOldState2NewStateMapping));
 			break;
 		}
 		case DFA_HOPCROFT_LISTS: {
-			minimizationResult = new MinimizationResult(true, true,
-					new MinimizeDfaHopcroftLists<>(autServices, operand, predicateFactoryRefinement,
-					partition, computeOldState2NewStateMapping));
+			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftLists<>(autServices, operand,
+					predicateFactoryRefinement, partition, computeOldState2NewStateMapping));
 			break;
 		}
 		case NWA_MAX_SAT: {
@@ -254,36 +249,37 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		case NWA_MAX_SAT2: {
 			minimizationResult = new MinimizationResult(true, true,
 					new MinimizeNwaPmaxSat<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
-					new MinimizeNwaMaxSat2.Settings<IPredicate>().
-							setAddMapOldState2NewState(computeOldState2NewStateMapping)));
+							(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
+							new MinimizeNwaMaxSat2.Settings<IPredicate>()
+									.setAddMapOldState2NewState(computeOldState2NewStateMapping)));
 			break;
 		}
 		case RAQ_DIRECT_SIMULATION: {
 			minimizationResult = new MinimizationResult(true, true,
 					new ReduceNwaDirectSimulation<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, false, partition));
+							(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, false, partition));
 			break;
 		}
 		case RAQ_DIRECT_SIMULATION_B: {
-			minimizationResult = new MinimizationResult(true, true,
-					new ReduceNwaDirectSimulationB<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand));
+			minimizationResult = new MinimizationResult(true, true, new ReduceNwaDirectSimulationB<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			break;
 		}
 		case NWA_COMBINATOR_MULTI_DEFAULT: {
-			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
+			final IMinimizeNwa<LETTER, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping);
-			final boolean minimizationAttempt = ((MinimizeNwaCombinator<CodeBlock, IPredicate>) minNwa).getMode() != MinimizationMethods.NONE;
+			final boolean minimizationAttempt =
+					((MinimizeNwaCombinator<LETTER, IPredicate>) minNwa).getMode() != MinimizationMethods.NONE;
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa);
 			break;
 		}
 		case NWA_COMBINATOR_MULTI_SIMULATION: {
-			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
+			final IMinimizeNwa<LETTER, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, Strategy.SIMULATION_BASED);
-			final boolean minimizationAttempt = ((MinimizeNwaCombinator<CodeBlock, IPredicate>) minNwa).getMode() != MinimizationMethods.NONE;
+			final boolean minimizationAttempt =
+					((MinimizeNwaCombinator<LETTER, IPredicate>) minNwa).getMode() != MinimizationMethods.NONE;
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa);
 			break;
 		}
@@ -309,32 +305,29 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		}
 		case RAQ_DELAYED_SIMULATION: {
 			minimizationResult = new MinimizationResult(true, true,
-			new ReduceNwaDelayedSimulation<>(autServices,
-					predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand,
-					false, partition));
+					new ReduceNwaDelayedSimulation<>(autServices, predicateFactoryRefinement,
+							(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, false, partition));
 			break;
 		}
 		case RAQ_DELAYED_SIMULATION_B: {
-			minimizationResult = new MinimizationResult(true, true,
-					new ReduceNwaDelayedSimulationB<>(autServices, predicateFactoryRefinement,
-					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand));
+			minimizationResult = new MinimizationResult(true, true, new ReduceNwaDelayedSimulationB<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			break;
 		}
 		case NONE: {
 			// no-op minimization
-			minimizationResult = new MinimizationResult(false, false,
-					new IMinimizeNwa<CodeBlock, IPredicate>() {
-						@Override
-						public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
-							return operand;
-						}
+			minimizationResult = new MinimizationResult(false, false, new IMinimizeNwa<LETTER, IPredicate>() {
+				@Override
+				public INestedWordAutomaton<LETTER, IPredicate> getResult() {
+					return operand;
+				}
 
-						@Override
-						public boolean checkResult(final IStateFactory<IPredicate> stateFactory)
-								throws AutomataLibraryException {
-							return true;
-						}
-					});
+				@Override
+				public boolean checkResult(final IStateFactory<IPredicate> stateFactory)
+						throws AutomataLibraryException {
+					return true;
+				}
+			});
 			break;
 		}
 		default:
@@ -343,7 +336,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		return minimizationResult;
 	}
 
-	public IDoubleDeckerAutomaton<CodeBlock, IPredicate> getMinimizedAutomaton() {
+	public IDoubleDeckerAutomaton<LETTER, IPredicate> getMinimizedAutomaton() {
 		return mMinimizedAutomaton;
 	}
 
@@ -358,40 +351,37 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	public boolean wasMinimizationAttempted() {
 		return mMinimizationResult.wasMinimizationAttempted();
 	}
-	
+
 	public AutomataMinimizationStatisticsGenerator getStatistics() {
 		return mStatistics;
 	}
 
-
-
-
 	private class MinimizationResult {
 		private final boolean mNewAutomatonWasBuilt;
 		private final boolean mMinimizationAttempt;
-		private final IMinimizeNwa<CodeBlock, IPredicate> mRawMinimizationOutput;
-		
+		private final IMinimizeNwa<LETTER, IPredicate> mRawMinimizationOutput;
+
 		public MinimizationResult(final boolean minimizationAttempt, final boolean newAutomatonWasBuilt,
-				final IMinimizeNwa<CodeBlock, IPredicate> rawMinimizationOutput) {
+				final IMinimizeNwa<LETTER, IPredicate> rawMinimizationOutput) {
 			super();
 			mNewAutomatonWasBuilt = newAutomatonWasBuilt;
 			mMinimizationAttempt = minimizationAttempt;
 			mRawMinimizationOutput = rawMinimizationOutput;
 		}
+
 		public boolean wasNewAutomatonBuilt() {
 			return mNewAutomatonWasBuilt;
 		}
+
 		public boolean wasMinimizationAttempted() {
 			return mMinimizationAttempt;
 		}
-		public IMinimizeNwa<CodeBlock, IPredicate> getRawMinimizationOutput() {
+
+		public IMinimizeNwa<LETTER, IPredicate> getRawMinimizationOutput() {
 			return mRawMinimizationOutput;
 		}
 	}
-	
-	
-	
-	
+
 	public static class AutomataMinimizationTimeout extends Exception {
 		private static final long serialVersionUID = 1L;
 		private final AutomataMinimizationStatisticsGenerator mStatistics;
@@ -411,7 +401,5 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			return mAutomataOperationCanceledException;
 		}
 	}
-	
-	
 
 }

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -59,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * Class that contains static methods that are related to the {@link TraceChecker}.
- * 
+ *
  * @author Matthias Heizmann
  */
 public final class TraceCheckerUtils {
@@ -74,7 +73,7 @@ public final class TraceCheckerUtils {
 	 * <li>pp_i is the ProgramPoint before CodeBlock cb_i, and
 	 * <li>pp_{i+1} is the ProgramPoint after CodeBlock cb_i.
 	 * </ul>
-	 * 
+	 *
 	 * @param trace
 	 *            trace
 	 * @return sequence of program points
@@ -95,7 +94,7 @@ public final class TraceCheckerUtils {
 	 * Variant of
 	 * {@link #computeCoverageCapability(IUltimateServiceProvider, InterpolantsPreconditionPostcondition, List, ILogger, PredicateUnifier)}
 	 * where the sequence of ProgramPoints is not a parameter but computed from the trace.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param traceChecker
@@ -126,7 +125,7 @@ public final class TraceCheckerUtils {
 	 * Checks whether the given sequence of predicates is inductive. For each i we check if {predicates[i-1]} st_i
 	 * {predicates[i]} is a valid Hoare triple. If all triples are valid, we return true. Otherwise an exception is
 	 * thrown.
-	 * 
+	 *
 	 * @param interpolants
 	 *            sequence of interpolants
 	 * @param trace
@@ -168,7 +167,7 @@ public final class TraceCheckerUtils {
 	 * Similar to the method
 	 * {@link #checkInterpolantsInductivityForward(List, NestedWord, IPredicate, IPredicate, SortedMap, String, CfgSmtToolkit, ILogger, ManagedScript)}
 	 * . But here we start from the end. This ensures that we get the last Hoare triple that is invalid.
-	 * 
+	 *
 	 * @param interpolants
 	 *            sequence of interpolants
 	 * @param trace
@@ -247,7 +246,7 @@ public final class TraceCheckerUtils {
 	 * analyzing a trace.
 	 */
 	public static IcfgProgramExecution
-			computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IcfgEdge> trace) {
+			computeSomeIcfgProgramExecutionWithoutValues(final Word<? extends IIcfgTransition<?>> trace) {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
