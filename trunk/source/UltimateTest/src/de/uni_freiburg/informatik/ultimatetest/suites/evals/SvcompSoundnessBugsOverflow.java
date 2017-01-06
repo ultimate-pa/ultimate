@@ -46,23 +46,28 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class SvcompSoundnessBugsOverflow extends AbstractEvalTestSuite {
 
-	// @formatter:off
-	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_KOJAK = new Triple[] {
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Overflow-64bit-Kojak_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_false-valid-deref.i"),
+			new Triple<>("KojakC_WitnessPrinter.xml", "svcomp2017/kojak/svcomp-Overflow-64bit-Kojak_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i"), };
 
-	};
-	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_TAIPAN = new Triple[] {
-			
-	};
-	
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Overflow-64bit-Taipan_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_false-valid-deref.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml", "svcomp2017/taipan/svcomp-Overflow-64bit-Taipan_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i"), };
+
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] UNSOUND_AUTOMIZER = new Triple[] {
-
-	};
-	// @formatter:on
+			new Triple<>("AutomizerC_WitnessPrinter.xml",
+					"svcomp2017/automizer/svcomp-Overflow-64bit-Automizer_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_false-valid-deref.i"),
+			new Triple<>("AutomizerC_WitnessPrinter.xml",
+					"svcomp2017/automizer/svcomp-Overflow-64bit-Automizer_Default.epf",
+					"examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i"), };
 
 	private static final Triple<String, String, String>[] INPUTS =
 			CoreUtil.concatAll(UNSOUND_KOJAK, UNSOUND_TAIPAN, UNSOUND_AUTOMIZER);
@@ -74,7 +79,7 @@ public class SvcompSoundnessBugsOverflow extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 15 * 60 * 1000;
 	}
 
 	@Override
