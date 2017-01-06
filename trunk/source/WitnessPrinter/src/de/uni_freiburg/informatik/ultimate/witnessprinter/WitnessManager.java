@@ -172,8 +172,8 @@ public class WitnessManager {
 
 	private void reportWitnessResult(final String svcompWitness, final IResult cex,
 			final WitnessVerificationStatus verificationStatus, final WitnessVerificationStatus expectedStatus) {
-		mServices.getResultService().reportResult(cex.getPlugin(),
-				new ExternalWitnessValidationResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
+		mServices.getResultService().reportResult(cex.getPlugin(), new ExternalWitnessValidationResult(
+				Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
 	}
 
 	private boolean checkWitness(final String svcompWitnessFile, final IResult cex, final String originalFile,
@@ -253,7 +253,7 @@ public class WitnessManager {
 		return false;
 	}
 
-	private String[] makeCPACheckerCommand(final String command, final String svcompWitnessFile,
+	private static String[] makeCPACheckerCommand(final String command, final String svcompWitnessFile,
 			final String cpaCheckerProp, final String originalFile, final String workingDir, final int timeoutInS) {
 		final List<String> cmdArgs = new ArrayList<>();
 		final String[] args = command.split(" ");
