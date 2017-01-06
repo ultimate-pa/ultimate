@@ -107,7 +107,7 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static String handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
+	public static BigInteger handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
 		int value;
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
@@ -169,7 +169,7 @@ public final class ISOIEC9899TC3 {
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		return String.valueOf(value);
+		return BigInteger.valueOf(value);
 	}
 	
 	/**

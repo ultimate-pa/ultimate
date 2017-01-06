@@ -114,22 +114,24 @@ public abstract class AExpressionTranslation {
 		final ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
-		case IASTLiteralExpression.lk_float_constant:
-		{
+		case IASTLiteralExpression.lk_float_constant: {
 			final String val = new String(node.getValue());
 			final RValue rVal = translateFloatingLiteral(loc, val);
 			assert rVal != null : "result must not be null";
 			return new ExpressionResult(rVal);
 		}
-		case IASTLiteralExpression.lk_char_constant:
-			throw new AssertionError("To be handled by subclass");
-		case IASTLiteralExpression.lk_integer_constant:
-		{
+		case IASTLiteralExpression.lk_char_constant: {
+			final BigInteger integerValue = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
+			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			final Expression literal = constructLiteralForIntegerType(loc, charType, integerValue);
+			return new ExpressionResult(new RValue(literal, charType));
+		}
+		case IASTLiteralExpression.lk_integer_constant: {
 			final String val = new String(node.getValue());
 			final RValue rVal = translateIntegerLiteral(loc, val);
 			return new ExpressionResult(rVal);
 		}
-		case IASTLiteralExpression.lk_string_literal:
+		case IASTLiteralExpression.lk_string_literal: {
 			// Translate string to uninitialized char pointer
 			final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
@@ -141,6 +143,7 @@ public abstract class AExpressionTranslation {
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
+		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
 		case IASTLiteralExpression.lk_true:

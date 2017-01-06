@@ -32,7 +32,6 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -51,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -66,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
@@ -98,23 +95,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 		super(typeSizeConstants, typeHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		mUnsignedTreatment = unsignedTreatment;
 		mAssumeThatSignedValuesAreInRange = assumeSignedInRange;
-	}
-
-	@Override
-	public ExpressionResult translateLiteral(final Dispatcher main, final IASTLiteralExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
-
-		switch (node.getKind()) {
-		case IASTLiteralExpression.lk_char_constant:
-			final String valChar = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			return new ExpressionResult(new RValue(new IntegerLiteral(loc, valChar), new CPrimitive(CPrimitives.CHAR)));
-		case IASTLiteralExpression.lk_integer_constant:
-			final String valInt = new String(node.getValue());
-			final RValue rVal = translateIntegerLiteral(loc, valInt);
-			return new ExpressionResult(rVal);
-		default:
-			return super.translateLiteral(main, node);
-		}
 	}
 
 	@Override

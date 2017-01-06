@@ -33,7 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -53,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
@@ -67,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
@@ -94,21 +91,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		mRoundingMode = roundingMode;
 	}
 
-	@Override
-	public ExpressionResult translateLiteral(final Dispatcher main, final IASTLiteralExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
-
-		switch (node.getKind()) {
-		case IASTLiteralExpression.lk_char_constant: {
-			final String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			final CPrimitive cprimitive = new CPrimitive(CPrimitives.CHAR);
-			final int bitlength = 8 * mTypeSizes.getSize(CPrimitives.CHAR);
-			return new ExpressionResult(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
-		}
-		default:
-			return super.translateLiteral(main, node);
-		}
-	}
 
 	@Override
 	public RValue translateIntegerLiteral(final ILocation loc, final String val) {
