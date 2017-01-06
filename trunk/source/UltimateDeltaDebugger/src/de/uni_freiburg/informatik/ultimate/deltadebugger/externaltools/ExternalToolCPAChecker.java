@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.externaltools;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -58,6 +59,7 @@ public class ExternalToolCPAChecker extends ExternalTool {
 			final boolean killed) {
 
 		if (killed) {
+			logOutput(output, error, returnCode, killed);
 			return ExternalToolResult.TIMEOUT;
 		}
 
@@ -69,18 +71,39 @@ public class ExternalToolCPAChecker extends ExternalTool {
 				getOutputPredicate(DeltaDebuggerPreferences.LABEL_EXTERNAL_TOOL_CPACHECKER_OUTPUT_REGEX_TIMEOUT);
 		final Predicate<String> isError =
 				getOutputPredicate(DeltaDebuggerPreferences.LABEL_EXTERNAL_TOOL_CPACHECKER_OUTPUT_REGEX_ERROR);
+
+		ExternalToolResult result = ExternalToolResult.UNKNOWN;
+
 		for (final String line : output.split(CoreUtil.getPlatformLineSeparator())) {
 			if (isInteresting.test(line)) {
-				return ExternalToolResult.INTERESTING;
+				result = ExternalToolResult.INTERESTING;
+				break;
 			} else if (isOOM.test(line)) {
-				return ExternalToolResult.OOM;
+				result = ExternalToolResult.OOM;
+				break;
 			} else if (isTimeout.test(line)) {
-				return ExternalToolResult.TIMEOUT;
+				result = ExternalToolResult.TIMEOUT;
+				break;
 			} else if (isError.test(line)) {
-				return ExternalToolResult.ERROR;
+				result = ExternalToolResult.ERROR;
+				break;
 			}
 		}
-		return ExternalToolResult.UNKNOWN;
+		if (result != ExternalToolResult.INTERESTING) {
+			logOutput(output, error, returnCode, killed);
+		}
+		return result;
+	}
+
+	private void logOutput(final String output, final String error, final int returnCode, final boolean killed) {
+		mLogger.info("CPAChecker terminated with return code " + returnCode);
+		if (killed) {
+			mLogger.info("CPAChecker was killed due to hard timeout");
+		}
+		mLogger.info("STDOUT:");
+		mLogger.info(output);
+		mLogger.info("STDERR:");
+		mLogger.info(error);
 	}
 
 	@Override
@@ -102,7 +125,10 @@ public class ExternalToolCPAChecker extends ExternalTool {
 		final String[] args = command.split(" ");
 
 		final List<String> cmdArgs = new ArrayList<>();
-		for (int i = 0; i < args.length; ++i) {
+
+		cmdArgs.add(Paths.get(mCpaCheckerHome, args[0]).toFile().getAbsolutePath());
+
+		for (int i = 1; i < args.length; ++i) {
 			cmdArgs.add(args[i]);
 		}
 		cmdArgs.add("-timelimit");

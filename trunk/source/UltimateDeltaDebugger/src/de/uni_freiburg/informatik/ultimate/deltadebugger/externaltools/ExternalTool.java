@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.externaltools;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
@@ -69,11 +70,13 @@ public abstract class ExternalTool implements IExternalTool {
 		final String workingDir = getWorkingDir();
 		final String exitCommand = getExitCommand();
 
+		mLogger.info(String.format("Preparing to run command %s in directory %s with exit command %s",
+				Arrays.toString(cmd), workingDir, exitCommand));
 		MonitoredProcess extProcess;
 		try {
 			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices, mStorage, mLogger);
 		} catch (final IOException e) {
-			mLogger.fatal("External tool could not be run.", e);
+			mLogger.fatal("External tool could not be run. Reason:", e);
 			return ExternalToolResult.INVALID;
 		}
 		final BufferedInputStream errorStream = new BufferedInputStream(extProcess.getErrorStream());

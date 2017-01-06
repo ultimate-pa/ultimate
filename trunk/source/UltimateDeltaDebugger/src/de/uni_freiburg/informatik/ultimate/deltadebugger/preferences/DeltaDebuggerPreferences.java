@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
@@ -58,7 +59,7 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 					+ "(i.e., some class implementing IResult with this name). "
 					+ "The delta debugger searchs for the presence of this result.";
 	private static final Class<?>[] INTERESTING_RESULT_TYPE_CLASSES = new Class<?>[] { ExceptionOrErrorResult.class,
-			SyntaxErrorResult.class, UnsupportedSyntaxResult.class, TypeErrorResult.class };
+			SyntaxErrorResult.class, UnsupportedSyntaxResult.class, TypeErrorResult.class, CounterExampleResult.class };
 	private static final String[] VALUES_INTERESTING_RESULT_TYPE =
 			Arrays.stream(INTERESTING_RESULT_TYPE_CLASSES).map(a -> a.getSimpleName()).collect(Collectors.toList())
 					.toArray(new String[INTERESTING_RESULT_TYPE_CLASSES.length]);
