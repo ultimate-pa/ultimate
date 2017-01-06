@@ -34,8 +34,9 @@ public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doub
 	@Override
 	public void addVariable(final Doubleton<V> doubleton) {
 		// check that transitivity generator knows the variables
-		assert mTransitivityGenerator.hasContent(doubleton);
-		
+		assert mTransitivityGenerator.hasContent(doubleton.getOneElement())
+				&& mTransitivityGenerator.hasContent(doubleton.getOtherElement());
+
 		super.addVariable(doubleton);
 	}
 	

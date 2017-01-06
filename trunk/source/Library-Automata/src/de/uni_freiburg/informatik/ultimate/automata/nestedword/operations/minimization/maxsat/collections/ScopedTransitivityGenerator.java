@@ -49,6 +49,19 @@ public class ScopedTransitivityGenerator<C> {
 	}
 	
 	/**
+	 * Adds a new content if not already present.
+	 * <p>
+	 * NOTE: A content must be added before its first occurrence in any assertion.<br>
+	 * It is, however, possible to add it after other unrelated assertions have been made.
+	 * 
+	 * @param content
+	 *            new content
+	 */
+	public void addContentIfNotPresent(final C content) {
+		mContent2node.put(content, new NormalNode<>(content));
+	}
+	
+	/**
 	 * Adds a new content.
 	 * <p>
 	 * NOTE: A content must be added before its first occurrence in any assertion.<br>
@@ -63,17 +76,13 @@ public class ScopedTransitivityGenerator<C> {
 	}
 	
 	/**
-	 * Checks whether the given two contents are known to the data structure.
-	 * 
-	 * @param doubleton
-	 *            two contents
-	 * @return true iff both contents are known
+	 * @param content
+	 *            Content.
+	 * @return true iff content is known
 	 */
-	public boolean hasContent(final Doubleton<C> doubleton) {
-		return mContent2node.containsKey(doubleton.getOneElement())
-				&& mContent2node.containsKey(doubleton.getOtherElement());
+	public boolean hasContent(final C content) {
+		return mContent2node.containsKey(content);
 	}
-	
 	/**
 	 * Makes the given contents equal and reports all inferred transitivity information in order to be consistent.
 	 * 
