@@ -1025,6 +1025,8 @@ public class FunctionHandler {
 			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.singletonList(overappFlag));
 		} else if (methodName.equals("__builtin_strlen")
 				|| methodName.equals("__builtin_strcmp")
+				|| methodName.equals("strlen")
+				|| methodName.equals("strcmp")
 				) {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
