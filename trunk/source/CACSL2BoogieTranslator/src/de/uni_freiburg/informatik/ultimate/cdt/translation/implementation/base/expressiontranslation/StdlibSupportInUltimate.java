@@ -47,6 +47,7 @@ public class StdlibSupportInUltimate {
 			"abort",
 			
 			// functions from string.h
+			"memcpy",
 			"memset",
 			"strlen",
 			"strcmp",
@@ -153,7 +154,7 @@ public class StdlibSupportInUltimate {
 			
 			
 			// functions from string.h
-			"memcpy",
+
 			"memmove",
 			"memccpy",
 			"memcmp",
