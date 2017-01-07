@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -142,7 +144,15 @@ public abstract class AExpressionTranslation {
 			decls.add(tVarDecl);
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
-			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
+			final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+			final char[] charArray;
+			if (node.getValue().length >= 2 && node.getValue()[0] == '\"' && node.getValue()[node.getValue().length-1] == '\"') {
+				charArray = Arrays.copyOfRange(node.getValue(), 1, node.getValue().length - 1);
+			} else {
+				throw new UnsupportedOperationException("unsupported representation of string literal " + Arrays.toString(node.getValue()));
+			}
+			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray);
+			return new ExpressionResult(statements, rvalue, decls, auxVars);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));

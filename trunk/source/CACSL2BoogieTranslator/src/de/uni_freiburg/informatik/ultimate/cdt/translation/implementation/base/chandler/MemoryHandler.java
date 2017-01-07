@@ -984,19 +984,35 @@ public class MemoryHandler {
 		return constructPointerFromBaseAndOffset(base, offsetPlus, loc);
 	}
 
-	private Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr, final Expression index) {
+	private static Expression constructOneDimensionalArrayAccess(final ILocation loc, final Expression arr, final Expression index) {
 		final Expression[] singletonIndex = new Expression[] { index };
 		return new ArrayAccessExpression(loc, arr, singletonIndex);
 	}
 
-	private Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr, final Expression index,
+	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr, final Expression index,
 			final Expression newValue) {
 		final Expression[] singletonIndex = new Expression[] { index };
 		return new ArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
+	
+	/**
+	 * Construct a Boogie statement of the following form.
+	 * arrayIdentifier[index] := value;
+	 * TODO 2017-01-07 Matthias: This method is not directly related to the 
+	 * MemoryHandler and should probably moved to a some class for utility functions.
+	 */
+	public static AssignmentStatement constructOneDimensionalArrayUpdate(final ILocation loc, final Expression index,
+			final String arrayIdentifier, final Expression value) {
+		final LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
+				new VariableLHS(loc, arrayIdentifier),
+				new Expression[] { index }) };
+		final Expression[] rhs = new Expression[] { value };
+		final AssignmentStatement assignment = new AssignmentStatement(loc, lhs, rhs);
+		return assignment;
+	}
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
-	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
+	private static EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
 			final Function<Expression, Expression> valueModification, final String ptrId,
 			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression valueExpr = new IdentifierExpression(loc, valueId);
@@ -1006,7 +1022,7 @@ public class MemoryHandler {
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
-	private EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, final String ptrId,
+	private static EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, final String ptrId,
 			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
@@ -1014,7 +1030,7 @@ public class MemoryHandler {
 		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
 	}
 
-	private EnsuresSpecification ensuresArrayUpdate(final ILocation loc, final Expression newValue,
+	private static EnsuresSpecification ensuresArrayUpdate(final ILocation loc, final Expression newValue,
 			final Expression index, final Expression arrayExpr) {
 		final Expression oldArray = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructOneDimensionalArrayStore(loc, oldArray, index, newValue);
@@ -1029,7 +1045,7 @@ public class MemoryHandler {
 	 * @param vars
 	 * @return ModifiesSpecification which says that all variables of the set vars can be modified.
 	 */
-	private <T> ModifiesSpecification constructModifiesSpecification(final ILocation loc, final Collection<T> vars,
+	private static <T> ModifiesSpecification constructModifiesSpecification(final ILocation loc, final Collection<T> vars,
 			final Function<T, String> varToString) {
 		final VariableLHS[] modifie = new VariableLHS[vars.size()];
 		int i = 0;
@@ -2055,6 +2071,61 @@ public class MemoryHandler {
 	public void endScope() {
 		mVariablesToBeMalloced.endScope();
 		mVariablesToBeFreed.endScope();
+	}
+
+	
+	/**
+	 * Construct the statements that write a string literal on the heap.
+	 * (According to 6.4.5 of C11)
+	 * The first statement is a call that allocates the memory
+	 * The preceding statements write the (integer) values of the string literal
+	 * to the appropriate heap array.
+	 * Finally we append 0, since string literals in C are null terminated.
+	 * E.g., for the string literal "New" the result is the following.
+	 * 
+	 * call resultPointer := #Ultimate.alloc(value.length + 1);
+     * #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 0 }] := 78;
+     * #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 1 }] := 101;
+     * #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 2 }] := 119;
+     * #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 3 }] := 0;
+     * 
+     * 2017-01-06 Matthias: This works for the our default memory model.
+     * I might not work for all our memory models.
+	 */
+	public List<Statement> writeStringToHeap(final ILocation loc, final String resultPointer, final char[] value) {
+		final Expression size = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(value.length + 1));
+		final CallStatement ultimateAllocCall = getMallocCall(size, resultPointer, loc);
+		final List<Statement> result = new ArrayList<>();
+		result.add(ultimateAllocCall);
+		final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+		for (int i=0; i<value.length; i++) {
+			final BigInteger valueBigInt = BigInteger.valueOf(value[i]);
+			final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, i, valueBigInt);
+			result.add(statement);
+		}
+		// string literals are "nullterminated" i.e.,  suffixed by 0
+		final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, value.length, BigInteger.ZERO);
+		result.add(statement);
+		return result;
+	}
+
+	private AssignmentStatement writeCharToHeap(final ILocation loc, final String resultPointer,
+			final int additionalOffset, final BigInteger valueBigInt) {
+		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
+		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
+		mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableName());
+		final String array = dhp.getVariableName();
+		final Expression inputPointer = new IdentifierExpression(loc, resultPointer);
+		final Expression additionalOffsetExpr = mExpressionTranslation.constructLiteralForIntegerType(
+				loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));
+		final Expression pointer = doPointerArithmetic(IASTBinaryExpression.op_plus, loc, inputPointer,
+				new RValue(additionalOffsetExpr, mExpressionTranslation.getCTypeOfPointerComponents()),
+				new CPrimitive(CPrimitives.CHAR));
+		final Expression valueExpr = mExpressionTranslation.constructLiteralForIntegerType(
+				loc, new CPrimitive(CPrimitives.CHAR), valueBigInt);
+		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array, valueExpr);
+		return statement;
 	}
 
 	

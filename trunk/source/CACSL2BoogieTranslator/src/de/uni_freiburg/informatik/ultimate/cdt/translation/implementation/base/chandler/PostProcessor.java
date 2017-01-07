@@ -40,7 +40,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -309,11 +308,11 @@ public class PostProcessor {
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
-						new VariableLHS(translationUnitLoc, SFO.VALID),
-						new Expression[] { zero }) };
-				final Expression[] rhs = new Expression[] { memoryHandler.getBooleanArrayHelper().constructFalse() };
-				initStatements.add(0, new AssignmentStatement(translationUnitLoc, lhs, rhs));
+				final String lhsId = SFO.VALID;
+				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
+				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc, zero,
+						lhsId, literalThatRepresentsFalse);
+				initStatements.add(0, assignment);
 				mInitializedGlobals.add(SFO.VALID);
 			}
 
@@ -410,7 +409,6 @@ public class PostProcessor {
 		functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
 		return decl;
 	}
-
 
 
 	/**
@@ -671,7 +669,7 @@ public class PostProcessor {
 		return decls;
 	}
 			
-	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, FunctionHandler functionHandler, final MemoryHandler memoryHandler,
+	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
 
@@ -715,7 +713,7 @@ public class PostProcessor {
 		// visit(TranslationUnit) after the postprocessor)
 		// can compute the correct modifies clause
 		functionHandler.addModifiedGlobalEntry(fpfName);
-		for (String fittingFunc : fittingFunctions) {
+		for (final String fittingFunc : fittingFunctions) {
 			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
 		}
 
