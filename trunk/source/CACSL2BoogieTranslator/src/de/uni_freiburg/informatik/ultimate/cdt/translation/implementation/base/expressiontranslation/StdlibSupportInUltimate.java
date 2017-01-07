@@ -45,12 +45,14 @@ public class StdlibSupportInUltimate {
 			"calloc",
 			"free",
 			"abort",
+			"alloca",
 			
 			// functions from string.h
 			"memcpy",
 			"memset",
 			"strlen",
 			"strcmp",
+			"strchr",
 	};
 	
 	private final static String[] UNSUPPORTED_STD_OPERATIONS_ARRAY = new String[] {
@@ -107,7 +109,6 @@ public class StdlibSupportInUltimate {
 			"lcong48_r",
 			"realloc",
 			"cfree",
-			"alloca",
 			"valloc",
 			"posix_memalign",
 			"atexit",
@@ -170,7 +171,6 @@ public class StdlibSupportInUltimate {
 			"strxfrm_l",
 			"strdup",
 			"strndup",
-			"strchr",
 			"strrchr",
 			"strcspn",
 			"strspn",

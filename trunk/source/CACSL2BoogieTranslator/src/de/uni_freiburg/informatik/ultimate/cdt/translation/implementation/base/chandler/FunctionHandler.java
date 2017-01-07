@@ -938,7 +938,8 @@ public class FunctionHandler {
 
 		} else if (methodName.equals("__builtin_huge_valf")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
-		} else if (methodName.equals("__builtin_strchr")) {
+		} else if (methodName.equals("__builtin_strchr")
+				|| methodName.equals("strchr")) {
 			/*
 			 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c); Description: The strchr
 			 * function locates the first occurrence of c (converted to a char) in the string pointed to by s. The
@@ -1098,8 +1099,8 @@ public class FunctionHandler {
 			builder.setLRVal(lrVal);
 
 			return builder.build();
-		} else if (methodName.equals("abs")) {
-			throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
+//		} else if (methodName.equals("abs")) { // made obsolete by StdlibSupportInUltimate.java
+//			throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
