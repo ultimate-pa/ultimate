@@ -226,8 +226,10 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(nodeIdentifier.toString());
-		sb.append(" ||| representative: ");
-		sb.append(representative.nodeIdentifier.toString());
+		if (representative != this) {
+			sb.append(" ||| representative: ");
+			sb.append(representative.nodeIdentifier.toString());
+		}
 		
 //		sb.append(" ||| reverseRepresentative: ");
 //		for (EqGraphNode node : reverseRepresentative) {

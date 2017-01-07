@@ -257,7 +257,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	@Override
 	public String toString() {
 //		if (mEqNode != null) {
-			return "NodeId: " + mEqNode;
+			return "NodeId(#" + Integer.toString(this.hashCode()).substring(0, 3) + "): " + mEqNode;
 //		} else if (mIdentifyingTerm != null) {
 //			return "NodeId: " + mTerm;
 //		} else {

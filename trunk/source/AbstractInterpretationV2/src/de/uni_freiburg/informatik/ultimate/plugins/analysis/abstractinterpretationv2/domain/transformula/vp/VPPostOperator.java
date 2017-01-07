@@ -278,12 +278,13 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 						VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
 
 						resultStatesForCurrentNodePair = 
-								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 										VPFactoryHelpers.addEquality(
 												lhS,
 												rhS,
-												resultStatesForCurrentNodePair, mTfStateFactory),
-										mTfStateFactory);
+												resultStatesForCurrentNodePair, mTfStateFactory)
+//										, mTfStateFactory)
+											;
 					}
 
 					resultStates.addAll(resultStatesForCurrentNodePair);
@@ -295,7 +296,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		} else {
 			// two "normal" terms are equated
 			
-			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
+			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping --> vanilla builder should suffice
+//			VPTfStateBuilder tfStateBuilder = mTfStateFactory.copy(tfPreState); 
 			//TODO: the wrapping could be done up front in tfStatePreparer..
 			IElementWrapper lhsWrapper = WrapperFactory.wrapElement(lhs, tfStateBuilder);
 			IElementWrapper rhsWrapper = WrapperFactory.wrapElement(rhs, tfStateBuilder);
@@ -317,16 +319,18 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					// add (dis)equality
 					if (!negated) {
 						resultStatesForCurrentNodePair = 
-								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 										VPFactoryHelpers.addEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory),
-										mTfStateFactory);
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory)
+//										, mTfStateFactory)
+										;
 					} else {
 						resultStatesForCurrentNodePair = 
-								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 										VPFactoryHelpers.addDisEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory),
-										mTfStateFactory);
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory)
+//										, mTfStateFactory)
+										;
 					
 					}
 					resultStates.addAll(resultStatesForCurrentNodePair);
@@ -335,60 +339,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			
 			assert !resultStates.isEmpty();
 			return resultStates;
-//			return null;
 		}
-//		/*
-//		 * case "ArrayEquality"
-//		 */
-//		{
-//			final List<ArrayEquality> aeqs =
-//					new ArrayEqualityExtractor(new Term[] { appTerm }).getArrayEqualities();
-//			if (!aeqs.isEmpty()) {
-//				assert aeqs.size() == 1 : "?";
-//				if (!mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getLhs(), tf.getInVars(),
-//						tf.getOutVars())
-//						|| !mDomain.getPreAnalysis().isArrayTracked(aeqs.get(0).getRhs(), tf.getInVars(),
-//								tf.getOutVars())) {
-//					return Collections.singleton(tfPreState);
-//				}
-//
-//				// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-//				final Set<VPTfState> result =
-//						handleArrayEqualityTransition(tfPreState, tf, aeqs.get(0), negated);
-//				assert !result.isEmpty();
-//				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
-//				return result;
-//			}
-//		}
-//
-//		/*
-//		 * case "ArrayUpdate"
-//		 */
-//		{
-//			final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
-//			if (!aus.isEmpty()) {
-//				assert aus.size() == 1 : "?";
-//				if (!mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getNewArray(), tf.getInVars(),
-//						tf.getOutVars())
-//						|| !mDomain.getPreAnalysis().isArrayTracked(aus.get(0).getOldArray(), tf.getInVars(),
-//								tf.getOutVars())) {
-//					return Collections.singleton(tfPreState);
-//				}
-//
-//				// we have an array update
-//				final Set<VPTfState> result = handleArrayUpdateTransition(tfPreState, tf, aus.get(0), negated);
-//				assert !result.isEmpty();
-//				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
-//				return result;
-//			}
-//		}
-//
-//		/*
-//		 * case "two terms we track are equated"
-//		 */
-//		final Set<VPTfState> resultStates = handleBasicEquality(tfPreState, tf, appTerm, negated);
-//		// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
-//		return resultStates;
 	}
 
 	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState, INodeOrArrayWithSideCondition lhsNodeWSc,
@@ -406,17 +357,19 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		resultStatesForCurrentNodePair.add(preStateCopy.build());
 		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
 			resultStatesForCurrentNodePair = 
-					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+//					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory),
-							mTfStateFactory);
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory)
+//							, mTfStateFactory)
+							;
 		}
 		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
 			resultStatesForCurrentNodePair = 
-					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
+//					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory),
-							mTfStateFactory);
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory)
+//							, mTfStateFactory)
+							;
 		}
 		// TODO: filter bottom states?
 		return resultStatesForCurrentNodePair;

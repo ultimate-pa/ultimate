@@ -158,7 +158,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		boolean newEmptyNonTheoryConsts = false;
 		Set<IProgramConst> newNonTheoryConsts = null;
 		boolean newEmptyBranchEncoders = false;
-		Collection<TermVariable> newBranchEncoders = null;
+		Collection<TermVariable> newBranchEncoders = null; // TODO: deal with these for working LBE, right?..
 		boolean newEmptyAuxVars = false;
 		TransFormulaBuilder tfBuilder = new TransFormulaBuilder(
 				newInVars, 
@@ -203,7 +203,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							VPDomainHelpers.getArrayTerm(mds.getArray()),
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+//							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
 			assert oldArray != null;
 
 			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
@@ -220,7 +221,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
 				continue;
 			}
-			if (!mVpDomain.getPreAnalysis().isArrayTracked(mds.getArray(), 
+			if (!mVpDomain.getPreAnalysis().isArrayTracked(
+					VPDomainHelpers.getArrayTerm(mds.getArray()),
 					VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf))) {
 //					VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars))) {
 				continue;
@@ -228,8 +230,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							mds.getArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+							VPDomainHelpers.getArrayTerm(mds.getArray()),
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 
 			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
 					

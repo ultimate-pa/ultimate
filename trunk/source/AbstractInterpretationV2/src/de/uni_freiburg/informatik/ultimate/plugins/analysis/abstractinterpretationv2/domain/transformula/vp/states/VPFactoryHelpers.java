@@ -434,11 +434,12 @@ public class VPFactoryHelpers {
 			}
 			NODEID conStateGraphNode = otherGraphNode.nodeIdentifier;
 			NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
-			resultStates.addAll(
-					conjoinAll(
-							addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory), 
-							resultStates, 
-							factory));
+//			resultStates.addAll(
+//					conjoinAll(
+//							addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory), 
+//							resultStates, 
+//							factory));
+			resultStates = 	addEquality(conStateGraphNode, conStateGraphNodeRe, resultStates, factory);
 		}
 //		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		assert !resultStates.isEmpty();
