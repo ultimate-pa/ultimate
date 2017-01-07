@@ -170,8 +170,8 @@ public class SpaceExParser implements ISource {
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
-		SpaceExPreferenceManager mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger);
-		final HybridModel system = new HybridModel(spaceEx, mLogger);
+		SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		final HybridModel system = new HybridModel(spaceEx, mLogger, preferenceManager);
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new

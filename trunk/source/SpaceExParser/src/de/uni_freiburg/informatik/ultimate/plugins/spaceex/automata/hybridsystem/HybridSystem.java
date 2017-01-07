@@ -36,18 +36,21 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.BindType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 /**
  * Representation of a hybrid system that contains of multiple hybrid automata.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
 public class HybridSystem {
-
+	
 	private final ILogger mLogger;
 	private final String mName;
+	SpaceExPreferenceManager mPreferenceManager;
 	private final Map<String, HybridAutomaton> mAutomata;
 	private final Map<String, HybridSystem> mSubSystems;
 	private final Set<String> mLocalParameters;
@@ -56,13 +59,14 @@ public class HybridSystem {
 	private final Set<String> mGlobalConstants;
 	private final Set<String> mLabels;
 	private final Map<String, Map<String, String>> mBinds;
-
+	
 	protected HybridSystem(ComponentType system, Map<String, ComponentType> automata,
-	        Map<String, ComponentType> systems, ILogger logger) {
+			Map<String, ComponentType> systems, ILogger logger, SpaceExPreferenceManager preferenceManager) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
-
+		
 		mLogger = logger;
 		mName = system.getId();
+		mPreferenceManager = preferenceManager;
 		mAutomata = new HashMap<>();
 		mSubSystems = new HashMap<>();
 		mLocalParameters = new HashSet<>();
@@ -71,39 +75,40 @@ public class HybridSystem {
 		mGlobalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
 		mBinds = new HashMap<>();
-
+		
 		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
-		        mLocalConstants, mGlobalConstants, mLabels, mLogger));
-
+				mLocalConstants, mGlobalConstants, mLabels, mLogger));
+		
 		system.getBind().stream().forEach(b -> {
 			final String comp = b.getComponent();
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(b.getAs(),
-		                new HybridSystem(systems.get(comp), automata, systems, mLogger));
+						new HybridSystem(systems.get(comp), automata, systems, mLogger, mPreferenceManager));
 				if (old != null) {
 					mLogger.warn("A hybrid system with name " + b.getAs() + " already existed and was replaced.");
 				}
 			} else if (automata.containsKey(comp)) {
-				final HybridAutomaton old = mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger));
+				final HybridAutomaton old =
+						mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger, mPreferenceManager));
 				if (old != null) {
 					mLogger.warn("A hybrid automaton with name " + b.getAs() + " already existed and was replaced.");
 				}
 			} else {
 				throw new UnsupportedOperationException(
-		                "The component with name " + comp + " is neither a system nor an automaton component.");
+						"The component with name " + comp + " is neither a system nor an automaton component.");
 			}
-
-			final Map<String, String> binds = b.getMap().stream()
-		            .collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
+			
+			final Map<String, String> binds =
+					b.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
 			mBinds.put(comp, binds);
 		});
 		
 	}
-
+	
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
-	        final Set<String> globalConstants, final Set<String> localConstants, final Set<String> labels,
-	        final Map<String, HybridAutomaton> automata, final Map<String, HybridSystem> subsystems,
-	        final Map<String, Map<String, String>> binds, final ILogger logger) {
+			final Set<String> globalConstants, final Set<String> localConstants, final Set<String> labels,
+			final Map<String, HybridAutomaton> automata, final Map<String, HybridSystem> subsystems,
+			final Map<String, Map<String, String>> binds, final ILogger logger) {
 		mLogger = logger;
 		mName = name;
 		mAutomata = automata;
@@ -117,14 +122,14 @@ public class HybridSystem {
 		// TODO Add bind.
 	}
 	
-	public Map<String, HybridAutomaton> getAutomata(){
+	public Map<String, HybridAutomaton> getAutomata() {
 		return mAutomata;
 	}
 	
-	public String getName(){
+	public String getName() {
 		return mName;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -144,9 +149,9 @@ public class HybridSystem {
 		mAutomata.forEach((name, aut) -> sb.append(indent).append("Automaton ").append(name).append(":\n")
 				.append(indent).append(indent).append(aut).append("\n"));
 		sb.append(indent).append("Subsystems:\n");
-		mSubSystems.forEach((name, sys) -> sb.append(indent).append(indent).append("* System ").append(name + "\n"));		
+		mSubSystems.forEach((name, sys) -> sb.append(indent).append(indent).append("* System ").append(name + "\n"));
 		sb.append(indent).append("binds:\n");
-		mBinds.forEach((k,v)->{
+		mBinds.forEach((k, v) -> {
 			sb.append(indent + "automata: " + k + " bind: " + v + "\n");
 		});
 		return sb.toString();

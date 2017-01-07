@@ -27,8 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -38,33 +41,54 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
+/**
+ * Class that shall parse the config file of a SpaceEx model.
+ * 
+ * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
+ *
+ */
 public class SpaceExPreferenceManager {
 	
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-	private String mConfigFile;
-	private boolean mLoadConfig;
 	private String mSystem;
 	private Map<String, String> mInitialLocations;
-	private Map<String, String[]> mInitialVariables;
+	private Map<String, List<SignValuePair>> mInitialVariables;
 	
-	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger) throws Exception {
+	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger, File spaceExFile)
+			throws Exception {
 		mServices = services;
 		mLogger = logger;
 		IPreferenceProvider preferenceProvider = mServices
 				.getPreferenceProvider(de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator.PLUGIN_ID);
-		mConfigFile =
+		String configfile =
 				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
-		mLoadConfig = preferenceProvider
+		boolean loadconfig = preferenceProvider
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mInitialVariables = new HashMap<>();
 		mInitialLocations = new HashMap<>();
-		parseConfigFile();
+		// check if the configfile name is not empty
+		// if it is search for a config file in the directory.
+		if (!"".equals(configfile)) {
+			File config = new File(configfile);
+			if (config.exists() && !config.isDirectory()) {
+				parseConfigFile(config);
+			}
+		} else if (loadconfig) {
+			configfile = spaceExFile.getAbsolutePath().replaceAll(".xml", ".cfg");
+			File config = new File(configfile);
+			if (config.exists() && !config.isDirectory()) {
+				parseConfigFile(config);
+			} else {
+				mLogger.info("no configfile with the name " + configfile + " exists");
+			}
+		}
 	}
 	
-	private void parseConfigFile() throws Exception {
+	private void parseConfigFile(File configfile) throws Exception {
+		mLogger.info("Parsing configfile: " + configfile);
 		Properties prop = new Properties();
-		final FileInputStream fis = new FileInputStream(mConfigFile);
+		final FileInputStream fis = new FileInputStream(configfile);
 		// load properties file
 		prop.load(fis);
 		// get properties
@@ -73,9 +97,7 @@ public class SpaceExPreferenceManager {
 		// initially holds the initial variable assignment, as well as initial locations.
 		String initially = prop.getProperty("initially").replaceAll("\"", "");
 		/*
-		 * TODO: split "initially" into parts IF the string is empty set default values. default values for initial
-		 * locations shall be: 1. the first location seen. 2. variables shall be initialized with the invariant of the
-		 * initial location. ELSE: split string at separator "&" initial location assignments are of the form:
+		 * split "initially" into parts, split string at separator "&" initial location assignments are of the form:
 		 * loc(#AUTOMATON NAME#)==#INITIAL LOCATION NAME# variable assignments are of the form: #VAR NAME#==#VALUE# OR
 		 * #LOWER BOUND VALUE# <= #VARNAME# <= #UPPER BOUND VALUE#
 		 */
@@ -111,18 +133,22 @@ public class SpaceExPreferenceManager {
 					String var = varMatcher.group(3);
 					String sign2 = varMatcher.group(4);
 					String value2 = varMatcher.group(5);
-					mInitialVariables.put(var, new String[] { sign1, value1, sign2, value2 });
+					List<SignValuePair> svPairs = new ArrayList<>();
+					svPairs.add(new SignValuePair(sign1, value1));
+					svPairs.add(new SignValuePair(sign2, value2));
+					mInitialVariables.put(var, svPairs);
 				} else if (varMatcher2.matches()) {
 					String var = varMatcher2.group(1);
 					String sign = varMatcher2.group(2);
 					String value = varMatcher2.group(3);
-					mInitialVariables.put(var, new String[] { sign, value });
+					List<SignValuePair> svPairs = new ArrayList<>();
+					svPairs.add(new SignValuePair(sign, value));
+					mInitialVariables.put(var, svPairs);
 				}
 			}
 		}
-		mLogger.info(mInitialLocations);
-		mLogger.info(mInitialVariables);
 		fis.close();
+		mLogger.info("Done");
 	}
 	
 	public String getSystem() {
@@ -133,7 +159,7 @@ public class SpaceExPreferenceManager {
 		return mInitialLocations;
 	}
 	
-	public Map<String, String[]> getInitialVariables() {
+	public Map<String, List<SignValuePair>> getInitialVariables() {
 		return mInitialVariables;
 	}
 	

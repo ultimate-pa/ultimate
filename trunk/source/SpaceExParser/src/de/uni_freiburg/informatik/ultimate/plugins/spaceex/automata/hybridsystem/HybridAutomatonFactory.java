@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Factory that creates {@link HybridAutomaton} instances.
@@ -41,11 +42,12 @@ public class HybridAutomatonFactory {
 	
 	private final ILogger mLogger;
 	
-	public HybridAutomatonFactory(ILogger logger){
+	public HybridAutomatonFactory(ILogger logger) {
 		mLogger = logger;
 	}
 	
-	public HybridAutomaton createHybridAutomatonFromComponent(final ComponentType automaton) {
-		return new HybridAutomaton(automaton, mLogger);
-	}	
+	public HybridAutomaton createHybridAutomatonFromComponent(final ComponentType automaton,
+			SpaceExPreferenceManager preferenceManager) {
+		return new HybridAutomaton(automaton, mLogger, preferenceManager);
+	}
 }

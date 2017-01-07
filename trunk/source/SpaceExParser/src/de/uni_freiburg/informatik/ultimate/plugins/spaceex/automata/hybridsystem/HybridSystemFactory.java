@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Factory to create {@link HybridSystem} objects.
@@ -40,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
  *
  */
 public final class HybridSystemFactory {
-
+	
 	private final ILogger mLogger;
-
+	
 	/**
 	 * Default constructor of the {@link HybridSystem} factory.
 	 * 
@@ -51,7 +52,7 @@ public final class HybridSystemFactory {
 	public HybridSystemFactory(final ILogger logger) {
 		mLogger = logger;
 	}
-
+	
 	/**
 	 * Creates a new instance of a hybrid system from a given {@link ComponentType}, obtained from parsing a SpaceEx XML
 	 * model description.
@@ -65,18 +66,19 @@ public final class HybridSystemFactory {
 	 * @return A new {@link HybridSystem} instance.
 	 */
 	public HybridSystem createHybridSystemFromComponent(final ComponentType system,
-	        final Map<String, ComponentType> automata, final Map<String, ComponentType> systems) {
-		return new HybridSystem(system, automata, systems, mLogger);
+			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems,
+			SpaceExPreferenceManager preferenceManager) {
+		return new HybridSystem(system, automata, systems, mLogger, preferenceManager);
 	}
-
+	
 	public HybridSystem createHybridSystem(final String name, final Set<String> globalVariables,
-	        final Set<String> localVariables, final Set<String> globalConstants, final Set<String> localConstants,
-	        final Set<String> labels, final Map<String, HybridAutomaton> automata,
-	        final Map<String, HybridSystem> subsystems, final Map<String, Map<String, String>> binds,
-	        final ILogger logger) {
-
+			final Set<String> localVariables, final Set<String> globalConstants, final Set<String> localConstants,
+			final Set<String> labels, final Map<String, HybridAutomaton> automata,
+			final Map<String, HybridSystem> subsystems, final Map<String, Map<String, String>> binds,
+			final ILogger logger) {
+		
 		return new HybridSystem(name, globalVariables, localVariables, globalConstants, localConstants, labels,
-		        automata, subsystems, binds, logger);
+				automata, subsystems, binds, logger);
 	}
 	
 }

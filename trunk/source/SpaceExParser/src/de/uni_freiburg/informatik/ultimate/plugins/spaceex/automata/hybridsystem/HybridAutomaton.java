@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE SpaceExParser plug-in.
  * 
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 public class HybridAutomaton {
@@ -50,15 +52,16 @@ public class HybridAutomaton {
 	private final Set<String> mLocalConstants;
 	private final Set<String> mLabels;
 	private final Map<Integer, Location> mLocations;
+	private Location mInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
-
-	protected HybridAutomaton(ComponentType automaton, ILogger logger) {
+	private SpaceExPreferenceManager mPreferenceManager;
+	
+	protected HybridAutomaton(ComponentType automaton, ILogger logger, SpaceExPreferenceManager preferenceManager) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
-			        "The input automaton must be a hybrid automaton, not a system template.");
+					"The input automaton must be a hybrid automaton, not a system template.");
 		}
-		
 		mName = automaton.getId();
 		mLocations = new HashMap<>();
 		mTransitions = new ArrayList<>();
@@ -68,27 +71,32 @@ public class HybridAutomaton {
 		mLocalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
 		mLogger = logger;
-
+		mPreferenceManager = preferenceManager;
+		
 		for (final ParamType param : automaton.getParam()) {
 			HybridSystemHelper.addParameter(param, mLocalParameters, mGlobalParameters, mLocalConstants,
-			        mGlobalConstants, mLabels, mLogger);
+					mGlobalConstants, mLabels, mLogger);
 		}
-
+		
 		for (final LocationType loc : automaton.getLocation()) {
 			addLocation(loc);
 		}
-
+		
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
-		
+		// if no initial location has been specified, it's simply the first location.
+		if (mPreferenceManager == null || !mPreferenceManager.getInitialLocations().containsKey(mName + "_1")) {
+			mInitialLocation = mLocations.get(1);
+		}
 	}
 	
-	protected HybridAutomaton(String name,Map<Integer, Location> locations,List<Transition> transitions,
-			                  Set<String> localParameters, Set<String> localConstants, Set<String> globalParameters,
-			                  Set<String> globalConstants,Set<String> labels,ILogger logger){
+	protected HybridAutomaton(String name, Map<Integer, Location> locations, Location initialLocation,
+			List<Transition> transitions, Set<String> localParameters, Set<String> localConstants,
+			Set<String> globalParameters, Set<String> globalConstants, Set<String> labels, ILogger logger) {
 		mName = name;
 		mLocations = locations;
+		mInitialLocation = initialLocation;
 		mTransitions = transitions;
 		mGlobalParameters = globalParameters;
 		mLocalParameters = localParameters;
@@ -97,40 +105,47 @@ public class HybridAutomaton {
 		mLabels = labels;
 		mLogger = logger;
 	}
-
+	
 	private void addLocation(LocationType location) {
 		if (mLocations.containsKey(location.getId())) {
 			throw new IllegalArgumentException(
-			        "The location " + location.getId() + " is already part of the automaton.");
+					"The location " + location.getId() + " is already part of the automaton.");
 		}
-
+		
 		final Location newLoc = new Location(location);
 		newLoc.setInvariant(location.getInvariant());
 		newLoc.setFlow(location.getFlow());
-
+		String initlocname = "";
+		if (mPreferenceManager != null && mPreferenceManager.getInitialLocations().containsKey(mName + "_1")) {
+			initlocname = mPreferenceManager.getInitialLocations().get(mName + "_1");
+		}
+		
+		if (initlocname.equals(newLoc.getName())) {
+			mInitialLocation = newLoc;
+		}
 		mLocations.put(newLoc.getId(), newLoc);
-
+		
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("[" + mName + "]: Added location: " + newLoc); 
+			mLogger.debug("[" + mName + "]: Added location: " + newLoc);
 		}
 	}
-
+	
 	private void addTransition(TransitionType trans) {
 		final Location source = mLocations.get(trans.getSource());
 		final Location target = mLocations.get(trans.getTarget());
-
+		
 		if (source == null || target == null) {
 			throw new UnsupportedOperationException("The source or target location referenced by transition "
-			        + trans.getSource() + " --> " + trans.getTarget() + " is not present.");
+					+ trans.getSource() + " --> " + trans.getTarget() + " is not present.");
 		}
-
+		
 		final Transition newTrans = new Transition(source, target);
 		newTrans.setGuard(trans.getGuard());
 		newTrans.setLabel(trans.getLabel());
 		newTrans.setUpdate(trans.getAssignment());
-
+		
 		mTransitions.add(newTrans);
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("[" + mName + "]: Added transition: " + newTrans);
 		}
@@ -140,11 +155,11 @@ public class HybridAutomaton {
 		return mName;
 	}
 	
-	public Map<Integer, Location> getLocations(){
+	public Map<Integer, Location> getLocations() {
 		return mLocations;
 	}
 	
-	public List<Transition> getTransitions(){
+	public List<Transition> getTransitions() {
 		return mTransitions;
 	}
 	
@@ -167,17 +182,22 @@ public class HybridAutomaton {
 	public Set<String> getLabels() {
 		return mLabels;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		String indent = "    ";
-		sb.append(mName).append(":\n ")
-		.append(indent).append("parameters: ").append(mGlobalParameters.toString() + mLocalParameters.toString() +"\n")
-		.append(indent).append("constants: ").append(mGlobalConstants.toString() + mLocalConstants.toString() +"\n")
-		.append(indent).append("labels: ").append(mLabels.toString()+"\n")
-		.append(indent).append("locations: ").append(mLocations.toString()+"\n")
-		.append(indent).append("transitions: ").append(mTransitions.toString());
+		sb.append(mName).append(":\n ").append(indent).append("parameters: ")
+				.append(mGlobalParameters.toString() + mLocalParameters.toString() + "\n").append(indent)
+				.append("constants: ").append(mGlobalConstants.toString() + mLocalConstants.toString() + "\n")
+				.append(indent).append("labels: ").append(mLabels.toString() + "\n").append(indent)
+				.append("locations: ").append(mLocations.toString() + "\n").append(indent).append("initial Location: ")
+				.append(mInitialLocation.toString() + "\n").append(indent).append("transitions: ")
+				.append(mTransitions.toString());
 		return sb.toString();
+	}
+	
+	public Location getInitialLocation() {
+		return mInitialLocation;
 	}
 }

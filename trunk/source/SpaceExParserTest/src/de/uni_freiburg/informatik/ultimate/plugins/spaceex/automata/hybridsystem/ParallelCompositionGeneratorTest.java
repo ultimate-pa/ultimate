@@ -96,11 +96,12 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[]", merge.getLocalConstants().toString());
 		assertEquals("[]", merge.getLocalParameters().toString());
 		assertEquals("[jump1]", merge.getLabels().toString());
-		assertEquals("{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, "
-				+ "2=loc_2_2(2), Invariant: y <= 5 && x <= 5, Flow: y'==1 && x'==1, "
-				+ "3=loc_2_3(3), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, "
-				+ "4=loc_3_2(4), Invariant: y <= 6 && x <= 5, Flow: y'==1 && x'==1, "
-				+ "5=loc_3_3(5), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1}",
+		assertEquals(
+				"{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, "
+						+ "2=loc_2_2(2), Invariant: y <= 5 && x <= 5, Flow: y'==1 && x'==1, "
+						+ "3=loc_2_3(3), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, "
+						+ "4=loc_3_2(4), Invariant: y <= 6 && x <= 5, Flow: y'==1 && x'==1, "
+						+ "5=loc_3_3(5), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1}",
 				merge.getLocations().toString());
 		assertEquals(
 				"[(1) === (); {y:=0 && x:=0}; Label: jump1 ===> (2), " + "(2) === (); {} ===> (3), "
@@ -126,11 +127,12 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[]", merge.getLocalConstants().toString());
 		assertEquals("[]", merge.getLocalParameters().toString());
 		assertEquals("[jump1]", merge.getLabels().toString());
-		assertEquals("{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, "
-				+ "2=loc_1_2(2), Invariant: y <= 4 && x <= 5, Flow: y'==1 && x'==1, "
-				+ "3=loc_2_1(3), Invariant: y <= 5 && x <= 4, Flow: y'==1 && x'==1, "
-				+ "4=loc_2_3(4), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, "
-				+ "5=loc_3_3(5), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1}",
+		assertEquals(
+				"{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, "
+						+ "2=loc_1_2(2), Invariant: y <= 4 && x <= 5, Flow: y'==1 && x'==1, "
+						+ "3=loc_2_1(3), Invariant: y <= 5 && x <= 4, Flow: y'==1 && x'==1, "
+						+ "4=loc_2_3(4), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, "
+						+ "5=loc_3_3(5), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1}",
 				merge.getLocations().toString());
 		assertEquals("[(1) === (); {} ===> (2), " + "(2) === (); {y:=0 && x:=0}; Label: jump1 ===> (4), "
 				+ "(4) === (); {} ===> (5)]", merge.getTransitions().toString());

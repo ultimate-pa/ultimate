@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Class that represents a hybrid model, consisting of multiple concurrently running hybrid automata and some system
@@ -62,6 +63,7 @@ public class HybridModel {
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private List<HybridSystem> mSystems;
 	private Map<String, HybridAutomaton> mMergedAutomata;
+	private SpaceExPreferenceManager mPreferenceManager;
 	
 	public HybridModel(final Sspaceex root, final ILogger logger) throws Exception {
 		mLogger = logger;
@@ -97,7 +99,62 @@ public class HybridModel {
 			// create the systems
 			systems.forEach((id, comp) -> {
 				mLogger.info("creating hybridsystem for system: " + id);
-				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems);
+				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
+						mPreferenceManager);
+				mLogger.info("hybridsystem created:\n" + hybsys.toString());
+				mSystems.add(hybsys);
+				HybridAutomaton hybAut = mergeAutomata(hybsys);
+				mMergedAutomata.put(hybAut.getName(), hybAut);
+			});
+		}
+	}
+	
+	/**
+	 * v2
+	 * 
+	 * @param root
+	 * @param logger
+	 * @param preferenceManager
+	 * @throws Exception
+	 */
+	public HybridModel(final Sspaceex root, final ILogger logger, SpaceExPreferenceManager preferenceManager)
+			throws Exception {
+		mLogger = logger;
+		mPreferenceManager = preferenceManager;
+		mHybridSystemFactory = new HybridSystemFactory(mLogger);
+		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
+		mSystems = new ArrayList<>();
+		mMergedAutomata = new HashMap<>();
+		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
+				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
+					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
+							+ " already exists. Overwriting with new one.");
+					return newEntry;
+				}));
+		
+		final Map<String, ComponentType> systems = root.getComponent().stream().filter(c -> !c.getBind().isEmpty())
+				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
+					mLogger.warn("A hybrid system with name " + oldEntry.getId()
+							+ " already exists. Overwriting with new one.");
+					return newEntry;
+				}));
+		
+		if (systems.isEmpty() && automata.size() > 1) {
+			throw new UnsupportedOperationException(
+					"If no hybrid system is specified, only one automaton is allowed to exist in the model.");
+		}
+		
+		if (systems.isEmpty()) {
+			HybridSystem hybsys = createDefaultSystem(automata);
+			mLogger.info("hybridsystem created:\n" + hybsys.toString());
+			mSystems.add(hybsys);
+		} else {
+			// create the systems
+			systems.forEach((id, comp) -> {
+				mLogger.info("creating hybridsystem for system: " + id);
+				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
+						mPreferenceManager);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.add(hybsys);
 				HybridAutomaton hybAut = mergeAutomata(hybsys);
@@ -110,7 +167,7 @@ public class HybridModel {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
 		final HybridAutomaton automaton =
-				mHybridAutomatonFactory.createHybridAutomatonFromComponent(automatonComponent);
+				mHybridAutomatonFactory.createHybridAutomatonFromComponent(automatonComponent, mPreferenceManager);
 		// set global parameters
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
 				.map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
