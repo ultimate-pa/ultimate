@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Auxiliary that contains information about float operations of
+ * Auxiliary file that contains information about float operations of
  * env.h and math.h support in ultimate.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
