@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class ExpressionFactory extends BoogieTransformer {
 	
-	public static Expression newUnaryExpression(ILocation loc, UnaryExpression.Operator operator, Expression expr) {
+	public static Expression newUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator, final Expression expr) {
 		final Expression exprLiteral = filterLiteral(expr);
 		Expression result;
 		if (exprLiteral != null) {
@@ -85,7 +85,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		return result;
 	}
 
-	public static Expression newBinaryExpression(ILocation loc, Operator operator, Expression left, Expression right) {
+	public static Expression newBinaryExpression(final ILocation loc, final Operator operator, final Expression left, final Expression right) {
 		final Expression leftLiteral = filterLiteral(left);
 		final Expression rightLiteral = filterLiteral(right);
 		Expression result;
@@ -109,8 +109,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 	
 	
-	private static BooleanLiteral constructBinaryExpression_Bool(ILocation loc, Operator operator, BooleanLiteral leftLiteral,
-			BooleanLiteral rightLiteral) {
+	private static BooleanLiteral constructBinaryExpression_Bool(final ILocation loc, final Operator operator, final BooleanLiteral leftLiteral,
+			final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
 		final boolean rightValue = rightLiteral.getValue();
 		final boolean result;
@@ -152,8 +152,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 	
 	
-	private static Expression constructBinaryExpression_Integer(ILocation loc, Operator operator, IntegerLiteral leftLiteral,
-			IntegerLiteral rightLiteral) {
+	private static Expression constructBinaryExpression_Integer(final ILocation loc, final Operator operator, final IntegerLiteral leftLiteral,
+			final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		switch (operator) {
@@ -213,8 +213,8 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 	}
 	
-	private static Expression constructBinaryExpression_Real(ILocation loc, Operator operator, RealLiteral leftLiteral,
-			RealLiteral rightLiteral) {
+	private static Expression constructBinaryExpression_Real(final ILocation loc, final Operator operator, final RealLiteral leftLiteral,
+			final RealLiteral rightLiteral) {
 		final BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
 		final BigDecimal rightValue = new BigDecimal(rightLiteral.getValue());
 		switch (operator) {
@@ -272,8 +272,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 
 
-	private static Expression constructBinaryExpression_Bitvector(ILocation loc, Operator operator, BitvecLiteral leftLiteral,
-			BitvecLiteral rightLiteral) {
+	private static Expression constructBinaryExpression_Bitvector(final ILocation loc, final Operator operator, final BitvecLiteral leftLiteral,
+			final BitvecLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		if (leftValue.compareTo(BigInteger.ZERO) < 0) {
@@ -323,7 +323,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 	}
 	
-	public static Expression newIfThenElseExpression(ILocation loc, Expression condition, Expression thenPart, Expression elsePart) {
+	public static Expression newIfThenElseExpression(final ILocation loc, final Expression condition, final Expression thenPart, final Expression elsePart) {
 		final Expression condLiteral = filterLiteral(condition);
 		if (condLiteral instanceof BooleanLiteral) {
 			final boolean value = ((BooleanLiteral) condLiteral).getValue();
@@ -338,9 +338,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		
 	}
 
-
-
-	private static Expression filterLiteral(Expression expr) {
+	private static Expression filterLiteral(final Expression expr) {
 		if ((expr instanceof IntegerLiteral) || 
 				(expr instanceof BooleanLiteral) || 
 				(expr instanceof BitvecLiteral) || 
@@ -349,5 +347,15 @@ public class ExpressionFactory extends BoogieTransformer {
 		} else {
 			return null;
 		}
+	}
+	
+	public static boolean isTrueLiteral(final Expression expr) {
+		if (expr instanceof BooleanLiteral) {
+			final BooleanLiteral bl = (BooleanLiteral) expr;
+			if (bl.getValue()) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

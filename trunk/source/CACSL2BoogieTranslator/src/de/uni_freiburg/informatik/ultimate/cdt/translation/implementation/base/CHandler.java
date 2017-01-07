@@ -2271,16 +2271,26 @@ public class CHandler implements ICHandler {
 			} else {
 				throw new AssertionError("no such operation");
 			}
-			final AssertStatement smallerMaxInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPLEQ, operationResult,
-					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType(resultType).toString())));
-			check.addToNodeAnnot(smallerMaxInt);
-			final AssertStatement biggerMinInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPGEQ, operationResult,
-					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType(resultType).toString())));
-			check.addToNodeAnnot(biggerMinInt);
-			rex.stmt.add(smallerMaxInt);
-			rex.stmt.add(biggerMinInt);
+			{
+				final Expression smallerMaxInt = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPLEQ, operationResult,
+						new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType(resultType).toString()));
+				if (!ExpressionFactory.isTrueLiteral(smallerMaxInt)) {
+					final AssertStatement smallerMaxIntStmt = new AssertStatement(loc, smallerMaxInt);
+					check.addToNodeAnnot(smallerMaxIntStmt);
+					rex.stmt.add(smallerMaxIntStmt);
+				}
+			}
+			{
+				final Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPGEQ, operationResult,
+						new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType(resultType).toString()));
+				if (!ExpressionFactory.isTrueLiteral(biggerMinInt)) {
+					final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
+					check.addToNodeAnnot(biggerMinIntStmt);
+					rex.stmt.add(biggerMinIntStmt);
+				}
+			}
 		}
 	}
 
