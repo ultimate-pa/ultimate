@@ -989,18 +989,10 @@ public class FunctionHandler {
 			/*
 			 * Add memsafety checks if the corresponding setting is active:
 			 *  the argument "s" must point to valid memory
-			 *  
-			 *  s.base == 0 || (valid[s.base] && s.offset < length[s.base])
 			 */
 			if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
 				final Expression arg_s_value = arg_s.lrVal.getValue();
-//				// s.base == 0 
-//				final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-//						IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(arg_s_value, loc),
-//						expressionTranslation.getCTypeOfPointerComponents(),
-//						MemoryHandler.getPointerBaseAddress(nullExpr, loc),
-//						expressionTranslation.getCTypeOfPointerComponents());
 				// valid[s.base] 
 				final Expression baseValueValid = new ArrayAccessExpression(loc, memoryHandler.getValidArray(loc),
 										new Expression[] {
@@ -1010,7 +1002,6 @@ public class FunctionHandler {
 				chk.addToNodeAnnot(assertion);
 				builder.addStatement(assertion);
 			}
-
 			if (memoryHandler.getPointerTargetFullyAllocatedCheckMode() != PointerCheckMode.IGNORE) {
 				
 				final Expression arg_s_value = arg_s.lrVal.getValue();
@@ -1023,9 +1014,6 @@ public class FunctionHandler {
 										new Expression[] {
 												MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
 								expressionTranslation.getCTypeOfPointerComponents());
-//				// putting it together
-//				final Expression aOrBAndC = new BinaryExpression(loc, Operator.LOGICOR, baseEqualsNull, 
-//						new BinaryExpression(loc, Operator.LOGICAND, baseValue, offsetSmallerLength));
 
 				final AssertStatement assertion = new AssertStatement(loc, offsetSmallerLength);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
