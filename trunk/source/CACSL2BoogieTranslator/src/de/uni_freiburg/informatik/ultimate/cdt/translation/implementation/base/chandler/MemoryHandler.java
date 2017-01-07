@@ -1079,7 +1079,7 @@ public class MemoryHandler {
 	 */
 	private void checkPointerTargetFullyAllocated(final ILocation loc, final Expression size, final String ptrName,
 			final ArrayList<Specification> specList) {
-		if (mPointerBaseValidity == PointerCheckMode.IGNORE) {
+		if (mPointerTargetFullyAllocated == PointerCheckMode.IGNORE) {
 			// add nothing
 			return;
 		} else {
@@ -2130,6 +2130,14 @@ public class MemoryHandler {
 				loc, new CPrimitive(CPrimitives.CHAR), valueBigInt);
 		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array, valueExpr);
 		return statement;
+	}
+
+	public PointerCheckMode getPointerBaseValidityCheckMode() {
+		return mPointerBaseValidity;
+	}
+
+	public PointerCheckMode getPointerTargetFullyAllocatedCheckMode() {
+		return mPointerTargetFullyAllocated;
 	}
 
 	

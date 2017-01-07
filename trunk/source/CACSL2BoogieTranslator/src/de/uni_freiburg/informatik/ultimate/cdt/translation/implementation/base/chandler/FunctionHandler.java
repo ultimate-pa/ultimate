@@ -57,6 +57,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -117,12 +118,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 
 /**
  * Class that handles translation of functions.
@@ -949,68 +952,141 @@ public class FunctionHandler {
 			 * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
 			 * NULL or a pointer into the area where the argument pointer is valid.
 			 */
-			final List<Declaration> decl = new ArrayList<>();
-			final List<Statement> stmt = new ArrayList<>();
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//			final List<Declaration> decl = new ArrayList<>();
+//			final List<Statement> stmt = new ArrayList<>();
+//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-			// dispatch first argument
+			// dispatch first argument -- we need its value for the assume
 			assert arguments.length == 2 : "wrong number of arguments";
 			final ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0]))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-
+			builder.addDeclarations(arg_s.decl)
+				.addStatements(arg_s.stmt)
+				.addOverapprox(arg_s.overappr)
+				.putAuxVars(arg_s.auxVars)
+				.addNeighbourUnionFields(arg_s.otherUnionFields);
+			
+			// dispatch second argument -- only for its sideeffects
+			final ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			builder.addDeclarations(arg_c.decl)
+				.addStatements(arg_c.stmt)
+				.addOverapprox(arg_c.overappr)
+				.putAuxVars(arg_c.auxVars)
+				.addNeighbourUnionFields(arg_c.otherUnionFields);
+	
 			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 			final VariableDeclaration tmpVarDecl =
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-			decl.add(tmpVarDecl);
-			auxVars.put(tmpVarDecl, loc);
-
-			final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
+			builder.addDeclaration(tmpVarDecl);
+			builder.putAuxVar(tmpVarDecl, loc);
+			
 			final Expression nullExpr = expressionTranslation.constructNullPointer(loc);
-			// res.base == 0 && res.offset == 0
-			final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerBaseAddress(nullExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents());
-			final Expression offsetEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(nullExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents());
-			final BinaryExpression equalsNull =
-					new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
-			// old solution did not work quickly..
-			// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
-			// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
-			// res.base == arg_s.base
-			final Expression baseEquals = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents(),
-					MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc),
-					expressionTranslation.getCTypeOfPointerComponents());
-			// res.offset >= 0
-			final Expression offsetNonNegative = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_lessEqual,
-					expressionTranslation.constructLiteralForIntegerType(loc,
-							expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
-					expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(tmpExpr, loc),
-					expressionTranslation.getCTypeOfPointerComponents());
-			// res.offset < length(arg_s.base)
-			final Expression offsetSmallerLength =
-					expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-							IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
-							expressionTranslation.getCTypeOfPointerComponents(),
-							new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
-									new Expression[] {
-											MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
-							expressionTranslation.getCTypeOfPointerComponents());
-			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
-			final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
-					new BinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
-			// assume equalsNull or inRange
-			final AssumeStatement assume =
-					new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+
+			/*
+			 * Add memsafety checks if the corresponding setting is active:
+			 *  the argument "s" must point to valid memory
+			 *  
+			 *  s.base == 0 || (valid[s.base] && s.offset < length[s.base])
+			 */
+			if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
+
+				final Expression arg_s_value = arg_s.lrVal.getValue();
+//				// s.base == 0 
+//				final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+//						IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(arg_s_value, loc),
+//						expressionTranslation.getCTypeOfPointerComponents(),
+//						MemoryHandler.getPointerBaseAddress(nullExpr, loc),
+//						expressionTranslation.getCTypeOfPointerComponents());
+				// valid[s.base] 
+				final Expression baseValueValid = new ArrayAccessExpression(loc, memoryHandler.getValidArray(loc),
+										new Expression[] {
+												MemoryHandler.getPointerBaseAddress(arg_s_value, loc) });
+				final AssertStatement assertion = new AssertStatement(loc, baseValueValid);
+				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				chk.addToNodeAnnot(assertion);
+				builder.addStatement(assertion);
+			}
+
+			if (memoryHandler.getPointerTargetFullyAllocatedCheckMode() != PointerCheckMode.IGNORE) {
+				
+				final Expression arg_s_value = arg_s.lrVal.getValue();
+				// s.offset < length[s.base])
+				final Expression offsetSmallerLength =
+						expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+								IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(arg_s_value, loc),
+								expressionTranslation.getCTypeOfPointerComponents(),
+								new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+										new Expression[] {
+												MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
+								expressionTranslation.getCTypeOfPointerComponents());
+//				// putting it together
+//				final Expression aOrBAndC = new BinaryExpression(loc, Operator.LOGICOR, baseEqualsNull, 
+//						new BinaryExpression(loc, Operator.LOGICAND, baseValue, offsetSmallerLength));
+
+				final AssertStatement assertion = new AssertStatement(loc, offsetSmallerLength);
+				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				chk.addToNodeAnnot(assertion);
+				builder.addStatement(assertion);
+			}
+
+
+
+			// the havocced/uninitialized variable that represents the return value
+			final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
+
+			/*
+			 * build the assume statement as described above
+			 */
+			{
+				// res.base == 0 && res.offset == 0
+				final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents(),
+						MemoryHandler.getPointerBaseAddress(nullExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents());
+				final Expression offsetEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(nullExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents());
+				final BinaryExpression equalsNull =
+						new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
+				// old solution did not work quickly..
+				// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
+				// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
+				// res.base == arg_s.base
+				final Expression baseEquals = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_equals, MemoryHandler.getPointerBaseAddress(tmpExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents(),
+						MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc),
+						expressionTranslation.getCTypeOfPointerComponents());
+				// res.offset >= 0
+				final Expression offsetNonNegative = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_lessEqual,
+						expressionTranslation.constructLiteralForIntegerType(loc,
+								expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
+						expressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(tmpExpr, loc),
+						expressionTranslation.getCTypeOfPointerComponents());
+				// res.offset < length(arg_s.base)
+				final Expression offsetSmallerLength =
+						expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+								IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
+								expressionTranslation.getCTypeOfPointerComponents(),
+								new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
+										new Expression[] {
+												MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
+								expressionTranslation.getCTypeOfPointerComponents());
+				// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
+				final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
+						new BinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
+				// assume equalsNull or inRange
+				final AssumeStatement assume =
+						new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+				builder.addStatement(assume);
+			}
 
 
 			
@@ -1018,12 +1094,13 @@ public class FunctionHandler {
 			final Overapprox overappFlag = new Overapprox("builtin_strchr", loc);
 //			overapprox.add(overappFlag);
 //			assume.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overappFlag);
+			builder.addOverapprox(overappFlag);
 			
-			stmt.add(assume);
 			
 			final RValue lrVal = new RValue(tmpExpr, resultType);
+			builder.setLRVal(lrVal);
 
-			return new ExpressionResult(stmt, lrVal, decl, auxVars, Collections.singletonList(overappFlag));
+			return builder.build();
 		} else if (methodName.equals("__builtin_strlen")
 				|| methodName.equals("__builtin_strcmp")
 				|| methodName.equals("strlen")
