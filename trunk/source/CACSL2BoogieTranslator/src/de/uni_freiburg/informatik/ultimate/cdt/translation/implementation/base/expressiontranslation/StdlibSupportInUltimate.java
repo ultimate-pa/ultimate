@@ -156,14 +156,12 @@ public class StdlibSupportInUltimate {
 			"memcpy",
 			"memmove",
 			"memccpy",
-
 			"memcmp",
 			"memchr",
 			"strcpy",
 			"strncpy",
 			"strcat",
 			"strncat",
-
 			"strncmp",
 			"strcoll",
 			"strxfrm",
@@ -180,7 +178,6 @@ public class StdlibSupportInUltimate {
 			"strtok",
 			"__strtok_r",
 			"strtok_r",
-
 			"strnlen",
 			"strerror",
 			"strerror_r",
@@ -203,17 +200,17 @@ public class StdlibSupportInUltimate {
 	};
 	//@formatter:on
 
-	private final static Set<String> SUPPORTED_FLOAT_OPERATIONS = new HashSet<>(Arrays.asList(SUPPORTED_STD_OPERATIONS_ARRAY));
+	private final static Set<String> SUPPORTED_STD_OPERATIONS = new HashSet<>(Arrays.asList(SUPPORTED_STD_OPERATIONS_ARRAY));
 	
-	private final static Set<String> UNSUPPORTED_FLOAT_OPERATIONS = new HashSet<>(Arrays.asList(UNSUPPORTED_STD_OPERATIONS_ARRAY));
+	private final static Set<String> UNSUPPORTED_STD_OPERATIONS = new HashSet<>(Arrays.asList(UNSUPPORTED_STD_OPERATIONS_ARRAY));
 
 	
 	
 	public static Set<String> getUnsupportedFloatOperations() {
-		return UNSUPPORTED_FLOAT_OPERATIONS;
+		return UNSUPPORTED_STD_OPERATIONS;
 	}
 	public static Set<String> getSupportedFloatOperations() {
-		return SUPPORTED_FLOAT_OPERATIONS;
+		return SUPPORTED_STD_OPERATIONS;
 	}
 	
 	
