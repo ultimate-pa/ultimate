@@ -2091,22 +2091,26 @@ public class MemoryHandler {
      * 
      * 2017-01-06 Matthias: This works for the our default memory model.
      * I might not work for all our memory models.
+     * 
+     * @param writeValues if not set we omit to write values and just allocate memory
 	 */
-	public List<Statement> writeStringToHeap(final ILocation loc, final String resultPointer, final char[] value) {
+	public List<Statement> writeStringToHeap(final ILocation loc, final String resultPointer, final char[] value, 
+			final boolean writeValues) {
 		final Expression size = mExpressionTranslation.constructLiteralForIntegerType(loc, 
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(value.length + 1));
 		final CallStatement ultimateAllocCall = getMallocCall(size, resultPointer, loc);
 		final List<Statement> result = new ArrayList<>();
 		result.add(ultimateAllocCall);
-		final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
-		for (int i=0; i<value.length; i++) {
-			final BigInteger valueBigInt = BigInteger.valueOf(value[i]);
-			final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, i, valueBigInt);
+		if (writeValues) {
+			for (int i=0; i<value.length; i++) {
+				final BigInteger valueBigInt = BigInteger.valueOf(value[i]);
+				final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, i, valueBigInt);
+				result.add(statement);
+			}
+			// string literals are "nullterminated" i.e.,  suffixed by 0
+			final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, value.length, BigInteger.ZERO);
 			result.add(statement);
 		}
-		// string literals are "nullterminated" i.e.,  suffixed by 0
-		final AssignmentStatement statement = writeCharToHeap(loc, resultPointer, value.length, BigInteger.ZERO);
-		result.add(statement);
 		return result;
 	}
 

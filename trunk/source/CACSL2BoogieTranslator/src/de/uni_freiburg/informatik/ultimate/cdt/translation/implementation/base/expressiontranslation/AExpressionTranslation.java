@@ -151,7 +151,8 @@ public abstract class AExpressionTranslation {
 			} else {
 				throw new UnsupportedOperationException("unsupported representation of string literal " + Arrays.toString(node.getValue()));
 			}
-			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray);
+			final boolean writeValues = charArray.length < 13;
+			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray, writeValues);
 			return new ExpressionResult(statements, rvalue, decls, auxVars);
 		}
 		case IASTLiteralExpression.lk_false:
