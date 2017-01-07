@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResult
 public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-//	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	private static final int FILES_PER_DIR_LIMIT = 4;
+	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+//	private static final int FILES_PER_DIR_LIMIT = 4;
 	private static final int FILE_OFFSET = 0;
 	
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-no-overflow.*\\.c|.*_true-no-overflow.*\\.c";
