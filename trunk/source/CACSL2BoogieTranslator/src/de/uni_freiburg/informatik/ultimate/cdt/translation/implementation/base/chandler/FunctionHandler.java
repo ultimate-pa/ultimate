@@ -1192,10 +1192,17 @@ public class FunctionHandler {
 							expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("1")),
 					expressionTranslation.getCTypeOfPointerComponents()
 					);
-			final AssertStatement assertion = new AssertStatement(loc, baseValueValid);
-			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-			chk.addToNodeAnnot(assertion);
-			result.add(assertion);
+			
+			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
+				final AssertStatement assertion = new AssertStatement(loc, baseValueValid);
+				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				chk.addToNodeAnnot(assertion);
+				result.add(assertion);
+			} else {
+				assert memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSUME : "missed a case?";
+				final Statement assume = new AssumeStatement(loc, baseValueValid);
+				result.add(assume);
+			}
 		}
 		if (memoryHandler.getPointerTargetFullyAllocatedCheckMode() != PointerCheckMode.IGNORE) {
 			
@@ -1218,14 +1225,20 @@ public class FunctionHandler {
 									expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
 							expressionTranslation.getCTypeOfPointerComponents());
 
-			final AssertStatement assertion = new AssertStatement(loc, 
-					new BinaryExpression(loc, 
-							Operator.LOGICAND, 
-							offsetSmallerLength,
-							offsetNonnegative));
-			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-			chk.addToNodeAnnot(assertion);
-			result.add(assertion);
+			final Expression aAndB = new BinaryExpression(loc, 
+					Operator.LOGICAND, 
+					offsetSmallerLength,
+					offsetNonnegative);
+			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
+				final AssertStatement assertion = new AssertStatement(loc, aAndB);
+				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+				chk.addToNodeAnnot(assertion);
+				result.add(assertion);
+			} else {
+				assert memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSUME : "missed a case?";
+				final Statement assume = new AssumeStatement(loc, aAndB);
+				result.add(assume);
+			}
 		}
 		return result;
 	}
