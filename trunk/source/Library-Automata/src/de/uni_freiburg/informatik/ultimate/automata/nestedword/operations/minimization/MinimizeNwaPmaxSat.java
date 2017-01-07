@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Partial Max-SAT based minimization of NWA using {@link Doubleton}s (symmetric pairs) of states as variable type.
@@ -127,7 +128,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
 			final Settings<STATE> settings, final boolean applyInitialPartitionPreprocessing)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaPmaxSat", operand, settings);
+		super(services, stateFactory, "MinimizeNwaPmaxSat", operand, settings, new NestedMap2<>());
 		
 		mInitialPartition = applyInitialPartitionPreprocessing
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,

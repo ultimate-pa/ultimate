@@ -83,7 +83,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
 	protected static final String SOLVER_TIMEOUT = "solving";
 	
-	protected final NestedMap2<STATE, STATE, T> mStatePairs = new NestedMap2<>();
+	protected final NestedMap2<STATE, STATE, T> mStatePairs;
 	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
@@ -116,10 +116,12 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final String operationName, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings) throws AutomataOperationCanceledException {
+			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePairs)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operationName, operand);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
+		mStatePairs = statePairs;
 		mSettings = settings;
 		mSettings.validate();
 		mSolver = createSolver();

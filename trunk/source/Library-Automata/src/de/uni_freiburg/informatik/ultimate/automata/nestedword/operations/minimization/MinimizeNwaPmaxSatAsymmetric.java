@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -98,20 +99,45 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Iterable<Pair<STATE, STATE>> initialPairs,
 			final Settings<STATE> settings) throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaPmaxSatAsymmetric", operand, settings.setSolverModeGeneral());
+		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings);
+	}
+	
+	/**
+	 * Constructor with initial pairs in internal data structure (publicly available for efficiency reasons).
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param initialStatePairs
+	 *            internal data structure for initial pairs of states
+	 * @param settings
+	 *            settings wrapper
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory, "MinimizeNwaPmaxSatAsymmetric", operand, settings.setSolverModeGeneral(),
+				initialStatePairs);
 		mEmptyStackState = mOperand.getEmptyStackState();
-		
-		fillMapWithInitialPairs(initialPairs);
 		
 		run();
 	}
 	
-	private void fillMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
+	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
+			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
+		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
 		for (final Pair<STATE, STATE> pair : initialPairs) {
-			mStatePairs.put(pair.getFirst(), pair.getSecond(), pair);
+			result.put(pair.getFirst(), pair.getSecond(), pair);
 		}
+		return result;
 	}
-
+	
 	@Override
 	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorPair<>(mSettings.isUsePathCompression());
@@ -167,9 +193,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 	}
 	
-	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12)
-			throws AutomataOperationCanceledException {
-		for (final Entry<STATE, Pair<STATE, STATE>> state3toPair : mStatePairs.get(pair12.getSecond()).entrySet()) {
+	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
+		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePairs.get(pair12.getSecond());
+		if (state2to3s == null) {
+			return;
+		}
+		for (final Entry<STATE, Pair<STATE, STATE>> state3toPair : state2to3s.entrySet()) {
 			final STATE state3 = state3toPair.getKey();
 			final Pair<STATE, STATE> pair23 = state3toPair.getValue();
 			final Pair<STATE, STATE> pair13 = mStatePairs.get(pair12.getFirst(), state3);
@@ -240,7 +269,14 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		if (state1.equals(mEmptyStackState) || state2.equals(mEmptyStackState)) {
 			return false;
 		}
-		return mStatePairs.get(state1).containsKey(state2);
+		
+		final Map<STATE, Pair<STATE, STATE>> rhsStates = mStatePairs.get(state1);
+		if (rhsStates == null) {
+			// no state was in relation to state1
+			return false;
+		}
+		
+		return rhsStates.containsKey(state2);
 	}
 	
 	@Override
