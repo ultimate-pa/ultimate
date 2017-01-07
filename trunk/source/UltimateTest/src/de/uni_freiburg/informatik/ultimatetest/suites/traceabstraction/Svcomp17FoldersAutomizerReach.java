@@ -37,62 +37,60 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompOverflowTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTestSuite {
+public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-//	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	private static final int FILES_PER_DIR_LIMIT = 4;
+	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+//	private static final int FILES_PER_DIR_LIMIT = 1;
 	private static final int FILE_OFFSET = 0;
 	
-	private static final String STANDARD_DOT_C_PATTERN = ".*_false-no-overflow.*\\.c|.*_true-no-overflow.*\\.c";
-	private static final String STANDARD_DOT_I_PATTERN = ".*_false-no-overflow.*\\.i|.*_true-no-overflow.*\\.i";
+	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c";
+	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i|.*_true-unreach-call.*\\.i";
 	
+//	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c";
+//	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
 
-	
-	// @formatter:off
-	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
-		/***** Category 4. Overflows *****/
-		/*** Subcategory  Overflows-Other ***/
-		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-	};
-	// @formatter:on
-	
 	
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_64BIT = {
-		/***** Category 4. Overflows *****/
-		/*** Subcategory Overflows-BitVectors ***/
-		new DirectoryFileEndingsPair("examples/svcomp/signedintegeroverflow-regression/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
-			
 		/***** Category 6. SoftwareSystems *****/
-		/*** Subcategory  Systems_BusyBox_Overflows ***/
-		new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		/*** Subcategory  Systems_DeviceDriversLinux64_ReachSafety ***/
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.8/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.2-rc1/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.14/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.0-rc1-mav/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
 	};
 	// @formatter:on
+	
 	
 	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompOverflowTestResultDecider(urd, false);
+		return new SvcompReachTestResultDecider(urd, false);
 	}
-	
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public long getTimeout() {
-		return 300 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -100,16 +98,12 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 	 * Ultimate will run on each program with each setting that is defined here.
 	 * The path are defined relative to the folder "trunk/examples/settings/",
 	 * because we assume that all settings files are in this folder.
+	 * 
 	 */
-	private static final String[] SETTINGS_32BIT = {
-		// @formatter:off
-		"svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf",
-		// @formatter:on
-	};
-	
 	private static final String[] SETTINGS_64BIT = {
 		// @formatter:off
-		"svcomp2017/automizer/svcomp-Overflow-64bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
 		// @formatter:on
 	};
 	
@@ -124,13 +118,6 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
-			for (final String toolchain : TOOLCHAINS) {
-				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_32BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
-			}
-		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(

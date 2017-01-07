@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
 public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelCheckerTestSuite {
 
 	@Override
-	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new SafetyCheckTestResultDecider(ultimateRunDefinition, true);
 	}
 
