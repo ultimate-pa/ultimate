@@ -6,6 +6,7 @@ int minimizeSevpa = numberOfStates(minimizeSevpa(nwa));
 int minimizeNwaMaxSat = numberOfStates(minimizeNwaMaxSat(nwa));
 int minimizeNwaPmaxSat = numberOfStates(minimizeNwaPmaxSat(nwa));
 int minimizeNwaPmaxSatAsymmetric = numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa));
+int reduceNwaDirectSimulationB = numberOfStates(ReduceNwaDirectSimulationB(nwa));
 
 print(removeDeadEnds);
 print(shrinkNwa);
@@ -13,6 +14,7 @@ print(minimizeSevpa);
 print(minimizeNwaMaxSat);
 print(minimizeNwaPmaxSat);
 print(minimizeNwaPmaxSatAsymmetric);
+print(reduceNwaDirectSimulationB);
 
 NestedWordAutomaton nwaUnprocessed = (
 	callAlphabet = {"call rec(y);" },
