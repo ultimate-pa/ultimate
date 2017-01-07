@@ -3,7 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-GraphVR
 Bundle-SymbolicName: Library-GraphVR
 Bundle-Version: 1.5.0
+Require-Bundle: Library-UltimateCore
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: com.google.protobuf,
- de.uni_freiburg.informatik.ultimate.graphvr
-Bundle-ClassPath: protobuf-java-3.0.0.jar
+ de.uni_freiburg.informatik.ultimate.graphvr,
+ de.uni_freiburg.informatik.ultimate.graphvr.server
+Bundle-ClassPath: protobuf-java-3.0.0.jar,
+ .
