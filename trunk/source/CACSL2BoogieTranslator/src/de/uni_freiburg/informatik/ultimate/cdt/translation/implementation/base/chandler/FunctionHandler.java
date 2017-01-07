@@ -989,14 +989,29 @@ public class FunctionHandler {
 			/*
 			 * Add memsafety checks if the corresponding setting is active:
 			 *  the argument "s" must point to valid memory
+			 *  
+			 *  technical Notes:
+			 *    these assertions are added before the assume statement and before the result can be assigned
+			 *   	thus the overapproximation introduced does not affect violations of these assertions
 			 */
 			if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
 				final Expression arg_s_value = arg_s.lrVal.getValue();
 				// valid[s.base] 
-				final Expression baseValueValid = new ArrayAccessExpression(loc, memoryHandler.getValidArray(loc),
+				final Expression validBase = new ArrayAccessExpression(loc, memoryHandler.getValidArray(loc),
 										new Expression[] {
 												MemoryHandler.getPointerBaseAddress(arg_s_value, loc) });
+				
+				// valid[s.base] == 1
+				final Expression baseValueValid = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+						IASTBinaryExpression.op_equals, 
+						validBase, 
+						expressionTranslation.getCTypeOfPointerComponents(),
+						expressionTranslation.constructLiteralForIntegerType(loc,
+								expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("1")),
+						expressionTranslation.getCTypeOfPointerComponents()
+						);
+;
 				final AssertStatement assertion = new AssertStatement(loc, baseValueValid);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.addToNodeAnnot(assertion);
@@ -1014,8 +1029,21 @@ public class FunctionHandler {
 										new Expression[] {
 												MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) }),
 								expressionTranslation.getCTypeOfPointerComponents());
+				
+				// s.offset >= 0;
+				final Expression offsetNonnegative =
+						expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+								IASTBinaryExpression.op_greaterEqual, MemoryHandler.getPointerOffset(arg_s_value, loc),
+								expressionTranslation.getCTypeOfPointerComponents(),
+								expressionTranslation.constructLiteralForIntegerType(loc,
+										expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
+								expressionTranslation.getCTypeOfPointerComponents());
 
-				final AssertStatement assertion = new AssertStatement(loc, offsetSmallerLength);
+				final AssertStatement assertion = new AssertStatement(loc, 
+						new BinaryExpression(loc, 
+								Operator.LOGICAND, 
+								offsetSmallerLength,
+								offsetNonnegative));
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.addToNodeAnnot(assertion);
 				builder.addStatement(assertion);
