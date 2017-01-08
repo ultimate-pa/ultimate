@@ -81,8 +81,14 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
-		final boolean useBisimulation = DEFAULT_USE_BISIMULATION || isFiniteAutomaton();
+		final MinimizationBackend backend;
+		if (isFiniteAutomaton()) {
+			backend = MinimizationBackend.FINITE_AUTOMATON;
+		} else if (DEFAULT_USE_BISIMULATION) {
+			backend = MinimizationBackend.BISIMULATION;
+		} else {
+			backend = MinimizationBackend.SIMULATION;
+		}
 		
 		mLogger.info(startMessage());
 		
@@ -107,9 +113,19 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 					mLogger)) : "The computed simulation results are incorrect.";
 			
 			sim.doSimulation();
-			mResult = useBisimulation
-					? useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph)
-					: useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+			switch (backend) {
+				case FINITE_AUTOMATON:
+					mResult = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
+					break;
+				case BISIMULATION:
+					mResult = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+					break;
+				case SIMULATION:
+					mResult = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);;
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown backend type: " + backend);
+			}
 			
 			sim.triggerComputationOfPerformanceData(mResult);
 			sim.getSimulationPerformance();
@@ -128,7 +144,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	}
 	
 	private boolean isFiniteAutomaton() {
-		return mOperand.getCallAlphabet().isEmpty();
+		return mOperand.getReturnAlphabet().isEmpty();
 	}
 
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinninSink() {
@@ -181,22 +197,34 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		return spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null;
 	}
 
-	private IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
-			throws AutomataOperationCanceledException {
+	private UnionFind<STATE> simulationToEquivalenceRelation(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
+			final AGameGraph<LETTER, STATE> graph) {
 		final HashRelationDataStructure simRelation = new HashRelationDataStructure();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		final UnionFind<STATE> equivalenceRelation =
 				computeEquivalenceRelation(simRelation.getSimulation(), operand.getStates());
-		
-		if (isFiniteAutomaton()) {
-			final boolean addMapping = false;
-			final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-					new QuotientNwaConstructor<>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping );
-			return (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
-		}
-		
+		return equivalenceRelation;
+	}
+	
+	private IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
+			final AGameGraph<LETTER, STATE> graph) {
+		final UnionFind<STATE> equivalenceRelation =
+				simulationToEquivalenceRelation(operand, simulationInfoProvider, graph);
+		final boolean addMapping = false;
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping);
+		return (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
+	}
+
+	private IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
+			throws AutomataOperationCanceledException {
+		final UnionFind<STATE> equivalenceRelation =
+				simulationToEquivalenceRelation(operand, simulationInfoProvider, graph);
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
 				new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
@@ -235,6 +263,21 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
+	}
+	
+	private enum MinimizationBackend {
+		/**
+		 * Finite automaton minimization.
+		 */
+		FINITE_AUTOMATON,
+		/**
+		 * Bisimulation minimization.
+		 */
+		BISIMULATION,
+		/**
+		 * Simulation minimization.
+		 */
+		SIMULATION
 	}
 	
 	/**
