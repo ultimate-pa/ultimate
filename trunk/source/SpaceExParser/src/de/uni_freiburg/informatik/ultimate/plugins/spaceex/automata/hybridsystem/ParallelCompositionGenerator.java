@@ -47,18 +47,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class ParallelCompositionGenerator {
 	
 	private final ILogger mLogger;
-	private final Set<String> mGlobalConstsMerge;
-	private final Set<String> mGlobalParamsMerge;
-	private final Set<String> mLocalConstsMerge;
-	private final Set<String> mLocalParamsMerge;
-	private final Set<String> mLabelsMerge;
-	private final Set<String> mGlobalLabels;
-	private final Map<String, Set<String>> mLocalLabels;
-	private final Map<Integer, Location> mLocationsMerge;
+	private Set<String> mGlobalConstsMerge;
+	private Set<String> mGlobalParamsMerge;
+	private Set<String> mLocalConstsMerge;
+	private Set<String> mLocalParamsMerge;
+	private Set<String> mLabelsMerge;
+	private Set<String> mGlobalLabels;
+	private Map<String, Set<String>> mLocalLabels;
+	private Map<Integer, Location> mLocationsMerge;
 	private Location mInitialLocationMerge;
-	private final List<Transition> mTransitionMerge;
-	private final AtomicInteger mIdCounter;
-	private final Map<String, Integer> mCreatedLocations;
+	private List<Transition> mTransitionMerge;
+	private AtomicInteger mIdCounter;
+	private Map<String, Integer> mCreatedLocations;
 	private Stack<LocationPair> mComputationStack;
 	private Set<String> mVisitedLocations;
 	
@@ -84,6 +84,7 @@ public class ParallelCompositionGenerator {
 	 * 
 	 * @param automaton1
 	 * @param automaton2
+	 * @param binds
 	 * @return
 	 */
 	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2) {
@@ -102,7 +103,6 @@ public class ParallelCompositionGenerator {
 		// 2. get the outgoing transitions from the initials
 		// 3. compare and merge the outgoing transitions
 		// 4. Repeat
-		// TODO: determine initial locations with the config file (i guess)
 		Location initial1 = automaton1.getInitialLocation();
 		Location initial2 = automaton2.getInitialLocation();
 		LocationPair locpair = new LocationPair(initial1, initial2);
@@ -113,8 +113,27 @@ public class ParallelCompositionGenerator {
 		HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
-		mIdCounter.set(0);
+		// clean up
+		cleanUpMembers();
 		return hybAut;
+	}
+	
+	private void cleanUpMembers() {
+		// clean up all members because necessary for multiple parallel compositions
+		// dirty hack
+		mGlobalConstsMerge = new HashSet<>();
+		mGlobalParamsMerge = new HashSet<>();
+		mLocalConstsMerge = new HashSet<>();
+		mLocalParamsMerge = new HashSet<>();
+		mLabelsMerge = new HashSet<>();
+		mGlobalLabels = new HashSet<>();
+		mLocalLabels = new HashMap<>();
+		mLocationsMerge = new HashMap<>();
+		mTransitionMerge = new ArrayList<>();
+		mCreatedLocations = new HashMap<>();
+		mIdCounter = new AtomicInteger(0);
+		mComputationStack = new Stack<>();
+		mVisitedLocations = new HashSet<>();
 	}
 	
 	/**

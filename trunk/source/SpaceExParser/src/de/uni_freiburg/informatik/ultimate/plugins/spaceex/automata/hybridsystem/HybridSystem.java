@@ -81,6 +81,9 @@ public class HybridSystem {
 		
 		system.getBind().stream().forEach(b -> {
 			final String comp = b.getComponent();
+			final Map<String, String> binds =
+					b.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
+			mBinds.put(comp, binds);
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(b.getAs(),
 						new HybridSystem(systems.get(comp), automata, systems, mLogger, mPreferenceManager));
@@ -98,11 +101,15 @@ public class HybridSystem {
 						"The component with name " + comp + " is neither a system nor an automaton component.");
 			}
 			
-			final Map<String, String> binds =
-					b.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
-			mBinds.put(comp, binds);
 		});
-		
+		mLogger.info("Binds before replacements: " + mBinds);
+		mAutomata.forEach((id, aut) -> {
+			mLogger.info("before replace: " + aut);
+			Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id.replaceAll("_1", "")));
+			mBinds.put(id.replaceAll("_1", ""), newBinds);
+			mLogger.info("after replace: " + aut);
+		});
+		mLogger.info("Binds after replacements: " + mBinds);
 	}
 	
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
@@ -120,6 +127,10 @@ public class HybridSystem {
 		mLabels = labels;
 		mBinds = binds;
 		// TODO Add bind.
+	}
+	
+	private void renameLabels() {
+		
 	}
 	
 	public Map<String, HybridAutomaton> getAutomata() {
@@ -155,5 +166,9 @@ public class HybridSystem {
 			sb.append(indent + "automata: " + k + " bind: " + v + "\n");
 		});
 		return sb.toString();
+	}
+	
+	public Map<String, Map<String, String>> getBinds() {
+		return mBinds;
 	}
 }

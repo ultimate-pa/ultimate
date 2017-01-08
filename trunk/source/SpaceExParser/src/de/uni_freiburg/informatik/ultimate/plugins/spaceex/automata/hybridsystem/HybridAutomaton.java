@@ -151,6 +151,93 @@ public class HybridAutomaton {
 		}
 	}
 	
+	/**
+	 * Function that renames variables and labels according to a systems binds.
+	 * 
+	 * @param autBinds
+	 * @return
+	 */
+	public Map<String, String> renameAccordingToBinds(Map<String, String> autBinds) {
+		Map<String, String> newBinds = new HashMap<>();
+		autBinds.forEach((glob, loc) -> {
+			if (mLabels.contains(loc)) {
+				// first of all remove the local name from labels and add the global name
+				replaceValueInSet(mLabels, loc, glob);
+				// second change the labelnames of the transitions.
+				renameTransitionLabels(loc, glob);
+			} else if (mGlobalParameters.contains(loc)) {
+				// first replace values
+				replaceValueInSet(mGlobalParameters, loc, glob);
+				// then rename in invariants and flow of locations
+				renameLocationVariables(loc, glob);
+				// then rename in guards and assignments of transitions
+				renameTransitionVariables(loc, glob);
+			} else if (mGlobalConstants.contains(loc)) {
+				replaceValueInSet(mGlobalConstants, loc, glob);
+				renameLocationVariables(loc, glob);
+				renameTransitionVariables(loc, glob);
+			} else if (mLocalParameters.contains(loc)) {
+				replaceValueInSet(mLocalParameters, loc, glob);
+				renameLocationVariables(loc, glob);
+				renameTransitionVariables(loc, glob);
+			} else if (mLocalConstants.contains(loc)) {
+				replaceValueInSet(mLocalConstants, loc, glob);
+				renameLocationVariables(loc, glob);
+				renameTransitionVariables(loc, glob);
+			}
+			newBinds.put(glob, glob);
+		});
+		return newBinds;
+	}
+	
+	/*
+	 * Function that renames variables of guards and updates of transitions
+	 */
+	private void renameTransitionVariables(String loc, String glob) {
+		mTransitions.forEach(trans -> {
+			String guard = trans.getGuard() != null ? trans.getGuard() : "";
+			guard = guard.replaceAll(loc, glob);
+			trans.setGuard(guard);
+			String update = trans.getUpdate() != null ? trans.getUpdate() : "";
+			update = update.replaceAll(loc, glob);
+			trans.setUpdate(update);
+		});
+	}
+	
+	/*
+	 * Function that renames invariant and flow of a location
+	 */
+	private void renameLocationVariables(String loc, String glob) {
+		mLocations.forEach((id, location) -> {
+			String invariant = (location.getInvariant() != null) ? location.getInvariant() : "";
+			invariant = invariant.replaceAll(loc, glob);
+			location.setInvariant(invariant);
+			String flow = (location.getFlow() != null) ? location.getFlow() : "";
+			flow = flow.replaceAll(loc, glob);
+			location.setFlow(flow);
+		});
+	}
+	
+	/*
+	 * function that replaces a value in a set
+	 */
+	private void replaceValueInSet(Set<String> set, String loc, String glob) {
+		set.remove(loc);
+		set.add(glob);
+	}
+	
+	/*
+	 * function that renames labels in transitions
+	 */
+	private void renameTransitionLabels(String loc, String glob) {
+		mTransitions.forEach(trans -> {
+			if (trans.getLabel() != null && trans.getLabel().equals(loc)) {
+				trans.setLabel(glob);
+			}
+		});
+		
+	}
+	
 	public String getName() {
 		return mName;
 	}
