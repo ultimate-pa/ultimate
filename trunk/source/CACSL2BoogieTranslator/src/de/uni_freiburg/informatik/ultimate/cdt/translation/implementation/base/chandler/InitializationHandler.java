@@ -392,7 +392,7 @@ public class InitializationHandler {
 				final AssignmentStatement assignment =
 						new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
 				addOverApprToStatementAnnots(overappr, assignment);
-				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs }));
+				stmt.add(assignment);
 			}
 		} else if (lCType instanceof CArray) {
 
