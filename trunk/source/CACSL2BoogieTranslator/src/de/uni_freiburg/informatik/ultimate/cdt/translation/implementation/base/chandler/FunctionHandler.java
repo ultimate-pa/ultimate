@@ -1060,30 +1060,80 @@ public class FunctionHandler {
 			builder.setLRVal(lrVal);
 
 			return builder.build();
-		} else if (methodName.equals("__builtin_strlen")
-				|| methodName.equals("__builtin_strcmp")
-				|| methodName.equals("strlen")
-				|| methodName.equals("strcmp")
-				) {
+		} else if (methodName.equals("__builtin_strlen") || methodName.equals("strlen")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException("strlen has one argument");
+			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
+			final ExpressionResult arg = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			builder.addDeclarations(arg.decl);
+			builder.addStatements(arg.stmt);
+			builder.addOverapprox(arg.overappr);
+			builder.putAuxVars(arg.auxVars);
+			builder.addNeighbourUnionFields(arg.otherUnionFields);
+			
+			builder.addStatements(addMemsafetyChecksForPointerExpression(
+							loc, arg.lrVal.getValue(), memoryHandler, expressionTranslation));
+			
+			// according to standard result is size_t, we use int for efficiency
+			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 			// introduce fresh aux variable
-			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 			final VariableDeclaration tmpVarDecl =
-					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
 			builder.addDeclaration(tmpVarDecl);
 			builder.putAuxVar(tmpVarDecl, loc);
 
 			final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-
-			final Overapprox overAppFlag = new Overapprox("builtin_strlen or builtin_strcmp", loc);
-//			tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
+			final Overapprox overAppFlag = new Overapprox(methodName, loc);
 			builder.addOverapprox(overAppFlag);
-
 			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
 			builder.setLRVal(lrVal);
+			return builder.build();
+			
+		} else if (methodName.equals("__builtin_strcmp") || methodName.equals("strcmp")) {
+			if (arguments.length != 2) {
+				throw new IllegalArgumentException("strcmp has two arguments");
+			}
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
+			final ExpressionResult arg0 = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			builder.addDeclarations(arg0.decl);
+			builder.addStatements(arg0.stmt);
+			builder.addOverapprox(arg0.overappr);
+			builder.putAuxVars(arg0.auxVars);
+			builder.addNeighbourUnionFields(arg0.otherUnionFields);
+			
+			builder.addStatements(addMemsafetyChecksForPointerExpression(
+							loc, arg0.lrVal.getValue(), memoryHandler, expressionTranslation));
+			
+			final ExpressionResult arg1 = ((ExpressionResult) main.dispatch(arguments[1]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			builder.addDeclarations(arg1.decl);
+			builder.addStatements(arg1.stmt);
+			builder.addOverapprox(arg1.overappr);
+			builder.putAuxVars(arg1.auxVars);
+			builder.addNeighbourUnionFields(arg1.otherUnionFields);
+			
+			builder.addStatements(addMemsafetyChecksForPointerExpression(
+							loc, arg1.lrVal.getValue(), memoryHandler, expressionTranslation));
+
+			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
+			// introduce fresh aux variable
+			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+			final VariableDeclaration tmpVarDecl =
+					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
+			builder.addDeclaration(tmpVarDecl);
+			builder.putAuxVar(tmpVarDecl, loc);
+
+			final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+			final Overapprox overAppFlag = new Overapprox(methodName, loc);
+			builder.addOverapprox(overAppFlag);
+			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
+			builder.setLRVal(lrVal);
 			return builder.build();
 		} else if (methodName.equals("__builtin_return_address")) {
 			/*
@@ -1174,7 +1224,7 @@ public class FunctionHandler {
 			final Expression pointerValue,
 			final MemoryHandler memoryHandler,
 			final AExpressionTranslation expressionTranslation) {
-		List<Statement> result = new ArrayList<>();
+		final List<Statement> result = new ArrayList<>();
 
 		if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
@@ -1209,7 +1259,7 @@ public class FunctionHandler {
 			// s.offset < length[s.base])
 			final Expression offsetSmallerLength =
 					expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-							IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(pointerValue, loc),
+							IASTBinaryExpression.op_lessThan, MemoryHandler.getPointerOffset(pointerValue, loc),
 							expressionTranslation.getCTypeOfPointerComponents(),
 							new ArrayAccessExpression(loc, memoryHandler.getLengthArray(loc),
 									new Expression[] {
