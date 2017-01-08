@@ -117,13 +117,13 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final String operationName, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePairs)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operationName, operand);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		mStatePairs = statePairs;
 		mSettings = settings;
-		mSettings.validate();
+		mSettings.validate(mOperand);
 		mSolver = createSolver();
 	}
 	
@@ -134,7 +134,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			case HORN:
 				return new HornMaxSatSolver<>(mServices);
 			case TRANSITIVITY:
-				if (mOperand.getReturnAlphabet().isEmpty()) {
+				if (hasNoReturnTransitions(mOperand)) {
 					// we can omit transitivity clauses if the operand has no return transitions
 					return new GeneralMaxSatSolver<>(mServices);
 				}
@@ -573,13 +573,18 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	}
 	
 	@SuppressWarnings("unchecked")
-	private T[] consArr(final Collection<T> pairs) {
+	protected final T[] consArr(final Collection<T> pairs) {
 		return (T[]) pairs.toArray(new Object[pairs.size()]);
 	}
 	
 	protected final void setStatesDifferent(final T pair) {
 		setVariableFalse(pair);
 		mNumberClausesAcceptance++;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected final void addInverseHornClause(final T negativeAtom, final Collection<T> positiveAtoms) {
+		addArbitraryLiteralClause((T[]) (new Object[] { negativeAtom }), consArr(positiveAtoms));
 	}
 	
 	private void addArbitraryLiteralClause(final T[] negativeAtoms, final T[] positiveAtoms) {
@@ -691,10 +696,16 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return flag ? null : mStatePairs.get(state1, state2);
 	}
 	
-	private T getVariableIfNotDifferent(final STATE state1, final STATE state2) {
+	/**
+	 * @return {@code null} if states are different, pair variable otherwise.
+	 */
+	protected final T getVariableIfNotDifferent(final STATE state1, final STATE state2) {
 		return getVariable(state1, state2, knownToBeDifferent(state1, state2, null));
 	}
 	
+	/**
+	 * @return {@code null} if states are similar, pair variable otherwise.
+	 */
 	private T getVariableIfNotSimilar(final STATE state1, final STATE state2) {
 		return getVariable(state1, state2, knownToBeSimilar(state1, state2, null));
 	}
@@ -714,6 +725,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 		return true;
+	}
+	
+	private static <LETTER, STATE> boolean hasNoReturnTransitions(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		return operand.getReturnAlphabet().isEmpty();
 	}
 	
 	protected final void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {
@@ -816,13 +831,17 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		/**
 		 * Validates the settings object for inconsistencies.
 		 */
-		public void validate() {
+		public <LETTER> void validate(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 			if (mSolverMode == null) {
 				throw new IllegalArgumentException("No solver mode set.");
 			}
-			if (!mUseTransitionHornClauses && mSolverMode == SolverMode.HORN) {
-				throw new IllegalArgumentException(
-						"For using the Horn solver you must use Horn clauses.");
+			if (mSolverMode == SolverMode.HORN) {
+				if (!mUseTransitionHornClauses) {
+					throw new IllegalArgumentException("For using the Horn solver you must use Horn clauses.");
+				}
+				if (!mUseFinalStateConstraints && !hasNoReturnTransitions(operand)) {
+					throw new IllegalArgumentException("For Buchi NWA a Horn solver is in general not sufficient.");
+				}
 			}
 		}
 		

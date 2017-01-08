@@ -158,13 +158,25 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			
 			mSolver.addVariable(pair);
 			
-			// separate final first and nonfinal second state
-			if (separateFinalAndNonfinalStates && mOperand.isFinal(state1) && !mOperand.isFinal(state2)) {
-				setStatesDifferent(pair);
+			if (separateFinalAndNonfinalStates) {
+				// separate final first and nonfinal second state ("direct simulation")
+				if (mOperand.isFinal(state1) && !mOperand.isFinal(state2)) {
+					setStatesDifferent(pair);
+				}
+			} else {
+				// Buchi minimization
+				if (mOperand.isFinal(state1) ^ mOperand.isFinal(state2)) {
+					generateBuchiConstraints(state1, state2, pair);
+				}
 			}
 		}
 	}
 	
+	private void generateBuchiConstraints(final STATE state1, final STATE state2, final Pair<STATE, STATE> pair) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Not implemented yet.");
+	}
+
 	private void addStateToTransitivityGeneratorIfNotPresent(final STATE state) {
 		if (mTransitivityGenerator != null) {
 			mTransitivityGenerator.addContentIfNotPresent(state);

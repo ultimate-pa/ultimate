@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -199,19 +200,64 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				mStatePairs.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 				
-				// separate final and nonfinal states
-				if (separateFinalAndNonfinalStates && (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ))) {
-					setStatesDifferent(doubleton);
+				if (separateFinalAndNonfinalStates) {
+					// separate final and nonfinal states ("direct bisimulation")
+					if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
+						setStatesDifferent(doubleton);
+					}
+				} else {
+					// Buchi constraints are added later when all variables have been added
 				}
 			}
 		}
 	}
 	
+	private void generateBuchiConstraints(final STATE[] states) {
+		for (int i = 0; i < states.length; i++) {
+			final STATE stateI = states[i];
+			for (int j = 0; j < i; j++) {
+				final STATE stateJ = states[j];
+				
+				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
+					generateBuchiConstraints(stateI, stateJ);
+				}
+			}
+		}
+	}
+	
+	private void generateBuchiConstraints(final STATE state1, final STATE state2) {
+		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);
+		for (final STATE downState1 : getDownStatesArray(state1)) {
+			final STATE[] downStates2 = getDownStatesArray(state2);
+			final ArrayList<Doubleton<STATE>> hierDoubletons = new ArrayList<>(downStates2.length);
+			for (final STATE downState2 : downStates2) {
+				final Doubleton<STATE> down12 = getVariableIfNotDifferent(downState1, downState2);
+				if (down12 != null && down12 != linDoubleton) {
+					hierDoubletons.add(down12);
+				}
+			}
+			
+			if (hierDoubletons.isEmpty()) {
+				// all constraints on down states were trivially eliminated
+				continue;
+			}
+			
+			addInverseHornClause(linDoubleton, hierDoubletons);
+		}
+	}
+
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
+		final boolean generateBuchiConstraints = !mSettings.getFinalStateConstraints();
+		
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
+			
+			if (generateBuchiConstraints) {
+				generateBuchiConstraints(states);
+			}
+			
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraints(states, i);
 				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
