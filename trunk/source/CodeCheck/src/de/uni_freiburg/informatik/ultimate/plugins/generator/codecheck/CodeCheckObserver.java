@@ -511,20 +511,23 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					benchmarkGenerator.addEdgeCheckerData(mCodeChecker.mEdgeChecker.getEdgeCheckerBenchmark());
 
-				} else { // trace is feasible
+				} else if (isSafe == LBool.SAT) { // trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 					allSafe = false;
 					if (traceChecker.providesRcfgProgramExecution()) {
 						realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
 					} else {
-						realErrorProgramExecution = TraceCheckerUtils.computeSomeIcfgProgramExecutionWithoutValues(errorRun.getWord());
+						realErrorProgramExecution =
+								TraceCheckerUtils.computeSomeIcfgProgramExecutionWithoutValues(errorRun.getWord());
 					}
-					
 
 					if (DEBUG) {
 						mCodeChecker.debug();
 					}
 					break;
+				} else {
+					assert isSafe == LBool.UNKNOWN;
+					throw new UnsupportedOperationException("Solver said unknown");
 				}
 				if (DEBUG) {
 					mCodeChecker.debug();
