@@ -10,3 +10,5 @@ Require-Bundle: Library-UltimateCore,
  org.junit;bundle-version="4.12.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
+Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions

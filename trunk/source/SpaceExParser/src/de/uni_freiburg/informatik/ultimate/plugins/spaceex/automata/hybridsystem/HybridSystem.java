@@ -102,6 +102,7 @@ public class HybridSystem {
 			}
 			
 		});
+		// TODO: find out how IDS are set, we need autName instead of autName_1
 		mLogger.info("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
 			mLogger.info("before replace: " + aut);
