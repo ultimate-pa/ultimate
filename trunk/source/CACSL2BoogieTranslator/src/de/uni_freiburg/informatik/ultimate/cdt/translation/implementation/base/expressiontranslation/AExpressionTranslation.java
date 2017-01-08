@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
@@ -151,9 +153,18 @@ public abstract class AExpressionTranslation {
 			} else {
 				throw new UnsupportedOperationException("unsupported representation of string literal " + Arrays.toString(node.getValue()));
 			}
-			final boolean writeValues = charArray.length < 13;
+			// overapproximate strings of length 7 or longer
+			final boolean writeValues = charArray.length < 7;
 			final List<Statement> statements = memoryHandler.writeStringToHeap(loc, tId, charArray, writeValues);
-			return new ExpressionResult(statements, rvalue, decls, auxVars);
+			final List<Overapprox> overapproxList;
+			if (writeValues) {
+				overapproxList = Collections.emptyList();
+			} else {
+				final Overapprox overapprox = new Overapprox("large string literal", loc);
+				overapproxList = new ArrayList<>();
+				overapproxList.add(overapprox);
+			}
+			return new ExpressionResult(statements, rvalue, decls, auxVars, overapproxList);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
