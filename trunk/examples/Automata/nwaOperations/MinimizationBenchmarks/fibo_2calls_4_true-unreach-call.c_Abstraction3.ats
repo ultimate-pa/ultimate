@@ -278,6 +278,8 @@ NestedWordAutomaton nwa = (
 );
 minimizeSevpa(removeUnreachable(nwa));
 shrinkNwa(removeUnreachable(nwa));
-minimizeNwaMaxSat2(removeUnreachable(nwa));
+minimizeNwaPmaxSat(removeUnreachable(nwa));
 ReduceNwaDirectSimulation(removeUnreachable(nwa));
 ReduceNwaDelayedSimulation(removeUnreachable(nwa));
+ReduceNwaDirectSimulationB(removeUnreachable(nwa));
+ReduceNwaDelayedSimulationB(removeUnreachable(nwa));
