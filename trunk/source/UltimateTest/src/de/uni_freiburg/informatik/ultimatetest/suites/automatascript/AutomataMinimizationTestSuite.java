@@ -80,7 +80,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String[] SETTINGS = { 
 			"AutomataScript/minimizeSevpa.epf", 
 			"AutomataScript/shrinkNwa.epf",
-			"AutomataScript/minimizeNwaMaxSat2.epf", 
+//			"AutomataScript/minimizeNwaMaxSat2.epf", 
 			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
 			"AutomataScript/reduceNwaDelayedSimulation.epf",
@@ -103,7 +103,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.BUCHI_NONDETERMINISTIC_STATES.toString(),
 			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(),
 			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
-			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
+			StatisticsType.SIZE_GAME_GRAPH.toString(), 
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
