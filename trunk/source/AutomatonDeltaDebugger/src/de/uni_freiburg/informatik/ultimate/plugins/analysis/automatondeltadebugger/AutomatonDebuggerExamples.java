@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DirectSimulationComparison;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
@@ -89,6 +90,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		 * {@link ReduceNwaDirectSimulation}.
 		 */
 		REDUCE_NWA_DIRECT_SIMULATION,
+		/**
+		 * {@link ReduceNwaDirectSimulationB}.
+		 */
+		REDUCE_NWA_DIRECT_SIMULATION_B,
 		/**
 		 * {@link ReduceNwaDelayedSimulation}.
 		 */
@@ -146,6 +151,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			
 			case REDUCE_NWA_DIRECT_SIMULATION:
 				operation = reduceNwaDirectSimulation(automaton, factory);
+				break;
+			
+			case REDUCE_NWA_DIRECT_SIMULATION_B:
+				operation = reduceNwaDirectSimulationB(automaton, factory);
 				break;
 			
 			case REDUCE_NWA_DELAYED_SIMULATION:
@@ -228,6 +237,22 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new ReduceNwaDirectSimulation<>(mServices, factory, preprocessed, false);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link ReduceNwaDirectSimulationB} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> reduceNwaDirectSimulationB(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final IStateFactory<STATE> factory) throws Throwable {
+		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
+				new RemoveDeadEnds<>(mServices, automaton).getResult();
+		return new ReduceNwaDirectSimulationB<>(mServices, factory, preprocessed);
 	}
 	
 	/**
