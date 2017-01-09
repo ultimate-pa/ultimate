@@ -124,6 +124,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 					simulationInfoProvider, uniqueSpoilerWinningSink);
 			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga =
 					new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
+			final int gameAutomatonSize = ga.size();
 			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices, ga, mOperand);
 			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<>(mServices, ga,
 					uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
@@ -155,6 +156,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					sizeOfLargestEquivalenceClass);
+			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
+					gameAutomatonSize);
+			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_GRAPH,
+					graph.getSize());
+
+
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),

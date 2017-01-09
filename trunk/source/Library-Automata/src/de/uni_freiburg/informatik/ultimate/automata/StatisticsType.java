@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
 
 /**
  * Type of statistics that can be reported to the
@@ -311,6 +312,16 @@ public enum StatisticsType {
 	 * compatibility with {@link ECountingMeasure}).
 	 */
 	SIMULATION_STEPS,
+	/**
+	 * Number of states of a game automaton which is e.g., constructed in
+	 * {@link ReduceNwaSimulationBased}.
+	 */
+	SIZE_GAME_AUTOMATON,
+	/**
+	 * Number of nodes of a game graph that is used to compute simulation
+	 * relations.
+	 */
+	SIZE_GAME_GRAPH,
 	/**
 	 * Number of states in the biggest equivalence class of an initial
 	 * partition which is provided e.g., by the
