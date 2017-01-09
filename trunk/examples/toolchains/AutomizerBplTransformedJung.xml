@@ -1,0 +1,12 @@
+<rundefinition>
+	<name>Automizer with ICFGTransformer and Jungvisualization</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
+
+	</toolchain>
+</rundefinition>
