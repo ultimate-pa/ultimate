@@ -78,13 +78,13 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String[] mFileEndings = { ".ats" };
 
 	private static final String[] SETTINGS = { 
-//			"AutomataScript/minimizeSevpa.epf", 
-//			"AutomataScript/shrinkNwa.epf",
-//			"AutomataScript/minimizeNwaMaxSat2.epf", 
-//			"AutomataScript/reduceNwaDirectSimulation.epf",
+			"AutomataScript/minimizeSevpa.epf", 
+			"AutomataScript/shrinkNwa.epf",
+			"AutomataScript/minimizeNwaMaxSat2.epf", 
+			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
-//			"AutomataScript/reduceNwaDelayedSimulation.epf",
-//			"AutomataScript/reduceNwaDelayedSimulationB.epf", 
+			"AutomataScript/reduceNwaDelayedSimulation.epf",
+			"AutomataScript/reduceNwaDelayedSimulationB.epf", 
 			};
 
 	private static final String[] INTERESTING_COLUMNS = { 
@@ -101,7 +101,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.TIME_PREPROCESSING.toString(), 
 			StatisticsType.TIME_SOLVING.toString(),
 			StatisticsType.BUCHI_NONDETERMINISTIC_STATES.toString(),
-			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(), 
+			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(),
+			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
+			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
