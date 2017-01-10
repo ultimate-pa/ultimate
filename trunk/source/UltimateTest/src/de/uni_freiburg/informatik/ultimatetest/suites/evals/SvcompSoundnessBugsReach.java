@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
+@SuppressWarnings("squid:S00103")
 public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
