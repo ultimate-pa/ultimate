@@ -110,7 +110,8 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS ={ 
-			"minimizeNwaMaxSat2", 
+			"minimizeNwaPmaxSat",
+			"minimizeNwaPmaxSatAsymmetric", 
 			"minimizeSevpa", 
 			"shrinkNwa", 
 			"reduceNwaDirectSimulation",
