@@ -375,49 +375,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		return resultStatesForCurrentNodePair;
 	}
 
-	private Set<VPTfState> handleBasicEquality(final VPTfState tfPreState, final TransFormula tf,
-			final ApplicationTerm appTerm, final boolean negated) {
-		final Term param1 = appTerm.getParameters()[0];
-		final Term param2 = appTerm.getParameters()[1];
-
-		if (tfPreState.tracksTerm(param1) && tfPreState.tracksTerm(param2)) {
-			if (!negated) {
-				final Set<VPTfState> result = mTfStateFactory.addEquality(param1, param2, tfPreState);
-				return result;
-			}
-			final Set<VPTfState> result = mTfStateFactory.addDisequality(param1, param2, tfPreState);
-			return result;
-		}
-		// we don't track at least one of the params
-		return Collections.singleton(tfPreState);
-	}
-
-	private Set<VPTfState> handleArrayUpdateTransition(final VPTfState tfPreState, final TransFormula tf,
-			final ArrayUpdate arrayUpdate, final boolean negated) {
-		if (!negated) {
-			final Set<VPTfState> result = mTfStateFactory.handleArrayEqualityWithException(arrayUpdate.getNewArray(),
-					arrayUpdate.getOldArray(), arrayUpdate.getMultiDimensionalStore().getStoreTerm(),
-					arrayUpdate.getMultiDimensionalStore().getValue(), tfPreState);
-			return result;
-		}
-		// we have a disequality between arrays
-		// --> "it could be anywhere"..
-		return Collections.singleton(tfPreState);
-	}
-
-	private Set<VPTfState> handleArrayEqualityTransition(final VPTfState tfPreState, final TransFormula tf,
-			final ArrayEquality arrayEquality, final boolean negated) {
-
-		if (!negated) {
-			final Set<VPTfState> result =
-					mTfStateFactory.handleArrayEquality(arrayEquality.getLhs(), arrayEquality.getRhs(), tfPreState);
-			return result;
-		}
-		// we have a disequality between arrays
-		// --> "it could be anywhere"..
-		return Collections.singleton(tfPreState);
-	}
-
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> stateBeforeLeaving,
 			final VPState<ACTION> stateAfterLeaving, final ACTION transition) {

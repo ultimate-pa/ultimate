@@ -90,6 +90,16 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	private final VPDomainPreanalysis mPreAnalysis;
 
 
+	/**
+	 * Create the template VPTfStateBuilder for a given TransFormula.
+	 * These templates are created for all TransFormulas in the program before the fixpoint
+	 * computation starts. During analysis copies of the templates are maded and manipulated.
+	 * 
+	 * @param preAnalysis
+	 * @param tfStatePreparer
+	 * @param tf
+	 * @param allConstantEqNodes
+	 */
 	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis,
 			VPTransFormulaStateBuilderPreparer tfStatePreparer,
 			TransFormula tf, Set<EqNode> allConstantEqNodes) {
@@ -119,13 +129,13 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		}
 		this.addDisEqualites(disEqualitySet);
 		
-		
 		assert isTopConsistent();
 	}
 
 	
 	/**
-	 * copy constructor
+	 * Copy constructor.
+	 * 
 	 * @param builder
 	 */
 	public VPTfStateBuilder(VPTfStateBuilder builder) {

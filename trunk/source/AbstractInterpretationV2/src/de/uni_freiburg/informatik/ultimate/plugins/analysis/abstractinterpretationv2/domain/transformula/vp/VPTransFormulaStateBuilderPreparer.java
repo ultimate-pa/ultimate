@@ -69,19 +69,10 @@ public class VPTransFormulaStateBuilderPreparer {
 	
 	VPDomainPreanalysis mPreAnalysis;
 
-//	private final Collection<EqNode> mAllEqNodes;
-//	private final Set<EqFunctionNode> mAllEqFunctionNodes;
-//	private final Set<EqNode> mAllEqNonFunctionNodes;
 	private final Set<EqNode> mAllConstantEqNodes;
 	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 
 			new HashMap<>();
 	private final ILogger mLogger;
-	
-//	NestedMap3<IProgramVarOrConst, 
-//			Pair<IProgramVar, TermVariable>,  
-//			Pair<IProgramVar, TermVariable>, 
-//			VPTfArrayIdentifier> mPvocToInVarToOutVarToArrayIdentifier = new NestedMap3<>();
-	
 	
 	public VPTransFormulaStateBuilderPreparer(VPDomainPreanalysis preAnalysis, IIcfg<?> root, ILogger logger) {
 		mPreAnalysis = preAnalysis;
@@ -93,14 +84,8 @@ public class VPTransFormulaStateBuilderPreparer {
 				.filter(node -> node instanceof EqFunctionNode)
 				.map(node -> (EqFunctionNode) node)
 				.collect(Collectors.toSet());
-//		HashSet<EqNode> allEqNonFunctionNodes = new HashSet<>(allEqNodes);
 		allEqFunctionNodes.removeAll(allEqFunctionNodes);
 
-//		mAllEqNodes = Collections.unmodifiableCollection(allEqNodes);
-//		mAllEqFunctionNodes = Collections.unmodifiableSet(allEqFunctionNodes);
-//		mAllEqNonFunctionNodes = Collections.unmodifiableSet(allEqNonFunctionNodes);
-		
-		
 		Set<EqNode> allConstantEqNodes = 
 				allEqNodes.stream()
 				.filter(node -> node.isConstant())
@@ -130,7 +115,6 @@ public class VPTransFormulaStateBuilderPreparer {
 		}
 	}
 	
-	
 	protected void visit(IAction c) {
 		if (c instanceof ICallAction) {
 			visit((ICallAction) c);
@@ -142,7 +126,6 @@ public class VPTransFormulaStateBuilderPreparer {
 			assert false : "forgot a case?";
 		}
 	}
-	
 	
 	protected void visit(ICallAction c) {
 		TransFormula tf = c.getLocalVarsAssignment();
@@ -159,14 +142,11 @@ public class VPTransFormulaStateBuilderPreparer {
 		handleTransFormula(tf);
 	}
 
-
-
 	private void handleTransFormula(TransFormula tf) {
 		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes);
 		
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}
-	
 	
 	public VPTfStateBuilder getVPTfStateBuilder(TransFormula tf) {
 		VPTfStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
@@ -178,44 +158,4 @@ public class VPTransFormulaStateBuilderPreparer {
 	public Set<EqNode> getAllConstantEqNodes() {
 		return mAllConstantEqNodes;
 	}
-
-//	public VPTfArrayIdentifier getArrayIdentifier(Term term, TransFormula transFormula) {
-//		return getArrayIdentifier(
-//				mPreAnalysis.getIProgramVarOrConstOrLiteral(term, 
-//					VPDomainHelpers.computeProgramVarMappingFromTransFormula(transFormula)),
-//				VPDomainHelpers.projectToTerm(transFormula.getInVars(), term),
-//				VPDomainHelpers.projectToTerm(transFormula.getOutVars(), term));
-//	}
-//
-//	/**
-//	 * 
-//	 * @param function
-//	 * @param inVars
-//	 * @param outVars
-//	 * @return
-//	 * 
-//	 * TODO should we move this to the VPTfStateBuilder, like the management for VPNodeIdenfifiers??
-//	 */
-//	public VPTfArrayIdentifier getArrayIdentifier(IProgramVarOrConst function, 
-//			Map<IProgramVar, TermVariable> inVars,
-//			Map<IProgramVar, TermVariable> outVars) {
-//		Pair<IProgramVar, TermVariable> inVar = null;;
-//		Pair<IProgramVar, TermVariable> outVar = null;;
-//		
-//		TermVariable iTv = inVars.get(function);
-//		if (iTv != null) {
-//			inVar = new Pair<>((IProgramVar) function, iTv);
-//		}
-//		TermVariable oTv = inVars.get(function);
-//		if (oTv != null) {
-//			outVar = new Pair<>((IProgramVar) function, oTv);
-//		}
-//		VPTfArrayIdentifier result = mPvocToInVarToOutVarToArrayIdentifier.get(function, inVar, outVar);
-//		
-//		if (result == null) {
-//			result = new VPTfArrayIdentifier(function, inVar, outVar);
-//			mPvocToInVarToOutVarToArrayIdentifier.put(function, inVar, outVar, result);
-//		}
-//		return result;
-//	}
 }

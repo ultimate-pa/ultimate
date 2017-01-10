@@ -15,39 +15,20 @@ public class SelectTermWrapper implements IElementWrapper {
 
 	List<IElementWrapper> mIndices; // this is a list because we may have a multidimensional array
 
-//	NodeIdWithSideCondition mSideCondition;
-	
-	
-
-//	public SelectTermWrapper(IArrayWrapper mArray, List<IElementWrapper> mIndices,
-//			WrapperSideCondition mSideCondition) {
-//		super();
-//		this.mArray = mArray;
-//		this.mIndices = mIndices;
-//		this.mSideCondition = mSideCondition;
-//	}
-
-
-
 	public SelectTermWrapper(IArrayWrapper array, List<IElementWrapper> indices) {
 		this.mArray = array;
 		this.mIndices = indices;
 	}
 
-
-
 	@Override
 	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfState) {
 		
-
 
 		List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndices.stream()
 				.map(elWr -> elWr.getNodeIdWithSideConditions(tfState))
 				.collect(Collectors.toList());
 		Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
 
-		// TODO: the method should probably given the index (or indices) of this select term so
-		//  it can prepare the anonymous array better
 		Set<ArrayWithSideCondition> arrayWscs = mArray.getArrayWithSideConditions(tfState, combinedIndices);	
 
 		Set<NodeIdWithSideCondition> result = new HashSet<>();
@@ -58,10 +39,9 @@ public class SelectTermWrapper implements IElementWrapper {
 				List<VPTfNodeIdentifier> indexVectorAsNodeIds = 
 						indexVector.stream().map(niwsc -> niwsc.mNodeId).collect(Collectors.toList());
 				
-//				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVector);
 				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVectorAsNodeIds);
 				
-				// compute the new sidecondition
+				// compute the new side condition
 				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> resultEqualities = 
 						new HashSet<>(arrayWsc.getEqualities());
 				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> resultDisEqualities = 
@@ -70,7 +50,7 @@ public class SelectTermWrapper implements IElementWrapper {
 					resultEqualities.addAll(i.getEqualities());
 					resultDisEqualities.addAll(i.getDisEqualities());
 				}
-				// TODO filter out inconsistent nodes
+				// TODO filter out inconsistent nodes (i.e. with contradicting side conditions)
 				
 				if (valueAtIndex != null) {
 					// the arrayWsc gives us a value for the given index --> return that
@@ -93,36 +73,8 @@ public class SelectTermWrapper implements IElementWrapper {
 		
 		assert !result.isEmpty();
 		return result;
-		
-//		/*
-//		 * Cases:
-//		 * - a select-over-store introduces a case split:
-//		 *   given (select (store a i x) j), we get the cases "i = j" and "i != j"
-//		 * - 
-//		 */
-//		
-//		if (mArray instanceof VPTfArrayIdentifier) {
-//			
-//			return null;
-//		} else if (mArray instanceof StoreTermWrapper) {
-//
-//			return null;
-//		} else {
-//			assert false : "missed a case?";
-//			return null;
-//		}
-		
 	}
 
-
-
-//	@Override
-//	public Set<ISingleElementWrapper> getElements() {
-////		return Collections.singleton(this); // TODO: not sure about this
-//		assert false;
-//		return null;
-//	}
-	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
