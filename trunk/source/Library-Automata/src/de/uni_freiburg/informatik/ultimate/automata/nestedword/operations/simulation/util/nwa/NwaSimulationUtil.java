@@ -112,7 +112,7 @@ public final class NwaSimulationUtil {
 					considerVertex = !nwa.isFinal(state1) || nwa.isFinal(state2);
 				}
 			}
-			if (considerVertex && state1 != null && state2 != null) {
+			if (considerVertex) {
 				if (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity()) {
 					if (spoilerVertex instanceof SpoilerNwaVertex<?, ?>) {
 						supposedlySimulations.put(spoilerVertex.getQ0(), spoilerVertex.getQ1(), true);
