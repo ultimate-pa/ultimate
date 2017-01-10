@@ -80,7 +80,8 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String[] SETTINGS = { 
 			"AutomataScript/minimizeSevpa.epf", 
 			"AutomataScript/shrinkNwa.epf",
-//			"AutomataScript/minimizeNwaMaxSat2.epf", 
+			"AutomataScript/minimizeNwaPmaxSat.epf", 
+			"AutomataScript/minimizeNwaPmaxSatAsymmetric.epf",
 			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
 			"AutomataScript/reduceNwaDelayedSimulation.epf",
