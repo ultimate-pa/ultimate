@@ -219,30 +219,41 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				final STATE stateJ = states[j];
 				
 				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
-					generateBuchiConstraints(stateI, stateJ);
+					generateBuchiConstraintsOneDirection(stateI, stateJ);
+					generateBuchiConstraintsOneDirection(stateJ, stateI);
 				}
 			}
 		}
 	}
 	
-	private void generateBuchiConstraints(final STATE state1, final STATE state2) {
+	/**
+	 * Creates constraints <tt>\bigwedge_{p_h} \geg X_{p,q} \lor \bigvee_{q_h} X_{p_h, q_h}</tt>.
+	 */
+	private void generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
 		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);
-		for (final STATE downState1 : getDownStatesArray(state1)) {
+		outer: for (final STATE downState1 : getDownStatesArray(state1)) {
 			final STATE[] downStates2 = getDownStatesArray(state2);
 			final ArrayList<Doubleton<STATE>> hierDoubletons = new ArrayList<>(downStates2.length);
 			for (final STATE downState2 : downStates2) {
-				final Doubleton<STATE> down12 = getVariableIfNotDifferent(downState1, downState2);
-				if (down12 != null && down12 != linDoubleton) {
+				final Doubleton<STATE> down12 = getVariable(downState1, downState2, false);
+				if (knownToBeDifferent(downState1, downState2, down12)) {
+					// literal can be omitted
+					continue;
+				} else if (knownToBeSimilar(downState1, downState2, down12)) {
+					// clause is trivially true
+					continue outer;
+				} else {
 					hierDoubletons.add(down12);
 				}
 			}
 			
 			if (hierDoubletons.isEmpty()) {
-				// all constraints on down states were trivially eliminated
-				continue;
+				// unit clause
+				setStatesDifferent(linDoubleton);
+			} else {
+				// general clause
+				addInverseHornClause(linDoubleton, hierDoubletons);
 			}
-			
-			addInverseHornClause(linDoubleton, hierDoubletons);
 		}
 	}
 

@@ -536,7 +536,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mNumberClausesTransitivity += THREE;
 	}
 	
-	private boolean knownToBeSimilar(final STATE state1, final STATE state2, final T pair) {
+	protected final boolean knownToBeSimilar(final STATE state1, final STATE state2, final T pair) {
 		if (state1.equals(state2)) {
 			return true;
 		}
@@ -552,7 +552,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return false;
 	}
 	
-	private boolean knownToBeDifferent(final STATE state1, final STATE state2, final T pair) {
+	protected final boolean knownToBeDifferent(final STATE state1, final STATE state2, final T pair) {
 		if (state1.equals(state2)) {
 			return false;
 		}
@@ -699,7 +699,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	/**
 	 * @return {@code null} if states are different, pair variable otherwise.
 	 */
-	protected final T getVariableIfNotDifferent(final STATE state1, final STATE state2) {
+	private T getVariableIfNotDifferent(final STATE state1, final STATE state2) {
 		return getVariable(state1, state2, knownToBeDifferent(state1, state2, null));
 	}
 	
