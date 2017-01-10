@@ -1,7 +1,8 @@
 // Testfile dumped by Ultimate at 2017/01/08 23:12:11
 // Shrunk by Christian Schilling 2017/01/10
 //
-// Revealed a problem in the delayed simulation-based minimization for NWA.
+// Revealed a bug in the delayed simulation-based minimization for NWA with the
+//  PMax-SAT encoding.
 
 NestedWordAutomaton nwa3 = removeNonLiveStates(nwa);
 print(numberOfStates(ReduceNwaDelayedSimulationB(nwa3)));
