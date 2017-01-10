@@ -1,0 +1,59 @@
+// Testfile dumped by Ultimate at 2017/01/08 22:08:37
+// Shrunk by Christian Schilling 2017/01/10
+//
+// Revealed a trivial bug that the simulation sanity check should be applied
+//  after the simulation has been computed because it reads the results from the
+//  game graph.
+
+NestedWordAutomaton nwa2 = removeDeadEnds(nwa);
+print(ReduceNwaDirectSimulationB(nwa2));
+
+NestedWordAutomaton nwa = (
+	alphabet = {"a"},
+	states = {"q1" "q2" "q0"},
+	initialStates = {"q0"},
+	finalStates = {"q2" "q0"},
+	transitions = {
+		("q0" "a" "q1")
+		("q1" "a" "q1")
+		("q1" "a" "q2")
+	}
+);
+
+
+// GameGraph gg = (
+// 	SpoilerVertices = {
+// 		<(false, q1, q2), p:2>
+// 		<(false, null, null), p:1>
+// 		<(false, q1, q1), p:2>
+// 		<(false, q2, q2), p:2>
+// 		<(false, q1, q0), p:2>
+// 	},
+// 	DuplicatorVertices = {
+// 		<(false, q2, q1, a), p:2>
+// 		<(false, q2, q2, a), p:2>
+// 		<(false, q2, q0, a), p:2>
+// 		<(false, q1, q0, a), p:2>
+// 		<(false, q1, q1, a), p:2>
+// 		<(false, q1, q2, a), p:2>
+// 	},
+// 	edges = {
+// 		(false, q2, q1, a)	--> (false, null, null)
+// 		(false, q2, q1, a)	--> (false, q2, q2)
+// 		(false, q2, q2, a)	--> (false, null, null)
+// 		(false, q2, q0, a)	--> (false, null, null)
+// 		(false, q1, q2)	--> (false, q2, q2, a)
+// 		(false, q1, q2)	--> (false, q1, q2, a)
+// 		(false, null, null)	--> (false, null, null, null)
+// 		(false, null, null)	--> (false, null, null)
+// 		(false, q1, q1)	--> (false, q2, q1, a)
+// 		(false, q1, q1)	--> (false, q1, q1, a)
+// 		(false, q2, q2)	--> (false, null, null, null)
+// 		(false, q1, q0)	--> (false, q2, q0, a)
+// 		(false, q1, q0)	--> (false, q1, q0, a)
+// 		(false, q1, q0, a)	--> (false, q1, q1)
+// 		(false, q1, q1, a)	--> (false, q1, q2)
+// 		(false, q1, q1, a)	--> (false, q1, q1)
+// 		(false, q1, q2, a)	--> (false, null, null)
+// 	}
+// );
