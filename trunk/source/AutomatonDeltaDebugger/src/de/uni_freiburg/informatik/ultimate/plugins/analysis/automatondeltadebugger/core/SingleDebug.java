@@ -74,6 +74,10 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		}
 		mIterator = list.listIterator();
 		while (mIterator.hasNext()) {
+			if (mShrinker.isTimeoutRequested()) {
+				return result;
+			}
+			
 			// extract next element from the list
 			final List<T> sublist = Collections.singletonList(mIterator.next());
 			

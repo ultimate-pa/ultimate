@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
  * Removes states.
@@ -47,6 +48,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  *            state type
  */
 public class StateShrinker<LETTER, STATE> extends AbstractShrinker<STATE, LETTER, STATE> {
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public StateShrinker(final IUltimateServiceProvider services) {
+		super(services);
+	}
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<STATE> states) {

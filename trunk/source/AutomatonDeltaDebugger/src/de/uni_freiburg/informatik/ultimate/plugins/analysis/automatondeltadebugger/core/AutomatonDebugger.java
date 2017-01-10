@@ -33,6 +33,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class AutomatonDebugger<LETTER, STATE> {
+	private final IUltimateServiceProvider mServices;
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	private final INestedWordAutomatonFactory<LETTER, STATE> mFactory;
 	private final AbstractTester<LETTER, STATE> mTester;
@@ -80,11 +82,12 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @param tester
 	 *            tester
 	 */
-	public AutomatonDebugger(final INestedWordAutomaton<LETTER, STATE> automaton,
+	public AutomatonDebugger(final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, STATE> automaton,
 			final INestedWordAutomatonFactory<LETTER, STATE> factory, final AbstractTester<LETTER, STATE> tester) {
-		this.mAutomaton = automaton;
-		this.mFactory = factory;
-		this.mTester = tester;
+		mServices = services;
+		mAutomaton = automaton;
+		mFactory = factory;
+		mTester = tester;
 	}
 	
 	/**
@@ -185,6 +188,10 @@ public class AutomatonDebugger<LETTER, STATE> {
 	private boolean applyShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkers, final DebugPolicy policy) {
 		boolean isReduced = false;
 		for (final AbstractShrinker<?, LETTER, STATE> shrinker : shrinkers) {
+			if (isTimeoutRequested()) {
+				break;
+			}
+			
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton =
 					shrinker.runSearch(mAutomaton, mTester, mFactory, policy);
 			if (newAutomaton != null) {
@@ -195,7 +202,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		}
 		return isReduced;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
@@ -209,5 +216,9 @@ public class AutomatonDebugger<LETTER, STATE> {
 				.append('>');
 		// @formatter:on
 		return builder.toString();
+	}
+	
+	private boolean isTimeoutRequested() {
+		return !mServices.getProgressMonitorService().continueProcessing();
 	}
 }

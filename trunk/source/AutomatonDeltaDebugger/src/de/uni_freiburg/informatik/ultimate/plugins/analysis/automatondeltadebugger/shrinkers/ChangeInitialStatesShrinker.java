@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -58,8 +59,12 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	 * Constructor.
 	 * <p>
 	 * Implementation detail: The assignment of the fields is useless.
+	 * 
+	 * @param services
+	 *            Ultimate services.
 	 */
-	public ChangeInitialStatesShrinker() {
+	public ChangeInitialStatesShrinker(final IUltimateServiceProvider services) {
+		super(services);
 		mPairs = null;
 		mChangeWasSuccessful = false;
 		mAutomatonBackup = null;
@@ -105,7 +110,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		
 		return automaton;
 	}
-
+	
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
 		// there are still more things to change
@@ -170,7 +175,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	private boolean sameNumberOfInitialStates(final INestedWordAutomaton<LETTER, STATE> automaton1,
 			final INestedWordAutomaton<LETTER, STATE> automaton2) {
 		final boolean result = automaton1.getInitialStates().size() == automaton2.getInitialStates().size();
-		if (! result) {
+		if (!result) {
 			return false;
 		}
 		return result;

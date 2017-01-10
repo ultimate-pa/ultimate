@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.LetterType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedLetter;
 
@@ -52,9 +53,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class UnusedLetterShrinker<LETTER, STATE> extends AbstractShrinker<TypedLetter<LETTER>, LETTER, STATE> {
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public UnusedLetterShrinker(final IUltimateServiceProvider services) {
+		super(services);
+	}
+	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<TypedLetter<LETTER>> list) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<TypedLetter<LETTER>> list) {
 		// create alphabets
 		final ListIterator<TypedLetter<LETTER>> it = list.listIterator();
 		final Set<LETTER> internalAlphabet = unwrapLetters(it,

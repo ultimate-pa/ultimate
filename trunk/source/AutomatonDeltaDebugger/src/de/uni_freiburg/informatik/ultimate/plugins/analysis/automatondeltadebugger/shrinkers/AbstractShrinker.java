@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractTester;
@@ -60,6 +61,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 public abstract class AbstractShrinker<T, LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	protected INestedWordAutomatonFactory<LETTER, STATE> mFactory;
+	protected final IUltimateServiceProvider mServices;
+	
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public AbstractShrinker(final IUltimateServiceProvider services) {
+		mServices = services;
+	}
 	
 	/**
 	 * Creates an automaton.
@@ -163,6 +173,13 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	public boolean isCancelRequested() {
 		// default: never cancel
 		return false;
+	}
+	
+	/**
+	 * @return {@code true} iff timeout is requested by Ultimate.
+	 */
+	public boolean isTimeoutRequested() {
+		return !mServices.getProgressMonitorService().continueProcessing();
 	}
 	
 	@Override

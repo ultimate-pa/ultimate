@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
 
 /**
@@ -52,6 +53,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public abstract class BridgeShrinker<T, LETTER, STATE> extends AbstractShrinker<T, LETTER, STATE> {
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public BridgeShrinker(final IUltimateServiceProvider services) {
+		super(services);
+	}
+	
 	/**
 	 * Resets the internal state of the shrinker.
 	 * 

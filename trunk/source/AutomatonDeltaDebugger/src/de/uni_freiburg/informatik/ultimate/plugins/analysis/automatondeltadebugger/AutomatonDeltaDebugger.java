@@ -223,11 +223,11 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
-		shrinkersLoop.add(new StateShrinker<>());
-		shrinkersLoop.add(new InternalTransitionShrinker<>());
-		shrinkersLoop.add(new CallTransitionShrinker<>());
-		shrinkersLoop.add(new ReturnTransitionShrinker<>());
-		shrinkersLoop.add(new SingleExitShrinker<>());
+		shrinkersLoop.add(new StateShrinker<>(mServices));
+		shrinkersLoop.add(new InternalTransitionShrinker<>(mServices));
+		shrinkersLoop.add(new CallTransitionShrinker<>(mServices));
+		shrinkersLoop.add(new ReturnTransitionShrinker<>(mServices));
+		shrinkersLoop.add(new SingleExitShrinker<>(mServices));
 		
 		return shrinkersLoop;
 	}
@@ -241,7 +241,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
-		shrinkersBridge.add(new ChangeInitialStatesShrinker<>());
+		shrinkersBridge.add(new ChangeInitialStatesShrinker<>(mServices));
 		
 		return shrinkersBridge;
 	}
@@ -255,8 +255,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final List<AbstractShrinker<?, LETTER, STATE>> shrinkersEnd = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
-		shrinkersEnd.add(new UnusedLetterShrinker<>());
-		shrinkersEnd.add(new NormalizeStateShrinker<>());
+		shrinkersEnd.add(new UnusedLetterShrinker<>(mServices));
+		shrinkersEnd.add(new NormalizeStateShrinker<>(mServices));
 		
 		return shrinkersEnd;
 	}

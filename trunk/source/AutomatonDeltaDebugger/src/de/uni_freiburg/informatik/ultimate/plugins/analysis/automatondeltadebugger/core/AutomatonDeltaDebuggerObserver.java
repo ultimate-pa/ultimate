@@ -134,7 +134,8 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 				new NestedWordAutomatonFactory<>(automaton, mServices);
 		
 		// construct delta debugger
-		final AutomatonDebugger<LETTER, STATE> debugger = new AutomatonDebugger<>(automaton, automatonFactory, mTester);
+		final AutomatonDebugger<LETTER, STATE> debugger =
+				new AutomatonDebugger<>(mServices, automaton, automatonFactory, mTester);
 		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =

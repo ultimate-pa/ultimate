@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedTransition;
 
 /**
@@ -45,6 +46,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class CallTransitionShrinker<LETTER, STATE>
 		extends AbstractShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public CallTransitionShrinker(final IUltimateServiceProvider services) {
+		super(services);
+	}
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {

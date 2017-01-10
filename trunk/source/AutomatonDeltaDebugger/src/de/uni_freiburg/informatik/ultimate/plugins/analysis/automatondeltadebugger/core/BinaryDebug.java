@@ -104,6 +104,10 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		}
 		mStack.add(new SublistBounds(0, list.size(), false));
 		while (!mStack.isEmpty()) {
+			if (mShrinker.isTimeoutRequested()) {
+				return result;
+			}
+			
 			mSublistBounds = mStack.poll();
 			final List<T> sublist = list.subList(mSublistBounds.mLeft, mSublistBounds.mRight);
 			if (sublist.isEmpty()) {

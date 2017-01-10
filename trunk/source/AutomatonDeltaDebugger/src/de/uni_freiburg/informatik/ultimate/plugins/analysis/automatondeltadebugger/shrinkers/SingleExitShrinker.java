@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -68,6 +69,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STATE, STATE>, LETTER, STATE> {
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public SingleExitShrinker(final IUltimateServiceProvider services) {
+		super(services);
+	}
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<Pair<STATE, STATE>> list) {
