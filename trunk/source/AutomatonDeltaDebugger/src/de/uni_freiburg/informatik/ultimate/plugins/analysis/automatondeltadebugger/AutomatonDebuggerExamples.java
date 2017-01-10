@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DirectSimulationComparison;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -98,6 +99,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		 * {@link ReduceNwaDelayedSimulation}.
 		 */
 		REDUCE_NWA_DELAYED_SIMULATION,
+		/**
+		 * {@link ReduceNwaDelayedSimulationB}.
+		 */
+		REDUCE_NWA_DELAYED_SIMULATION_B,
 		/**
 		 * {@link ShrinkNwa}.
 		 */
@@ -159,6 +164,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			
 			case REDUCE_NWA_DELAYED_SIMULATION:
 				operation = reduceNwaDelayedSimulation(automaton, factory);
+				break;
+			
+			case REDUCE_NWA_DELAYED_SIMULATION_B:
+				operation = reduceNwaDelayedSimulationB(automaton, factory);
 				break;
 			
 			case SHRINK_NWA:
@@ -269,6 +278,22 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedSimulation<>(mServices, factory, preprocessed, false);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link ReduceNwaDelayedSimulationB} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> reduceNwaDelayedSimulationB(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final IStateFactory<STATE> factory) throws Throwable {
+		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
+				new RemoveNonLiveStates<>(mServices, automaton).getResult();
+		return new ReduceNwaDelayedSimulationB<>(mServices, factory, preprocessed);
 	}
 	
 	/**
