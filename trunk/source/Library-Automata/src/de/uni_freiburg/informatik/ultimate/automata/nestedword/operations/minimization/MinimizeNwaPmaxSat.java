@@ -219,8 +219,11 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				final STATE stateJ = states[j];
 				
 				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
-					generateBuchiConstraintsOneDirection(stateI, stateJ);
-					generateBuchiConstraintsOneDirection(stateJ, stateI);
+					final boolean statesAreDifferent = generateBuchiConstraintsOneDirection(stateI, stateJ);
+					if (!statesAreDifferent) {
+						// create constraints for the other direction only if not trivially satisfied
+						generateBuchiConstraintsOneDirection(stateJ, stateI);
+					}
 				}
 			}
 		}
@@ -228,8 +231,10 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	
 	/**
 	 * Creates constraints <tt>\bigwedge_{p_h} \geg X_{p,q} \lor \bigvee_{q_h} X_{p_h, q_h}</tt>.
+	 * 
+	 * @return
 	 */
-	private void generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
+	private boolean generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
 		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);
 		outer: for (final STATE downState1 : getDownStatesArray(state1)) {
 			final STATE[] downStates2 = getDownStatesArray(state2);
@@ -248,15 +253,16 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			}
 			
 			if (hierDoubletons.isEmpty()) {
-				// unit clause
+				// result is a unit clause with only the linear doubleton
 				setStatesDifferent(linDoubleton);
-			} else {
-				// general clause
-				addInverseHornClause(linDoubleton, hierDoubletons);
+				return true;
 			}
+			
+			addInverseHornClause(linDoubleton, hierDoubletons);
 		}
+		return false;
 	}
-
+	
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
@@ -319,7 +325,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		// equality intended here
 		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
-
+	
 	@Override
 	protected boolean isInitialPair(final Doubleton<STATE> pair) {
 		return isInitialPair(pair.getOneElement(), pair.getOtherElement());
@@ -342,7 +348,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		}
 		return resultingEquivalenceClasses;
 	}
-
+	
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
