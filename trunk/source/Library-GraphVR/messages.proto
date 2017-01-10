@@ -4,13 +4,12 @@ package de.uni_freiburg.informatik.ultimate.graphvr.protobuf;
 
 //option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "Meta";
-
 message Header {
 	Action action = 1;
-	string reference = 2;
-	repeated string queries = 3;
-	repeated string types = 4;
-	Message message = 5;
+	Message message = 2;
+	string data_type = 3;
+	string query_id = 4;
+	string query_type = 5;
 
 	enum Action {
 		QUIT = 0; // used to indicate that the connection will be terminated
@@ -21,17 +20,19 @@ message Header {
 		SORRY = 6; // no data in response to a request
 	}
 
-	}
+	//repeated string queries = 3;
+	//repeated string types = 4;
+}
 
-	message Message {
+message Message {
 	string source = 1;
 	string text = 2;
 	Level level = 4;
-
 	enum Level {
 		DEBUG = 0;
 		INFO = 1;
 		WARN = 2;
 		ERROR = 3;
 	}
+
 }

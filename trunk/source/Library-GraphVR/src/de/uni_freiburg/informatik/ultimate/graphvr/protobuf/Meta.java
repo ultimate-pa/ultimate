@@ -28,65 +28,47 @@ public final class Meta {
     de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header.Action getAction();
 
     /**
-     * <code>optional string reference = 2;</code>
-     */
-    java.lang.String getReference();
-    /**
-     * <code>optional string reference = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getReferenceBytes();
-
-    /**
-     * <code>repeated string queries = 3;</code>
-     */
-    java.util.List<java.lang.String>
-        getQueriesList();
-    /**
-     * <code>repeated string queries = 3;</code>
-     */
-    int getQueriesCount();
-    /**
-     * <code>repeated string queries = 3;</code>
-     */
-    java.lang.String getQueries(int index);
-    /**
-     * <code>repeated string queries = 3;</code>
-     */
-    com.google.protobuf.ByteString
-        getQueriesBytes(int index);
-
-    /**
-     * <code>repeated string types = 4;</code>
-     */
-    java.util.List<java.lang.String>
-        getTypesList();
-    /**
-     * <code>repeated string types = 4;</code>
-     */
-    int getTypesCount();
-    /**
-     * <code>repeated string types = 4;</code>
-     */
-    java.lang.String getTypes(int index);
-    /**
-     * <code>repeated string types = 4;</code>
-     */
-    com.google.protobuf.ByteString
-        getTypesBytes(int index);
-
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
      */
     boolean hasMessage();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
      */
     de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message getMessage();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
      */
     de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder getMessageOrBuilder();
+
+    /**
+     * <code>optional string data_type = 3;</code>
+     */
+    java.lang.String getDataType();
+    /**
+     * <code>optional string data_type = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getDataTypeBytes();
+
+    /**
+     * <code>optional string query_id = 4;</code>
+     */
+    java.lang.String getQueryId();
+    /**
+     * <code>optional string query_id = 4;</code>
+     */
+    com.google.protobuf.ByteString
+        getQueryIdBytes();
+
+    /**
+     * <code>optional string query_type = 5;</code>
+     */
+    java.lang.String getQueryType();
+    /**
+     * <code>optional string query_type = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getQueryTypeBytes();
   }
   /**
    * Protobuf type {@code de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Header}
@@ -101,9 +83,9 @@ public final class Meta {
     }
     private Header() {
       action_ = 0;
-      reference_ = "";
-      queries_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      types_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      dataType_ = "";
+      queryId_ = "";
+      queryType_ = "";
     }
 
     @java.lang.Override
@@ -138,30 +120,6 @@ public final class Meta {
               break;
             }
             case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
-
-              reference_ = s;
-              break;
-            }
-            case 26: {
-              java.lang.String s = input.readStringRequireUtf8();
-              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-                queries_ = new com.google.protobuf.LazyStringArrayList();
-                mutable_bitField0_ |= 0x00000004;
-              }
-              queries_.add(s);
-              break;
-            }
-            case 34: {
-              java.lang.String s = input.readStringRequireUtf8();
-              if (!((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-                types_ = new com.google.protobuf.LazyStringArrayList();
-                mutable_bitField0_ |= 0x00000008;
-              }
-              types_.add(s);
-              break;
-            }
-            case 42: {
               de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Builder subBuilder = null;
               if (message_ != null) {
                 subBuilder = message_.toBuilder();
@@ -174,6 +132,24 @@ public final class Meta {
 
               break;
             }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              dataType_ = s;
+              break;
+            }
+            case 34: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              queryId_ = s;
+              break;
+            }
+            case 42: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              queryType_ = s;
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -182,12 +158,6 @@ public final class Meta {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
-          queries_ = queries_.getUnmodifiableView();
-        }
-        if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
-          types_ = types_.getUnmodifiableView();
-        }
         makeExtensionsImmutable();
       }
     }
@@ -385,7 +355,6 @@ public final class Meta {
       // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Header.Action)
     }
 
-    private int bitField0_;
     public static final int ACTION_FIELD_NUMBER = 1;
     private int action_;
     /**
@@ -402,117 +371,127 @@ public final class Meta {
       return result == null ? de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header.Action.UNRECOGNIZED : result;
     }
 
-    public static final int REFERENCE_FIELD_NUMBER = 2;
-    private volatile java.lang.Object reference_;
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    private de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message message_;
     /**
-     * <code>optional string reference = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
      */
-    public java.lang.String getReference() {
-      java.lang.Object ref = reference_;
+    public boolean hasMessage() {
+      return message_ != null;
+    }
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message getMessage() {
+      return message_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.getDefaultInstance() : message_;
+    }
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder getMessageOrBuilder() {
+      return getMessage();
+    }
+
+    public static final int DATA_TYPE_FIELD_NUMBER = 3;
+    private volatile java.lang.Object dataType_;
+    /**
+     * <code>optional string data_type = 3;</code>
+     */
+    public java.lang.String getDataType() {
+      java.lang.Object ref = dataType_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        reference_ = s;
+        dataType_ = s;
         return s;
       }
     }
     /**
-     * <code>optional string reference = 2;</code>
+     * <code>optional string data_type = 3;</code>
      */
     public com.google.protobuf.ByteString
-        getReferenceBytes() {
-      java.lang.Object ref = reference_;
+        getDataTypeBytes() {
+      java.lang.Object ref = dataType_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        reference_ = b;
+        dataType_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int QUERIES_FIELD_NUMBER = 3;
-    private com.google.protobuf.LazyStringList queries_;
+    public static final int QUERY_ID_FIELD_NUMBER = 4;
+    private volatile java.lang.Object queryId_;
     /**
-     * <code>repeated string queries = 3;</code>
+     * <code>optional string query_id = 4;</code>
      */
-    public com.google.protobuf.ProtocolStringList
-        getQueriesList() {
-      return queries_;
+    public java.lang.String getQueryId() {
+      java.lang.Object ref = queryId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        queryId_ = s;
+        return s;
+      }
     }
     /**
-     * <code>repeated string queries = 3;</code>
-     */
-    public int getQueriesCount() {
-      return queries_.size();
-    }
-    /**
-     * <code>repeated string queries = 3;</code>
-     */
-    public java.lang.String getQueries(int index) {
-      return queries_.get(index);
-    }
-    /**
-     * <code>repeated string queries = 3;</code>
+     * <code>optional string query_id = 4;</code>
      */
     public com.google.protobuf.ByteString
-        getQueriesBytes(int index) {
-      return queries_.getByteString(index);
+        getQueryIdBytes() {
+      java.lang.Object ref = queryId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        queryId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
 
-    public static final int TYPES_FIELD_NUMBER = 4;
-    private com.google.protobuf.LazyStringList types_;
+    public static final int QUERY_TYPE_FIELD_NUMBER = 5;
+    private volatile java.lang.Object queryType_;
     /**
-     * <code>repeated string types = 4;</code>
+     * <code>optional string query_type = 5;</code>
      */
-    public com.google.protobuf.ProtocolStringList
-        getTypesList() {
-      return types_;
+    public java.lang.String getQueryType() {
+      java.lang.Object ref = queryType_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        queryType_ = s;
+        return s;
+      }
     }
     /**
-     * <code>repeated string types = 4;</code>
-     */
-    public int getTypesCount() {
-      return types_.size();
-    }
-    /**
-     * <code>repeated string types = 4;</code>
-     */
-    public java.lang.String getTypes(int index) {
-      return types_.get(index);
-    }
-    /**
-     * <code>repeated string types = 4;</code>
+     * <code>optional string query_type = 5;</code>
      */
     public com.google.protobuf.ByteString
-        getTypesBytes(int index) {
-      return types_.getByteString(index);
-    }
-
-    public static final int MESSAGE_FIELD_NUMBER = 5;
-    private de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message message_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
-     */
-    public boolean hasMessage() {
-      return message_ != null;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message getMessage() {
-      return message_ == null ? de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.getDefaultInstance() : message_;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder getMessageOrBuilder() {
-      return getMessage();
+        getQueryTypeBytes() {
+      java.lang.Object ref = queryType_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        queryType_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
 
     private byte memoizedIsInitialized = -1;
@@ -530,17 +509,17 @@ public final class Meta {
       if (action_ != de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header.Action.QUIT.getNumber()) {
         output.writeEnum(1, action_);
       }
-      if (!getReferenceBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, reference_);
-      }
-      for (int i = 0; i < queries_.size(); i++) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, queries_.getRaw(i));
-      }
-      for (int i = 0; i < types_.size(); i++) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, types_.getRaw(i));
-      }
       if (message_ != null) {
-        output.writeMessage(5, getMessage());
+        output.writeMessage(2, getMessage());
+      }
+      if (!getDataTypeBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, dataType_);
+      }
+      if (!getQueryIdBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, queryId_);
+      }
+      if (!getQueryTypeBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, queryType_);
       }
     }
 
@@ -553,28 +532,18 @@ public final class Meta {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, action_);
       }
-      if (!getReferenceBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, reference_);
-      }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < queries_.size(); i++) {
-          dataSize += computeStringSizeNoTag(queries_.getRaw(i));
-        }
-        size += dataSize;
-        size += 1 * getQueriesList().size();
-      }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < types_.size(); i++) {
-          dataSize += computeStringSizeNoTag(types_.getRaw(i));
-        }
-        size += dataSize;
-        size += 1 * getTypesList().size();
-      }
       if (message_ != null) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, getMessage());
+          .computeMessageSize(2, getMessage());
+      }
+      if (!getDataTypeBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, dataType_);
+      }
+      if (!getQueryIdBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, queryId_);
+      }
+      if (!getQueryTypeBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, queryType_);
       }
       memoizedSize = size;
       return size;
@@ -593,17 +562,17 @@ public final class Meta {
 
       boolean result = true;
       result = result && action_ == other.action_;
-      result = result && getReference()
-          .equals(other.getReference());
-      result = result && getQueriesList()
-          .equals(other.getQueriesList());
-      result = result && getTypesList()
-          .equals(other.getTypesList());
       result = result && (hasMessage() == other.hasMessage());
       if (hasMessage()) {
         result = result && getMessage()
             .equals(other.getMessage());
       }
+      result = result && getDataType()
+          .equals(other.getDataType());
+      result = result && getQueryId()
+          .equals(other.getQueryId());
+      result = result && getQueryType()
+          .equals(other.getQueryType());
       return result;
     }
 
@@ -616,20 +585,16 @@ public final class Meta {
       hash = (19 * hash) + getDescriptorForType().hashCode();
       hash = (37 * hash) + ACTION_FIELD_NUMBER;
       hash = (53 * hash) + action_;
-      hash = (37 * hash) + REFERENCE_FIELD_NUMBER;
-      hash = (53 * hash) + getReference().hashCode();
-      if (getQueriesCount() > 0) {
-        hash = (37 * hash) + QUERIES_FIELD_NUMBER;
-        hash = (53 * hash) + getQueriesList().hashCode();
-      }
-      if (getTypesCount() > 0) {
-        hash = (37 * hash) + TYPES_FIELD_NUMBER;
-        hash = (53 * hash) + getTypesList().hashCode();
-      }
       if (hasMessage()) {
         hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
         hash = (53 * hash) + getMessage().hashCode();
       }
+      hash = (37 * hash) + DATA_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getDataType().hashCode();
+      hash = (37 * hash) + QUERY_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getQueryId().hashCode();
+      hash = (37 * hash) + QUERY_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getQueryType().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -750,18 +715,18 @@ public final class Meta {
         super.clear();
         action_ = 0;
 
-        reference_ = "";
-
-        queries_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        types_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000008);
         if (messageBuilder_ == null) {
           message_ = null;
         } else {
           message_ = null;
           messageBuilder_ = null;
         }
+        dataType_ = "";
+
+        queryId_ = "";
+
+        queryType_ = "";
+
         return this;
       }
 
@@ -784,26 +749,15 @@ public final class Meta {
 
       public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header buildPartial() {
         de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header result = new de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
         result.action_ = action_;
-        result.reference_ = reference_;
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
-          queries_ = queries_.getUnmodifiableView();
-          bitField0_ = (bitField0_ & ~0x00000004);
-        }
-        result.queries_ = queries_;
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
-          types_ = types_.getUnmodifiableView();
-          bitField0_ = (bitField0_ & ~0x00000008);
-        }
-        result.types_ = types_;
         if (messageBuilder_ == null) {
           result.message_ = message_;
         } else {
           result.message_ = messageBuilder_.build();
         }
-        result.bitField0_ = to_bitField0_;
+        result.dataType_ = dataType_;
+        result.queryId_ = queryId_;
+        result.queryType_ = queryType_;
         onBuilt();
         return result;
       }
@@ -848,32 +802,20 @@ public final class Meta {
         if (other.action_ != 0) {
           setActionValue(other.getActionValue());
         }
-        if (!other.getReference().isEmpty()) {
-          reference_ = other.reference_;
-          onChanged();
-        }
-        if (!other.queries_.isEmpty()) {
-          if (queries_.isEmpty()) {
-            queries_ = other.queries_;
-            bitField0_ = (bitField0_ & ~0x00000004);
-          } else {
-            ensureQueriesIsMutable();
-            queries_.addAll(other.queries_);
-          }
-          onChanged();
-        }
-        if (!other.types_.isEmpty()) {
-          if (types_.isEmpty()) {
-            types_ = other.types_;
-            bitField0_ = (bitField0_ & ~0x00000008);
-          } else {
-            ensureTypesIsMutable();
-            types_.addAll(other.types_);
-          }
-          onChanged();
-        }
         if (other.hasMessage()) {
           mergeMessage(other.getMessage());
+        }
+        if (!other.getDataType().isEmpty()) {
+          dataType_ = other.dataType_;
+          onChanged();
+        }
+        if (!other.getQueryId().isEmpty()) {
+          queryId_ = other.queryId_;
+          onChanged();
+        }
+        if (!other.getQueryType().isEmpty()) {
+          queryType_ = other.queryType_;
+          onChanged();
         }
         onChanged();
         return this;
@@ -900,7 +842,6 @@ public final class Meta {
         }
         return this;
       }
-      private int bitField0_;
 
       private int action_ = 0;
       /**
@@ -946,274 +887,17 @@ public final class Meta {
         return this;
       }
 
-      private java.lang.Object reference_ = "";
-      /**
-       * <code>optional string reference = 2;</code>
-       */
-      public java.lang.String getReference() {
-        java.lang.Object ref = reference_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          reference_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string reference = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getReferenceBytes() {
-        java.lang.Object ref = reference_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          reference_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string reference = 2;</code>
-       */
-      public Builder setReference(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  
-        reference_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string reference = 2;</code>
-       */
-      public Builder clearReference() {
-        
-        reference_ = getDefaultInstance().getReference();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string reference = 2;</code>
-       */
-      public Builder setReferenceBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        reference_ = value;
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.LazyStringList queries_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      private void ensureQueriesIsMutable() {
-        if (!((bitField0_ & 0x00000004) == 0x00000004)) {
-          queries_ = new com.google.protobuf.LazyStringArrayList(queries_);
-          bitField0_ |= 0x00000004;
-         }
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public com.google.protobuf.ProtocolStringList
-          getQueriesList() {
-        return queries_.getUnmodifiableView();
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public int getQueriesCount() {
-        return queries_.size();
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public java.lang.String getQueries(int index) {
-        return queries_.get(index);
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public com.google.protobuf.ByteString
-          getQueriesBytes(int index) {
-        return queries_.getByteString(index);
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public Builder setQueries(
-          int index, java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureQueriesIsMutable();
-        queries_.set(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public Builder addQueries(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureQueriesIsMutable();
-        queries_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public Builder addAllQueries(
-          java.lang.Iterable<java.lang.String> values) {
-        ensureQueriesIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, queries_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public Builder clearQueries() {
-        queries_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000004);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string queries = 3;</code>
-       */
-      public Builder addQueriesBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        ensureQueriesIsMutable();
-        queries_.add(value);
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.LazyStringList types_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      private void ensureTypesIsMutable() {
-        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
-          types_ = new com.google.protobuf.LazyStringArrayList(types_);
-          bitField0_ |= 0x00000008;
-         }
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public com.google.protobuf.ProtocolStringList
-          getTypesList() {
-        return types_.getUnmodifiableView();
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public int getTypesCount() {
-        return types_.size();
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public java.lang.String getTypes(int index) {
-        return types_.get(index);
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public com.google.protobuf.ByteString
-          getTypesBytes(int index) {
-        return types_.getByteString(index);
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public Builder setTypes(
-          int index, java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureTypesIsMutable();
-        types_.set(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public Builder addTypes(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureTypesIsMutable();
-        types_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public Builder addAllTypes(
-          java.lang.Iterable<java.lang.String> values) {
-        ensureTypesIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, types_);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public Builder clearTypes() {
-        types_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000008);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated string types = 4;</code>
-       */
-      public Builder addTypesBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        ensureTypesIsMutable();
-        types_.add(value);
-        onChanged();
-        return this;
-      }
-
       private de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message message_ = null;
       private com.google.protobuf.SingleFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message, de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Builder, de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder> messageBuilder_;
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public boolean hasMessage() {
         return messageBuilder_ != null || message_ != null;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message getMessage() {
         if (messageBuilder_ == null) {
@@ -1223,7 +907,7 @@ public final class Meta {
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public Builder setMessage(de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message value) {
         if (messageBuilder_ == null) {
@@ -1239,7 +923,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public Builder setMessage(
           de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Builder builderForValue) {
@@ -1253,7 +937,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public Builder mergeMessage(de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message value) {
         if (messageBuilder_ == null) {
@@ -1271,7 +955,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public Builder clearMessage() {
         if (messageBuilder_ == null) {
@@ -1285,7 +969,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Builder getMessageBuilder() {
         
@@ -1293,7 +977,7 @@ public final class Meta {
         return getMessageFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder getMessageOrBuilder() {
         if (messageBuilder_ != null) {
@@ -1304,7 +988,7 @@ public final class Meta {
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 5;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Message message = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message, de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Builder, de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.MessageOrBuilder> 
@@ -1318,6 +1002,213 @@ public final class Meta {
           message_ = null;
         }
         return messageBuilder_;
+      }
+
+      private java.lang.Object dataType_ = "";
+      /**
+       * <code>optional string data_type = 3;</code>
+       */
+      public java.lang.String getDataType() {
+        java.lang.Object ref = dataType_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          dataType_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string data_type = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getDataTypeBytes() {
+        java.lang.Object ref = dataType_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          dataType_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string data_type = 3;</code>
+       */
+      public Builder setDataType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        dataType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string data_type = 3;</code>
+       */
+      public Builder clearDataType() {
+        
+        dataType_ = getDefaultInstance().getDataType();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string data_type = 3;</code>
+       */
+      public Builder setDataTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        dataType_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object queryId_ = "";
+      /**
+       * <code>optional string query_id = 4;</code>
+       */
+      public java.lang.String getQueryId() {
+        java.lang.Object ref = queryId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          queryId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string query_id = 4;</code>
+       */
+      public com.google.protobuf.ByteString
+          getQueryIdBytes() {
+        java.lang.Object ref = queryId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          queryId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string query_id = 4;</code>
+       */
+      public Builder setQueryId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        queryId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string query_id = 4;</code>
+       */
+      public Builder clearQueryId() {
+        
+        queryId_ = getDefaultInstance().getQueryId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string query_id = 4;</code>
+       */
+      public Builder setQueryIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        queryId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object queryType_ = "";
+      /**
+       * <code>optional string query_type = 5;</code>
+       */
+      public java.lang.String getQueryType() {
+        java.lang.Object ref = queryType_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          queryType_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string query_type = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getQueryTypeBytes() {
+        java.lang.Object ref = queryType_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          queryType_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string query_type = 5;</code>
+       */
+      public Builder setQueryType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        queryType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string query_type = 5;</code>
+       */
+      public Builder clearQueryType() {
+        
+        queryType_ = getDefaultInstance().getQueryType();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string query_type = 5;</code>
+       */
+      public Builder setQueryTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        queryType_ = value;
+        onChanged();
+        return this;
       }
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -2236,20 +2127,20 @@ public final class Meta {
   static {
     java.lang.String[] descriptorData = {
       "\n\016messages.proto\0224de.uni_freiburg.inform" +
-      "atik.ultimate.graphvr.protobuf\"\256\002\n\006Heade" +
+      "atik.ultimate.graphvr.protobuf\"\264\002\n\006Heade" +
       "r\022S\n\006action\030\001 \001(\0162C.de.uni_freiburg.info" +
       "rmatik.ultimate.graphvr.protobuf.Header." +
-      "Action\022\021\n\treference\030\002 \001(\t\022\017\n\007queries\030\003 \003" +
-      "(\t\022\r\n\005types\030\004 \003(\t\022N\n\007message\030\005 \001(\0132=.de." +
-      "uni_freiburg.informatik.ultimate.graphvr" +
-      ".protobuf.Message\"L\n\006Action\022\010\n\004QUIT\020\000\022\t\n" +
-      "\005HELLO\020\001\022\013\n\007LOGGING\020\002\022\010\n\004SEND\020\003\022\013\n\007REQUE" +
-      "ST\020\004\022\t\n\005SORRY\020\006\"\256\001\n\007Message\022\016\n\006source\030\001 ",
-      "\001(\t\022\014\n\004text\030\002 \001(\t\022R\n\005level\030\004 \001(\0162C.de.un" +
-      "i_freiburg.informatik.ultimate.graphvr.p" +
-      "rotobuf.Message.Level\"1\n\005Level\022\t\n\005DEBUG\020" +
-      "\000\022\010\n\004INFO\020\001\022\010\n\004WARN\020\002\022\t\n\005ERROR\020\003B\006B\004Meta" +
-      "b\006proto3"
+      "Action\022N\n\007message\030\002 \001(\0132=.de.uni_freibur" +
+      "g.informatik.ultimate.graphvr.protobuf.M" +
+      "essage\022\021\n\tdata_type\030\003 \001(\t\022\020\n\010query_id\030\004 " +
+      "\001(\t\022\022\n\nquery_type\030\005 \001(\t\"L\n\006Action\022\010\n\004QUI" +
+      "T\020\000\022\t\n\005HELLO\020\001\022\013\n\007LOGGING\020\002\022\010\n\004SEND\020\003\022\013\n" +
+      "\007REQUEST\020\004\022\t\n\005SORRY\020\006\"\256\001\n\007Message\022\016\n\006sou",
+      "rce\030\001 \001(\t\022\014\n\004text\030\002 \001(\t\022R\n\005level\030\004 \001(\0162C" +
+      ".de.uni_freiburg.informatik.ultimate.gra" +
+      "phvr.protobuf.Message.Level\"1\n\005Level\022\t\n\005" +
+      "DEBUG\020\000\022\010\n\004INFO\020\001\022\010\n\004WARN\020\002\022\t\n\005ERROR\020\003B\006" +
+      "B\004Metab\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2268,7 +2159,7 @@ public final class Meta {
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_protobuf_Header_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_graphvr_protobuf_Header_descriptor,
-        new java.lang.String[] { "Action", "Reference", "Queries", "Types", "Message", });
+        new java.lang.String[] { "Action", "Message", "DataType", "QueryId", "QueryType", });
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_protobuf_Message_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_de_uni_freiburg_informatik_ultimate_graphvr_protobuf_Message_fieldAccessorTable = new
