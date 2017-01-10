@@ -129,12 +129,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<>(mServices, ga,
 					uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
+			sim.doSimulation();
 			
 			// TODO Christian 2017-01-07: This is fishy, should it not depend on the simulation type?
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
 					mLogger) : "The computed simulation results are incorrect.";
 			
-			sim.doSimulation();
 			switch (backend) {
 				case FINITE_AUTOMATON:
 					mResult = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
