@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 	
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
@@ -118,7 +118,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
+	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 	
