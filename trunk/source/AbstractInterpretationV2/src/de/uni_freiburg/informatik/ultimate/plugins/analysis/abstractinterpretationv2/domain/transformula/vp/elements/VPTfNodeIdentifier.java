@@ -86,7 +86,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 //			ApplicationTerm at = (ApplicationTerm) term;
 //			mFunction = new VPArrayIdentifier(getArrayTerm(at));
 //			mFunction = getArrayIdentifier((EqFunctionNode) eqNode, inVars, outVars);
-			mFunction = tfStateBuilder.getArrayIdentifier(
+			mFunction = tfStateBuilder.getOrConstructArrayIdentifier(
 					((EqFunctionNode) eqNode).getFunction(), inVars, outVars);
 		} else {
 			mFunction = null;

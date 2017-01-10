@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,11 +39,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -56,6 +59,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IArrayWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.SelectTermWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.StoreTermWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPAuxVarNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
@@ -67,7 +74,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	
 //	private Set<IProgramVar> mVars = new HashSet<>();
 	
-	private Map<Term, VPTfNodeIdentifier> mTermToNodeId = new HashMap<>();
+//	private Map<Term, VPTfNodeIdentifier> mTermToNodeId = new HashMap<>();
+	private Set<VPTfNodeIdentifier> mAllNodeIds = new HashSet<>();
 	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode = new HashMap<>();
 	private	NestedMap3<EqNode, 
 			Map<IProgramVar, TermVariable>, 
@@ -88,6 +96,10 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		VPTfArrayIdentifier> mPvocToInVarToOutVarToArrayIdentifier = new NestedMap3<>();
 
 	private final VPDomainPreanalysis mPreAnalysis;
+	private Map<Term, IArrayWrapper> mTermToArrayWrapper = new HashMap<>();
+	private Map<Term, IElementWrapper> mTermToElementWrapper = new HashMap<>();
+	
+	private WrapperFactory mWrapperFactory = new WrapperFactory();
 
 
 	/**
@@ -117,8 +129,10 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		 * TODO: do this more efficiently
 		 */
 		final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqualitySet = new HashSet<>();
-		for (final VPTfNodeIdentifier node1 : mTermToNodeId.values()) {
-			for (final VPTfNodeIdentifier node2 : mTermToNodeId.values()) {
+//		for (final VPTfNodeIdentifier node1 : mTermToNodeId.values()) {
+		for (final VPTfNodeIdentifier node1 : mAllNodeIds) {
+//			for (final VPTfNodeIdentifier node2 : mTermToNodeId.values()) {
+			for (final VPTfNodeIdentifier node2 : mAllNodeIds) {
 				if (!node1.isLiteral() || !node2.isLiteral()) {
 					continue;
 				}
@@ -149,7 +163,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		// the arrayIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
 		mPvocToInVarToOutVarToArrayIdentifier = builder.mPvocToInVarToOutVarToArrayIdentifier;
 		// the nodeIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
-		mTermToNodeId = new HashMap<>(builder.mTermToNodeId); // TODO: do we really need a fresh map here?? if yes, then also for the arrayId?
+//		mTermToNodeId = new HashMap<>(builder.mTermToNodeId); // TODO: do we really need a fresh map here?? if yes, then also for the arrayId?
+		mAllNodeIds = builder.mAllNodeIds;
 		mNonAuxVarNodeIds = builder.mNonAuxVarNodeIds.copy();
 		mAuxVarNodeIds = new HashMap<>(builder.mAuxVarNodeIds);
 		mArrayIdToFunctionNodes = builder.mArrayIdToFunctionNodes.copy();
@@ -179,8 +194,51 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert isTopConsistent();
 	}
 
-
 	private void createEqGraphNodes(VPDomainPreanalysis preAnalysis, Set<EqNode> allConstantEqNodes) {
+
+		Set<ApplicationTerm> xQualities = new ApplicationTermFinder(
+				new HashSet<>(Arrays.asList(new String[] { "=", "distinct" })), 
+				false)
+			.findMatchingSubterms(mTransFormula.getFormula());
+
+		for (ApplicationTerm xQuality : xQualities) {
+			Term lhs = xQuality.getParameters()[0];
+			Term rhs = xQuality.getParameters()[1];
+			
+			if (lhs.getSort().isArraySort()) {
+				IArrayWrapper lhsWrapper = getOrConstructArrayWrapper(lhs);
+				IArrayWrapper rhsWrapper = getOrConstructArrayWrapper(rhs);
+				
+			} else {
+				IElementWrapper lhsWrapper = getOrConstructElementWrapper(lhs);
+				IElementWrapper rhsWrapper = getOrConstructElementWrapper(rhs);
+
+				
+			}
+		}
+	}
+
+	private IElementWrapper getOrConstructElementWrapper(Term term) {
+		IElementWrapper result = mTermToElementWrapper.get(term);
+		if (result == null) {
+			mWrapperFactory.wrapElement(term);
+			mTermToElementWrapper.put(term, result);
+		}
+		return result;
+	}
+
+
+	private IArrayWrapper getOrConstructArrayWrapper(Term term) {
+		IArrayWrapper result = mTermToArrayWrapper.get(term);
+		if (result == null) {
+			mWrapperFactory.wrapArray(term);
+			mTermToArrayWrapper.put(term, result);
+		}
+		return result;
+	}
+
+
+	private void createEqGraphNodesOld(VPDomainPreanalysis preAnalysis, Set<EqNode> allConstantEqNodes) {
 
 		/*
 		 * The EqGraphNodes we need for the given TransFormula can come from four sources:
@@ -447,20 +505,21 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	}
 
 
-	public void merge(Term t1, Term t2) {
-		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn1 = mNodeIdToEqGraphNode.get(mTermToNodeId.get(t1));
-		assert egn1 != null;
-		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn2 = mNodeIdToEqGraphNode.get(mTermToNodeId.get(t2));
-		assert egn2 != null;
-		
-		merge(egn1, egn2);
-		assert isTopConsistent();
-	}
+//	public void merge(Term t1, Term t2) {
+//		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn1 = mNodeIdToEqGraphNode.get(mTermToNodeId.get(t1));
+//		assert egn1 != null;
+//		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn2 = mNodeIdToEqGraphNode.get(mTermToNodeId.get(t2));
+//		assert egn2 != null;
+//		
+//		merge(egn1, egn2);
+//		assert isTopConsistent();
+//	}
 
 	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructEqGraphNode(TermVariable tv) {
 		// we have an AuxVar
 		VPAuxVarNodeIdentifier nodeId = getAuxVarNodeIdentifier(tv);
-		mTermToNodeId.put(tv, nodeId);
+//		mTermToNodeId.put(tv, nodeId);
+		mAllNodeIds.add(nodeId);
 		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeId);
 		if (result == null) {
 			result = new EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>(nodeId);
@@ -512,7 +571,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
 			VPTfArrayIdentifier arrayId = 
-					getArrayIdentifier(eqFunctionNode.getFunction(), inVars, outVars);
+					getOrConstructArrayIdentifier(eqFunctionNode.getFunction(), inVars, outVars);
 //					new VPArrayIdentifier(
 //					VPDomainHelpers.getArrayTerm((ApplicationTerm) term));
 			result.addToCcchild(arrayId, argNodes);
@@ -535,6 +594,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 *             a subterm in mTransFormula (others might be introduced, for example for ArrayEqualties)
 	 * @return
 	 */
+	@Deprecated
 	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructEqGraphNode(
 			final EqNode eqNode, 
 			final Map<IProgramVar, TermVariable> inVars, 
@@ -547,7 +607,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		
 		VPTfNodeIdentifier nodeIdentifier = getNodeIdentifier(eqNode, inVars, outVars);
 
-		mTermToNodeId.put(term, nodeIdentifier);
+//		mTermToNodeId.put(term, nodeIdentifier);
+		mAllNodeIds.add(nodeIdentifier);
 
 		EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> result = mNodeIdToEqGraphNode.get(nodeIdentifier);
 		if (result != null) {
@@ -590,9 +651,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			}
 			// later EqGraphNode.setupNode() will make initCcchild out of this:
 			VPTfArrayIdentifier arrayId = 
-					getArrayIdentifier(
-							VPDomainHelpers.getArrayTerm((ApplicationTerm) term), 
-							mTransFormula);
+					getOrConstructArrayIdentifier(
+							VPDomainHelpers.getArrayTerm((ApplicationTerm) term));
 //					VPDomainHelpers.getArrayTerm((ApplicationTerm) term));
 			result.addToCcchild(arrayId, argNodes);
 			
@@ -626,7 +686,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	public VPTfState build() {
 		assert mTransFormula != null;
 		assert mNodeIdToEqGraphNode != null;
-		assert mTermToNodeId != null;
+//		assert mTermToNodeId != null;
 		assert mArrayIdToFunctionNodes != null;
 		assert mDisEqualitySet != null;
 		assert mVars != null;
@@ -637,7 +697,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 				mTransFormula, 
 				this,
 				mNodeIdToEqGraphNode,
-				mTermToNodeId,
+//				mTermToNodeId,
+				mAllNodeIds,
 				mArrayIdToFunctionNodes, 
 				mDisEqualitySet, 
 				mIsTop, 
@@ -681,17 +742,12 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		return mNodeIdToEqGraphNode.values();
 	}
 
-	public VPTfNodeIdentifier getNodeId(Term value) {
-		return mTermToNodeId.get(value);
-	}
-	
-	
-	public VPTfArrayIdentifier getArrayIdentifier(Term term, TransFormula transFormula) {
-		return getArrayIdentifier(
+	public VPTfArrayIdentifier getOrConstructArrayIdentifier(Term term) {
+		return getOrConstructArrayIdentifier(
 				mPreAnalysis.getIProgramVarOrConstOrLiteral(term, 
-					VPDomainHelpers.computeProgramVarMappingFromTransFormula(transFormula)),
-				VPDomainHelpers.projectToTerm(transFormula.getInVars(), term),
-				VPDomainHelpers.projectToTerm(transFormula.getOutVars(), term));
+					VPDomainHelpers.computeProgramVarMappingFromTransFormula(mTransFormula)),
+				VPDomainHelpers.projectToTerm(mTransFormula.getInVars(), term),
+				VPDomainHelpers.projectToTerm(mTransFormula.getOutVars(), term));
 	}
 
 	/**
@@ -701,9 +757,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 * @param outVars
 	 * @return
 	 * 
-	 * TODO should we move this to the VPTfStateBuilder, like the management for VPNodeIdenfifiers??
 	 */
-	public VPTfArrayIdentifier getArrayIdentifier(IProgramVarOrConst function, 
+	public VPTfArrayIdentifier getOrConstructArrayIdentifier(IProgramVarOrConst function, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
 		Pair<IProgramVar, TermVariable> inVar = null;;
@@ -737,5 +792,106 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	
 	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(VPTfArrayIdentifier array) {
 		return mArrayIdToFunctionNodes.getImage(array);
+	}
+
+
+	public IArrayWrapper getArrayWrapper(Term term) {
+		IArrayWrapper result = mTermToArrayWrapper.get(term);
+		assert result != null;
+		return result;
+	}
+	
+	public IElementWrapper getElementWrapper(Term term) {
+		IElementWrapper result = mTermToElementWrapper.get(term);
+		assert result != null;
+		return result;
+	}
+
+	class WrapperFactory {
+		/**
+		 * 
+		 * 
+		 * @param term
+		 * @return
+		 */
+		IElementWrapper wrapElement(Term term) {
+			assert !term.getSort().isArraySort();
+
+			if (term instanceof TermVariable) {
+				EqNode eqNode = getPreAnalysis().getEqNode(term, 
+						VPDomainHelpers.computeProgramVarMappingFromTransFormula(getTransFormula()));
+				VPTfNodeIdentifier nodeId = getOrConstructEqGraphNode(eqNode,
+						VPDomainHelpers.projectToTerm(getTransFormula().getInVars(), term),
+						VPDomainHelpers.projectToTerm(getTransFormula().getOutVars(), term)).nodeIdentifier;
+				return nodeId;
+			} else if (term instanceof ConstantTerm) {
+				EqNode eqNode = getPreAnalysis().getEqNode(term, 
+						Collections.emptyMap());
+				VPTfNodeIdentifier nodeId = getOrConstructEqGraphNode(eqNode,
+						Collections.emptyMap(),
+						Collections.emptyMap()).nodeIdentifier;
+				return nodeId;
+			} else if (term instanceof ApplicationTerm
+					&& ((ApplicationTerm) term).getParameters().length == 0) {
+				// we have a constant
+				EqNode eqNode = getPreAnalysis().getEqNode(term, 
+						Collections.emptyMap());
+				VPTfNodeIdentifier nodeId = getOrConstructEqGraphNode(eqNode,
+						Collections.emptyMap(),
+						Collections.emptyMap()).nodeIdentifier;
+				return nodeId;
+			} else if (term instanceof ApplicationTerm
+					&& ((ApplicationTerm) term).getFunction().getName().equals("select")) {
+
+				MultiDimensionalSelect mds = new MultiDimensionalSelect(term);
+
+				IArrayWrapper array  = wrapArray(mds.getArray());
+
+				List<IElementWrapper> indices = new ArrayList<>();
+				for (Term index : mds.getIndex()) {
+					indices.add(wrapElement(index));
+				}
+				return new SelectTermWrapper(array, indices);
+			} else {
+				assert false : "missed case?";
+			}
+
+			return null;
+		}
+
+		IArrayWrapper wrapArray(Term term) {
+			if (term instanceof TermVariable) {
+				VPTfArrayIdentifier arrayId = getOrConstructArrayIdentifier(term);
+				return arrayId;
+			} else if (term instanceof ConstantTerm) {
+				VPTfArrayIdentifier arrayId = getOrConstructArrayIdentifier(term);
+				return arrayId;
+			} else if (term instanceof ApplicationTerm
+					&& ((ApplicationTerm) term).getParameters().length == 0) {
+				// we have a constant
+				VPTfArrayIdentifier arrayId = getOrConstructArrayIdentifier(term);
+				return arrayId;
+			} else if (term instanceof ApplicationTerm
+					&& ((ApplicationTerm) term).getFunction().getName().equals("store")) {
+
+				MultiDimensionalStore mds = new MultiDimensionalStore(term);
+
+				IArrayWrapper array  = wrapArray(mds.getArray());
+
+				List<IElementWrapper> indices = new ArrayList<>();
+				for (Term index : mds.getIndex()) {
+					indices.add(wrapElement(index));
+				}
+
+				IElementWrapper value = wrapElement(mds.getValue());
+
+				return new StoreTermWrapper(array, indices, value);
+			} else {
+				assert false : "missed case?";
+			}	
+
+			return null;
+		}
+
 	}
 }

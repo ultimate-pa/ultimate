@@ -66,15 +66,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		mPreAnalysis = preAnalysis;
 	}
 
-	public Set<VPTfState> addEquality(final Term t1, final Term t2, final VPTfState state) {
-		final Set<VPTfState> result =
-				VPFactoryHelpers.addEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
-		return result;
-	}
-
-	public Set<VPTfState> addDisequality(final Term t1, final Term t2, final VPTfState state) {
-		return VPFactoryHelpers.addDisEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
-	}
+//	public Set<VPTfState> addEquality(final Term t1, final Term t2, final VPTfState state) {
+//		final Set<VPTfState> result =
+//				VPFactoryHelpers.addEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
+//		return result;
+//	}
+//
+//	public Set<VPTfState> addDisequality(final Term t1, final Term t2, final VPTfState state) {
+//		return VPFactoryHelpers.addDisEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
+//	}
 
 	public Set<VPTfState> conjoin(final VPTfState state1, final VPTfState state2) {
 		return VPFactoryHelpers.conjoin(state1, state2, this);
@@ -88,19 +88,19 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		return VPFactoryHelpers.conjoinAll(andList, this);
 	}
 
-	public Set<VPTfState> handleArrayEqualityWithException(final TermVariable newArray, final Term oldArray,
-			final ApplicationTerm storeTerm, final Term value, final VPTfState tfPreState) {
-		return VPFactoryHelpers.arrayEqualityWithException(
-//				new VPArrayIdentifier(newArray),
-//				tfPreState.getArrayIdentifier(newArray, tfPreState.getTransFormula()),
-				tfPreState.getArrayIdentifier(newArray),
-//				new VPArrayIdentifier(oldArray), 
-//				tfPreState.getArrayIdentifier(oldArray, tfPreState.getTransFormula()),
-				tfPreState.getArrayIdentifier(oldArray),
-				tfPreState.getNodeId(storeTerm),
-				tfPreState.getNodeId(value),
-				tfPreState, this);
-	}
+//	public Set<VPTfState> handleArrayEqualityWithException(final TermVariable newArray, final Term oldArray,
+//			final ApplicationTerm storeTerm, final Term value, final VPTfState tfPreState) {
+//		return VPFactoryHelpers.arrayEqualityWithException(
+////				new VPArrayIdentifier(newArray),
+////				tfPreState.getArrayIdentifier(newArray, tfPreState.getTransFormula()),
+//				tfPreState.getArrayIdentifier(newArray),
+////				new VPArrayIdentifier(oldArray), 
+////				tfPreState.getArrayIdentifier(oldArray, tfPreState.getTransFormula()),
+//				tfPreState.getArrayIdentifier(oldArray),
+//				tfPreState.getNodeId(storeTerm),
+//				tfPreState.getNodeId(value),
+//				tfPreState, this);
+//	}
 
 	public Set<VPTfState> handleArrayEquality(final Term lhs, final Term rhs, final VPTfState tfPreState) {
 		return VPFactoryHelpers.arrayEquality(

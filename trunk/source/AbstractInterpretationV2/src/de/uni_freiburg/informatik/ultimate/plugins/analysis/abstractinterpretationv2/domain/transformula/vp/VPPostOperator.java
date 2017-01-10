@@ -50,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
@@ -63,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.NodeIdWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.UndetermindedNodeWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.WrapperFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
@@ -256,8 +253,10 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			// two arrays are equated
 			
 			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
-			IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
-			IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
+//			IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
+			IArrayWrapper lhsWrapper = tfStateBuilder.getArrayWrapper(lhs);
+//			IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
+			IArrayWrapper rhsWrapper = tfStateBuilder.getArrayWrapper(rhs);
 			
 			Set<VPTfState> resultStates = new HashSet<>();
 			for (ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
@@ -299,8 +298,10 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping --> vanilla builder should suffice
 //			VPTfStateBuilder tfStateBuilder = mTfStateFactory.copy(tfPreState); 
 			//TODO: the wrapping could be done up front in tfStatePreparer..
-			IElementWrapper lhsWrapper = WrapperFactory.wrapElement(lhs, tfStateBuilder);
-			IElementWrapper rhsWrapper = WrapperFactory.wrapElement(rhs, tfStateBuilder);
+//			IElementWrapper lhsWrapper = WrapperFactory.wrapElement(lhs, tfStateBuilder);
+			IElementWrapper lhsWrapper = tfStateBuilder.getElementWrapper(lhs);
+//			IElementWrapper rhsWrapper = WrapperFactory.wrapElement(rhs, tfStateBuilder);
+			IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
 //			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs, tfStateBuilder).getElements();
 			
 			Set<VPTfState> resultStates = new HashSet<>();

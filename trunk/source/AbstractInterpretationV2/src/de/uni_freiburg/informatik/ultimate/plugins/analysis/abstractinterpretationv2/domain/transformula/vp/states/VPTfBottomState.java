@@ -41,16 +41,16 @@ public class VPTfBottomState extends VPTfState {
 
 	public VPTfBottomState(Set<IProgramVar> vars) {
 		super(null, null,
-				Collections.emptyMap(), Collections.emptyMap(), 
+				Collections.emptyMap(), Collections.emptySet(), 
 				new HashRelation<>(), 
 				Collections.emptySet(),false, vars);
 	}
 
-	@Override
-	public boolean tracksTerm(Term term) {
-		assert false : "check for bottom before calling this! (right?)";
-		return super.tracksTerm(term);
-	}
+//	@Override
+//	public boolean tracksTerm(Term term) {
+//		assert false : "check for bottom before calling this! (right?)";
+//		return super.tracksTerm(term);
+//	}
 
 	@Override
 	public boolean isBottom() {

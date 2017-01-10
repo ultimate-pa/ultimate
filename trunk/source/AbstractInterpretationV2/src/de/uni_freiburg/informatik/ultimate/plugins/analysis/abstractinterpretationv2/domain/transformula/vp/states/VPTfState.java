@@ -43,17 +43,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayIdentifier> {
 	
-	private final Map<Term, VPTfNodeIdentifier> mTermToNodeId;
+//	private final Map<Term, VPTfNodeIdentifier> mTermToNodeId;
 	private final VPTfStateBuilder mBuilder;
 	private final TransFormula mTransFormula;
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
+	private final Set<VPTfNodeIdentifier> mAllNodeIds;
 
 
 	public VPTfState(TransFormula tf,
 			VPTfStateBuilder builder,
 			Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
-			Map<Term, VPTfNodeIdentifier> termToNodeId,
+//			Map<Term, VPTfNodeIdentifier> termToNodeId,
+			Set<VPTfNodeIdentifier> allNodeIds,
 			HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
 			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, 
 			boolean isTop, 
@@ -61,16 +63,17 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
 		mBuilder = builder;
-		mTermToNodeId = Collections.unmodifiableMap(termToNodeId);
+//		mTermToNodeId = Collections.unmodifiableMap(termToNodeId);
+		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy(); // TODO is copy needed here?
 		
 		assert isTopConsistent();
 	}
 
-	public boolean tracksTerm(Term term) {
-		return mTermToNodeId.containsKey(term);
-	}
+//	public boolean tracksTerm(Term term) {
+//		return mTermToNodeId.containsKey(term);
+//	}
 
 	public boolean isBottom() {
 		return false;
@@ -99,9 +102,9 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return mTransFormula;
 	}
 	
-	public VPTfNodeIdentifier getNodeId(Term t) {
-		return mTermToNodeId.get(t);
-	}
+//	public VPTfNodeIdentifier getNodeId(Term t) {
+//		return mTermToNodeId.get(t);
+//	}
 	
 	@Override
 	public String toString() {
@@ -120,6 +123,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	}
 
 	public VPTfArrayIdentifier getArrayIdentifier(Term newArray) {
-		return mBuilder.getArrayIdentifier(newArray, mTransFormula);
+		assert mBuilder.getTransFormula() == mTransFormula;
+		return mBuilder.getOrConstructArrayIdentifier(newArray);
 	}
 }
