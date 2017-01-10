@@ -93,8 +93,11 @@ public final class NwaSimulationUtil {
 		// First collect them
 		final NestedMap2<STATE, STATE, Boolean> supposedlySimulations = new NestedMap2<>();
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
+			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+				continue;
+			}
+			
 			// All the states we need are from Spoiler
-			boolean considerVertex = true;
 			final STATE state1 = spoilerVertex.getQ0();
 			final STATE state2 = spoilerVertex.getQ1();
 			
@@ -103,20 +106,22 @@ public final class NwaSimulationUtil {
 				continue;
 			}
 			
-			// For delayed simulation we need to choose between the
-			// vertex with bit set to true or false
+			final boolean considerVertex;
 			if (simulationType == ESimulationType.DELAYED) {
+				// For delayed simulation we need to choose between the vertex with bit set to true or false
 				if (spoilerVertex.isB()) {
 					considerVertex = nwa.isFinal(state1) && !nwa.isFinal(state2);
 				} else {
 					considerVertex = !nwa.isFinal(state1) || nwa.isFinal(state2);
 				}
+			} else {
+				considerVertex = true;
 			}
+			
 			if (considerVertex) {
 				if (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity()) {
-					if (spoilerVertex instanceof SpoilerNwaVertex<?, ?>) {
-						supposedlySimulations.put(spoilerVertex.getQ0(), spoilerVertex.getQ1(), true);
-					}
+					// TODO Christian 2016-01-10 The only value ever put in the map is "true" -> makes no sense
+					supposedlySimulations.put(spoilerVertex.getQ0(), spoilerVertex.getQ1(), true);
 				}
 			}
 		}
@@ -380,7 +385,4 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
-	
-	
-	
 }
