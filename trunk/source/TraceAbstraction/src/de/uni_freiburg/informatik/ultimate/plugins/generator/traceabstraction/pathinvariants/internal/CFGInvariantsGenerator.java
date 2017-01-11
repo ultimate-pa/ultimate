@@ -196,7 +196,9 @@ public final class CFGInvariantsGenerator {
 						// The result in pattern processor was 'unsat'
 						varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 						for (final TermVariable smtVar : smtVarsFromUnsatCore) {
-							varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
+							if (smtVars2ProgramVars.get(smtVar) != null) {
+								varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
+							}
 						}
 						mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 					} else {
@@ -316,7 +318,9 @@ public final class CFGInvariantsGenerator {
 				// The result in pattern processor was 'unsat'
 				// varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 				for (final TermVariable smtVar : smtVarsFromUnsatCore) {
-					varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
+					if (smtVars2ProgramVars.get(smtVar) != null) {
+						varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
+					}
 				}
 				mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 			} else {
