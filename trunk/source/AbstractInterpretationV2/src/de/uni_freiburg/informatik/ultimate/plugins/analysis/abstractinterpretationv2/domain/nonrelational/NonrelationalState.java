@@ -135,6 +135,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			final boolean isBottom) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
+		assert isBottom || mValueMap.values().stream()
+				.allMatch(v -> !v.isBottom()) : "The abstract state to be created does contain bottom values but is"
+						+ " not to be marked as being bottom.";
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
 		sId++;
 		mId = sId;

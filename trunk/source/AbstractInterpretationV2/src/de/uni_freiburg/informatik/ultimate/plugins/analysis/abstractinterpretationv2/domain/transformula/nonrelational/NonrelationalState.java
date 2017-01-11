@@ -68,6 +68,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	
 	private final ILogger mLogger;
 	
+	private final boolean mIsBottom;
+	
 	/**
 	 * Default constructor of an {@link NonrelationalState}.
 	 *
@@ -75,7 +77,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The current logger object in the current context.
 	 */
 	protected NonrelationalState(final ILogger logger) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>());
+		this(logger, false);
+	}
+
+	protected NonrelationalState(final ILogger logger, final boolean isBottom) {
+		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom);
 	}
 	
 	/**
@@ -92,13 +98,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The values of all boolean variables.
 	 */
 	protected NonrelationalState(final ILogger logger, final Set<IProgramVarOrConst> variables,
-			final Map<IProgramVarOrConst, V> valuesMap, final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap) {
+			final Map<IProgramVarOrConst, V> valuesMap, final Map<IProgramVarOrConst, BooleanValue> booleanValuesMap,
+			final boolean isBottom) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
+		assert isBottom || mValueMap.values().stream()
+				.allMatch(v -> !v.isBottom()) : "The abstract state to be created does contain bottom values but is"
+						+ " not to be marked as being bottom.";
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
 		sId++;
 		mId = sId;
 		mLogger = logger;
+		mIsBottom = isBottom;
 	}
 	
 	@Override
