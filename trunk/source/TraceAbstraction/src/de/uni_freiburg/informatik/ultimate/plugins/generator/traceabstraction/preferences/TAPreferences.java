@@ -290,4 +290,8 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);
 	}
+	
+	public boolean interactive() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERACTIVE_VERIFICATION);
+	}
 }

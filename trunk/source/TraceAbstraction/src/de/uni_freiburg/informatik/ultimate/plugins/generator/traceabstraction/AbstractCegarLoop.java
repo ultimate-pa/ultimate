@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.Server;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -339,6 +341,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+			}
+			if (mPref.interactive()) {
+				final TraceAbstractionProtos.IterationInfo itinfo = TraceAbstractionProtos.IterationInfo.newBuilder()
+						.setIteration(mIteration).build();
+				Server.get().send(itinfo);
 			}
 
 			try {
