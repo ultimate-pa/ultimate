@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;
 
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
@@ -51,48 +52,50 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Provides utility methods for simulation with NWA automata.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class NwaSimulationUtil {
+	private NwaSimulationUtil() {
+		// Utility class.
+	}
 	
 	/**
-	 * Utility class. No implementation.
-	 */
-	private NwaSimulationUtil() {
-
-	}
-
-	/**
-	 * Computes if the simulation results saved in the given game graph are
-	 * correct.
+	 * Checks if the simulation results saved in the given game graph are correct.<br>
+	 * This is only a semi-check, i.e., if it returns {@code false}, there is a violation. For instance, we ignore
+	 * return transitions.
 	 * 
 	 * @param gameGraph
 	 *            Game graph where the simulation results are saved in
 	 * @param nwa
-	 *            The underlying Nwa automata
-	 * @return <tt>True</tt> if the simulation results are correct,
-	 *         <tt>false</tt> otherwise.
+	 *            The underlying NWA
+	 * @param simulationType
+	 *            simulation type
+	 * @param logger
+	 *            logger
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code false} only if the simulation results are not correct (however, {@code true} has no meaning)
 	 */
-	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(
-			final AGameGraph<LETTER, STATE> gameGraph,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa,
-			final ESimulationType simulationType,
+	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final ESimulationType simulationType,
 			final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");
 		}
-
-		// We check each supposedly simulation and validate
+		
+		// We check each supposed simulation and validate
 		// First collect them
-		final NestedMap2<STATE, STATE, Boolean> supposedlySimulations = new NestedMap2<>();
+		final HashRelation<STATE, STATE> supposedSimulations = new HashRelation<>();
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
+			// skip auxiliary vertices
 			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
 				continue;
 			}
@@ -118,19 +121,17 @@ public final class NwaSimulationUtil {
 				considerVertex = true;
 			}
 			
-			if (considerVertex) {
-				if (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity()) {
-					// TODO Christian 2016-01-10 The only value ever put in the map is "true" -> makes no sense
-					supposedlySimulations.put(spoilerVertex.getQ0(), spoilerVertex.getQ1(), true);
-				}
+			if (considerVertex
+					&& (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity())) {
+				supposedSimulations.addPair(spoilerVertex.getQ0(), spoilerVertex.getQ1());
 			}
 		}
-
-		// Validate the supposedly simulations
-		for (final Pair<STATE, STATE> supposedlySimulation : supposedlySimulations.keys2()) {
-			final STATE leftState = supposedlySimulation.getFirst();
-			final STATE rightState = supposedlySimulation.getSecond();
-
+		
+		// Validate the supposed simulations
+		for (final Entry<STATE, STATE> supposedSimulation : supposedSimulations.entrySet()) {
+			final STATE leftState = supposedSimulation.getKey();
+			final STATE rightState = supposedSimulation.getValue();
+			
 			// Each from leftState outgoing transitions also needs an matching
 			// outgoing transition from rightState whose destination also
 			// simulates the other
@@ -138,20 +139,20 @@ public final class NwaSimulationUtil {
 			for (final OutgoingInternalTransition<LETTER, STATE> leftTrans : nwa.internalSuccessors(leftState)) {
 				final STATE leftDest = leftTrans.getSucc();
 				final LETTER letter = leftTrans.getLetter();
-
+				final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
+				
 				boolean foundMatchingTrans = false;
 				for (final OutgoingInternalTransition<LETTER, STATE> rightTrans : nwa.internalSuccessors(rightState,
 						letter)) {
 					final STATE rightDest = rightTrans.getSucc();
 					// If the right destination also simulates the left
 					// destination, we found a matching transition
-					final Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
-					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
+					if (destinationSimulation.contains(rightDest)) {
 						foundMatchingTrans = true;
 						break;
 					}
 				}
-
+				
 				// If no matching transition could be found, the underlying
 				// simulation is incorrect
 				if (!foundMatchingTrans) {
@@ -162,24 +163,24 @@ public final class NwaSimulationUtil {
 					return false;
 				}
 			}
-
+			
 			// Call transitions
 			for (final OutgoingCallTransition<LETTER, STATE> leftTrans : nwa.callSuccessors(leftState)) {
 				final STATE leftDest = leftTrans.getSucc();
 				final LETTER letter = leftTrans.getLetter();
-
+				final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
+				
 				boolean foundMatchingTrans = false;
 				for (final OutgoingCallTransition<LETTER, STATE> rightTrans : nwa.callSuccessors(rightState, letter)) {
 					final STATE rightDest = rightTrans.getSucc();
 					// If the right destination also simulates the left
 					// destination, we found a matching transition
-					final Boolean destinationSimulation = supposedlySimulations.get(leftDest, rightDest);
-					if (destinationSimulation != null && destinationSimulation.booleanValue()) {
+					if (destinationSimulation.contains(rightDest)) {
 						foundMatchingTrans = true;
 						break;
 					}
 				}
-
+				
 				// If no matching transition could be found, the underlying
 				// simulation is incorrect
 				if (!foundMatchingTrans) {
@@ -190,16 +191,16 @@ public final class NwaSimulationUtil {
 					return false;
 				}
 			}
-
+			
 			// Return transitions do not need to get matched
 		}
-
+		
 		if (logger.isInfoEnabled()) {
 			logger.info("Finished checking correctness of simulation results, they are correct.");
 		}
 		return true;
 	}
-
+	
 	/**
 	 * Computes the <i>inner simulation</i> on a given nwa game graph. The
 	 * simulation makes predecessors of non-simulating vertices also to
@@ -229,14 +230,14 @@ public final class NwaSimulationUtil {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Starting innerSimulation.");
 		}
-
+		
 		// Undo removing of return bridges
 		if (gameGraph instanceof INwaGameGraph<?, ?>) {
 			((INwaGameGraph<LETTER, STATE>) gameGraph).undoRemovedReturnBridgesChanges();
 		} else {
 			throw new IllegalArgumentException("The given gameGraph must be an instance of INwaGameGraph.");
 		}
-
+		
 		// Collect all non simulating vertices
 		final Queue<Vertex<LETTER, STATE>> workingList = new LinkedList<>();
 		final int globalInfinity = gameGraph.getGlobalInfinity();
@@ -246,7 +247,7 @@ public final class NwaSimulationUtil {
 				if (spoilerVertex.getPM(null, globalInfinity) >= globalInfinity) {
 					workingList.add(spoilerVertex);
 				}
-
+				
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
@@ -255,11 +256,11 @@ public final class NwaSimulationUtil {
 				}
 			}
 		}
-
+		
 		// Start the simulation, beginning with all roots
 		while (!workingList.isEmpty()) {
 			final Vertex<LETTER, STATE> workingVertex = workingList.poll();
-
+			
 			// Impose every predecessor, that is no call predecessor, a progress
 			// measure of infinity. If they are Duplicator vertices, do that
 			// only if they have no other simulating successors
@@ -279,7 +280,7 @@ public final class NwaSimulationUtil {
 						continue;
 					}
 				}
-
+				
 				boolean considerVertex = true;
 				// If the predecessor is a duplicator vertex, check if he has an
 				// alternative successor
@@ -300,17 +301,17 @@ public final class NwaSimulationUtil {
 					// alternative
 					considerVertex = !hasAlternative;
 				}
-
+				
 				// Impose a progress measure of infinity and add the element
 				if (considerVertex) {
 					pred.setPM(globalInfinity);
 					workingList.add(pred);
-
+					
 					if (logger.isDebugEnabled()) {
 						logger.debug("\tImposed infinity for: " + pred);
 					}
 				}
-
+				
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
@@ -320,7 +321,7 @@ public final class NwaSimulationUtil {
 			}
 		}
 	}
-
+	
 	/**
 	 * Retrieves general performance data of the input and output nwa automaton.
 	 * Saves the data in the given internal performance object. Only nwa
@@ -335,49 +336,53 @@ public final class NwaSimulationUtil {
 	 *            The resulting nwa automaton
 	 * @param services
 	 *            The service object used by the framework
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
 	 */
 	public static <LETTER, STATE> void retrieveGeneralNwaAutomataPerformance(
 			final SimulationPerformance simulationPerformance, final INestedWordAutomaton<LETTER, STATE> input,
 			final INestedWordAutomaton<LETTER, STATE> result, final AutomataLibraryServices services) {
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
-
+		
 		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_CALL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-
+		
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
