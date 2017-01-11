@@ -1,0 +1,53 @@
+FiniteAutomaton tracesOfTs = (
+     alphabet = {"{}" "{TRY}" "{DEL}" "{TRY, DEL}"},
+     states = {q0 start try_to_send lost delivered},
+     initialStates = {q0},
+     finalStates = {q0 start try_to_send lost delivered},
+     transitions = {
+         (q0 "{}" start)
+         (start "{TRY}" try_to_send)
+         (try_to_send "{}" lost)
+         (try_to_send "{DEL}" delivered)
+         (lost "{TRY}" try_to_send)
+         (delivered "{}" start)
+     }
+);
+
+print(tracesOfTs);
+
+FiniteAutomaton badBehaviors = (
+     alphabet = {"{}" "{TRY}" "{DEL}" "{TRY, DEL}"},
+     states = {q0 qF q1},
+     initialStates = {q0},
+     finalStates = {qF},
+     transitions = {
+         (q0 "{}" q0)
+         (q0 "{TRY}" q0)
+         (q0 "{DEL}" q0)
+         (q0 "{TRY, DEL}" q0)
+         (q0 "{TRY}" qF)
+         (qF "{}" qF)
+         (qF "{TRY}" qF)
+         (qF "{DEL}" q1)
+         (qF "{TRY, DEL}" q1)
+         (q1 "{}" q1)
+         (q1 "{TRY}" q1)
+         (q1 "{DEL}" q1)
+         (q1 "{TRY, DEL}" q1)
+     }
+);
+
+print(badBehaviors);
+
+
+FiniteAutomaton inter = BuchiIntersect(tracesOfTs, badBehaviors);
+print(inter);
+
+
+boolean empty = BuchiIsEmpty(inter);
+print(empty);
+
+
+NestedLassoWord omegaWord = getAcceptedLassoWord(inter);
+print(omegaWord);
+

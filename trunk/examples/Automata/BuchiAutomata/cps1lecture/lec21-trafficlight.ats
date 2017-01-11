@@ -1,0 +1,38 @@
+FiniteAutomaton tracesOfTs = (
+     alphabet = {"{}" "{GREEN}"},
+     states = {q0 red green},
+     initialStates = {q0},
+     finalStates = {q0 red green},
+     transitions = {
+         (q0 "{}" red)
+         (red "{GREEN}" green)
+         (green "{}" red)
+     }
+);
+print(tracesOfTs);
+
+FiniteAutomaton badBehaviors = (
+     alphabet = {"{}" "{GREEN}"},
+     states = {q0 q1 q2},
+     initialStates = {q0},
+     finalStates = {q1},
+     transitions = {
+         (q0 "{}" q0)
+		 (q0 "{GREEN}" q0)
+         (q0 "{}" q1)
+		 (q0 "{}" q1)
+		 (q1 "{GREEN}" q2)
+         (q2 "{}" q2)
+		 (q2 "{GREEN}" q2)
+     }
+);
+print(badBehaviors);
+
+
+FiniteAutomaton inter = BuchiIntersect(tracesOfTs, badBehaviors);
+print(inter);
+
+
+boolean empty = BuchiIsEmpty(inter);
+print(empty);
+
