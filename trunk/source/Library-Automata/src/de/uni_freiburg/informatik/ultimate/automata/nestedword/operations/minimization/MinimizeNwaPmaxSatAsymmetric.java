@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @see MinimizeNwaMaxSat2
  */
 public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
+	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
+	
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
 	private STATE mEmptyStackState;
@@ -77,7 +80,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 */
 	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, createPairs(operand.getStates()), new Settings<>());
+		this(services, stateFactory, operand, createAtsInitialPairs(services, operand), new Settings<>());
 	}
 	
 	/**
@@ -129,11 +132,38 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		run();
 	}
 	
+	/**
+	 * Creates the initial pairs for the automata script interpreter constructor.
+	 * <p>
+	 * The method allows for fast policy switching.
+	 */
+	private static <LETTER, STATE> Iterable<Pair<STATE, STATE>> createAtsInitialPairs(
+			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
+			createNestedMapWithInitialPartition(new LookaheadPartitionConstructor<>(services, operand).getPartition());
+		}
+		return createPairs(operand.getStates());
+	}
+	
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
 			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
 		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
 		for (final Pair<STATE, STATE> pair : initialPairs) {
 			result.put(pair.getFirst(), pair.getSecond(), pair);
+		}
+		return result;
+	}
+	
+	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
+			createNestedMapWithInitialPartition(final Collection<Set<STATE>> partition) {
+		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
+		for (final Set<STATE> block : partition) {
+			final ArrayList<STATE> blockAsArray = new ArrayList<>(block);
+			for (final STATE state1 : blockAsArray) {
+				for (final STATE state2 : blockAsArray) {
+					result.put(state1, state2, new Pair<>(state1, state2));
+				}
+			}
 		}
 		return result;
 	}
@@ -176,7 +206,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented yet.");
 	}
-
+	
 	private void addStateToTransitivityGeneratorIfNotPresent(final STATE state) {
 		if (mTransitivityGenerator != null) {
 			mTransitivityGenerator.addContentIfNotPresent(state);
