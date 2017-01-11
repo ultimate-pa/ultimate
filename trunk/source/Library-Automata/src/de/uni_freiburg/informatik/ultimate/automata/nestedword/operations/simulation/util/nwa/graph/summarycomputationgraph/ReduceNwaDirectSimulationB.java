@@ -31,28 +31,29 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> implements IMinimizeNwa<LETTER, STATE> {
-
+public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
+	
 	public ReduceNwaDirectSimulationB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, new DirectSimulationInfoProvider<>());
 	}
 	
+	@Override
+	protected ESimulationType getSimulationType() {
+		return ESimulationType.DELAYED;
+	}
 	
-	
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
-	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return super.checkLanguageEquivalence(stateFactory).getFirst();

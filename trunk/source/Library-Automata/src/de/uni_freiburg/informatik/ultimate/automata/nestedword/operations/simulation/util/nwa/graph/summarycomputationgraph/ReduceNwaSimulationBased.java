@@ -131,8 +131,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 			sim.doSimulation();
 			
-			// TODO Christian 2017-01-07: This is fishy, should it not depend on the simulation type?
-			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
+			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
 					mLogger) : "The computed simulation results are incorrect.";
 			
 			switch (backend) {
@@ -287,9 +286,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		return mOperand;
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getAutomataOperationStatistics()
-	 */
+	protected abstract ESimulationType getSimulationType();
+	
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;

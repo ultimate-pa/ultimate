@@ -32,22 +32,28 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-public class ReduceNwaDelayedSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> implements IMinimizeNwa<LETTER, STATE> {
-
+public class ReduceNwaDelayedSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
+	
 	public ReduceNwaDelayedSimulationB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, new DelayedSimulationInfoProvider<>());
 	}
 	
+	@Override
+	protected ESimulationType getSimulationType() {
+		return ESimulationType.DELAYED;
+	}
 	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
