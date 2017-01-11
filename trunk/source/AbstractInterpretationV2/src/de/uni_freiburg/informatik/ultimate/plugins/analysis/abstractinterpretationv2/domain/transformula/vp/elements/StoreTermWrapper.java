@@ -239,4 +239,10 @@ public class StoreTermWrapper implements IArrayWrapper {
 		
 		return sb.toString();
 	}
+
+	@Override
+	public VPTfArrayIdentifier getBaseArray() {
+		return mBaseArray.getBaseArray();
+	}
+	
 }

@@ -216,6 +216,19 @@ public class VPDomainHelpers {
 		return result;
 	}
 	
+	
+	public static InOutStatus getInOutStatusOfPvoc(IProgramVarOrConst function, TransFormula tf) {
+		InOutStatus functionInOutStatus;
+		if (function instanceof IProgramVarOrConst) {
+			functionInOutStatus = VPDomainHelpers.computeInOutStatus((IProgramVar) function, tf);
+		} else {
+			// TODO: constants are like a THROUGH-variable for our purposes here, right?
+			//     (or UPDATE, as this makes no difference here)
+			functionInOutStatus = InOutStatus.THROUGH;
+		}
+		return functionInOutStatus;
+	}
+	
 	/**
 	 * For a given IProgramVar pv and a TransFormula tf, computes whether
 	 * pv is only an InVar, only an outVar, an update or a through (e.g. used in an assume) or does not occur in tf.

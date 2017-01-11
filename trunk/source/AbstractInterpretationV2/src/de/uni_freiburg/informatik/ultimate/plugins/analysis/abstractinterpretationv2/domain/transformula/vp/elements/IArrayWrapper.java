@@ -17,4 +17,9 @@ public interface IArrayWrapper {
 	 */
 	Set<ArrayWithSideCondition> getArrayWithSideConditions(VPTfState tfState, Set<List<NodeIdWithSideCondition>> requestedIndices);
 
+	/**
+	 * Get the array that this wrapper is built around. (i.e. array in the innermost store term)
+	 * @return
+	 */
+	VPTfArrayIdentifier getBaseArray();
 }

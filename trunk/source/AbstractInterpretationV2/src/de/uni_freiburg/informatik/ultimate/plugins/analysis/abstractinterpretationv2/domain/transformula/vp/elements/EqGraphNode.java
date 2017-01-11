@@ -60,6 +60,7 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
 	 */
 	public final NODEID nodeIdentifier;
+
 	private EqGraphNode<NODEID, ARRAYID> representative;
 	private Set<EqGraphNode<NODEID, ARRAYID>> reverseRepresentative;
 	private Set<EqGraphNode<NODEID, ARRAYID>> ccpar;
@@ -70,7 +71,7 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
 	public EqGraphNode(NODEID id) {
 		assert id != null;
-//		this.nodeIdentifier = new VPNodeIdentifier(eqNode);
+		
 		this.nodeIdentifier = id;
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();

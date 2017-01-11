@@ -50,11 +50,14 @@ public class EqFunctionNode extends EqNode {
 	private final List<EqNode> args;
 
 	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args, ManagedScript script) {
-//		super(function.isGlobal() 
-//				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
-//			!(function instanceof IProgramVar)
-//				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
-		super(function.isGlobal(), !(function instanceof IProgramVar)); // new paradigm: the "topmost function symbol determines isGobal and isConstant.
+		super(function.isGlobal() 
+				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
+			!(function instanceof IProgramVar)
+				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
+
+//		super(function.isGlobal(), !(function instanceof IProgramVar)); // new paradigm: the "topmost function symbol determines isGobal and isConstant.
+		 // update: reverted to the old paradigm: a node is constant if all its components are
+
 		this.function = function;
 		this.args = args;
 		Set<IProgramVar> vars = new HashSet<>();

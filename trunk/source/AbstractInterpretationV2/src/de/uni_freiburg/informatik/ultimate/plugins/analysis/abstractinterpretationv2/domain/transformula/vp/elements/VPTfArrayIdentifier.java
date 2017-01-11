@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author Alexander Nutz
  */
-public class VPTfArrayIdentifier implements ISingleArrayWrapper {
+public class VPTfArrayIdentifier implements IArrayWrapper {
 	
 	IProgramVarOrConst mPvoc;
 	Pair<IProgramVar, TermVariable> mInVar;
@@ -72,7 +72,6 @@ public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 			Pair<IProgramVar, TermVariable> outVar) {
 		mPvoc = pvoc;
 		
-		
 		if (inVar != null) {
 			mTerm = inVar.getSecond();
 		}
@@ -87,6 +86,10 @@ public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 			assert pvoc instanceof ConstOrLiteral;
 			mTerm = pvoc.getTerm();
 		}
+	}
+	
+	public IProgramVarOrConst getProgramVarOrConst() {
+		return mPvoc;
 	}
 	
 
@@ -179,5 +182,27 @@ public class VPTfArrayIdentifier implements ISingleArrayWrapper {
 				Collections.emptySet(), Collections.emptySet());
 		return Collections.singleton(awsc);
 	}
+
+	public Map<IProgramVar, TermVariable> getInVars() {
+		if (mInVar == null) {
+			return Collections.emptyMap();
+		} else {
+			return Collections.singletonMap(mInVar.getFirst(), mInVar.getSecond());
+		}
+	}
+	
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		if (mOutVar == null) {
+			return Collections.emptyMap();
+		} else {
+			return Collections.singletonMap(mOutVar.getFirst(), mOutVar.getSecond());
+		}
+	}
+
+	@Override
+	public VPTfArrayIdentifier getBaseArray() {
+		return this;
+	}
+	
 	
 }

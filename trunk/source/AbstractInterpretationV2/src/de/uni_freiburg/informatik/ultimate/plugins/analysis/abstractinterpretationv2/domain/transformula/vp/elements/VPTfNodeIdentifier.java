@@ -63,34 +63,47 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
 	private final VPTfArrayIdentifier mFunction;
-	private final boolean mIsInOrThrough;
+//	private final boolean mIsInOrThrough;
+	private final TfNodeInOutStatus mInOutStatus;
 
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
 
+	/**
+	 * super constructor exclusively for VpTfThroughNodeIdentifier
+	 * @param eqNode
+	 */
+	protected VPTfNodeIdentifier(EqNode eqNode) {
+		this.mEqNode = eqNode;
+		this.mIsFunction = eqNode instanceof EqFunctionNode;
+
+		this.mIsLiteral = eqNode.isLiteral();
+		
+		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
+		
+		mInVars = null;
+		mOutVars = null;
+		mInOutStatus = TfNodeInOutStatus.THROUGH;
+		mFunction = null;
+		
+	}
 
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars,
 			VPTfStateBuilder tfStateBuilder) {
 		this.mEqNode = eqNode;
-//		this.mIsFunction = term instanceof ApplicationTerm 
-//				&& (((ApplicationTerm) term).getFunction().getName().equals("select")
-//						|| ((ApplicationTerm) term).getFunction().getName().equals("store"));
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 
-//		this.mTerm = term;
-		this.mInVars = Collections.unmodifiableMap(inVars);
-		this.mOutVars = Collections.unmodifiableMap(outVars);
 		this.mIsLiteral = eqNode.isLiteral();
 		if (mIsFunction) {
-//			ApplicationTerm at = (ApplicationTerm) term;
-//			mFunction = new VPArrayIdentifier(getArrayTerm(at));
-//			mFunction = getArrayIdentifier((EqFunctionNode) eqNode, inVars, outVars);
 			mFunction = tfStateBuilder.getOrConstructArrayIdentifier(
 					((EqFunctionNode) eqNode).getFunction(), inVars, outVars);
 		} else {
 			mFunction = null;
 		}
+		
+		this.mInVars = Collections.unmodifiableMap(inVars);
+		this.mOutVars = Collections.unmodifiableMap(outVars);
 		
 		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
 		
@@ -123,44 +136,80 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 //		}	
 		
 		/*
-		 * new plan: 
-		 * a node's inOutStatus is determined by its topmost symbol.
-		 *  (in a[b[i]] that would be a for example)
+		 * new plan (2.0):
+		 *  introduced enum TfNodeInOutStatus
 		 */
-		boolean isIn = false;
-		boolean isOut = false;
 		if (eqNode.mIsConstant) {
-			isIn = true;
-			isOut = true;
+			mInOutStatus = TfNodeInOutStatus.THROUGH;
 		} else {
-			if (eqNode.isFunction()) {
-				final IProgramVarOrConst function = eqNode.getFunction();
-				assert function instanceof IProgramVar : "node should be constant"; 
-				
-				isIn = mInVars.containsKey(function);
-				isOut = mOutVars.containsKey(function);
-			} else {
-				/*
-				 * in case of a base node, we can just go over the variables
-				 */
-				for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
-					if (!mOutVars.containsKey(en.getKey())) {
-						// we have an invar that is no outVar --> this node is "in"
-						isIn = true;
-					}
+			/**
+			 * is there a var that is only in inVars?
+			 */
+			boolean hasIn = false;
+			/**
+			 * is there a var that is only in outVars?
+			 */
+			boolean hasOut = false;
+			/**
+			 * is there a var that is both in inVars and in outVars?
+			 * (assuming that this implies that it has the same TermVariable in both cases, see assertions below)
+			 */
+			boolean hasThrough = false;
+
+
+			for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
+				if (!mOutVars.containsKey(en.getKey())) {
+
 				}
-				for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
-					if (!mInVars.containsKey(en.getKey())) {
-						// we have an outVar that is no inVar --> this node is "out"
-						// if it is already "in", then the sanity check fails
-						isOut = true;
-						assert !isIn;
-					}
-				}	
+				// we have an invar 
+//				hasIn = true;
+				if (mOutVars.containsKey(en.getKey())) {
+					// en.getKey is both in and out
+					assert en.getValue() == mOutVars.get(en.getKey()) : 
+						"we have an EqGraphNode with both update-versions of a variable -- can this really happen?";
+					hasThrough = true;
+				} else {
+					hasIn = true;
+				}
+			}
+			for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
+//				if (!mInVars.containsKey(en.getKey())) {
+					// we have an outVar that is no inVar
+//				hasOut = true;
+//				} else {
+				if (mInVars.containsKey(en.getKey())) {
+					// en.getKey is both in and out
+					assert en.getValue() == mInVars.get(en.getKey()) : 
+						"we have an EqGraphNode with both update-versions of a variable -- can this really happen?";
+					hasThrough = true;
+				} else {
+					hasOut = true;
+				}
+			}	
+			
+			if (hasIn && hasOut) {
+				mInOutStatus = TfNodeInOutStatus.MIXED;
+			} else if (hasIn && !hasOut) {
+				if (hasThrough) {
+					mInOutStatus = TfNodeInOutStatus.THROUGH;
+				} else {
+					mInOutStatus = TfNodeInOutStatus.IN;
+				}
+			} else if (!hasIn && hasOut) {
+				if (hasThrough) {
+					mInOutStatus = TfNodeInOutStatus.THROUGH;
+				} else {
+					mInOutStatus = TfNodeInOutStatus.OUT;
+				}
+			} else {
+				if (hasThrough) {
+					mInOutStatus = TfNodeInOutStatus.THROUGH;
+				} else {
+					assert false : "node is constant, right?..";
+					mInOutStatus = TfNodeInOutStatus.MIXED;
+				}
 			}
 		}
-		
-		mIsInOrThrough = isIn || (!isIn && !isOut);
 		
 		assert sanityCheck();
 	}
@@ -291,14 +340,13 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		return HashUtils.hashHsieh(31, mEqNode, mInVars, mOutVars);
 	}
 
-
-	public boolean isInOrThrough() {
-		return mIsInOrThrough;
+	public boolean isOutOrThrough() {
+		return mInOutStatus == TfNodeInOutStatus.OUT || mInOutStatus == TfNodeInOutStatus.THROUGH;
 	}
 
-
-
-
+	public boolean isInOrThrough() {
+		return mInOutStatus == TfNodeInOutStatus.IN || mInOutStatus == TfNodeInOutStatus.THROUGH;
+	}
 
 	@Override
 	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfState) {
@@ -309,4 +357,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 //	public Set<ISingleElementWrapper> getElements() {
 //		return Collections.singleton(this);
 //	}
+}
+enum TfNodeInOutStatus {
+	IN, OUT, THROUGH, MIXED;
 }
