@@ -79,14 +79,6 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	}
 
 	@Override
-	public Collection<CodeBlock> filterInitialElements(final Collection<CodeBlock> elems) {
-		if (elems == null) {
-			return Collections.emptyList();
-		}
-		return elems.stream().filter(e -> !RcfgUtils.isSummaryWithImplementation(e)).collect(Collectors.toList());
-	}
-
-	@Override
 	public boolean isEnteringScope(final CodeBlock current) {
 		return current instanceof Call;
 	}

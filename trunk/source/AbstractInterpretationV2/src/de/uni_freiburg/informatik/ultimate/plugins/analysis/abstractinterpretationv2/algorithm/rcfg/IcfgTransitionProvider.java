@@ -85,14 +85,6 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 	}
 
 	@Override
-	public Collection<IcfgEdge> filterInitialElements(final Collection<IcfgEdge> elems) {
-		if (elems == null) {
-			return Collections.emptyList();
-		}
-		return elems.stream().filter(e -> !RcfgUtils.isSummaryWithImplementation(e)).collect(Collectors.toList());
-	}
-
-	@Override
 	public boolean isEnteringScope(final IcfgEdge current) {
 		return current instanceof ICallAction;
 	}

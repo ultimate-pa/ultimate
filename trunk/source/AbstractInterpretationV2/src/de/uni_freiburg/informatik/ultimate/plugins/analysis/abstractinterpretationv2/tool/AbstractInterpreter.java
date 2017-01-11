@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
@@ -173,7 +174,7 @@ public final class AbstractInterpreter {
 		}
 
 		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
-		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
+		final Collection<CodeBlock> filteredInitialElements = filterInitials(initials, transProvider);
 
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
@@ -221,6 +222,12 @@ public final class AbstractInterpreter {
 		return result;
 	}
 
+	private static <ACTION> Collection<ACTION> filterInitials(final Collection<ACTION> initials,
+			final ITransitionProvider<ACTION, ?> transProvider) {
+		return initials.stream().filter(a -> !transProvider.isSummaryWithImplementation(a))
+				.collect(Collectors.toList());
+	}
+
 	/**
 	 * Run abstract interpretation on the RCFG of the future (experimental).
 	 *
@@ -263,7 +270,7 @@ public final class AbstractInterpreter {
 
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 		final Collection<IcfgEdge> filteredInitialElements =
-				transProvider.filterInitialElements(RcfgUtils.getInitialEdges(root));
+				filterInitials(RcfgUtils.getInitialEdges(root), transProvider);
 
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");

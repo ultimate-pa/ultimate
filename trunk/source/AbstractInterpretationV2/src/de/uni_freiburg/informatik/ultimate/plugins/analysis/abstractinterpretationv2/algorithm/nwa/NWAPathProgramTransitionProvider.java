@@ -55,12 +55,6 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 	}
 
 	@Override
-	public Collection<CodeBlock> filterInitialElements(final Collection<CodeBlock> elems) {
-		return super.filterInitialElements(elems).stream().filter(a -> mLetter2Index.contains(a))
-				.collect(Collectors.toList());
-	}
-
-	@Override
 	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.contains(a) || a instanceof Summary)
 				.map(a -> (CodeBlock) a).collect(Collectors.toList());

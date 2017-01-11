@@ -31,44 +31,110 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 
 /**
+ * A {@link ITransitionProvider} describes the successor/predecessor relation of a control flow graph.
+ *
+ * @param <ACTION>
+ *            The type of transitions of the control flow graph.
+ * @param <LOCATION>
+ *            The type of locations/vertices of the control flow graph.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- *
  */
 public interface ITransitionProvider<ACTION, LOCATION> {
 
-	Collection<ACTION> filterInitialElements(Collection<ACTION> actions);
-
+	/**
+	 * @param action
+	 *            The current transition.
+	 * @param scope
+	 *            The current scope.
+	 * @return all outgoing transitions of the target of the current transition that can be taken when in the current
+	 *         scope.
+	 */
 	Collection<ACTION> getSuccessors(ACTION action, ACTION scope);
 
+	/**
+	 * @param action
+	 *            a transition.
+	 * @param scope
+	 *            the current scope of the analysis.
+	 * @return true if the target of this transition is an error location.
+	 */
 	boolean isSuccessorErrorLocation(ACTION action, ACTION scope);
 
-	String toLogString(ACTION action);
-
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @return true if the given transition enters a new scope, false otherwise. True also implies that the current
+	 *         transition is a call transition.
+	 */
 	boolean isEnteringScope(ACTION action);
 
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @param scope
+	 *            the current scope (i.e., a call transition)
+	 * @return true if the given transition leaves the given scope, false otherwise.
+	 */
 	boolean isLeavingScope(ACTION action, ACTION scope);
 
 	/**
+	 * @param action
+	 *            the current transition.
+	 * @param call
+	 *            some call transition.
 	 * @return true iff <code>action</code> is a summary for <code>call</code>
 	 */
 	boolean isSummaryForCall(ACTION action, ACTION call);
 
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @return true iff the given transition is a summary for which an implementation and thus a call transition exists.
+	 */
 	boolean isSummaryWithImplementation(ACTION action);
 
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @return the source of the current transition.
+	 */
 	LOCATION getSource(ACTION action);
 
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @return the target of the current transition.
+	 */
 	LOCATION getTarget(ACTION action);
 
+	/**
+	 * @param loc
+	 *            the current location.
+	 * @return all outgoing transitions of this location.
+	 */
 	Collection<ACTION> getSuccessorActions(LOCATION loc);
 
+	/**
+	 * @param call
+	 *            a call transition.
+	 * @return if call is a call transition, return the summary transition that represents the call.
+	 */
 	ACTION getSummaryForCall(ACTION call);
 
 	/**
-	 * Returns the name of the procedure after or during the execution of this statement.
-	 *
-	 * For summaries, this returns the name of the procedure that is summarized.
+	 * @param current
+	 *            the current transition.
+	 * @return the name of the procedure after or during the execution of the given transition. For summary transitions,
+	 *         this returns the name of the procedure that is summarized.
 	 */
 	String getProcedureName(ACTION current);
+
+	/**
+	 * @param action
+	 *            The current transition.
+	 * @return a String representation of the current transition.
+	 */
+	String toLogString(ACTION action);
 }
