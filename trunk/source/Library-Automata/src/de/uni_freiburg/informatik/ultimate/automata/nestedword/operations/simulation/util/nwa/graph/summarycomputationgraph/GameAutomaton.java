@@ -190,7 +190,7 @@ public class GameAutomaton<LETTER, STATE>
 					lasp.getOutgoingTransitionsForSpoiler(spoilerState, letter);
 			final Set<STATE> spoilerSuccs = NestedWordAutomataUtils.constructSuccessorSet(spoilerSuccIt);
 			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> duplicatorSuccIt =
-					lasp.getOutgoingTransitionsForSpoiler(duplicatorState, letter);
+					lasp.getOutgoingTransitionsForDuplicator(duplicatorState, letter);
 			final Set<STATE> duplicatorSuccs = NestedWordAutomataUtils.constructSuccessorSet(duplicatorSuccIt);
 			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter =
 					computeSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs,
@@ -228,7 +228,7 @@ public class GameAutomaton<LETTER, STATE>
 		for (final STATE spoilerSucc : spoilerSuccs) {
 			if (duplicatorSuccs.contains(spoilerSucc)) {
 				if (mAlwaysOmitSymmetricPairsWithFalseBit && (!vertex.isB() || mOperand.isFinal(spoilerSucc))) {
-					// if "delayed bit" was not set or spoilerSucc is accepting 
+					// if "delayed bit" was not set or spoilerSucc is accepting
 					// (which means the delayed bit would be 'false' for the successor)
 					// we make this a duplicator winning sink
 					// In fact we do not construct it.
@@ -236,7 +236,7 @@ public class GameAutomaton<LETTER, STATE>
 				}
 			}
 			final IGameLetter<LETTER, STATE> gameLetter =
-					getOrConstuctSuccessorGameLetter(vertex, letter, transitionType, spoilerSucc);
+					getOrConstructSuccessorGameLetter(vertex, letter, transitionType, spoilerSucc);
 			if (duplicatorSuccs.isEmpty()) {
 				final IGameState wrapper = getOrConstructSuccessorSpoilerWinningSinkVertex(vertex, letter, spoilerSucc,
 						spoilerStateNeededInSucc);
@@ -281,7 +281,7 @@ public class GameAutomaton<LETTER, STATE>
 		return result;
 	}
 
-	private IGameLetter<LETTER, STATE> getOrConstuctSuccessorGameLetter(
+	private IGameLetter<LETTER, STATE> getOrConstructSuccessorGameLetter(
 			final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter, final ETransitionType transitionType,
 			final STATE spoilerSucc) {
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
