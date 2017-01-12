@@ -391,7 +391,7 @@ public class ToolchainManager {
 				}
 
 			} catch (final Exception e) {
-				mLogger.fatal(getLogPrefix() + ": Exception during parsing: " + e.getMessage());
+				mLogger.fatal(getLogPrefix() + ": Exception during parsing: ", e);
 				resetModelManager();
 				throw e;
 			} finally {
