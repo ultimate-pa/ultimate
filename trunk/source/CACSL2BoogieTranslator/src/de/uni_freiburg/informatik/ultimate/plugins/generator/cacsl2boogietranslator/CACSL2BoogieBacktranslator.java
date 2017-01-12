@@ -189,6 +189,7 @@ public class CACSL2BoogieBacktranslator
 					continue;
 				}
 
+				final AtomicTraceElement<CACSLLocation> newAte;
 				if (cnode instanceof CASTTranslationUnit) {
 					// if cnode points to the TranslationUnit, cnode should be
 					// Ultimate.init or Ultimate.start and we make our
@@ -209,25 +210,26 @@ public class CACSL2BoogieBacktranslator
 				} else if (cnode instanceof CASTIfStatement) {
 					// if cnode is an if, we point to the condition
 					final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
-					translatedATEs.add(new AtomicTraceElement<>(cloc,
+					newAte = new AtomicTraceElement<>(cloc,
 							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(),
-							ate.getRelevanceInformation()));
+							ate.getRelevanceInformation());
 				} else if (cnode instanceof CASTWhileStatement) {
 					// if cnode is a while, we know that it is not ignored and that
 					// it comes from the if(!cond)break; construct in Boogie.
 					// we therefore invert the stepinfo, i.e. from condevaltrue
 					// to condevalfalse
-					handleConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition(), translatedATEs);
+					newAte = handleConditional(ate, cloc, ((CASTWhileStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
-					handleConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition(), translatedATEs);
+					newAte = handleConditional(ate, cloc, ((CASTDoStatement) cnode).getCondition());
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
-					handleConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression(), translatedATEs);
+					newAte = handleConditional(ate, cloc, ((CASTForStatement) cnode).getConditionExpression());
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
 							translatedATEs, translatedProgramStates);
+					assert translatedATEs.size() == translatedProgramStates.size();
 					continue;
 				} else {
 					// just use as it, all special cases should have been
@@ -242,9 +244,12 @@ public class CACSL2BoogieBacktranslator
 						// we dont want to see no dirty temp havoc
 						continue;
 					}
-					translatedATEs.add(new AtomicTraceElement<CACSLLocation>(cloc, ate.getRelevanceInformation()));
+					newAte = new AtomicTraceElement<>(cloc, ate.getRelevanceInformation());
 				}
-				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
+				if (newAte != null) {
+					translatedATEs.add(newAte);
+					translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
+				}
 
 			} else if (loc instanceof ACSLLocation) {
 				// for now, just use ACSL as-it
@@ -257,11 +262,13 @@ public class CACSL2BoogieBacktranslator
 				reportUnfinishedBacktranslation(
 						UNFINISHED_BACKTRANSLATION + ": Invalid location (Location is no CACSLLocation)");
 			}
+			assert translatedATEs.size() == translatedProgramStates.size();
 		}
 
 		// TODO: This is hacky because we get imprecise counterexamples for empty loops like BugForLoop01 -- the real
 		// reason must be the null node itself
 		// remove all ATEs where the step node is null
+
 		final Iterator<AtomicTraceElement<CACSLLocation>> iter = translatedATEs.iterator();
 		final Iterator<ProgramState<IASTExpression>> iterPs = translatedProgramStates.iterator();
 		while (iter.hasNext()) {
@@ -280,8 +287,7 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements and return the result
-		final CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
-		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = check.check(translatedATEs);
+		final List<AtomicTraceElement<CACSLLocation>> checkedTranslatedATEs = checkForSubtreeInclusion(translatedATEs);
 		return new CACSLProgramExecution(initialState, checkedTranslatedATEs, translatedProgramStates, mLogger,
 				mServices);
 	}
@@ -293,14 +299,14 @@ public class CACSL2BoogieBacktranslator
 		return check.areAllTemp();
 	}
 
-	private void handleConditional(final AtomicTraceElement<BoogieASTNode> ate, final CACSLLocation cloc,
-			final IASTExpression condition, final List<AtomicTraceElement<CACSLLocation>> translatedATEs) {
+	private AtomicTraceElement<CACSLLocation> handleConditional(final AtomicTraceElement<BoogieASTNode> ate,
+			final CACSLLocation cloc, final IASTExpression condition) {
 		final EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 		if (newSi == null) {
-			return;
+			return null;
 		}
-		translatedATEs.add(new AtomicTraceElement<>(cloc, LocationFactory.createCLocation(condition), newSi,
-				ate.getRelevanceInformation()));
+		return new AtomicTraceElement<>(cloc, LocationFactory.createCLocation(condition), newSi,
+				ate.getRelevanceInformation());
 	}
 
 	/**
@@ -930,11 +936,11 @@ public class CACSL2BoogieBacktranslator
 		if (len == 32) {
 			final int intBits = Integer.parseUnsignedInt(binary, 2);
 			final float floatValue = Float.intBitsToFloat(intBits);
-			return new BigDecimal(floatValue);
+			return BigDecimal.valueOf(floatValue);
 		} else if (len == 64) {
 			final long longBits = Long.parseUnsignedLong(binary, 2);
 			final double doubleValue = Double.longBitsToDouble(longBits);
-			return new BigDecimal(doubleValue);
+			return BigDecimal.valueOf(doubleValue);
 		} else {
 			throw new IllegalArgumentException("Unsupported length: " + len);
 		}
@@ -1016,11 +1022,6 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private void checkLiteral(final CType cType, final Expression expr, final String value) {
-		if (value.contains("~fp~LONGDOUBLE")) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
-					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
-
-		}
 		if (value == null || "null".equals(value)) {
 			if (cType == null) {
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
@@ -1030,6 +1031,10 @@ public class CACSL2BoogieBacktranslator
 						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated for associated CType "
 						+ cType);
 			}
+		} else if (value.contains("~fp~LONGDOUBLE")) {
+			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
+					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+
 		}
 	}
 
@@ -1174,85 +1179,81 @@ public class CACSL2BoogieBacktranslator
 	 *
 	 * There may be a better solution to this (its rather expensive).
 	 *
-	 * @author dietsch@informatik.uni-freiburg.de
-	 *
 	 */
-	private class CheckForSubtreeInclusion {
+	protected static List<AtomicTraceElement<CACSLLocation>>
+			checkForSubtreeInclusion(final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
 
-		protected List<AtomicTraceElement<CACSLLocation>>
-				check(final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
+		// first, compute lookup data structure
+		final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents = new HashMap<>();
+		for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
+			final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
 
-			// first, compute lookup data structure
-			final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents = new HashMap<>();
-			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-				final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
-
-				if (!(ate.getStep() instanceof CLocation)) {
-					continue;
-				}
-				final IASTNode origNode = ((CLocation) ate.getStep()).getNode();
-				final Set<IASTNode> parents = new HashSet<>();
-
-				IASTNode currentParent = origNode.getParent();
-				while (currentParent != null) {
-					parents.add(currentParent);
-					currentParent = currentParent.getParent();
-				}
-
-				ateToParents.put(ate, parents);
-			}
-
-			// second, compute actual tree inclusion check
-			final List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
-			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-				final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
-				final AtomicTraceElement<CACSLLocation> currentResult =
-						check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL, ateToParents);
-				rtr.add(currentResult);
-			}
-			return rtr;
-		}
-
-		private AtomicTraceElement<CACSLLocation> check(final AtomicTraceElement<CACSLLocation> ate,
-				final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, final int start,
-				final StepInfo newSi, final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents) {
-
-			final Set<IASTNode> parents = ateToParents.get(ate);
-
-			if (parents == null) {
-				// not implemented for ACSL
-				return ate;
+			if (!(ate.getStep() instanceof CLocation)) {
+				continue;
 			}
 			final IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+			final Set<IASTNode> parents = new HashSet<>();
 
-			if (!(origNode instanceof IASTExpression)) {
-				// do nothing for statements
-				return ate;
+			IASTNode currentParent = origNode.getParent();
+			while (currentParent != null) {
+				parents.add(currentParent);
+				currentParent = currentParent.getParent();
 			}
 
-			for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
-				final AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
-				if (!(current.getStep() instanceof CLocation)) {
-					// skip acsl nodes
-					continue;
-				}
+			ateToParents.put(ate, parents);
+		}
 
-				// TODO: Fix relevance information
+		// second, compute actual tree inclusion check
+		final List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
+		for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
+			final AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+			final AtomicTraceElement<CACSLLocation> currentResult = checkForSubtreeInclusion(ate,
+					translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL, ateToParents);
+			rtr.add(currentResult);
+		}
+		return rtr;
+	}
 
-				final IASTNode candidate = ((CLocation) current.getStep()).getNode();
-				if (parents.contains(candidate)) {
-					EnumSet<StepInfo> set = ate.getStepInfo();
-					if (set.isEmpty() || set.contains(StepInfo.NONE)) {
-						set = EnumSet.of(newSi);
-					} else {
-						set.add(newSi);
-					}
-					return new AtomicTraceElement<>(current.getStep(), ate.getStep(), set,
-							mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()));
-				}
-			}
+	private static AtomicTraceElement<CACSLLocation> checkForSubtreeInclusion(
+			final AtomicTraceElement<CACSLLocation> ate,
+			final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, final int start,
+			final StepInfo newSi, final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents) {
+
+		final Set<IASTNode> parents = ateToParents.get(ate);
+
+		if (parents == null) {
+			// not implemented for ACSL
 			return ate;
 		}
+		final IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+
+		if (!(origNode instanceof IASTExpression)) {
+			// do nothing for statements
+			return ate;
+		}
+
+		for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
+			final AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
+			if (!(current.getStep() instanceof CLocation)) {
+				// skip acsl nodes
+				continue;
+			}
+
+			// TODO: Fix relevance information
+
+			final IASTNode candidate = ((CLocation) current.getStep()).getNode();
+			if (parents.contains(candidate)) {
+				EnumSet<StepInfo> set = ate.getStepInfo();
+				if (set.isEmpty() || set.contains(StepInfo.NONE)) {
+					set = EnumSet.of(newSi);
+				} else {
+					set.add(newSi);
+				}
+				return new AtomicTraceElement<>(current.getStep(), ate.getStep(), set,
+						mergeRelevaneInformation(ate.getRelevanceInformation(), current.getRelevanceInformation()));
+			}
+		}
+		return ate;
 	}
 
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {

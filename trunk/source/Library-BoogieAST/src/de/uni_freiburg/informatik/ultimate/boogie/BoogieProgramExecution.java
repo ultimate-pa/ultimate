@@ -60,7 +60,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
 
 	public BoogieProgramExecution(final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-	        final List<AtomicTraceElement<BoogieASTNode>> trace) {
+			final List<AtomicTraceElement<BoogieASTNode>> trace) {
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
 	}
@@ -90,71 +90,13 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	@Override
 	public String toString() {
-		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
-		        new BoogieBacktranslationValueProvider());
+		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef =
+				new ProgramExecutionFormatter<>(new BoogieBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
 	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
-		return new IValuation() {
-			@Override
-			public VariableValuesMap getValuesForFailurePathIndex(final int index) {
-				final ProgramState<Expression> ps = getProgramState(index);
-				if (ps == null) {
-					return new VariableValuesMap(getEmtpyProgramState());
-				} else {
-					return new VariableValuesMap(translateProgramState(ps));
-				}
-			}
-
-			public Map<String, Entry<IBoogieType, List<String>>> getEmtpyProgramState() {
-				return Collections.emptyMap();
-			}
-
-			public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(
-		            final ProgramState<Expression> ps) {
-				final Map<String, Entry<IBoogieType, List<String>>> result = new HashMap<>();
-				for (final Expression var : ps.getVariables()) {
-					final String varString = backtranslationWorkaround(translatorSequence, var);
-					final List<String> valuesString = exprSet2StringList(ps.getValues(var));
-					result.put(varString, new SimpleEntry<IBoogieType, List<String>>(var.getType(), valuesString));
-				}
-				return result;
-			}
-
-			private List<String> exprSet2StringList(final Collection<Expression> expressions) {
-				final List<String> result = new ArrayList<String>(expressions.size());
-				for (final Expression expr : expressions) {
-					result.add(backtranslationWorkaround(translatorSequence, expr));
-				}
-				return result;
-			}
-		};
-	}
-
-	/**
-	 * Use Ultimate's translator sequence do translate a result expression back through the toolchain.
-	 *
-	 * @param expr
-	 *            the resulting expression
-	 * @return a string corresponding to the backtranslated expression
-	 */
-	private static <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
-	        final SE expr) {
-		final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
-		        translatorSequence.toArray(new ITranslator[translatorSequence.size()]));
-
-		// If the result is a Boogie expression, we use the Boogie pretty
-		// printer
-		String result;
-		if (backExpr instanceof String) {
-			result = (String) backExpr;
-		} else if (backExpr instanceof Expression) {
-			result = BoogiePrettyPrinter.print((Expression) backExpr);
-		} else {
-			result = backExpr.toString();
-		}
-		return result;
+		return new BoogieValuation(translatorSequence);
 	}
 
 	@Override
@@ -170,5 +112,69 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public String getSVCOMPWitnessString() {
 		return null;
+	}
+
+	private final class BoogieValuation implements IValuation {
+		private final List<ITranslator<?, ?, ?, ?, ?, ?>> mTranslatorSequence;
+
+		private BoogieValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
+			mTranslatorSequence = translatorSequence;
+		}
+
+		@Override
+		public VariableValuesMap getValuesForFailurePathIndex(final int index) {
+			final ProgramState<Expression> ps = getProgramState(index);
+			if (ps == null) {
+				return new VariableValuesMap(getEmtpyProgramState());
+			}
+			return new VariableValuesMap(translateProgramState(ps));
+		}
+
+		public Map<String, Entry<IBoogieType, List<String>>> getEmtpyProgramState() {
+			return Collections.emptyMap();
+		}
+
+		public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(final ProgramState<Expression> ps) {
+			final Map<String, Entry<IBoogieType, List<String>>> result = new HashMap<>();
+			for (final Expression var : ps.getVariables()) {
+				final String varString = backtranslationWorkaround(mTranslatorSequence, var);
+				final List<String> valuesString = exprSet2StringList(ps.getValues(var));
+				result.put(varString, new SimpleEntry<>(var.getType(), valuesString));
+			}
+			return result;
+		}
+
+		private List<String> exprSet2StringList(final Collection<Expression> expressions) {
+			final List<String> result = new ArrayList<>(expressions.size());
+			for (final Expression expr : expressions) {
+				result.add(backtranslationWorkaround(mTranslatorSequence, expr));
+			}
+			return result;
+		}
+
+		/**
+		 * Use Ultimate's translator sequence do translate a result expression back through the toolchain.
+		 *
+		 * @param expr
+		 *            the resulting expression
+		 * @return a string corresponding to the backtranslated expression
+		 */
+		private <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
+				final SE expr) {
+			final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
+					translatorSequence.toArray(new ITranslator[translatorSequence.size()]));
+
+			// If the result is a Boogie expression, we use the Boogie pretty
+			// printer
+			String result;
+			if (backExpr instanceof String) {
+				result = (String) backExpr;
+			} else if (backExpr instanceof Expression) {
+				result = BoogiePrettyPrinter.print((Expression) backExpr);
+			} else {
+				result = backExpr.toString();
+			}
+			return result;
+		}
 	}
 }
