@@ -1,0 +1,31 @@
+// Testfile dumped by Ultimate at 2017/01/08 23:04:06
+// Shrunk by Christian Schilling 2017/01/12
+//
+// Revealed a problem in the delayed simulation-based minimization for NWA.
+//
+// {q0,q3} and {q1,q4}, but the further is not correct.
+
+NestedWordAutomaton nwa3 = removeNonLiveStates(nwa);
+print(ReduceNwaDelayedSimulationB(nwa3));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a" "b"},
+	returnAlphabet = {"r"},
+	states = {"q1" "qF" "q3" "q2" "q4" "q0"},
+	initialStates = {"q0"},
+	finalStates = {"qF" "q0"},
+	callTransitions = {
+		("q0" "c" "q1")
+		("q3" "c" "q4")
+	},
+	internalTransitions = {
+		("q2" "a" "qF")
+		("q2" "b" "q3")
+		("qF" "a" "qF")
+	},
+	returnTransitions = {
+		("q1" "q0" "r" "q2")
+		("q4" "q3" "r" "q2")
+	}
+);
