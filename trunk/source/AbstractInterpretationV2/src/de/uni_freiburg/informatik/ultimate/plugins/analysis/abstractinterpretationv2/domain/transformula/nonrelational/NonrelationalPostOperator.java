@@ -33,6 +33,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -55,12 +57,19 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
 		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
-	        throw new UnsupportedOperationException("Summary for procedure without implementation");
-	    }
+			throw new UnsupportedOperationException("Summary for procedure without implementation");
+		}
+		
+		final UnmodifiableTransFormula transformula = transition.getTransformula();
+		final Term term = transformula.getFormula();
 		
 		final List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		
+		if (true) {
+			throw new AssertionError("Not implemented");
+		}
+
 		// TODO
 		
 		return currentStates;
