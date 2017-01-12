@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.FutureRcfgVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
@@ -50,7 +50,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractDomain<STATE, IcfgEdge, IProgramVar> domain =
 				(IAbstractDomain<STATE, IcfgEdge, IProgramVar>) selectDomainFutureCfg();
 		final IAbstractStateStorage<STATE, IcfgEdge, IProgramVar, IcfgLocation> storageProvider =
-				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge, IProgramVar> variableProvider =
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
@@ -69,7 +69,7 @@ public class FixpointEngineFutureParameterFactory {
 					final ILoopDetector<IcfgEdge> loopDetector,
 					final IAbstractDomain<STATE, IcfgEdge, IProgramVar> domain) {
 		final IAbstractStateStorage<STATE, IcfgEdge, IProgramVar, IcfgLocation> storageProvider =
-				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge, IProgramVar> variableProvider =
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
@@ -99,7 +99,7 @@ public class FixpointEngineFutureParameterFactory {
 		final IAbstractDomain<STATE, IcfgEdge, IProgramVar> domain =
 				(IAbstractDomain<STATE, IcfgEdge, IProgramVar>) createEqualityDomain(logger);
 		final IAbstractStateStorage<STATE, IcfgEdge, IProgramVar, IcfgLocation> storageProvider =
-				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge, IProgramVar> variableProvider =
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =

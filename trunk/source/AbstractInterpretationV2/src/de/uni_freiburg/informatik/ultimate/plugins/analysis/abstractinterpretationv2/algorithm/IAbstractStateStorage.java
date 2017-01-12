@@ -35,32 +35,51 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Interface that describes how abstract states can be stored and retrieved relative to actions of a (program) model.
+ * An {@link IAbstractStateStorage} allows to store the relation between abstract states, program locations (of a
+ * control flow graph), and scopes.
+ *
+ * It also provides methods to convert all abstract states stored at a location to {@link Term}s.
+ *
+ * A {@link IAbstractStateStorage} instance is relative to one scope stack and retains links to its parent abstract
+ * state storage.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-	
+
+	/**
+	 * @param transition
+	 *            the current transition.
+	 * @return an {@link AbstractMultiState} that represents multiple abstract states that were saved at the target
+	 *         location of the current transition.
+	 */
 	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractPostStates(ACTION transition);
-	
+
+	/**
+	 * Save a new
+	 * 
+	 * @param transition
+	 * @param state
+	 * @return
+	 */
 	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractPostState(ACTION transition,
 			AbstractMultiState<STATE, ACTION, VARDECL> state);
-	
+
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage(ACTION scope);
-	
-	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script);
-	
-	Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
-	
-	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
-	
-	Set<Term> getTerms(final ACTION initialTransition, final Script script);
-	
+
 	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
-	
+
 	void scopeFixpointReached();
-	
+
 	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
 			ACTION summaryAction);
+
+	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script);
+
+	Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
+
+	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
+
+	Set<Term> getTerms(final ACTION initialTransition, final Script script);
 }
