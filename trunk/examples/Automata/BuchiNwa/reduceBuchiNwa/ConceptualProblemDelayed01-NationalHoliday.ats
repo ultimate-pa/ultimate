@@ -1,0 +1,24 @@
+// Author: Christian, Daniel, Matthias
+// Date: 2017-01-12
+//
+
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" },
+    returnAlphabet = {"r" },
+    states = {"q0" "q1" "qf" },
+    initialStates = {"q0" },
+    finalStates = {"qf" },
+    callTransitions = {
+         ("q0" "c" "q1")
+    },
+    internalTransitions = {
+         ("q0" "a" "qf")
+    },
+    returnTransitions = {
+         ("q1" "q0" "r" "q0")
+    }
+);
