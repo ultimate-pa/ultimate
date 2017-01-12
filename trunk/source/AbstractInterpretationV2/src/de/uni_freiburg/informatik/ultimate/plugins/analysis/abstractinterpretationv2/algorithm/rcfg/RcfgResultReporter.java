@@ -54,23 +54,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
+public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
 		implements IResultReporter<STATE, ACTION, VARDECL, LOC> {
-
+	
 	protected final IUltimateServiceProvider mServices;
-
+	
 	public RcfgResultReporter(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-
+	
 	@Override
 	public void reportPossibleError(
 			final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<IcfgEdge> trace = new ArrayList<>();
-
+		
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
-
+		
 		int i = 0;
 		for (final Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOC, ACTION> elem : cex.getAbstractExecution()) {
 			trace.add(elem.getThird());
@@ -78,33 +78,33 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, ACTION, VARD
 			++i;
 		}
 		final IcfgProgramExecution pex = new IcfgProgramExecution(trace, programStates);
-
+		
 		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, getLast(cex),
 				mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
-
+		
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
-
+	
 	private ProgramState<Term>
 			computeProgramState(final AbstractMultiState<STATE, ACTION, VARDECL> abstractMultiState) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}
-
+	
 	private LOC getLast(final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}
-
+	
 	@Override
 	public void reportSafe(final ACTION first) {
 		reportSafe(first, "No error locations were reached.");
 	}
-
+	
 	@Override
 	public void reportSafe(final ACTION first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
 	}
-
+	
 }

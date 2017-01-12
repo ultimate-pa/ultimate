@@ -109,11 +109,11 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 			// return Validity.UNKNOWN;
 		}
 		
-		final IAbstractState<?, ?, ?> preState = pre.getAbstractState();
-		final IAbstractState<?, ?, ?> postState = succ.getAbstractState();
+		final IAbstractState<?, ?> preState = pre.getAbstractState();
+		final IAbstractState<?, ?> postState = succ.getAbstractState();
 		
 		final CodeBlock block = (CodeBlock) act;
-		final List<IAbstractState> postStates = applyPostInternally(preState, pre.getPostOperator(), block);
+		final List<IAbstractState<?, ?>> postStates = applyPostInternally(preState, pre.getPostOperator(), block);
 		
 		for (final IAbstractState post : postStates) {
 			if (isSubsetInternally(post, postState)) {
@@ -124,7 +124,7 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 		return Validity.UNKNOWN;
 	}
 	
-	private static List<IAbstractState> applyPostInternally(final IAbstractState<?, ?, ?> currentState,
+	private static List<IAbstractState<?, ?>> applyPostInternally(final IAbstractState<?, ?> currentState,
 			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
 	}

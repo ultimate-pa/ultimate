@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * A state in the {@link CompoundDomain}.
@@ -53,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomainState implements IAbstractState<CompoundDomainState, IBoogieVar> {
 	
 	private static int sId;
 
 	private final IUltimateServiceProvider mServices;
 
-	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
+	private final List<IAbstractState<?, IBoogieVar>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
 	private final int mId;
 
@@ -93,7 +92,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	 *            The abstract state to create the new state from.
 	 */
 	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList,
-			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
+			final List<IAbstractState<?, IBoogieVar>> abstractStateList) {
 		sId++;
 		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
@@ -165,7 +164,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public CompoundDomainState patch(final CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
+		final List<IAbstractState<?, IBoogieVar>> returnList = new ArrayList<>();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			returnList.add(patchInternally(mAbstractStates.get(i), dominator.mAbstractStates.get(i)));
 		}
@@ -223,7 +222,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 
-		for (final IAbstractState<?, CodeBlock, IBoogieVar> state : mAbstractStates) {
+		for (final IAbstractState<?, IBoogieVar> state : mAbstractStates) {
 			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
 		}
 
@@ -238,8 +237,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return s.substring(0, 3);
 	}
 
-	private CompoundDomainState performStateOperation(
-			final Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
+	private CompoundDomainState
+			performStateOperation(final Function<IAbstractState<?, IBoogieVar>, IAbstractState<?, IBoogieVar>> state) {
 		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
@@ -248,7 +247,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return mDomainList;
 	}
 
-	protected List<IAbstractState<?, CodeBlock, IBoogieVar>> getAbstractStatesList() {
+	protected List<IAbstractState<?, IBoogieVar>> getAbstractStatesList() {
 		return mAbstractStates;
 	}
 
@@ -269,9 +268,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return rtr;
 	}
 
-	private static SubsetResult isStrictSubsetOf(final SubsetResult current,
-			final IAbstractState<?, CodeBlock, IBoogieVar> aState,
-			final IAbstractState<?, CodeBlock, IBoogieVar> bState) {
+	private static SubsetResult isStrictSubsetOf(final SubsetResult current, final IAbstractState<?, IBoogieVar> aState,
+			final IAbstractState<?, IBoogieVar> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
 		return current.update(result);
 	}

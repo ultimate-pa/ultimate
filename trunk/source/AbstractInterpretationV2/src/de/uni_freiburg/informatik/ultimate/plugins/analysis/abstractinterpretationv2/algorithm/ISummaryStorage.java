@@ -33,9 +33,9 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ISummaryStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface ISummaryStorage<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
 	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
 			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState);
-	
+
 }

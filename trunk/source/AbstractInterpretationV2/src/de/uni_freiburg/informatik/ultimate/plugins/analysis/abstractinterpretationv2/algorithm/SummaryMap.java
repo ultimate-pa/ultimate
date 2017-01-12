@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
+final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>
 		implements ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> {
 	
 	private final Map<String, Set<Summary>> mSummaries;
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final ILogger mLogger;
-
+	
 	SummaryMap(final IAbstractStateBinaryOperator<STATE> mergeOp, final ITransitionProvider<ACTION, LOCATION> trans,
 			final ILogger logger) {
 		mTransProvider = trans;
@@ -58,7 +58,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		mSummaries = new HashMap<>();
 		mLogger = logger;
 	}
-
+	
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
 			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState) {
@@ -69,7 +69,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 						.findAny().map(a -> a.getReturnPreState()).orElse(null);
 		return rtr;
 	}
-
+	
 	/**
 	 *
 	 * @param callPostState
@@ -82,7 +82,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		// current is a call, but we have to find the summary
 		final String procName = mTransProvider.getProcedureName(callStatement);
 		final Set<Summary> oldSummaries = getSummary(procName);
-
+		
 		final Summary newSummary;
 		if (oldSummaries.isEmpty()) {
 			newSummary = new Summary(callPostState, returnPreState);
@@ -92,7 +92,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		}
 		oldSummaries.add(newSummary);
 	}
-
+	
 	private Summary updateSummaries(final Set<Summary> oldSummaries,
 			final AbstractMultiState<STATE, ACTION, VARDECL> callPostState,
 			final AbstractMultiState<STATE, ACTION, VARDECL> returnPreState, final ACTION callStatement) {
@@ -118,7 +118,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		logCurrentSummaries("Add summary", callStatement, rtr);
 		return rtr;
 	}
-
+	
 	private void logCurrentSummaries(final String message, final ACTION current, final Summary newSummary) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
@@ -128,7 +128,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 				+ ": PreCall " + LoggingHelper.getStateString(newSummary.getCallPostState()) + " PreReturn "
 				+ LoggingHelper.getStateString(newSummary.getReturnPreState()));
 	}
-
+	
 	private Set<Summary> getSummary(final String procName) {
 		final Set<Summary> summaries = mSummaries.get(procName);
 		if (summaries == null) {
@@ -138,12 +138,12 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		}
 		return summaries;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mSummaries.toString();
 	}
-
+	
 	/**
 	 * Container a procedure summary, consisting of state after call and state before return
 	 *
@@ -152,27 +152,27 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 	private final class Summary {
 		private final AbstractMultiState<STATE, ACTION, VARDECL> mCallPostState;
 		private final AbstractMultiState<STATE, ACTION, VARDECL> mReturnPreState;
-
+		
 		private Summary(final AbstractMultiState<STATE, ACTION, VARDECL> callPost,
 				final AbstractMultiState<STATE, ACTION, VARDECL> returnPre) {
 			mCallPostState = callPost;
 			mReturnPreState = returnPre;
 		}
-
+		
 		AbstractMultiState<STATE, ACTION, VARDECL> getReturnPreState() {
 			return mReturnPreState;
 		}
-
+		
 		AbstractMultiState<STATE, ACTION, VARDECL> getCallPostState() {
 			return mCallPostState;
 		}
-
+		
 		@Override
 		public String toString() {
 			return "{CallPost: " + LoggingHelper.getStateString(mCallPostState) + " ReturnPre: "
 					+ LoggingHelper.getStateString(mReturnPreState) + "}";
 		}
-
+		
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -181,7 +181,7 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 			result = prime * result + ((mCallPostState == null) ? 0 : mCallPostState.hashCode());
 			return result;
 		}
-
+		
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {

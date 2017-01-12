@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link IntervalDomainState} for the given statement.
@@ -46,21 +45,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class IntervalDomainStatementProcessor
 		extends NonrelationalStatementProcessor<IntervalDomainState, IntervalDomainValue> {
-
+	
 	protected IntervalDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
 		super(logger, boogieSymbolTable, bpl2SmtTable, maxParallelStates);
 	}
-
+	
 	@Override
-	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock>
+	protected IEvaluatorFactory<IntervalDomainValue, IntervalDomainState>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final EvaluatorFactory.Function<String, IntervalDomainValue> valueExpressionEvaluatorCreator =
 				(value, type) -> new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value));
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new IntervalValueFactory(),
 				valueExpressionEvaluatorCreator);
 	}
-
+	
 	@Override
 	protected Expression normalizeExpression(final Expression expr) {
 		return new ExpressionNormalizer().transform(expr);

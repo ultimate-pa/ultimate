@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * An evaluator for unary expressions in a nonrelational abstract domain.
@@ -53,13 +52,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <STATE>
  *            The type of states of the abstract domain.
  */
-public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
-		implements INAryEvaluator<VALUE, STATE, CodeBlock> {
-
+public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
+		implements INAryEvaluator<VALUE, STATE> {
+	
 	private final EvaluatorLogger mLogger;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, CodeBlock> mSubEvaluator;
+	private IEvaluator<VALUE, STATE> mSubEvaluator;
 	private Operator mOperator;
 
 	public UnaryExpressionEvaluator(final EvaluatorLogger logger,
@@ -130,7 +129,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 
 		if (mSubEvaluator == null) {

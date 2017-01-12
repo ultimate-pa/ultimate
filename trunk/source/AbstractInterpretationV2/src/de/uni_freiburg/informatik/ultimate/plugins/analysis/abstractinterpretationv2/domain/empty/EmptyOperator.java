@@ -35,19 +35,18 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <ACTION>
  * @param <VARDECL>
  */
-public final class EmptyOperator<ACTION, VARDECL>
-		implements IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> {
+public final class EmptyOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> {
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> apply(final EmptyDomainState<ACTION, VARDECL> first,
-			final EmptyDomainState<ACTION, VARDECL> second) {
+	public EmptyDomainState<VARDECL> apply(final EmptyDomainState<VARDECL> first,
+			final EmptyDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
-		
+
 		if (!first.hasSameVariables(second)) {
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
-		
+
 		return new EmptyDomainState<>(first.getVariables());
 	}
 }

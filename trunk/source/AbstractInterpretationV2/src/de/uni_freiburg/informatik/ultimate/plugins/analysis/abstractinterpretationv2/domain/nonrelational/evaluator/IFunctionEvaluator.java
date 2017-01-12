@@ -38,11 +38,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  *
  * @param <VALUE>
  * @param <STATE>
- * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION, VARDECL>
-		extends IEvaluator<VALUE, STATE, ACTION> {
+public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVar>, VARDECL>
+		extends IEvaluator<VALUE, STATE> {
 	
 	/**
 	 * @return The number of input parameters of the function.

@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
 	
 	/**
 	 * @return A new state of the current abstract domain.

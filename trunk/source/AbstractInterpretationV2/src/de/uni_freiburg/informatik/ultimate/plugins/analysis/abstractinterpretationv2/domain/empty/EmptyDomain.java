@@ -41,39 +41,38 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL>
-		implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
+	public EmptyDomainState<VARDECL> createFreshState() {
 		return new EmptyDomainState<>();
 	}
+	
+	@Override
+	public EmptyDomainState<VARDECL> createTopState() {
+		return new EmptyDomainState<>(false);
+	}
 
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> createTopState() {
-		return new EmptyDomainState<>(false);
+	public EmptyDomainState<VARDECL> createBottomState() {
+		return new EmptyDomainState<>(true);
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> createBottomState() {
-		return new EmptyDomainState<>(true);
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getWideningOperator() {
 		return new EmptyOperator<>();
 	}
-
+	
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getMergeOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getMergeOperator() {
 		return new EmptyOperator<>();
 	}
-
+	
 	@Override
-	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
+	public IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		// This domain is the least-expressive domain there is.

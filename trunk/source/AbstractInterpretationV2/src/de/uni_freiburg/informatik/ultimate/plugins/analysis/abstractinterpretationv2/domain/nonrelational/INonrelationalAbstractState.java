@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  * @param <ACTION>
  *            The type of the action.
  */
-public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION>
-		extends IAbstractState<STATE, ACTION, IBoogieVar> {
+public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, IBoogieVar>>
+		extends IAbstractState<STATE, IBoogieVar> {
 	
 	/**
 	 * Intersects <tt>this</tt> with another abstract state.

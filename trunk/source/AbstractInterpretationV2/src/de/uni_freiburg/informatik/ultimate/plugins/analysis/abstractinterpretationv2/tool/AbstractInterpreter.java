@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
-
+	
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 *
@@ -91,7 +91,7 @@ public final class AbstractInterpreter {
 	 * {@link IllegalArgumentException}. Produce no results.
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	public static <STATE extends IAbstractState<STATE, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
 			runSilently(final BoogieIcfgContainer root, final Collection<CodeBlock> initials,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
@@ -105,7 +105,7 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on the whole RCFG.
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	public static <STATE extends IAbstractState<STATE, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
 			run(final IIcfg<BoogieIcfgLocation> root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
@@ -118,7 +118,7 @@ public final class AbstractInterpreter {
 	 * @param pathProgramProjection
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	public static <STATE extends IAbstractState<STATE, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> runOnPathProgram(
 					final IIcfg<BoogieIcfgLocation> root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
 					final NestedRun<CodeBlock, ?> counterexample, final Set<CodeBlock> pathProgramProjection,
@@ -162,7 +162,7 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	private static <STATE extends IAbstractState<STATE, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
 			run(final IIcfg<BoogieIcfgLocation> root, final Collection<CodeBlock> initials,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services, final boolean isSilent) {
@@ -234,7 +234,7 @@ public final class AbstractInterpreter {
 	 * @param logger
 	 *
 	 */
-	public static <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	public static <STATE extends IAbstractState<STATE, IProgramVar>>
 			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> runFuture(final IIcfg<?> root,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services, final boolean isSilent,
 					final ILogger logger) {
@@ -262,12 +262,12 @@ public final class AbstractInterpreter {
 				(fac, log) -> fac.selectDomainFutureCfg(DataflowDomain.class, log));
 	}
 
-	private static <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	private static <STATE extends IAbstractState<STATE, IProgramVar>>
 			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation>
 			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 					final ILogger logger, final boolean isSilent,
 					final BiFunction<FixpointEngineFutureParameterFactory, ILogger, IAbstractDomain<STATE, IcfgEdge, IProgramVar>> fun) {
-
+		
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 		final Collection<IcfgEdge> filteredInitialElements =
 				filterInitials(RcfgUtils.getInitialEdges(root), transProvider);
@@ -311,7 +311,7 @@ public final class AbstractInterpreter {
 		return result;
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL, LOC>
+	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LOC>
 			IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>
 
 			runSilently(final Supplier<IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>> fun,
@@ -332,7 +332,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static <
-			STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
+			STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IcfgEdge, VARDECL, LOC extends IcfgLocation>
 			IResultReporter<STATE, ACTION, VARDECL, LOC>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
 		if (isSilent) {

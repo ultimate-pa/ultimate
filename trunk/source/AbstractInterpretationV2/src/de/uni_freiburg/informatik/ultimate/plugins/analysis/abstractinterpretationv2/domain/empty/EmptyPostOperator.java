@@ -40,20 +40,19 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <VARDECL>
  */
 public final class EmptyPostOperator<ACTION, VARDECL>
-		implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+		implements IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
 	
 	@Override
-	public List<EmptyDomainState<ACTION, VARDECL>> apply(final EmptyDomainState<ACTION, VARDECL> oldstate,
-			final ACTION concrete) {
-		final List<EmptyDomainState<ACTION, VARDECL>> returnList = new ArrayList<>();
+	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate, final ACTION concrete) {
+		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
 		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
 		return returnList;
 	}
-	
+
 	@Override
-	public List<EmptyDomainState<ACTION, VARDECL>> apply(final EmptyDomainState<ACTION, VARDECL> oldstate,
-			final EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, final ACTION transition) {
-		final List<EmptyDomainState<ACTION, VARDECL>> returnList = new ArrayList<>();
+	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate,
+			final EmptyDomainState<VARDECL> oldstateWithFreshVariables, final ACTION transition) {
+		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
 		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables())));
 		return returnList;
 	}

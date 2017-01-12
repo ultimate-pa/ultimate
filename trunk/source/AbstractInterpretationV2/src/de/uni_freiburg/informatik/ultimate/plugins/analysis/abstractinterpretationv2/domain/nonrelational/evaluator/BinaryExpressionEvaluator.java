@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Standard binary expression evaluator for Abstract Interpretation for Nonrelational Domain States.
@@ -57,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <STATE>
  *            The state type of the domain.
  */
-public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
-		implements INAryEvaluator<VALUE, STATE, CodeBlock> {
-
+public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
+		implements INAryEvaluator<VALUE, STATE> {
+	
 	private final Set<IBoogieVar> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
@@ -67,8 +66,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private IEvaluator<VALUE, STATE, CodeBlock> mLeftSubEvaluator;
-	private IEvaluator<VALUE, STATE, CodeBlock> mRightSubEvaluator;
+	private IEvaluator<VALUE, STATE> mLeftSubEvaluator;
+	private IEvaluator<VALUE, STATE> mRightSubEvaluator;
 
 	private Operator mOperator;
 
@@ -109,7 +108,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
-
+		
 		final VALUE firstValue = first.getValue();
 		final VALUE secondValue = second.getValue();
 		switch (op) {
@@ -227,7 +226,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState) {
-
+		
 		final List<STATE> returnList = new ArrayList<>();
 
 		final VALUE evalResultValue = evalResult.getValue();
@@ -413,7 +412,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {

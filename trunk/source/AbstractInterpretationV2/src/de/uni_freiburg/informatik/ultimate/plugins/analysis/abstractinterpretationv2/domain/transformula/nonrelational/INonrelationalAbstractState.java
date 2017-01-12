@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <ACTION>
  *            The type of the action.
  */
-public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, ACTION, IProgramVarOrConst>, ACTION>
-		extends IAbstractState<STATE, ACTION, IProgramVarOrConst> {
+public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, IProgramVarOrConst>>
+		extends IAbstractState<STATE, IProgramVarOrConst> {
 	
 	/**
 	 * Intersects <tt>this</tt> with another abstract state.

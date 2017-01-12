@@ -47,22 +47,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DataflowState<ACTION extends IAction>
-		implements IAbstractState<DataflowState<ACTION>, ACTION, IProgramVar> {
-
+public class DataflowState<ACTION extends IAction> implements IAbstractState<DataflowState<ACTION>, IProgramVar> {
+	
 	private static int sId;
 	private final int mId;
-
+	
 	private final Set<IProgramVar> mVars;
 	private final Map<IProgramVar, Set<ACTION>> mDef;
 	private final Map<IProgramVar, Set<ACTION>> mUse;
 	private final Map<IProgramVar, Set<ACTION>> mReachDef;
 	private final Map<IProgramVar, Set<IcfgLocation>> mNoWrite;
-
+	
 	DataflowState() {
 		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
-
+	
 	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<ACTION>> def,
 			final Map<IProgramVar, Set<ACTION>> use, final Map<IProgramVar, Set<ACTION>> reachdef,
 			final Map<IProgramVar, Set<IcfgLocation>> noWrite) {
@@ -77,7 +76,7 @@ public class DataflowState<ACTION extends IAction>
 		mId = getFreshId();
 		mNoWrite = noWrite;
 	}
-
+	
 	@Override
 	public DataflowState<ACTION> addVariable(final IProgramVar variable) {
 		if (mVars.contains(variable)) {
@@ -87,7 +86,7 @@ public class DataflowState<ACTION extends IAction>
 		vars.add(variable);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
-
+	
 	@Override
 	public DataflowState<ACTION> removeVariable(final IProgramVar variable) {
 		if (!mVars.contains(variable)) {
@@ -105,7 +104,7 @@ public class DataflowState<ACTION extends IAction>
 		use.remove(variable);
 		return new DataflowState<>(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	@Override
 	public DataflowState<ACTION> addVariables(final Collection<IProgramVar> variables) {
 		if (variables == null || variables.isEmpty()) {
@@ -115,7 +114,7 @@ public class DataflowState<ACTION extends IAction>
 		vars.addAll(variables);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
-
+	
 	@Override
 	public DataflowState<ACTION> removeVariables(final Collection<IProgramVar> variables) {
 		if (variables == null || variables.isEmpty()) {
@@ -135,34 +134,34 @@ public class DataflowState<ACTION extends IAction>
 		});
 		return new DataflowState<>(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	@Override
 	public boolean containsVariable(final IProgramVar var) {
 		return mVars.contains(var);
 	}
-
+	
 	@Override
 	public Set<IProgramVar> getVariables() {
 		return Collections.unmodifiableSet(mVars);
 	}
-
+	
 	@Override
 	public DataflowState<ACTION> patch(final DataflowState<ACTION> dominator) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mVars.isEmpty();
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		// A basic dataflow state is never bottom
 		return false;
 	}
-
+	
 	@Override
 	public boolean isEqualTo(final DataflowState<ACTION> other) {
 		if (other == null) {
@@ -182,7 +181,7 @@ public class DataflowState<ACTION extends IAction>
 		}
 		return other.mNoWrite.equals(mNoWrite);
 	}
-
+	
 	@Override
 	public SubsetResult isSubsetOf(final DataflowState<ACTION> other) {
 		if (isEqualTo(other)) {
@@ -190,12 +189,12 @@ public class DataflowState<ACTION extends IAction>
 		}
 		return SubsetResult.NONE;
 	}
-
+	
 	@Override
 	public Term getTerm(final Script script) {
 		return script.term("true");
 	}
-
+	
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -222,17 +221,17 @@ public class DataflowState<ACTION extends IAction>
 		sb.append('}');
 		return sb.toString();
 	}
-
+	
 	@Override
 	public String toString() {
 		return toLogString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -251,40 +250,40 @@ public class DataflowState<ACTION extends IAction>
 		}
 		return other.mId == mId;
 	}
-
+	
 	Map<IProgramVar, Set<ACTION>> getDef() {
 		return Collections.unmodifiableMap(mDef);
 	}
-
+	
 	Map<IProgramVar, Set<ACTION>> getUse() {
 		return Collections.unmodifiableMap(mUse);
 	}
-
+	
 	Map<IProgramVar, Set<ACTION>> getReachingDefinitions() {
 		return Collections.unmodifiableMap(mReachDef);
 	}
-
+	
 	Map<IProgramVar, Set<IcfgLocation>> getNoWrite() {
 		return Collections.unmodifiableMap(mNoWrite);
 	}
-
+	
 	DataflowState<ACTION> union(final DataflowState<ACTION> other) {
 		if (other == null || other == this || other.isEqualTo(this)) {
 			return this;
 		}
-
+		
 		if (!mVars.equals(other.mVars)) {
 			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
 		}
-
+		
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
 		final Map<IProgramVar, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		final Map<IProgramVar, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
-
+		
 		// TODO: What about def and use?
-
+		
 		for (final Entry<IProgramVar, Set<ACTION>> otherEntry : other.mReachDef.entrySet()) {
 			final Set<ACTION> set = reachdef.get(otherEntry.getKey());
 			if (set == null) {
@@ -296,7 +295,7 @@ public class DataflowState<ACTION extends IAction>
 				reachdef.put(otherEntry.getKey(), newset);
 			}
 		}
-
+		
 		for (final Entry<IProgramVar, Set<IcfgLocation>> otherEntry : other.mNoWrite.entrySet()) {
 			final Set<IcfgLocation> set = noWrite.get(otherEntry.getKey());
 			if (set == null) {
@@ -308,19 +307,19 @@ public class DataflowState<ACTION extends IAction>
 				noWrite.put(otherEntry.getKey(), newset);
 			}
 		}
-
+		
 		return new DataflowState<>(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	private static int getFreshId() {
 		sId++;
 		return sId;
 	}
-
+	
 	public Set<IcfgLocation> getNowriteLocations(final IProgramVar iProgramVar) {
 		return mNoWrite.get(iProgramVar);
 	}
-
+	
 	public Set<ACTION> getReachingDefinitions(final IProgramVar var) {
 		return mReachDef.get(var);
 	}

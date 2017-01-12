@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Evaluator for singleton boolean values in a nonrelational domain.
@@ -51,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <STATE>
  *            The type of the states of the abstract domain.
  */
-public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
-		implements IEvaluator<VALUE, STATE, CodeBlock> {
-
+public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
+		implements IEvaluator<VALUE, STATE> {
+	
 	private final BooleanValue mBooleanValue;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
@@ -76,7 +75,7 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Adding a subevaluator is not supported for singleton boolean expression evaluators.");
 	}

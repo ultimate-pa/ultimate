@@ -45,36 +45,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar>>
 		extends RcfgVariableProvider<STATE> {
 	
 	public PathProgramVariableProvider(final ISymbolTableAdapter adapter, final IUltimateServiceProvider services) {
 		super(new PathProgramSymbolTableAdapter(adapter), services);
 	}
-
+	
 	private static class PathProgramSymbolTableAdapter implements ISymbolTableAdapter {
 		
 		private final ISymbolTableAdapter mAdapter;
-
+		
 		public PathProgramSymbolTableAdapter(final ISymbolTableAdapter adapter) {
 			mAdapter = adapter;
 		}
-
+		
 		@Override
 		public Map<String, Declaration> getLocalVariables(final String procedure) {
 			return mAdapter.getLocalVariables(procedure);
 		}
-
+		
 		@Override
 		public Set<IProgramNonOldVar> getGlobals() {
 			return mAdapter.getGlobals();
 		}
-
+		
 		@Override
 		public Set<IProgramConst> getConsts() {
 			return mAdapter.getConsts();
 		}
-
+		
 		@Override
 		public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 				final boolean inOldContext) {
@@ -82,14 +82,14 @@ public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, Cod
 			return rtr;
 		}
 	}
-
+	
 	private static class VariableCollector {
 		private final Set<CodeBlock> mPathProgram;
-
+		
 		private VariableCollector(final Set<CodeBlock> pathProgramProjection) {
 			mPathProgram = pathProgramProjection;
 			// mPathProgram.stream().map(a -> )
 		}
 	}
-
+	
 }

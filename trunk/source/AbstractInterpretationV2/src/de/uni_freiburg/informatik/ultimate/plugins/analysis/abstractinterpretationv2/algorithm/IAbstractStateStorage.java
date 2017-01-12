@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-
+public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
+	
 	/**
 	 * @param transition
 	 *            the current transition.
@@ -55,31 +55,31 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	 *         location of the current transition.
 	 */
 	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractPostStates(ACTION transition);
-
+	
 	/**
 	 * Save a new
-	 * 
+	 *
 	 * @param transition
 	 * @param state
 	 * @return
 	 */
 	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractPostState(ACTION transition,
 			AbstractMultiState<STATE, ACTION, VARDECL> state);
-
+	
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage(ACTION scope);
-
+	
 	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
-
+	
 	void scopeFixpointReached();
-
+	
 	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
 			ACTION summaryAction);
-
+	
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script);
-
+	
 	Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
-
+	
 	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
-
+	
 	Set<Term> getTerms(final ACTION initialTransition, final Script script);
 }

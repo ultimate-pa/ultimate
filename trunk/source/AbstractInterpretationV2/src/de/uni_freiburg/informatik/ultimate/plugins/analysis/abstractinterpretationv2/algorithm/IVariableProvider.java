@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
 	
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
@@ -56,7 +56,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 *         <code>current</code> in the program.
 	 */
 	STATE defineInitialVariables(ACTION current, STATE state);
-	
+
 	/**
 	 * Should prepare an {@link IAbstractState} with insertion or removal of variables s.t.
 	 * <ul>

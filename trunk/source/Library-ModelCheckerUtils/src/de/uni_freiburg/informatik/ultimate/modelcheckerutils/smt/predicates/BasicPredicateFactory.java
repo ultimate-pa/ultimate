@@ -156,7 +156,7 @@ public class BasicPredicateFactory {
 				tvp.getClosedFormula(), inputPreds);
 	}
 
-	public AbstractStatePredicate newAbstractStatePredicate(final IAbstractState<?, ?, ?> abstractState,
+	public AbstractStatePredicate newAbstractStatePredicate(final IAbstractState<?, ?> abstractState,
 			final IAbstractPostOperator<?, ?, ?> postOperator) {
 		assert abstractState != null;
 		assert postOperator != null;

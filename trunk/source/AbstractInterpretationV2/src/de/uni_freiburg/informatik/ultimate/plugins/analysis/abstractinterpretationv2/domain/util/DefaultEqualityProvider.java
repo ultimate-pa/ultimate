@@ -52,12 +52,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * @param <STATE>
  *            The type of the abstract states handled by the equality provider.
  */
-public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-		implements IEqualityProvider<STATE, CodeBlock, IBoogieVar, Expression> {
-
+public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, IBoogieVar>>
+		implements IEqualityProvider<STATE, IBoogieVar, Expression> {
+	
 	private final IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> mPostOperator;
 	private final CodeBlockFactory mCodeBlockFactory;
-
+	
 	/**
 	 * Creates an instance of a default Equality Provider for Boogie-based abstract domains.
 	 *
@@ -71,33 +71,33 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlo
 		mPostOperator = postOperator;
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 	}
-
+	
 	@Override
 	public boolean isDefinitelyEqual(final STATE state, final Expression first, final Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPNEQ);
 	}
-
+	
 	@Override
 	public boolean isDefinitelyNotEqual(final STATE state, final Expression first, final Expression second) {
 		return checkVariableParameters(state, first, second, Operator.COMPEQ);
 	}
-
+	
 	private boolean checkVariableParameters(final STATE state, final Expression first, final Expression second,
 			final Operator operator) {
 		assert state != null;
 		assert first != null;
 		assert second != null;
-
+		
 		final Expression formula = new BinaryExpression(null, operator, first, second);
 		final AssumeStatement assumeStatement = new AssumeStatement(null, formula);
-
+		
 		final CodeBlock assumeCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null,
 				new ArrayList<>(Arrays.asList(assumeStatement)), Origin.IMPLEMENTATION);
-
+		
 		final List<STATE> postReturn = mPostOperator.apply(state, assumeCodeBlock);
 		assert postReturn.size() == 1;
-
+		
 		return postReturn.get(0).isBottom();
 	}
-
+	
 }

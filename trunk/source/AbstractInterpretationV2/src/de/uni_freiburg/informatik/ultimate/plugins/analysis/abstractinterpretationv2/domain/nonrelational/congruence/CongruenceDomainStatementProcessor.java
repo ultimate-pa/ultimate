@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link CongruenceDomainState} for the given statement.
@@ -51,14 +50,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class CongruenceDomainStatementProcessor
 		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
-
+	
 	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
 		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
 	}
-
+	
 	@Override
-	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock>
+	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator =
 				(value, type) -> {
@@ -73,7 +72,7 @@ public class CongruenceDomainStatementProcessor
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new CongruenceValueFactory(),
 				singletonValueExpressionEvaluatorCreator);
 	}
-
+	
 	@Override
 	protected Expression normalizeExpression(final Expression expr) {
 		return ExpressionTransformer.transform(expr);

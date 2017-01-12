@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * An evaluator for singleton value expressions in nonrelational abstract domains.
@@ -50,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <STATE>
  *            The type of states in the abstract domain.
  */
-public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
-		implements IEvaluator<VALUE, STATE, CodeBlock> {
-
+public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
+		implements IEvaluator<VALUE, STATE> {
+	
 	private final VALUE mValue;
 	private final EvaluatorType mType;
-
+	
 	/**
 	 * Constructor for a new singleton value expression evaluator.
 	 *
@@ -67,46 +66,46 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 		mValue = value;
 		mType = type;
 	}
-
+	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mValue, BooleanValue.TOP));
 	}
-
+	
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
 		return Collections.singletonList(currentState);
 	}
-
+	
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a sub evaluator to a singleton value expression evaluator.");
 	}
-
+	
 	@Override
 	public Set<IBoogieVar> getVarIdentifiers() {
 		return Collections.emptySet();
 	}
-
+	
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean containsBool() {
 		return false;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mValue.toString();
 	}
-
+	
 	@Override
 	public EvaluatorType getType() {
 		return mType;

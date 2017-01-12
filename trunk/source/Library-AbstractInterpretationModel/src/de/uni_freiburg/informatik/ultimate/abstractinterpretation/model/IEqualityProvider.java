@@ -36,14 +36,12 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
  *
  * @param <STATE>
  *            The type of the abstract states of this equality provider.
- * @param <ACTION>
- *            The type of the actions of this equality provider.
  * @param <VARDECL>
  *            The type of the variable declarations of this equality provider.
  * @param <EXPRESSION>
  *            The type of the expressions of this equality provider.
  */
-public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+public interface IEqualityProvider<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, EXPRESSION> {
 	
 	/**
 	 * Checks whether two expressions over a given abstract state are equal, i.e. whether they evaluate to the same
@@ -60,7 +58,7 @@ public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 * @return <code>true</code> if and only if the expressions are equal, <code>false</code> otherwise.
 	 */
 	boolean isDefinitelyEqual(final STATE state, final EXPRESSION first, final EXPRESSION second);
-
+	
 	/**
 	 * Checks whether two expressions over a given abstract state are not equal, i.e. whether they do not evaluate to
 	 * the same value. Returns <code>true</code> if and only if the expressions are not equal, <code>false</code>

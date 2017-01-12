@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION>
-		extends IEvaluator<VALUE, STATE, ACTION> {
+public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVar>>
+		extends IEvaluator<VALUE, STATE> {
 	
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.

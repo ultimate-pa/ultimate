@@ -38,18 +38,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @param <STATE>
  * @param <LOCATION>
  */
-public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION extends IAction, VARDECL, LOCATION>
+public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IAction, VARDECL, LOCATION>
 		implements IDebugHelper<STATE, ACTION, VARDECL, LOCATION> {
-
+	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IHoareTripleChecker mHTC;
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final SimplificationTechnique mSimplificationTechnique;
-
+	
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
-
+	
 	public RcfgDebugHelper(final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
@@ -59,7 +59,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mHTC = new IncrementalHoareTripleChecker(csToolkit);
 	}
-
+	
 	@Override
 	public boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
@@ -69,7 +69,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
 		return isPostSound(hierPre, transition, precond, postcond);
 	}
-
+	
 	@Override
 	public boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
 			final Set<STATE> postStates, final ACTION transition) {
@@ -78,14 +78,14 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
 		return isPostSound(hierPre, transition, precond, postcond);
 	}
-
+	
 	private IPredicate getHierachicalPre(final ACTION transition, final Supplier<IPredicate> func) {
 		if (transition instanceof IIcfgReturnTransition<?, ?>) {
 			return func.get();
 		}
 		return null;
 	}
-
+	
 	private boolean isPostSound(final IPredicate precondHier, final ACTION transition, final IPredicate precond,
 			final IPredicate postcond) {
 		final Validity result;
@@ -97,13 +97,13 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 			result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 		}
 		mHTC.releaseLock();
-
+		
 		if (result != Validity.VALID) {
 			logUnsoundness(transition, precond, postcond, precondHier);
 		}
 		return result != Validity.INVALID;
 	}
-
+	
 	private void logUnsoundness(final ACTION transition, final IPredicate precond, final IPredicate postcond,
 			final IPredicate precondHier) {
 		mLogger.fatal("Soundness check failed for the following triple:");
@@ -123,7 +123,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 				"Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices, mSimplificationTechnique)
 						.toStringDirect() + "}");
 	}
-
+	
 	private String getTransformulaDebugString(final ACTION action) {
 		if (action instanceof IInternalAction) {
 			return ((IInternalAction) action).getTransformula().getFormula().toStringDirect();
@@ -135,26 +135,26 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL
 			throw new UnsupportedOperationException("Cannot find transformula in " + action);
 		}
 	}
-
+	
 	private IPredicate createPredicateFromState(final Collection<STATE> states) {
 		Term acc = mMgdScript.getScript().term("false");
-
+		
 		for (final STATE state : states) {
 			acc = Util.or(mMgdScript.getScript(), acc, state.getTerm(mMgdScript.getScript()));
 		}
-
+		
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
 	}
-
+	
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, ACTION, VARDECL> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
 	}
-
+	
 	private static int getIllegalPredicateId() {
 		return sIllegalPredicates--;
 	}

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 public class FixpointEngineFutureParameterFactory {
-
+	
 	private final IIcfg<?> mRoot;
 	private final IUltimateServiceProvider mServices;
 
@@ -42,7 +42,7 @@ public class FixpointEngineFutureParameterFactory {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	public <STATE extends IAbstractState<STATE, IProgramVar>>
 			FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>
 			createParamsFuture(final IProgressAwareTimer timer,
 					final ITransitionProvider<IcfgEdge, IcfgLocation> transitionProvider,
@@ -62,7 +62,7 @@ public class FixpointEngineFutureParameterFactory {
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
-	public <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	public <STATE extends IAbstractState<STATE, IProgramVar>>
 			FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>
 			createParamsFuture(final IProgressAwareTimer timer,
 					final ITransitionProvider<IcfgEdge, IcfgLocation> transitionProvider,
@@ -90,7 +90,7 @@ public class FixpointEngineFutureParameterFactory {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	public <STATE extends IAbstractState<STATE, IProgramVar>>
 			FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>
 			createParamsFutureEqualityDomain(final IProgressAwareTimer timer,
 					final ITransitionProvider<IcfgEdge, IcfgLocation> transitionProvider,
@@ -110,7 +110,7 @@ public class FixpointEngineFutureParameterFactory {
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
-	public <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
+	public <STATE extends IAbstractState<STATE, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
 			selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
@@ -119,7 +119,7 @@ public class FixpointEngineFutureParameterFactory {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
+	private <STATE extends IAbstractState<STATE, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
 			selectDomainFutureCfg(final String domainName, final ILogger logger) {
 		if (EmptyDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVar>) new EmptyDomain<IcfgEdge, IProgramVar>();
@@ -131,7 +131,7 @@ public class FixpointEngineFutureParameterFactory {
 		throw new UnsupportedOperationException(getFailureString(domainName));
 	}
 
-	public <DOM extends IAbstractDomain<STATE, IcfgEdge, IProgramVar>, STATE extends IAbstractState<STATE, IcfgEdge, IProgramVar>>
+	public <DOM extends IAbstractDomain<STATE, IcfgEdge, IProgramVar>, STATE extends IAbstractState<STATE, IProgramVar>>
 			IAbstractDomain<STATE, IcfgEdge, IProgramVar>
 			selectDomainFutureCfg(final Class<DOM> domain, final ILogger logger) {
 		return selectDomainFutureCfg(Objects.requireNonNull(domain).getSimpleName(), logger);

@@ -51,8 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  *
  */
-public final class EmptyDomainState<ACTION, VARDECL>
-		implements IAbstractState<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDomainState<VARDECL>, VARDECL> {
 	
 	private static int sId;
 	private final Set<VARDECL> mVarDecls;
@@ -79,27 +78,27 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> addVariable(final VARDECL variable) {
+	public EmptyDomainState<VARDECL> addVariable(final VARDECL variable) {
 		assert variable != null;
 		
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<VARDECL>(newMap);
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> removeVariable(final VARDECL variable) {
+	public EmptyDomainState<VARDECL> removeVariable(final VARDECL variable) {
 		assert variable != null;
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		final boolean result = newMap.remove(variable);
 		assert result;
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<VARDECL>(newMap);
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> addVariables(final Collection<VARDECL> variables) {
+	public EmptyDomainState<VARDECL> addVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 		
@@ -109,11 +108,11 @@ public final class EmptyDomainState<ACTION, VARDECL>
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<VARDECL>(newMap);
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> removeVariables(final Collection<VARDECL> variables) {
+	public EmptyDomainState<VARDECL> removeVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 		
@@ -121,7 +120,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		for (final VARDECL entry : variables) {
 			newMap.remove(entry);
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<VARDECL>(newMap);
 	}
 	
 	@Override
@@ -144,7 +143,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 	
 	@Override
-	public boolean isEqualTo(final EmptyDomainState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(final EmptyDomainState<VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
@@ -187,7 +186,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 			return false;
 		}
 		@SuppressWarnings("unchecked")
-		final EmptyDomainState<ACTION, VARDECL> other = (EmptyDomainState<ACTION, VARDECL>) obj;
+		final EmptyDomainState<VARDECL> other = (EmptyDomainState<VARDECL>) obj;
 		return mId == other.mId;
 	}
 	
@@ -198,7 +197,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	 *            another state
 	 * @return true iff this state has the same variables than other
 	 */
-	boolean hasSameVariables(final EmptyDomainState<ACTION, VARDECL> other) {
+	boolean hasSameVariables(final EmptyDomainState<VARDECL> other) {
 		return isEqualTo(other);
 	}
 	
@@ -218,7 +217,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 	
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> patch(final EmptyDomainState<ACTION, VARDECL> dominator) {
+	public EmptyDomainState<VARDECL> patch(final EmptyDomainState<VARDECL> dominator) {
 		if (dominator.isEmpty()) {
 			return this;
 		} else if (isEmpty()) {
@@ -233,11 +232,11 @@ public final class EmptyDomainState<ACTION, VARDECL>
 			return this;
 		}
 		
-		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
+		return new EmptyDomainState<VARDECL>(newVarDecls);
 	}
 	
 	@Override
-	public SubsetResult isSubsetOf(final EmptyDomainState<ACTION, VARDECL> other) {
+	public SubsetResult isSubsetOf(final EmptyDomainState<VARDECL> other) {
 		assert hasSameVariables(other);
 		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}

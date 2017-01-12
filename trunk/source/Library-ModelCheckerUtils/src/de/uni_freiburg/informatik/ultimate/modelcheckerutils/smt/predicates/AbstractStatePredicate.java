@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class AbstractStatePredicate extends BasicPredicate {
 	
 	private static final long serialVersionUID = 1L;
-	
-	private final IAbstractState<?, ?, ?> mAbstractState;
-	private final IAbstractPostOperator<?, ?, ?> mPostOperator;
 
+	private final IAbstractState<?, ?> mAbstractState;
+	private final IAbstractPostOperator<?, ?, ?> mPostOperator;
+	
 	/**
 	 * Default constructor of an abstract state predicate, constructed from an abstract state.
 	 *
@@ -63,23 +63,23 @@ public class AbstractStatePredicate extends BasicPredicate {
 	 * @param postOperator
 	 */
 	public AbstractStatePredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final IAbstractState<?, ?, ?> abstractState,
+			final Set<IProgramVar> vars, final Term closedFormula, final IAbstractState<?, ?> abstractState,
 			final IAbstractPostOperator<?, ?, ?> postOperator) {
 		super(serialNumber, procedures, term, vars, closedFormula);
-
+		
 		mAbstractState = abstractState;
 		mPostOperator = postOperator;
 	}
-	
+
 	@Visualizable
-	public IAbstractState<?, ?, ?> getAbstractState() {
+	public IAbstractState<?, ?> getAbstractState() {
 		return mAbstractState;
 	}
-	
+
 	public IAbstractPostOperator<?, ?, ?> getPostOperator() {
 		return mPostOperator;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -87,12 +87,12 @@ public class AbstractStatePredicate extends BasicPredicate {
 		sb.append(mFormula.toStringDirect());
 		return sb.toString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mSerialNumber;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
@@ -104,9 +104,9 @@ public class AbstractStatePredicate extends BasicPredicate {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		
-		final AbstractStatePredicate other = (AbstractStatePredicate) obj;
 
+		final AbstractStatePredicate other = (AbstractStatePredicate) obj;
+		
 		return mSerialNumber == other.mSerialNumber;
 	}
 }

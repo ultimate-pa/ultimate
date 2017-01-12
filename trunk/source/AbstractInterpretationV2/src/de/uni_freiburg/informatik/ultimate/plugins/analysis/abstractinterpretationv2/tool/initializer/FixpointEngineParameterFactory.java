@@ -24,8 +24,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.DefaultSymbolTableAdapter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.FutureRcfgVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.PathProgramVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.PathProgramVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -66,7 +66,7 @@ public class FixpointEngineParameterFactory {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	public <STATE extends IAbstractState<STATE, IBoogieVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>
 			createParams(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
@@ -87,7 +87,7 @@ public class FixpointEngineParameterFactory {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+	public <STATE extends IAbstractState<STATE, IBoogieVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>
 			createParamsPathProgram(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
@@ -107,7 +107,7 @@ public class FixpointEngineParameterFactory {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+	public <STATE extends IAbstractState<STATE, IProgramVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
 			createParamsFuture(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
@@ -137,7 +137,7 @@ public class FixpointEngineParameterFactory {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+	public <STATE extends IAbstractState<STATE, IProgramVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
 			createParamsFutureEqualityDomain(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
@@ -180,7 +180,7 @@ public class FixpointEngineParameterFactory {
 	private IAbstractDomain<?, CodeBlock, IProgramVar> createEqualityDomain(final ILogger logger) {
 		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger);
 		preAnalysis.postProcess();
-		final VPTransFormulaStateBuilderPreparer tfPreparer = 
+		final VPTransFormulaStateBuilderPreparer tfPreparer =
 				new VPTransFormulaStateBuilderPreparer(preAnalysis, mRoot, logger);
 		return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices, mRoot.getSymboltable(),
 				preAnalysis, tfPreparer);

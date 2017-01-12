@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -56,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            The type of abstract domain states.
  */
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-		implements IEvaluator<VALUE, STATE, CodeBlock> {
-
+		implements IEvaluator<VALUE, STATE> {
+	
 	private final Set<IBoogieVar> mVariableSet;
 	private final IBoogieVar mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
@@ -126,7 +125,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a subevaluator to singleton variable expression evaluators.");
 	}

@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
 	/**
 	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {\/ postStates} holds.
@@ -31,11 +31,11 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDEC
 		return isPostSound(Collections.singleton(stateBeforeLeaving), Collections.singleton(stateBeforeLeaving),
 				postStates, transition);
 	}
-	
+
 	boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition);
-	
+
 	boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
 			final Set<STATE> postStates, final ACTION transition);
 }

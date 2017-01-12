@@ -38,8 +38,8 @@ import java.util.List;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
-
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
+	
 	/**
 	 * Compute the abstract post for an old STATE (that extends {@link IAbstractState}) and a given ACTION (transition).
 	 *
@@ -50,7 +50,7 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTIO
 	 * @return A new list of STATEs that is the result of applying the abstract post.
 	 */
 	List<STATE> apply(STATE oldstate, ACTION transition);
-
+	
 	/**
 	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
 	 *

@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Widening operator of the {@link CompoundDomain}.
@@ -55,15 +54,15 @@ public class CompoundDomainWideningOperator implements IAbstractStateBinaryOpera
 	
 	@Override
 	public CompoundDomainState apply(final CompoundDomainState first, final CompoundDomainState second) {
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> firstStates = first.getAbstractStatesList();
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> secondStates = second.getAbstractStatesList();
+		final List<IAbstractState<?, IBoogieVar>> firstStates = first.getAbstractStatesList();
+		final List<IAbstractState<?, IBoogieVar>> secondStates = second.getAbstractStatesList();
 		
 		assert firstStates.size() == secondStates.size();
 		assert first.getDomainList().size() == second.getDomainList().size();
 		
 		final List<IAbstractDomain> domains = first.getDomainList();
 		
-		final List<IAbstractState<?, CodeBlock, IBoogieVar>> widenedList = new ArrayList<>();
+		final List<IAbstractState<?, IBoogieVar>> widenedList = new ArrayList<>();
 		
 		for (int i = 0; i < firstStates.size(); i++) {
 			widenedList.add(
