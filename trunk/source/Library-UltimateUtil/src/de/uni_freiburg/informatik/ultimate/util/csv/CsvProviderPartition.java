@@ -189,7 +189,7 @@ public class CsvProviderPartition<T> {
 		for (int i = 0; i < numberOfRows; ++i) {
 			final List<T> row = csv.getRow(i);
 			final T entry = row.get(columnIndex);
-			assert entry instanceof Integer;
+			assert thresholds == null || entry instanceof Integer;
 			final int bin = getBin(entry, thresholds);
 			ICsvProvider<T> group = (thresholds == null) ? key2group.get(entry) : bin2group.get(bin);
 			final String rowTitle;
