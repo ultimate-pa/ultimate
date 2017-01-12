@@ -91,9 +91,10 @@ public class WitnessAutomatonConstructor {
 			mServices.getProgressMonitorService().cancelToolchain();
 			return null;
 		}
+
 		// find starting element(s)
-		final Set<WitnessNode> initialNodes =
-				graph.getVertices().stream().filter(a -> a.getIncomingEdges().size() == 0).collect(Collectors.toSet());
+		final Set<WitnessNode> initialNodes = graph.getVertices().stream()
+				.filter(WitnessAutomatonConstructor::isInitialNode).collect(Collectors.toSet());
 
 		if (initialNodes.size() > 1) {
 			throw new IllegalArgumentException("This file contains a witness with more than one initial location");
@@ -314,6 +315,14 @@ public class WitnessAutomatonConstructor {
 			value = -1;
 		}
 		return value;
+	}
+
+	private static boolean isInitialNode(final WitnessNode node) {
+		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(node);
+		if (annot == null) {
+			return false;
+		}
+		return annot.isInitial();
 	}
 
 	private WitnessNode createNode(final String id) {
