@@ -205,14 +205,14 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final IPairDataStructure<STATE> dataStructure) {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final IBinaryRelation<STATE> simulationRelation) {
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			if (isAuxiliaryVertex(spoilerVertex)) {
 				continue;
 			}
 			if ((simulationInfoProvider.isSimulationInformationProvider(spoilerVertex, operand))
 					&& (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity())) {
-				dataStructure.addPair(spoilerVertex.getQ0(), spoilerVertex.getQ1());
+				simulationRelation.addPair(spoilerVertex.getQ0(), spoilerVertex.getQ1());
 			}
 		}
 	}
@@ -229,7 +229,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	private UnionFind<STATE> simulationToEquivalenceRelation(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
-		final HashRelationDataStructure simRelation = new HashRelationDataStructure();
+		final HashRelationBackedBinaryRelation simRelation = new HashRelationBackedBinaryRelation();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		return computeEquivalenceRelation(simRelation.getSimulation(), operand.getStates());
 	}
@@ -265,7 +265,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) throws AutomataOperationCanceledException {
-		final NestedMapDataStructure simRelation = new NestedMapDataStructure();
+		final NestedMapBackedBinaryRelation simRelation = new NestedMapBackedBinaryRelation();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
@@ -321,7 +321,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	 *            element type
 	 */
 	@FunctionalInterface
-	private interface IPairDataStructure<T> {
+	private interface IBinaryRelation<T> {
 		void addPair(T state1, T state2);
 	}
 	
@@ -330,10 +330,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class HashRelationDataStructure implements IPairDataStructure<STATE> {
+	private class HashRelationBackedBinaryRelation implements IBinaryRelation<STATE> {
 		private final HashRelation<STATE, STATE> mSimulation;
 		
-		public HashRelationDataStructure() {
+		public HashRelationBackedBinaryRelation() {
 			mSimulation = new HashRelation<>();
 		}
 		
@@ -352,10 +352,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class NestedMapDataStructure implements IPairDataStructure<STATE> {
+	private class NestedMapBackedBinaryRelation implements IBinaryRelation<STATE> {
 		private final NestedMap2<STATE, STATE, Pair<STATE, STATE>> mSimulation;
 		
-		public NestedMapDataStructure() {
+		public NestedMapBackedBinaryRelation() {
 			mSimulation = new NestedMap2<>();
 		}
 		
