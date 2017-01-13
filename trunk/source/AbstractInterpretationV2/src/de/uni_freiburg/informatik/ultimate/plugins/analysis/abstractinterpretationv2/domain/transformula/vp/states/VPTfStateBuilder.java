@@ -363,13 +363,17 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			final EqNode eqNode, 
 			final boolean inOrThroughOrOutOrThroughChooseIn) {
 
-		VPTfNodeIdentifier resultNodeId = inOrThroughOrOutOrThroughChooseIn ? mEqNodeToInOrThroughTfNodeId.get(eqNode)
-				: mEqNodeToOutOrThroughTfNodeId.get(eqNode);
+		{
+			final VPTfNodeIdentifier resultNodeId = inOrThroughOrOutOrThroughChooseIn ? mEqNodeToInOrThroughTfNodeId.get(eqNode)
+					: mEqNodeToOutOrThroughTfNodeId.get(eqNode);
 
-		if (resultNodeId != null) {
-			// we already have an EqGraphNode for EqFunctionNode
-			assert inOrThroughOrOutOrThroughChooseIn ? resultNodeId.isInOrThrough() : resultNodeId.isOutOrThrough();
-			return mNodeIdToEqGraphNode.get(resultNodeId);
+			if (resultNodeId != null) {
+				// we already have an EqGraphNode for EqFunctionNode
+				assert inOrThroughOrOutOrThroughChooseIn ? resultNodeId.isInOrThrough() : resultNodeId.isOutOrThrough();
+				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> result = mNodeIdToEqGraphNode.get(resultNodeId);
+				assert result != null;
+				return result;
+			}
 		}
 
 		if (eqNode instanceof EqFunctionNode) {
@@ -403,7 +407,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			final VPTfNodeIdentifier newNodeId = getNodeIdentifier(functionNode, newInVars, newOutVars);
 
 			EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newFunctionEqGraphNode = 
-					getOrConstructEqGraphNode(newNodeId);
+					new EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>(newNodeId);
+//					getOrConstructEqGraphNode(newNodeId);
 
 
 			// update ccchild/parent fields
@@ -417,13 +422,13 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			mNodeIdToEqGraphNode.put(newNodeId, newFunctionEqGraphNode);
 			mArrayIdToFunctionNodes.addPair(arrayId, newNodeId);		
 
-			if (inOrThroughOrOutOrThroughChooseIn) {
-				mEqNodeToInOrThroughTfNodeId.put(functionNode, resultNodeId);
-				assert newNodeId.isInOrThrough();
-			} else {
-				mEqNodeToInOrThroughTfNodeId.put(functionNode, resultNodeId);
-				assert newNodeId.isOutOrThrough();
-			}
+//			if (inOrThroughOrOutOrThroughChooseIn) {
+//				mEqNodeToInOrThroughTfNodeId.put(functionNode, resultNodeId);
+//				assert newNodeId.isInOrThrough();
+//			} else {
+//				mEqNodeToOutOrThroughTfNodeId.put(functionNode, resultNodeId);
+//				assert newNodeId.isOutOrThrough();
+//			}
 
 			assert newFunctionEqGraphNode != null;
 			return newFunctionEqGraphNode;
@@ -432,9 +437,9 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 			VPTfNodeIdentifier newNodeId;
 			if (eqNode.isConstant()) {
-				newNodeId = null;
-				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+				newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
+//				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+//				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
 			} else {
 				boolean hasIn = false;
 				boolean hasOut = false;
@@ -460,7 +465,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 						// we create an in id
 						newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
 						newNodeId = null;
-						mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+						mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
 					}
 				} else {
 					// we need to create an outOrThrough node
@@ -472,12 +477,12 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 					} else {
 						// we create an out id
 						newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.OUT);
-						mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
 						mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
 					}
 				}
 			}
 			EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
+			mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
 
 			assert newEqGraphNode != null;
 			return newEqGraphNode;

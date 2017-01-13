@@ -162,11 +162,11 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 			/**
 			 * is there a var that is only in inVars?
 			 */
-			boolean hasIn = false;
+			boolean hasExclusiveIn = false;
 			/**
 			 * is there a var that is only in outVars?
 			 */
-			boolean hasOut = false;
+			boolean hasExclusiveOut = false;
 			/**
 			 * is there a var that is both in inVars and in outVars?
 			 * (assuming that this implies that it has the same TermVariable in both cases, see assertions below)
@@ -186,7 +186,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 						"we have an EqGraphNode with both update-versions of a variable -- can this really happen?";
 					hasThrough = true;
 				} else {
-					hasIn = true;
+					hasExclusiveIn = true;
 				}
 			}
 			for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
@@ -200,30 +200,30 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 						"we have an EqGraphNode with both update-versions of a variable -- can this really happen?";
 					hasThrough = true;
 				} else {
-					hasOut = true;
+					hasExclusiveOut = true;
 				}
 			}	
 			
-			if (hasIn && hasOut) {
+			if (hasExclusiveIn && hasExclusiveOut) {
 				mInOutStatus = TfNodeInOutStatus.MIXED;
-			} else if (hasIn && !hasOut) {
-				if (hasThrough) {
-					mInOutStatus = TfNodeInOutStatus.THROUGH;
-				} else {
+			} else if (hasExclusiveIn && !hasExclusiveOut) {
+//				if (hasThrough) {
+//					mInOutStatus = TfNodeInOutStatus.THROUGH;
+//				} else {
 					mInOutStatus = TfNodeInOutStatus.IN;
-				}
-			} else if (!hasIn && hasOut) {
-				if (hasThrough) {
-					mInOutStatus = TfNodeInOutStatus.THROUGH;
-				} else {
+//				}
+			} else if (!hasExclusiveIn && hasExclusiveOut) {
+//				if (hasThrough) {
+//					mInOutStatus = TfNodeInOutStatus.THROUGH;
+//				} else {
 					mInOutStatus = TfNodeInOutStatus.OUT;
-				}
+//				}
 			} else {
 				if (hasThrough) {
 					mInOutStatus = TfNodeInOutStatus.THROUGH;
 				} else {
 					assert false : "node is constant, right?..";
-					mInOutStatus = TfNodeInOutStatus.MIXED;
+					mInOutStatus = TfNodeInOutStatus.THROUGH;
 				}
 			}
 		}
