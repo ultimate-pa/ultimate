@@ -31,6 +31,9 @@ popd > /dev/null
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml
 ./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml
 
+# uncomment this after the final release 
+for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
+
 rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
 rm *.zip 
 
