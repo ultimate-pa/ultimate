@@ -58,15 +58,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class VPTfArrayIdentifier implements IArrayWrapper {
 	
-	IProgramVarOrConst mPvoc;
-	Pair<IProgramVar, TermVariable> mInVar;
-	Pair<IProgramVar, TermVariable> mOutVar;
-	Term mTerm;
+	private final IProgramVarOrConst mPvoc;
+	private final Pair<IProgramVar, TermVariable> mInVar;
+	private final Pair<IProgramVar, TermVariable> mOutVar;
+	private Term mTerm;
+	private final ArrayInOutStatus mInOutStatus;
 	
-//	public VPArrayIdentifier(IProgramVarOrConst pvoc) {
-//		mPvoc = pvoc;
-//	}
-	
+	protected VPTfArrayIdentifier(IProgramVarOrConst pvoc, ArrayInOutStatus inOutStatus) {
+		mPvoc = pvoc;
+		mTerm = null; //TODO: makes sense?
+		mInVar = null;
+		mOutVar = null;
+		mInOutStatus = inOutStatus;
+	}
+
 	public VPTfArrayIdentifier(IProgramVarOrConst pvoc, 
 			Pair<IProgramVar, TermVariable> inVar, 
 			Pair<IProgramVar, TermVariable> outVar) {
@@ -86,44 +91,23 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 			assert pvoc instanceof ConstOrLiteral;
 			mTerm = pvoc.getTerm();
 		}
+		
+		if (inVar == null && outVar != null) {
+			mInOutStatus = ArrayInOutStatus.OUT;
+		} else if (inVar != null && outVar == null) {
+			mInOutStatus = ArrayInOutStatus.IN;
+		} else if (inVar != null && outVar != null) {
+			mInOutStatus = ArrayInOutStatus.THROUGH;
+		} else {
+			mInOutStatus = ArrayInOutStatus.AUX;
+			assert false : "do we deal with this case correctly?";
+		}
 	}
 	
 	public IProgramVarOrConst getProgramVarOrConst() {
 		return mPvoc;
 	}
 	
-
-//	public VPArrayIdentifier(IProgramVarOrConst pvoc, 
-//			Map<IProgramVar, TermVariable> inVars, 
-//			Map<IProgramVar, TermVariable> outVars) {
-//		mPvoc = pvoc;
-//		
-//		TermVariable iTv = inVars.get(pvoc);
-//		if (iTv != null) {
-//			mInVar = new Pair<>((IProgramVar) pvoc, iTv);
-//			mTerm = iTv;
-//		}
-//		TermVariable oTv = inVars.get(pvoc);
-//		if (oTv != null) {
-//			mOutVar = new Pair<>((IProgramVar) pvoc, oTv);
-//			mTerm = oTv;
-//		}
-//		
-//		if (mTerm == null) {
-//			assert pvoc instanceof ConstOrLiteral;
-//			mTerm = pvoc.getTerm();
-//		}
-//	}
-
-	public VPTfArrayIdentifier(Term term) {
-		assert term != null;
-		mTerm = term;
-	}
-
-//	public VPArrayIdentifier(IProgramVarOrConst function, InOutStatus none) {
-//		// TODO Auto-generated constructor stub
-//	}
-
 	@Override
 	public boolean equals(Object other) {
 		if (!(other instanceof VPTfArrayIdentifier)) {
@@ -131,9 +115,10 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		}
 		VPTfArrayIdentifier otherArrayId = (VPTfArrayIdentifier) other;
 		return this.mTerm == otherArrayId.mTerm 
+				&& this.mPvoc == otherArrayId.mPvoc
+				&& this.mInOutStatus == otherArrayId.mInOutStatus
 				&& this.mInVar.equals(otherArrayId.mInVar)
-				&& this.mOutVar.equals(otherArrayId.mOutVar)
-				&& this.mPvoc == otherArrayId.mPvoc;
+				&& this.mOutVar.equals(otherArrayId.mOutVar);
 	}
 	
 	@Override
@@ -152,7 +137,11 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 	public int hashCode() {
 //		return HashUtils.hashHsieh(31, mPvoc, mInVar, mOutVar, mTerm); // does not work as m[In|Out]Var can be null
 //		return HashUtils.hashHsieh(31, mTerm);
-		return mTerm.hashCode();
+
+//		return HashUtils.hashHsieh(31, mPvoc, mInVar, mOutVar, mTerm); // does not work as m[In|Out]Var can be null
+//		return HashUtils.hashHsieh(31, hashObjects); // does not work as m[In|Out]Var can be null
+		return HashUtils.hashHsieh(31, mPvoc, mInOutStatus);
+//		return 
 	}
 
 
@@ -204,5 +193,16 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		return this;
 	}
 	
-	
+	public boolean isInOrThrough() {
+		return mInOutStatus == ArrayInOutStatus.IN || mInOutStatus == ArrayInOutStatus.THROUGH;
+	}
+
+	public boolean isOutOrThrough() {
+		return mInOutStatus == ArrayInOutStatus.OUT || mInOutStatus == ArrayInOutStatus.THROUGH;
+	}
+
+	public ArrayInOutStatus getInOutStatus() {
+		return mInOutStatus;
+	}
 }
+

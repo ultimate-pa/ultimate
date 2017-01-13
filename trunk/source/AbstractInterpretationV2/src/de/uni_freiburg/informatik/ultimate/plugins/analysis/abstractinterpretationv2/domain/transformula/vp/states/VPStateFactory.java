@@ -217,30 +217,10 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 */
 		Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
 		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier.getEqNode() == null) {
-				// auxvar node
-				continue;
-			}
-			if (node.nodeIdentifier.getEqNode().isConstant()) {
-				// we need to track all constants
-				outVarsAndConstantEqNodeSet.add(node);
-				continue;
-			}
-			
-			HashSet<IProgramVar> nodeVars = new HashSet<>(node.nodeIdentifier.getEqNode().getVariables());
-			nodeVars.retainAll(tf.getOutVars().keySet());
-			if (!nodeVars.isEmpty()) {
-				// we need to track all nodes that talk about at least one outvar
+			if (node.nodeIdentifier.isOutOrThrough()) {
 				outVarsAndConstantEqNodeSet.add(node);
 			}
 		}
-//		for (IProgramVar pv : tf.getOutVars().keySet()) {
-//			EqNode pvEqnode = mPreAnalysis.getEqNode(pv);
-//			if (pvEqnode != null) {
-//				outVarsAndConstantEqNodes.add(pvEqnode);
-//			}
-//		}
-//		outVarsAndConstantEqNodes.addAll(mTfPreparer.getAllConstantEqNodes());
 		List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes = new ArrayList<>(outVarsAndConstantEqNodeSet);
 
 		final VPStateBuilder<ACTION> builder = copy(havocVariables(tf.getAssignedVars(), oldState));// TODO

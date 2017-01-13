@@ -217,14 +217,14 @@ public class VPDomainHelpers {
 	}
 	
 	
-	public static InOutStatus getInOutStatusOfPvoc(IProgramVarOrConst function, TransFormula tf) {
-		InOutStatus functionInOutStatus;
+	public static InOutStatusOfStateId getInOutStatusOfPvoc(IProgramVarOrConst function, TransFormula tf) {
+		InOutStatusOfStateId functionInOutStatus;
 		if (function instanceof IProgramVarOrConst) {
 			functionInOutStatus = VPDomainHelpers.computeInOutStatus((IProgramVar) function, tf);
 		} else {
 			// TODO: constants are like a THROUGH-variable for our purposes here, right?
 			//     (or UPDATE, as this makes no difference here)
-			functionInOutStatus = InOutStatus.THROUGH;
+			functionInOutStatus = InOutStatusOfStateId.THROUGH;
 		}
 		return functionInOutStatus;
 	}
@@ -235,27 +235,32 @@ public class VPDomainHelpers {
 	 * @param pvoc
 	 * @param tf
 	 */
-	public static InOutStatus computeInOutStatus(IProgramVar pv, TransFormula tf) {
+	public static InOutStatusOfStateId computeInOutStatus(IProgramVar pv, TransFormula tf) {
 		boolean isIn = tf.getInVars().containsKey(pv);
 		boolean isOut = tf.getOutVars().containsKey(pv);
 
 		if (isIn && isOut) {
 			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
-				return InOutStatus.THROUGH;
+				return InOutStatusOfStateId.THROUGH;
 			} else {
-				return InOutStatus.UPDATE;
+				return InOutStatusOfStateId.UPDATE;
 			}
 		} else if (isIn && !isOut) {
-			return InOutStatus.IN;
+			return InOutStatusOfStateId.IN;
 		} else if (!isIn && isOut) {
-			return InOutStatus.OUT;
+			return InOutStatusOfStateId.OUT;
 		} else {
 			assert !isIn && !isOut;
-			return InOutStatus.NONE;
+			return InOutStatusOfStateId.NONE;
 		}
 	}
 	
-	public enum InOutStatus {
+	/**
+	 * in out status of a node identifier in a "normal" state (not transition state)
+	 * @author alex
+	 *
+	 */
+	public enum InOutStatusOfStateId {
 		IN, OUT, THROUGH, UPDATE, NONE;
 	}
 

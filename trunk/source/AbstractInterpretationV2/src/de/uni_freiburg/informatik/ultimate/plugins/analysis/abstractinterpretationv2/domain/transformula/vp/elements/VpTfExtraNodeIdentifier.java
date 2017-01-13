@@ -3,38 +3,39 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
-public class VpTfThroughNodeIdentifier extends VPTfNodeIdentifier {
+public class VpTfExtraNodeIdentifier extends VPTfNodeIdentifier {
 
 	/**
 	 * @param eqNode
 	 * @param tfStateBuilder TODO: parameter seems unnecessary
 	 */
-	public VpTfThroughNodeIdentifier(EqNode eqNode) {
-		super(eqNode);
-
+	public VpTfExtraNodeIdentifier(EqNode eqNode, TfNodeInOutStatus inOutStatus) {
+		super(eqNode, inOutStatus);
+		assert !(eqNode instanceof EqFunctionNode);
 	}
 
 	@Override
 	public VPTfArrayIdentifier getFunction() {
-		assert false : "implement this?";
+		assert false : "we don't introduce extraNodeIds for function nodes, right?";
 		return null;
 	}
 
 	@Override
 	public String toString() {
-		return "VpTfThroughNodeIdentifier: " + getEqNode().toString();
+		return "VpTfTExtraNodeIdentifier: " + getEqNode().toString() + "(" + mInOutStatus + ")";
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof VpTfThroughNodeIdentifier)) {
+		if (!(other instanceof VpTfExtraNodeIdentifier)) {
 			return false;
 		}
 
-		VpTfThroughNodeIdentifier otherVpThroughId = (VpTfThroughNodeIdentifier) other;
+		VpTfExtraNodeIdentifier otherVpThroughId = (VpTfExtraNodeIdentifier) other;
 		if (otherVpThroughId.getEqNode() != this.getEqNode()) {
 			return false;
 		}
+
 		
 		return true;
 	}

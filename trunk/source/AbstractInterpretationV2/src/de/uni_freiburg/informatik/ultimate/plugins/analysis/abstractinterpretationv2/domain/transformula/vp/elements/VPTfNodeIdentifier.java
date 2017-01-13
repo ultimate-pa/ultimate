@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,26 +65,42 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	private final boolean mIsLiteral;
 	private final VPTfArrayIdentifier mFunction;
 //	private final boolean mIsInOrThrough;
-	private final TfNodeInOutStatus mInOutStatus;
+	protected final TfNodeInOutStatus mInOutStatus;
 
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
 
 	/**
 	 * super constructor exclusively for VpTfThroughNodeIdentifier
 	 * @param eqNode
+	 * @param inOutStatus 
 	 */
-	protected VPTfNodeIdentifier(EqNode eqNode) {
+	protected VPTfNodeIdentifier(final EqNode eqNode, final TfNodeInOutStatus inOutStatus) {
 		this.mEqNode = eqNode;
-		this.mIsFunction = eqNode instanceof EqFunctionNode;
+
+		assert !(eqNode instanceof EqFunctionNode);
+		this.mIsFunction = false;
+		this.mFunction = null;
 
 		this.mIsLiteral = eqNode.isLiteral();
 		
 		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
 		
-		mInVars = null;
-		mOutVars = null;
-		mInOutStatus = TfNodeInOutStatus.THROUGH;
-		mFunction = null;
+		mInOutStatus = inOutStatus;
+
+		Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		if (isInOrThrough()) {
+			for (IProgramVar var : eqNode.getVariables()) {
+				inVars.put(var, null);
+			}
+		}
+		mInVars = inVars;
+		Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+		if (isOutOrThrough()) {
+			for (IProgramVar var : eqNode.getVariables()) {
+				outVars.put(var, null);
+			}
+		}
+		mOutVars = outVars;
 		
 	}
 
@@ -306,7 +323,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	@Override
 	public String toString() {
 //		if (mEqNode != null) {
-			return "NodeId(#" + Integer.toString(this.hashCode()).substring(0, 3) + "): " + mEqNode;
+//			return "NodeId(#" + Integer.toString(this.hashCode()).substring(0, 3) + "): " + mEqNode;
+			return "NodeId(" + mInOutStatus + "): " + mEqNode;
 //		} else if (mIdentifyingTerm != null) {
 //			return "NodeId: " + mTerm;
 //		} else {
@@ -353,11 +371,17 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		return Collections.singleton(mNodeIdWithSideCondition);
 	}
 
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
+	}
+
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
+	}
+
 //	@Override
 //	public Set<ISingleElementWrapper> getElements() {
 //		return Collections.singleton(this);
 //	}
 }
-enum TfNodeInOutStatus {
-	IN, OUT, THROUGH, MIXED;
-}
+

@@ -254,19 +254,4 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
 		return sb.toString();
 	}
-	
-//	@Override
-//	public boolean equals(Object other) {
-//		if (!(other instanceof EqGraphNode)) {
-//			return false;
-//		}
-//		//TODO: what is this for??
-//		assert false;
-//		return ((EqGraphNode)other).nodeIdentifier.equals(this.nodeIdentifier);
-//	}
-
-//	public void setCcchild(Map<Object, Object> newMap) {
-//		ccchild = newMap;
-//	}
-
 }
