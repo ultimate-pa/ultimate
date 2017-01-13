@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
@@ -81,22 +81,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 /**
  * Base class to recursively walk through a Boogie tree, doing transformations. This class changes nothing, but
  * inherited classes may override some of the provided functions. This class will then propagate the changes.
- * 
+ *
  * The boogie declaration is currently read-only, so all changes have to be returned in new objects. Therefore each of
  * this function takes a Boogie-AST-node and returns the same type. If the return value for the children do not change
  * the default methods will return the same value again, so that no new objects are created.
- * 
+ *
  * As an example usage see de.uni_freiburg.informatik.ultimate.boogie.preprocessor.FunctionInliner. Note that the
  * underlying ITypes are not changed by the default implementation. You either need preserve types, run this before type
  * checking, or take care of updating the types yourself.
- * 
+ *
  * @author Jochen Hoenicke
  */
 public abstract class BoogieTransformer {
 
 	/**
 	 * Process a declaration (including its children).
-	 * 
+	 *
 	 * @param decl
 	 *            the declaration to process.
 	 * @return the processed declaration.
@@ -163,15 +163,14 @@ public abstract class BoogieTransformer {
 
 		if (newDecl == null) {
 			return decl;
-		} else {
-			ModelUtils.copyAnnotations(decl, newDecl);
-			return newDecl;
 		}
+		ModelUtils.copyAnnotations(decl, newDecl);
+		return newDecl;
 	}
 
 	/**
 	 * Process an array of AST type. This implementation calls processType on all elements
-	 * 
+	 *
 	 * @param types
 	 *            the types to process.
 	 * @return the processed types.
@@ -190,7 +189,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process a AST type. This implementation recurses on the sub types.
-	 * 
+	 *
 	 * @param type
 	 *            the type to process.
 	 * @return the processed type.
@@ -217,16 +216,15 @@ public abstract class BoogieTransformer {
 		}
 		if (newType == null) {
 			return type;
-		} else {
-			ModelUtils.copyAnnotations(type, newType);
-			return newType;
 		}
+		ModelUtils.copyAnnotations(type, newType);
+		return newType;
 	}
 
 	/**
 	 * Process an array of variable list as it appears in function- and variable-specifications. This implementation
 	 * calls processVarList on all elements.
-	 * 
+	 *
 	 * @param vls
 	 *            the variable lists
 	 * @return the processed variable lists.
@@ -246,7 +244,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process a variable list as it appears in function- and variable-specifications. This implementation processes the
 	 * where clause and the type.
-	 * 
+	 *
 	 * @param vl
 	 *            the variable list
 	 * @return the processed variable list.
@@ -266,7 +264,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process the body of an implementation. Processes the contained variable declarations and statements.
-	 * 
+	 *
 	 * @param body
 	 *            the implementation body.
 	 * @return the processed body.
@@ -287,7 +285,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process a local variable declaration. Global declarations are processed by processDeclaration.
-	 * 
+	 *
 	 * @param local
 	 *            The local variable declaration.
 	 * @return the processed declaration.
@@ -307,7 +305,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process array of local variable declarations. This is called for implementations.
-	 * 
+	 *
 	 * @param locals
 	 *            the array of variable declarations
 	 * @return the processed declarations.
@@ -326,7 +324,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process the statements. Calls processStatement for all statements in the array.
-	 * 
+	 *
 	 * @param statements
 	 *            the statement to process.
 	 * @return processed statements.
@@ -346,7 +344,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process the statement. Calls processExpression for all contained expressions and recurses for while and if
 	 * statements.
-	 * 
+	 *
 	 * @param statement
 	 *            the statement to process.
 	 * @return processed statement.
@@ -417,15 +415,14 @@ public abstract class BoogieTransformer {
 		if (newStatement == null) {
 			/* No recursion for label, havoc, break, return and goto */
 			return statement;
-		} else {
-			ModelUtils.copyAnnotations(statement, newStatement);
-			return newStatement;
 		}
+		ModelUtils.copyAnnotations(statement, newStatement);
+		return newStatement;
 	}
 
 	/**
 	 * Process the loop invariant specifications. Calls processExpression for all loop invariants.
-	 * 
+	 *
 	 * @param specs
 	 *            the invariant specifications to process.
 	 * @return processed specifications.
@@ -450,7 +447,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process a left hand side (of an assignement). Recurses for array left hand side and calls processExpression for
 	 * all contained expressions.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left hand side to process.
 	 * @return processed left hand side.
@@ -473,7 +470,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process the left hand sides (of an assignment). Calls processLeftHandSide for each element in the array.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
@@ -493,7 +490,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process the left hand sides (of a call or havoc, or modifies specification). Default implementation calls
 	 * processLeftHandSides and casts back to VariableLHS.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left hand sides to process.
 	 * @return processed left hand sides.
@@ -511,7 +508,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process a procedure specification. Recursively calls processExpression for ensures and requires specifications.
 	 * This must not be called for LoopInvariantSpecifications.
-	 * 
+	 *
 	 * @param spec
 	 *            the specification to process.
 	 * @return processed specification.
@@ -539,16 +536,15 @@ public abstract class BoogieTransformer {
 		}
 		if (newSpec == null) {
 			return spec;
-		} else {
-			ModelUtils.copyAnnotations(spec, newSpec);
-			return newSpec;
 		}
+		ModelUtils.copyAnnotations(spec, newSpec);
+		return newSpec;
 	}
 
 	/**
 	 * Process the procedure specifications. Calls processSpecification for each element in the array. This must not be
 	 * called for LoopInvariantSpecifications.
-	 * 
+	 *
 	 * @param specs
 	 *            the specifications to process.
 	 * @return processed specifications.
@@ -568,7 +564,7 @@ public abstract class BoogieTransformer {
 	/**
 	 * Process the attribute. Calls processExpression for all contained expressions. This must handle all kinds of
 	 * attributes, including triggers.
-	 * 
+	 *
 	 * @param attr
 	 *            the attribute to process.
 	 * @return processed attribute.
@@ -590,16 +586,15 @@ public abstract class BoogieTransformer {
 		}
 		if (newAttr == null) {
 			return attr;
-		} else {
-			ModelUtils.copyAnnotations(attr, newAttr);
-			return newAttr;
 		}
+		ModelUtils.copyAnnotations(attr, newAttr);
+		return newAttr;
 	}
 
 	/**
 	 * Process the attributes. Calls processAttribute for each element in the array. This must handle all kinds of
 	 * attributes, including triggers.
-	 * 
+	 *
 	 * @param attributes
 	 *            the attributes to process.
 	 * @return processed attributes.
@@ -618,7 +613,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process the expressions. Calls processExpression for each element in the array.
-	 * 
+	 *
 	 * @param exprs
 	 *            the expression to process.
 	 * @return processed expressions.
@@ -637,7 +632,7 @@ public abstract class BoogieTransformer {
 
 	/**
 	 * Process the expressions. Calls processExpression for each subexpression.
-	 * 
+	 *
 	 * @param expr
 	 *            the expression to process.
 	 * @return processed expression.
@@ -738,9 +733,8 @@ public abstract class BoogieTransformer {
 			 * do not need recursion, and recursion can leave the expression unchanged.
 			 */
 			return expr;
-		} else {
-			ModelUtils.copyAnnotations(expr, newExpr);
-			return newExpr;
 		}
+		ModelUtils.copyAnnotations(expr, newExpr);
+		return newExpr;
 	}
 }
