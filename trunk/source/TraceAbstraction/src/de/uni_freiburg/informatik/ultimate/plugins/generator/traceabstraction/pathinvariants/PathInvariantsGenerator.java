@@ -100,6 +100,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = false;
 	
+	/**
+	 * If set to true, we always construct two copies of each invariant
+	 * pattern, one strict inequality and one non-strict inequality.
+	 * If set to false we use only one non-strict inequality.
+	 */
+	private final static boolean mAlwaysStrictAndNonStrictCopies = false;
+	
 	private final boolean mUseLiveVariables;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -147,13 +154,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
-				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
 			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
 		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables);
+			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
 		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables);
+		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables, mAlwaysStrictAndNonStrictCopies);
 	}
 
 	/**
@@ -231,13 +238,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	/**
 	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
 	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations.
+	 * TODO: If assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the error location).
 	 * 
 	 * @param pathProgram
 	 * @return
 	 */
 	private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation> pathProgram,
 			final ManagedScript managedScript) {
-		final Set<?> loopLocations = pathProgram.getLoopLocations();
+		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
 		final IcfgLocation errorloc = extractErrorLocationFromPathProgram(pathProgram);
 		final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
 		locs2WP.put(errorloc, mPostcondition);

@@ -19,15 +19,17 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 	private Map<IcfgLocation, PatternSetting> mLoc2PatternSetting;
 	
 	public DynamicPatternSettingsStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
-			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables);
+			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables,
+			boolean alwaysStrictAndNonStrictCopies) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
 		mLocations2LiveVariables = new HashMap<>();
 		mLoc2PatternSetting = new HashMap<>();
 	}
 	
 	public DynamicPatternSettingsStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
-			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables);
+			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+			boolean alwaysStrictAndNonStrictCopies) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
 		mLocations2LiveVariables = loc2LiveVariables;
 		if (loc2LiveVariables == null) {
 			mLocations2LiveVariables = new HashMap<>();
@@ -53,7 +55,11 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 					ps.mNumOfConjuncts);
 			for (int j = 0; j < ps.mNumOfConjuncts; j++) {
 				final boolean[] invariantPatternCopies;
-				invariantPatternCopies = new boolean[] { false };
+				if (super.mAlwaysStrictAndNonStrictCopies) {
+					invariantPatternCopies = new boolean[] { false, true };
+				} else {
+					invariantPatternCopies = new boolean[] { false };
+				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, ps.getPatternVariables(), prefix + "_" + newPrefix(), strict);
@@ -90,7 +96,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		if (!mLoc2PatternSetting.containsKey(location)) {
 			// Create new setting for this location
 			Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
-			if (varsForThisPattern.containsAll(varsFromUnsatCore)) {
+			if (!varsFromUnsatCore.isEmpty() && varsForThisPattern.containsAll(varsFromUnsatCore)) {
 				// If the current set of variables is a superset of the set of variables from the unsat core, then we remove the residual variables.
 				varsForThisPattern.retainAll(varsFromUnsatCore);
 			}
@@ -98,13 +104,13 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			mLoc2PatternSetting.put(location, ps);
 		} else {
 			ps = mLoc2PatternSetting.get(location);
-			if (ps.getPatternVariables().containsAll(varsFromUnsatCore)) {
+			if (ps.getPatternVariables().containsAll(varsFromUnsatCore)) { // TODO: is not empty
 				ps.getPatternVariables().retainAll(varsFromUnsatCore);
 			}
 			if (mLocations2LiveVariables.containsKey(location)) {
 				Set<IProgramVar> liveVars = mLocations2LiveVariables.get(location);
 				// Add those variables from unsat core to pattern which are also live.
-				for (IProgramVar var : varsFromUnsatCore ) {
+				for (IProgramVar var : varsFromUnsatCore ) { // TODO: hier muss auch etwas getan werden
 					if (liveVars.contains(var)) {
 						ps.getPatternVariables().add(var);
 					}
@@ -138,7 +144,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		private int mNumOfConjuncts;
 		private static final int MAX_NUM_CONJUNCTS = 3;
 		private int mNumOfDisjuncts;
-		private static final int MAX_NUM_DISJUNCTS = 3;
+		private static final int MAX_NUM_DISJUNCTS = 4;
 		private Set<IProgramVar> mPatternVariables;
 		
 		public PatternSetting(int disjuncts, int conjuncts, Set<IProgramVar> vars) {

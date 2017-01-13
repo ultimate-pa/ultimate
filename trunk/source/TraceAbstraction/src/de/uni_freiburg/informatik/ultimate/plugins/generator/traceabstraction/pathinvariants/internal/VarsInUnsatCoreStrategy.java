@@ -15,8 +15,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 
 /**
- * This strategy constructs invariant patterns using those program variables have been previously in the unsatisfiable core.
- * If it is the first iteration, then either all program variables or only the live variables are used to construct the pattern.
+ * This strategy constructs invariant patterns using those program variables which have been previously in the unsatisfiable core.
+ * If it is the first iteration, then either all program variables or only the live variables are used for the pattern.
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
@@ -26,9 +26,9 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	
 	public VarsInUnsatCoreStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
 			int maxRounds, Set<IProgramVar> allProgramVariables,
-			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables) {
+			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies) {
 		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
-				locs2LiveVariables);
+				locs2LiveVariables, alwaysStrictAndNonStrictCopies);
 		mLocations2PatternVariables = new HashMap<>();
 	}
 
@@ -51,7 +51,11 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
 				final boolean[] invariantPatternCopies;
+				if (mAlwaysStrictAndNonStrictCopies) {
+					invariantPatternCopies = new boolean[] { false, true };
+				} else {
 					invariantPatternCopies = new boolean[] { false };
+				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, varsForThisPattern, prefix + "_" + newPrefix(), strict);

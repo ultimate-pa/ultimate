@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -94,7 +96,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		TWO_MODE
 	}
 
-	private static final String PREFIX = "liipp_";
+	private static final String PREFIX = "lp_";
 	private static final String PREFIX_SEPARATOR = "_";
 
 	private static final String ANNOT_PREFIX = "LIIPP_Annot";
@@ -132,12 +134,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final int mMaxRounds;
 	private final boolean mUseNonlinearConstraints; 
 	private final SimplificationType mSimplifySatisfyingAssignment = SimplificationType.TWO_MODE;
-	/**
-	 * If set to true, we always construct two copies of each invariant
-	 * pattern, one strict inequality and one non-strict inequality.
-	 * If set to false we use only one non-strict inequality.
-	 */
-	private final boolean mAlwaysStrictAndNonStrictCopies = false;
+
 	private Collection<TermVariable> mVarsFromUnsatCore;
 	private final IcfgLocation mStartLocation;
 	private final IcfgLocation mErrorLocation;
@@ -236,7 +233,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 */
 	@Override
 	public void startRound(final int round) {
-
+		mSolver.echo(new QuotedObject("Round " + round));
 		resetSettings();
 		mEntryInvariantPattern = null;
 		mExitInvariantPattern = null;
@@ -271,7 +268,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	 * @return unique prefix (within this instance and round)
 	 */
 	protected String newPrefix() {
-		return PREFIX + (mPrefixCounter++) + PREFIX_SEPARATOR;
+		return PREFIX + (mPrefixCounter++);
 	}
 
 
@@ -373,7 +370,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			mLogger.info( "[LIIPP] Transforming conjunct "
 					+ conjunct);
 			final MotzkinTransformation transformation = new MotzkinTransformation(
-					mSolver, analysisType, false);
+					mSolver, analysisType, !false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
@@ -616,14 +613,18 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		}
 		if (PRINT_CONSTRAINTS) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("StartPattern: ");
+			sb.append("\nStartPattern: ");
 			startInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
-			sb.append("Transition: ");
-			sb.append(predicate.getTransition());
-			sb.append(" AND "); 
-			sb.append("EndPattern: ");
+			sb.append("\nTransition: ");
+			transitionDNF.forEach(dis -> dis.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
+//			sb.append(" AND "); 
+			sb.append("\nEndPattern: ");
 			endInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
 			mLogger.info(sb.toString());
+		}
+		// Respect timeout / toolchain cancellation
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
 		}
 
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
@@ -772,6 +773,10 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 					final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
 					motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
 				}
+				if (DEBUG_OUTPUT) {
+					mLogger.info("UnsatCoreAnnots: " + Arrays.toString(unsatCoreAnnots));
+					mLogger.info("MotzkinVars in unsat core: " + motzkinVariables);
+				}
 				mVarsFromUnsatCore = new HashSet<>();
 				final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
 				final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
@@ -788,6 +793,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 //						}
 
 					}
+					
 					if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
 						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet().stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
 						for (final Set<LinearInequality> s : setsContainingLinq) {
@@ -819,20 +825,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		}
 
 		mLogger.info( "[LIIPP] Solution found!");
-//		final Collection<Term> coefficientsOfAllInvariants = mPatternVariables;
-//		try {
-//			if (mSimplifySatisfyingAssignment) {
-//				mValuation = ModelExtractionUtils.getSimplifiedAssignment(
-//						mSolver, coefficientsOfAllInvariants, mLogger, mServices);
-//			} else {
-//				mValuation = ModelExtractionUtils.getValuation(mSolver,
-//						coefficientsOfAllInvariants);
-//			}
-//		} catch (final TermException e) {
-//			e.printStackTrace();
-//			throw new AssertionError("model extraction failed");
-//		}
-//		mLogger.info( "[LIIPP] Valuation: " + mValuation);
 
 		return true;
 	}
@@ -942,6 +934,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 		if (mUseVarsFromUnsatCore) {
 			mSolver.setOption(":produce-unsat-cores", true);
 		}
+		
 		final Logics logic;
 		if (mUseNonlinearConstraints) {
 			logic = Logics.QF_NRA;

@@ -21,8 +21,9 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 
 	public LiveVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
-			int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables);
+			int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
+			boolean alwaysStrictAndNonStrictCopies) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
 		mLocations2LiveVariables = locs2LiveVariables;
 	}
 

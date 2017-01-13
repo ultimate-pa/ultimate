@@ -30,6 +30,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 	protected final Set<IProgramVar> mAllProgramVariables;
 	protected int mPrefixCounter;
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
+	protected boolean mAlwaysStrictAndNonStrictCopies;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -54,7 +55,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 	public LocationDependentLinearInequalityInvariantPatternStrategy(
 			final int baseDisjuncts, final int baseConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound,
-			final int maxRounds, Set<IProgramVar> allProgramVariables) {
+			final int maxRounds, Set<IProgramVar> allProgramVariables, boolean alwaysStrictAndNonStrictCopies) {
 		this.baseConjuncts = baseConjuncts;
 		this.baseDisjuncts = baseDisjuncts;
 		this.disjunctsPerRound = disjunctsPerRound;
@@ -63,6 +64,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		mAllProgramVariables = allProgramVariables;
 		mPrefixCounter = 0;
 		mLoc2PatternCoefficents = new HashMap<>();
+		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
 	}
 
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
@@ -75,7 +77,11 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
 				final boolean[] invariantPatternCopies;
-					invariantPatternCopies = new boolean[] { false };
+					if (mAlwaysStrictAndNonStrictCopies) {
+						invariantPatternCopies = new boolean[] { false, true };
+					} else {
+						invariantPatternCopies = new boolean[] { false };
+					}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);

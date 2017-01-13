@@ -57,6 +57,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	protected final Set<IProgramVar> mPatternVariables;
 	protected int mPrefixCounter;
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
+	private boolean mAlwaysStrictAndNonStrictCopies;
 	
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -82,7 +83,8 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	public LocationIndependentLinearInequalityInvariantPatternStrategy(
 			final int baseDisjuncts, final int baseConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound,
-			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables) {
+			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
+			boolean alwaysStrictAndNonStrictCopies) {
 		this.baseConjuncts = baseConjuncts;
 		this.baseDisjuncts = baseDisjuncts;
 		this.disjunctsPerRound = disjunctsPerRound;
@@ -92,6 +94,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		mPatternVariables = patternVariables;
 		mPrefixCounter = 0;
 		mLoc2PatternCoefficents = new HashMap<>();
+		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
 	}
 
 //	/**
@@ -125,7 +128,11 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
 				final boolean[] invariantPatternCopies;
-				invariantPatternCopies = new boolean[] { false };
+				if (mAlwaysStrictAndNonStrictCopies) {
+					invariantPatternCopies = new boolean[] { false, true };
+				} else {
+					invariantPatternCopies = new boolean[] { false };
+				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
