@@ -363,11 +363,11 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *            The automaton.
 	 * @param factory
 	 *            state factory
-	 * @return new {@link MinimizeNwaOverapproximation} instance
+	 * @return new {@link RemoveNonLiveStates} instance
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	private IOperation<LETTER, STATE> removeNonLiveStates(final INestedWordAutomaton<LETTER, STATE> automaton)
+	public IOperation<LETTER, STATE> removeNonLiveStates(final INestedWordAutomaton<LETTER, STATE> automaton)
 			throws Throwable {
 		return new RemoveNonLiveStates<>(mServices, automaton);
 	}
