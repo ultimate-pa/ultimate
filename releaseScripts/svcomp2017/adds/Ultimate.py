@@ -177,26 +177,34 @@ def flatten(l):
         else:
             yield el   
 
-def createWitnessPassthroughArgumentsList(printWitness, prop, architecture, cFile):
-    if not printWitness:
+def createCliSettings(checkTermination, validateWitness, prop, architecture, cFile):
+    if checkTermination:
+        # we can neither validate nor produce witnesses in termination mode, so no additional arguments are required
         return []
+    
     ret = []
-    ret.append('--witnessprinter.graph.data.specification')
-    ret.append(prop)
-    ret.append('--witnessprinter.graph.data.producer')
-    ret.append(toolname)
-    ret.append('--witnessprinter.graph.data.architecture')
-    ret.append(architecture)
+    if validateWitness:
+        # we need to disable hoare triple generation as workaround for an internal bug
+        ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
+        ret.append('false')
+    else:
+        # we are neither in termination nor in validation mode, so we should generate a witness and need 
+        # to pass some things to the witness printer
+        ret.append('--witnessprinter.graph.data.specification')
+        ret.append(prop)
+        ret.append('--witnessprinter.graph.data.producer')
+        ret.append(toolname)
+        ret.append('--witnessprinter.graph.data.architecture')
+        ret.append(architecture)
+        ret.append('--witnessprinter.graph.data.programhash')
+        try:
+            sha = subprocess.Popen(['sha1sum', cFile], stdout=subprocess.PIPE).communicate()[0]
+            ret.append(sha.split()[0])
+        except:
+            print('Error trying to start sha1sum')
+            sys.exit(1)
 
-    ret.append('--witnessprinter.graph.data.programhash')
-    try:
-        sha = subprocess.Popen(['sha1sum', cFile], stdout=subprocess.PIPE).communicate()[0]
-        ret.append(sha.split()[0])
-    except:
-        print('Error trying to start sha1sum')
-        sys.exit(1)
     return ret
-        
 
 def getSettingsPath(bitprecise, settingsSearchString):
     if bitprecise:
@@ -342,13 +350,13 @@ def main():
     toolchain = getToolchainPath(terminationMode, memDeref, memDerefMemtrack, overflowMode, validateWitness)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsPath(False, settingsSearchString)
-    witnessPassthroughArguments = createWitnessPassthroughArgumentsList(
-                                    not validateWitness and not terminationMode,
-                                    propFileStr, architecture, inputFiles)
+    
+    # create manual settings that override settings files for witness passthrough (collecting various things) and for witness validation
+    manualCliArguments = createCliSettings(terminationMode, validateWitness, propFileStr, architecture, inputFiles)
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, witnessPassthroughArguments])
+    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, manualCliArguments])
  
 
     # actually run Ultimate 
@@ -358,7 +366,7 @@ def main():
         # we did fail because we had to overapproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsPath(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, witnessPassthroughArguments])
+        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, manualCliArguments])
         safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
