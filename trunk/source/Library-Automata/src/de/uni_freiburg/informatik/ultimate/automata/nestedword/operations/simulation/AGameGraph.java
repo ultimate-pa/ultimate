@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.VertexValueContainer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorySubSummaryChoiceVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -769,12 +771,19 @@ public abstract class AGameGraph<LETTER, STATE> {
 					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
-				result.append(")\t--> (" + succ.isB() + ", " + succ.getQ0() + ", " + succ.getQ1());
+				result.append(")");
+				if ((vertex instanceof SpoilerSubSummaryPriorityVertex) || (vertex instanceof DuplicatorySubSummaryChoiceVertex)) {
+					result.append(vertex.getClass().getSimpleName());
+				}
+				result.append("\t--> (" + succ.isB() + ", " + succ.getQ0() + ", " + succ.getQ1());
 				if (succ instanceof DuplicatorVertex) {
 					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")");
+				if ((succ instanceof SpoilerSubSummaryPriorityVertex) || (succ instanceof DuplicatorySubSummaryChoiceVertex)) {
+					result.append(succ.getClass().getSimpleName());
+				}
 			}
 		}
 		result.append(lineSeparator + "\t}");
