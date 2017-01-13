@@ -176,11 +176,13 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 		final DuplicatorySubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice = 
 				new DuplicatorySubSummaryChoiceVertex<>(gameSummary);
 		assert !mGameGraph.getDuplicatorVertices().contains(duplicatorChoice) : "duplicator choice already there";
+		mGameGraph.addDuplicatorVertex(duplicatorChoice);
 		mGameGraph.addEdge(sourceVertex, duplicatorChoice);
 		for (final IGameState duplicatorResponse : gameSummary.getDuplicatorResponses().keySet()) {
 			final SpoilerSubSummaryPriorityVertex<LETTER, STATE> spoilerPrioVertex = 
 					new SpoilerSubSummaryPriorityVertex<>(gameSummary, duplicatorResponse);
 			assert !mGameGraph.getSpoilerVertices().contains(spoilerPrioVertex) : "spoiler priority vertex already there";
+			mGameGraph.addSpoilerVertex(spoilerPrioVertex);
 			final SpoilerNwaVertex<LETTER, STATE> targetVertex = getSpoilerVertex(duplicatorResponse);
 			assert mGameGraph.getSpoilerVertices().contains(targetVertex) : "target missing";
 			mGameGraph.addEdge(duplicatorChoice, spoilerPrioVertex);
