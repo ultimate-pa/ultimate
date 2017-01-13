@@ -126,7 +126,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 					new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 			final int gameAutomatonSize = ga.size();
 			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices, ga, mOperand);
-			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<>(mServices, ga,
+			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGameGraphTransformer<>(mServices, ga,
 					uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 			sim.doSimulation();

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorySubSummaryChoiceVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorSubSummaryChoiceVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <LETTER>
  * @param <STATE>
  */
-public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
+public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
 	
 
 	private final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> mGameAutomaton;
@@ -66,7 +66,7 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 	
 	
 	
-	public GameAutomatonToGamGraphTransformer(
+	public GameAutomatonToGameGraphTransformer(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton, 
 			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, 
@@ -173,8 +173,8 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 	private void addGameSummary(final GameCallReturnSummary<STATE> gameSummary) {
 		final SpoilerNwaVertex<LETTER, STATE> sourceVertex = getSpoilerVertex(gameSummary.getSummarySource());
 		assert mGameGraph.getSpoilerVertices().contains(sourceVertex) : "source missing";
-		final DuplicatorySubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice = 
-				new DuplicatorySubSummaryChoiceVertex<>(gameSummary);
+		final DuplicatorSubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice = 
+				new DuplicatorSubSummaryChoiceVertex<>(gameSummary);
 		assert !mGameGraph.getDuplicatorVertices().contains(duplicatorChoice) : "duplicator choice already there";
 		mGameGraph.addDuplicatorVertex(duplicatorChoice);
 		mGameGraph.addEdge(sourceVertex, duplicatorChoice);

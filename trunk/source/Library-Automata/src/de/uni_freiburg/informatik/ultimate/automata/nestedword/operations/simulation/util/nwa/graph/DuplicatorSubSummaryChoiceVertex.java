@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DuplicatorySubSummaryChoiceVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
+public final class DuplicatorSubSummaryChoiceVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
 	
 	private final GameCallReturnSummary<STATE> mSummary;
 	
-	public DuplicatorySubSummaryChoiceVertex(final GameCallReturnSummary<STATE> summary) {
+	public DuplicatorSubSummaryChoiceVertex(final GameCallReturnSummary<STATE> summary) {
 		// use "neutral" priority two
 		super(2, GameAutomaton.unwrapSpoilerNwaVertex(summary.getSummarySource()).isB(), null, null, null);
 		mSummary = summary;
@@ -71,7 +71,7 @@ public final class DuplicatorySubSummaryChoiceVertex<LETTER, STATE> extends Dupl
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final DuplicatorySubSummaryChoiceVertex other = (DuplicatorySubSummaryChoiceVertex) obj;
+		final DuplicatorSubSummaryChoiceVertex other = (DuplicatorSubSummaryChoiceVertex) obj;
 		if (mSummary == null) {
 			if (other.mSummary != null)
 				return false;
