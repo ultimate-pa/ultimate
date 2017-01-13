@@ -43,19 +43,25 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  */
 public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
 	
+	private final Class<VARDECL> mVariablesType;
+
+	public EmptyDomain(final Class<VARDECL> variablesType) {
+		mVariablesType = variablesType;
+	}
+	
 	@Override
 	public EmptyDomainState<VARDECL> createFreshState() {
-		return new EmptyDomainState<>();
+		return new EmptyDomainState<>(mVariablesType);
 	}
 	
 	@Override
 	public EmptyDomainState<VARDECL> createTopState() {
-		return new EmptyDomainState<>(false);
+		return new EmptyDomainState<>(false, mVariablesType);
 	}
 
 	@Override
 	public EmptyDomainState<VARDECL> createBottomState() {
-		return new EmptyDomainState<>(true);
+		return new EmptyDomainState<>(true, mVariablesType);
 	}
 	
 	@Override

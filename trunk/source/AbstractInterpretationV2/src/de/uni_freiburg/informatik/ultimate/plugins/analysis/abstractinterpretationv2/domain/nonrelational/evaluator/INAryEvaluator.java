@@ -29,15 +29,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 
 /**
  * Interface for NAry evaluators that have some operator.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVar>>
-		extends IEvaluator<VALUE, STATE> {
+public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
+		extends IEvaluator<VALUE, STATE, VARDECL> {
 	
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.
@@ -46,7 +45,7 @@ public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoog
 	 *            The operator to set.
 	 */
 	void setOperator(Object operator);
-	
+
 	/**
 	 * Returns the arity of the evaluator.
 	 *

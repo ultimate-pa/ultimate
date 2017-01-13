@@ -42,11 +42,11 @@ public final class EmptyOperator<ACTION, VARDECL> implements IAbstractStateBinar
 			final EmptyDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
-
+		
 		if (!first.hasSameVariables(second)) {
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
-
-		return new EmptyDomainState<>(first.getVariables());
+		
+		return new EmptyDomainState<>(first.getVariables(), first.getVariablesType());
 	}
 }

@@ -517,5 +517,10 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 		return false;
 	}
+
+	@Override
+	public Class<IProgramVar> getVariablesType() {
+		return IProgramVar.class;
+	}
 	
 }

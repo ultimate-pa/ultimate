@@ -49,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class SignPostOperator implements IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> {
+public class SignPostOperator implements IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
 	
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
 	private final ILogger mLogger;
-	
+
 	/**
 	 * Default constructor.
 	 */
@@ -63,7 +63,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 		mStatementProcessor = stmtProcessor;
 		mLogger = logger;
 	}
-	
+
 	/**
 	 * Applies the post operator to a given {@link IAbstractState}, according to some Boogie {@link CodeBlock}.
 	 *
@@ -74,41 +74,42 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public List<SignDomainState> apply(final SignDomainState oldstate, final CodeBlock transition) {
+	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> oldstate,
+			final CodeBlock transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
-		
+
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
 		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
-	        throw new UnsupportedOperationException("Summary for procedure without implementation");
-	    }
-		
-		List<SignDomainState> currentStates = new ArrayList<>();
+			throw new UnsupportedOperationException("Summary for procedure without implementation");
+		}
+
+		List<SignDomainState<IBoogieVar>> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 		final List<Statement> statements = mStatementExtractor.process(transition);
-		
+
 		for (final Statement stmt : statements) {
-			final List<SignDomainState> afterProcessStates = new ArrayList<>();
-			for (final SignDomainState currentState : currentStates) {
-				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt);
+			final List<SignDomainState<IBoogieVar>> afterProcessStates = new ArrayList<>();
+			for (final SignDomainState<IBoogieVar> currentState : currentStates) {
+				final List<SignDomainState<IBoogieVar>> processed = mStatementProcessor.process(currentState, stmt);
 				assert !processed.isEmpty();
 				afterProcessStates.addAll(processed);
 			}
-			
+
 			currentStates = afterProcessStates;
 		}
-		
+
 		return currentStates;
 	}
-	
+
 	@Override
-	public List<SignDomainState> apply(final SignDomainState stateBeforeLeaving,
-			final SignDomainState stateAfterLeaving, final CodeBlock transition) {
+	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> stateBeforeLeaving,
+			final SignDomainState<IBoogieVar> stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
-		
-		final List<SignDomainState> returnList = new ArrayList<>();
-		
+
+		final List<SignDomainState<IBoogieVar>> returnList = new ArrayList<>();
+
 		if (transition instanceof Call) {
 			// nothing changes during this switch
 			returnList.add(stateAfterLeaving);
@@ -123,8 +124,8 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 			throw new UnsupportedOperationException(
 					"SignDomain does not support context switches other than Call and Return (yet)");
 		}
-		
+
 		return returnList;
 	}
-	
+
 }

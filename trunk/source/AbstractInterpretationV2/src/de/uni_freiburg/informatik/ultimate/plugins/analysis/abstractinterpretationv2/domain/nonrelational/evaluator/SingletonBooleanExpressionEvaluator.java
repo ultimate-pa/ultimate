@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -50,56 +49,56 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of the states of the abstract domain.
  */
-public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
-		implements IEvaluator<VALUE, STATE> {
+public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+		implements IEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final BooleanValue mBooleanValue;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-
+	
 	public SingletonBooleanExpressionEvaluator(final BooleanValue booleanValue,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mBooleanValue = booleanValue;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
-
+	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
 		return Collections.singletonList(
 				new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), mBooleanValue));
 	}
-
+	
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		return Collections.singletonList(currentState);
 	}
-
+	
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		throw new UnsupportedOperationException(
 				"Adding a subevaluator is not supported for singleton boolean expression evaluators.");
 	}
-
+	
 	@Override
-	public Set<IBoogieVar> getVarIdentifiers() {
+	public Set<VARDECL> getVarIdentifiers() {
 		return Collections.emptySet();
 	}
-
+	
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean containsBool() {
 		return true;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mBooleanValue.toString();
 	}
-
+	
 	@Override
 	public EvaluatorType getType() {
 		return EvaluatorType.BOOL;

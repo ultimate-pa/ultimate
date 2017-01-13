@@ -53,18 +53,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
+public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
 	
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 	private final BoogieSymbolTable mSymbolTable;
-	
-	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
-	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
-	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
-	
+
+	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mWideningOperator;
+	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mMergeOperator;
+	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> mPostOperator;
+
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
 			final BoogieIcfgContainer rootAnnotation) {
@@ -74,33 +74,33 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 		mRootAnnotation = rootAnnotation;
 		mSymbolTable = symbolTable;
 	}
-	
+
 	@Override
-	public IntervalDomainState createFreshState() {
-		return new IntervalDomainState(mLogger);
-	}
-	
-	@Override
-	public IntervalDomainState createTopState() {
-		return new IntervalDomainState(mLogger, false);
+	public IntervalDomainState<IBoogieVar> createFreshState() {
+		return new IntervalDomainState<>(mLogger, IBoogieVar.class);
 	}
 
 	@Override
-	public IntervalDomainState createBottomState() {
-		return new IntervalDomainState(mLogger, true);
+	public IntervalDomainState<IBoogieVar> createTopState() {
+		return new IntervalDomainState<>(mLogger, false, IBoogieVar.class);
 	}
 	
 	@Override
-	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
+	public IntervalDomainState<IBoogieVar> createBottomState() {
+		return new IntervalDomainState<>(mLogger, true, IBoogieVar.class);
+	}
+
+	@Override
+	public IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> getWideningOperator() {
 		if (mWideningOperator == null) {
 			final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
-			
+
 			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
-				mWideningOperator = new IntervalSimpleWideningOperator();
+				mWideningOperator = new IntervalSimpleWideningOperator<>();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-				final IAbstractStateBinaryOperator<IntervalDomainState> rtr =
-						new IntervalLiteralWideningOperator(mLiteralCollection);
+				final IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> rtr =
+						new IntervalLiteralWideningOperator<>(mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
@@ -110,20 +110,20 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 						"The widening operator " + wideningOperator + " is not implemented.");
 			}
 		}
-		
+
 		return mWideningOperator;
 	}
-	
+
 	@Override
-	public IAbstractStateBinaryOperator<IntervalDomainState> getMergeOperator() {
+	public IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> getMergeOperator() {
 		if (mMergeOperator == null) {
-			mMergeOperator = new IntervalMergeOperator();
+			mMergeOperator = new IntervalMergeOperator<>();
 		}
 		return mMergeOperator;
 	}
-	
+
 	@Override
-	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -133,7 +133,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 		}
 		return mPostOperator;
 	}
-	
+
 	@Override
 	public int getDomainPrecision() {
 		return 1000;

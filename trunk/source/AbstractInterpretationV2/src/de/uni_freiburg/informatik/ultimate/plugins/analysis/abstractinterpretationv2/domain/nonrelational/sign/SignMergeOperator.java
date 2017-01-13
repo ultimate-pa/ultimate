@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.SignValues;
 
 /**
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomainState> {
+public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<SignDomainState<VARDECL>> {
 	
 	private static final int BUFFER_SIZE = 100;
 	
@@ -81,7 +80,7 @@ public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomai
 	 *            The second state to merge.
 	 */
 	@Override
-	public SignDomainState apply(final SignDomainState first, final SignDomainState second) {
+	public SignDomainState<VARDECL> apply(final SignDomainState<VARDECL> first, final SignDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
 		
@@ -89,11 +88,11 @@ public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomai
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 		
-		final SignDomainState newState = first.createCopy();
+		final SignDomainState<VARDECL> newState = first.createCopy();
 		
-		final Set<IBoogieVar> variables = first.getVariables();
+		final Set<VARDECL> variables = first.getVariables();
 		
-		for (final IBoogieVar entry : variables) {
+		for (final VARDECL entry : variables) {
 			
 			final SignDomainValue value1 = first.getValue(entry);
 			final SignDomainValue value2 = second.getValue(entry);

@@ -34,20 +34,21 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TemporaryBoogieVar;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 public class IntervalDomainSubsetTest {
-
+	
 	@Test
 	public void TestSubsetRelatedToBug() {
 		final TemporaryBoogieVar varA = new TemporaryBoogieVar(BoogieType.TYPE_INT, "a");
 
-		IntervalDomainState state1 = new IntervalDomainState(new ConsoleLogger());
+		IntervalDomainState<IBoogieVar> state1 = new IntervalDomainState<>(new ConsoleLogger(), IBoogieVar.class);
 		state1 = state1.addVariable(varA);
 		state1 = state1.setValue(varA, new IntervalDomainValue(new IntervalValue(), new IntervalValue(8)));
 
-		IntervalDomainState state2 = new IntervalDomainState(new ConsoleLogger());
+		IntervalDomainState<IBoogieVar> state2 = new IntervalDomainState<>(new ConsoleLogger(), IBoogieVar.class);
 		state2 = state2.addVariable(varA);
 		state2 = state2.setValue(varA, new IntervalDomainValue(1, 8));
 
@@ -64,11 +65,11 @@ public class IntervalDomainSubsetTest {
 	public void TestContainment() {
 		final TemporaryBoogieVar varA = new TemporaryBoogieVar(BoogieType.TYPE_INT, "a");
 
-		IntervalDomainState s1 = new IntervalDomainState(new ConsoleLogger());
+		IntervalDomainState<IBoogieVar> s1 = new IntervalDomainState<>(new ConsoleLogger(), IBoogieVar.class);
 		s1 = s1.addVariable(varA);
 		s1 = s1.setValue(varA, new IntervalDomainValue(2, 4));
 
-		IntervalDomainState s2 = new IntervalDomainState(new ConsoleLogger());
+		IntervalDomainState<IBoogieVar> s2 = new IntervalDomainState<>(new ConsoleLogger(), IBoogieVar.class);
 		s2 = s2.addVariable(varA);
 		s2 = s2.setValue(varA, new IntervalDomainValue(0, 5));
 

@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -52,47 +51,47 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of states of the abstract domain.
  */
-public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-		implements IEvaluator<VALUE, STATE> {
+public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, VARDECL>, VARDECL>
+		implements IEvaluator<VALUE, STATE, VARDECL> {
 	
-	private final Set<IBoogieVar> mVariables;
+	private final Set<VARDECL> mVariables;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-	
-	private IEvaluator<VALUE, STATE> mConditionEvaluator;
-	private IEvaluator<VALUE, STATE> mNegatedConditionEvaluator;
-	private IEvaluator<VALUE, STATE> mIfEvaluator;
-	private IEvaluator<VALUE, STATE> mElseEvaluator;
-	
+
+	private IEvaluator<VALUE, STATE, VARDECL> mConditionEvaluator;
+	private IEvaluator<VALUE, STATE, VARDECL> mNegatedConditionEvaluator;
+	private IEvaluator<VALUE, STATE, VARDECL> mIfEvaluator;
+	private IEvaluator<VALUE, STATE, VARDECL> mElseEvaluator;
+
 	public ConditionalEvaluator(final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVariables = new HashSet<>();
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-		
+
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		
+
 		final List<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
-		
+
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
 			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
-			
+
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
-					
+
 					for (final IEvaluationResult<VALUE> ifRes : trueResult) {
 						if (!ifRes.getValue().isBottom() && !ifRes.getBooleanValue().isBottom()) {
 							returnList.add(
 									new NonrelationalEvaluationResult<>(ifRes.getValue(), ifRes.getBooleanValue()));
 						}
 					}
-					
+
 					mVariables.addAll(mIfEvaluator.getVarIdentifiers());
 					break;
 				default:
@@ -100,23 +99,23 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				}
 			}
 		}
-		
+
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
 			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
-			
+
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
-					
+
 					for (final IEvaluationResult<VALUE> elseRes : falseResult) {
 						if (!elseRes.getValue().isBottom() && !elseRes.getBooleanValue().isBottom()) {
 							returnList.add(
 									new NonrelationalEvaluationResult<>(elseRes.getValue(), elseRes.getBooleanValue()));
 						}
 					}
-					
+
 					mVariables.addAll(mElseEvaluator.getVarIdentifiers());
 					break;
 				default:
@@ -124,63 +123,63 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				}
 			}
 		}
-		
+
 		if (returnList.isEmpty()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(),
 					BooleanValue.FALSE));
 		}
-		
+
 		return NonrelationalUtils.mergeIfNecessary(returnList, 1);
 	}
-	
+
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
-		
+
 		final List<STATE> returnList = new ArrayList<>();
-		
+
 		final List<IEvaluationResult<VALUE>> conditionResult = mConditionEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> negatedConditionResult = mNegatedConditionEvaluator.evaluate(currentState);
-		
+
 		for (final IEvaluationResult<VALUE> cond : conditionResult) {
 			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
-			
+
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
-					
+
 					for (final IEvaluationResult<VALUE> t : trueResult) {
 						final List<STATE> ifStates = mIfEvaluator.inverseEvaluate(t, conditionState);
-						
+
 						for (final STATE ifState : ifStates) {
 							if (!ifState.isBottom()) {
 								returnList.add(ifState);
 							}
 						}
 					}
-					
+
 					break;
 				default:
 					break;
 				}
 			}
 		}
-		
+
 		for (final IEvaluationResult<VALUE> cond : negatedConditionResult) {
 			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
-			
+
 			for (final STATE conditionState : conditionStates) {
 				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
-					
+
 					for (final IEvaluationResult<VALUE> f : falseResult) {
 						final List<STATE> elseStates = mElseEvaluator.inverseEvaluate(f, conditionState);
-						
+
 						for (final STATE elseState : elseStates) {
 							if (!elseState.isBottom()) {
 								returnList.add(elseState);
@@ -193,16 +192,16 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				}
 			}
 		}
-		
+
 		if (returnList.isEmpty()) {
 			returnList.add(currentState.bottomState());
 		}
-		
+
 		return NonrelationalUtils.mergeStatesIfNecessary(returnList, 1);
 	}
-	
+
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		assert evaluator != null;
 		if (mNegatedConditionEvaluator == null) {
 			mNegatedConditionEvaluator = evaluator;
@@ -216,36 +215,36 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			throw new UnsupportedOperationException("Cannot add futher sub evaluators to this conditional evaluator.");
 		}
 	}
-	
+
 	@Override
-	public Set<IBoogieVar> getVarIdentifiers() {
+	public Set<VARDECL> getVarIdentifiers() {
 		return mVariables;
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return mConditionEvaluator == null || mIfEvaluator == null || mElseEvaluator == null;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		return mIfEvaluator.containsBool() || mElseEvaluator.containsBool();
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		sb.append("if ").append(mConditionEvaluator).append(" [[ ").append(mNegatedConditionEvaluator).append(" ]]")
 				.append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
-		
+
 		return sb.toString();
 	}
-	
+
 	@Override
 	public EvaluatorType getType() {
 		assert mIfEvaluator.getType() == mElseEvaluator.getType();
 		return mIfEvaluator.getType();
 	}
-	
+
 }

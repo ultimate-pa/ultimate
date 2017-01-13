@@ -58,52 +58,55 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	private final Set<STATE> mStates;
 	private final int mMaxSize;
 	private final int mId;
-	
-	AbstractMultiState(final int maxSize) {
-		this(maxSize, newSet(maxSize));
+
+	private final Class<VARDECL> mVariablesType;
+
+	AbstractMultiState(final int maxSize, final Class<VARDECL> variablesType) {
+		this(maxSize, newSet(maxSize), variablesType);
 	}
-	
-	AbstractMultiState(final int maxSize, final STATE state) {
-		this(maxSize, newSet(maxSize));
+
+	AbstractMultiState(final int maxSize, final STATE state, final Class<VARDECL> variablesType) {
+		this(maxSize, newSet(maxSize), variablesType);
 		mStates.add(state);
 	}
-	
-	AbstractMultiState(final Set<STATE> state) {
-		this(state.size(), state);
+
+	AbstractMultiState(final Set<STATE> state, final Class<VARDECL> variablesType) {
+		this(state.size(), state, variablesType);
 	}
-	
-	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
+
+	private AbstractMultiState(final int maxSize, final Set<STATE> states, final Class<VARDECL> variablesType) {
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
 		mId = sNextFreeId;
+		mVariablesType = variablesType;
 	}
-	
+
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> addVariable(final VARDECL variable) {
 		return applyToAll(a -> a.addVariable(variable));
 	}
-	
+
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> removeVariable(final VARDECL variable) {
 		return applyToAll(a -> a.removeVariable(variable));
 	}
-	
+
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> addVariables(final Collection<VARDECL> variables) {
 		return applyToAll(a -> a.addVariables(variables));
 	}
-	
+
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> removeVariables(final Collection<VARDECL> variables) {
 		return applyToAll(a -> a.removeVariables(variables));
 	}
-	
+
 	@Override
 	public boolean containsVariable(final VARDECL var) {
 		return mStates.stream().anyMatch(a -> a.containsVariable(var));
 	}
-	
+
 	@Override
 	public Set<VARDECL> getVariables() {
 		if (mStates.isEmpty()) {
@@ -111,7 +114,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return Collections.unmodifiableSet(mStates.iterator().next().getVariables());
 	}
-	
+
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL>
 			patch(final AbstractMultiState<STATE, ACTION, VARDECL> dominator) {
@@ -123,19 +126,19 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		while (iter.hasNext() && otherIter.hasNext()) {
 			newSet.add(iter.next().patch(otherIter.next()));
 		}
-		return new AbstractMultiState<>(mMaxSize, newSet);
+		return new AbstractMultiState<>(mMaxSize, newSet, mVariablesType);
 	}
-	
+
 	@Override
 	public boolean isEmpty() {
 		return mStates.stream().anyMatch(a -> a.isEmpty());
 	}
-	
+
 	@Override
 	public boolean isBottom() {
 		return mStates.isEmpty() || mStates.stream().allMatch(a -> a.isBottom());
 	}
-	
+
 	@Override
 	public boolean isEqualTo(final AbstractMultiState<STATE, ACTION, VARDECL> other) {
 		if (other == null) {
@@ -144,7 +147,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (!other.getVariables().equals(getVariables())) {
 			return false;
 		}
-		
+
 		for (final STATE state : mStates) {
 			if (!other.mStates.stream().anyMatch(state::isEqualTo)) {
 				return false;
@@ -152,7 +155,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return true;
 	}
-	
+
 	@Override
 	public SubsetResult isSubsetOf(final AbstractMultiState<STATE, ACTION, VARDECL> other) {
 		if (other == null) {
@@ -164,7 +167,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (other.mStates.isEmpty() && !mStates.isEmpty()) {
 			return SubsetResult.NONE;
 		}
-		
+
 		SubsetResult result = SubsetResult.EQUAL;
 		for (final STATE state : mStates) {
 			final Optional<SubsetResult> min =
@@ -178,12 +181,12 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Term getTerm(final Script script) {
 		return SmtUtils.or(script, mStates.stream().map(a -> a.getTerm(script)).collect(Collectors.toSet()));
 	}
-	
+
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -204,12 +207,12 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return sb.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -234,7 +237,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Apply the {@link IVariableProvider#defineVariablesAfter(Object, IAbstractState, IAbstractState)} function to all
 	 * states in this multi-state. This state acts as local pre state, and all states in hierachicalPreState are used as
@@ -254,15 +257,15 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 			return this;
 		}
 		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
-				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
 		return rtr;
 	}
-	
+
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
 			final ACTION transition) {
 		return applyToAllCollection(a -> postOp.apply(a, transition));
 	}
-	
+
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
 			final AbstractMultiState<STATE, ACTION, VARDECL> multiStateBeforeLeaving, final ACTION transition) {
 		final Set<STATE> newSet = newSet(mStates.size() * multiStateBeforeLeaving.mStates.size());
@@ -272,10 +275,10 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 			}
 		}
 		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
-				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
 		return rtr;
 	}
-	
+
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractStateBinaryOperator<STATE> op,
 			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
 		final Set<STATE> newSet = newSet(mStates.size() * other.mStates.size());
@@ -284,31 +287,31 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 				newSet.add(op.apply(firstOper, secondOper));
 			}
 		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
 	}
-	
+
 	@Override
 	public String toString() {
 		return toLogString();
 	}
-	
+
 	public Set<STATE> getStates() {
 		return Collections.unmodifiableSet(mStates);
 	}
-	
+
 	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
 		return mStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).orElse(null);
 	}
-	
+
 	public AbstractMultiState<STATE, ACTION, VARDECL> merge(final IAbstractStateBinaryOperator<STATE> mergeOp,
 			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
 		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
 		final Set<STATE> set = newSet();
 		set.addAll(mStates);
 		set.addAll(other.mStates);
-		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set));
+		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set), mVariablesType);
 	}
-	
+
 	private AbstractMultiState<STATE, ACTION, VARDECL> applyToAll(final Function<STATE, STATE> func) {
 		final Set<STATE> newSet = newSet(mStates.size());
 		for (final STATE state : mStates) {
@@ -317,26 +320,26 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (mStates.equals(newSet)) {
 			return this;
 		}
-		return new AbstractMultiState<>(mMaxSize, newSet);
+		return new AbstractMultiState<>(mMaxSize, newSet, mVariablesType);
 	}
-	
+
 	private AbstractMultiState<STATE, ACTION, VARDECL>
 			applyToAllCollection(final Function<STATE, Collection<STATE>> func) {
 		final Set<STATE> newSet = newSet();
 		for (final STATE state : mStates) {
 			newSet.addAll(func.apply(state));
 		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
 	}
-	
+
 	private Set<STATE> newSet() {
 		return newSet(mMaxSize);
 	}
-	
+
 	private static <STATE> Set<STATE> newSet(final int maxSize) {
 		return new LinkedHashSet<>(maxSize, 1.0F);
 	}
-	
+
 	private Set<STATE> reduce(final IAbstractStateBinaryOperator<STATE> mergeOp, final Set<STATE> states) {
 		final Set<STATE> maximalElements = getMaximalElements(states);
 		if (maximalElements.size() <= mMaxSize) {
@@ -344,7 +347,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		}
 		return reduceByOrderedMerge(mergeOp, maximalElements);
 	}
-	
+
 	private Set<STATE> reduceByOrderedMerge(final IAbstractStateBinaryOperator<STATE> mergeOp,
 			final Set<STATE> states) {
 		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
@@ -364,7 +367,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		assert reducibleSet.size() <= mMaxSize;
 		return reducibleSet;
 	}
-	
+
 	private Set<STATE> getMaximalElements(final Set<STATE> states) {
 		final Set<STATE> maximalElements = newSet(states.size());
 		for (final STATE state : states) {
@@ -384,12 +387,17 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 					iter.remove();
 				}
 			}
-			
+
 			if (maximal) {
 				maximalElements.add(state);
 			}
 		}
 		assert maximalElements.stream().filter(a -> a.isBottom()).count() <= 1 : "There can be only one bottom element";
 		return maximalElements;
+	}
+
+	@Override
+	public Class<VARDECL> getVariablesType() {
+		return mVariablesType;
 	}
 }

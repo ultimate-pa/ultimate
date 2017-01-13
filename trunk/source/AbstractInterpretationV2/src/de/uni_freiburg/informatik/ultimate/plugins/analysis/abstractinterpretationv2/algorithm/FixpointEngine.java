@@ -69,6 +69,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final ILogger mLogger;
+	private final Class<VARDECL> mVariablesType;
 	
 	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
@@ -89,14 +90,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mDomain.getMergeOperator(), mTransitionProvider, mLogger);
+		mVariablesType = params.getVariablesType();
 	}
 	
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain, mTransitionProvider)
-				: intermediateResult;
+		mResult = intermediateResult == null
+				? new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType) : intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage, start, script);
@@ -105,7 +107,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 	
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script) {
-		return run(start, script, new AbstractInterpretationResult<>(mDomain, mTransitionProvider));
+		return run(start, script, new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType));
 	}
 	
 	private void calculateFixpoint(final ACTION start) {
@@ -334,7 +336,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
 		final AbstractMultiState<STATE, ACTION, VARDECL> preMultiState =
-				new AbstractMultiState<>(mMaxParallelStates, preState);
+				new AbstractMultiState<>(mMaxParallelStates, preState, mVariablesType);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 	

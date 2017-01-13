@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
@@ -46,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The value type of the abstract domain.
  * @param <ACTION>
  *            Any action type.
+ * @param <VARDECL>
+ *            Any variable declaration type.
  */
-public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVar>> {
+public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
 	
 	/**
 	 * Evaluates the evaluator with all its sub-evaluators according to the given state.
@@ -78,12 +79,12 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVa
 	 * @param evaluator
 	 *            The evaluator to add.
 	 */
-	void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator);
+	void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator);
 	
 	/**
 	 * @return The set of all variable identifiers that occur in all sub evaluators.
 	 */
-	Set<IBoogieVar> getVarIdentifiers();
+	Set<VARDECL> getVarIdentifiers();
 	
 	/**
 	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.

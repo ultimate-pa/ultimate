@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -41,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
-public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
-		implements IFunctionEvaluator<VALUE, STATE, IBoogieVar> {
+public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+		implements IFunctionEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final String mName;
 	private final int mInParamCount;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
-	private final List<IEvaluator<VALUE, STATE>> mInputParamEvaluators;
+	private final List<IEvaluator<VALUE, STATE, VARDECL>> mInputParamEvaluators;
 	private final EvaluatorType mType;
 
 	public FunctionEvaluator(final String name, final int numInParams,
@@ -82,7 +81,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -91,7 +90,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 	}
 
 	@Override
-	public Set<IBoogieVar> getVarIdentifiers() {
+	public Set<VARDECL> getVarIdentifiers() {
 		return new HashSet<>();
 	}
 

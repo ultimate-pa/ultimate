@@ -56,10 +56,10 @@ public class FixpointEngineFutureParameterFactory {
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
 
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices)
-				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-				.setDebugHelper(debugHelper).setTimer(timer);
+		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices,
+				IProgramVar.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+						.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
 	public <STATE extends IAbstractState<STATE, IProgramVar>>
@@ -74,10 +74,10 @@ public class FixpointEngineFutureParameterFactory {
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices)
-				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-				.setDebugHelper(debugHelper).setTimer(timer);
+		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices,
+				IProgramVar.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+						.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
 	/**
@@ -104,10 +104,10 @@ public class FixpointEngineFutureParameterFactory {
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices)
-				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-				.setDebugHelper(debugHelper).setTimer(timer);
+		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation, Expression>(mServices,
+				IProgramVar.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+						.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
 	public <STATE extends IAbstractState<STATE, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
@@ -122,7 +122,8 @@ public class FixpointEngineFutureParameterFactory {
 	private <STATE extends IAbstractState<STATE, IProgramVar>> IAbstractDomain<STATE, IcfgEdge, IProgramVar>
 			selectDomainFutureCfg(final String domainName, final ILogger logger) {
 		if (EmptyDomain.class.getSimpleName().equals(domainName)) {
-			return (IAbstractDomain<STATE, IcfgEdge, IProgramVar>) new EmptyDomain<IcfgEdge, IProgramVar>();
+			return (IAbstractDomain<STATE, IcfgEdge, IProgramVar>) new EmptyDomain<IcfgEdge, IProgramVar>(
+					IProgramVar.class);
 		} else if (DataflowDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge, IProgramVar>) new DataflowDomain<IcfgEdge>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {

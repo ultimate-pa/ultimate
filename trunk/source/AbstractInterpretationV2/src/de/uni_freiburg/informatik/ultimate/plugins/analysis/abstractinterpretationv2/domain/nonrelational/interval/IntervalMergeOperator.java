@@ -40,10 +40,11 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <VARDECL>
  *            Any variable declaration type.
  */
-public class IntervalMergeOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
+public class IntervalMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<IntervalDomainState<VARDECL>> {
 	
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
+	public IntervalDomainState<VARDECL> apply(final IntervalDomainState<VARDECL> first,
+			final IntervalDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
 		

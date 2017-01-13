@@ -45,7 +45,7 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 	@Override
 	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate, final ACTION concrete) {
 		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables()), oldstate.getVariablesType()));
 		return returnList;
 	}
 
@@ -53,7 +53,8 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate,
 			final EmptyDomainState<VARDECL> oldstateWithFreshVariables, final ACTION transition) {
 		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables())));
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables()),
+				oldstate.getVariablesType()));
 		return returnList;
 	}
 }

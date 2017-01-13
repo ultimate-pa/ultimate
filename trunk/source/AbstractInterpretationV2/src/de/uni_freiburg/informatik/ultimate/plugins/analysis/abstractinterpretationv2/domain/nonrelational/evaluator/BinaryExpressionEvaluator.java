@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -56,23 +55,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The state type of the domain.
  */
-public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
-		implements INAryEvaluator<VALUE, STATE> {
+public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+		implements INAryEvaluator<VALUE, STATE, VARDECL> {
 	
-	private final Set<IBoogieVar> mVariableSet;
+	private final Set<VARDECL> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
 	private final int mMaxParallelSates;
-
+	
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-
-	private IEvaluator<VALUE, STATE> mLeftSubEvaluator;
-	private IEvaluator<VALUE, STATE> mRightSubEvaluator;
-
+	
+	private IEvaluator<VALUE, STATE, VARDECL> mLeftSubEvaluator;
+	private IEvaluator<VALUE, STATE, VARDECL> mRightSubEvaluator;
+	
 	private Operator mOperator;
-
+	
 	private final VALUE mTopValue;
-
+	
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
@@ -82,19 +81,19 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 		mTopValue = mNonrelationalValueFactory.createTopValue();
 	}
-
+	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-
+		
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-
+		
 		final List<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
-
+		
 		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
-
+		
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
 				final List<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
@@ -105,7 +104,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		assert !returnList.isEmpty();
 		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		
@@ -163,7 +162,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			return onlyTop();
 		}
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> evaluateArithDiv(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		switch (mEvaluatorType) {
@@ -175,7 +174,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			throw new UnsupportedOperationException("Division on types other than integers and reals is undefined.");
 		}
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> evaluateCompare(final VALUE first, final VALUE second,
 			final BiFunction<VALUE, VALUE, VALUE> compareValue,
 			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
@@ -186,11 +185,11 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		} else {
 			returnBool = compareBoolean.apply(first, second);
 		}
-
+		
 		if (!returnBool.isSingleton()) {
 			return both(returnValue, returnBool);
 		}
-
+		
 		final List<IEvaluationResult<VALUE>> rtr = new ArrayList<>();
 		rtr.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 		final BooleanValue negBool = returnBool.neg();
@@ -205,7 +204,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 		return rtr;
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> evaluateCompEq(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		BooleanValue returnBool = BooleanValue.INVALID;
@@ -213,9 +212,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
 					? BooleanValue.TRUE : BooleanValue.BOTTOM;
 		}
-
+		
 		final VALUE returnValue = first.getValue().intersect(second.getValue());
-
+		
 		if (returnBool.isBottom() || returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
 		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
@@ -223,24 +222,24 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
-
+	
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE oldState) {
 		
 		final List<STATE> returnList = new ArrayList<>();
-
+		
 		final VALUE evalResultValue = evalResult.getValue();
 		final BooleanValue evalResultBool = evalResult.getBooleanValue();
-
+		
 		final List<IEvaluationResult<VALUE>> leftValues = mLeftSubEvaluator.evaluate(oldState);
 		final List<IEvaluationResult<VALUE>> rightValues = mRightSubEvaluator.evaluate(oldState);
-
+		
 		for (final IEvaluationResult<VALUE> leftOp : leftValues) {
 			for (final IEvaluationResult<VALUE> rightOp : rightValues) {
 				final List<STATE> returnStates = new ArrayList<>();
 				final VALUE leftOpValue = leftOp.getValue();
 				final VALUE rightOpValue = rightOp.getValue();
-
+				
 				switch (mOperator) {
 				case LOGICAND:
 					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(evalResult, oldState);
@@ -264,15 +263,15 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 						returnStates.add(oldState);
 						break;
 					}
-
+					
 					final VALUE inverseLeft = inverseEvaluate(evalResultValue, leftOpValue, rightOpValue, true);
 					final VALUE inverseRight = inverseEvaluate(evalResultValue, rightOpValue, leftOpValue, false);
-
+					
 					final NonrelationalEvaluationResult<VALUE> leftEvalResult =
 							new NonrelationalEvaluationResult<>(inverseLeft, rightOp.getBooleanValue());
 					final NonrelationalEvaluationResult<VALUE> rightEvalResult =
 							new NonrelationalEvaluationResult<>(inverseRight, leftOp.getBooleanValue());
-
+					
 					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalResult, oldState);
 					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalResult, oldState);
 					returnStates.addAll(crossIntersect(leftEq, rightEq));
@@ -289,16 +288,16 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case ARITHMOD:
 					final VALUE newValueLeft = inverseEvaluate(evalResultValue, leftOpValue, rightOpValue, true);
 					final VALUE newValueRight = inverseEvaluate(evalResultValue, rightOpValue, leftOpValue, false);
-
+					
 					final NonrelationalEvaluationResult<VALUE> inverseResultLeft =
 							new NonrelationalEvaluationResult<>(newValueLeft, evalResultBool);
 					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
 							new NonrelationalEvaluationResult<>(newValueRight, evalResultBool);
-
+					
 					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState);
 					final List<STATE> rightInverseArith =
 							mRightSubEvaluator.inverseEvaluate(inverseResultRight, oldState);
-
+					
 					returnStates.addAll(crossIntersect(leftInverseArith, rightInverseArith));
 					break;
 				default:
@@ -306,7 +305,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					returnStates.add(oldState);
 					break;
 				}
-
+				
 				if (returnStates.isEmpty()) {
 					returnStates.add(oldState);
 				}
@@ -314,11 +313,11 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				returnList.addAll(returnStates);
 			}
 		}
-
+		
 		assert !returnList.isEmpty();
 		return returnList;
 	}
-
+	
 	/**
 	 * Intersect all the states of <code>left</code> with all the states of <code>right</code> and return the result.
 	 */
@@ -331,11 +330,11 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 		return rtr;
 	}
-
+	
 	private VALUE inverseEvaluate(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
 			final boolean isLeft) {
 		VALUE newValue;
-
+		
 		switch (mOperator) {
 		case ARITHPLUS:
 			newValue = referenceValue.subtract(otherValue);
@@ -410,57 +409,57 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 		return newValue;
 	}
-
+	
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		assert evaluator != null;
-
+		
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned to.");
 		}
-
+		
 		if (mLeftSubEvaluator == null) {
 			mLeftSubEvaluator = evaluator;
 			return;
 		}
-
+		
 		mRightSubEvaluator = evaluator;
 	}
-
+	
 	@Override
-	public Set<IBoogieVar> getVarIdentifiers() {
+	public Set<VARDECL> getVarIdentifiers() {
 		return mVariableSet;
 	}
-
+	
 	@Override
 	public boolean hasFreeOperands() {
 		return mLeftSubEvaluator == null || mRightSubEvaluator == null;
 	}
-
+	
 	@Override
 	public boolean containsBool() {
 		return mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool();
 	}
-
+	
 	@Override
 	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
-
+		
 		mOperator = (Operator) operator;
 	}
-
+	
 	@Override
 	public int getArity() {
 		return 2;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
+		
 		sb.append(mLeftSubEvaluator);
-
+		
 		switch (mOperator) {
 		case ARITHDIV:
 			sb.append(" / ");
@@ -511,70 +510,70 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			mOperator.name();
 			break;
 		}
-
+		
 		sb.append(mRightSubEvaluator);
-
+		
 		return sb.toString();
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> both(final VALUE value, final BooleanValue bvalue) {
 		assert value != null;
 		assert bvalue != null;
 		assert bvalue != BooleanValue.INVALID;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, bvalue));
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> onlyValue(final VALUE value) {
 		assert value != null;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, BooleanValue.INVALID));
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> onlyBoolean(final BooleanValue value) {
 		assert value != null;
 		assert value != BooleanValue.INVALID;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> onlyTop() {
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
 	}
-
+	
 	private VALUE greaterThan(final VALUE first, final VALUE second) {
 		return first.greaterThan(second);
 	}
-
+	
 	private VALUE greaterOrEqual(final VALUE first, final VALUE second) {
 		return first.greaterOrEqual(second);
 	}
-
+	
 	private VALUE lessThan(final VALUE first, final VALUE second) {
 		return first.lessThan(second);
 	}
-
+	
 	private VALUE lessOrEqual(final VALUE first, final VALUE second) {
 		return first.lessOrEqual(second);
 	}
-
+	
 	private BooleanValue greaterThanBool(final VALUE first, final VALUE second) {
 		return first.isGreaterThan(second);
 	}
-
+	
 	private BooleanValue greaterOrEqualBool(final VALUE first, final VALUE second) {
 		return first.isGreaterOrEqual(second);
 	}
-
+	
 	private BooleanValue lessThanBool(final VALUE first, final VALUE second) {
 		return first.isLessThan(second);
 	}
-
+	
 	private BooleanValue lessOrEqualBool(final VALUE first, final VALUE second) {
 		return first.isLessOrEqual(second);
 	}
-
+	
 	@Override
 	public EvaluatorType getType() {
 		assert mLeftSubEvaluator.getType() == mRightSubEvaluator.getType();
 		return mEvaluatorType;
 	}
-
+	
 }

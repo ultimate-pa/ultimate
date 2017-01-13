@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
@@ -57,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-		implements INonrelationalAbstractState<STATE> {
+public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
+		implements INonrelationalAbstractState<STATE, VARDECL> {
 	
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
@@ -67,21 +69,25 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	private static int sId;
 	private final int mId;
 	
-	private final Set<IBoogieVar> mVariables;
-	private final Map<IBoogieVar, V> mValueMap;
-	private final Map<IBoogieVar, BooleanValue> mBooleanValuesMap;
+	private final Set<VARDECL> mVariables;
+	private final Map<VARDECL, V> mValueMap;
+	private final Map<VARDECL, BooleanValue> mBooleanValuesMap;
 	private final boolean mIsBottom;
 	
 	private final ILogger mLogger;
+	
+	protected final Class<VARDECL> mVariablesType;
 	
 	/**
 	 * Default constructor of an {@link NonrelationalState}.
 	 *
 	 * @param logger
 	 *            The current logger object in the current context.
+	 * @param variableType
+	 *            The type of the variables stored by this state.
 	 */
-	protected NonrelationalState(final ILogger logger) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>());
+	protected NonrelationalState(final ILogger logger, final Class<VARDECL> variableType) {
+		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), variableType);
 	}
 
 	/**
@@ -91,9 +97,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The current logger object in the current context.
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
+	 * @param variableType
+	 *            The type of the variables stored by this state.
 	 */
-	protected NonrelationalState(final ILogger logger, final boolean isBottom) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom);
+	protected NonrelationalState(final ILogger logger, final boolean isBottom, final Class<VARDECL> variableType) {
+		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom, variableType);
 	}
 	
 	/**
@@ -108,10 +116,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The values of all variables.
 	 * @param booleanValuesMap
 	 *            The values of all boolean variables.
+	 * @param variableType
+	 *            The type of the variables stored by this state.
 	 */
-	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variables,
-			final Map<IBoogieVar, V> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap) {
-		this(logger, variables, valuesMap, booleanValuesMap, false);
+	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
+			final Map<VARDECL, BooleanValue> booleanValuesMap, final Class<VARDECL> variableType) {
+		this(logger, variables, valuesMap, booleanValuesMap, false, variableType);
 	}
 
 	/**
@@ -128,10 +138,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The values of all boolean variables.
 	 * @param isBottom
 	 *            If <code>true</code> the created state corresponds to &bot;, &top; otherwise.
+	 * @param variableType
+	 *            The type of the variables stored by this state.
 	 */
-	protected NonrelationalState(final ILogger logger, final Set<IBoogieVar> variables,
-			final Map<IBoogieVar, V> valuesMap, final Map<IBoogieVar, BooleanValue> booleanValuesMap,
-			final boolean isBottom) {
+	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
+			final Map<VARDECL, BooleanValue> booleanValuesMap, final boolean isBottom,
+			final Class<VARDECL> variableType) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
@@ -139,10 +151,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		mId = sId;
 		mLogger = logger;
 		mIsBottom = isBottom;
+		mVariablesType = variableType;
 	}
 	
 	@Override
-	public Set<IBoogieVar> getVariables() {
+	public Set<VARDECL> getVariables() {
 		return Collections.unmodifiableSet(mVariables);
 	}
 	
@@ -154,7 +167,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The name of the variable to get the {@link IntervalDomainValue} for.
 	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
 	 */
-	public V getValue(final IBoogieVar variableName) {
+	public V getValue(final VARDECL variableName) {
 		if (!getVar2ValueNonrelational().containsKey(variableName)) {
 			throw new UnsupportedOperationException("There is no value of variable " + variableName + ".");
 		}
@@ -170,7 +183,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.
 	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
 	 */
-	public BooleanValue getBooleanValue(final IBoogieVar booleanVariableName) {
+	public BooleanValue getBooleanValue(final VARDECL booleanVariableName) {
 		if (!getVar2ValueBoolean().containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
 					"There is no boolean variable with name " + booleanVariableName + ".");
@@ -188,7 +201,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
 	 *         variable has been set to the given value.
 	 */
-	public STATE setValue(final IBoogieVar name, final V value) {
+	public STATE setValue(final VARDECL name, final V value) {
 		final STATE returnState = createCopy();
 		setValueInternally(returnState, name, value);
 		return returnState;
@@ -208,12 +221,13 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the values of the given
 	 *         variables have been set to the given values.
 	 */
-	public STATE setValues(final IBoogieVar[] vars, final V[] values) {
+	public STATE setValues(final VARDECL[] vars, final V[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
 		
-		return setMixedValues(vars, values, new IBoogieVar[0], new BooleanValue[0], new IBoogieVar[0], getArray(0));
+		return setMixedValues(vars, values, getVariableTypeArray(0), new BooleanValue[0], getVariableTypeArray(0),
+				getArray(0));
 	}
 	
 	/**
@@ -226,7 +240,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
 	 *         variable has been set to the given value.
 	 */
-	public STATE setBooleanValue(final IBoogieVar name, final BooleanValue value) {
+	public STATE setBooleanValue(final VARDECL name, final BooleanValue value) {
 		assert name != null;
 		assert value != null;
 		
@@ -249,12 +263,13 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the values of the given
 	 *         variables have been set to the given values.
 	 */
-	protected NonrelationalState<STATE, V> setBooleanValues(final IBoogieVar[] vars, final BooleanValue[] values) {
+	protected NonrelationalState<STATE, V, VARDECL> setBooleanValues(final VARDECL[] vars,
+			final BooleanValue[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
 		
-		return setMixedValues(new IBoogieVar[0], getArray(0), vars, values, new IBoogieVar[0], getArray(0));
+		return setMixedValues(getVariableTypeArray(0), getArray(0), vars, values, getVariableTypeArray(0), getArray(0));
 	}
 	
 	/**
@@ -269,20 +284,21 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> but with updated value for the
 	 *         given array variable.
 	 */
-	protected NonrelationalState<STATE, V> setArrayValue(final IBoogieVar array, final V value) {
+	protected NonrelationalState<STATE, V, VARDECL> setArrayValue(final VARDECL array, final V value) {
 		assert array != null;
 		assert value != null;
-		final NonrelationalState<STATE, V> returnState = createCopy();
+		final NonrelationalState<STATE, V, VARDECL> returnState = createCopy();
 		setValueInternally(returnState, array, value);
 		return returnState;
 	}
 	
-	protected NonrelationalState<STATE, V> setArrayValues(final IBoogieVar[] arrays, final V[] values) {
+	protected NonrelationalState<STATE, V, VARDECL> setArrayValues(final VARDECL[] arrays, final V[] values) {
 		assert arrays != null;
 		assert values != null;
 		assert arrays.length == values.length;
 		
-		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new BooleanValue[0], arrays, values);
+		return setMixedValues(getVariableTypeArray(0), getArray(0), getVariableTypeArray(0), new BooleanValue[0],
+				arrays, values);
 	}
 	
 	/**
@@ -300,8 +316,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            A list of values which corresponds to the list of boolean variable identifiers.
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> but with the updated values.
 	 */
-	public STATE setMixedValues(final IBoogieVar[] vars, final V[] values, final IBoogieVar[] booleanVars,
-			final BooleanValue[] booleanValues, final IBoogieVar[] arrays, final V[] arrayValues) {
+	public STATE setMixedValues(final VARDECL[] vars, final V[] values, final VARDECL[] booleanVars,
+			final BooleanValue[] booleanValues, final VARDECL[] arrays, final V[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -335,7 +351,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @param value
 	 *            The value to set.
 	 */
-	private void setValueInternally(final NonrelationalState<STATE, V> state, final IBoogieVar var, final V value) {
+	private void setValueInternally(final NonrelationalState<STATE, V, VARDECL> state, final VARDECL var,
+			final V value) {
 		assert state != null;
 		assert var != null;
 		assert value != null;
@@ -349,18 +366,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *
 	 * @param state
 	 *            The state to set the variable value for.
-	 * @param name
-	 *            The name of the variable to change the value for.
+	 * @param variable
+	 *            The variable to change the value for.
 	 * @param value
 	 *            The value to set.
 	 */
-	private void setValueInternally(final NonrelationalState<STATE, V> state, final IBoogieVar name,
+	private void setValueInternally(final NonrelationalState<STATE, V, VARDECL> state, final VARDECL variable,
 			final BooleanValue value) {
 		assert state != null;
-		assert name != null;
-		assert state.mVariables.contains(name) : "Variable unknown";
-		assert state.getVar2ValueBoolean().get(name) != null : "Boolean variable not in boolean values map";
-		state.getVar2ValueBoolean().put(name, value);
+		assert variable != null;
+		assert state.mVariables.contains(variable) : "Variable unknown";
+		assert state.getVar2ValueBoolean().get(variable) != null : "Boolean variable not in boolean values map";
+		state.getVar2ValueBoolean().put(variable, value);
 	}
 	
 	/**
@@ -370,7 +387,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The variable name to obtain the type for.
 	 * @return The {@link VariableType} of the variable.
 	 */
-	protected VariableType getVariableType(final IBoogieVar var) {
+	protected VariableType getVariableType(final VARDECL var) {
 		if (!containsVariable(var)) {
 			throw new UnsupportedOperationException("The variable " + var + " does not exist in the current state.");
 		}
@@ -396,7 +413,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @param variable
 	 *            The type of the variable.
 	 */
-	private void addVariableInternally(final NonrelationalState<STATE, V> state, final IBoogieVar variable) {
+	private void addVariableInternally(final NonrelationalState<STATE, V, VARDECL> state, final VARDECL variable) {
 		assert state != null;
 		assert variable != null;
 		
@@ -406,8 +423,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 		
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> state.getVar2ValueNonrelational().put(var, createTopValue());
-		final Consumer<IBoogieVar> boolConsumer = var -> state.getVar2ValueBoolean().put(var, BooleanValue.TOP);
+		final Consumer<VARDECL> varConsumer = var -> state.getVar2ValueNonrelational().put(var, createTopValue());
+		final Consumer<VARDECL> boolConsumer = var -> state.getVar2ValueBoolean().put(var, BooleanValue.TOP);
 		
 		TypeUtils.consumeVariable(varConsumer, boolConsumer, null, variable);
 	}
@@ -419,12 +436,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final STATE returnState = createCopy();
 		
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer =
+		final Consumer<VARDECL> varConsumer =
 				var -> setValueInternally(returnState, var, dominator.getVar2ValueNonrelational().get(var));
-		final Consumer<IBoogieVar> boolConsumer =
+		final Consumer<VARDECL> boolConsumer =
 				var -> setValueInternally(returnState, var, dominator.getVar2ValueBoolean().get(var));
 		
-		for (final IBoogieVar var : dominator.getVariables()) {
+		for (final VARDECL var : dominator.getVariables()) {
 			if (!returnState.containsVariable(var)) {
 				addVariableInternally(returnState, var);
 			}
@@ -449,7 +466,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return SubsetResult.NONE;
 		}
 		
-		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
+		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V thisValue = entry.getValue();
 			final V otherValue = other.getVar2ValueNonrelational().get(entry.getKey());
 			if (!thisValue.isContainedIn(otherValue)) {
@@ -457,7 +474,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			}
 		}
 		
-		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
+		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
 			final BooleanValue thisValue = entry.getValue();
 			final BooleanValue otherValue = other.getVar2ValueBoolean().get(entry.getKey());
 			if (!thisValue.isContainedIn(otherValue)) {
@@ -468,21 +485,21 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	}
 	
 	@Override
-	public STATE removeVariable(final IBoogieVar variable) {
+	public STATE removeVariable(final VARDECL variable) {
 		assert variable != null;
 		
-		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
+		final Set<VARDECL> newVarMap = new HashSet<>(mVariables);
 		newVarMap.remove(variable);
-		final Map<IBoogieVar, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
+		final Map<VARDECL, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
 		newValMap.remove(variable);
-		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
+		final Map<VARDECL, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 		newBooleanValMap.remove(variable);
 		
 		return createState(mLogger, newVarMap, newValMap, newBooleanValMap);
 	}
 	
 	@Override
-	public STATE addVariable(final IBoogieVar variable) {
+	public STATE addVariable(final VARDECL variable) {
 		assert variable != null;
 		mLogger.debug("Adding boogievar " + LoggingHelper.getHashCodeString(variable) + " " + variable);
 		final STATE returnState = createCopy();
@@ -492,22 +509,22 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public STATE addVariables(final Collection<IBoogieVar> variables) {
+	public STATE addVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		if (variables.isEmpty()) {
 			// nothing to add, nothing changes
 			return (STATE) this;
 		}
 		
-		final Set<IBoogieVar> newVars = new HashSet<>(mVariables);
-		final Map<IBoogieVar, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
-		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
+		final Set<VARDECL> newVars = new HashSet<>(mVariables);
+		final Map<VARDECL, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
+		final Map<VARDECL, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 		
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> newValMap.put(var, createTopValue());
-		final Consumer<IBoogieVar> boolConsumer = var -> newBooleanValMap.put(var, BooleanValue.TOP);
+		final Consumer<VARDECL> varConsumer = var -> newValMap.put(var, createTopValue());
+		final Consumer<VARDECL> boolConsumer = var -> newBooleanValMap.put(var, BooleanValue.TOP);
 		
-		for (final IBoogieVar var : variables) {
+		for (final VARDECL var : variables) {
 			if (!newVars.add(var)) {
 				throw new UnsupportedOperationException(
 						"Variable names must be disjoint. The variable " + var + " is already present.");
@@ -520,14 +537,14 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	}
 	
 	@Override
-	public STATE removeVariables(final Collection<IBoogieVar> variables) {
+	public STATE removeVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 		
-		final Set<IBoogieVar> newVarMap = new HashSet<>(mVariables);
-		final Map<IBoogieVar, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
-		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
-		for (final IBoogieVar entry : variables) {
+		final Set<VARDECL> newVarMap = new HashSet<>(mVariables);
+		final Map<VARDECL, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
+		final Map<VARDECL, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
+		for (final VARDECL entry : variables) {
 			newVarMap.remove(entry);
 			newValMap.remove(entry);
 			newBooleanValMap.remove(entry);
@@ -537,7 +554,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	}
 	
 	@Override
-	public boolean containsVariable(final IBoogieVar name) {
+	public boolean containsVariable(final VARDECL name) {
 		return mVariables.contains(name);
 	}
 	
@@ -548,13 +565,13 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	
 	@Override
 	public boolean isBottom() {
-		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
+		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
 			if (entry.getValue().isBottom()) {
 				return true;
 			}
 		}
 		
-		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
+		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
 			if (entry.getValue() == BooleanValue.BOTTOM) {
 				return true;
 			}
@@ -569,14 +586,14 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return false;
 		}
 		
-		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
+		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V otherValue = other.getVar2ValueNonrelational().get(entry.getKey());
 			if (!getVar2ValueNonrelational().get(entry.getKey()).isEqualTo(otherValue)) {
 				return false;
 			}
 		}
 		
-		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
+		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
 			final BooleanValue otherValue = other.getVar2ValueBoolean().get(entry.getKey());
 			if (!getVar2ValueBoolean().get(entry.getKey()).isEqualTo(otherValue)) {
 				return false;
@@ -596,9 +613,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public String toLogString() {
 		final StringBuilder stringBuilder = new StringBuilder();
-		for (final IBoogieVar entry : mVariables) {
+		for (final VARDECL entry : mVariables) {
+			final String varName;
+			if (entry instanceof IBoogieVar) {
+				varName = ((IBoogieVar) entry).getGloballyUniqueId();
+			} else if (entry instanceof IProgramVarOrConst) {
+				varName = ((IProgramVarOrConst) entry).getGloballyUniqueId();
+			} else {
+				throw new UnsupportedOperationException(
+						"Variable type " + entry.getClass().getSimpleName() + " not implemented.");
+			}
 			
-			stringBuilder.append(entry.getGloballyUniqueId()).append(" = ");
+			stringBuilder.append(varName).append(" = ");
 			
 			final V val = getVar2ValueNonrelational().get(entry);
 			
@@ -636,14 +662,19 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	
 	protected abstract STATE createCopy();
 	
-	protected abstract STATE createState(ILogger logger, Set<IBoogieVar> newVarMap, Map<IBoogieVar, V> newValMap,
-			Map<IBoogieVar, BooleanValue> newBooleanValMap);
+	protected abstract STATE createState(ILogger logger, Set<VARDECL> newVarMap, Map<VARDECL, V> newValMap,
+			Map<VARDECL, BooleanValue> newBooleanValMap);
 	
 	protected abstract V createBottomValue();
 	
 	protected abstract V createTopValue();
 	
 	protected abstract V[] getArray(int size);
+
+	@SuppressWarnings("unchecked")
+	public VARDECL[] getVariableTypeArray(final int size) {
+		return (VARDECL[]) Array.newInstance(mVariablesType, size);
+	}
 	
 	/**
 	 * Returns <code>true</code> if and only if {@link this} has the same variables as other.
@@ -652,7 +683,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
 	 */
-	public boolean hasSameVariables(final NonrelationalState<STATE, V> other) {
+	public boolean hasSameVariables(final NonrelationalState<STATE, V, VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
@@ -665,7 +696,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return false;
 		}
 		
-		for (final IBoogieVar entry : mVariables) {
+		for (final VARDECL entry : mVariables) {
 			if (!other.mVariables.contains(entry)) {
 				return false;
 			}
@@ -689,12 +720,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		
 		final STATE returnState = createCopy();
 		
-		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
+		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 					entry.getValue().intersect(other.getVar2ValueNonrelational().get(entry.getKey())));
 		}
 		
-		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
+		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
 					entry.getValue().intersect(other.getVar2ValueBoolean().get(entry.getKey())));
 		}
@@ -710,9 +741,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		
 		final List<Term> acc = new ArrayList<>(getVar2ValueNonrelational().size() + getVar2ValueBoolean().size());
 		
-		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
-			final IBoogieVar boogievar = entry.getKey();
-			final Term var = NonrelationalTermUtils.getTermVar(boogievar);
+		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
+			final VARDECL variable = entry.getKey();
+			final Term var;
+			if (variable instanceof IBoogieVar) {
+				var = NonrelationalTermUtils.getTermVar((IBoogieVar) variable);
+			} else if (variable instanceof IProgramVarOrConst) {
+				var = NonrelationalTermUtils.getTermVar((IProgramVarOrConst) variable);
+			} else {
+				throw new UnsupportedOperationException(
+						"Variable type " + variable.getClass().getSimpleName() + " not implemented.");
+			}
+			
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
@@ -722,9 +762,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			}
 			acc.add(entry.getValue().getTerm(script, sort, var));
 		}
-		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
-			final IBoogieVar boogievar = entry.getKey();
-			final Term var = NonrelationalTermUtils.getTermVar(boogievar);
+		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
+			final VARDECL variable = entry.getKey();
+			final Term var;
+			if (variable instanceof IBoogieVar) {
+				var = NonrelationalTermUtils.getTermVar((IBoogieVar) variable);
+			} else if (variable instanceof IProgramVarOrConst) {
+				var = NonrelationalTermUtils.getTermVar((IProgramVarOrConst) variable);
+			} else {
+				throw new UnsupportedOperationException(
+						"Variable type " + variable.getClass().getSimpleName() + " not implemented.");
+			}
+
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			acc.add(entry.getValue().getTerm(script, sort, var));
@@ -733,16 +782,21 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		return Util.and(script, acc.toArray(new Term[acc.size()]));
 	}
 	
+	@Override
+	public Class<VARDECL> getVariablesType() {
+		return mVariablesType;
+	}
+	
 	/**
 	 * @return A new {@link NonrelationalState} containing the same set of variables but with values set to &bot;.
 	 */
 	public STATE bottomState() {
 		final STATE ret = createCopy();
-		for (final Entry<IBoogieVar, V> entry : ret.getVar2ValueNonrelational().entrySet()) {
+		for (final Entry<VARDECL, V> entry : ret.getVar2ValueNonrelational().entrySet()) {
 			entry.setValue(createBottomValue());
 		}
 		
-		for (final Entry<IBoogieVar, BooleanValue> entry : ret.getVar2ValueBoolean().entrySet()) {
+		for (final Entry<VARDECL, BooleanValue> entry : ret.getVar2ValueBoolean().entrySet()) {
 			entry.setValue(BooleanValue.BOTTOM);
 		}
 		
@@ -761,17 +815,16 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given in the parameters are set to &top;.
 	 */
-	public STATE setVarsToTop(final List<IBoogieVar> vars, final List<IBoogieVar> bools,
-			final List<IBoogieVar> arrays) {
+	public STATE setVarsToTop(final List<VARDECL> vars, final List<VARDECL> bools, final List<VARDECL> arrays) {
 		final STATE returnState = createCopy();
 		
-		for (final IBoogieVar var : vars) {
+		for (final VARDECL var : vars) {
 			setValueInternally(returnState, var, createTopValue());
 		}
-		for (final IBoogieVar bool : bools) {
+		for (final VARDECL bool : bools) {
 			setValueInternally(returnState, bool, BooleanValue.TOP);
 		}
-		for (final IBoogieVar array : arrays) {
+		for (final VARDECL array : arrays) {
 			// TODO: Implement proper handling of arrays.
 			setValueInternally(returnState, array, createTopValue());
 		}
@@ -791,17 +844,16 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} that is the copy of <code>this</code>, where all occurring variables,
 	 *         booleans, and arrays given as parameters are set to &bot;.
 	 */
-	protected STATE setVarsToBottom(final List<IBoogieVar> vars, final List<IBoogieVar> bools,
-			final List<IBoogieVar> arrays) {
+	protected STATE setVarsToBottom(final List<VARDECL> vars, final List<VARDECL> bools, final List<VARDECL> arrays) {
 		final STATE returnState = createCopy();
 		
-		for (final IBoogieVar var : vars) {
+		for (final VARDECL var : vars) {
 			setValueInternally(returnState, var, createBottomValue());
 		}
-		for (final IBoogieVar bool : bools) {
+		for (final VARDECL bool : bools) {
 			setValueInternally(returnState, bool, BooleanValue.BOTTOM);
 		}
-		for (final IBoogieVar array : arrays) {
+		for (final VARDECL array : arrays) {
 			// TODO: Implement proper handling of arrays.
 			setValueInternally(returnState, array, createBottomValue());
 		}
@@ -829,22 +881,22 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final STATE returnState = createCopy();
 		
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> setValueInternally(returnState, var,
+		final Consumer<VARDECL> varConsumer = var -> setValueInternally(returnState, var,
 				getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-		final Consumer<IBoogieVar> boolConsumer = var -> setValueInternally(returnState, var,
+		final Consumer<VARDECL> boolConsumer = var -> setValueInternally(returnState, var,
 				getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
 		
-		for (final IBoogieVar var : mVariables) {
+		for (final VARDECL var : mVariables) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 		return returnState;
 	}
 	
-	protected Map<IBoogieVar, BooleanValue> getVar2ValueBoolean() {
+	protected Map<VARDECL, BooleanValue> getVar2ValueBoolean() {
 		return mBooleanValuesMap;
 	}
 	
-	protected Map<IBoogieVar, V> getVar2ValueNonrelational() {
+	protected Map<VARDECL, V> getVar2ValueNonrelational() {
 		return mValueMap;
 	}
 	

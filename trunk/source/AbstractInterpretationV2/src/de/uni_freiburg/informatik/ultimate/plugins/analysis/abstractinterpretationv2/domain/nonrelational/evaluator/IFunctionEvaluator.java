@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 
 /**
  * Interface for function evaluators.
@@ -40,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  * @param <STATE>
  * @param <VARDECL>
  */
-public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, IBoogieVar>, VARDECL>
-		extends IEvaluator<VALUE, STATE> {
+public interface IFunctionEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
+		extends IEvaluator<VALUE, STATE, VARDECL> {
 	
 	/**
 	 * @return The number of input parameters of the function.

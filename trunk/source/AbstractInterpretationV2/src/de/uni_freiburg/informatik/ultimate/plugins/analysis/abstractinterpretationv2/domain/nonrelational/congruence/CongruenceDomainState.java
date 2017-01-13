@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 
@@ -44,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class CongruenceDomainState extends NonrelationalState<CongruenceDomainState, CongruenceDomainValue> {
+public class CongruenceDomainState<VARDECL>
+		extends NonrelationalState<CongruenceDomainState<VARDECL>, CongruenceDomainValue, VARDECL> {
 	
 	/**
 	 * Default constructor of an {@link CongruenceDomainState}.
@@ -52,8 +52,8 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 	 * @param logger
 	 *            The current logger object in the current context.
 	 */
-	protected CongruenceDomainState(final ILogger logger) {
-		super(logger);
+	protected CongruenceDomainState(final ILogger logger, final Class<VARDECL> variablesType) {
+		super(logger, variablesType);
 	}
 
 	/**
@@ -64,8 +64,8 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 	 * @param isBottom
 	 *            If <code>true</code> the created state corresponds to &bot;, &top; otherwise.
 	 */
-	protected CongruenceDomainState(final ILogger logger, final boolean isBottom) {
-		super(logger, isBottom);
+	protected CongruenceDomainState(final ILogger logger, final boolean isBottom, final Class<VARDECL> variablesType) {
+		super(logger, isBottom, variablesType);
 	}
 	
 	/**
@@ -81,10 +81,10 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 	 * @param booleanValuesMap
 	 *            The values of all boolean variables.
 	 */
-	protected CongruenceDomainState(final ILogger logger, final Set<IBoogieVar> variablesMap,
-			final Map<IBoogieVar, CongruenceDomainValue> valuesMap,
-			final Map<IBoogieVar, BooleanValue> booleanValuesMap) {
-		super(logger, variablesMap, valuesMap, booleanValuesMap);
+	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
+			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
+			final Class<VARDECL> variablesType) {
+		super(logger, variablesMap, valuesMap, booleanValuesMap, variablesType);
 	}
 
 	/**
@@ -102,23 +102,22 @@ public class CongruenceDomainState extends NonrelationalState<CongruenceDomainSt
 	 * @param isBottom
 	 *            If <code>true</code>, the created state is &bot;, &top; otherwise.
 	 */
-	protected CongruenceDomainState(final ILogger logger, final Set<IBoogieVar> variablesMap,
-			final Map<IBoogieVar, CongruenceDomainValue> valuesMap,
-			final Map<IBoogieVar, BooleanValue> booleanValuesMap, final boolean isBottom) {
-		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
+	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
+			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
+			final boolean isBottom, final Class<VARDECL> variablesType) {
+		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom, variablesType);
 	}
 	
 	@Override
-	protected CongruenceDomainState createCopy() {
-		return new CongruenceDomainState(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()));
+	protected CongruenceDomainState<VARDECL> createCopy() {
+		return new CongruenceDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+				new HashMap<>(getVar2ValueBoolean()), mVariablesType);
 	}
 	
 	@Override
-	protected CongruenceDomainState createState(final ILogger logger, final Set<IBoogieVar> newVarMap,
-			final Map<IBoogieVar, CongruenceDomainValue> newValMap,
-			final Map<IBoogieVar, BooleanValue> newBooleanValMap) {
-		return new CongruenceDomainState(logger, newVarMap, newValMap, newBooleanValMap);
+	protected CongruenceDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
+			final Map<VARDECL, CongruenceDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap) {
+		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, mVariablesType);
 	}
 	
 	@Override

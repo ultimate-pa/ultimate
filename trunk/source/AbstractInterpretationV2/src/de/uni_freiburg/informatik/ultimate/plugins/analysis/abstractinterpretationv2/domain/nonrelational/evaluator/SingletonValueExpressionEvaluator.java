@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -49,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <STATE>
  *            The type of states in the abstract domain.
  */
-public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE>>
-		implements IEvaluator<VALUE, STATE> {
+public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+		implements IEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final VALUE mValue;
 	private final EvaluatorType mType;
@@ -81,13 +80,13 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 	}
 	
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE> evaluator) {
+	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a sub evaluator to a singleton value expression evaluator.");
 	}
 	
 	@Override
-	public Set<IBoogieVar> getVarIdentifiers() {
+	public Set<VARDECL> getVarIdentifiers() {
 		return Collections.emptySet();
 	}
 	

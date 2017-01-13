@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar> {
+public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	
-	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mIcfgSymbolTable;
 	
@@ -66,32 +66,32 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 	}
 	
 	@Override
-	public SignDomainState createFreshState() {
-		return new SignDomainState(mLogger);
+	public SignDomainState<IBoogieVar> createFreshState() {
+		return new SignDomainState<>(mLogger, IBoogieVar.class);
 	}
 	
 	@Override
-	public SignDomainState createTopState() {
+	public SignDomainState<IBoogieVar> createTopState() {
 		throw new UnsupportedOperationException("Not implemented: createTopState");
 	}
 
 	@Override
-	public SignDomainState createBottomState() {
+	public SignDomainState<IBoogieVar> createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
 	
 	@Override
-	public IAbstractStateBinaryOperator<SignDomainState> getWideningOperator() {
-		return new SignMergeOperator();
+	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getWideningOperator() {
+		return new SignMergeOperator<>();
 	}
 	
 	@Override
-	public IAbstractStateBinaryOperator<SignDomainState> getMergeOperator() {
-		return new SignMergeOperator();
+	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getMergeOperator() {
+		return new SignMergeOperator<>();
 	}
 	
 	@Override
-	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final int maxParallelStates = 2;
 			final SignDomainStatementProcessor stmtProcessor =

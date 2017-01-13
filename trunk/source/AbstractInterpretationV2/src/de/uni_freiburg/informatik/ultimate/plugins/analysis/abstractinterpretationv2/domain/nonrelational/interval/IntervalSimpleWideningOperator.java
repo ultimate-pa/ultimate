@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
@@ -42,33 +41,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
+public class IntervalSimpleWideningOperator<VARDECL>
+		implements IAbstractStateBinaryOperator<IntervalDomainState<VARDECL>> {
 	
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
+	public IntervalDomainState<VARDECL> apply(final IntervalDomainState<VARDECL> first,
+			final IntervalDomainState<VARDECL> second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
-		
-		final List<IBoogieVar> boolsToTop = new ArrayList<>();
-		final List<IBoogieVar> varsToTop = new ArrayList<>();
-		final List<IBoogieVar> arraysToTop = new ArrayList<>();
-		
+
+		final List<VARDECL> boolsToTop = new ArrayList<>();
+		final List<VARDECL> varsToTop = new ArrayList<>();
+		final List<VARDECL> arraysToTop = new ArrayList<>();
+
 		// TODO: Add array support.
-		final Consumer<IBoogieVar> varConsumer = var -> {
+		final Consumer<VARDECL> varConsumer = var -> {
 			if (!first.getValue(var).isEqualTo(second.getValue(var))) {
 				varsToTop.add(var);
 			}
 		};
-		final Consumer<IBoogieVar> boolConsumer = var -> {
+		final Consumer<VARDECL> boolConsumer = var -> {
 			if (!first.getBooleanValue(var).isEqualTo(second.getBooleanValue(var))) {
 				boolsToTop.add(var);
 			}
 		};
-		
-		for (final IBoogieVar var : first.getVariables()) {
+
+		for (final VARDECL var : first.getVariables()) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
-		
+
 		return first.setVarsToTop(varsToTop, boolsToTop, arraysToTop);
 	}
 }

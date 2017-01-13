@@ -86,17 +86,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
+public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V, IBoogieVar>, V extends INonrelationalValue<V>>
 		extends BoogieVisitor {
 	
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
-	private final IEvaluatorFactory<V, STATE> mEvaluatorFactory;
+	private final IEvaluatorFactory<V, STATE, IBoogieVar> mEvaluatorFactory;
 	
 	private STATE mOldState;
 	private List<STATE> mReturnState;
-	private ExpressionEvaluator<V, STATE> mExpressionEvaluator;
+	private ExpressionEvaluator<V, STATE, IBoogieVar> mExpressionEvaluator;
 	private IBoogieVar mLhsVariable;
 	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
 	
@@ -177,7 +177,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		return super.processExpression(newExpr);
 	}
 	
-	protected abstract IEvaluatorFactory<V, STATE> createEvaluatorFactory(final int maxParallelStates);
+	protected abstract IEvaluatorFactory<V, STATE, IBoogieVar> createEvaluatorFactory(final int maxParallelStates);
 	
 	/**
 	 * Override this method to add evaluators for this (already preprocessed) expression.
@@ -189,8 +189,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 * @param expr
 	 *            The preprocessed expression.
 	 */
-	protected void addEvaluators(final ExpressionEvaluator<V, STATE> evaluator,
-			final IEvaluatorFactory<V, STATE> evaluatorFactory, final Expression expr) {
+	protected void addEvaluators(final ExpressionEvaluator<V, STATE, IBoogieVar> evaluator,
+			final IEvaluatorFactory<V, STATE, IBoogieVar> evaluatorFactory, final Expression expr) {
 		// not necessary for non-relational statement processor
 	}
 	
@@ -365,21 +365,21 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final IntegerLiteral expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final IEvaluator<V, STATE, IBoogieVar> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 	
 	@Override
 	protected void visit(final RealLiteral expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final IEvaluator<V, STATE, IBoogieVar> evaluator =
 				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 	
 	@Override
 	protected void visit(final BinaryExpression expr) {
-		final INAryEvaluator<V, STATE> evaluator =
+		final INAryEvaluator<V, STATE, IBoogieVar> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -387,7 +387,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final FunctionApplication expr) {
-		final IEvaluator<V, STATE> evaluator;
+		final IEvaluator<V, STATE, IBoogieVar> evaluator;
 		final List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 		
 		// If we don't have a specification for the function, we return top.
@@ -416,7 +416,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final IdentifierExpression expr) {
-		final IEvaluator<V, STATE> evaluator =
+		final IEvaluator<V, STATE, IBoogieVar> evaluator =
 				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
@@ -424,7 +424,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final UnaryExpression expr) {
-		final INAryEvaluator<V, STATE> evaluator =
+		final INAryEvaluator<V, STATE, IBoogieVar> evaluator =
 				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -433,7 +433,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory
+		final IEvaluator<V, STATE, IBoogieVar> evaluator = mEvaluatorFactory
 				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -450,7 +450,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	
 	@Override
 	protected void visit(final IfThenElseExpression expr) {
-		final IEvaluator<V, STATE> evaluator = mEvaluatorFactory.createConditionalEvaluator();
+		final IEvaluator<V, STATE, IBoogieVar> evaluator = mEvaluatorFactory.createConditionalEvaluator();
 		mExpressionEvaluator.addEvaluator(evaluator);
 		
 		// Create a new expression for the negative case

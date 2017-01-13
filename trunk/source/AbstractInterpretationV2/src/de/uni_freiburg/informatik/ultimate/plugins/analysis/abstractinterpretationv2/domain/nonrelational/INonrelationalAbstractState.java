@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 
 /**
  * Interface that provides methods that all non-relational abstract states have in common.
@@ -41,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  * @param <ACTION>
  *            The type of the action.
  */
-public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, IBoogieVar>>
-		extends IAbstractState<STATE, IBoogieVar> {
+public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
+		extends IAbstractState<STATE, VARDECL> {
 	
 	/**
 	 * Intersects <tt>this</tt> with another abstract state.
