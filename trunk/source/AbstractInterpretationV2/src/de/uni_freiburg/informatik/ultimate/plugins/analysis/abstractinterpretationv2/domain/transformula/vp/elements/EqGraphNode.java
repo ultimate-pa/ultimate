@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -210,6 +211,12 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		this.ccchild.addPair(pVorC, ccchild);
 	}
 	
+	public void addToCcchild(HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild2) {
+		for (final Entry<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> entry : ccchild2.entrySet()) {
+			addToCcchild(entry.getKey(), entry.getValue());
+		}
+	}
+
 	public Set<EqGraphNode<NODEID, ARRAYID>> getInitCcpar() {
 		return initCcpar;
 	}

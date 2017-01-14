@@ -118,11 +118,14 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 			return;
 		}
 		node2.find().addToReverseRepresentative(node1.find());
-		node1.find().setRepresentative(node2.find());
 		node2.find().addToCcpar(node1.find().getCcpar());
-		for (final Entry<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> entry : node1.find().getCcchild().entrySet()) {
-			node2.find().getCcchild().addPair(entry.getKey(), entry.getValue());
-		}
+		node2.find().addToCcchild(node1.find().getCcchild());
+		// this set-operation must come after the other 3 above (because find is called on node1 for all the others)!!
+		node1.find().setRepresentative(node2.find());
+
+//		for (final Entry<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> entry : node1.find().getCcchild().entrySet()) {
+//			node2.find().getCcchild().addPair(entry.getKey(), entry.getValue());
+//		}
 
 		/*
 		 * Because of the change of representative, the disequality set also need to be updated.

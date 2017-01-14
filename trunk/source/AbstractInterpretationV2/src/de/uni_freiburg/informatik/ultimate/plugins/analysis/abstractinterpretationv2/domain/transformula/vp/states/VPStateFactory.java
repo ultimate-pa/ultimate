@@ -197,19 +197,9 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		}
 
 		if (tfState.isTop()) {
-//			final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
-//			builder.addVars(tfState.getVariables());
-//			return builder.build();
 			return oldState;
 		}
-		
-		/*
-		 * strategy:
-		 * we first add disequalites from the transition state
-		 *  --> without the presence of equalities they induce no propagations, so we can work on one builder
-		 * then we add equalities from the transition state
-		 */
-		
+	
 		/*
 		 * We are projecting the state to what it says about 
 		 *  - outVars of the given TransFormula tf
@@ -225,6 +215,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 		final VPStateBuilder<ACTION> builder = copy(havocVariables(tf.getAssignedVars(), oldState));// TODO
 		builder.addVars(tfState.getVariables());
+		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = new HashSet<>();
+		statesWithDisEqualitiesAdded.add(builder.build());
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
@@ -232,27 +224,23 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 				EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
 				if (outNode1 == outNode2) {
-					// no need to disequate two identical nodes
+					assert false;
 					continue;
 				}
 
-//				VPNodeIdentifier id1 = new VPNodeIdentifier(outNode1, 
-//						VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
-//						VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
-//				VPNodeIdentifier id2 = new VPNodeIdentifier(outNode2, 
-//						VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
-//						VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
-
 				if (tfState.areUnEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
-					builder.addDisEquality(outNode1.nodeIdentifier.getEqNode(), outNode2.nodeIdentifier.getEqNode());
+					statesWithDisEqualitiesAdded = 
+							VPFactoryHelpers.addDisEquality(outNode1.nodeIdentifier.getEqNode(), 
+									outNode2.nodeIdentifier.getEqNode(), 
+									statesWithDisEqualitiesAdded, 
+									this);
 				}
 			}
 		}
 
-		final VPState<ACTION> stateWithDisEqualitiesAdded = builder.build();
 
 		Set<VPState<ACTION>> resultStates = new HashSet<>();
-		resultStates.add(stateWithDisEqualitiesAdded);
+		resultStates.addAll(statesWithDisEqualitiesAdded);
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
@@ -263,12 +251,6 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 					// no need to equate two identical nodes
 					continue;
 				}
-//				VPNodeIdentifier id1 = new VPNodeIdentifier(outNode1, 
-//							VPDomainHelpers.projectToVars(tf.getInVars(), outNode1.getVariables()),
-//							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode1.getVariables()));
-//				VPNodeIdentifier id2 = new VPNodeIdentifier(outNode2, 
-//							VPDomainHelpers.projectToVars(tf.getInVars(), outNode2.getVariables()),
-//							VPDomainHelpers.projectToVars(tf.getOutVars(), outNode2.getVariables()));
 
 				if (tfState.areEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
 					resultStates = VPFactoryHelpers.addEquality(

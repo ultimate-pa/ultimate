@@ -242,6 +242,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 			
 				if (state.areEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
 					resultStates = VPFactoryHelpers.addEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier, resultStates, this);
+					assert resultStates.size() == 1 : "??";
 				}
 			}
 		}
