@@ -308,34 +308,36 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	 * @param EqGraphNode
 	 *            to be havoc
 	 */
-	public VPState<ACTION> havoc(final EqNode node, final VPState<ACTION> originalState) {
+	public VPState<ACTION> havoc(final EqNode nodeToBeHavocced, final VPState<ACTION> originalState) {
 		if (originalState.isBottom()) {
 			return originalState;
 		}
 		
 		//assert !node.isLiteral() : "cannot havoc a literal";
-		assert node.getTerm().getFreeVars().length > 0 : "cannot havoc a constant term";
+		assert nodeToBeHavocced.getTerm().getFreeVars().length > 0 : "cannot havoc a constant term";
 		
 		
-		VPStateBuilder<ACTION> builder = copy(originalState);
-		EqGraphNode<EqNode, IProgramVarOrConst> graphNode = builder.getEqGraphNode(node);
+		VPStateBuilder<ACTION> builder1 = copy(originalState);
+		EqGraphNode<EqNode, IProgramVarOrConst> graphNodeForNodeToBeHavocced = builder1.getEqGraphNode(nodeToBeHavocced);
 		
 		// TODO: determine if state becomes top through the havoc!
 
-		// Handling the outgoing edge chain
-		final EqGraphNode<EqNode, IProgramVarOrConst> firstRepresentative = graphNode.getRepresentative();
+		/*
+		 *  Handling the outgoing edge chain
+		 */
+		final EqGraphNode<EqNode, IProgramVarOrConst> firstRepresentative = graphNodeForNodeToBeHavocced.getRepresentative();
 		EqGraphNode<EqNode, IProgramVarOrConst> nextRepresentative = firstRepresentative;
-		nextRepresentative.getReverseRepresentative().remove(graphNode);
+		nextRepresentative.getReverseRepresentative().remove(graphNodeForNodeToBeHavocced);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
-			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-			for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNode.getCcchild().entrySet()) {
+			nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
+			for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNodeForNodeToBeHavocced.getCcchild().entrySet()) {
 				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 			}
 			nextRepresentative = nextRepresentative.getRepresentative();
 		}
-		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
+		nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
 		HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> copyOfGraphNodeCcchild = new HashRelation<>();
-		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNode.getCcchild().entrySet()) {
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNodeForNodeToBeHavocced.getCcchild().entrySet()) {
 			copyOfGraphNodeCcchild.addPair(entry.getKey(), entry.getValue());
 		}
 		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : copyOfGraphNodeCcchild.entrySet()) {
@@ -351,21 +353,21 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		 *  For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
 		 */
 		EqGraphNode<EqNode, IProgramVarOrConst> firstReserveRepresentativeNode = null;
-		if (!graphNode.getReverseRepresentative().isEmpty()) {
-			firstReserveRepresentativeNode = graphNode.getReverseRepresentative().iterator().next();
+		if (!graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty()) {
+			firstReserveRepresentativeNode = graphNodeForNodeToBeHavocced.getReverseRepresentative().iterator().next();
 		}
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNode.getReverseRepresentative()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNodeForNodeToBeHavocced.getReverseRepresentative()) {
 			// first reset the representative of all the reverseRepresentative nodes.
 			reverseNode.setRepresentative(reverseNode);
 		}
 		
 		boolean havocNodeIsItsRepresentative = false;
-		VPState<ACTION> resultState = builder.build();
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNode.getReverseRepresentative()) {
+		VPState<ACTION> resultState = builder1.build();
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> reverseNode : graphNodeForNodeToBeHavocced.getReverseRepresentative()) {
 			// case y -> x <- z
-			if (firstRepresentative.equals(graphNode)) {
+			if (firstRepresentative.equals(graphNodeForNodeToBeHavocced)) {
 				havocNodeIsItsRepresentative = true;
-				if (graphNode.getReverseRepresentative().size() > 1) {
+				if (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() > 1) {
 					assert firstReserveRepresentativeNode != null;
 					resultState = disjoinAll(
 								VPFactoryHelpers.addEquality(reverseNode.nodeIdentifier, firstReserveRepresentativeNode.nodeIdentifier, resultState, this));
@@ -376,47 +378,42 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			}
 		}
 		
-		builder = copy(resultState);
-		graphNode = builder.getEqGraphNode(node);
+		VPStateBuilder<ACTION> builder2 = copy(resultState);
+		graphNodeForNodeToBeHavocced = builder2.getEqGraphNode(nodeToBeHavocced);
 		
 		/*
-		 * Handling the node itself:
+		 * Handling the nodeToBeHavocced itself:
 		 * First update disequality set.
-		 * Then set havoc node to initial.
+		 * Then set nodeToBeHavocced to initial.
 		 */
 		if (havocNodeIsItsRepresentative) {
 			Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>();
-			for (VPDomainSymmetricPair<EqNode> pair : builder.getDisEqualitySet()) {
-				if (pair.contains(graphNode.nodeIdentifier)) {
+			for (VPDomainSymmetricPair<EqNode> pair : builder2.getDisEqualitySet()) {
+				if (pair.contains(graphNodeForNodeToBeHavocced.nodeIdentifier)) {
 					newDisEqualitySet.add(
 							new VPDomainSymmetricPair<EqNode>(
-									pair.getOther(graphNode.nodeIdentifier), 
+									pair.getOther(graphNodeForNodeToBeHavocced.nodeIdentifier), 
 									resultState.find(firstReserveRepresentativeNode.nodeIdentifier)));
 				} else {
 					newDisEqualitySet.add(pair);
 				}
 			}
-			builder.addDisEqualites(newDisEqualitySet);
+			builder2.clearDisEqualitySet();
+			builder2.addDisEqualites(newDisEqualitySet);
 		} else {
 			// do nothing: no need to update disequality set, because if x is not representative, then x should not be in disequality set.
 		}
-//		if (graphNode.getRepresentative().equals(graphNode)) {
-//			Set<VPDomainSymmetricPair<EqNode>> newSet = 
-//					builder.getDisEqualitySet().stream()
-//					.filter(pair -> !pair.contains(node))
-//					.collect(Collectors.toSet());
-//			builder.setDisEqualites(newSet);
-//		}
-		graphNode.setNodeToInitial();
+		graphNodeForNodeToBeHavocced.setNodeToInitial();
 
-		if (node instanceof EqFunctionNode) {
-			builder.restorePropagation((EqFunctionNode) node);
+		if (nodeToBeHavocced instanceof EqFunctionNode) {
+			builder2.restorePropagation((EqFunctionNode) nodeToBeHavocced);
 		}
-		resultState = builder.build();
+		
+		resultState = builder2.build();
 		
 		// also havoc the function nodes which index had been havoc.
-		if (!graphNode.getInitCcpar().isEmpty()) {
-			for (final EqGraphNode<EqNode, IProgramVarOrConst> initCcpar : graphNode.getInitCcpar()) {
+		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
+			for (final EqGraphNode<EqNode, IProgramVarOrConst> initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
 				resultState = havoc(initCcpar.nodeIdentifier, resultState);
 			}
 		}
@@ -424,8 +421,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		/*
 		 * havoc all the non-atomic EqNodes which depend on this one
 		 */
-		if (node instanceof EqAtomicBaseNode) {
-			for (EqNonAtomicBaseNode  dependentNode : ((EqAtomicBaseNode) node).getDependentNonAtomicBaseNodes()) {
+		if (nodeToBeHavocced instanceof EqAtomicBaseNode) {
+			for (EqNonAtomicBaseNode  dependentNode : ((EqAtomicBaseNode) nodeToBeHavocced).getDependentNonAtomicBaseNodes()) {
 				resultState = havoc(dependentNode, resultState);
 			}
 		}

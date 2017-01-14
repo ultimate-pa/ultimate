@@ -156,6 +156,10 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 	Collection<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
 		return mEqNodeToEqGraphNodeMap.values();
 	}
+	
+	public void clearDisEqualitySet() {
+		mDisEqualitySet.clear();
+	}
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
 		return Collections.unmodifiableSet(mDisEqualitySet);

@@ -369,7 +369,14 @@ public class VPDomainHelpers {
 	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
 		boolean isHavocced(ARRAYID array, IVPStateOrTfState<NODEID, ARRAYID> resultState) {
 		for (EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier.getAllFunctions().contains(array)) {
+			if (!node.nodeIdentifier.getAllFunctions().contains(array)) {
+				continue;
+			}
+			// node talks about array --> it must be its own representative and may not appear in a disequality
+			if (node.getRepresentative() != node) {
+				return false;
+			}
+			if (!resultState.getDisequalities(node.nodeIdentifier).isEmpty()) {
 				return false;
 			}
 		}
