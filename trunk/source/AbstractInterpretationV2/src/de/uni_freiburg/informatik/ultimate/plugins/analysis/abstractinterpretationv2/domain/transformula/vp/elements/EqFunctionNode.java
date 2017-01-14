@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +49,7 @@ public class EqFunctionNode extends EqNode {
 	
 	private final IProgramVarOrConst function;
 	private final List<EqNode> args;
+	private final Set<IProgramVarOrConst> mAllFunctionSymbols;
 
 	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args, ManagedScript script) {
 		super(function.isGlobal() 
@@ -70,6 +72,13 @@ public class EqFunctionNode extends EqNode {
 		mVariables = Collections.unmodifiableSet(vars);
 
 		mTerm = restoreMultidimensionalSelect(script, function, args);
+		
+		Set<IProgramVarOrConst> allFunctionSymbols = new HashSet<>();
+		allFunctionSymbols.add(function);
+		for (EqNode arg : args) {
+			allFunctionSymbols.addAll(arg.getAllFunctions());
+		}
+		mAllFunctionSymbols = Collections.unmodifiableSet(allFunctionSymbols);
 	}
 	
 	@Override
@@ -137,5 +146,9 @@ public class EqFunctionNode extends EqNode {
 	public boolean isFunction() {
 		return true;
 	}
-	
+
+	@Override
+	public Collection<IProgramVarOrConst> getAllFunctions() {
+		return mAllFunctionSymbols;
+	}
 }

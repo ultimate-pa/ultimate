@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfStateBuilder;
@@ -315,6 +316,23 @@ public class VPDomainHelpers {
 		return true;	
 	}
 	
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+			boolean disEqualityRelationIrreflexive(
+					Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
+					IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
+		for (VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
+			// both "==" and "equals" just to make sure..
+			if (pair.getFirst() == pair.getSecond()) { 
+				return false;
+			}
+			if (pair.getFirst().equals(pair.getSecond())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	
 	/**
 	 * cross product computation
 	 * 
@@ -346,6 +364,16 @@ public class VPDomainHelpers {
 	public static Map<IProgramVar, TermVariable> projectToTermAndVars(Map<IProgramVar, TermVariable> varMapping,
 			Term projectionTerm, Set<IProgramVar> projectionVars) {
 		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
+	}
+
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+		boolean isHavocced(ARRAYID array, IVPStateOrTfState<NODEID, ARRAYID> resultState) {
+		for (EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
+			if (node.nodeIdentifier.getAllFunctions().contains(array)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 }

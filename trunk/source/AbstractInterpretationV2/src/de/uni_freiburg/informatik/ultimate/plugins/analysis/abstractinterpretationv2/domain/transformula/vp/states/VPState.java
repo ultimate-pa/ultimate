@@ -311,7 +311,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final StringBuilder sb = new StringBuilder();
 		sb.append("VPState\n");
 		sb.append("vars: " + mVars.toString() + "\n");
-		sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
+		//sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
 		sb.append("Graph:\n");
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
 			if (egn.getRepresentative() != egn) {

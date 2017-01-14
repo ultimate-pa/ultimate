@@ -68,7 +68,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		 * Create fresh EqGraphNodes from EqNodes.
 		 */
 		final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap = new HashMap<>();
-		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mDomain.getPreAnalysis().getTermToEqNodeMap().values()) {
 			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
 		}
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
@@ -130,7 +130,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		 EqNode firstIndex = functionNode.getArgs().get(0);
 		 EqGraphNode<EqNode, IProgramVarOrConst> firstIndexGN = getEqGraphNode(firstIndex);
 
-		 final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
+		 final Set<EqFunctionNode> fnNodeSet = mDomain.getPreAnalysis().getArrayIdToFnNodeMap().getImage(functionNode.getFunction());
 		 for (final EqFunctionNode fnNode : fnNodeSet) {
 			 if (getEqGraphNode(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
 				 if (congruent(getEqGraphNode(fnNode), getEqGraphNode(functionNode))) {

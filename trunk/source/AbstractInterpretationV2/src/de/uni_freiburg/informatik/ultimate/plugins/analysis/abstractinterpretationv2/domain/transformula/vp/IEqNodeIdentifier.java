@@ -27,12 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
+
 public interface IEqNodeIdentifier<ARRAYID> {
 
 	
 	public boolean isFunction();
 
 	public ARRAYID getFunction();
+	
+	public Collection<ARRAYID> getAllFunctions();
 	
 	public boolean isLiteral();
 }

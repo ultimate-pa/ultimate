@@ -87,17 +87,17 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 * @param i2
 	 */
 	void merge(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
-		if (node1 == node2) {
+		if (node1 == node2 || node1.find() == node2.find()) {
 			//nothing to do
 			return;
 		}
 
 		setIsTop(false);
 			
-		if (!node1.find().equals(node2.find())) {
-			union(node1, node2);
-			equalityPropagation(node1, node2);
-		}
+		union(node1, node2);
+		equalityPropagation(node1, node2);
+
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}	
 
 	/**
@@ -111,10 +111,8 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
-		//			final EqGraphNode graphNode1Find = find(node1);
-		//			final EqGraphNode graphNode2Find = find(node2);
-
 		if (node1.find().equals(node2.find())) {
+			assert false : "this should have been checked before calling union";
 			return;
 		}
 		node2.find().addToReverseRepresentative(node1.find());
@@ -123,9 +121,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		// this set-operation must come after the other 3 above (because find is called on node1 for all the others)!!
 		node1.find().setRepresentative(node2.find());
 
-//		for (final Entry<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> entry : node1.find().getCcchild().entrySet()) {
-//			node2.find().getCcchild().addPair(entry.getKey(), entry.getValue());
-//		}
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 
 		/*
 		 * Because of the change of representative, the disequality set also need to be updated.
@@ -158,9 +154,11 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 			mDisEqualitySet.remove(pair);
 			mDisEqualitySet.add(
 					new VPDomainSymmetricPair<NODEID>(newFirst, newSecond));
+			assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 		}
 
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}
 
 	private void equalityPropagation(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
@@ -174,6 +172,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 				}
 			}
 		}
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}
 
 	/**
@@ -215,8 +214,11 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 //			+ getEqGraphNode(id2).find() + " vs " + getEqGraphNode(id2);
 		setIsTop(false);
 		
+		assert !id1.equals(id2);
+		
 		EqGraphNode<NODEID, ARRAYID> egn1 = getEqGraphNode(id1);
 		EqGraphNode<NODEID, ARRAYID> egn2 = getEqGraphNode(id2);
+		assert !egn1.equals(egn2);
 		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().nodeIdentifier, egn2.find().nodeIdentifier));
 //		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(id1, id2));
 	}

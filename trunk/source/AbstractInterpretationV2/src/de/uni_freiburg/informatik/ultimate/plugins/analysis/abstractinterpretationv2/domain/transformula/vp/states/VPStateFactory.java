@@ -143,7 +143,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		builder.setIsTop(originalState.isTop());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 
-		for (final EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mPreAnalysis.getTermToEqNodeMap().values()) {
 			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
 			final EqGraphNode<EqNode, IProgramVarOrConst> oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode.copyFields(oldGraphNode, newGraphNode, builder);
@@ -162,6 +162,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 
 		assert builder.mVars.equals(originalState.getVariables());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(builder.mDisEqualitySet, builder);
 		return builder;
 	}
 
@@ -275,7 +276,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	}
 
 	public Set<EqNode> getFunctionNodesForArray(final IProgramVarOrConst firstArray) {
-		final Set<EqFunctionNode> image = mDomain.getArrayIdToEqFnNodeMap().getImage(firstArray);
+		final Set<EqFunctionNode> image = mPreAnalysis.getArrayIdToFnNodeMap().getImage(firstArray);
 		return image.stream().map(node -> (EqNode) node).collect(Collectors.toSet());
 	}
 
@@ -439,11 +440,14 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	 */
 	public VPState<ACTION> havocArray(final IProgramVarOrConst array, VPState<ACTION> originalState) {
 		VPState<ACTION> resultState = copy(originalState).build();
-
-		for (final EqFunctionNode fnNode : mDomain.getArrayIdToEqFnNodeMap()
-				.getImage(array)) {
-			resultState = this.havoc(fnNode, resultState);
+		
+		for (EqNode eqNode : originalState.getEqNodeToEqGraphNodeMap().keySet()) {
+			if (eqNode.getAllFunctions().contains(array)) {
+				resultState = this.havoc(eqNode, resultState);
+			}
 		}
+		
+		assert VPDomainHelpers.isHavocced(array, resultState);
 		return resultState;
 	}
 

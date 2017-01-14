@@ -111,7 +111,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		StringBuilder sb = new StringBuilder();
 		sb.append("VPTfState\n");
 		sb.append("vars: " + mVars.toString() +"\n");
-		sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
+		//sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
 		sb.append("Graph:\n");
 		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
 			if (egn.getRepresentative() != egn) {

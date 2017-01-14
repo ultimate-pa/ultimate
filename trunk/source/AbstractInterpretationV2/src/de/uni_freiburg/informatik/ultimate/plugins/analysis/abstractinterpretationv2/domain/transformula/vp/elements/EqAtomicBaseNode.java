@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -89,5 +90,10 @@ public class EqAtomicBaseNode extends EqNode {
 	public IProgramVarOrConst getFunction() {
 		assert false : "check for isFunction() first";
 		return null;
+	}
+
+	@Override
+	public Collection<IProgramVarOrConst> getAllFunctions() {
+		return Collections.emptySet();
 	}
 }

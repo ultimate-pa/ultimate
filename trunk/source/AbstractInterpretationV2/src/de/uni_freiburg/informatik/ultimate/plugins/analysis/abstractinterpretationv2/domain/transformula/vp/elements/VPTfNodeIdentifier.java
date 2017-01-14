@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,6 +66,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
 	private final VPTfArrayIdentifier mFunction;
+	private final Set<VPTfArrayIdentifier> mAllFunctions;// TODO: perhaps this field is unnecessary --> one could move it from the interface to Eqnode..
 //	private final boolean mIsInOrThrough;
 	protected final TfNodeInOutStatus mInOutStatus;
 
@@ -102,6 +105,9 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		}
 		mOutVars = outVars;
 		
+		
+		mAllFunctions = Collections.emptySet();
+
 	}
 
 	public VPTfNodeIdentifier(EqNode eqNode, 
@@ -118,39 +124,26 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		} else {
 			mFunction = null;
 		}
+		// compute all function symbols in this node and its descendants (used only for debugging, if at all, see TODO at the field..)
+		if (mIsFunction) {
+			Set<VPTfArrayIdentifier> allFunctions = new HashSet<>();
+			for (EqNode argEqn : ((EqFunctionNode) eqNode).getArgs()) {
+				if (argEqn instanceof EqFunctionNode) {
+					allFunctions.add(tfStateBuilder.getOrConstructArrayIdentifier(
+							((EqFunctionNode) argEqn).getFunction(), inVars, outVars));
+				}
+			
+			}
+			allFunctions.add(mFunction);
+			mAllFunctions = Collections.unmodifiableSet(allFunctions);
+		} else {
+			mAllFunctions = Collections.emptySet();
+		}
 		
 		this.mInVars = Collections.unmodifiableMap(inVars);
 		this.mOutVars = Collections.unmodifiableMap(outVars);
 		
 		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
-		
-//		/*
-//		 * a nodeIdentifier has to be "pure" in the sense that it is either
-//		 *  - "in" (i.e. there are variables that are inVars but no outVars)
-//		 *  - "out" (i.e. there are variables that are outVars but no inVars)
-//		 *  - "through" (i.e. all variables are both inVars and outVars)
-//		 *  Than means it cannot have two variables where one is only in and one is only out. 
-//		 *  
-//		 *  TODO: the following computation is related to what VPDomainHelpers.computeInOutStatus(pv, tf) does
-//		 *     --> perhaps merge
-//		 */
-//
-//		boolean isIn = false;
-//		boolean isOut = false;
-//		for (Entry<IProgramVar, TermVariable> en : mInVars.entrySet()) {
-//			if (!mOutVars.containsKey(en.getKey())) {
-//				// we have an invar that is no outVar --> this node is "in"
-//				isIn = true;
-//			}
-//		}
-//		for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
-//			if (!mInVars.containsKey(en.getKey())) {
-//				// we have an outVar that is no inVar --> this node is "out"
-//				// if it is already "in", then the sanity check fails
-//				isOut = true;
-//				assert !isIn;
-//			}
-//		}	
 		
 		/*
 		 * new plan (2.0):
@@ -229,6 +222,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		}
 		
 		assert sanityCheck();
+		
+		
 	}
 	
 	
@@ -379,6 +374,13 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		return mOutVars;
 	}
 
+	@Override
+	public Collection<VPTfArrayIdentifier> getAllFunctions() {
+		return mAllFunctions;
+	}
+
+	
+	
 //	@Override
 //	public Set<ISingleElementWrapper> getElements() {
 //		return Collections.singleton(this);

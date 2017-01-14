@@ -65,10 +65,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final ILogger mLogger;
 	
 
-	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
 
 	private final ManagedScript mManagedScript;
-	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final VPStateFactory<ACTION> mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
@@ -83,8 +81,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = script;
-		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
-		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
@@ -127,14 +123,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 	}
 
-	public Map<Term, EqNode> getTermToEqNodeMap() {
-		return mTermToEqNodeMap;
-	}
-
-	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
-		return mArrayIdToEqFnNodes;
-	}
-
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
 		assert false;
@@ -164,7 +152,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public Set<EqNode> getLiteralEqNodes() {
 		// TODO only compute this once!
 		final Set<EqNode> literalSet = new HashSet<>();
-		for (final EqNode eqNode : getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mPreAnalysis.getTermToEqNodeMap().values()) {
 			if (eqNode.isLiteral()) {
 				literalSet.add(eqNode);
 			}

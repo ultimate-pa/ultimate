@@ -142,6 +142,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 
 
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
+		assert VPDomainHelpers.disEqualityRelationIrreflexive(builder.mDisEqualitySet, builder);
 		builder.setIsTop(state.isTop());
 //		assert builder.mVars.equals(state.getVariables());
 		return builder;
