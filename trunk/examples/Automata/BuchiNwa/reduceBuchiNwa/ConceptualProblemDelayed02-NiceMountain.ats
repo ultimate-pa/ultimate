@@ -1,0 +1,62 @@
+// Author: Matthias Heizmann
+// Date: 2017-01-14
+//
+// Example that explains why we cannot have (classical) delayed simulation
+// (using algorithms that we considered so far).
+// 
+// Automaton consists of two independent components the q* and p* states.
+// All states that have the same second letter can be merged without
+// changing the language (and they are currently merged by 
+// reduceNwaDelayedSimulationB).
+//
+// However, according to our current definition of "delayed simulation" there
+// is no simulation between pA and qA.
+// Let us assume Spoiler has his pebble on pA and duplicator has his pebble 
+// on qA. 
+//
+// In our algorithms Spoiler now has to decide if we wants to take 
+// the summary (take call and pledge to take return) or if we wants to take the
+// call but and pledge to not take the return. If Spoiler takes the summary,
+// Duplicator will respond with a run over qD2, if Spoiler does not take the
+// summary Duplicator will respond with a run over qC1. In both cases 
+// Duplicator visited an accepting state and satisfied all requirements for
+// delayed simulation.
+//
+// According to our defintion, Spoiler takes only the call transition.
+// afterwards Duplicator responds with a move to either qB1 or qB2.
+// In both cases, spoiler can pick a run that visits an accepting state such
+// that Duplicator cannot visit an accepting state.
+
+
+print(reduceNwaDelayedSimulationB(removeDeadEnds(nwa)));
+
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {"c" },
+    internalAlphabet = {"a" "b" },
+    returnAlphabet = {"r" },
+    states = {"pA" "pB" "pC" "pD" "qA" "qB1" "qB2" "qC1" "qC2" "qD1" "qD2" },
+    initialStates = {"pA" "qA" },
+    finalStates = {"pC" "pD" "qC1" "qD2" },
+    callTransitions = {
+        ("pA" "c" "pB")
+        ("qA" "c" "qB1")
+        ("qA" "c" "qB2")
+    },
+    internalTransitions = {
+        ("pB" "a" "pC")
+        ("qB1" "a" "qC1")
+        ("qB2" "a" "qC2")
+        ("pC" "a" "pA")
+        ("qC1" "a" "qA")
+        ("qC2" "a" "qA")
+        ("pB" "b" "pD")
+        ("qB1" "b" "qD1")
+        ("qB2" "b" "qD2")
+    },
+    returnTransitions = {
+        ("pD" "pA" "r" "pA")
+        ("qD1" "qA" "r" "qA")
+        ("qD2" "qA" "r" "qA")
+    }
+);
