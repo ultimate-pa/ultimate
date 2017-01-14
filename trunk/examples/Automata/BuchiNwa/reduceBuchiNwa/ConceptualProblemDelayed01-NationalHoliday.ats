@@ -1,6 +1,10 @@
 // Author: Christian, Daniel, Matthias
 // Date: 2017-01-12
 //
+// Problem reported by Daniel on 2016-10-02.
+// http://i.imgur.com/HdN5QwS.jpg
+// Solved by using ANP relations.
+
 
 print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
 
