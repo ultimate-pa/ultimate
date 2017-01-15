@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
@@ -959,9 +958,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
-		} else if (method instanceof MinimizeNwaMaxSat2) {
-			final MinimizeNwaMaxSat2<LETTER, STATE> minimizeNwaMaxSat2 = (MinimizeNwaMaxSat2<LETTER, STATE>) method;
-			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaMaxSat2.getResult();
+		} else if (method instanceof MinimizeNwaPmaxSat) {
+			final MinimizeNwaPmaxSat<LETTER, STATE> minimizeNwaPmaxSat = (MinimizeNwaPmaxSat<LETTER, STATE>) method;
+			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaPmaxSat.getResult();
 			// Performance data
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);

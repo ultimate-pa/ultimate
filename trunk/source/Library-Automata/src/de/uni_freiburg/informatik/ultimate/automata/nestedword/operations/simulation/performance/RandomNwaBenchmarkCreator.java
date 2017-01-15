@@ -358,7 +358,7 @@ public final class RandomNwaBenchmarkCreator {
 			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
 			break;
 		case 2:
-			operation = "minimizeNwaMaxSat2(removeDeadEnds(nwa));";
+			operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
 			break;
 		default:
 			operation = "";
