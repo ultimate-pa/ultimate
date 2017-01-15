@@ -26,8 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
  * 
@@ -36,26 +42,52 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <STATE>
  */
 public class FullMultipebbleGameState<STATE> {
-	private final DoubleDecker<STATE> mSpoilerDoubleDecker;
-	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
-	
-	
-	public FullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
-			final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
-		super();
-		mSpoilerDoubleDecker = spoilerDoubleDecker;
-		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
-	}
 
+	protected final DoubleDecker<STATE> mSpoilerDoubleDecker;
+
+	public FullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker) {
+		mSpoilerDoubleDecker = spoilerDoubleDecker;
+	}
 
 	public DoubleDecker<STATE> getSpoilerDoubleDecker() {
 		return mSpoilerDoubleDecker;
 	}
-
-
-	public NestedMap2<STATE, STATE, Boolean> getDuplicatorDoubleDeckers() {
-		return mDuplicatorDoubleDeckers;
+	
+	
+	public <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsInternal(final LETTER letter, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		final List<DoubleDecker<STATE>> result = new ArrayList<>();
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
+			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getDown(), trans.getSucc()));
+		}
+		return result;
+	}
+	
+	public <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsCall(final LETTER letter, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		final List<DoubleDecker<STATE>> result = new ArrayList<>();
+		for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
+			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getUp(), trans.getSucc()));
+		}
+		return result;
+	}
+	
+	public <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsReturn(final DoubleDecker<STATE> hier, final LETTER letter, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		if (hier.getUp() != mSpoilerDoubleDecker.getDown()) {
+			throw new IllegalArgumentException("mismatch");
+		}
+		final List<DoubleDecker<STATE>> result = new ArrayList<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(mSpoilerDoubleDecker.getUp(), mSpoilerDoubleDecker.getDown(), letter)) {
+			result.add(new DoubleDecker<STATE>(hier.getDown(), trans.getSucc()));
+		}
+		return result;
 	}
 
 	
+	
+//	public <LETTER> List<DoubleDecker<STATE>> computeSuccessors(final INestedWordAutomaton<LETTER, STATE> nwa) {
+//		List<DoubleDecker<STATE>> result = new ArrayList<>();
+//		for (LETTER letter : nwa.lettersInternal(mSpoilerDoubleDecker.getUp())) {
+//			
+//		}
+//	}
+
 }

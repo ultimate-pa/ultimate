@@ -24,7 +24,31 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Package provides classes for computation of full multipebble simulations. 
- */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+
+/**
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ */
+public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
+	private final HashRelation<STATE, STATE> mDuplicatorDoubleDeckers;
+	
+	
+	public DirectFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
+			final HashRelation<STATE, STATE> duplicatorDoubleDeckers) {
+		super(spoilerDoubleDecker);
+		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
+	}
+
+
+	public HashRelation<STATE, STATE> getDuplicatorDoubleDeckers() {
+		return mDuplicatorDoubleDeckers;
+	}
+
+	
+}
