@@ -300,24 +300,6 @@ public class MapEliminator {
 	 * <p>
 	 * The given TransFormula has to be in the collection given to the constructor and it has to be in NNF and
 	 * quantifier-free.
-	 * <p>
-	 * This method ignores the index analysis
-	 *
-	 * @param transformula
-	 *            The old TransFormula (quantifier-free, in NNF), which might contain maps
-	 * @return A TransFormula, where array accesses and calls of uninterpreted functions are replaced
-	 */
-	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula) {
-		final EqualityAnalysisResult emptyResult = new EqualityAnalysisResult(mDoubletons);
-		return getRewrittenTransFormula(transformula, emptyResult, emptyResult);
-	}
-
-	/**
-	 * Given a TransFormula with possibly array accesses or calls of uninterpreted functions, returns a new
-	 * TransFormula, where these are replaced. In general an overapproximation is returned.
-	 * <p>
-	 * The given TransFormula has to be in the collection given to the constructor and it has to be in NNF and
-	 * quantifier-free.
 	 *
 	 * @param transformula
 	 *            The old TransFormula (quantifier-free, in NNF), which might contain maps
@@ -530,7 +512,8 @@ public class MapEliminator {
 		for (final MapTemplate template : mMapsToIndices.getDomain()) {
 			for (final ArrayIndex index : mMapsToIndices.getImage(template)) {
 				final Term term = template.getTerm(index);
-				final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(term, false);
+				final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(term,
+						false);
 				if (varOrConst instanceof ReplacementConst) {
 					throw new UnsupportedOperationException("not yet implemented");
 				} else if (varOrConst instanceof IReplacementVar) {
@@ -548,7 +531,8 @@ public class MapEliminator {
 						transformula.addInVar(var, termVar);
 					}
 					if (!transformula.getOutVars().containsKey(var)) {
-						// If the term contains an assigned var, different in- and out-vars are created, otherwise the same
+						// If the term contains an assigned var, different in- and out-vars are created, otherwise the
+						// same
 						if (containsAssignedVar) {
 							transformula.addOutVar(var, getFreshTermVar(term));
 						} else {
@@ -571,7 +555,7 @@ public class MapEliminator {
 			return getAndAddAuxVar(term);
 		}
 		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
-		final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(definition, false); 
+		final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(definition, false);
 		if (varOrConst instanceof ReplacementConst) {
 			throw new UnsupportedOperationException("not yet implemented");
 		} else if (varOrConst instanceof IReplacementVar) {
