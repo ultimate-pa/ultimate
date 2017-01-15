@@ -30,7 +30,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -108,6 +111,7 @@ public final class RandomNwaBenchmarkCreator {
 		final float totalityHierPredInPercMin = 50f;
 		final float totalityHierPredInPercMax = 50f;
 		final int stepSize = 2;
+		boolean uniformStep = true;
 
 		// Which method to use
 		final boolean createExplicit = false;
@@ -119,7 +123,7 @@ public final class RandomNwaBenchmarkCreator {
 			coverSpaceBenchmark(n, k, amount, operationSwitch, useRandomTvModel, acceptanceInPercMin,
 					acceptanceInPercMax, totalityInternalInPercMin, totalityInternalInPercMax, totalityCallInPercMin,
 					totalityCallInPercMax, totalityReturnInPercMin, totalityReturnInPercMax, totalityHierPredInPercMin,
-					totalityHierPredInPercMax, stepSize);
+					totalityHierPredInPercMax, stepSize, uniformStep);
 		}
 	}
 
@@ -171,6 +175,10 @@ public final class RandomNwaBenchmarkCreator {
 	 *            0
 	 * @param stepSize
 	 *            How big the steps between each iteration should be
+	 * @param uniformStep
+	 *            If <tt>true</tt> each parameter will equally be increased at
+	 *            the same time. If <tt>false</tt> they will be changed
+	 *            independently.
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -179,7 +187,7 @@ public final class RandomNwaBenchmarkCreator {
 			final float totalityInternalInPercMin, final float totalityInternalInPercMax,
 			final float totalityCallInPercMin, final float totalityCallInPercMax, final float totalityReturnInPercMin,
 			final float totalityReturnInPercMax, final float totalityHierPredInPercMin,
-			final float totalityHierPredInPercMax, final float stepSize) throws IOException {
+			final float totalityHierPredInPercMax, final float stepSize, final boolean uniformStep) throws IOException {
 		System.out.println("Starting creation of space coverage sets...");
 
 		int acceptanceSteps = (int) Math.ceil((acceptanceInPercMax - acceptanceInPercMin) / stepSize);
@@ -203,20 +211,101 @@ public final class RandomNwaBenchmarkCreator {
 			hierPredSteps = 1;
 		}
 
-		int stepsToGo = acceptanceSteps * internalSteps * callSteps * returnSteps * hierPredSteps;
+		int stepsToGo;
+		if (uniformStep) {
+			List<Integer> steps = new LinkedList<>();
+			steps.add(acceptanceSteps);
+			steps.add(internalSteps);
+			steps.add(callSteps);
+			steps.add(returnSteps);
+			steps.add(hierPredSteps);
+			stepsToGo = Collections.max(steps);
+		} else {
+			stepsToGo = acceptanceSteps * internalSteps * callSteps * returnSteps * hierPredSteps;
+		}
 		System.out.println("Sets to create: " + stepsToGo);
 		System.out.println("---------------");
 
-		for (float acceptanceInPerc = acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
-			for (float totalityInternalInPerc = totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc += stepSize) {
-				for (float totalityCallInPerc = totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc += stepSize) {
-					for (float totalityReturnInPerc = totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc += stepSize) {
-						for (float totalityHierPredInPerc = totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc += stepSize) {
-							createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
-									totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
-									useRandomTvModel);
-							stepsToGo--;
-							System.out.println("Steps to go: " + stepsToGo);
+		if (uniformStep) {
+			List<Float> minPercentages = new LinkedList<>();
+			minPercentages.add(acceptanceInPercMin);
+			minPercentages.add(totalityInternalInPercMin);
+			minPercentages.add(totalityCallInPercMin);
+			minPercentages.add(totalityReturnInPercMin);
+			minPercentages.add(totalityHierPredInPercMin);
+			float smallestPercentage = Collections.min(minPercentages);
+			List<Float> maxPercentages = new LinkedList<>();
+			maxPercentages.add(acceptanceInPercMax);
+			maxPercentages.add(totalityInternalInPercMax);
+			maxPercentages.add(totalityCallInPercMax);
+			maxPercentages.add(totalityReturnInPercMax);
+			maxPercentages.add(totalityHierPredInPercMax);
+			float greatestPercentage = Collections.max(maxPercentages);
+
+			for (float percentage = smallestPercentage; percentage <= greatestPercentage; percentage += stepSize) {
+				float acceptanceInPerc;
+				if (percentage < acceptanceInPercMin) {
+					acceptanceInPerc = acceptanceInPercMin;
+				} else if (percentage > acceptanceInPercMax) {
+					acceptanceInPerc = acceptanceInPercMax;
+				} else {
+					acceptanceInPerc = percentage;
+				}
+
+				float totalityInternalInPerc;
+				if (percentage < totalityInternalInPercMin) {
+					totalityInternalInPerc = totalityInternalInPercMin;
+				} else if (percentage > totalityInternalInPercMax) {
+					totalityInternalInPerc = totalityInternalInPercMax;
+				} else {
+					totalityInternalInPerc = percentage;
+				}
+
+				float totalityCallInPerc;
+				if (percentage < totalityCallInPercMin) {
+					totalityCallInPerc = totalityCallInPercMin;
+				} else if (percentage > totalityCallInPercMax) {
+					totalityCallInPerc = totalityCallInPercMax;
+				} else {
+					totalityCallInPerc = percentage;
+				}
+
+				float totalityReturnInPerc;
+				if (percentage < totalityReturnInPercMin) {
+					totalityReturnInPerc = totalityReturnInPercMin;
+				} else if (percentage > totalityReturnInPercMax) {
+					totalityReturnInPerc = totalityReturnInPercMax;
+				} else {
+					totalityReturnInPerc = percentage;
+				}
+
+				float totalityHierPredInPerc;
+				if (percentage < totalityHierPredInPercMin) {
+					totalityHierPredInPerc = totalityHierPredInPercMin;
+				} else if (percentage > totalityHierPredInPercMax) {
+					totalityHierPredInPerc = totalityHierPredInPercMax;
+				} else {
+					totalityHierPredInPerc = percentage;
+				}
+
+				createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+						totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch, useRandomTvModel);
+				stepsToGo--;
+				System.out.println("Steps to go: " + stepsToGo);
+			}
+
+		} else {
+			for (float acceptanceInPerc = acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
+				for (float totalityInternalInPerc = totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc += stepSize) {
+					for (float totalityCallInPerc = totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc += stepSize) {
+						for (float totalityReturnInPerc = totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc += stepSize) {
+							for (float totalityHierPredInPerc = totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc += stepSize) {
+								createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+										totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
+										useRandomTvModel);
+								stepsToGo--;
+								System.out.println("Steps to go: " + stepsToGo);
+							}
 						}
 					}
 				}
@@ -263,13 +352,13 @@ public final class RandomNwaBenchmarkCreator {
 		final String operation;
 		switch (operationSwitch) {
 		case 0:
-			operation = "compareReduceNwaSimulation(removeUnreachable(nwa));";
+			operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
 			break;
 		case 1:
-			operation = "reduceNwaDirectSimulation(removeUnreachable(nwa), false);";
+			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
 			break;
 		case 2:
-			operation = "minimizeNwaMaxSat2(removeUnreachable(nwa));";
+			operation = "minimizeNwaMaxSat2(removeDeadEnds(nwa));";
 			break;
 		default:
 			operation = "";

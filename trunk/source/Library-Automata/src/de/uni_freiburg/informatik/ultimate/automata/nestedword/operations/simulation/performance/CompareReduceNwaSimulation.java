@@ -34,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
@@ -112,6 +115,69 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
+	 * simulation.performance.CompareReduceBuchiSimulation#
+	 * addGeneralAutomataPerformanceForExternalMethod(de.uni_freiburg.informatik
+	 * .ultimate.automata.nestedword.INestedWordAutomaton,
+	 * de.uni_freiburg.informatik.ultimate.automata.nestedword.
+	 * INestedWordAutomaton)
+	 */
+	@Override
+	protected void addGeneralAutomataPerformanceForExternalMethod(final INestedWordAutomaton<LETTER, STATE> input,
+			final INestedWordAutomaton<LETTER, STATE> output) {
+		super.addGeneralAutomataPerformanceForExternalMethod(input, output);
+
+		final AutomataLibraryServices services = getServices();
+		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+
+		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
+				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
+				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
+				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
+
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
+				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
+				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
+				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
+
+		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, output, true);
+
+		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
+				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
+		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
+				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
+		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
+				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
+
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
+				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_CALL,
+				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
+				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
+		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
+				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.performance.CompareReduceBuchiSimulation#
 	 * measureMethodPerformance(java.lang.String,
@@ -133,20 +199,19 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		boolean outOfMemory = false;
 		Object method = null;
 		if (!(operandRaw instanceof IDoubleDeckerAutomaton)) {
-			throw new IllegalArgumentException(
-					"Input must be of type " + IDoubleDeckerAutomaton.class);
+			throw new IllegalArgumentException("Input must be of type " + IDoubleDeckerAutomaton.class);
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<>(services,
-				operand).getResult();
+		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<LETTER, STATE>(
+				services, operand).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<>(services,
-						operand, true).getPartition();
-				
+				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(
+						services, operand, true).getPartition();
+
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
 						logger, operand, stateFactory, possibleEquivalenceClassesForDirect);
 				graph.generateGameGraphFromAutomaton();
@@ -155,16 +220,16 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, progressTimer,
-						logger, operand, stateFactory, possibleEquivalenceClasses);
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<LETTER, STATE>(services,
+						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
 						useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, progressTimer, logger,
-						operand, stateFactory, possibleEquivalenceClasses);
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<LETTER, STATE>(services,
+						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
@@ -172,7 +237,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<>(getServices(), operand);
+				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -213,8 +278,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
-//				stateFactory, reachableOperand);
-		
+		// stateFactory, reachableOperand);
+
 		// Other minimization methods
 //		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
 //				stateFactory, reachableOperand);

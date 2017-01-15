@@ -54,26 +54,46 @@ public final class PlotUtil {
 		PrintWriter pw = null;
 		try {
 			br = new BufferedReader(new FileReader(benchmarkPlotFile));
-			pw = new PrintWriter(
-					new FileWriter(new File(benchmarkPlotFile.getParentFile(), FILE_NAME_PLOT_DATA_CSV)));
+			pw = new PrintWriter(new FileWriter(new File(benchmarkPlotFile.getParentFile(), FILE_NAME_PLOT_DATA_CSV)));
 			final String[] headers = br.readLine().split(separator);
 
 			int directoryIndex = -1;
-			int sizeIndex = -1;
+			int internalAfterPreProcIndex = -1;
+			int callAfterPreProcIndex = -1;
+			int returnAfterPreProcIndex = -1;
+			int internalOutputIndex = -1;
+			int callOutputIndex = -1;
+			int returnOutputIndex = -1;
+			int sizeAfterPreProcIndex = -1;
 			int removedIndex = -1;
 			for (int i = 0; i < headers.length; i++) {
 				final String header = headers[i];
 				if (header.equals("DIRECTORY")) {
 					directoryIndex = i;
+				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL.toString())) {
+					internalAfterPreProcIndex = i;
+				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_CALL.toString())) {
+					callAfterPreProcIndex = i;
+				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_RETURN.toString())) {
+					returnAfterPreProcIndex = i;
+				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL.toString())) {
+					internalOutputIndex = i;
+				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_CALL.toString())) {
+					callOutputIndex = i;
+				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_RETURN.toString())) {
+					returnOutputIndex = i;
 				} else if (header.equals(ECountingMeasure.BUCHI_STATES.toString())) {
-					sizeIndex = i;
+					sizeAfterPreProcIndex = i;
 				} else if (header.equals(ECountingMeasure.REMOVED_STATES.toString())) {
 					removedIndex = i;
 				}
 			}
 
 			pw.println("INTERNAL_DENSITY" + separator + "CALL_DENSITY" + separator + "RETURN_DENSITY" + separator
-					+ "HIERPRED_DENSITY" + separator + "SIZE" + separator + "REMOVED" + separator + "ACCEPTANCE");
+					+ "HIERPRED_DENSITY" + separator + "ACCEPTANCE" + separator + "#INTERNAL_AFTER_PRE_PROC" + separator
+					+ "#CALL_AFTER_PRE_PROC" + separator + "#RETURN_AFTER_PRE_PROC" + separator + "#INTERNAL_OUTPUT"
+					+ separator + "#CALL_OUTPUT" + separator + "#RETURN_OUTPUT" + separator + "SIZE_INITIAL" + separator
+					+ "SIZE_AFTER_PRE_PROC" + separator + "SIZE_OUTPUT");
 
 			while (br.ready()) {
 				final String line = br.readLine();
@@ -83,14 +103,56 @@ public final class PlotUtil {
 
 				final String[] values = line.split(separator);
 				final String directory = values[directoryIndex];
-				final String sizeText = values[sizeIndex];
+				final String internalAfterPreProcText = values[internalAfterPreProcIndex];
+				final String callAfterPreProcText = values[callAfterPreProcIndex];
+				final String returnAfterPreProcText = values[returnAfterPreProcIndex];
+				final String internalOutputText = values[internalOutputIndex];
+				final String callOutputText = values[callOutputIndex];
+				final String returnOutputText = values[returnOutputIndex];
+				final String sizeAfterPreProcText = values[sizeAfterPreProcIndex];
 				final String removedText = values[removedIndex];
 
-				final int size;
-				if (sizeText.equals(noValue)) {
-					size = 0;
+				final int internalAfterPreProc;
+				if (internalAfterPreProcText.equals(noValue)) {
+					internalAfterPreProc = 0;
 				} else {
-					size = Integer.parseInt(sizeText);
+					internalAfterPreProc = Integer.parseInt(internalAfterPreProcText);
+				}
+				final int callAfterPreProc;
+				if (callAfterPreProcText.equals(noValue)) {
+					callAfterPreProc = 0;
+				} else {
+					callAfterPreProc = Integer.parseInt(callAfterPreProcText);
+				}
+				final int returnAfterPreProc;
+				if (returnAfterPreProcText.equals(noValue)) {
+					returnAfterPreProc = 0;
+				} else {
+					returnAfterPreProc = Integer.parseInt(returnAfterPreProcText);
+				}
+				final int internalOutput;
+				if (internalOutputText.equals(noValue)) {
+					internalOutput = 0;
+				} else {
+					internalOutput = Integer.parseInt(internalOutputText);
+				}
+				final int callOutput;
+				if (callOutputText.equals(noValue)) {
+					callOutput = 0;
+				} else {
+					callOutput = Integer.parseInt(callOutputText);
+				}
+				final int returnOutput;
+				if (returnOutputText.equals(noValue)) {
+					returnOutput = 0;
+				} else {
+					returnOutput = Integer.parseInt(returnOutputText);
+				}
+				final int sizeAfterPreProc;
+				if (sizeAfterPreProcText.equals(noValue)) {
+					sizeAfterPreProc = 0;
+				} else {
+					sizeAfterPreProc = Integer.parseInt(sizeAfterPreProcText);
 				}
 				final int removed;
 				if (removedText.equals(noValue)) {
@@ -98,28 +160,34 @@ public final class PlotUtil {
 				} else {
 					removed = Integer.parseInt(removedText);
 				}
+				final int sizeOutput = sizeAfterPreProc - removed;
 
+				int sizeInitial = -1;
 				int acceptance = -1;
 				int internalDensity = -1;
 				int callDensity = -1;
 				int returnDensity = -1;
 				int hierPredDensity = -1;
 				Pattern directoryPattern = Pattern.compile(
-						".*#\\d+_n\\d+_k\\d+_f(\\d+)(?:\\.\\d+)?%_ti(\\d+)(?:\\.\\d+)?%_tc(\\d+)(?:\\.\\d+)?%_tr(\\d+)(?:\\.\\d+)?%_th(\\d+)(?:\\.\\d+)?%$");
+						".*#\\d+_n(\\d+)_k\\d+_f(\\d+)(?:\\.\\d+)?%_ti(\\d+)(?:\\.\\d+)?%_tc(\\d+)(?:\\.\\d+)?%_tr(\\d+)(?:\\.\\d+)?%_th(\\d+)(?:\\.\\d+)?%$");
 				Matcher directoryMatcher = directoryPattern.matcher(directory);
 				if (directoryMatcher.find()) {
-					acceptance = Integer.parseInt(directoryMatcher.group(1));
-					internalDensity = Integer.parseInt(directoryMatcher.group(2));
-					callDensity = Integer.parseInt(directoryMatcher.group(3));
-					returnDensity = Integer.parseInt(directoryMatcher.group(4));
-					hierPredDensity = Integer.parseInt(directoryMatcher.group(5));
+					sizeInitial = Integer.parseInt(directoryMatcher.group(1));
+					acceptance = Integer.parseInt(directoryMatcher.group(2));
+					internalDensity = Integer.parseInt(directoryMatcher.group(3));
+					callDensity = Integer.parseInt(directoryMatcher.group(4));
+					returnDensity = Integer.parseInt(directoryMatcher.group(5));
+					hierPredDensity = Integer.parseInt(directoryMatcher.group(6));
 				} else {
 					System.out.println(directory);
 					throw new IllegalStateException();
 				}
 
 				pw.println(internalDensity + separator + callDensity + separator + returnDensity + separator
-						+ hierPredDensity + separator + size + separator + removed + separator + acceptance);
+						+ hierPredDensity + separator + acceptance + separator + internalAfterPreProc + separator
+						+ callAfterPreProc + separator + returnAfterPreProc + separator + internalOutput + separator
+						+ callOutput + separator + returnOutput + separator + sizeInitial + separator + sizeAfterPreProc
+						+ separator + sizeOutput);
 			}
 		} finally {
 			if (br != null) {

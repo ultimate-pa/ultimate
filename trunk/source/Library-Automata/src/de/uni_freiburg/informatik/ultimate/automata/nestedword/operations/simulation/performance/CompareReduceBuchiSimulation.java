@@ -47,8 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
@@ -118,6 +120,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	private static final String LOG_ENTRY_HEAD_START = "<!--";
 	/**
+	 * Threshold in bytes at which a log file should get finalized.
+	 */
+	private final static int LOG_FILE_SIZE_THRESHOLD = 1_000_000;
+	/**
 	 * Name for the object of the log file.
 	 */
 	private static final String LOG_PATH_DATA = "testData";
@@ -141,6 +147,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * Suffix for test result files.
 	 */
 	private static final String LOG_PATH_PLOT_SUFF = ".csv";
+
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
@@ -160,39 +167,39 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		final List<Pair<String, List<String>>> tables = new LinkedList<>();
 		tables.add(new Pair<>("instanceFullComparison",
 				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
-//		tables.add(new Pair<>("instanceTimePartitioning",
+		// tables.add(new Pair<>("instanceTimePartitioning",
 //				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-//		tables.add(new Pair<>("instanceAlgoWork",
+		// tables.add(new Pair<>("instanceAlgoWork",
 //				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-//		tables.add(new Pair<>("averagedSimulationFullComparison",
+		// tables.add(new Pair<>("averagedSimulationFullComparison",
 //				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
 		tables.add(new Pair<>("averagedSimulationPerDirectoryTable",
 				ComparisonTables.createAveragedSimulationPerDirectoryTable(performanceEntries, LOG_SEPARATOR,
 						ESimulationType.EXT_MINIMIZENWAMAXSAT, false, false, true)));
 //		tables.add(new Pair<>("averagedSimulationTimePartitioning",
 //				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
-//		tables.add(new Pair<>("averagedSimulationAlgoWork",
+						// tables.add(new Pair<>("averagedSimulationAlgoWork",
 //				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 //		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
 //		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
 //		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
-//		tables.add(new Pair<>("longerThanOneSecondNames",
-//				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
-		
-//		tables.add(new Pair<>("directFilteredInstanceFullComparison",
+						// tables.add(new Pair<>("longerThanOneSecondNames",
+						// ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+
+		// tables.add(new Pair<>("directFilteredInstanceFullComparison",
 //				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
-//		tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
+		// tables.add(new Pair<>("delayedFilteredInstanceFullComparison",
 //				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
-//		tables.add(new Pair<>("directFilteredAverageFullComparison",
+		// tables.add(new Pair<>("directFilteredAverageFullComparison",
 //		ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
-//		tables.add(new Pair<>("delayedFilteredAverageFullComparison",
+		// tables.add(new Pair<>("delayedFilteredAverageFullComparison",
 //				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DELAYED, true, true, true)));
 
 		System.out.println("Creating html files...");
 		for (final Pair<String, List<String>> pair : tables) {
 			tableToHtmlFile(pair.getFirst(), pair.getSecond());
 		}
-		
+
 		System.out.println("Creating plot files...");
 		for (final Pair<String, List<String>> pair : tables) {
 			tableToPlotFile(pair.getFirst(), pair.getSecond());
@@ -299,7 +306,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 								} else {
 									performance.addTimeMeasureValue(measure, ComparisonTables.secondsToMillis(value));
 								}
-							} else if (indexCountingMeasure >= 0 && indexCountingMeasure < currentCountingMeasures.size()) {
+							} else if (indexCountingMeasure >= 0
+									&& indexCountingMeasure < currentCountingMeasures.size()) {
 								final ECountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
 								final int value = Integer.parseInt(lineElements[i]);
 								if (value == SimulationPerformance.NO_COUNTING_RESULT) {
@@ -359,7 +367,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
-		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
+		htmlText.append(
+				"<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
 
 		// CSS
 		htmlText.append("<style>");
@@ -391,10 +400,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		htmlText.append("</head><body>");
 		htmlText.append(
 				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" />");
-		htmlText.append("<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
+		htmlText.append(
+				"<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
 		htmlText.append("<br/>");
 		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
-		
+
 		boolean isFirstRow = true;
 		for (final String row : table) {
 			// First row is header
@@ -498,14 +508,14 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	}
 
 	/**
-	 * Holds counting measures of the comparison.
-	 */
-	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
-	/**
 	 * Overall time an external operation took. Needed since it does not track
 	 * this measure by itself.
 	 */
 	private long mExternalOverallTime;
+	/**
+	 * Filter for logging files.
+	 */
+	private final FileFilter mLogFileFilter;
 	/**
 	 * Internal buffer for logged lines, can be flushed by using
 	 * {@link #flushLogToLogger()}.
@@ -520,13 +530,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	private final LinkedHashMap<ETimeMeasure, Float> mTimeMeasures;
 	/**
-	 * Filter for logging files.
+	 * Holds counting measures of the comparison.
 	 */
-	private final FileFilter mLogFileFilter;
-	/**
-	 * Threshold in bytes at which a log file should get finalized.
-	 */
-	private final static int LOG_FILE_SIZE_THRESHOLD = 1_000_000;
+	protected final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction.
@@ -550,7 +556,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		super(services);
 		verifyAutomatonValidity(operand);
 
-		mLoggedLines = new LinkedList<>();
+		mLoggedLines = new LinkedList<String>();
 		mOperand = operand;
 		mTimeMeasures = new LinkedHashMap<>();
 		mCountingMeasures = new LinkedHashMap<>();
@@ -576,8 +582,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		final long simulationTimeoutMillis = SIMULATION_TIMEOUT * ComparisonTables.SECONDS_TO_MILLIS;
 
 		// Remove dead ends, a requirement of simulation
-		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<>(
-				mServices, new RemoveDeadEnds<>(mServices, operand).getResult()).getResult();
+		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
+				mServices, new RemoveDeadEnds<LETTER, STATE>(mServices, operand).getResult()).getResult();
 
 		final String automatonName = "";
 //		BufferedReader br = null;
@@ -772,7 +778,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		}
 
 		PrintWriter writer = null;
-		
+
 		File dataFile = null;
 		boolean foundSmallLogFile = false;
 		int highestLogFileIndex = 0;
@@ -784,7 +790,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			}
 			// Get the index of this log file
 			final String name = logFile.getName();
-			final int index = Integer.parseInt(name.replaceFirst(LOG_PATH_DATA, "").replaceFirst(LOG_PATH_DATA_EXT, ""));
+			final int index = Integer
+					.parseInt(name.replaceFirst(LOG_PATH_DATA, "").replaceFirst(LOG_PATH_DATA_EXT, ""));
 			if (index > highestLogFileIndex) {
 				highestLogFileIndex = index;
 			}
@@ -793,7 +800,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			highestLogFileIndex++;
 			dataFile = new File(LOG_PATH, LOG_PATH_DATA + highestLogFileIndex + LOG_PATH_DATA_EXT);
 		}
-		
+
 		try {
 			writer = new PrintWriter(new BufferedWriter(new FileWriter(dataFile, true)));
 			for (final String message : mLoggedLines) {
@@ -853,6 +860,53 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	}
 
 	/**
+	 * Adds general automata performance data for external methods to the
+	 * internal measure structures.
+	 * 
+	 * @param input
+	 *            Input automaton before using the external method
+	 * @param output
+	 *            Output automaton after using the external method
+	 */
+	protected void addGeneralAutomataPerformanceForExternalMethod(final INestedWordAutomaton<LETTER, STATE> input,
+			final INestedWordAutomaton<LETTER, STATE> output) {
+		final AutomataLibraryServices services = getServices();
+
+		// Input automaton
+		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
+		final int inputStates = inputAnalyzer.getNumberOfStates();
+		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+		mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, inputStates);
+		mCountingMeasures.put(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+				inputAnalyzer.getNumberOfNondeterministicStates());
+
+		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE, inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+
+		// Output automaton
+		if (output != null) {
+			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, output, true);
+			final int outputStates = outputAnalyzer.getNumberOfStates();
+			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+			mCountingMeasures.put(ECountingMeasure.RESULT_STATES, outputStates);
+			mCountingMeasures.put(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+					outputAnalyzer.getNumberOfNondeterministicStates());
+
+			mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE,
+					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+			mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+			mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+
+			// General metrics
+			mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
+			mCountingMeasures.put(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+		}
+	}
+
+	/**
 	 * Measures the effectiveness of a given method for buechi reduction and
 	 * logs it.
 	 * 
@@ -892,38 +946,25 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		} else if (method instanceof MinimizeSevpa) {
 			final MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
-			// Removed states
-			if (methodResult != null) {
-				final int removedStates = operand.size() - methodResult.size();
-				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
-			}
-			// Buechi states
-			mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Performance data
+			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
+					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof ShrinkNwa) {
 			final ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
-			// Removed states
-			if (methodResult != null) {
-				final int removedStates = operand.size() - methodResult.size();
-				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
-			}
-			// Buechi states
-			mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Performance data
+			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
+					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeNwaMaxSat2) {
-			final MinimizeNwaPmaxSat<LETTER, STATE> minimizeNwaMaxSat2 =
-					(MinimizeNwaPmaxSat<LETTER, STATE>) method;
+			final MinimizeNwaMaxSat2<LETTER, STATE> minimizeNwaMaxSat2 = (MinimizeNwaMaxSat2<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaMaxSat2.getResult();
-			// Removed states
-			if (methodResult != null) {
-				final int removedStates = operand.size() - methodResult.size();
-				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
-			}
-			// Buechi states
-			mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Performance data
+			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
+					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
 			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		}
@@ -1023,7 +1064,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<>(mServices, operand);
+				method = new MinimizeSevpa<LETTER, STATE>(mServices, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -1034,7 +1075,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 				} else {
-					operandAsNwa = new RemoveUnreachable<>(services, operand).getResult();
+					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaPmaxSat<>(mServices, stateFactory, operandAsNwa);
