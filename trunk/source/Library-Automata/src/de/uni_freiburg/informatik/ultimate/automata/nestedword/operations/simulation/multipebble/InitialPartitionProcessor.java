@@ -26,37 +26,48 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import java.util.Collection;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 /**
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <STATE>
+ * @param <GS>
  */
-public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
-	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
+public abstract class InitialPartitionProcessor<STATE> {
+
+	private final AutomataLibraryServices mServices;
 	
+	public InitialPartitionProcessor(final AutomataLibraryServices services) {
+		mServices = services;
+	}
 	
-	public DelayedFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
-			final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
-		super(spoilerDoubleDecker);
-		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
+	public abstract boolean shouldBeProcessed(STATE q0, STATE q1);
+	public abstract void doProcess(STATE q0, STATE q1);
+	
+	public void process(final Collection<Set<STATE>> equivalenceClasses) throws AutomataOperationCanceledException {
+		for (final Set<STATE> eqClass : equivalenceClasses) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				final long initialNodes =
+						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(equivalenceClasses);
+				final RunningTaskInfo rti =
+						new RunningTaskInfo(getClass(), "constructing " + initialNodes + "initial vertices");
+				throw new AutomataOperationCanceledException(rti);
+			}
+			for (final STATE q0 : eqClass) {
+				for (final STATE q1 : eqClass) {
+					if (shouldBeProcessed(q0, q1)) {
+						doProcess(q0, q1);
+					}
+				}
+			}
+		}
 	}
 
-
-	public NestedMap2<STATE, STATE, Boolean> getDuplicatorDoubleDeckers() {
-		return mDuplicatorDoubleDeckers;
-	}
-
-
-	@Override
-	public boolean isAccepting() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
-	
 }

@@ -44,11 +44,22 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 		super(spoilerDoubleDecker);
 		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
 	}
-
-
+	
 	public HashRelation<STATE, STATE> getDuplicatorDoubleDeckers() {
 		return mDuplicatorDoubleDeckers;
 	}
+	
+	
+	
+	@Override
+	public boolean isAccepting() {
+		return mDuplicatorDoubleDeckers.isEmpty();
+	}
+
+
+
+	
+
 
 	
 }

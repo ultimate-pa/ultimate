@@ -26,37 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <STATE>
+ * @param <GS>
  */
-public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
-	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
+public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>> implements IStateFactory<GS> {
+
+	public FullMultipebbleStateFactory() {
+		super();
+	}
 	
 	
-	public DelayedFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
-			final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
-		super(spoilerDoubleDecker);
-		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
-	}
+	public abstract <LETTER> List<GS> computeSuccessorsInternal(GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+	public abstract <LETTER> List<GS> computeSuccessorsCall(GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+	public abstract <LETTER> List<GS> computeSuccessorsReturn(GS gs, final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
 
 
-	public NestedMap2<STATE, STATE, Boolean> getDuplicatorDoubleDeckers() {
-		return mDuplicatorDoubleDeckers;
-	}
+	public abstract <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1, final INestedWordAutomatonSimple<LETTER, STATE> operand);
 
 
-	@Override
-	public boolean isAccepting() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	public abstract <LETTER> GS constructInitialState(STATE q0, STATE q1, INestedWordAutomatonSimple<LETTER, STATE> operand);
 
-
-	
 }
