@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.HashRelationBackedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.IBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.NestedMapBackedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
@@ -59,8 +62,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Computes a simulation relation and applies PMax-SAT-based minimization afterward.
@@ -159,8 +160,6 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 					gameAutomatonSize);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_GRAPH,
 					graph.getSize());
-
-
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -205,7 +204,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final IBinaryRelation<STATE> simulationRelation) {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final IBinaryRelation<STATE, ?> simulationRelation) {
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			if (isAuxiliaryVertex(spoilerVertex)) {
 				continue;
@@ -229,9 +229,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	private UnionFind<STATE> simulationToEquivalenceRelation(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
-		final HashRelationBackedBinaryRelation simRelation = new HashRelationBackedBinaryRelation();
+		final HashRelationBackedBinaryRelation<STATE> simRelation = new HashRelationBackedBinaryRelation<>();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
-		return computeEquivalenceRelation(simRelation.getSimulation(), operand.getStates());
+		return computeEquivalenceRelation(simRelation.getRelation(), operand.getStates());
 	}
 	
 	private IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(final IStateFactory<STATE> stateFactory,
@@ -265,12 +265,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) throws AutomataOperationCanceledException {
-		final NestedMapBackedBinaryRelation simRelation = new NestedMapBackedBinaryRelation();
+		final NestedMapBackedBinaryRelation<STATE> simRelation = new NestedMapBackedBinaryRelation<>();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer =
-				new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand, simRelation.getSimulation(),
+				new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand, simRelation.getRelation(),
 						new MinimizeNwaMaxSat2.Settings<STATE>()
 								.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 		return maxSatMinimizer.getResult();
@@ -311,62 +311,6 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		 * Simulation minimization.
 		 */
 		SIMULATION
-	}
-	
-	/**
-	 * General data structure interface to store pairs.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 * @param <T>
-	 *            element type
-	 */
-	@FunctionalInterface
-	private interface IBinaryRelation<T> {
-		void addPair(T state1, T state2);
-	}
-	
-	/**
-	 * {@link HashRelation} data structure.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private class HashRelationBackedBinaryRelation implements IBinaryRelation<STATE> {
-		private final HashRelation<STATE, STATE> mSimulation;
-		
-		public HashRelationBackedBinaryRelation() {
-			mSimulation = new HashRelation<>();
-		}
-		
-		@Override
-		public void addPair(final STATE state1, final STATE state2) {
-			mSimulation.addPair(state1, state2);
-		}
-		
-		public HashRelation<STATE, STATE> getSimulation() {
-			return mSimulation;
-		}
-	}
-	
-	/**
-	 * {@link NestedMap2} data structure.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private class NestedMapBackedBinaryRelation implements IBinaryRelation<STATE> {
-		private final NestedMap2<STATE, STATE, Pair<STATE, STATE>> mSimulation;
-		
-		public NestedMapBackedBinaryRelation() {
-			mSimulation = new NestedMap2<>();
-		}
-		
-		@Override
-		public void addPair(final STATE state1, final STATE state2) {
-			mSimulation.put(state1, state2, new Pair<>(state1, state2));
-		}
-		
-		public NestedMap2<STATE, STATE, Pair<STATE, STATE>> getSimulation() {
-			return mSimulation;
-		}
 	}
 	
 	private class ParsimoniousSimulation extends ASimulation<LETTER, STATE> {
