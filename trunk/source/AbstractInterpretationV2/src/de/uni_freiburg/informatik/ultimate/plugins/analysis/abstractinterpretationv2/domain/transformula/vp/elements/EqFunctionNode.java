@@ -127,9 +127,10 @@ public class EqFunctionNode extends EqNode {
 			return result;
 		} else {
 			List<EqNode> newArgs = args.subList(0, args.size() - 1);
+			Term innerTerm = restoreMultidimensionalSelect(script, function, newArgs);
 			script.lock(function);
 			Term result = script.term(function, "select", 
-					restoreMultidimensionalSelect(script, function, newArgs), 
+					innerTerm, 
 					args.get(args.size() - 1).getTerm());
 			script.unlock(function);
 			return result;

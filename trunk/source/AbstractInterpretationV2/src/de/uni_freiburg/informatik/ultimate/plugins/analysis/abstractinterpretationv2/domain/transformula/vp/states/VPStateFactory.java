@@ -433,6 +433,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			}
 		}
 		
+		assert VPDomainHelpers.isHavocced(nodeToBeHavocced, resultState);
 		return resultState;
 	}
 	

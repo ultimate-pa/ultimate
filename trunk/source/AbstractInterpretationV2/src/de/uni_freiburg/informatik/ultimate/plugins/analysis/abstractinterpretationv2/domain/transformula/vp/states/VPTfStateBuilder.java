@@ -417,6 +417,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		VPTfNodeIdentifier newNodeId;
 		if (eqNode.isConstant()) {
 			newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
+			assert newNodeId != null;
 			// mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
 			// mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
 		} else {
@@ -442,7 +443,6 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 				} else {
 					// we create an in id
 					newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
-					newNodeId = null;
 					mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
 				}
 			} else {

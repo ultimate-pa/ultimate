@@ -358,15 +358,32 @@ public class VPDomainHelpers {
 			if (!node.nodeIdentifier.getAllFunctions().contains(array)) {
 				continue;
 			}
-			// node talks about array --> it must be its own representative and may not appear in a disequality
-			if (node.getRepresentative() != node) {
+			if (!isHavocced(node.nodeIdentifier, resultState)) {
 				return false;
 			}
-			if (!resultState.getDisequalities(node.nodeIdentifier).isEmpty()) {
-				return false;
-			}
+
 		}
 		return true;
 	}
 	
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+		boolean isHavocced(NODEID nodeId, IVPStateOrTfState<NODEID, ARRAYID> resultState) {
+		EqGraphNode<NODEID, ARRAYID> node = resultState.getEqGraphNode(nodeId);
+		/*
+		 *  node talks about array 
+		 *   --> it must be its own representative 
+		 *   --> its set of reverseRepresentatives must be empty
+		 *   --> it may not appear in a disequality
+		 */
+		if (node.getRepresentative() != node) {
+			return false;
+		}
+		if (!node.getReverseRepresentative().isEmpty()) {
+			return false;
+		}
+		if (!resultState.getDisequalities(node.nodeIdentifier).isEmpty()) {
+			return false;
+		}
+		return true;
+	}
 }

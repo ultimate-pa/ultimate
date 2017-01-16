@@ -123,6 +123,9 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 			assert false : "this should have been checked before calling union";
 			return;
 		}
+		
+		EqGraphNode<NODEID, ARRAYID> oldNode1Representative = node1.find();
+		
 		node2.find().addToReverseRepresentative(node1.find());
 		node2.find().addToCcpar(node1.find().getCcpar());
 		node2.find().addToCcchild(node1.find().getCcchild());
@@ -132,32 +135,31 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 
 		/*
-		 * Because of the change of representative, the disequality set also need to be updated.
+		 * Because node1.find has a new  representative, any disequality that contains its old representative must 
+		 * be updated to its new representative
+		 * 
 		 */
 		Set<VPDomainSymmetricPair<NODEID>> copyOfDisEqSet = new HashSet<>(mDisEqualitySet);
 		for (VPDomainSymmetricPair<NODEID> pair : copyOfDisEqSet) {
-			NODEID first = pair.getFirst();
-			EqGraphNode<NODEID, ARRAYID> firstEqn = getEqGraphNode(first);
-			NODEID second = pair.getSecond();
-			EqGraphNode<NODEID, ARRAYID> secondEqn = getEqGraphNode(second);
-//			if (first.isLiteral() && second.isLiteral()) {
-//				continue;
-//			}
-			if (firstEqn != node1 
-					&& secondEqn != node1
-					&& firstEqn != node2
-					&& secondEqn != node2) {
-				// pair does not contain one of the unified nodes
+			EqGraphNode<NODEID, ARRAYID> firstEqnInDisEquality = getEqGraphNode(pair.getFirst());
+			EqGraphNode<NODEID, ARRAYID> secondEqnInDisEquality = getEqGraphNode(pair.getSecond());
+			
+
+			if (firstEqnInDisEquality != oldNode1Representative
+					&& secondEqnInDisEquality != oldNode1Representative) {
+				// pair does not contain node1's old representative
 				continue;
 			}
 			
-			if (firstEqn.find() == firstEqn 
-					&& secondEqn.find() == secondEqn) {
-				continue;
-			}
+			NODEID newFirst = pair.getFirst();
+			NODEID newSecond = pair.getSecond();
 			
-			NODEID newFirst = firstEqn.find().nodeIdentifier;
-			NODEID newSecond = secondEqn.find().nodeIdentifier;
+			if (firstEqnInDisEquality == oldNode1Representative) {
+				newFirst = node1.find().nodeIdentifier;
+			}
+			if (secondEqnInDisEquality == oldNode1Representative) {
+				newSecond = node1.find().nodeIdentifier;
+			}
 
 			mDisEqualitySet.remove(pair);
 			mDisEqualitySet.add(

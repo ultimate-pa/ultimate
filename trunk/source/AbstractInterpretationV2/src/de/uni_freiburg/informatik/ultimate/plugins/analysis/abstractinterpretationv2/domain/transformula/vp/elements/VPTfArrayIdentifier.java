@@ -113,12 +113,17 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (!(other instanceof VPTfArrayIdentifier)) {
 			return false;
 		}
+		if (this == other) {
+			return true;
+		}
 		VPTfArrayIdentifier otherArrayId = (VPTfArrayIdentifier) other;
-		return this.mTerm == otherArrayId.mTerm 
+		boolean result = this.mTerm == otherArrayId.mTerm 
 				&& this.mPvoc == otherArrayId.mPvoc
 				&& this.mInOutStatus == otherArrayId.mInOutStatus
-				&& this.mInVar.equals(otherArrayId.mInVar)
-				&& this.mOutVar.equals(otherArrayId.mOutVar);
+				&& ((this.mInVar == null && otherArrayId.mInVar == null) || this.mInVar.equals(otherArrayId.mInVar))
+				&& ((this.mOutVar == null && otherArrayId.mOutVar == null) || this.mOutVar.equals(otherArrayId.mOutVar));
+		assert !result : "we manage ArrayIdentifiers such that they are unique, right??";
+		return result;
 	}
 	
 	@Override
