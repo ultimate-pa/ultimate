@@ -85,7 +85,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
 			"AutomataScript/reduceNwaDelayedSimulation.epf",
-			"AutomataScript/reduceNwaDelayedSimulationB.epf", 
+			"AutomataScript/reduceNwaDelayedSimulationB.epf",
+			"AutomataScript/reduceNwaDirectFullMultipebbleSimulation.epf",
+			"AutomataScript/reduceNwaDelayedFullMultipebbleSimulation.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = { 
@@ -117,7 +119,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"reduceNwaDirectSimulation",
 			"reduceNwaDirectSimulationB", 
 			"reduceNwaDelayedSimulation", 
-			"reduceNwaDelayedSimulationB", 
+			"reduceNwaDelayedSimulationB",
+			"reduceNwaDirectFullMultipebbleSimulation",
+			"reduceNwaDelayedFullMultipebbleSimulation",
 	};
 	
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));
