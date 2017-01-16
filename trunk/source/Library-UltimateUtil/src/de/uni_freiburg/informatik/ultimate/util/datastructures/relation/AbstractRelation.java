@@ -171,6 +171,13 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	public String toString() {
 		return mMap.toString();
 	}
+	
+	/**
+	 * @return true iff there is no element in this relation
+	 */
+	public boolean isEmpty() {
+		return mMap.isEmpty();
+	}
 
 	/**
 	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
