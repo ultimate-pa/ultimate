@@ -13,4 +13,4 @@
 
 
 (check-sat)
-(get-model)
+;(get-model)

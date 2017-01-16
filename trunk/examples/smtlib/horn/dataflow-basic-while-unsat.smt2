@@ -18,4 +18,4 @@
 (assert (forall ((x Int) (y Int)) (=> (and (Ix2 x) (Iy2 y) (= x y)) false)))
 
 (check-sat)
-(get-model)
+;(get-model)
