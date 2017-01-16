@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -26,12 +27,12 @@ public class NumUtilTest {
 			}
 			final BigInteger ai = a.toBigIntegerExact();
 			final BigInteger bi = b.toBigIntegerExact();
-			final BigInteger qi = NumUtil.euclideanDivision(a, b).toBigIntegerExact();
+			final BigInteger qi = AbsIntUtil.euclideanDivision(a, b).toBigIntegerExact();
 			final BigInteger ri = ai.subtract(bi.multiply(qi));
 			if (ai.compareTo(qi.multiply(bi).add(ri)) != 0) {
 				Assert.fail("was " + a + " = " + b + " * " + qi + " R " + ri);
 			}
-			final BigDecimal mod = NumUtil.euclideanModulo(a, b);
+			final BigDecimal mod = AbsIntUtil.euclideanModulo(a, b);
 			if (a.compareTo(new BigDecimal(qi).multiply(b).add(mod)) != 0) {
 				String msg = "expected a = (a/b)*b + a%b but was ...\n";
 				msg += "a  : " + ai + "\n";
@@ -70,11 +71,11 @@ public class NumUtilTest {
 		assertIntDiv("-7.6", "-.3", "+26");
 
 		try {
-			NumUtil.euclideanDivision(BigDecimal.ONE, BigDecimal.ZERO);
+			AbsIntUtil.euclideanDivision(BigDecimal.ONE, BigDecimal.ZERO);
 			Assert.fail("Computed 1 / 0");
 		} catch (final ArithmeticException e) {}
 		try {
-			NumUtil.euclideanDivision(BigDecimal.ZERO, BigDecimal.ZERO);
+			AbsIntUtil.euclideanDivision(BigDecimal.ZERO, BigDecimal.ZERO);
 			Assert.fail("Computed 0 / 0");
 		} catch (final ArithmeticException e) {}
 	}
@@ -95,11 +96,11 @@ public class NumUtilTest {
 		assertMod("0", "-5", "0");
 
 		try {
-			NumUtil.euclideanModulo(BigDecimal.ONE, BigDecimal.ZERO);
+			AbsIntUtil.euclideanModulo(BigDecimal.ONE, BigDecimal.ZERO);
 			Assert.fail("Computed 1 % 0");
 		} catch (final ArithmeticException e) {}
 		try {
-			NumUtil.euclideanModulo(BigDecimal.ZERO, BigDecimal.ZERO);
+			AbsIntUtil.euclideanModulo(BigDecimal.ZERO, BigDecimal.ZERO);
 			Assert.fail("Computed 0 % 0");
 		} catch (final ArithmeticException e) {}
 	}
@@ -121,7 +122,7 @@ public class NumUtilTest {
 
 	// assert a / b = q
 	private void assertIntDiv(String a, String b, String qExpected) {
-		final BigDecimal qActual = NumUtil.euclideanDivision(new BigDecimal(a), new BigDecimal(b));
+		final BigDecimal qActual = AbsIntUtil.euclideanDivision(new BigDecimal(a), new BigDecimal(b));
 		if (qActual.compareTo(new BigDecimal(qExpected)) != 0) {
 			Assert.fail(String.format("%s / %s: expected %s but was %s", a, b, qExpected, qActual));
 		}
@@ -129,7 +130,7 @@ public class NumUtilTest {
 
 	// assert a % b = r
 	private void assertMod(String a, String b, String rExpected) {
-		final BigDecimal rActual = NumUtil.euclideanModulo(new BigDecimal(a), new BigDecimal(b));
+		final BigDecimal rActual = AbsIntUtil.euclideanModulo(new BigDecimal(a), new BigDecimal(b));
 		if (rActual.compareTo(new BigDecimal(rExpected)) != 0) {
 			Assert.fail(String.format("%s %% %s: expected %s but was %s", a, b, rExpected, rActual));
 		}
@@ -137,7 +138,7 @@ public class NumUtilTest {
 
 	// assert d = expectedDecimalFraction
 	private void assertDecimalFraction(String d, String nomExpected, String denomExpected) {
-		final Pair<BigInteger, BigInteger> fActual = NumUtil.decimalFraction(new BigDecimal(d));
+		final Pair<BigInteger, BigInteger> fActual = AbsIntUtil.decimalFraction(new BigDecimal(d));
 		final Pair<BigInteger, BigInteger> fExpected = new Pair<>(new BigInteger(nomExpected), new BigInteger(denomExpected));
 		if (!fExpected.equals(fActual)) {
 			Assert.fail(String.format("decimalFraction(%s): expected %s/%s but was %s/%s",

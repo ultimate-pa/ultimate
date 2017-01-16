@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Represents a Boogie expression as an affine term of the form {@code Σ ( c_i * x_i ) + c} where c are constants and x
@@ -166,12 +166,12 @@ public class AffineExpression {
 	}
 
 	/**
-	 * Divides this AffineExpression by a constant such that all coefficients are 1 or -1 if possible.
-	 * All coefficients keep their sign.
+	 * Divides this AffineExpression by a constant such that all coefficients are 1 or -1 if possible. All coefficients
+	 * keep their sign.
 	 * <p>
-	 * Division of the constant may require rounding. Example: Unit coefficient form  of (3x + 1) is (1x + 1/3),
-	 * which cannot be expressed by a {@link BigDecimal}. In case rounding is required, {@code null} is returned.
-	 * 
+	 * Division of the constant may require rounding. Example: Unit coefficient form of (3x + 1) is (1x + 1/3), which
+	 * cannot be expressed by a {@link BigDecimal}. In case rounding is required, {@code null} is returned.
+	 *
 	 *
 	 * @return Unit coefficient form or {@code null}
 	 */
@@ -184,13 +184,13 @@ public class AffineExpression {
 			final BigDecimal newConstant;
 			try {
 				newConstant = mConstant.divide(absCoefficient);
-			} catch (ArithmeticException arithException) {
+			} catch (final ArithmeticException arithException) {
 				return null; // TODO switch from BigDecimal to rational numbers
 			}
 			// compute unit coefficients (recall: coefficients in AffineExpression are always != 0)
 			final Map<IBoogieVar, BigDecimal> unitCoefficients = new HashMap<>();
-			mCoefficients.forEach(
-					(var, coeff) -> unitCoefficients.put(var, coeff.signum() > 0 ? BigDecimal.ONE : NumUtil.MINUS_ONE));
+			mCoefficients.forEach((var, coeff) -> unitCoefficients.put(var,
+					coeff.signum() > 0 ? BigDecimal.ONE : AbsIntUtil.MINUS_ONE));
 			//
 			return new AffineExpression(unitCoefficients, newConstant);
 		} else {
@@ -212,7 +212,7 @@ public class AffineExpression {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Constructs an equivalent {@link OneVarForm} of this affine expression if possible. OneVarForm is an affine
 	 * expression of the form {@code +/- x + c} where {@code x} is a variable and {@code c} is a constant.
@@ -258,7 +258,7 @@ public class AffineExpression {
 					return null;
 				}
 			}
-		} else if (coefficients.get(0).abs().compareTo(NumUtil.TWO) != 0) { // && distinctVars == 1
+		} else if (coefficients.get(0).abs().compareTo(AbsIntUtil.TWO) != 0) { // && distinctVars == 1
 			return null;
 		}
 		final TwoVarForm twoVarForm = new TwoVarForm();
@@ -390,14 +390,14 @@ public class AffineExpression {
 		if (isConstant()) {
 			final BigDecimal quotient;
 			if (integerDivison) {
-				quotient = NumUtil.euclideanDivision(mConstant, divisor);
+				quotient = AbsIntUtil.euclideanDivision(mConstant, divisor);
 			} else {
 				quotient = mConstant.divide(divisor);
 			}
 			return new AffineExpression(quotient);
 		}
 		final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
+				integerDivison ? AbsIntUtil::exactDivison : BigDecimal::divide;
 		final AffineExpression quotient = new AffineExpression();
 		quotient.mConstant = divOp.apply(mConstant, divisor);
 		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
@@ -419,7 +419,7 @@ public class AffineExpression {
 	 */
 	public AffineExpression modulo(final AffineExpression divisor) {
 		if (isConstant() && divisor.isConstant() && divisor.mConstant.signum() != 0) {
-			return new AffineExpression(NumUtil.euclideanModulo(mConstant, divisor.mConstant));
+			return new AffineExpression(AbsIntUtil.euclideanModulo(mConstant, divisor.mConstant));
 		}
 		return null;
 	}

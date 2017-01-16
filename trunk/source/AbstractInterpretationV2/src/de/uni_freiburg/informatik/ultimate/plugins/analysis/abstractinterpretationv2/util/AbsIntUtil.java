@@ -31,6 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,18 +41,35 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
+ * Collection of random utility functions.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
+ * @author Claus Schätzle (schaetzc@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public final class AbsIntUtil {
+
+	public static final BigDecimal MINUS_ONE = BigDecimal.ONE.negate();
+	public static final BigDecimal TWO = new BigDecimal(2);
+
+	private AbsIntUtil() {
+		// do not instantiate utility class
+	}
 
 	/**
 	 * Write predicates created by AI to a file.
@@ -73,8 +93,7 @@ public final class AbsIntUtil {
 		}
 
 		sb.append("\n\n");
-		try {
-			final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true));
+		try (final BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
 			bw.append(sb);
 			bw.close();
 		} catch (final IOException e) {
@@ -122,5 +141,214 @@ public final class AbsIntUtil {
 
 	public static <T> Set<T> getFreshSet(final Set<T> oldSet) {
 		return getFreshSet(oldSet, oldSet.size());
+	}
+
+	public static <T> ArrayList<T> singletonArrayList(final T value) {
+		final ArrayList<T> list = new ArrayList<>();
+		list.add(value);
+		return list;
+	}
+
+	/**
+	 * Calculates the euclidean division.euc The result {@code q} of the euclidean division {@code a / b = q} satisfies
+	 * {@code a = bq + r} where {@code 0 ≤ r < |b|} and {@code b ≠ 0}.
+	 * <p>
+	 * The type of division only matters for non-real numbers like integers or floats with limited precision.
+	 * <p>
+	 * Examples:<br>
+	 * <code>
+	 *     +7 / +3 = +2<br>
+	 *     +7 / -3 = -2<br>
+	 *     -7 / +3 = -3<br>
+	 *     -7 / -3 = +3
+	 * </code>
+	 *
+	 * @param a
+	 *            dividend
+	 * @param b
+	 *            divisor
+	 * @return euclidean division {@code q = a / b}
+	 *
+	 * @throws ArithmeticException
+	 *             if {@code b = 0}
+	 */
+	public static BigDecimal euclideanDivision(final BigDecimal a, final BigDecimal b) {
+		final BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
+		BigDecimal quotient = quotientAndRemainder[0];
+		final BigDecimal remainder = quotientAndRemainder[1];
+		if (remainder.signum() != 0 && a.signum() < 0) {
+			// sig(a) != 0, since "remainder != 0"
+			if (b.signum() < 0) {
+				// sig(b) != 0, since "a / 0" throws an exception
+				quotient = quotient.add(BigDecimal.ONE);
+			} else {
+				quotient = quotient.subtract(BigDecimal.ONE);
+			}
+		}
+		return quotient;
+	}
+
+	/**
+	 * Calculates {@code a / b} only if {@code b} is a divisor of {@code a}.
+	 *
+	 * @param a
+	 *            dividend
+	 * @param b
+	 *            true divisor of {@code a}
+	 * @return exact result of {@code a / b} (always an integer)
+	 *
+	 * @throws ArithmeticException
+	 *             if {@code b} is a not a divisor of {@code a}.
+	 */
+	public static BigDecimal exactDivison(final BigDecimal a, final BigDecimal b) {
+		final BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
+		if (quotientAndRemainder[1].signum() == 0) {
+			return quotientAndRemainder[0];
+		}
+		throw new ArithmeticException("Divison not exact.");
+	}
+
+	/**
+	 * Checks if a number is integral.
+	 *
+	 * @param d
+	 *            number
+	 * @return {@code d} is an integer
+	 */
+	public static boolean isIntegral(final BigDecimal d) {
+		return d.remainder(BigDecimal.ONE).signum() == 0;
+	}
+
+	/**
+	 * Calculates the euclidean modulo. The result {@code r} is the remainder of the euclidean division
+	 * {@code a / b = q}, satisfying {@code a = bq + r} where {@code 0 ≤ r < |b|} and {@code b ≠ 0}.
+	 * <p>
+	 * Examples:<br>
+	 * <code>
+	 *     +7 % +3 = 1<br>
+	 *     +7 % -3 = 1<br>
+	 *     -7 % +3 = 2<br>
+	 *     -7 % -3 = 2
+	 * </code>
+	 *
+	 * @param a
+	 *            dividend
+	 * @param b
+	 *            divisor
+	 * @return {@code r = a % b} (remainder of the euclidean division {@code a / b})
+	 *
+	 * @throws ArithmeticException
+	 *             if {@code b = 0}
+	 */
+	public static BigDecimal euclideanModulo(final BigDecimal a, final BigDecimal b) {
+		BigDecimal r = a.remainder(b);
+		if (r.signum() < 0) {
+			r = r.add(b.abs());
+		}
+		return r;
+	}
+
+	/**
+	 * Turns a BigDecimal d into its decimal fraction d = numerator / denominator. Numerator and denominator are both
+	 * integers and denominator is a positive power of 10. Trailing zeros are not removed (can be done by
+	 * {@link BigDecimal#stripTrailingZeros()} in advance).
+	 * <p>
+	 * Examples:<br>
+	 *
+	 * <pre>
+	 *  1.5   =  15 /   10
+	 * -1.5   = -15 /   10
+	 * 20.0   = 200 /   10
+	 * 20     =  20 /    1
+	 *  2e1   =  20 /    1
+	 *  0.03  =   3 /  100
+	 *  0.030 =  30 / 1000
+	 *  0e9   =   0 /    1
+	 * </pre>
+	 *
+	 * @param d
+	 *            BigDecimal
+	 * @return decimal fraction
+	 */
+	public static Pair<BigInteger, BigInteger> decimalFraction(final BigDecimal d) {
+		BigInteger numerator = d.unscaledValue();
+		BigInteger denominator = BigInteger.TEN.pow(Math.abs(d.scale()));
+		if (d.scale() < 0) {
+			numerator = numerator.multiply(denominator);
+			denominator = BigInteger.ONE;
+		}
+		return new Pair<>(numerator, denominator);
+	}
+
+	/**
+	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
+	 * boogie type.
+	 *
+	 * @param identifier
+	 *            the identifier of the variable
+	 * @param type
+	 *            the type of the variable
+	 * @return {@link IBoogieVar} according to the given identifier and {@link IBoogieType}
+	 *
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 */
+	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
+		return new TemporaryBoogieVar(type, identifier);
+	}
+
+	/**
+	 * Determines if a {@link IdentifierExpression} references a variable or constant. {@link IdentifierExpression} can
+	 * also reference functions or procedures. In that case, this method will return {@code false}.
+	 *
+	 * @param ie
+	 *            {@link IdentifierExpression}
+	 * @return expression references a variable or constant
+	 */
+	public static boolean isVariable(final IdentifierExpression ie) {
+		final DeclarationInformation di = ie.getDeclarationInformation();
+		switch (di.getStorageClass()) {
+		case PROC_FUNC:
+		case IMPLEMENTATION:
+			return false;
+		case GLOBAL:
+		case IMPLEMENTATION_INPARAM:
+		case IMPLEMENTATION_OUTPARAM:
+		case LOCAL:
+		case QUANTIFIED:
+		case PROC_FUNC_INPARAM:
+		case PROC_FUNC_OUTPARAM:
+			return true;
+		default:
+			throw new IllegalArgumentException("Unknown storage class: " + di.getStorageClass());
+		}
+	}
+
+	public static boolean isGlobal(final IBoogieVar ibv) {
+		if (ibv instanceof IProgramVar) {
+			return ((IProgramVar) ibv).isGlobal();
+		} else if (ibv instanceof BoogieConst) {
+			return true;
+		} else {
+			throw new AssertionError("Unknown IBoogieVar type: " + ibv.getClass().getName());
+		}
+	}
+
+	public static Operator negateRelOp(final Operator relOp) {
+		switch (relOp) {
+		case COMPEQ:
+			return Operator.COMPNEQ;
+		case COMPNEQ:
+			return Operator.COMPEQ;
+		case COMPLEQ:
+			return Operator.COMPGT;
+		case COMPGT:
+			return Operator.COMPLEQ;
+		case COMPLT:
+			return Operator.COMPGEQ;
+		case COMPGEQ:
+			return Operator.COMPLT;
+		default:
+			throw new IllegalArgumentException("Not a negatable relational operator: " + relOp);
+		}
 	}
 }

@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class OctStatementProcessor {
@@ -101,7 +101,7 @@ public class OctStatementProcessor {
 				final IBoogieVar origVar = mPostOp.getBoogieVar(vLhs);
 				// unique (origVar is unique + braces are not allowed)
 				final String tmpVarName = "octTmp(" + origVar + ")";
-				final IBoogieVar tmpVar = BoogieUtil.createTemporaryIBoogieVar(tmpVarName, vLhs.getType());
+				final IBoogieVar tmpVar = AbsIntUtil.createTemporaryIBoogieVar(tmpVarName, vLhs.getType());
 
 				tmpVars.put(tmpVarName, tmpVar);
 				mapLhsToRhs.add(new Pair<>(tmpVar, rhs[i]));
@@ -156,7 +156,7 @@ public class OctStatementProcessor {
 		} else if (rhs instanceof IdentifierExpression) {
 			final IdentifierExpression ie = (IdentifierExpression) rhs;
 			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
-			if (BoogieUtil.isVariable(ie)) {
+			if (AbsIntUtil.isVariable(ie)) {
 				final IBoogieVar sourceVar = mPostOp.getBoogieVar(ie);
 				oldStates.forEach(s -> s.copyVar(targetVar, sourceVar));
 			} else {

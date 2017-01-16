@@ -42,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -292,7 +291,7 @@ public class OctAssumeProcessor {
 		if (relOp == BinaryExpression.Operator.COMPPO) {
 			return oldStates; // safe over-approximation
 		} else if (isNegated) {
-			relOp = BoogieUtil.negateRelOp(relOp);
+			relOp = AbsIntUtil.negateRelOp(relOp);
 		}
 
 		final Expression left = binExpr.getLeft();
@@ -358,7 +357,7 @@ public class OctAssumeProcessor {
 		leC = geC = affExpr.getConstant().negate();
 		if (intRelation) {
 			// in case of integers: (affExpr - c != 0) as (affExpr <= c-1) or (affExpr >= c+1)
-			if (NumUtil.isIntegral(leC)) {
+			if (AbsIntUtil.isIntegral(leC)) {
 				leC = leC.subtract(BigDecimal.ONE);
 				geC = geC.add(BigDecimal.ONE);
 			} else {
@@ -425,7 +424,7 @@ public class OctAssumeProcessor {
 
 		// from now on handle (affExpr - c == 0) as (affExpr == c) ----------------
 		final BigDecimal c = affExpr.getConstant().negate();
-		if (intRelation && !NumUtil.isIntegral(c)) {
+		if (intRelation && !AbsIntUtil.isIntegral(c)) {
 			// (assume intVar == 1.5) is equivalent to (assume false).
 			return new ArrayList<>();
 		}
@@ -476,7 +475,7 @@ public class OctAssumeProcessor {
 		// from now on handle (affExpr - c <= 0) as (affExpr <= c) ----------------
 		BigDecimal c = affExpr.getConstant().negate();
 		if (intRelation) {
-			if (!NumUtil.isIntegral(c)) {
+			if (!AbsIntUtil.isIntegral(c)) {
 				// int <= 1.5   ==>   int <= 1
 				// int <  1.5   ==>   int <= 1
 				c = c.setScale(0, RoundingMode.FLOOR);

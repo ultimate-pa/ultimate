@@ -50,9 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -104,7 +103,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	public static List<OctDomainState> joinToSingleton(final List<OctDomainState> states) {
-		return CollectionUtil.singeltonArrayList(join(states));
+		return AbsIntUtil.singletonArrayList(join(states));
 	}
 
 	public static List<OctDomainState> deepCopy(final List<OctDomainState> states) {
@@ -236,7 +235,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 				final String tmpVarName = "octTmp(" + inParam + ")";
 				final BoogieVar realBoogieVar = mBpl2SmtTable.getBoogieVar(inParam, call.getMethodName(), true);
 				assert realBoogieVar != null;
-				final IBoogieVar tmpBoogieVar = BoogieUtil.createTemporaryIBoogieVar(tmpVarName, type);
+				final IBoogieVar tmpBoogieVar = AbsIntUtil.createTemporaryIBoogieVar(tmpVarName, type);
 				final Expression arg = call.getArguments()[paramNumber];
 				++paramNumber;
 

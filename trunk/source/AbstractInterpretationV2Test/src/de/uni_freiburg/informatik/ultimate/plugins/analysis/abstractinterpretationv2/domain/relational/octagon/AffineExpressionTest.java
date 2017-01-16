@@ -14,7 +14,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 public class AffineExpressionTest {
 
@@ -257,7 +257,7 @@ public class AffineExpressionTest {
 		if (rtr != null) {
 			return rtr;
 		}
-		final IBoogieVar var = BoogieUtil.createTemporaryIBoogieVar(iname, type);
+		final IBoogieVar var = AbsIntUtil.createTemporaryIBoogieVar(iname, type);
 		cache.put(iname, var);
 		return var;
 	}

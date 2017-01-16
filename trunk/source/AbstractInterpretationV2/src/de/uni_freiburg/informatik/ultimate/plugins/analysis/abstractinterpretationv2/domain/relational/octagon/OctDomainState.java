@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -793,7 +793,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final Set<IBoogieVar> sharedVars = new HashSet<>();
 		final Set<IBoogieVar> otherEntrySet = other.mMapVarToBoogieVar;
 		for (final IBoogieVar entry : mMapVarToBoogieVar) {
-			if (BoogieUtil.isGlobal(entry) && otherEntrySet.contains(entry)) {
+			if (AbsIntUtil.isGlobal(entry) && otherEntrySet.contains(entry)) {
 				sharedVars.add(entry);
 			}
 		}

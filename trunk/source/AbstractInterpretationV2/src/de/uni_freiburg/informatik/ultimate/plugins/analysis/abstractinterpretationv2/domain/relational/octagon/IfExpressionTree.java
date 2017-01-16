@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -304,7 +304,7 @@ public final class IfExpressionTree {
 			final OctPostOperator postOp, final List<OctDomainState> oldStates) {
 
 		if (isLeaf()) {
-			return CollectionUtil.singeltonArrayList(new Pair<>(mLeafExpr, oldStates));
+			return AbsIntUtil.singletonArrayList(new Pair<>(mLeafExpr, oldStates));
 		}
 
 		List<OctDomainState> thenStates;

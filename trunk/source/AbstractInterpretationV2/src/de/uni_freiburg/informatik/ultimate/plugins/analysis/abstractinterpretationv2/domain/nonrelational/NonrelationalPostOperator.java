@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -187,7 +187,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final ILocation loc = callStatement.getLocation();
 		for (int i = 0; i < args.length; i++) {
 			final String name = tmpParamNames.get(i);
-			final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
+			final IBoogieVar boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
 			final VariableLHS lhs = new VariableLHS(loc, name);
 			tmpParamVars.put(name, boogieVar);
 			tmpVarUses.put(lhs, boogieVar);

@@ -41,8 +41,8 @@ import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
@@ -1456,7 +1456,7 @@ public class OctMatrix {
 			mStrongClosure = null;
 		}
 		if (mTightClosure != this) {
-			assert constant.isInfinity() || NumUtil.isIntegral(constant.getValue()) : "int incremented by real";
+			assert constant.isInfinity() || AbsIntUtil.isIntegral(constant.getValue()) : "int incremented by real";
 			mTightClosure = null;
 		}
 	}

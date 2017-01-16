@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -695,7 +695,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// If we are dealing with point intervals, the modulo computation is easy.
 		if (isPointInterval() && divisor.isPointInterval()) {
-			final BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
+			final BigDecimal remainder = AbsIntUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
 			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
 		}
 
