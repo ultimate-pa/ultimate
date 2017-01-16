@@ -530,17 +530,30 @@ public class VPDomainPreanalysis {
 	}
 
 	/**
+	 * Gets the EqNode for a normalized Term (a "Term without TransFormula-indices")
+	 * @param term
+	 * @return
+	 */
+	public EqNode getEqNode(final Term term) {
+		final EqNode result = mTermToEqNode.get(term);
+		return result;
+	}
+
+	/**
 	 *
 	 * @param term
 	 * @param tvToPvMap
 	 * @return the EqNode for term (normalized by tvToPvMap) if we track term, null otherwise
 	 */
 	public EqNode getEqNode(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
-		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
-		final Map<Term, Term> substitionMap = VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap);
-		final Term termWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(term);
-		final EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
-		return result;
+		if (!tvToPvMap.isEmpty()) {
+			// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
+			final Map<Term, Term> substitionMap = VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap);
+			final Term termWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(term);
+			return getEqNode(termWithNormalizedVariables);
+		} else {
+			return getEqNode(term);
+		}
 	}
 	
 	public EqNode getEqNode(IProgramVarOrConst pvoc) {

@@ -523,14 +523,34 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		return IProgramVar.class;
 	}
 
-	public boolean areEqual(final Term oneElement, final Term otherElement) {
-		// TODO Auto-generated method stub
-		return false;
+	/**
+	 * Returns true iff term1 _must_ equal term2 in this VPState.
+	 * (In particular returns false if this VPState does not have any constraint on the
+	 *  term1 and term2.)
+	 */
+	public boolean areEqual(final Term term1, final Term term2) {
+		EqNode node1 = mPreAnalysis.getEqNode(term1);
+		EqNode node2 = mPreAnalysis.getEqNode(term2);
+		if (node1 == null || node2 == null) {
+			// the analysis did not track at least one of the given terms
+			return false;
+		}
+		return areEqual(node1, node2);
 	}
 
-	public boolean areUnEqual(final Term oneElement, final Term otherElement) {
-		// TODO Auto-generated method stub
-		return false;
+	/**
+	 * Returns true iff term1 and term2 _must_ be unequal in this VPState.
+	 * (In particular returns false if this VPState does not have any constraint on the
+	 *  term1 and term2.)
+	 */
+	public boolean areUnEqual(final Term term1, final Term term2) {
+		EqNode node1 = mPreAnalysis.getEqNode(term1);
+		EqNode node2 = mPreAnalysis.getEqNode(term2);
+		if (node1 == null || node2 == null) {
+			// the analysis did not track at least one of the given terms
+			return false;
+		}
+		return areUnEqual(node1, node2);
 	}
 
 }
