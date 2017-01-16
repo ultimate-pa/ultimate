@@ -56,6 +56,37 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 		return mDuplicatorDoubleDeckers.isEmpty();
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mDuplicatorDoubleDeckers == null) ? 0 : mDuplicatorDoubleDeckers.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final DirectFullMultipebbleGameState other = (DirectFullMultipebbleGameState) obj;
+		if (mDuplicatorDoubleDeckers == null) {
+			if (other.mDuplicatorDoubleDeckers != null)
+				return false;
+		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "DirectFullMultipebbleGameState [mDuplicatorDoubleDeckers=" + mDuplicatorDoubleDeckers
+				+ ", mSpoilerDoubleDecker=" + mSpoilerDoubleDecker + "]";
+	}
+
 
 
 	

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final GS mEmptyStackState;
 	private final Collection<Set<STATE>> mPossibleEquivalenceClasses;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
-	private final List<GS> mInitialStates;
+	private final Set<GS> mInitialStates;
 
 	public FullMultiPebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
@@ -64,7 +65,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		mStateFactory = gameFactory;
 		mEmptyStackState = gameFactory.createEmptyStackState();
 		mPossibleEquivalenceClasses = possibleEquivalentClasses;
-		mInitialStates = new ArrayList<>();
+		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
 		final XYYZ te = new XYYZ(services);
 		te.process(possibleEquivalentClasses);
@@ -123,7 +124,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 	@Override
 	public boolean isInitial(final GS state) {
-		throw new UnsupportedOperationException();
+		return mInitialStates.contains(state);
 	}
 
 	@Override
