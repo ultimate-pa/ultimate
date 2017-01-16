@@ -43,31 +43,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
-	
+
 	/**
 	 * @return a {@link Map} mapping to each location that was reachable during the analysis the computed fixpoint as
 	 *         {@link Term}.
 	 */
 	Map<LOCATION, Term> getLoc2Term();
-	
+
 	/**
 	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to
 	 *         the corresponding abstract states.
 	 */
 	Map<LOCATION, Set<STATE>> getLoc2States();
-	
+
 	/**
 	 * @return a {@link Map} mapping each location that was reachable during the analysis of the computed fixpoint to
 	 *         one abstract state which is the result of the merging operation of all corresponding abstract states at
 	 *         that location.
 	 */
 	Map<LOCATION, STATE> getLoc2SingleStates();
-	
+
 	/**
 	 * @return a {@link Set} containing all fixpoints computed during the analysis as {@link Term}s.
 	 */
 	Set<Term> getTerms();
-	
+
 	/**
 	 * @return A {@link List} of all (potentially spurious) abstract counterexamples found during the analysis. A
 	 *         counterexample is a sequence of ACTIONs from an initial location to an error location. An abstract
@@ -76,12 +76,12 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 */
 	List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples();
-	
+
 	/**
 	 * @return true if the analysis could reach an error location, false otherwise.
 	 */
 	boolean hasReachedError();
-	
+
 	/**
 	 * Generates a single string that represents this result. The string contains all fixpoints computed during the
 	 * analysis.
@@ -91,13 +91,11 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 * @return A string representing this result.
 	 */
 	String toSimplifiedString(Function<Term, String> funSimplify);
-	
+
 	/**
 	 * @return The {@link IAbstractDomain} used during the analysis.
 	 */
 	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
-	
-	Set<STATE> getPostStates(Deque<ACTION> callStack, ACTION symbol);
-	
+
 	Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates);
 }

@@ -31,26 +31,16 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
 import java.util.List;
 
 /**
- * {@link IAbstractPostOperator} describes a post operator for an {@link IAbstractDomain}. It is used to compute the
- * abstract post given an old {@link IAbstractState} and a transition.
+ * {@link IAbstractPostOperator} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
+ * the abstract post or pre state given an old {@link IAbstractState} and a transition.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
-	
-	/**
-	 * Compute the abstract post for an old STATE (that extends {@link IAbstractState}) and a given ACTION (transition).
-	 *
-	 * @param oldstate
-	 *            The abstract state before execution of the ACTION.
-	 * @param transition
-	 *            The transition that is taken.
-	 * @return A new list of STATEs that is the result of applying the abstract post.
-	 */
-	List<STATE> apply(STATE oldstate, ACTION transition);
-	
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
+		extends IAbstractTransformer<STATE, ACTION, VARDECL> {
+
 	/**
 	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
 	 *
@@ -64,5 +54,6 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDE
 	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
 	 *         effects of the taken transition.
 	 */
+	@Override
 	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

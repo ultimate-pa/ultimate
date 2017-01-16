@@ -32,8 +32,7 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 		return null;
 	}
 
-	public void addIteration(final WorklistItem<?, ACTION, ?, LOCATION> currentItem) {
-		final ACTION action = currentItem.getAction();
+	public void addIteration(final ACTION action) {
 		mLastAction = action.hashCode();
 		addOrIncrement(mAction2Visits);
 	}

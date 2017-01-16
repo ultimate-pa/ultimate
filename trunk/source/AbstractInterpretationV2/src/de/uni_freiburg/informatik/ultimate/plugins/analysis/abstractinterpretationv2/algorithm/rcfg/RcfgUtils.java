@@ -25,20 +25,19 @@ public final class RcfgUtils {
 	private RcfgUtils() {
 	}
 
-	public static boolean isAllowedReturn(final IIcfgTransition<?> current, final IIcfgTransition<?> currentScope) {
+	public static boolean isAllowedReturn(final IIcfgReturnTransition<?, ?> current,
+			final IIcfgTransition<?> currentScope) {
 		if (currentScope == null) {
 			return false;
 		}
-		if (current instanceof IIcfgReturnTransition<?, ?>) {
-			final IIcfgReturnTransition<?, ?> currReturn = (IIcfgReturnTransition<?, ?>) current;
-			assert currentScope instanceof IIcfgCallTransition<?>;
-			return currReturn.getCorrespondingCall().equals(currentScope);
-		}
-		return false;
+		assert currentScope instanceof IIcfgCallTransition<?>;
+		return current.getCorrespondingCall().equals(currentScope);
+
 	}
 
 	public static boolean isValidSuccessor(final IcfgEdge successor, final IcfgEdge lastCall) {
-		return !(successor instanceof IIcfgReturnTransition<?, ?>) || RcfgUtils.isAllowedReturn(successor, lastCall);
+		return !(successor instanceof IIcfgReturnTransition<?, ?>)
+				|| RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) successor, lastCall);
 	}
 
 	public static <E extends IcfgEdge> Collection<IcfgEdge> getValidCodeBlocks(final Collection<E> candidates,

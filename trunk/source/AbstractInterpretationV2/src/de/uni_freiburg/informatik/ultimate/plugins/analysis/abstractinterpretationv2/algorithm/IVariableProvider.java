@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  * @param <VARDECL>
  */
 public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
-	
+
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
 	 * <code>current</code>. Will be called for initial edges of a program and for a fresh state.<br>
@@ -78,4 +78,5 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	 *         <code>current</code> and that are visible in the scope after execution of <code>current</code>.
 	 */
 	STATE defineVariablesAfter(final ACTION current, final STATE localPreState, final STATE hierachicalPreState);
+
 }

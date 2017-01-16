@@ -30,12 +30,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -59,8 +60,8 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	public boolean isSuccessorErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
 		assert elem != null;
 
-		if (elem instanceof Return) {
-			if (!RcfgUtils.isAllowedReturn(elem, currentScope)) {
+		if (elem instanceof IIcfgReturnTransition<?, ?>) {
+			if (!RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) elem, currentScope)) {
 				return false;
 			}
 		}
@@ -86,7 +87,25 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	@Override
 	public boolean isLeavingScope(final CodeBlock current, final CodeBlock scope) {
 		assert current != null;
-		return RcfgUtils.isAllowedReturn(current, scope);
+		if (current instanceof IIcfgReturnTransition<?, ?>) {
+			return RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) current, scope);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isEnteringScope(final CodeBlock action, final CodeBlock scope) {
+		if (action instanceof IIcfgCallTransition<?> && scope instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) action;
+			final IIcfgReturnTransition<?, ?> retTran = (IIcfgReturnTransition<?, ?>) scope;
+			return retTran.getCorrespondingCall().equals(call);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isLeavingScope(final CodeBlock action) {
+		return action instanceof IIcfgReturnTransition<?, ?>;
 	}
 
 	@Override
@@ -102,6 +121,11 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	@Override
 	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
+	}
+
+	@Override
+	public Collection<CodeBlock> getPredecessorActions(final BoogieIcfgLocation loc) {
+		return loc.getIncomingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
 	}
 
 	@Override

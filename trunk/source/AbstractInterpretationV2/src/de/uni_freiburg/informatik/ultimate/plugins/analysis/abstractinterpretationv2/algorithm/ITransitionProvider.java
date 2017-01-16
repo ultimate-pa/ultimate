@@ -35,13 +35,13 @@ import java.util.Collection;
  *
  * @param <ACTION>
  *            The type of transitions of the control flow graph.
- * @param <LOCATION>
+ * @param <LOC>
  *            The type of locations/vertices of the control flow graph.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface ITransitionProvider<ACTION, LOCATION> {
+public interface ITransitionProvider<ACTION, LOC> {
 
 	/**
 	 * @param action
@@ -52,6 +52,20 @@ public interface ITransitionProvider<ACTION, LOCATION> {
 	 *         scope.
 	 */
 	Collection<ACTION> getSuccessors(ACTION action, ACTION scope);
+
+	/**
+	 * @param loc
+	 *            the current location.
+	 * @return all outgoing transitions of this location.
+	 */
+	Collection<ACTION> getSuccessorActions(LOC loc);
+
+	/**
+	 * @param loc
+	 *            the current location.
+	 * @return all incoming transitions of this location.
+	 */
+	Collection<ACTION> getPredecessorActions(LOC loc);
 
 	/**
 	 * @param action
@@ -74,10 +88,27 @@ public interface ITransitionProvider<ACTION, LOCATION> {
 	 * @param action
 	 *            the current transition.
 	 * @param scope
+	 *            the current scope (i.e., a return transition)
+	 * @return true if the given transition enters a scope that is represented by the scope transition, false otherwise.
+	 *         True also implies that the current transition is a call transition.
+	 */
+	boolean isEnteringScope(ACTION action, ACTION scope);
+
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @param scope
 	 *            the current scope (i.e., a call transition)
 	 * @return true if the given transition leaves the given scope, false otherwise.
 	 */
 	boolean isLeavingScope(ACTION action, ACTION scope);
+
+	/**
+	 * @param action
+	 *            the current transition.
+	 * @return true if the given transition leaves any scope, false otherwise.
+	 */
+	boolean isLeavingScope(ACTION action);
 
 	/**
 	 * @param action
@@ -100,21 +131,14 @@ public interface ITransitionProvider<ACTION, LOCATION> {
 	 *            the current transition.
 	 * @return the source of the current transition.
 	 */
-	LOCATION getSource(ACTION action);
+	LOC getSource(ACTION action);
 
 	/**
 	 * @param action
 	 *            the current transition.
 	 * @return the target of the current transition.
 	 */
-	LOCATION getTarget(ACTION action);
-
-	/**
-	 * @param loc
-	 *            the current location.
-	 * @return all outgoing transitions of this location.
-	 */
-	Collection<ACTION> getSuccessorActions(LOCATION loc);
+	LOC getTarget(ACTION action);
 
 	/**
 	 * @param call

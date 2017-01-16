@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
  *
  */
 public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
-	
+
 	/**
 	 * @return A new state of the current abstract domain.
 	 */
@@ -70,4 +70,8 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	 * @return The perceived precision of the domain.
 	 */
 	int getDomainPrecision();
+
+	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
+		throw new UnsupportedOperationException("This domain does not support the pre operator");
+	}
 }

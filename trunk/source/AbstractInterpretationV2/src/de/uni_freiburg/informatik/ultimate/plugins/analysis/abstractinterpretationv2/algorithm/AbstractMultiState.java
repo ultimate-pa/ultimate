@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  */
 public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
 		implements IAbstractState<AbstractMultiState<STATE, ACTION, VARDECL>, VARDECL> {
-	
+
 	private static int sNextFreeId;
 	private final Set<STATE> mStates;
 	private final int mMaxSize;
@@ -246,7 +247,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public AbstractMultiState<STATE, ACTION, VARDECL> defineVariablesAfter(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION transition,
 			final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState) {
-		
+
 		final Set<STATE> newSet = newSet(mStates.size() * hierachicalPreState.mStates.size());
 		for (final STATE localState : mStates) {
 			for (final STATE hierState : hierachicalPreState.mStates) {
@@ -261,9 +262,9 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		return rtr;
 	}
 
-	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
+	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op,
 			final ACTION transition) {
-		return applyToAllCollection(a -> postOp.apply(a, transition));
+		return applyToAllCollection(a -> op.apply(a, transition));
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,

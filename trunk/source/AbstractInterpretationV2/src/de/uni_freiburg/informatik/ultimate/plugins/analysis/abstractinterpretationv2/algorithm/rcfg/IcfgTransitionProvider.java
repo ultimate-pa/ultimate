@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -86,13 +88,31 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 
 	@Override
 	public boolean isEnteringScope(final IcfgEdge current) {
-		return current instanceof ICallAction;
+		return current instanceof IIcfgCallTransition<?>;
 	}
 
 	@Override
 	public boolean isLeavingScope(final IcfgEdge current, final IcfgEdge scope) {
 		assert current != null;
-		return RcfgUtils.isAllowedReturn(current, scope);
+		if (current instanceof IIcfgReturnTransition<?, ?>) {
+			return RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) current, scope);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isEnteringScope(final IcfgEdge action, final IcfgEdge scope) {
+		if (action instanceof IIcfgCallTransition<?> && scope instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) action;
+			final IIcfgReturnTransition<?, ?> retTran = (IIcfgReturnTransition<?, ?>) scope;
+			return retTran.getCorrespondingCall().equals(call);
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isLeavingScope(final IcfgEdge action) {
+		return action instanceof IIcfgReturnTransition<?, ?>;
 	}
 
 	@Override
@@ -108,6 +128,11 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 	@Override
 	public Collection<IcfgEdge> getSuccessorActions(final IcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().collect(Collectors.toList());
+	}
+
+	@Override
+	public Collection<IcfgEdge> getPredecessorActions(final IcfgLocation loc) {
+		return loc.getIncomingEdges().stream().collect(Collectors.toList());
 	}
 
 	@Override
@@ -143,4 +168,5 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 		return call.getSource().getOutgoingEdges().stream().filter(a -> isSummaryForCall(a, call)).findFirst()
 				.orElse(null);
 	}
+
 }
