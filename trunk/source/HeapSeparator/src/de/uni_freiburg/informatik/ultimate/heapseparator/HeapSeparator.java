@@ -40,83 +40,87 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.heapseparator.preferences.PreferenceInitializer;
 
 /**
- * 
- * 
+ *
  * @author nutz
- * 
- * 
+ *
  */
 public class HeapSeparator implements IGenerator {
 
-	private ILogger mlogger;
-	private IToolchainStorage mstorage;
-	private HeapSeparatorObserver mobserver;
-	private IUltimateServiceProvider mservices;
+	private ILogger mLogger;
+	private IToolchainStorage mStorage;
+	private HeapSeparatorObserver mObserver;
+	private IUltimateServiceProvider mServices;
 
 	@Override
 	public ModelType getOutputDefinition() {
-		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
+
 	@Override
 	public ModelQuery getModelQuery() {
 		// TODO is this the right setting??
 		return ModelQuery.LAST;
 	}
+
 	@Override
 	public List<String> getDesiredToolIds() {
-		// TODO Auto-generated method stub
 		return null;
 	}
+
 	@Override
-	public void setInputDefinition(ModelType graphType) {
-		// TODO Auto-generated method stub
-		
+	public void setInputDefinition(final ModelType graphType) {
+
 	}
+
 	@Override
 	public List<IObserver> getObservers() {
-		mobserver = new HeapSeparatorObserver(mservices);
-		return Collections.singletonList(mobserver);
+		mObserver = new HeapSeparatorObserver(mServices);
+		return Collections.singletonList(mObserver);
 	}
+
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-		
+	public void setToolchainStorage(final IToolchainStorage storage) {
+
 	}
+
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
-		mservices = services;
+	public void setServices(final IUltimateServiceProvider services) {
+		mServices = services;
 	}
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
-		
+
 	}
+
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+
 	}
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
+
 	@Override
 	public IElement getModel() {
-		return mobserver.getModel();
+		return mObserver.getModel();
 	}
 
 }

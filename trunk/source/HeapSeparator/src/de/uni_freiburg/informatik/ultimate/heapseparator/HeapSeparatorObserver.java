@@ -26,25 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
@@ -59,7 +48,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	private ManagedScript mScript;
 
 	private final IUltimateServiceProvider mServices;
-	
+
 	private BoogieIcfgContainer mBoogieIcfgContainer;
 
 	public HeapSeparatorObserver(final IUltimateServiceProvider services) {
@@ -90,13 +79,9 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-
 		final BoogieIcfgContainer boogieIcfgContainer = (BoogieIcfgContainer) root;
-		
-		HsNonPlugin hnp = new HsNonPlugin(mServices, boogieIcfgContainer.getCfgSmtToolkit(), mLogger);
-		
+		final HsNonPlugin hnp = new HsNonPlugin(mServices, boogieIcfgContainer.getCfgSmtToolkit(), mLogger);
 		mBoogieIcfgContainer = hnp.separate(boogieIcfgContainer);
-
 		return false;
 	}
 }
