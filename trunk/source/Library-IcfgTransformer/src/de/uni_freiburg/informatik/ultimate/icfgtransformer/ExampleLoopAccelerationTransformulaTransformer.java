@@ -35,23 +35,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A very simple implementation of a {@link ITransformulaTransformer}.
- * 
+ *
  * Demonstrates the basic interface that should be used for loop acceleration transformers.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ExampleLoopAccelerationTransformulaTransformer implements ITransformulaTransformer<TransFormula> {
+public class ExampleLoopAccelerationTransformulaTransformer implements ITransformulaTransformer {
 
 	private final ILogger mLogger;
-	private final TransFormula mResult;
+	private final ManagedScript mManagedScript;
 
 	/**
 	 * Create an {@link ExampleLoopAccelerationTransformulaTransformer} instance.
-	 * 
+	 *
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
 	 * @param loopBody
@@ -66,30 +67,23 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	 *            {@link Term}s of the old {@link TransFormula}.
 	 */
 	public ExampleLoopAccelerationTransformulaTransformer(final ILogger logger, final ManagedScript managedScript,
-			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac,
-			final TransFormula loopBody) {
+			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac) {
 		mLogger = logger;
-		mResult = transform(Objects.requireNonNull(loopBody), Objects.requireNonNull(managedScript),
-				Objects.requireNonNull(oldSymbolTable), Objects.requireNonNull(replacementVarFac));
-	}
-
-	private TransFormula transform(final TransFormula loopBody, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory) {
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Performing identity transformation for " + loopBody);
-		}
-		return TransFormulaBuilder.constructCopy(managedScript, loopBody, Collections.emptySet(),
-				Collections.emptySet(), Collections.emptyMap());
-	}
-
-	@Override
-	public TransFormula getTransformationResult() {
-		return mResult;
+		mManagedScript = Objects.requireNonNull(managedScript);
 	}
 
 	@Override
 	public String getName() {
 		return getClass().getSimpleName();
+	}
+
+	@Override
+	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Performing identity transformation for " + tf);
+		}
+		return TransFormulaBuilder.constructCopy(mManagedScript, tf, Collections.emptySet(), Collections.emptySet(),
+				Collections.emptyMap());
 	}
 
 }

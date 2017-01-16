@@ -33,33 +33,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
-public class HeapSepTransFormulaTransformer implements ITransformulaTransformer<TransFormula> {
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
+public class HeapSepTransFormulaTransformer implements ITransformulaTransformer {
 
-	private final TransFormula mTransFormula;
 	private final ManagedScript mScript;
 	private final VPDomain<IcfgEdge> mVpDomain;
 	private final NewArrayIdProvider mNewArrayIdProvider;
 
-	public HeapSepTransFormulaTransformer(final TransFormula transFormula, final ManagedScript script,
-			final VPDomain<IcfgEdge> vpDomain, final NewArrayIdProvider newArrayIdProvider) {
-		super();
-		mTransFormula = transFormula;
+	public HeapSepTransFormulaTransformer(final ManagedScript script, final VPDomain<IcfgEdge> vpDomain,
+			final NewArrayIdProvider newArrayIdProvider) {
 		mScript = script;
 		mVpDomain = vpDomain;
 		mNewArrayIdProvider = newArrayIdProvider;
 	}
 
 	@Override
-	public TransFormula getTransformationResult() {
-		final UnmodifiableTransFormula newTf = splitArraysInTransFormula(mTransFormula);
-		return newTf;
+	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
+		return splitArraysInTransFormula(tf);
 	}
 
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
-		assert false : "TODO: insert an appropriate name";
-		return null;
+		return HeapSeparator.class.getSimpleName();
 	}
 
 	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort,
@@ -343,5 +342,4 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer<
 			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
 		}
 	}
-
 }

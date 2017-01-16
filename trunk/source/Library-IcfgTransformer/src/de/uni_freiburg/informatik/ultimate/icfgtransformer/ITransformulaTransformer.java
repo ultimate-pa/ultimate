@@ -27,19 +27,20 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * A {@link ITransformulaTransformer} produces a single {@link TransFormula}, usually from another one.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITransformulaTransformer<T extends TransFormula> {
+public interface ITransformulaTransformer {
 	/**
 	 * @return The result of the transformation through this transformer.
 	 */
-	T getTransformationResult();
-	
+	UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf);
+
 	/**
 	 * @return A human-friendly name that can be used during debugging, e.g., if many transformers run after another.
 	 */

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -74,8 +74,7 @@ public class IcfgUtils {
 		return startEdges;
 	}
 
-	public static <T extends IIcfgTransition<IcfgLocation>> UnmodifiableTransFormula
-			getTransformula(final T transition) {
+	public static <T extends IIcfgTransition<?>> UnmodifiableTransFormula getTransformula(final T transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();
 		} else if (transition instanceof ICallAction) {

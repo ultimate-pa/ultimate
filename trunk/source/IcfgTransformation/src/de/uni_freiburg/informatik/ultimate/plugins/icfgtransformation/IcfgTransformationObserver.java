@@ -33,12 +33,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -116,7 +119,15 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IcfgTransformer<INLOC, OUTLOC> createTransformer(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker) {
-		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass, "TransformedIcfg");
+
+		// TODO: Decide which transformer should be used via settings (and/or allow chaining of transformers in
+		// icfgtransformer
+		final ReplacementVarFactory fac = new ReplacementVarFactory(icfg.getCfgSmtToolkit(), false);
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getSymboltable(), fac);
+
+		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass, "TransformedIcfg",
+				transformer);
 	}
 
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {
