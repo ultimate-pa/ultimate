@@ -67,6 +67,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Use nonlinear constraints in PathInvariants";
 	public static final String LABEL_UNSAT_CORES_IN_PATHINVARIANTS = "Use unsat cores in PathInvariants";
 	public static final String LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS = "Use weakest precondition in PathInvariants";
+	public static final String LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS = "Use abstract interpretation in PathInvariants";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
@@ -158,6 +159,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	
 	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
 	
+	
 	/**
 	 * Constructor.
 	 */
@@ -203,6 +205,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS, Boolean.FALSE,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS, Boolean.FALSE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, Boolean.FALSE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL,
 						PreferenceType.Combo, UnsatCores.values()),

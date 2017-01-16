@@ -81,6 +81,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCoreForPathInvariants;
 	private final boolean mUseWeakestPreconditionForPathInvariants;
+	private boolean mUseAbstractInterpretationPredicates;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -137,6 +138,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 						AssertCodeBlockOrder.class);
 		mUnsatCores = ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
+		mUseAbstractInterpretationPredicates = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS);
 		mUseInterpolantConsolidation =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
 		mUseNonlinearConstraints = ultimatePrefs
@@ -221,6 +223,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
+	}
+	
+	public boolean getUseAbstractInterpretation() {
+		return mUseAbstractInterpretationPredicates;
 	}
 
 	public boolean getUseInterpolantConsolidation() {

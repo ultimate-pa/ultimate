@@ -141,6 +141,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	
 	private static final boolean PRINT_CONSTRAINTS = false;
 	private static final boolean DEBUG_OUTPUT = false;
+	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
 	
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -813,11 +814,19 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 				if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
 					locsInUnsatCore.remove(mStartLocation);
 					locsInUnsatCore.remove(mErrorLocation);
-					for (final IcfgLocation loc : locsInUnsatCore) {
-						mStrategy.changePatternSettingForLocation(loc);
-						mLogger.info("changed setting for loc: " + loc);
-					}
 					mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
+					if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
+						IcfgLocation freqLoc = Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
+						mStrategy.changePatternSettingForLocation(freqLoc);
+						mLogger.info("changed setting for most freq. loc: " + freqLoc);
+						
+					} else {
+						for (final IcfgLocation loc : locsInUnsatCore) {
+							mStrategy.changePatternSettingForLocation(loc);
+							mLogger.info("changed setting for loc: " + loc);
+						}
+					}
+
 				}
 			}
 			mLogger.info( "[LIIPP] No solution found.");
