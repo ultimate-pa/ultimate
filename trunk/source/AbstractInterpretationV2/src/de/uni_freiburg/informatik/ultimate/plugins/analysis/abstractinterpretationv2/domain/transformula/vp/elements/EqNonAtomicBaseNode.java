@@ -34,6 +34,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ */
 public class EqNonAtomicBaseNode extends EqNode {
 	
 	public EqNonAtomicBaseNode(Term t, boolean isGlobal) {

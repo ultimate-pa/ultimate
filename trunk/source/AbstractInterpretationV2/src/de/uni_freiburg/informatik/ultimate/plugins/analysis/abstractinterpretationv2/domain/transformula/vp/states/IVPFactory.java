@@ -35,6 +35,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ * @param <NODEID>
+ * @param <ARRAYID>
+ */
 public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
 	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> copy(STATE state);

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends VPState<ACTION> {
 
-//	VPStateBottom(final ManagedScript script, final VPDomainPreanalysis preAnalysis, final VPStateFactory<ACTION> factory, final Set<IProgramVar> vars) {
 	VPStateBottom(final VPDomain<ACTION> domain, final Set<IProgramVar> vars) {
 		super(domain, vars);
 	}

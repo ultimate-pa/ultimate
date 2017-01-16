@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.INodeOrArrayWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.NodeIdWithSideCondition;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.UndetermindedNodeWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.UndeterminedNodeWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
@@ -310,8 +310,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				for (NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
 					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsNodeWSc,
 							rhsNodeWSc);
-					if (lhsNodeWSc instanceof UndetermindedNodeWithSideCondition
-							|| rhsNodeWSc instanceof UndetermindedNodeWithSideCondition) {
+					if (lhsNodeWSc instanceof UndeterminedNodeWithSideCondition
+							|| rhsNodeWSc instanceof UndeterminedNodeWithSideCondition) {
 						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the sideconditions
 						resultStates.addAll(resultStatesForCurrentNodePair);
 						continue;
@@ -358,19 +358,13 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		resultStatesForCurrentNodePair.add(preStateCopy.build());
 		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
 			resultStatesForCurrentNodePair = 
-//					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory)
-//							, mTfStateFactory)
-							;
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory);
 		}
 		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
 			resultStatesForCurrentNodePair = 
-//					VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory)
-//							, mTfStateFactory)
-							;
+									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory);
 		}
 		// TODO: filter bottom states?
 		return resultStatesForCurrentNodePair;

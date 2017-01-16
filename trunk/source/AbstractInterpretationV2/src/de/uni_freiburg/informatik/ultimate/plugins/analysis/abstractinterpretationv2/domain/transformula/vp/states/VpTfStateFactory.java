@@ -53,6 +53,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifier, VPTfArrayIdentifier> {
 
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;

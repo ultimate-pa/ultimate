@@ -34,8 +34,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ */
 public class ConstOrLiteral implements IProgramVarOrConst {
 	
+	private static final long serialVersionUID = 1185681517061703238L;
+
 	final bvocType mType;
 	
 	final Term mTerm;

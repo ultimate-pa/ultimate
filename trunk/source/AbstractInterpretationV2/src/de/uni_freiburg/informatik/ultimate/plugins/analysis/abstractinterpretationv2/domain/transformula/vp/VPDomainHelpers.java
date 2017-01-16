@@ -56,6 +56,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateBuilder;
 
+/**
+ * 
+ * @author Alexander Nutz
+ * @author Yu-Wen Chen
+ *
+ */
 public class VPDomainHelpers {
 	// public static IProgramVar getIProgramVarFromTermVariable(TermVariable tv, TransFormula tf) {
 	// for (Entry<IProgramVar, TermVariable> en : tf.getInVars().entrySet()) {
@@ -146,22 +152,7 @@ public class VPDomainHelpers {
 		return null;
 	}
 
-	public static Object getProgramVar(final Term term, final TransFormula tf) {
-		if (!(term instanceof TermVariable)) {
-			return null;
-		}
-		final IProgramVar invarPv = getProgramVar((TermVariable) term, tf.getInVars());
-		if (invarPv != null) {
-			return invarPv;
-		}
-		final IProgramVar outvarPv = getProgramVar((TermVariable) term, tf.getOutVars());
-		if (outvarPv != null) {
-			return outvarPv;
-		}
-		return null;
-	}
-	
-		/**
+	/**
 	 * Only keeps those entries in the given map whose value is a free variable in the given Term.
 	 */
 	public static Map<IProgramVar, TermVariable> projectToTerm(Map<IProgramVar, TermVariable> xVars, Term term) {
@@ -206,10 +197,6 @@ public class VPDomainHelpers {
 			Set<IProgramVar> projection) {
 		Map<IProgramVar, TermVariable> result = new HashMap<>();
 		for (Entry<IProgramVar, TermVariable> en : toBeProjected.entrySet()) {
-//			if (en.getKey().getTerm().getSort().isArraySort()) {
-//				// we keep all arrays 
-//				result.put(en.getKey(), en.getValue());
-//			}
 			if (projection.contains(en.getKey())) {
 				result.put(en.getKey(), en.getValue());
 			}
@@ -223,8 +210,7 @@ public class VPDomainHelpers {
 		if (function instanceof IProgramVarOrConst) {
 			functionInOutStatus = VPDomainHelpers.computeInOutStatus((IProgramVar) function, tf);
 		} else {
-			// TODO: constants are like a THROUGH-variable for our purposes here, right?
-			//     (or UPDATE, as this makes no difference here)
+			// constants are like a THROUGH-variable for our purposes here
 			functionInOutStatus = InOutStatusOfStateId.THROUGH;
 		}
 		return functionInOutStatus;

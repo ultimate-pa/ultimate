@@ -29,6 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class VPAuxVarNodeIdentifier extends VPTfNodeIdentifier {
 	
 	private final TermVariable mTv;

@@ -38,6 +38,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <NODEID>
+ * @param <ARRAYID>
+ */
 public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	
 	protected final Set<IProgramVar> mVars;
@@ -54,7 +61,6 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 	}
 	
 	public Set<NODEID> getDisequalities(NODEID nodeIdentifer) {
-//		assert nodeIdentifer.getEqNode() != null;
 		Set<NODEID> result = new HashSet<>();
 		for (VPDomainSymmetricPair<NODEID> pair : mDisEqualitySet) {
 			if (pair.contains(nodeIdentifer)) {

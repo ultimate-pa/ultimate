@@ -29,8 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 
+/**
+ * 
+ * @author Alexander Nutz
+ *
+ * @param <ARRAYID>
+ */
 public interface IEqNodeIdentifier<ARRAYID> {
-
 	
 	public boolean isFunction();
 

@@ -552,5 +552,4 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		return areUnEqual(node1, node2);
 	}
-
 }
