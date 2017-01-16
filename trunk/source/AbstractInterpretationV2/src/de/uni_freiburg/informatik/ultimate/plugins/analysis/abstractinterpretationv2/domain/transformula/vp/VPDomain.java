@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
@@ -35,14 +34,11 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
@@ -63,8 +59,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
-	
-
 
 	private final ManagedScript mManagedScript;
 	private final VPDomainPreanalysis mPreAnalysis;
@@ -110,13 +104,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPost;
 	}
 
-	@Override
-	public int getDomainPrecision() {
-		throw new UnsupportedOperationException("this domain has no precision");
-	}
-
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState<ACTION>> {
-
 		@Override
 		public VPState<ACTION> apply(final VPState<ACTION> first, final VPState<ACTION> second) {
 			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
@@ -181,7 +169,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean isDebugMode() {
 		return mDebugMode;
 	}
-	
+
 	public Benchmark getVpBenchmark() {
 		return mPreAnalysis.getBenchmark();
 	}

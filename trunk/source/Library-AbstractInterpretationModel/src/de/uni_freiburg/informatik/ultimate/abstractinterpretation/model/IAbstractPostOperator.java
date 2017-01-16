@@ -54,6 +54,5 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDE
 	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
 	 *         effects of the taken transition.
 	 */
-	@Override
 	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

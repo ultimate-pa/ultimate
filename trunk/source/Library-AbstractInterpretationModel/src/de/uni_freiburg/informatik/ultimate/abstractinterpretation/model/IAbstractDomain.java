@@ -64,12 +64,9 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	/**
 	 * @return The post operator for the current abstract domain.
 	 */
-	IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator();
-
-	/**
-	 * @return The perceived precision of the domain.
-	 */
-	int getDomainPrecision();
+	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {
+		throw new UnsupportedOperationException("This domain does not support the post operator");
+	}
 
 	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
 		throw new UnsupportedOperationException("This domain does not support the pre operator");

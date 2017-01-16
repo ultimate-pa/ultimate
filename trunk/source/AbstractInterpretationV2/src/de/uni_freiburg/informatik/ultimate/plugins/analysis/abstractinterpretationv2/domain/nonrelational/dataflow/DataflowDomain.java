@@ -92,11 +92,6 @@ public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPost;
 	}
 
-	@Override
-	public int getDomainPrecision() {
-		throw new UnsupportedOperationException("this domain has no precision");
-	}
-
 	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState<ACTION>> {
 
 		@Override

@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 
 public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
-	
+
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -49,7 +49,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	public CongruenceDomainState<IBoogieVar> createTopState() {
 		return new CongruenceDomainState<>(mLogger, false, IBoogieVar.class);
 	}
-	
+
 	@Override
 	public CongruenceDomainState<IBoogieVar> createBottomState() {
 		return new CongruenceDomainState<>(mLogger, true, IBoogieVar.class);
@@ -84,10 +84,5 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 					maxParallelStates, mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
 		}
 		return mPostOperator;
-	}
-
-	@Override
-	public int getDomainPrecision() {
-		return 300;
 	}
 }

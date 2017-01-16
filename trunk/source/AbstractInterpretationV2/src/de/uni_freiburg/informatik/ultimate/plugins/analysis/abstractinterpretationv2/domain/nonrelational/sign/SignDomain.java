@@ -49,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	
+
 	private IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mIcfgSymbolTable;
-	
+
 	public SignDomain(final IUltimateServiceProvider services, final IIcfg<BoogieIcfgLocation> rootAnnotation,
 			final BoogieSymbolTable symbolTable) {
 		mServices = services;
@@ -64,12 +64,12 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 		mSymbolTable = symbolTable;
 		mIcfgSymbolTable = (Boogie2SmtSymbolTable) rootAnnotation.getSymboltable();
 	}
-	
+
 	@Override
 	public SignDomainState<IBoogieVar> createFreshState() {
 		return new SignDomainState<>(mLogger, IBoogieVar.class);
 	}
-	
+
 	@Override
 	public SignDomainState<IBoogieVar> createTopState() {
 		throw new UnsupportedOperationException("Not implemented: createTopState");
@@ -79,17 +79,17 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 	public SignDomainState<IBoogieVar> createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getWideningOperator() {
 		return new SignMergeOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getMergeOperator() {
 		return new SignMergeOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -99,10 +99,5 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 			mPostOperator = new SignPostOperator(mLogger, stmtProcessor);
 		}
 		return mPostOperator;
-	}
-	
-	@Override
-	public int getDomainPrecision() {
-		return 50;
 	}
 }

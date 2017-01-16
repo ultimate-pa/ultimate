@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
-	
+
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
@@ -84,7 +84,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	public IntervalDomainState<IBoogieVar> createTopState() {
 		return new IntervalDomainState<>(mLogger, false, IBoogieVar.class);
 	}
-	
+
 	@Override
 	public IntervalDomainState<IBoogieVar> createBottomState() {
 		return new IntervalDomainState<>(mLogger, true, IBoogieVar.class);
@@ -132,10 +132,5 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 					mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
 		}
 		return mPostOperator;
-	}
-
-	@Override
-	public int getDomainPrecision() {
-		return 1000;
 	}
 }

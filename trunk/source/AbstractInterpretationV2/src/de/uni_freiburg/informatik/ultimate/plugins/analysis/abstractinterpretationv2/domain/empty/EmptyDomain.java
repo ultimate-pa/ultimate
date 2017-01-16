@@ -42,18 +42,18 @@ import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstrac
  *            Any variable declaration.
  */
 public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
-	
+
 	private final Class<VARDECL> mVariablesType;
 
 	public EmptyDomain(final Class<VARDECL> variablesType) {
 		mVariablesType = variablesType;
 	}
-	
+
 	@Override
 	public EmptyDomainState<VARDECL> createFreshState() {
 		return new EmptyDomainState<>(mVariablesType);
 	}
-	
+
 	@Override
 	public EmptyDomainState<VARDECL> createTopState() {
 		return new EmptyDomainState<>(false, mVariablesType);
@@ -63,25 +63,20 @@ public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomain
 	public EmptyDomainState<VARDECL> createBottomState() {
 		return new EmptyDomainState<>(true, mVariablesType);
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getWideningOperator() {
 		return new EmptyOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getMergeOperator() {
 		return new EmptyOperator<>();
 	}
-	
+
 	@Override
 	public IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
-	
-	@Override
-	public int getDomainPrecision() {
-		// This domain is the least-expressive domain there is.
-		return 0;
-	}
+
 }
