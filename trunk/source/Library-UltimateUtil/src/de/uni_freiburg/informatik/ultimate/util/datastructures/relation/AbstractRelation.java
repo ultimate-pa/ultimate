@@ -178,6 +178,33 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	public boolean isEmpty() {
 		return mMap.isEmpty();
 	}
+	
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mMap == null) ? 0 : mMap.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final AbstractRelation other = (AbstractRelation) obj;
+		if (mMap == null) {
+			if (other.mMap != null)
+				return false;
+		} else if (!mMap.equals(other.mMap))
+			return false;
+		return true;
+	}
 
 	/**
 	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
