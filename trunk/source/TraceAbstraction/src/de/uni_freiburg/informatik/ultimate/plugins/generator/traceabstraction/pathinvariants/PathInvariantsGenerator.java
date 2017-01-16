@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
@@ -100,14 +101,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = false;
-	
+
 	/**
-	 * If set to true, we always construct two copies of each invariant
-	 * pattern, one strict inequality and one non-strict inequality.
-	 * If set to false we use only one non-strict inequality.
+	 * If set to true, we always construct two copies of each invariant pattern, one strict inequality and one
+	 * non-strict inequality. If set to false we use only one non-strict inequality.
 	 */
 	private final static boolean mAlwaysStrictAndNonStrictCopies = false;
-	
+
 	
 	
 	private final boolean mUseLiveVariables;
@@ -159,13 +159,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
-				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
+				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+						mAlwaysStrictAndNonStrictCopies);
 			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
+			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+					mAlwaysStrictAndNonStrictCopies);
 		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables, mAlwaysStrictAndNonStrictCopies);
+			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+					mAlwaysStrictAndNonStrictCopies);
 		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables, mAlwaysStrictAndNonStrictCopies);
+		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables,
+				mAlwaysStrictAndNonStrictCopies);
 	}
 
 	/**
@@ -193,7 +197,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVariables, 
+			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVariables,
 			final boolean useAbstractInterpretationPredicates,
 			final boolean useWPForPathInvariants, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique,
@@ -220,7 +224,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			mAbstractInterpretationResult = null;
 		}
-		
+
 
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
@@ -250,9 +254,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	/**
 	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
-	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations.
-	 * TODO: If assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the error location).
-	 * 
+	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO: If
+	 * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the
+	 * error location).
+	 *
 	 * @param pathProgram
 	 * @return
 	 */
@@ -295,7 +300,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		result.remove(errorloc);
 		return result;
 	}
-	
+
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> 
 	abstractInterpretationResult, final ManagedScript managedScript) {
 		Map<IcfgLocation, UnmodifiableTransFormula> result = new HashMap<>();
@@ -473,7 +478,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
-			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars );
+			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
 		}
 		Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
 		if (mUseWeakestPrecondition) {
@@ -486,9 +491,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
 				getStrategy(useVarsFromUnsatCore, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
-		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore, solverSettings, simplificationTechnique,
-				xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
+		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
+				createDefaultFactory(mServices, mStorage, mPredicateUnifier, icfg.getCfgSmtToolkit(),
+						useNonlinearConstraints, useVarsFromUnsatCore, solverSettings, simplificationTechnique,
+						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices);
@@ -548,7 +554,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	/**
 	 * Computes for each location of the given path program a set of variables which are <emph> live </emph>.
-	 * 
+	 *
 	 * @param pathProgram
 	 * @return
 	 */
@@ -556,11 +562,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		final IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> result =
-				AbstractInterpreter.runFutureDataflowDomain(pathProgram, timer, mServices, true, mLogger);
-		return result;
+		final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> result =
+				AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
+		final Map<IcfgLocation, LiveVariableState<IcfgEdge>> loc2states = result.getLoc2SingleStates();
+		final Map<IcfgLocation, Set<IProgramVar>> rtr = new HashMap<>();
+		for (final Entry<IcfgLocation, LiveVariableState<IcfgEdge>> entry : loc2states.entrySet()) {
+			rtr.put(entry.getKey(), entry.getValue().getLiveVariables());
+		}
+		return rtr;
 	}
-	
+
 	
 	
 	private Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {

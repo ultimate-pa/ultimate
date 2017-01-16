@@ -143,6 +143,24 @@ public final class AbsIntUtil {
 		return getFreshSet(oldSet, oldSet.size());
 	}
 
+	public static <T> Set<T> union(final Set<T> a, final Set<T> b) {
+		final Set<T> rtr = getFreshSet(a, a.size() + b.size());
+		rtr.addAll(b);
+		return rtr;
+	}
+
+	public static <T> Set<T> intersect(final Set<T> a, final Set<T> b) {
+		final Set<T> rtr = getFreshSet(a, a.size());
+		rtr.retainAll(b);
+		return rtr;
+	}
+
+	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
+		final Set<T> rtr = getFreshSet(a, a.size());
+		rtr.removeAll(b);
+		return rtr;
+	}
+
 	public static <T> ArrayList<T> singletonArrayList(final T value) {
 		final ArrayList<T> list = new ArrayList<>();
 		list.add(value);
