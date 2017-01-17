@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * 
@@ -37,12 +38,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
 	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
+	private final boolean mAllBitsAreTrue;
 	
 	
 	public DelayedFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
 			final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		super(spoilerDoubleDecker);
 		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
+		mAllBitsAreTrue = areAllBitsTrue(duplicatorDoubleDeckers);
 	}
 
 
@@ -53,10 +56,62 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 
 	@Override
 	public boolean isAccepting() {
-		// TODO Auto-generated method stub
-		return false;
+		return mAllBitsAreTrue;
 	}
 
+	/**
+	 * @return true iff all DoubleDeckers are mapped to true. This includes the
+	 * special case where we have the empty set of DeckerDeckers.
+	 */
+	private boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+		for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
+			if (triple.getThird() == false) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + (mAllBitsAreTrue ? 1231 : 1237);
+		result = prime * result + ((mDuplicatorDoubleDeckers == null) ? 0 : mDuplicatorDoubleDeckers.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final DelayedFullMultipebbleGameState other = (DelayedFullMultipebbleGameState) obj;
+		if (mAllBitsAreTrue != other.mAllBitsAreTrue)
+			return false;
+		if (mDuplicatorDoubleDeckers == null) {
+			if (other.mDuplicatorDoubleDeckers != null)
+				return false;
+		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers))
+			return false;
+		return true;
+	}
+
+
+	@Override
+	public String toString() {
+		return "DelayedFullMultipebbleGameState [mDuplicatorDoubleDeckers=" + mDuplicatorDoubleDeckers
+				+ ", mAllBitsAreTrue=" + mAllBitsAreTrue + ", mSpoilerDoubleDecker=" + mSpoilerDoubleDecker + "]";
+	}
+	
+	
+	
+	
 
 	
 }
