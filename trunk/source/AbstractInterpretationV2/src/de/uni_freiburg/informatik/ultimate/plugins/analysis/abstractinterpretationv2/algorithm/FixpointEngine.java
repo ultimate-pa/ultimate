@@ -56,7 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC> {
+public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC>
+		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
@@ -71,7 +72,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private final ILogger mLogger;
 	private final Class<VARDECL> mVariablesType;
 
-	private AbstractInterpretationBenchmark<ACTION, LOC> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
 
@@ -93,36 +93,33 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mVariablesType = params.getVariablesType();
 	}
 
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final ACTION start, final Script script,
-			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> intermediateResult) {
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
+			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null
-				? new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType) : intermediateResult;
-		mBenchmark = mResult.getBenchmark();
+		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVariablesType);
 		calculateFixpoint(start);
-		mResult.saveRootStorage(mStateStorage, start, script);
+		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		return mResult;
 	}
 
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final ACTION start, final Script script) {
-		return run(start, script, new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType));
-	}
-
-	private void calculateFixpoint(final ACTION start) {
+	private void calculateFixpoint(final Collection<LOC> start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		worklist.add(createInitialWorklistItem(start));
+		// add all outgoing edges of nodes in the start set that are not unnecessary summaries to the worklist
+		start.stream().flatMap(a -> mTransitionProvider.getSuccessorActions(a).stream())
+				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a)).map(this::createInitialWorklistItem)
+				.forEach(worklist::add);
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
 
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem = worklist.removeFirst();
-			mBenchmark.addIteration(currentItem.getAction());
+			mResult.getBenchmark().addIteration(currentItem.getAction());
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
@@ -506,7 +503,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
 			}
-			mBenchmark.addFixpoint();
+			mResult.getBenchmark().addFixpoint();
 			return true;
 		}
 		return false;

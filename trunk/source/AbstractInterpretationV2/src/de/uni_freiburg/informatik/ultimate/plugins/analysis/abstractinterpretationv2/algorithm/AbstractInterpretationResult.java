@@ -30,15 +30,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
@@ -56,27 +60,27 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
-	private final Map<LOCATION, Term> mLoc2Term;
-	private final Map<LOCATION, Set<STATE>> mLoc2States;
-	private final Map<LOCATION, STATE> mLoc2SingleStates;
-	private final Set<Term> mTerms;
-	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
-	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final Class<VARDECL> mVariablesType;
+	private final Script mScript;
 
-	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
+	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
+	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
+
+	private Map<LOCATION, Term> mLoc2Term;
+	private Map<LOCATION, Set<STATE>> mLoc2States;
+	private Map<LOCATION, STATE> mLoc2SingleStates;
+	private Set<Term> mTerms;
+
+	protected AbstractInterpretationResult(final Script script,
+			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider, final Class<VARDECL> variablesType) {
-		assert abstractDomain != null;
-		mAbstractDomain = abstractDomain;
+		mAbstractDomain = Objects.requireNonNull(abstractDomain);
+		mScript = Objects.requireNonNull(script);
+		mTransProvider = Objects.requireNonNull(transProvider);
+		mVariablesType = Objects.requireNonNull(variablesType);
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
-		mLoc2Term = new HashMap<>();
-		mLoc2States = new HashMap<>();
-		mLoc2SingleStates = new HashMap<>();
-		mTerms = new LinkedHashSet<>();
-		mTransProvider = transProvider;
-		mVariablesType = variablesType;
 	}
 
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
@@ -103,17 +107,8 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
-			final ACTION start, final Script script) {
+	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage) {
 		mRootStorage = rootStateStorage;
-		mTerms.addAll(rootStateStorage.getTerms(start, script));
-		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script));
-
-		final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states =
-				rootStateStorage.getLoc2States(start);
-		loc2states.entrySet().forEach(a -> mLoc2States.put(a.getKey(),
-				a.getValue().stream().flatMap(b -> b.getStates().stream()).collect(Collectors.toSet())));
-		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
 
 	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> summaryStorage) {
@@ -122,9 +117,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	@Override
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates) {
-
-		final Set<STATE> states = mRootStorage.getAbstractPostStates(callStack, symbol);
-
+		final Set<STATE> states = mRootStorage.computeContextSensitiveAbstractPostStates(callStack, symbol);
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
 			// because this is a call, it could also be somewhere in the summary map
 			final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
@@ -133,23 +126,63 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				states.addAll(summaryState.getStates());
 			}
 		}
-
 		return states;
 	}
 
 	@Override
 	public Map<LOCATION, Term> getLoc2Term() {
+		if (mLoc2Term == null) {
+			mLoc2Term = new HashMap<>();
+			for (final Entry<LOCATION, STATE> entry : getLoc2SingleStates().entrySet()) {
+				mLoc2Term.put(entry.getKey(), entry.getValue().getTerm(mScript));
+			}
+		}
 		return mLoc2Term;
 	}
 
 	@Override
 	public Map<LOCATION, Set<STATE>> getLoc2States() {
+		if (mLoc2States == null) {
+			mLoc2States = new HashMap<>();
+			final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2multistates =
+					mRootStorage.computeLoc2States();
+			for (final Entry<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> entry : loc2multistates
+					.entrySet()) {
+				final Set<STATE> states =
+						entry.getValue().stream().flatMap(a -> a.getStates().stream()).collect(Collectors.toSet());
+				mLoc2States.put(entry.getKey(), states);
+			}
+		}
 		return mLoc2States;
 	}
 
 	@Override
 	public Map<LOCATION, STATE> getLoc2SingleStates() {
+		if (mLoc2SingleStates == null) {
+			mLoc2SingleStates = new HashMap<>();
+			final IAbstractStateBinaryOperator<STATE> mergeOp = mAbstractDomain.getMergeOperator();
+			for (final Entry<LOCATION, Set<STATE>> entry : getLoc2States().entrySet()) {
+				final Optional<STATE> singleState = entry.getValue().stream().reduce(mergeOp::apply);
+				if (singleState.isPresent()) {
+					mLoc2SingleStates.put(entry.getKey(), singleState.get());
+				}
+			}
+		}
 		return mLoc2SingleStates;
+	}
+
+	@Override
+	public Set<Term> getTerms() {
+		if (mTerms == null) {
+			mTerms = new HashSet<>();
+			getLoc2Term().entrySet().stream().map(a -> a.getValue()).forEach(mTerms::add);
+		}
+		return mTerms;
+	}
+
+	@Override
+	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
+		return mAbstractDomain;
 	}
 
 	@Override
@@ -165,11 +198,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	public AbstractInterpretationBenchmark<ACTION, LOCATION> getBenchmark() {
 		return mBenchmark;
-	}
-
-	@Override
-	public Set<Term> getTerms() {
-		return mTerms;
 	}
 
 	@Override
@@ -190,10 +218,5 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 			sb.append(String.join(", ", getTerms().stream().map(funSimplify::apply).collect(Collectors.toList())));
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
-		return mAbstractDomain;
 	}
 }

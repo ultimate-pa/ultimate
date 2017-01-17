@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -57,31 +56,43 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractState(LOC loc);
 
 	/**
-	 * Save a new state to some location.
+	 * Save a new state to some location. If there is already a state, merge the new one with the old one according to
+	 * the concrete implementation (e.g., respecting parallel states).
 	 *
-	 * @param transition
+	 * @param loc
+	 *            the location to which the state should be saved
 	 * @param state
-	 * @return
+	 *            the state that should be saved.
+	 * @return The new state that is now saved at this location (i.e., either the given state or a merged state).
 	 */
 	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractState(LOC loc,
 			AbstractMultiState<STATE, ACTION, VARDECL> state);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> createStorage(ACTION scope);
 
-	// Set<STATE> getAbstractStates(Deque<ACTION> callStack, LOC loc);
-
 	void scopeFixpointReached();
 
 	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
 			ACTION summaryAction);
 
-	Map<LOC, Term> getLoc2Term(final ACTION initialTransition, final Script script);
+	/**
+	 * Computes a mapping that assigns each location a term. The term represents the fixpoint computed at this location
+	 * according to the selected domain and analysis type. Locations that do not occur in the map were not reached.
+	 *
+	 * @return a map from location to term.
+	 */
+	Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> computeLoc2States();
 
-	Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
-
-	Map<LOC, STATE> getLoc2SingleStates(final ACTION initialTransition);
-
-	Set<Term> getTerms(final ACTION initialTransition, final Script script);
-
-	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
+	/**
+	 * Get the set of abstract domain states that is saved at the target location of the given symbol in the context
+	 * given by a call stack.
+	 *
+	 * @param callStack
+	 *            A stack of calls representing a context.
+	 * @param symbol
+	 *            The current transition.
+	 * @return The set of states saved at this location in this context or the empty set if no state is saved at this
+	 *         location.
+	 */
+	Set<STATE> computeContextSensitiveAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
 }

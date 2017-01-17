@@ -33,20 +33,16 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -122,33 +118,22 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public Map<LOC, Term> getLoc2Term(final ACTION initialTransition, final Script script) {
-		final Map<LOC, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
-		return convertStates2Terms(states, script);
-	}
-
-	@Override
-	public final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>>
-			getLoc2States(final ACTION initialTransition) {
-		final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> states =
-				getStatesOfAllChildren(initialTransition);
-		return states.entrySet().stream().filter(e -> e.getValue() != null && !e.getValue().isEmpty())
-				.collect(Collectors.toMap(e -> e.getKey(), v -> v.getValue()));
-	}
-
-	@Override
-	public Map<LOC, STATE> getLoc2SingleStates(final ACTION initialTransition) {
-		final Map<LOC, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
-		return states.entrySet().stream().filter(e -> e.getValue().mState != null).collect(Collectors
-				.toMap(Map.Entry::getKey, decorator -> decorator.getValue().mState.getSingleState(mMergeOperator)));
-	}
-
-	@Override
-	public Set<Term> getTerms(final ACTION initialTransition, final Script script) {
-		final Set<Term> rtr = new LinkedHashSet<>();
-		getLocalTerms(initialTransition, script, rtr);
-		mChildStores.stream().filter(a -> a != this).forEach(a -> rtr.addAll(a.getTerms(initialTransition, script)));
-		return rtr;
+	public final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> computeLoc2States() {
+		final Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> stores = getAllStores();
+		final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states = new HashMap<>();
+		for (final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> store : stores) {
+			for (final Entry<LOC, AbstractMultiState<STATE, ACTION, VARDECL>> entry : store.mStorage.entrySet()) {
+				final Set<AbstractMultiState<STATE, ACTION, VARDECL>> set = loc2states.get(entry.getKey());
+				if (set == null) {
+					final Set<AbstractMultiState<STATE, ACTION, VARDECL>> newSet = new HashSet<>();
+					newSet.add(entry.getValue());
+					loc2states.put(entry.getKey(), newSet);
+				} else {
+					set.add(entry.getValue());
+				}
+			}
+		}
+		return loc2states;
 	}
 
 	@Override
@@ -157,7 +142,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public Set<STATE> getAbstractPostStates(final Deque<ACTION> callStack, final ACTION symbol) {
+	public Set<STATE> computeContextSensitiveAbstractPostStates(final Deque<ACTION> callStack, final ACTION symbol) {
 		assert symbol != null;
 		assert mScope == null;
 		final Set<Pair<Deque<ACTION>, ACTION>> summaryCallStack = getSummaryCallStack(callStack, symbol);
@@ -320,176 +305,12 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		return sb;
 	}
 
-	private Map<LOC, StateDecorator> getMergedStatesOfAllChildren(final ACTION initialTransition) {
-		Map<LOC, StateDecorator> states = getMergedLocalStates(initialTransition);
-		for (final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> child : mChildStores.stream()
-				.filter(a -> a != this).collect(Collectors.toSet())) {
-			states = mergeMaps(states, child.getMergedStatesOfAllChildren(initialTransition), (a, b) -> a.merge(b));
+	private Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> getAllStores() {
+		final Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> rtr = new HashSet<>();
+		rtr.add(this);
+		for (final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> child : mChildStores) {
+			rtr.addAll(child.getAllStores());
 		}
-		return states;
-	}
-
-	private Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>>
-			getStatesOfAllChildren(final ACTION initialTransition) {
-		Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> states = getLocalStates(initialTransition);
-		for (final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> child : mChildStores.stream()
-				.filter(a -> a != this).collect(Collectors.toSet())) {
-			states = mergeMaps(states, child.getStatesOfAllChildren(initialTransition));
-		}
-		return states;
-	}
-
-	private Map<LOC, StateDecorator> getMergedLocalStates(final ACTION initialTransition) {
-		final Map<LOC, StateDecorator> rtr = new HashMap<>();
-		final Deque<ACTION> worklist = new ArrayDeque<>();
-		final Set<ACTION> closed = new HashSet<>();
-
-		worklist.add(initialTransition);
-
-		while (!worklist.isEmpty()) {
-			final ACTION current = worklist.remove();
-			// check if already processed
-			if (!closed.add(current)) {
-				continue;
-			}
-
-			final LOC postLoc = mTransProvider.getTarget(current);
-			// add successors to worklist
-			for (final ACTION outgoing : mTransProvider.getSuccessorActions(postLoc)) {
-				worklist.add(outgoing);
-			}
-
-			final AbstractMultiState<STATE, ACTION, VARDECL> states = mStorage.get(postLoc);
-
-			final StateDecorator currentState;
-			if (states == null || states.isEmpty()) {
-				// no states for this location
-				currentState = new StateDecorator();
-			} else {
-				currentState = new StateDecorator(states);
-			}
-
-			final StateDecorator alreadyKnownState = rtr.get(postLoc);
-			if (alreadyKnownState != null) {
-				rtr.put(postLoc, alreadyKnownState.merge(currentState));
-			} else {
-				rtr.put(postLoc, currentState);
-			}
-
-		}
-		return rtr;
-	}
-
-	private Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLocalStates(final ACTION initialTransition) {
-		final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> rtr = new HashMap<>();
-		final Deque<ACTION> worklist = new ArrayDeque<>();
-		final Set<ACTION> closed = new HashSet<>();
-
-		worklist.add(initialTransition);
-
-		while (!worklist.isEmpty()) {
-			final ACTION current = worklist.remove();
-
-			if (!closed.add(current)) {
-				continue;
-			}
-
-			final LOC postLoc = mTransProvider.getTarget(current);
-
-			for (final ACTION outgoing : mTransProvider.getSuccessorActions(postLoc)) {
-				worklist.add(outgoing);
-			}
-
-			Set<AbstractMultiState<STATE, ACTION, VARDECL>> alreadyKnownStates = rtr.get(postLoc);
-			if (alreadyKnownStates == null) {
-				alreadyKnownStates = new HashSet<>();
-				rtr.put(postLoc, alreadyKnownStates);
-			}
-
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState = mStorage.get(postLoc);
-			if (postState == null) {
-				continue;
-			}
-			alreadyKnownStates.add(postState);
-		}
-		return rtr;
-	}
-
-	private Set<Term> getLocalTerms(final ACTION initialTransition, final Script script, final Set<Term> terms) {
-		final Deque<ACTION> worklist = new ArrayDeque<>();
-		final Set<ACTION> closed = new LinkedHashSet<>();
-
-		worklist.add(initialTransition);
-
-		final Term falseTerm = script.term("false");
-
-		while (!worklist.isEmpty()) {
-			final ACTION current = worklist.remove();
-			// check if already processed
-			if (!closed.add(current)) {
-				continue;
-			}
-
-			final LOC postLoc = mTransProvider.getTarget(current);
-			// add successors to worklist
-			for (final ACTION outgoing : mTransProvider.getSuccessorActions(postLoc)) {
-				worklist.add(outgoing);
-			}
-
-			final AbstractMultiState<STATE, ACTION, VARDECL> multiState = mStorage.get(postLoc);
-
-			if (multiState == null || multiState.isEmpty()) {
-				// no states for this location
-				terms.add(falseTerm);
-			} else {
-				terms.add(multiState.getTerm(script));
-			}
-		}
-		return terms;
-	}
-
-	private static <K, V> Map<K, V> mergeMaps(final Map<K, V> a, final Map<K, V> b, final BiFunction<V, V, V> merge) {
-		final Map<K, V> rtr = new HashMap<>();
-
-		for (final Entry<K, V> entryA : a.entrySet()) {
-			final V valueB = b.get(entryA.getKey());
-			if (valueB == null) {
-				rtr.put(entryA.getKey(), entryA.getValue());
-			} else {
-				rtr.put(entryA.getKey(), merge.apply(entryA.getValue(), valueB));
-			}
-		}
-
-		for (final Entry<K, V> entryB : b.entrySet()) {
-			final V valueA = a.get(entryB.getKey());
-			if (valueA == null) {
-				rtr.put(entryB.getKey(), entryB.getValue());
-			} else {
-				// do nothing, this was already done in first iteration
-			}
-		}
-		return rtr;
-	}
-
-	private static <K, V> Map<K, Set<V>> mergeMaps(final Map<K, Set<V>> one, final Map<K, Set<V>> other) {
-		return mergeMaps(one, other, (a, b) -> {
-			assert a != null && b != null;
-			final Set<V> newSet = new HashSet<>();
-			newSet.addAll(a);
-			newSet.addAll(b);
-			return newSet;
-		});
-	}
-
-	private Map<LOC, Term> convertStates2Terms(final Map<LOC, StateDecorator> states, final Script script) {
-		final Map<LOC, Term> rtr = new HashMap<>();
-
-		for (final Entry<LOC, StateDecorator> entry : states.entrySet()) {
-			final Term term = entry.getValue().getTerm(script);
-			final LOC loc = entry.getKey();
-			rtr.put(loc, term);
-		}
-
 		return rtr;
 	}
 
@@ -507,39 +328,5 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 
 	protected ITransitionProvider<ACTION, LOC> getTransitionProvider() {
 		return mTransProvider;
-	}
-
-	private final class StateDecorator {
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mState;
-
-		private StateDecorator() {
-			mState = null;
-		}
-
-		private StateDecorator(final AbstractMultiState<STATE, ACTION, VARDECL> state) {
-			mState = state;
-		}
-
-		private Term getTerm(final Script script) {
-			if (mState == null) {
-				return script.term("false");
-			}
-			return mState.getTerm(script);
-		}
-
-		private StateDecorator merge(final StateDecorator other) {
-			if (other == null || other.mState == null) {
-				return this;
-			}
-			if (mState == null) {
-				return other;
-			}
-			return new StateDecorator(mState.merge(mMergeOperator, other.mState));
-		}
-
-		@Override
-		public String toString() {
-			return mState == null ? "null" : "\"" + mState.toLogString() + "\"";
-		}
 	}
 }

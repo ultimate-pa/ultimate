@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC, EXPRESSION> {
+public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC, EXPRESSION>
+		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
@@ -70,11 +71,10 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	private final ILogger mLogger;
 	private final Class<VARDECL> mVariablesType;
 
-	private AbstractInterpretationBenchmark<ACTION, LOC> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
 
-	public BackwardFixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC, EXPRESSION> params) {
+	public BackwardFixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
@@ -92,22 +92,16 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		mVariablesType = params.getVariablesType();
 	}
 
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
-			final Script script, final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> intermediateResult) {
-		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
-				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null
-				? new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType) : intermediateResult;
-		mBenchmark = mResult.getBenchmark();
-		calculateFixpoint(start);
-		// mResult.saveRootStorage(mStateStorage, start, script);
-		mResult.saveSummaryStorage(mSummaryMap);
-		return mResult;
-	}
-
+	@Override
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
 			final Script script) {
-		return run(start, script, new AbstractInterpretationResult<>(mDomain, mTransitionProvider, mVariablesType));
+		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
+				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
+		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVariablesType);
+		calculateFixpoint(start);
+		mResult.saveRootStorage(mStateStorage);
+		mResult.saveSummaryStorage(mSummaryMap);
+		return mResult;
 	}
 
 	private void calculateFixpoint(final Collection<LOC> sinks) {
@@ -116,15 +110,16 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		// add all incoming edges of the sinks to the worklist
+		// add all incoming edges of the sinks that are not unnecessary summaries to the worklist
 		sinks.stream().flatMap(a -> mTransitionProvider.getPredecessorActions(a).stream())
-				.map(this::createInitialWorklistItem).forEach(worklist::add);
+				.filter(a -> !mTransitionProvider.isSummaryWithImplementation(a)).map(this::createInitialWorklistItem)
+				.forEach(worklist::add);
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
 
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem = worklist.removeFirst();
-			mBenchmark.addIteration(currentItem.getAction());
+			mResult.getBenchmark().addIteration(currentItem.getAction());
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
@@ -428,7 +423,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
 			}
-			mBenchmark.addFixpoint();
+			mResult.getBenchmark().addFixpoint();
 			return true;
 		}
 		return false;
