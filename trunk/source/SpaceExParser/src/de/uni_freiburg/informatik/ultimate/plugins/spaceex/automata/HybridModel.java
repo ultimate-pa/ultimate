@@ -27,11 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -61,7 +59,7 @@ public class HybridModel {
 	private final HybridSystemFactory mHybridSystemFactory;
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
-	private List<HybridSystem> mSystems;
+	private Map<String, HybridSystem> mSystems;
 	private Map<String, HybridAutomaton> mMergedAutomata;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
@@ -70,7 +68,7 @@ public class HybridModel {
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
-		mSystems = new ArrayList<>();
+		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
@@ -94,7 +92,7 @@ public class HybridModel {
 		if (systems.isEmpty()) {
 			HybridSystem hybsys = createDefaultSystem(automata);
 			mLogger.info("hybridsystem created:\n" + hybsys.toString());
-			mSystems.add(hybsys);
+			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
@@ -102,9 +100,9 @@ public class HybridModel {
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
 						mPreferenceManager);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
-				mSystems.add(hybsys);
+				mSystems.put(hybsys.getName(), hybsys);
 				HybridAutomaton hybAut = mergeAutomata(hybsys);
-				mMergedAutomata.put(hybAut.getName(), hybAut);
+				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
 	}
@@ -124,7 +122,7 @@ public class HybridModel {
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
-		mSystems = new ArrayList<>();
+		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
@@ -148,7 +146,7 @@ public class HybridModel {
 		if (systems.isEmpty()) {
 			HybridSystem hybsys = createDefaultSystem(automata);
 			mLogger.info("hybridsystem created:\n" + hybsys.toString());
-			mSystems.add(hybsys);
+			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
@@ -156,9 +154,9 @@ public class HybridModel {
 				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
 						mPreferenceManager);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
-				mSystems.add(hybsys);
+				mSystems.put(hybsys.getName(), hybsys);
 				HybridAutomaton hybAut = mergeAutomata(hybsys);
-				mMergedAutomata.put(hybAut.getName(), hybAut);
+				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
 	}
@@ -191,14 +189,6 @@ public class HybridModel {
 				new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
 	}
 	
-	public List<HybridSystem> getSystems() {
-		return mSystems;
-	}
-	
-	public Map<String, HybridAutomaton> getMergedAutomata() {
-		return mMergedAutomata;
-	}
-	
 	/**
 	 * Function that merges all Automata of a {@link HybridSystem} into one {@link HybridAutomata}
 	 * 
@@ -220,6 +210,14 @@ public class HybridModel {
 		}
 		mLogger.info(merged.toString());
 		return merged;
+	}
+	
+	public Map<String, HybridSystem> getSystems() {
+		return mSystems;
+	}
+	
+	public Map<String, HybridAutomaton> getMergedAutomata() {
+		return mMergedAutomata;
 	}
 	
 }

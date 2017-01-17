@@ -52,6 +52,7 @@ public class SpaceExPreferenceManager {
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private String mSystem;
+	private String mModelFilename;
 	private Map<String, String> mInitialLocations;
 	private Map<String, List<SignValuePair>> mInitialVariables;
 	
@@ -65,6 +66,7 @@ public class SpaceExPreferenceManager {
 				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
 		boolean loadconfig = preferenceProvider
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
+		mModelFilename = spaceExFile.getAbsolutePath();
 		mInitialVariables = new HashMap<>();
 		mInitialLocations = new HashMap<>();
 		// check if the configfile name is not empty
@@ -161,6 +163,10 @@ public class SpaceExPreferenceManager {
 	
 	public Map<String, List<SignValuePair>> getInitialVariables() {
 		return mInitialVariables;
+	}
+	
+	public String getFileName() {
+		return mModelFilename;
 	}
 	
 }

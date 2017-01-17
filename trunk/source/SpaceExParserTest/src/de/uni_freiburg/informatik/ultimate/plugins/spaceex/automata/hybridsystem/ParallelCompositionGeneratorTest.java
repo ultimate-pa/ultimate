@@ -45,7 +45,7 @@ public class ParallelCompositionGeneratorTest {
 		fis.close();
 		HybridModel system = new HybridModel(spaceEx, logger);
 		Map<String, HybridAutomaton> mergedAutomata = system.getMergedAutomata();
-		HybridAutomaton merge = mergedAutomata.get("aut2||aut1");
+		HybridAutomaton merge = mergedAutomata.get("sys1");
 		System.out.println(merge);
 		assertEquals("aut2||aut1", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -66,7 +66,7 @@ public class ParallelCompositionGeneratorTest {
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
 		mergedAutomata = system.getMergedAutomata();
-		merge = mergedAutomata.get("aut2||aut1");
+		merge = mergedAutomata.get("sys1");
 		System.out.println(merge);
 		assertEquals("aut2||aut1", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -88,7 +88,7 @@ public class ParallelCompositionGeneratorTest {
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
 		mergedAutomata = system.getMergedAutomata();
-		merge = mergedAutomata.get("aut2||aut1");
+		merge = mergedAutomata.get("sys1");
 		System.out.println(merge);
 		assertEquals("aut2||aut1", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -119,7 +119,7 @@ public class ParallelCompositionGeneratorTest {
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
 		mergedAutomata = system.getMergedAutomata();
-		merge = mergedAutomata.get("aut2||aut1");
+		merge = mergedAutomata.get("sys1");
 		System.out.println(merge);
 		assertEquals("aut2||aut1", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());

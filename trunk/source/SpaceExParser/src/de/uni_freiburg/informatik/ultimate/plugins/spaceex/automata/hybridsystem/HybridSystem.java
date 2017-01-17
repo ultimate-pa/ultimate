@@ -102,6 +102,7 @@ public class HybridSystem {
 			}
 			
 		});
+		// rename variables according to binds
 		// TODO: find out how IDS are set, we need autName instead of autName_1
 		mLogger.info("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
@@ -130,16 +131,16 @@ public class HybridSystem {
 		// TODO Add bind.
 	}
 	
-	private void renameLabels() {
-		
-	}
-	
 	public Map<String, HybridAutomaton> getAutomata() {
 		return mAutomata;
 	}
 	
 	public String getName() {
 		return mName;
+	}
+	
+	public Map<String, Map<String, String>> getBinds() {
+		return mBinds;
 	}
 	
 	@Override
@@ -169,7 +170,4 @@ public class HybridSystem {
 		return sb.toString();
 	}
 	
-	public Map<String, Map<String, String>> getBinds() {
-		return mBinds;
-	}
 }
