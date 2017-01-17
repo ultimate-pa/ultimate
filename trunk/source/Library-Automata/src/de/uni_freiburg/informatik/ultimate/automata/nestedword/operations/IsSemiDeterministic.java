@@ -231,8 +231,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		for (final LETTER letter : nwa.lettersInternal(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
-					nwa.internalSuccessors(state, letter).iterator(); iterator.hasNext();) {
-				iterator.next();
+					nwa.internalSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
@@ -250,7 +249,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		for (final LETTER letter : nwa.lettersCall(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
-					nwa.callSuccessors(state, letter).iterator(); iterator.hasNext();) {
+					nwa.callSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
 				numberOfSuccs++;
 				if (numberOfSuccs > 1) {
 					return true;
@@ -268,7 +267,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
-					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext();) {
+					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
 				numberOfSuccs++;
 				if (numberOfSuccs > 1) {
 					return true;
@@ -287,7 +286,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 			for (final STATE hier : nwa.hierarchicalPredecessorsOutgoing(state, letter)) {
 				int numberOfSuccs = 0;
 				for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
-						nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext();) {
+						nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
 					numberOfSuccs++;
 					if (numberOfSuccs > 1) {
 						return true;

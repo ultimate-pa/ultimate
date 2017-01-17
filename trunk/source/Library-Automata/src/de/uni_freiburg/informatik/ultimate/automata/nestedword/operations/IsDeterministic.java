@@ -75,7 +75,7 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		mNondeterministicInitials = (mOperand.getInitialStates().size() > 1);
 		mNondeterministicTransitions = checkIfOperandhasNondeterministicTransitions();
-		mResult = mNondeterministicInitials || mNondeterministicTransitions;
+		mResult = !mNondeterministicInitials && !mNondeterministicTransitions;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
