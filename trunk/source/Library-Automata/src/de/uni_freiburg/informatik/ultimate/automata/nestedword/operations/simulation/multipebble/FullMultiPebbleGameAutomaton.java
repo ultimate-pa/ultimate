@@ -108,8 +108,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return "has " + mInitialStates.size() + " initial states, number of all states yet unknown.";
 	}
 
 	@Override
