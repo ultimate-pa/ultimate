@@ -71,6 +71,12 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 		}
 		return true;
 	}
+	
+	
+	@Override
+	public int getNumberOfPebbles() {
+		return mDuplicatorDoubleDeckers.size();
+	}
 
 
 	@Override
@@ -110,7 +116,7 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 	}
 	
 	
-	
+
 	
 
 	

@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <GS>
  */
 public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>> implements IStateFactory<GS> {
+	
+	private final int mMaxNumberOfPebbles = 0;
 
 	public FullMultipebbleStateFactory() {
 		super();

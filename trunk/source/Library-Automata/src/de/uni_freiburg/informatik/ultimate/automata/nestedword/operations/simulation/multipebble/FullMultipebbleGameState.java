@@ -53,9 +53,9 @@ public abstract class FullMultipebbleGameState<STATE> {
 		return mSpoilerDoubleDecker;
 	}
 	
-
-	
 	public abstract boolean isAccepting();
+	
+	public abstract int getNumberOfPebbles();
 	
 	
 	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsInternal(final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {

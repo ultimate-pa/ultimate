@@ -55,6 +55,11 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 	public boolean isAccepting() {
 		return mDuplicatorDoubleDeckers.isEmpty();
 	}
+	
+	@Override
+	public int getNumberOfPebbles() {
+		return mDuplicatorDoubleDeckers.size();
+	}
 
 	@Override
 	public int hashCode() {
@@ -86,6 +91,7 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 		return "DirectFullMultipebbleGameState [mDuplicatorDoubleDeckers=" + mDuplicatorDoubleDeckers
 				+ ", mSpoilerDoubleDecker=" + mSpoilerDoubleDecker + "]";
 	}
+
 
 
 
