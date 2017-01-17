@@ -1329,9 +1329,6 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		
 		for (final LETTER letter : lettersReturnIncoming(state)) {
 			final Map<STATE, Set<STATE>> hier2pred = mReturnIn.get(state).get(letter);
-			if (hier2pred != null) {
-				continue;
-			}
 			for (final STATE hier : hier2pred.keySet()) {
 				for (final STATE pred : predReturnLin(state, letter, hier)) {
 					removeReturnOut(pred, hier, letter, state);
