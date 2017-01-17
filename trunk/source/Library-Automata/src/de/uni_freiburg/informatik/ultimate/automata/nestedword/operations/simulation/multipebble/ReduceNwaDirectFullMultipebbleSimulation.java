@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
@@ -96,7 +96,7 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 			final FullMultiPebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton = 
 					new FullMultiPebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>>(mServices, gameFactory, possibleEquivalentClasses, operand);
 			final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> removed =
-					new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
+					new RemoveDeadEnds<>(mServices, gameAutomaton).getResult();
 			final int gameAutomatonSize = removed.size();
 			final NestedMap2<STATE, STATE, DirectFullMultipebbleGameState<STATE>> gsm = gameAutomaton.getGameStateMapping();
 			
@@ -116,6 +116,8 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 					sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
 					gameAutomatonSize);
+			mStatistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
+			mStatistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, mResult.size());
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -155,11 +157,11 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 				return false;
 			} 
 			final DirectFullMultipebbleGameState<STATE> s1 = mGameStateMapping.get(q0, q1);
-			if (mRemoved.getStates().contains(s1)) {
+			if (mRemoved.isInitial(s1)) {
 				return false;
 			}
 			final DirectFullMultipebbleGameState<STATE> s2 = mGameStateMapping.get(q1, q0);
-			if (mRemoved.getStates().contains(s2)) {
+			if (mRemoved.isInitial(s2)) {
 				return false;
 			}
 			return true;
@@ -189,6 +191,11 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
 	}
 	
 

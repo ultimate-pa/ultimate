@@ -67,7 +67,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		mPossibleEquivalenceClasses = possibleEquivalentClasses;
 		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
-		final XYYZ te = new XYYZ(services);
+		final InitialStateConstructor te = new InitialStateConstructor(services);
 		te.process(possibleEquivalentClasses);
 	}
 	
@@ -175,15 +175,15 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	}
 
 
-	private class XYYZ extends InitialPartitionProcessor<STATE> {
+	private class InitialStateConstructor extends InitialPartitionProcessor<STATE> {
 
-		public XYYZ(final AutomataLibraryServices services) {
+		public InitialStateConstructor(final AutomataLibraryServices services) {
 			super(services);
 		}
 
 		@Override
 		public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
-			return mStateFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand);
+			return !mStateFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand);
 		}
 
 		@Override

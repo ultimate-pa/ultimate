@@ -75,7 +75,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 	}
 	
 	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsReturn(final DoubleDecker<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		if (hier.getUp() != mSpoilerDoubleDecker.getDown()) {
+		if (!hier.getUp().equals(mSpoilerDoubleDecker.getDown())) {
 			throw new IllegalArgumentException("mismatch");
 		}
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
