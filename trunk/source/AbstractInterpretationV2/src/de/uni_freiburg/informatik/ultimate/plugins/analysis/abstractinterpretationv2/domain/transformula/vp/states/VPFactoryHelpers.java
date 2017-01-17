@@ -297,7 +297,10 @@ public class VPFactoryHelpers {
 		
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection)
+		 * TODO: this won't work like this because the two states may have different equivalence classes, and even if 
+		 *    those were the same, they might have different representatives!
 		 */
+		assert false : "TODO";
 		Set<VPDomainSymmetricPair<NODEID>> newDisequalities = new HashSet<>(first.getDisEqualities());
 		newDisequalities.retainAll(second.getDisEqualities());
 		builder.addDisEqualites(newDisequalities);

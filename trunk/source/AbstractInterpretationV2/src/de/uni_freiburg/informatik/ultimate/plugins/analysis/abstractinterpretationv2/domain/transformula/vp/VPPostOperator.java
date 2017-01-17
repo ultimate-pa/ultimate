@@ -305,6 +305,10 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
 //			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs, tfStateBuilder).getElements();
 			
+			if (lhsWrapper == null || rhsWrapper == null) {
+				return Collections.singleton(tfPreState);
+			}
+			
 			Set<VPTfState> resultStates = new HashSet<>();
 //			
 			for (NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
