@@ -354,6 +354,7 @@ public class VPDomainHelpers {
 
 	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
 		boolean isHavocced(ARRAYID array, IVPStateOrTfState<NODEID, ARRAYID> resultState) {
+		//TODO: fix the other isHavocced before using this
 		for (EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
 			if (!node.nodeIdentifier.getAllFunctions().contains(array)) {
 				continue;
@@ -370,10 +371,12 @@ public class VPDomainHelpers {
 		boolean isHavocced(NODEID nodeId, IVPStateOrTfState<NODEID, ARRAYID> resultState) {
 		EqGraphNode<NODEID, ARRAYID> node = resultState.getEqGraphNode(nodeId);
 		/*
-		 *  node talks about array 
-		 *   --> it must be its own representative 
+		 *  the node that has been havocced 
+		 *   --> must be its own representative 
 		 *   --> its set of reverseRepresentatives must be empty
-		 *   --> it may not appear in a disequality
+		 *   --> may not appear in a disequality
+		 *   ... -except- if there is a reason for propagation somewhere else in the graph(!)
+		 *    --> TODO: either account for this or don't use this method
 		 */
 		if (node.getRepresentative() != node) {
 			return false;

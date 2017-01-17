@@ -215,8 +215,9 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				 * finer: if no outVars occur, then the prestate can be returned safely, right?
 				 */
 				// VPState<ACTION> result = mStateFactory.havocVariables(assignedVars, prestate);
-				assert false : "TODO: implement";
-				return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
+//				assert false : "TODO: implement";
+//				return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
+				return Collections.singleton(tfPreState);
 			}
 
 		} else if (term instanceof QuantifiedFormula) {

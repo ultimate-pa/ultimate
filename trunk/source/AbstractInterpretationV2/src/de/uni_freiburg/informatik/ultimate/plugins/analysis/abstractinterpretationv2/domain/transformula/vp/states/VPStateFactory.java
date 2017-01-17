@@ -127,7 +127,6 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	public VPStateBottom<ACTION> getBottomState(final Set<IProgramVar> set) {
 		VPStateBottom<ACTION> result = mBottomStates.get(set);
 		if (result == null) {
-//			final VPStateBottomBuilder<ACTION> builder = new VPStateBottomBuilder<>(mDomain);
 			result = new VPStateBottom<>(mDomain, set);
 			mBottomStates.put(set, result);
 		}
@@ -321,7 +320,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		
 		//assert !node.isLiteral() : "cannot havoc a literal";
 		assert nodeToBeHavocced.getTerm().getFreeVars().length > 0 : "cannot havoc a constant term";
-		
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(originalState.getDisEqualities(), originalState);
+
 		
 		VPStateBuilder<ACTION> builder1 = copy(originalState);
 		EqGraphNode<EqNode, IProgramVarOrConst> graphNodeForNodeToBeHavocced = builder1.getEqGraphNode(nodeToBeHavocced);
@@ -433,7 +433,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			}
 		}
 		
-		assert VPDomainHelpers.isHavocced(nodeToBeHavocced, resultState);
+		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(resultState.getDisEqualities(), resultState);
+//		assert VPDomainHelpers.isHavocced(nodeToBeHavocced, resultState);
 		return resultState;
 	}
 	
@@ -451,7 +452,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			}
 		}
 		
-		assert VPDomainHelpers.isHavocced(array, resultState);
+//		assert VPDomainHelpers.isHavocced(array, resultState);
 		return resultState;
 	}
 
