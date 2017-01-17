@@ -66,6 +66,7 @@ public final class PlotUtil {
 			int returnOutputIndex = -1;
 			int sizeAfterPreProcIndex = -1;
 			int removedIndex = -1;
+			int overallTimeIndex = -1;
 			for (int i = 0; i < headers.length; i++) {
 				final String header = headers[i];
 				if (header.equals("DIRECTORY")) {
@@ -86,6 +87,8 @@ public final class PlotUtil {
 					sizeAfterPreProcIndex = i;
 				} else if (header.equals(ECountingMeasure.REMOVED_STATES.toString())) {
 					removedIndex = i;
+				} else if (header.equals(ETimeMeasure.OVERALL.toString())) {
+					overallTimeIndex = i;
 				}
 			}
 
@@ -93,7 +96,7 @@ public final class PlotUtil {
 					+ "HIERPRED_DENSITY" + separator + "ACCEPTANCE" + separator + "#INTERNAL_AFTER_PRE_PROC" + separator
 					+ "#CALL_AFTER_PRE_PROC" + separator + "#RETURN_AFTER_PRE_PROC" + separator + "#INTERNAL_OUTPUT"
 					+ separator + "#CALL_OUTPUT" + separator + "#RETURN_OUTPUT" + separator + "SIZE_INITIAL" + separator
-					+ "SIZE_AFTER_PRE_PROC" + separator + "SIZE_OUTPUT");
+					+ "SIZE_AFTER_PRE_PROC" + separator + "SIZE_OUTPUT" + separator + "OVERALL_TIME");
 
 			while (br.ready()) {
 				final String line = br.readLine();
@@ -111,6 +114,7 @@ public final class PlotUtil {
 				final String returnOutputText = values[returnOutputIndex];
 				final String sizeAfterPreProcText = values[sizeAfterPreProcIndex];
 				final String removedText = values[removedIndex];
+				final String overallTimeText = values[overallTimeIndex];
 
 				final int internalAfterPreProc;
 				if (internalAfterPreProcText.equals(noValue)) {
@@ -161,6 +165,12 @@ public final class PlotUtil {
 					removed = Integer.parseInt(removedText);
 				}
 				final int sizeOutput = sizeAfterPreProc - removed;
+				final float overallTimeOutput;
+				if (overallTimeText.equals(noValue)) {
+					overallTimeOutput = 0;
+				} else {
+					overallTimeOutput = Float.parseFloat(overallTimeText);
+				}
 
 				int sizeInitial = -1;
 				int acceptance = -1;
@@ -187,7 +197,7 @@ public final class PlotUtil {
 						+ hierPredDensity + separator + acceptance + separator + internalAfterPreProc + separator
 						+ callAfterPreProc + separator + returnAfterPreProc + separator + internalOutput + separator
 						+ callOutput + separator + returnOutput + separator + sizeInitial + separator + sizeAfterPreProc
-						+ separator + sizeOutput);
+						+ separator + sizeOutput + separator + overallTimeOutput);
 			}
 		} finally {
 			if (br != null) {

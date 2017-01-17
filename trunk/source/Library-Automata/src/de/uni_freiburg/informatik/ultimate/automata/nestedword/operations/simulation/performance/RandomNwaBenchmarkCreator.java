@@ -88,7 +88,7 @@ public final class RandomNwaBenchmarkCreator {
 		// Settings for both methods
 		final int n = 100;
 		final int k = 1;
-		final int amount = 20;
+		final int amount = 500;
 		final int operationSwitch = 0;
 		final boolean useRandomTvModel = true;
 
