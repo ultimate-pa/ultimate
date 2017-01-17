@@ -120,9 +120,9 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<>(mServices, mOperand,
 						false, false, false, false)).getResult();
 		correct &= ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
-		assert correct;
+		assert correct : "remove unreachable incorrect: too few states";
 		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
-		assert correct;
+		assert correct : "remove unreachable incorrect: too many states";
 		correct = correct && checkEachState(reachableStatesCopy);
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
