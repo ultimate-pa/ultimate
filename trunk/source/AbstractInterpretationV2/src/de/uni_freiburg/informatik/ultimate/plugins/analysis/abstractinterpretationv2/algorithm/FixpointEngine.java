@@ -93,6 +93,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mVariablesType = params.getVariablesType();
 	}
 
+	@Override
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
@@ -318,8 +319,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final Set<ACTION> reachedErrors) {
 		final ACTION currentAction = currentItem.getAction();
-		if (!mTransitionProvider.isSuccessorErrorLocation(currentAction, currentItem.getCurrentScope())
-				|| postState.isBottom() || !reachedErrors.add(currentAction)) {
+		final LOC postLoc = mTransitionProvider.getTarget(currentAction);
+		if (!mTransitionProvider.isErrorLocation(postLoc) || postState.isBottom()
+				|| !reachedErrors.add(currentAction)) {
 			// no new error reached
 			return;
 		}

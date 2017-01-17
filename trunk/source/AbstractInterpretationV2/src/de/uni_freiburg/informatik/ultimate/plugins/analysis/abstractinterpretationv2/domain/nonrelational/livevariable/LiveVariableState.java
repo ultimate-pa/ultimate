@@ -196,6 +196,6 @@ public class LiveVariableState<ACTION extends IAction>
 
 	@Override
 	public Set<IProgramVar> getVariables() {
-		throw new UnsupportedOperationException("This domain does not track variables");
+		return Collections.emptySet();
 	}
 }

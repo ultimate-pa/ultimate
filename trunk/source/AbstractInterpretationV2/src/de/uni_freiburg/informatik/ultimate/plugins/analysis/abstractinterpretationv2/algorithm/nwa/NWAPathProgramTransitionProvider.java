@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,10 +11,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  *
@@ -25,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider implements ILoopDetector<CodeBlock> {
 
 	private final NestedRun<CodeBlock, ?> mCex;
-	private final Set<CodeBlock> mLetter2Index;
+	private final Set<CodeBlock> mLetters;
 	private final CodeBlock mPostErrorLoc;
 
 	public NWAPathProgramTransitionProvider(final NestedRun<CodeBlock, ?> counterexample,
@@ -33,31 +30,29 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 			final IIcfg<BoogieIcfgLocation> annotation) {
 		super();
 		mCex = counterexample;
-		mLetter2Index = pathProgramProjection;
+		mLetters = pathProgramProjection;
 		// words count their states, so 0 is first state, length is last state
 		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2);
 	}
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(final CodeBlock elem, final CodeBlock scope) {
-		final BoogieIcfgLocation target = getTarget(elem);
-		if (target == null) {
-			return Collections.emptyList();
-		}
-		return RcfgUtils.getValidCodeBlocks(getSuccessorActions(target), scope).stream().map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
+		return super.getSuccessors(elem, scope).stream().filter(mLetters::contains).collect(Collectors.toSet());
 	}
 
 	@Override
-	public boolean isSuccessorErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
-		assert elem != null;
-		return mPostErrorLoc == elem;
+	public Collection<CodeBlock> getPredecessors(final CodeBlock elem, final CodeBlock scope) {
+		return super.getPredecessors(elem, scope).stream().filter(mLetters::contains).collect(Collectors.toSet());
+	}
+
+	@Override
+	public boolean isErrorLocation(final BoogieIcfgLocation loc) {
+		return loc.equals(mPostErrorLoc);
 	}
 
 	@Override
 	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
-		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.contains(a) || a instanceof Summary)
-				.map(a -> (CodeBlock) a).collect(Collectors.toList());
+		return super.getSuccessorActions(loc).stream().filter(mLetters::contains).collect(Collectors.toSet());
 	}
 
 	@Override

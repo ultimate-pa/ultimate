@@ -53,6 +53,8 @@ public interface ITransitionProvider<ACTION, LOC> {
 	 */
 	Collection<ACTION> getSuccessors(ACTION action, ACTION scope);
 
+	Collection<ACTION> getPredecessors(ACTION action, ACTION scope);
+
 	/**
 	 * @param loc
 	 *            the current location.
@@ -68,13 +70,11 @@ public interface ITransitionProvider<ACTION, LOC> {
 	Collection<ACTION> getPredecessorActions(LOC loc);
 
 	/**
-	 * @param action
-	 *            a transition.
-	 * @param scope
-	 *            the current scope of the analysis.
-	 * @return true if the target of this transition is an error location.
+	 * @param loc
+	 *            a location.
+	 * @return true if the location is an error location.
 	 */
-	boolean isSuccessorErrorLocation(ACTION action, ACTION scope);
+	boolean isErrorLocation(LOC loc);
 
 	/**
 	 * @param action

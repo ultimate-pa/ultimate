@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -46,11 +45,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpretationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.BackwardFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
@@ -193,7 +195,38 @@ public final class AbstractInterpreter {
 			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> runFuture(final IIcfg<?> root,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services, final boolean isSilent,
 					final ILogger logger) {
-		return runFuture(root, timer, services, logger, isSilent, (fac, log) -> fac.selectDomainFutureCfg());
+		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
+		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
+		final FixpointEngineFutureParameterFactory domFac = new FixpointEngineFutureParameterFactory(root, services);
+		final IAbstractDomain<STATE, IcfgEdge, IProgramVar> domain = domFac.selectDomainFutureCfg();
+		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> params =
+				domFac.createParamsFuture(timer, transProvider, loopDetector, domain);
+
+		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
+		final Set<IcfgLocation> initialNodes;
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation> fxpe;
+		if (domain instanceof LiveVariableDomain<?>) {
+			// run backwards is hacky if run as stand-alone analysis
+			initialNodes = getSinks(root);
+			fxpe = new BackwardFixpointEngine<>(params.setMaxParallelStates(1));
+			final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> result =
+					fxpe.run(initialNodes, script);
+			return postProcessResult(services, logger, true, initialNodes.size() > 1, result);
+		}
+		initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
+		fxpe = new FixpointEngine<>(params);
+		final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> result =
+				fxpe.run(initialNodes, script);
+		return postProcessResult(services, logger, isSilent, initialNodes.size() > 1, result);
+	}
+
+	/**
+	 * Get sink nodes of the icfg
+	 *
+	 */
+	private static Set<IcfgLocation> getSinks(final IIcfg<?> root) {
+		return new IcfgLocationIterator<>(root).asStream().filter(a -> a.getOutgoingEdges().isEmpty())
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -210,7 +243,8 @@ public final class AbstractInterpreter {
 				new FixpointEngineParameters<>(services, IProgramVar.class);
 		return runFuture(root, services, logger, isSilent,
 				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(logger, root, services))
-						.setTimer(timer));
+						.setTimer(timer),
+				p -> new FixpointEngine<>(p));
 	}
 
 	public static IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
@@ -219,7 +253,7 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVar.class);
 		return runFuture(root, services, logger, isSilent,
-				params.setDomain(new DataflowDomain<>(logger)).setTimer(timer));
+				params.setDomain(new DataflowDomain<>(logger)).setTimer(timer), p -> new FixpointEngine<>(p));
 	}
 
 	public static IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
@@ -228,25 +262,8 @@ public final class AbstractInterpreter {
 		final FixpointEngineParameters<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVar.class);
 		return runFuture(root, services, logger, isSilent,
-				params.setDomain(new LiveVariableDomain<>(logger)).setTimer(timer).setMaxParallelStates(1));
-	}
-
-	private static <STATE extends IAbstractState<STATE, IProgramVar>>
-			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation>
-			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-					final ILogger logger, final boolean isSilent,
-					final BiFunction<FixpointEngineFutureParameterFactory, ILogger, IAbstractDomain<STATE, IcfgEdge, IProgramVar>> fun) {
-
-		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> params =
-				getFinalParamsFuture(root, timer, services, logger, fun);
-
-		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
-		final Set<IcfgLocation> initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
-		final FixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation> fxpe = new FixpointEngine<>(params);
-		final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> result =
-				fxpe.run(initialNodes, script);
-
-		return postProcessResult(services, logger, isSilent, initialNodes.size() > 1, result);
+				params.setDomain(new LiveVariableDomain<>(logger)).setTimer(timer).setMaxParallelStates(1),
+				p -> new BackwardFixpointEngine<>(p));
 	}
 
 	/**
@@ -280,19 +297,6 @@ public final class AbstractInterpreter {
 		return result;
 	}
 
-	private static <STATE extends IAbstractState<STATE, IProgramVar>>
-			FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation>
-			getFinalParamsFuture(final IIcfg<?> root, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services, final ILogger logger,
-					final BiFunction<FixpointEngineFutureParameterFactory, ILogger, IAbstractDomain<STATE, IcfgEdge, IProgramVar>> fun) {
-		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
-		final FixpointEngineFutureParameterFactory domFac = new FixpointEngineFutureParameterFactory(root, services);
-		final ILoopDetector<IcfgEdge> loopDetector = new RcfgLoopDetector<>();
-		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> params =
-				domFac.createParamsFuture(timer, transProvider, loopDetector, fun.apply(domFac, logger));
-		return params;
-	}
-
 	/**
 	 * Expects initial params with domain already set.
 	 *
@@ -300,7 +304,8 @@ public final class AbstractInterpreter {
 	private static <STATE extends IAbstractState<STATE, IProgramVar>>
 			IAbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> runFuture(final IIcfg<?> root,
 					final IUltimateServiceProvider services, final ILogger logger, final boolean isSilent,
-					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> initialParams) {
+					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> initialParams,
+					final FixpointEngineFactory<STATE> funCreateEngine) {
 
 		final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 
@@ -310,8 +315,15 @@ public final class AbstractInterpreter {
 		final FixpointEngineFutureParameterFactory paramFac = new FixpointEngineFutureParameterFactory(root, services);
 		final FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> params =
 				paramFac.addDefaultParamsFuture(initialParams, transProvider, loopDetector);
-		final Set<IcfgLocation> initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
-		final FixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation> fxpe = new FixpointEngine<>(params);
+		final IFixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation> fxpe = funCreateEngine.create(params);
+
+		final Set<IcfgLocation> initialNodes;
+		if (fxpe instanceof BackwardFixpointEngine<?, ?, ?, ?>) {
+			initialNodes = getSinks(root);
+		} else {
+			initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
+		}
+
 		final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVar, IcfgLocation> result =
 				fxpe.run(initialNodes, script);
 
@@ -364,5 +376,11 @@ public final class AbstractInterpreter {
 			return new RcfgLibraryModeResultReporter<>(services);
 		}
 		return new RcfgResultReporter<>(services);
+	}
+
+	@FunctionalInterface
+	private interface FixpointEngineFactory<STATE extends IAbstractState<STATE, IProgramVar>> {
+		IFixpointEngine<STATE, IcfgEdge, IProgramVar, IcfgLocation>
+				create(FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation> params);
 	}
 }

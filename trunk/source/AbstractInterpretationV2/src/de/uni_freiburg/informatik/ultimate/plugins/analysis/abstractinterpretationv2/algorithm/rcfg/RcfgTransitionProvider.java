@@ -30,8 +30,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -52,26 +54,18 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		return RcfgUtils.getValidCodeBlocks(target.getOutgoingEdges(), scope).stream().map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
+		return target.getOutgoingEdges().stream().map(a -> (CodeBlock) a)
+				.filter(a -> !(a instanceof IReturnAction) || isLeavingScope(a, scope)).collect(Collectors.toSet());
 	}
 
 	@Override
-	public boolean isSuccessorErrorLocation(final CodeBlock elem, final CodeBlock currentScope) {
-		assert elem != null;
-
-		if (elem instanceof IIcfgReturnTransition<?, ?>) {
-			if (!RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) elem, currentScope)) {
-				return false;
-			}
+	public Collection<CodeBlock> getPredecessors(final CodeBlock elem, final CodeBlock scope) {
+		final IcfgLocation source = elem.getSource();
+		if (source == null) {
+			return Collections.emptyList();
 		}
-
-		final IcfgLocation target = elem.getTarget();
-		if (target instanceof BoogieIcfgLocation) {
-			final BoogieIcfgLocation progPoint = (BoogieIcfgLocation) target;
-			return progPoint.isErrorLocation();
-		}
-		return false;
+		return source.getIncomingEdges().stream().map(a -> (CodeBlock) a)
+				.filter(a -> !(a instanceof ICallAction) || isEnteringScope(a, scope)).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -158,4 +152,10 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 		return call.getSource().getOutgoingEdges().stream().map(a -> (CodeBlock) a)
 				.filter(a -> isSummaryForCall(a, call)).findFirst().orElse(null);
 	}
+
+	@Override
+	public boolean isErrorLocation(final BoogieIcfgLocation loc) {
+		return loc.isErrorLocation();
+	}
+
 }

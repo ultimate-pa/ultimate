@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -67,18 +66,13 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 	}
 
 	@Override
-	public boolean isSuccessorErrorLocation(final IcfgEdge elem, final IcfgEdge currentScope) {
-		assert elem != null;
-
-		if (elem instanceof Return && !isLeavingScope(elem, currentScope)) {
-			return false;
+	public Collection<IcfgEdge> getPredecessors(final IcfgEdge elem, final IcfgEdge scope) {
+		final IcfgLocation source = elem.getSource();
+		if (source == null) {
+			return Collections.emptyList();
 		}
-		final String proc = elem.getSucceedingProcedure();
-		final Set<?> errors = mIcfg.getProcedureErrorNodes().get(proc);
-		if (errors == null) {
-			return false;
-		}
-		return errors.contains(elem.getTarget());
+		return source.getIncomingEdges().stream().filter(a -> !(a instanceof ICallAction) || isEnteringScope(a, scope))
+				.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -167,6 +161,17 @@ public class IcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 		}
 		return call.getSource().getOutgoingEdges().stream().filter(a -> isSummaryForCall(a, call)).findFirst()
 				.orElse(null);
+	}
+
+	@Override
+	public boolean isErrorLocation(final IcfgLocation loc) {
+
+		final String proc = loc.getProcedure();
+		final Set<?> errors = mIcfg.getProcedureErrorNodes().get(proc);
+		if (errors == null) {
+			return false;
+		}
+		return errors.contains(loc);
 	}
 
 }

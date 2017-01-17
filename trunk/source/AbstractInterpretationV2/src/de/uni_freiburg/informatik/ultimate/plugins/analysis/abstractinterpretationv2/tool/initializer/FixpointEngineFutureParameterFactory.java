@@ -91,10 +91,8 @@ public class FixpointEngineFutureParameterFactory {
 				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVar, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-		return new FixpointEngineParameters<STATE, IcfgEdge, IProgramVar, IcfgLocation>(mServices, IProgramVar.class)
-				.setDomain(params.getAbstractDomain()).setLoopDetector(loopDetector).setStorage(storageProvider)
-				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-				.setDebugHelper(debugHelper);
+		return params.setStorage(storageProvider).setVariableProvider(variableProvider).setDebugHelper(debugHelper)
+				.setTransitionProvider(transitionProvider).setLoopDetector(loopDetector);
 	}
 
 	/**
