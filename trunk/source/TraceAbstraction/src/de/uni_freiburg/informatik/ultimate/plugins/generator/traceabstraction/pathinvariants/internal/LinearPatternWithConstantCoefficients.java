@@ -30,9 +30,11 @@ public class LinearPatternWithConstantCoefficients extends AbstractLinearInvaria
 	private AffineTerm mConstant = null;
 	private LinearInequality mLinearInequality = null;
 	private String mName = null;
+	private Map<Term, AffineTerm> mAuxVarsToConstantCoefficients;
 	
 	public LinearPatternWithConstantCoefficients(Script solver, Set<IProgramVar> variables, String prefix, boolean strict,
-			Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients, AffineTerm constant) {
+			Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients, Map<Term, AffineTerm> auxVarsToConstantCoefficients,
+			AffineTerm constant) {
 		super();
 		assert (variables.equals(programVarsToConstantCoefficients.keySet())) : "The given set of variables must be equal to the key-set of the map programVarsToConstantCoefficients";
 		
@@ -40,6 +42,7 @@ public class LinearPatternWithConstantCoefficients extends AbstractLinearInvaria
 		mStrictInequality = strict;
 		mVariablesOfThisPattern = variables;
 		mProgramVars2ConstantCoefficients = programVarsToConstantCoefficients;
+		mAuxVarsToConstantCoefficients = auxVarsToConstantCoefficients;
 		mConstant = constant;
 	}
 	
@@ -59,7 +62,8 @@ public class LinearPatternWithConstantCoefficients extends AbstractLinearInvaria
 		for (IProgramVar var : mVariablesOfThisPattern) {
 			vars2TermsForThisPattern.put(var, map.get(var));
 		}
-		final LinearInequality inequality = super.mFunctionGenerator.generate(vars2TermsForThisPattern, mProgramVars2ConstantCoefficients);
+		final LinearInequality inequality = super.mFunctionGenerator.generate(vars2TermsForThisPattern, mProgramVars2ConstantCoefficients,
+				mAuxVarsToConstantCoefficients);
 		inequality.setStrict(super.mStrictInequality);
 		inequality.add(mConstant);
 		mProgramVars2TermVariables = vars2TermsForThisPattern;

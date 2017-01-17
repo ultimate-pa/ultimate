@@ -137,10 +137,14 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @param programVars2NumericalCoefficients a mapping from Boogie variables to their constant (numerical) coefficients
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars, Map<IProgramVar, AffineTerm> programVars2NumericalCoefficients ) {
+	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars, Map<IProgramVar, AffineTerm> programVars2NumericalCoefficients,
+			Map<Term, AffineTerm> auxVarsToNumericalCoefficients) {
 		final LinearInequality li = new LinearInequality();
 		for (final Map.Entry<IProgramVar,? extends Term> entry : vars.entrySet()) {
 				li.add(entry.getValue(), programVars2NumericalCoefficients.get(entry.getKey()));
+		}
+		for (Map.Entry<Term, AffineTerm> entry : auxVarsToNumericalCoefficients.entrySet()) {
+			li.add(entry.getKey(), entry.getValue());
 		}
 		return li;
 	}

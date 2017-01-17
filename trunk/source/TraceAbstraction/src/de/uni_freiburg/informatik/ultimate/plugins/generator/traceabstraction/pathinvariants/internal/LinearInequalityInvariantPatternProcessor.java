@@ -139,8 +139,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 	private final IcfgLocation mStartLocation;
 	private final IcfgLocation mErrorLocation;
 	
-	private static final boolean PRINT_CONSTRAINTS = false;
-	private static final boolean DEBUG_OUTPUT = false;
+	private static final boolean PRINT_CONSTRAINTS = !false;
+	private static final boolean DEBUG_OUTPUT = !false;
 	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
 	
 	/**
@@ -1092,11 +1092,16 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvaria
 			final Collection<AbstractLinearInvariantPattern> conjunctsFromTransFormula = new ArrayList<AbstractLinearInvariantPattern>(linearinequalities.size());
 			for (final LinearInequality lineq : lineqs) {
 				final Map<IProgramVar, AffineTerm> programVarsToConstantCoefficients = new HashMap<>();
+				final Map<Term, AffineTerm> auxVarsToConstantCoefficients = new HashMap<>();
 				for (final Term termVar : lineq.getVariables()) {
-					programVarsToConstantCoefficients.put(termVariables2ProgramVars.get(termVar), lineq.getCoefficient(termVar));
+					if (termVariables2ProgramVars.containsKey(termVar)) {
+						programVarsToConstantCoefficients.put(termVariables2ProgramVars.get(termVar), lineq.getCoefficient(termVar));
+					} else {
+						auxVarsToConstantCoefficients.put(termVar, lineq.getCoefficient(termVar));
+					}
 				}
 				final LinearPatternWithConstantCoefficients lb = new LinearPatternWithConstantCoefficients(mSolver, programVarsToConstantCoefficients.keySet(), newPrefix(), lineq.isStrict(), 
-						programVarsToConstantCoefficients, lineq.getConstant());
+						programVarsToConstantCoefficients, auxVarsToConstantCoefficients, lineq.getConstant());
 				
 				conjunctsFromTransFormula.add(lb);
 			}
