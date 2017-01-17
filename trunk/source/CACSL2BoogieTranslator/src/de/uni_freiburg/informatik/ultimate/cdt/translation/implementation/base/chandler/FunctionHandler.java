@@ -1214,11 +1214,11 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Add memsafety checks if the corresponding setting is active:
-	 *  the {@link pointerValue} must point to valid memory
-	 *  
-	 *  the asser
-	 *  
+	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are 
+	 *   active.
+	 *  settings concerned are:
+	 *  - "Pointer base address is valid at dereference"
+	 *  - "Pointer to allocated memory at dereference"
 	 */
 	private List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc, 
 			final Expression pointerValue,
