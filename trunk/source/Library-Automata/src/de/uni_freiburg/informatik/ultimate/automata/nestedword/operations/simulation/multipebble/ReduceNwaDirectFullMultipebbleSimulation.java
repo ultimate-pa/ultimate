@@ -112,6 +112,7 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 			mResult = maxSatMinimizer.getResult();
 			
 			mStatistics = new AutomataOperationStatistics();
+			mStatistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES, gameFactory.getMaxNumberOfDoubleDeckerPebbles());
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,

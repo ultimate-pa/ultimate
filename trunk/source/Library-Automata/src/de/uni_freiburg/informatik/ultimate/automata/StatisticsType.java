@@ -207,6 +207,10 @@ public enum StatisticsType {
 	 */
 	IS_USING_SCCS,
 	/**
+	 * Max number of duplicator DoubleDeckers in a node of the game automaton.
+	 */
+	MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
+	/**
 	 * Number of variables.
 	 */
 	NUMBER_OF_VARIABLES,

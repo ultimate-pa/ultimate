@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>> implements IStateFactory<GS> {
 	
-	private final int mMaxNumberOfPebbles = 0;
+	private int mMaxNumberOfDoubleDeckerPebbles = 0;
 
 	public FullMultipebbleStateFactory() {
 		super();
@@ -65,6 +65,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsInternal(letter, nwa)) {
 			final GS duplicatorSucc = computeSuccessorsInternalGivenSpoilerSucc(spoilerSucc, gs, letter, nwa);
 			if (duplicatorSucc != null) {
+				mMaxNumberOfDoubleDeckerPebbles = Math.max(mMaxNumberOfDoubleDeckerPebbles, duplicatorSucc.getNumberOfPebbles());
 				result.add(duplicatorSucc);
 			}
 		}
@@ -77,6 +78,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsCall(letter, nwa)) {
 			final GS duplicatorSucc = computeSuccessorsCallGivenSpoilerSucc(spoilerSucc, gs, letter, nwa);
 			if (duplicatorSucc != null) {
+				mMaxNumberOfDoubleDeckerPebbles = Math.max(mMaxNumberOfDoubleDeckerPebbles, duplicatorSucc.getNumberOfPebbles());
 				result.add(duplicatorSucc);
 			}
 		}
@@ -90,10 +92,18 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsReturn(hier.getSpoilerDoubleDecker(), letter, nwa)) {
 			final GS duplicatorSucc = computeSuccessorsReturnGivenSpoilerSucc(spoilerSucc, gs, hier, letter, nwa);
 			if (duplicatorSucc != null) {
+				mMaxNumberOfDoubleDeckerPebbles = Math.max(mMaxNumberOfDoubleDeckerPebbles, duplicatorSucc.getNumberOfPebbles());
 				result.add(duplicatorSucc);
 			}
 		}
 		return result;
 	}
+
+
+	public int getMaxNumberOfDoubleDeckerPebbles() {
+		return mMaxNumberOfDoubleDeckerPebbles;
+	}
+	
+	
 
 }
