@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -23,7 +24,7 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 
 	private final NestedRun<CodeBlock, ?> mCex;
 	private final Set<CodeBlock> mLetters;
-	private final CodeBlock mPostErrorLoc;
+	private final IcfgLocation mPostErrorLoc;
 
 	public NWAPathProgramTransitionProvider(final NestedRun<CodeBlock, ?> counterexample,
 			final Set<CodeBlock> pathProgramProjection, final IUltimateServiceProvider services,
@@ -32,7 +33,7 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 		mCex = counterexample;
 		mLetters = pathProgramProjection;
 		// words count their states, so 0 is first state, length is last state
-		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2);
+		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2).getTarget();
 	}
 
 	@Override
