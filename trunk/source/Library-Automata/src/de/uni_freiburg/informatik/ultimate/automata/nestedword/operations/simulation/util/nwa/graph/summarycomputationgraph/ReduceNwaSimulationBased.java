@@ -172,7 +172,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	}
 	
 	private boolean isFiniteAutomaton() {
-		return mOperand.getReturnAlphabet().isEmpty();
+		return mOperand.getCallAlphabet().isEmpty();
 	}
 	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
