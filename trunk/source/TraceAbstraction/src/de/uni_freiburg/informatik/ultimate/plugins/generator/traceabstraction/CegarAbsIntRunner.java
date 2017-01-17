@@ -26,11 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -38,10 +47,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -57,6 +70,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -74,7 +90,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final IIcfg<?> mRoot;
 
 	private final Set<Set<LETTER>> mKnownPathPrograms;
-	private IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mAbsIntResult;
 
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
@@ -82,6 +97,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private boolean mSkipIteration;
+	private IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mAbsIntResult;
+	private IRun<LETTER, IPredicate, ?> mLastCex;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
 			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
@@ -143,7 +160,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return;
 		}
-
+		mLastCex = currentCex;
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mAbsIntResult = null;
@@ -207,6 +224,67 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return mMode == AbstractInterpretationMode.NONE;
 	}
 
+	public IInterpolantGenerator getInterpolantGenerator(final PredicateUnifier predicateUnifier) {
+
+		if (mMode == AbstractInterpretationMode.NONE) {
+			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
+		}
+		if (mSkipIteration) {
+			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
+		}
+		if (mAbsIntResult == null) {
+			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
+		}
+		if (mAbsIntResult.hasReachedError()) {
+			// analysis was not strong enough
+			return new AbsIntFailedInterpolantGenerator(predicateUnifier, mLastCex.getWord(),
+					ItpErrorStatus.ALGORITHM_FAILED, null);
+		}
+		// we were strong enough!
+		final List<IPredicate> interpolants = generateInterpolants(predicateUnifier, mLastCex.getWord(), mAbsIntResult);
+
+		return new AbsIntInterpolantGenerator(predicateUnifier, mLastCex.getWord(),
+				interpolants.toArray(new IPredicate[interpolants.size()]));
+	}
+
+	private List<IPredicate> generateInterpolants(final PredicateUnifier predicateUnifier, final Word<LETTER> word,
+			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult) {
+		mLogger.info("Generating AI predicates...");
+
+		final int wordlength = word.length();
+		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
+
+		final List<IPredicate> rtr = new ArrayList<>();
+		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+		final Deque<LETTER> callstack = new ArrayDeque<>();
+		final Script script = mCsToolkit.getManagedScript().getScript();
+		for (int i = 0; i < wordlength; i++) {
+			final LETTER symbol = word.getSymbol(i);
+			final Set<? extends IAbstractState<?, ?>> postStates;
+			if (symbol instanceof ICallAction) {
+				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
+				callstack.addFirst(symbol);
+			} else if (symbol instanceof IReturnAction) {
+				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
+				callstack.removeFirst();
+			} else {
+				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
+			}
+
+			final IPredicate next;
+			if (postStates.isEmpty()) {
+				next = falsePredicate;
+			} else {
+				final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
+						.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
+				next = predicateUnifier.getOrConstructPredicateForDisjunction(predicates);
+			}
+			rtr.add(next);
+		}
+
+		return rtr;
+	}
+
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
 			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final IRun<LETTER, IPredicate, ?> currentCex) {
@@ -263,5 +341,101 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			transitions.add(currentCex.getSymbol(i));
 		}
 		return transitions;
+	}
+
+	private static abstract class BaseAbsIntInterpolantGenerator implements IInterpolantGenerator {
+
+		private final PredicateUnifier mPredicateUnifier;
+		private final Word<? extends IAction> mCex;
+		private final IPredicate mPrecondition;
+		private final IPredicate mPostcondition;
+		private final InterpolantComputationStatus mStatus;
+
+		private BaseAbsIntInterpolantGenerator(final PredicateUnifier predicateUnifier,
+				final Word<? extends IAction> cex, final InterpolantComputationStatus status) {
+			mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
+			mCex = cex;
+			mStatus = Objects.requireNonNull(status);
+			mPrecondition = mPredicateUnifier.getTruePredicate();
+			mPostcondition = mPredicateUnifier.getFalsePredicate();
+		}
+
+		@Override
+		public Word<? extends IAction> getTrace() {
+			return mCex;
+		}
+
+		@Override
+		public IPredicate getPrecondition() {
+			return mPrecondition;
+		}
+
+		@Override
+		public IPredicate getPostcondition() {
+			return mPostcondition;
+		}
+
+		@Override
+		public PredicateUnifier getPredicateUnifier() {
+			return mPredicateUnifier;
+		}
+
+		@Override
+		public InterpolantComputationStatus getInterpolantComputationStatus() {
+			return mStatus;
+		}
+	}
+
+	private static final class AbsIntInterpolantGenerator extends BaseAbsIntInterpolantGenerator {
+
+		private final IPredicate[] mInterpolants;
+
+		private AbsIntInterpolantGenerator(final PredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
+				final IPredicate[] sequence) {
+			super(predicateUnifier, cex, new InterpolantComputationStatus(true, null, null));
+			mInterpolants = Objects.requireNonNull(sequence);
+		}
+
+		@Override
+		public Map<Integer, IPredicate> getPendingContexts() {
+			// TODO: Do I need this?
+			return null;
+		}
+
+		@Override
+		public IPredicate[] getInterpolants() {
+			return mInterpolants;
+		}
+
+		@Override
+		public boolean isPerfectSequence() {
+			// if we have a sequence, its always perfect
+			return true;
+		}
+
+	}
+
+	private static final class AbsIntFailedInterpolantGenerator extends BaseAbsIntInterpolantGenerator {
+
+		private AbsIntFailedInterpolantGenerator(final PredicateUnifier predicateUnifier,
+				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
+			super(predicateUnifier, cex, new InterpolantComputationStatus(false, status, ex));
+		}
+
+		@Override
+		public Map<Integer, IPredicate> getPendingContexts() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public IPredicate[] getInterpolants() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isPerfectSequence() {
+			// if we fail there is no sequence
+			return false;
+		}
 	}
 }

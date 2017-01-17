@@ -27,21 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -57,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
@@ -293,7 +288,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps, final Mode mode) {
 		switch (mode) {
 		case ABSTRACT_INTERPRETATION:
-			return ((AiRunnerWrapper) mInterpolantGenerator).getInterpolantAutomatonBuilder();
 		case SMTINTERPOL:
 		case Z3_IG:
 		case CVC4_IG:
@@ -444,12 +438,11 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 			return castTraceChecker();
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
-			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
-			//$FALL-THROUGH$
 		case ABSTRACT_INTERPRETATION:
+			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
 					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction);
-			return new AiRunnerWrapper();
+			return mAbsIntRunner.getInterpolantGenerator(getPredicateUnifier());
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
@@ -469,70 +462,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return RefinementStrategyExceptionBlacklist.NONE;
-	}
-
-	/**
-	 * Wrapper for {@link CegarAbsIntRunner} that works like an {@link IInterpolantGenerator}.
-	 *
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private class AiRunnerWrapper implements IInterpolantGenerator {
-		private final InterpolantComputationStatus mInterpolantComputationStatus;
-
-		public AiRunnerWrapper() {
-			// default constructor
-			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
-		}
-
-		@Override
-		public IPredicate[] getInterpolants() {
-			return new IPredicate[0];
-		}
-
-		@Override
-		public boolean isPerfectSequence() {
-			return mAbsIntRunner.hasShownInfeasibility();
-		}
-
-		public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder() {
-			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
-					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, mCounterexample);
-		}
-
-		@Override
-		public IPredicate getPrecondition() {
-			return mPredicateUnifier.getTruePredicate();
-		}
-
-		@Override
-		public IPredicate getPostcondition() {
-			return mPredicateUnifier.getFalsePredicate();
-		}
-
-		@Override
-		public Map<Integer, IPredicate> getPendingContexts() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public PredicateUnifier getPredicateUnifier() {
-			return mPredicateUnifier;
-		}
-
-		@Override
-		public boolean imperfectSequencesUsable() {
-			return false;
-		}
-
-		@Override
-		public Word<? extends IAction> getTrace() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public InterpolantComputationStatus getInterpolantComputationStatus() {
-			return mInterpolantComputationStatus;
-		}
 	}
 
 	/**
