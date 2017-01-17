@@ -10,9 +10,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-
 /**
- * This strategy constructs invariant patterns using those program variables which are <i> live </i> at the given location.
+ * This strategy constructs invariant patterns using those program variables which are <i> live </i> at the given
+ * location.
+ *
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
@@ -20,29 +21,34 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 
-	public LiveVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
-			int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
-			boolean alwaysStrictAndNonStrictCopies) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
+	public LiveVariablesStrategy(final int baseDisjuncts, final int baseConjuncts, final int disjunctsPerRound,
+			final int conjunctsPerRound, final int maxRounds, final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
+			final boolean alwaysStrictAndNonStrictCopies) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
+				alwaysStrictAndNonStrictCopies);
 		mLocations2LiveVariables = locs2LiveVariables;
 	}
 
-
 	@Override
-	public Set<IProgramVar> getPatternVariablesForLocation(IcfgLocation location, int round) {
-		return Collections.unmodifiableSet(mLocations2LiveVariables.get(location));
+	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location, final int round) {
+		final Set<IProgramVar> liveVars = mLocations2LiveVariables.get(location);
+		if (liveVars == null) {
+			return Collections.emptySet();
+		}
+		return Collections.unmodifiableSet(liveVars);
 	}
 
-
 	@Override
-	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
-			int round, Script solver, String prefix, Set<IProgramVar> vars) {
-		throw new UnsupportedOperationException("LiveVariablesStrategy does not support this kind of pattern construction.");
+	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(
+			final IcfgLocation location, final int round, final Script solver, final String prefix,
+			final Set<IProgramVar> vars) {
+		throw new UnsupportedOperationException(
+				"LiveVariablesStrategy does not support this kind of pattern construction.");
 	}
 
-
 	@Override
-	public void changePatternSettingForLocation(IcfgLocation location) {
+	public void changePatternSettingForLocation(final IcfgLocation location) {
 		throw new UnsupportedOperationException("LiveVariablesStrategy does not support dynamic setting changes.");
 	}
 

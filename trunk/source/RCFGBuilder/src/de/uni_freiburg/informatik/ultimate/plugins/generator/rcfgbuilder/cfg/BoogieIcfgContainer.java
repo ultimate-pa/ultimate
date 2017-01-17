@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
  * Stores references to all objects that represent an interprocedural control-flow graph (ICFG) that was directly
@@ -96,7 +95,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Set<BoogieIcfgLocation> mInitialNodes;
 
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
-			final Boogie2SMT mBoogie2smt, final RCFGBacktranslator backtranslator, final ILocation loc) {
+			final Boogie2SMT mBoogie2smt, final ILocation loc) {
 
 		mEntryNodes = new HashMap<>();
 		mExitNode = new HashMap<>();
@@ -159,10 +158,6 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		return result;
 	}
 
-	// public ModifiableGlobalVariableManager getModifiableGlobals() {
-	// return mModifiableGlobalVariableManager;
-	// }
-
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}
@@ -198,8 +193,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 
 	public String getFilename() {
 		final String pathAndFilename = getPayload().getLocation().getFileName();
-		final String pureFilename = new File(pathAndFilename).getName();
-		return pureFilename;
+		return new File(pathAndFilename).getName();
 	}
 
 	/**
