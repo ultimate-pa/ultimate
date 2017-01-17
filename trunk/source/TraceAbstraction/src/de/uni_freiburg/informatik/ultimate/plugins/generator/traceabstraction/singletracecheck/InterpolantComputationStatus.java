@@ -32,21 +32,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class InterpolantComputationStatus {
-	
+
 	public enum ItpErrorStatus {
-		
+
 		/**
-		 * SMT solver is not able to interpolate the input formula, e.g., 
-		 * because arrays are not supported
+		 * SMT solver is not able to interpolate the input formula, e.g., because arrays are not supported
 		 */
 		SMT_SOLVER_CANNOT_INTERPOLATE_INPUT,
-		
+
 		SMT_SOLVER_CRASH,
-		
+
 		ALGORITHM_FAILED,
-		
+
 		OTHER,
-		
+
 		/**
 		 * Trace was feasible, we cannot interpolate.
 		 */
@@ -56,23 +55,25 @@ public class InterpolantComputationStatus {
 	private final boolean mComputationSuccessful;
 	private final ItpErrorStatus mStatus;
 	private final Exception mException;
-	public InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status, final Exception exception) {
+
+	public InterpolantComputationStatus(final boolean computationSuccessful, final ItpErrorStatus status,
+			final Exception exception) {
 		super();
 		mComputationSuccessful = computationSuccessful;
 		mStatus = status;
 		mException = exception;
 	}
+
 	public boolean wasComputationSuccesful() {
 		return mComputationSuccessful;
 	}
+
 	public ItpErrorStatus getStatus() {
 		return mStatus;
 	}
+
 	public Exception getException() {
 		return mException;
 	}
-	
-	
-	
 
 }
