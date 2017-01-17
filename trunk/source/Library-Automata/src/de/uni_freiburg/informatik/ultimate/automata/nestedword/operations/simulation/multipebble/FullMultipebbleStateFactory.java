@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
@@ -44,14 +46,52 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 	
 	
-	public abstract <LETTER> List<GS> computeSuccessorsInternal(GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
-	public abstract <LETTER> List<GS> computeSuccessorsCall(GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
-	public abstract <LETTER> List<GS> computeSuccessorsReturn(GS gs, final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+	protected abstract <LETTER> GS computeSuccessorsInternalGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+	protected abstract <LETTER> GS computeSuccessorsCallGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+	protected abstract <LETTER> GS computeSuccessorsReturnGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs, final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
 
 
 	public abstract <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1, final INestedWordAutomatonSimple<LETTER, STATE> operand);
 
 
 	public abstract <LETTER> GS constructInitialState(STATE q0, STATE q1, INestedWordAutomatonSimple<LETTER, STATE> operand);
+	
+	
+	public final <LETTER> List<GS> computeSuccessorsInternal(final GS gs, 
+			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		final List<GS> result = new ArrayList<>();
+		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsInternal(letter, nwa)) {
+			final GS duplicatorSucc = computeSuccessorsInternalGivenSpoilerSucc(spoilerSucc, gs, letter, nwa);
+			if (duplicatorSucc != null) {
+				result.add(duplicatorSucc);
+			}
+		}
+		return result;
+	}
+	
+	public final <LETTER> List<GS> computeSuccessorsCall(final GS gs, 
+			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		final List<GS> result = new ArrayList<>();
+		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsCall(letter, nwa)) {
+			final GS duplicatorSucc = computeSuccessorsCallGivenSpoilerSucc(spoilerSucc, gs, letter, nwa);
+			if (duplicatorSucc != null) {
+				result.add(duplicatorSucc);
+			}
+		}
+		return result;
+	}
+	
+	
+	public final <LETTER> List<GS> computeSuccessorsReturn(final GS gs, 
+			final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		final List<GS> result = new ArrayList<>();
+		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsReturn(hier.getSpoilerDoubleDecker(), letter, nwa)) {
+			final GS duplicatorSucc = computeSuccessorsReturnGivenSpoilerSucc(spoilerSucc, gs, hier, letter, nwa);
+			if (duplicatorSucc != null) {
+				result.add(duplicatorSucc);
+			}
+		}
+		return result;
+	}
 
 }

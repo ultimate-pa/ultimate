@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
@@ -57,10 +55,11 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 	
 	
 	
-	private <LETTER> HashRelation<STATE, STATE> computeDuplicatorSuccessorsInternal(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
+	@Override
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
 			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
-		final HashRelation<STATE, STATE> result = new HashRelation<>();
+		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(doubleDecker.getValue(), letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getKey(), trans.getSucc());
@@ -69,30 +68,20 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 					return null;
 				}
 				if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
-					result.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
+					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
 		}
-		return result;
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
+	
+
 	
 	@Override
-	public <LETTER> List<DirectFullMultipebbleGameState<STATE>> computeSuccessorsInternal(final DirectFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		final List<DirectFullMultipebbleGameState<STATE>> result = new ArrayList<>();
-		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsInternal(letter, nwa)) {
-			final HashRelation<STATE, STATE> duplicatorSucc = computeDuplicatorSuccessorsInternal(spoilerSucc, gs, letter, nwa);
-			if (duplicatorSucc != null) {
-				result.add(new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSucc));
-			}
-		}
-		return result;
-	}
-	
-	private <LETTER> HashRelation<STATE, STATE> computeDuplicatorSuccessorsCall(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
 			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
-		final HashRelation<STATE, STATE> result = new HashRelation<>();
+		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getValue(), letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getValue(), trans.getSucc());
@@ -101,31 +90,21 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 					return null;
 				}
 				if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
-					result.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
+					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
 		}
-		return result;
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
+	
+
 	
 	@Override
-	public <LETTER> List<DirectFullMultipebbleGameState<STATE>> computeSuccessorsCall(final DirectFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		final List<DirectFullMultipebbleGameState<STATE>> result = new ArrayList<>();
-		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsCall(letter, nwa)) {
-			final HashRelation<STATE, STATE> duplicatorSucc = computeDuplicatorSuccessorsCall(spoilerSucc, gs, letter, nwa);
-			if (duplicatorSucc != null) {
-				result.add(new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSucc));
-			}
-		}
-		return result;
-	}
-	
-	private <LETTER> HashRelation<STATE, STATE> computeDuplicatorSuccessorsReturn(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
-			final HashRelation<STATE, STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
+			final DirectFullMultipebbleGameState<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
-		final HashRelation<STATE, STATE> result = new HashRelation<>();
-		for (final Entry<STATE, STATE> hierDoubleDecker : hier.entrySet()) {
+		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
+		for (final Entry<STATE, STATE> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
 			for (final STATE up : gs.getDuplicatorDoubleDeckers().getImage(hierDoubleDecker.getValue())) {
 				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(up, hierDoubleDecker.getValue(), letter)) {
 					final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(hierDoubleDecker.getKey(), trans.getSucc());
@@ -134,27 +113,16 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 						return null;
 					}
 					if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
-						result.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
+						duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 					}
 				}
 			}
 			
 		}
-		return result;
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
 	
-	@Override
-	public <LETTER> List<DirectFullMultipebbleGameState<STATE>> computeSuccessorsReturn(final DirectFullMultipebbleGameState<STATE> gs, 
-			final DirectFullMultipebbleGameState<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		final List<DirectFullMultipebbleGameState<STATE>> result = new ArrayList<>();
-		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsReturn(hier.getSpoilerDoubleDecker(), letter, nwa)) {
-			final HashRelation<STATE, STATE> duplicatorSucc = computeDuplicatorSuccessorsReturn(spoilerSucc, gs, hier.getDuplicatorDoubleDeckers(), letter, nwa);
-			if (duplicatorSucc != null) {
-				result.add(new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSucc));
-			}
-		}
-		return result;
-	}
+
 	
 	
 	
