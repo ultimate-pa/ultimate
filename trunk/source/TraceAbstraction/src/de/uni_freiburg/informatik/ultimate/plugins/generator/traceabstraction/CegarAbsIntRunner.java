@@ -241,35 +241,39 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
 		// we were strong enough!
-		final List<IPredicate> interpolants = generateInterpolants(predicateUnifier, mLastCex.getWord(), mAbsIntResult);
-
+		final Word<LETTER> word = mLastCex.getWord();
+		final List<IPredicate> interpolants = generateInterpolants(predicateUnifier, word, mAbsIntResult);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Interpolant sequence:");
+			mLogger.debug(interpolants);
+		}
+		assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
+				+ " but interpolant sequence has length " + interpolants.size();
 		return new AbsIntInterpolantGenerator(predicateUnifier, mLastCex.getWord(),
 				interpolants.toArray(new IPredicate[interpolants.size()]));
 	}
 
-	private List<IPredicate> generateInterpolants(final PredicateUnifier predicateUnifier, final Word<LETTER> word,
-			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult) {
+	private <STATE extends IAbstractState<STATE, IBoogieVar>> List<IPredicate> generateInterpolants(
+			final PredicateUnifier predicateUnifier, final Word<LETTER> word,
+			final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult) {
 		mLogger.info("Generating AI predicates...");
 
 		final int wordlength = word.length();
 		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
+		Set<STATE> previousStates = Collections.emptySet();
 		final List<IPredicate> rtr = new ArrayList<>();
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Deque<LETTER> callstack = new ArrayDeque<>();
 		final Script script = mCsToolkit.getManagedScript().getScript();
-		for (int i = 0; i < wordlength; i++) {
+		for (int i = 0; i < wordlength - 1; i++) {
 			final LETTER symbol = word.getSymbol(i);
-			final Set<? extends IAbstractState<?, ?>> postStates;
 			if (symbol instanceof ICallAction) {
-				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
 				callstack.addFirst(symbol);
 			} else if (symbol instanceof IReturnAction) {
-				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
 				callstack.removeFirst();
-			} else {
-				postStates = aiResult.getPostStates(callstack, symbol, Collections.emptySet());
 			}
+			final Set<STATE> postStates = aiResult.getPostStates(callstack, symbol, previousStates);
 
 			final IPredicate next;
 			if (postStates.isEmpty()) {
@@ -279,6 +283,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
 				next = predicateUnifier.getOrConstructPredicateForDisjunction(predicates);
 			}
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(symbol + " " + next);
+			}
+			previousStates = postStates;
 			rtr.add(next);
 		}
 
