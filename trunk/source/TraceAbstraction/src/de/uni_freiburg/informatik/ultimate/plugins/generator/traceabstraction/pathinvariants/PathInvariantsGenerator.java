@@ -260,6 +260,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation> pathProgram,
 			final ManagedScript managedScript) {
 		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
+		final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
 		final IcfgLocation errorloc = extractErrorLocationFromPathProgram(pathProgram);
 		final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
 		locs2WP.put(errorloc, mPostcondition);
@@ -271,16 +272,21 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				if (!(e instanceof IInternalAction)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
-				// Compute WP for the formula of the current transition and the predicate at the target location.
-				final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(mPredicateTransformer
-						.weakestPrecondition(locs2WP.get(e.getTarget()), ((IInternalAction) e).getTransformula()));
+				// Compute wp only if the source node is not an initial node
+				if (!e.getSource().getIncomingEdges().isEmpty()) {
+					// Compute WP for the formula of the current transition and the predicate at the target location.
+					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(mPredicateTransformer
+							.weakestPrecondition(locs2WP.get(e.getTarget()), ((IInternalAction) e).getTransformula()));
 
-				locs2WP.put(e.getSource(), wp);
-				if (!loopLocations.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
-					newEdges.addAll(e.getSource().getIncomingEdges());
+					locs2WP.put(e.getSource(), wp);
+					if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
+						newEdges.addAll(e.getSource().getIncomingEdges());
+					}
 				}
 			}
-			levelCounter++;
+			if (loopLocations.isEmpty()) {
+				levelCounter++;
+			}
 
 			if (newEdges.isEmpty() || levelCounter >= 2) {
 				break;
@@ -295,6 +301,46 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// remove the mapping (error-location -> false) from result
 		result.remove(errorloc);
 		return result;
+	}
+
+	/**
+	 * Check for each loop location of the path program if it contains some inner statements.
+	 * @param pathProgram
+	 * @return
+	 */
+	private Set<IcfgLocation> extractLocationsOfNonEmptyLoops(IIcfg<IcfgLocation> pathProgram) {
+		Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
+		Set<IcfgLocation> locationsOfNonEmptyLoops = new HashSet<>(loopLocations.size());
+		for (IcfgLocation currLoc : loopLocations) {
+			List<IcfgEdge> outEdges = currLoc.getOutgoingEdges();
+//			if (outEdges.isEmpty()) {
+//				break;
+//			}
+			for (IcfgEdge e : outEdges) {
+				if (nodeIsReachable(currLoc, e)) {
+					locationsOfNonEmptyLoops.add(currLoc);
+					break;
+				}
+			}
+		}
+		return locationsOfNonEmptyLoops;
+	}
+
+	private boolean nodeIsReachable(IcfgLocation currLoc, IcfgEdge e) {
+		Set<IcfgLocation> visitedNodes = new HashSet<>();
+		List<IcfgEdge> edgesToProcess = new LinkedList<IcfgEdge>();
+		edgesToProcess.add(e);
+		while (!edgesToProcess.isEmpty()) {
+			IcfgEdge currEdge = edgesToProcess.remove(edgesToProcess.size()-1);
+			IcfgLocation targ = currEdge.getTarget();
+			if (targ == currLoc) {
+				return true;
+			} else if (!visitedNodes.contains(targ)) {
+				visitedNodes.add(targ);
+				edgesToProcess.addAll(targ.getOutgoingEdges());
+			}
+		}
+		return false;
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
