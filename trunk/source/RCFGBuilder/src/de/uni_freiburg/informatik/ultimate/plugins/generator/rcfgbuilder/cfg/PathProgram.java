@@ -327,6 +327,11 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		public UnmodifiableTransFormula getTransformula() {
 			return mBacking.getTransformula();
 		}
+
+		@Override
+		public String toString() {
+			return mBacking.toString();
+		}
 	}
 
 	private static final class PathProgramCallAction<T extends IcfgEdge & ICallAction> extends PathProgramIcfgAction<T>
