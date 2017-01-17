@@ -991,7 +991,7 @@ public class FunctionHandler {
 			 *   	thus the overapproximation introduced does not affect violations of these assertions
 			 */
 			builder.addStatements(
-					addMemsafetyChecksForPointerExpression(
+					constructMemsafetyChecksForPointerExpression(
 							loc, arg_s.lrVal.getValue(), memoryHandler, expressionTranslation));
 
 			// the havocced/uninitialized variable that represents the return value
@@ -1074,7 +1074,7 @@ public class FunctionHandler {
 			builder.putAuxVars(arg.auxVars);
 			builder.addNeighbourUnionFields(arg.otherUnionFields);
 			
-			builder.addStatements(addMemsafetyChecksForPointerExpression(
+			builder.addStatements(constructMemsafetyChecksForPointerExpression(
 							loc, arg.lrVal.getValue(), memoryHandler, expressionTranslation));
 			
 			// according to standard result is size_t, we use int for efficiency
@@ -1107,7 +1107,7 @@ public class FunctionHandler {
 			builder.putAuxVars(arg0.auxVars);
 			builder.addNeighbourUnionFields(arg0.otherUnionFields);
 			
-			builder.addStatements(addMemsafetyChecksForPointerExpression(
+			builder.addStatements(constructMemsafetyChecksForPointerExpression(
 							loc, arg0.lrVal.getValue(), memoryHandler, expressionTranslation));
 			
 			final ExpressionResult arg1 = ((ExpressionResult) main.dispatch(arguments[1]))
@@ -1118,7 +1118,7 @@ public class FunctionHandler {
 			builder.putAuxVars(arg1.auxVars);
 			builder.addNeighbourUnionFields(arg1.otherUnionFields);
 			
-			builder.addStatements(addMemsafetyChecksForPointerExpression(
+			builder.addStatements(constructMemsafetyChecksForPointerExpression(
 							loc, arg1.lrVal.getValue(), memoryHandler, expressionTranslation));
 
 			final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
@@ -1220,7 +1220,7 @@ public class FunctionHandler {
 	 *  the asser
 	 *  
 	 */
-	private List<Statement> addMemsafetyChecksForPointerExpression(final ILocation loc, 
+	private List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc, 
 			final Expression pointerValue,
 			final MemoryHandler memoryHandler,
 			final AExpressionTranslation expressionTranslation) {
