@@ -64,12 +64,14 @@ public class HybridIcfgGenerator {
 	private List<IcfgLocation> mIcfgLocations;
 	private List<IcfgInternalTransition> mIcfgTransitions;
 	private Map<String, HybridCfgComponent> mCfgComponents;
+	private final IPayload mPayload;
 	
 	public HybridIcfgGenerator(ILogger logger, SpaceExPreferenceManager preferenceManager, CfgSmtToolkit smtToolkit) {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
 		mIcfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
+		mPayload = mIcfg.getPayload();
 		mIcfgLocations = new ArrayList<>();
 		mIcfgTransitions = new ArrayList<>();
 		mCfgComponents = new HashMap<>();
@@ -81,6 +83,11 @@ public class HybridIcfgGenerator {
 	}
 	
 	public BasicIcfg<IcfgLocation> createIfcgFromComponents() {
+		mCfgComponents.forEach((id, comp) -> {
+			for (IcfgLocation loc : comp.getLocations()) {
+				mIcfg.addOrdinaryLocation(loc);
+			}
+		});
 		return mIcfg;
 	}
 	
@@ -166,10 +173,9 @@ public class HybridIcfgGenerator {
 		locations.add(start);
 		IcfgLocation end = new IcfgLocation(id + "_end", id);
 		locations.add(end);
-		// TODO: Payload + transformula
-		IPayload plStartEnd = null;
+		// TODO: transformula
 		UnmodifiableTransFormula tfStartEnd = null;
-		IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, plStartEnd, tfStartEnd);
+		IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, tfStartEnd);
 		transitions.add(startEnd);
 		// new cfgComponent, has to be connected to the root node.
 		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions));
@@ -180,10 +186,9 @@ public class HybridIcfgGenerator {
 		IcfgLocation source = mCfgComponents.get("root").getEnd();
 		// the target of the transition is the the start of the target CFG component
 		IcfgLocation target = mCfgComponents.get("varAssignment").getStart();
-		// TODO: payload + transformula
-		IPayload payload = null;
+		// TODO: transformula
 		UnmodifiableTransFormula transFormula = null;
-		IcfgInternalTransition transition = new IcfgInternalTransition(source, target, payload, transFormula);
+		IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
 		mIcfgTransitions.add(transition);
 	}
 	
@@ -215,48 +220,42 @@ public class HybridIcfgGenerator {
 			/*
 			 * Transitions from start to Flow/Exit if invariant true, go to flow, else to error loc
 			 */
-			// TODO: payload + transformula
-			IPayload plStartFlow = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfStartFlow = null;
-			IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, plStartFlow, tfStartFlow);
+			IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
 			transitions.add(startFlow);
-			// TODO: payload + transformula
-			IPayload plStartError = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfStartError = null;
-			IcfgInternalTransition startError = new IcfgInternalTransition(start,
-					mCfgComponents.get("error").getStart(), plStartError, tfStartError);
+			IcfgInternalTransition startError =
+					new IcfgInternalTransition(start, mCfgComponents.get("error").getStart(), mPayload, tfStartError);
 			transitions.add(startError);
 			/*
 			 * Transition flow to invCheck
 			 */
-			// TODO: payload + transformula
-			IPayload plFlowInv = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfFlowInv = null;
-			IcfgInternalTransition flowInv = new IcfgInternalTransition(flow, invCheck, plFlowInv, tfFlowInv);
+			IcfgInternalTransition flowInv = new IcfgInternalTransition(flow, invCheck, mPayload, tfFlowInv);
 			transitions.add(flowInv);
 			/*
 			 * Transition invCheck to end/exit if invariant true, go to end, else to error loc
 			 */
 			// invcheck -> end
-			// TODO: payload + transformula
-			IPayload plInvEnd = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfInvEnd = null;
-			IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, plInvEnd, tfInvEnd);
+			IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, mPayload, tfInvEnd);
 			transitions.add(invEnd);
 			// invcheck -> exit
-			// TODO: payload + transformula
-			IPayload plInvError = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfInvError = null;
-			IcfgInternalTransition invError = new IcfgInternalTransition(invCheck,
-					mCfgComponents.get("error").getStart(), plInvError, tfInvError);
+			IcfgInternalTransition invError =
+					new IcfgInternalTransition(invCheck, mCfgComponents.get("error").getStart(), mPayload, tfInvError);
 			transitions.add(invError);
 			/*
 			 * Transition End to flow
 			 */
-			// TODO: payload + transformula
-			IPayload plEndFlow = null;
+			// TODO: transformula
 			UnmodifiableTransFormula tfEndFlow = null;
-			IcfgInternalTransition invFlow = new IcfgInternalTransition(flow, invCheck, plEndFlow, tfEndFlow);
+			IcfgInternalTransition invFlow = new IcfgInternalTransition(flow, invCheck, mPayload, tfEndFlow);
 			transitions.add(invFlow);
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
@@ -275,12 +274,10 @@ public class HybridIcfgGenerator {
 			IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
 			// the target of the transition is the the start of the target CFG component
 			IcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
-			// TODO: payload + transformula
-			IPayload payload = null;
+			// TODO: transformula
 			UnmodifiableTransFormula transFormula = null;
-			IcfgInternalTransition transition = new IcfgInternalTransition(source, target, payload, transFormula);
+			IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
 			mIcfgTransitions.add(transition);
 		});
 	}
-	
 }
