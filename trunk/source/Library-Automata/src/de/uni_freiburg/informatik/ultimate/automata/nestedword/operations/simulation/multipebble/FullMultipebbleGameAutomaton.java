@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @param <STATE>
  */
-public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>> extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
+public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>> extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
@@ -58,7 +58,7 @@ public class FullMultiPebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 	private final Set<GS> mInitialStates;
 
-	public FullMultiPebbleGameAutomaton(final AutomataLibraryServices services,
+	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mOperand = operand;

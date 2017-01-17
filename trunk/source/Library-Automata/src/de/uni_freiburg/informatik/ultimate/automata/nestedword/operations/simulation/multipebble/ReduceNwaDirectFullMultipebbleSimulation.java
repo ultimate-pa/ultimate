@@ -91,10 +91,10 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 				+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
 		
 		try {
-			final DirectFullMultiPebbleStateFactory<STATE> gameFactory = new DirectFullMultiPebbleStateFactory<>();
+			final DirectFullMultipebbleStateFactory<STATE> gameFactory = new DirectFullMultipebbleStateFactory<>();
 			
-			final FullMultiPebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton = 
-					new FullMultiPebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>>(mServices, gameFactory, possibleEquivalentClasses, operand);
+			final FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton = 
+					new FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>>(mServices, gameFactory, possibleEquivalentClasses, operand);
 			final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> removed =
 					new RemoveDeadEnds<>(mServices, gameAutomaton).getResult();
 			final int gameAutomatonSize = removed.size();
@@ -139,10 +139,10 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 		private final NestedMap2<STATE, STATE, DirectFullMultipebbleGameState<STATE>> mGameStateMapping;
 		private final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> mRemoved;
 		private final UnionFind<STATE> mMutuallySimulating;
-		private final DirectFullMultiPebbleStateFactory<STATE> mGameFactory;
+		private final DirectFullMultipebbleStateFactory<STATE> mGameFactory;
 
 		public ReadoutSimulation(final NestedMap2<STATE, STATE, DirectFullMultipebbleGameState<STATE>> gsm,
-				final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> removed, final DirectFullMultiPebbleStateFactory<STATE> gameFactory) {
+				final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> removed, final DirectFullMultipebbleStateFactory<STATE> gameFactory) {
 			super(mServices);
 			mGameStateMapping = gsm;
 			mRemoved = removed;

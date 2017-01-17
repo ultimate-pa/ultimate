@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @param <STATE>
  */
-public class DirectFullMultiPebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>  {
+public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>  {
 
 	@Override
 	public DirectFullMultipebbleGameState<STATE> createSinkStateContent() {
