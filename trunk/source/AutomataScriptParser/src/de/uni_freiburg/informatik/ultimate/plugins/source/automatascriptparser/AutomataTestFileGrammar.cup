@@ -9,7 +9,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import java.util.*;
 import com.github.jhoenicke.javacup.runtime.*;
@@ -197,7 +198,7 @@ terminal ConditionalBooleanOperatorAST OROR; // conditional_or_expression
 terminal Object QUESTION; // conditional_expression
 terminal AssignmentOperatorAST MULTEQ, DIVEQ, MODEQ, PLUSEQ, MINUSEQ; // assignment_operator
 
-terminal Object WORD, NESTED_WORD, NESTED_LASSO_WORD; 
+terminal Object WORD, NESTED_WORD, NESTED_LASSO_WORD, TREE; 
 
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
@@ -260,6 +261,11 @@ non terminal AtsASTNode unary_expression_not_plus_minus;
 non terminal AtsASTNode word_literal;
 non terminal NestedwordAST nested_word, nested_word_symbols_opt, nested_word_symbols; 
 non terminal Object nested_word_symbol;
+// 8.1 Trees
+non terminal TreeAST tree_literal;
+non terminal TreeAST tree_literal_inner;
+non terminal TreeListAST tree_list;
+non terminal TreeSymbolAST tree_symbol;
 
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
@@ -327,6 +333,8 @@ literal ::=	INTEGER_LITERAL:i
                    RESULT = c; :}
         |       word_literal:w
                 {: RESULT = w; :}
+        |       tree_literal:t
+                {: RESULT = t; :}
 	   ;
 	   
 	   
@@ -343,7 +351,10 @@ word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
 
 nested_word ::= nested_word_symbols_opt:nw {: RESULT = nw; :};
 
-nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new NestedwordAST(getLocation(symb,symb)); :};
+nested_word_symbols_opt ::= nested_word_symbols:nw 
+                            {: RESULT = nw; :} 
+                          | {: com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                               RESULT = new NestedwordAST(getLocation(symb,symb)); :};
 
 nested_word_symbols ::= nested_word_symbol:sym
 						{: NestedwordAST nw = new NestedwordAST(getLocation(sym$, sym$));
@@ -373,6 +384,28 @@ nested_word_symbol ::= identifier:i        /* This is an internal symbol */
         |              GT identifier:i    /* This is a return symbol */
                        {: RESULT = new ReturnSymbolAST(i); :}
         ;
+
+tree_literal ::= TREE LBRACK tree_literal_inner:tl RBRACK
+                 {: RESULT = tl; :}
+         ;
+
+tree_literal_inner ::= tree_symbol :i 
+                 {: RESULT = new TreeAST(getLocation(i$, i$), i); :}
+        |        tree_symbol:i LPAREN:lp tree_list:args RPAREN:rp
+                 {: RESULT = new TreeAST(getLocation(i$, rp$), i, args.getList()); :}
+        ;
+        
+
+tree_list ::= tree_literal_inner:t 
+                    {: RESULT = new TreeListAST(getLocation(t$, t$), t); :}
+        |           tree_list:list COMMA tree_literal_inner:lit
+                    {: list.add(lit);
+                       RESULT = list; :}
+        ;
+        
+tree_symbol ::= identifier:i
+                 {: RESULT = new TreeSymbolAST(getLocation(i$,i$), i); :}
+        ;
           
 // 3. Types
 type	::=     INT
@@ -387,6 +420,8 @@ type	::=     INT
         		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.Word.class; :}
         |       NESTED_LASSO_WORD
         		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord.class; :}
+        |       TREE
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.tree.Tree.class; :}
         |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
         |       FINITE_AUTOMATON
@@ -398,7 +433,7 @@ type	::=     INT
         |       ALTERNATING_AUTOMATON         
                 {: RESULT = AlternatingAutomaton.class; :}
         |       TREE_AUTOMATON         
-                {: RESULT = TreeAutomatonBU.class; :}
+                {: RESULT = ITreeAutomatonBU.class; :}
         ;
 
 // 5. Variable Declarations
@@ -441,12 +476,12 @@ variable_declaration ::=
                 RESULT = null;:}
          | type:t ta_definition:ta
                 {:
-                 if (t.equals(TreeAutomatonBU.class)) {
+                 if (t.equals(ITreeAutomatonBU.class)) {
                  		ta.setType(t);
                         m_automataDefinitions.addAutomaton(ta);
                  } else {
                         reportError(true, "AutomataDefiniton: Type error \"" + 
-                        t.getSimpleName() + "\" is not compatible with \"TreeAutomatonBU\""); 
+                        t.getSimpleName() + "\" is not compatible with \"ITreeAutomatonBU\""); 
                  }
                 RESULT = null;:}
 	;

@@ -9,3 +9,7 @@ TreeAutomaton ta730845 = (
 		(("[NAT, Bool]" "[NatList, BoolList]") cons "[NatList, BoolList]")
 	}
 );
+
+Tree t = Tree [ f(a,g(b)) ];
+
+assert ta730845.accepts(t);

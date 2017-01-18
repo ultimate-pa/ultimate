@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
@@ -105,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RelationalExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ReturnStatementAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.StatementListAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.UnaryExpressionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclarationAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpressionAST;
@@ -946,6 +948,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = interpret((ReturnStatementAST) node);
 		} else if (node instanceof StatementListAST) {
 			result = interpret((StatementListAST) node);
+		} else if (node instanceof TreeAST) {
+			result = interpret((TreeAST) node);
 		} else if (node instanceof UnaryExpressionAST) {
 			result = interpret((UnaryExpressionAST) node);
 		} else if (node instanceof VariableDeclarationAST) {
@@ -1128,6 +1132,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final NestedWord<String> stem = interpret(nw.getStem());
 		final NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<>(stem, loop);
+	}
+	
+	private Tree<String> interpret(final TreeAST t) {
+		return t.getTree();
 	}
 	
 	private Object interpret(final OperationInvocationExpressionAST oe) throws InterpreterException {

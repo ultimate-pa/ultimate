@@ -90,13 +90,15 @@ StringCharacter = [^\r\n\"\\]
   
   /* keywords for Words */
   /* Word */
-  "Word"                           { m_LastToken = m_CurToken; m_CurToken = "Word"; return symbol(sym.WORD); }
+  "Word"                         { m_LastToken = m_CurToken; m_CurToken = "Word"; return symbol(sym.WORD); }
   /* NestedWord */
-  "NestedWord"                           { m_LastToken = m_CurToken; m_CurToken = "NestedWord"; return symbol(sym.NESTED_WORD); }
+  "NestedWord"                   { m_LastToken = m_CurToken; m_CurToken = "NestedWord"; return symbol(sym.NESTED_WORD); }
     /* LassoWord */
-  "LassoWord"                          { m_LastToken = m_CurToken; m_CurToken = "LassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
+  "LassoWord"                    { m_LastToken = m_CurToken; m_CurToken = "LassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
   /* NestedLassoWord */
-  "NestedLassoWord"                          { m_LastToken = m_CurToken; m_CurToken = "NestedLassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
+  "NestedLassoWord"              { m_LastToken = m_CurToken; m_CurToken = "NestedLassoWord"; return symbol(sym.NESTED_LASSO_WORD); }
+  /* Tree */
+  "Tree"                         { m_LastToken = m_CurToken; m_CurToken = "Tree"; return symbol(sym.TREE); }
 
   /* keywords for AutomataDefinitionFile */
   /* NestedWordAutomaton */
