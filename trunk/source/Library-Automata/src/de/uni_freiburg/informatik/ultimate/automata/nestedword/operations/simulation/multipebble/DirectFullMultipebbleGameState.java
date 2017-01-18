@@ -88,8 +88,7 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 
 	@Override
 	public String toString() {
-		return "DirectFullMultipebbleGameState [mDuplicatorDoubleDeckers=" + mDuplicatorDoubleDeckers
-				+ ", mSpoilerDoubleDecker=" + mSpoilerDoubleDecker + "]";
+		return "Spoiler: " + mSpoilerDoubleDecker +	" Duplicator: " + mDuplicatorDoubleDeckers;
 	}
 
 

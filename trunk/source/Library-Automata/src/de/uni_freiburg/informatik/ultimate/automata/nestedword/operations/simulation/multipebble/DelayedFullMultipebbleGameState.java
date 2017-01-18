@@ -63,7 +63,7 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 	 * @return true iff all DoubleDeckers are mapped to true. This includes the
 	 * special case where we have the empty set of DeckerDeckers.
 	 */
-	private boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+	protected boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
 			if (triple.getThird() == false) {
 				return false;
@@ -73,6 +73,13 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 	}
 	
 	
+	
+	
+	public boolean areAllBitsTrue() {
+		return mAllBitsAreTrue;
+	}
+
+
 	@Override
 	public int getNumberOfDoubleDeckerPebbles() {
 		return mDuplicatorDoubleDeckers.size();
@@ -111,8 +118,7 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 
 	@Override
 	public String toString() {
-		return "DelayedFullMultipebbleGameState [mDuplicatorDoubleDeckers=" + mDuplicatorDoubleDeckers
-				+ ", mAllBitsAreTrue=" + mAllBitsAreTrue + ", mSpoilerDoubleDecker=" + mSpoilerDoubleDecker + "]";
+		return "Spoiler: " + mSpoilerDoubleDecker +	" Duplicator: " + mDuplicatorDoubleDeckers;
 	}
 	
 	

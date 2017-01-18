@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
@@ -114,19 +115,22 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
-			for (final Entry<STATE, Boolean> entry : gs.getDuplicatorDoubleDeckers().get(hierDoubleDecker.getSecond()).entrySet()) {
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(entry.getKey(), hierDoubleDecker.getSecond(), letter)) {
-					final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(hierDoubleDecker.getFirst(), trans.getSucc());
-					
-					final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal, entry.getValue(), duplicatorSucc.getUp(), nwa);
-					if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-						// duplicator succs contains spoiler succ, hence spoiler cannot win 
-						return null;
-					}
-					if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
-						// do nothing, DoubleDecker without obligation already contained
-					} else {
-						duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+			final Map<STATE, Boolean> up = gs.getDuplicatorDoubleDeckers().get(hierDoubleDecker.getSecond());
+			if (up != null) {
+				for (final Entry<STATE, Boolean> entry : up.entrySet()) {
+					for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(entry.getKey(), hierDoubleDecker.getSecond(), letter)) {
+						final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(hierDoubleDecker.getFirst(), trans.getSucc());
+
+						final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal, entry.getValue(), duplicatorSucc.getUp(), nwa);
+						if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
+							// duplicator succs contains spoiler succ, hence spoiler cannot win 
+							return null;
+						}
+						if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
+							// do nothing, DoubleDecker without obligation already contained
+						} else {
+							duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+						}
 					}
 				}
 			}
@@ -169,6 +173,11 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		@Override
 		public String toString() {
 			return mDebugIdentifier;
+		}
+
+		@Override
+		protected boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+			return true;
 		}
 		
 		
