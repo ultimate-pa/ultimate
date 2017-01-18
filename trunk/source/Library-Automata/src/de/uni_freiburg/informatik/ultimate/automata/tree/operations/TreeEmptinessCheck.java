@@ -11,7 +11,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  */
 public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	protected final TreeRun<LETTER, STATE> result;
 	
 	public TreeEmptinessCheck(final TreeAutomatonBU<LETTER, STATE> tree) {

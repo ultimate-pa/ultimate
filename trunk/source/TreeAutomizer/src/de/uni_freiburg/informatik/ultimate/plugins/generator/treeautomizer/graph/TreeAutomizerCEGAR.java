@@ -7,7 +7,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -66,7 +66,7 @@ public class TreeAutomizerCEGAR {
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected ITreeAutomaton<HCTransFormula, HCPredicate> mInterpolAutomaton;
+	protected ITreeAutomatonBU<HCTransFormula, HCPredicate> mInterpolAutomaton;
 
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
 			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, Script script) {
@@ -189,7 +189,7 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug("Refine begins...");
 		//mLogger.debug(mAbstraction);
 		
-		final ITreeAutomaton<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
+		final ITreeAutomatonBU<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
 				mInterpolAutomaton, mPredicateFactory)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);

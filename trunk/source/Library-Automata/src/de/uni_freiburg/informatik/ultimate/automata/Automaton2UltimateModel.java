@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
@@ -91,8 +91,8 @@ public final class Automaton2UltimateModel {
 			final AAToUltimateModel<LETTER, STATE> transformer = new AAToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(alternatingAutomaton);
 			
-		} else if (automaton instanceof ITreeAutomaton) {
-			final ITreeAutomaton<LETTER, STATE> treeAutomaton = (ITreeAutomaton<LETTER, STATE>) automaton;
+		} else if (automaton instanceof ITreeAutomatonBU) {
+			final ITreeAutomatonBU<LETTER, STATE> treeAutomaton = (ITreeAutomatonBU<LETTER, STATE>) automaton;
 			final TreeAutomatonToUltimateModel<LETTER, STATE> transformer = new TreeAutomatonToUltimateModel<>();
 			return transformer.getUltimateModelOfAA(treeAutomaton);
 			

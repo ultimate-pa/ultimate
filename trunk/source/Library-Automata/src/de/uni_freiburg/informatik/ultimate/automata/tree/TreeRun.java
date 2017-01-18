@@ -105,7 +105,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	}
 	
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getAutomaton() {
+	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
 		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 		
 		for (final STATE st : getStates()) {

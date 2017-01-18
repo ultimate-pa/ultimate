@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
@@ -29,11 +29,11 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final TreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	private final IStateFactory<STATE> stateFactory;
 	
-	protected final ITreeAutomaton<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
 	final Map<Set<STATE>, STATE> minimizedStates;
 	
-	public Minimize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Minimize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
 		stateFactory = factory;
 		minimizedStates = new HashMap<>();
@@ -97,7 +97,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return true;
 	}
 	
-	private ITreeAutomaton<LETTER, STATE> computeResult() {
+	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 		
 
 		DisjointSet<STATE> worklist = new DisjointSet<>(treeAutomaton.getStates());
@@ -170,7 +170,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return removeUnreachables(res);
 	}
 	
-	private ITreeAutomaton<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
+	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		
 		final Set<STATE> worklist = new HashSet<>();
@@ -250,7 +250,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return result;
 	}
 

@@ -13,23 +13,23 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
 public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 
-	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	private final IStateFactory<STATE> stateFactory;
 	
-	protected final ITreeAutomaton<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> result;
 	private final Map<Integer, List<List<STATE>>> memCombinations;
 	
 	private final STATE dummyState;
 	private final Set<STATE> states;
 	
-	public Totalize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Totalize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		treeAutomaton =  tree;
 		stateFactory = factory;
 		memCombinations = new HashMap<>();
@@ -129,7 +129,7 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return result;
 	}
 

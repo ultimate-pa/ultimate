@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
@@ -26,13 +26,13 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  */
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	private final IStateFactory<STATE> stateFactory;
 	private final Map<Set<STATE>, STATE> reducedStates;
 	
-	protected final ITreeAutomaton<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
-	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Determinize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
 		stateFactory = factory;
 		treeAutomaton = tree;
@@ -62,7 +62,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting determinization";
 	}
 	
-	private ITreeAutomaton<LETTER, STATE> computeResult() {
+	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
 		
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
@@ -220,7 +220,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return result;
 	}
 
@@ -245,7 +245,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		final StringFactory fac = new StringFactory();
 		final Determinize<String, String> op = new Determinize<>(treeA, fac);
-		final ITreeAutomaton<String, String> res = op.getResult();
+		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(res.toString() + "\n");
@@ -261,7 +261,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
 
 		final Determinize<String, String> opB = new Determinize<>(treeB, fac);
-		final ITreeAutomaton<String, String> resB = opB.getResult();
+		final ITreeAutomatonBU<String, String> resB = opB.getResult();
 		
 
 		System.out.println(treeB.toString() + "\n");

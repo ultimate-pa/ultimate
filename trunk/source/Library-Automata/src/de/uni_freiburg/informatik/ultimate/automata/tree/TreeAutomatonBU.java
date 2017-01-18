@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  */
-public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, STATE> {
+public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, STATE> {
 	
 	private final Map<List<STATE>, Map<LETTER, Iterable<STATE>>> parentsMap;
 	private final Map<STATE, Map<LETTER, Iterable<List<STATE>>>> childrenMap;

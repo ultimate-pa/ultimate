@@ -8,7 +8,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -27,11 +27,11 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final Boolean result;
 	
-	public Accepts(final ITreeAutomaton<LETTER, STATE> automaton, final TreeRun<LETTER, STATE> run) {
+	public Accepts(final ITreeAutomatonBU<LETTER, STATE> automaton, final TreeRun<LETTER, STATE> run) {
 		this(automaton, run.getTree());
 	}
 	
-	public Accepts(final ITreeAutomaton<LETTER, STATE> automaton, final Tree<LETTER> run) {
+	public Accepts(final ITreeAutomatonBU<LETTER, STATE> automaton, final Tree<LETTER> run) {
 		example = run;
 		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) automaton;
 		

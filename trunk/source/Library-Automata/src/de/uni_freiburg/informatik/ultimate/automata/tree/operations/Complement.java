@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
 /**
@@ -19,12 +19,12 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  */
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomaton<LETTER, STATE> treeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
 	private final IStateFactory<STATE> stateFactory;
 	
-	protected final ITreeAutomaton<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> result;
 	
-	public Complement(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Complement(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		treeAutomaton = tree;
 		stateFactory = factory;
 		
@@ -45,7 +45,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting complementing";
 	}
 	
-	private ITreeAutomaton<LETTER, STATE> computeResult() {
+	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 		final Determinize<LETTER, STATE> op = new Determinize<>(treeAutomaton, stateFactory);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
@@ -54,7 +54,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return result;
 	}
 
@@ -88,7 +88,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final Complement<String, String> com = new Complement<>(treeB, fac);
 		
 		final Intersect<String, String> op = new Intersect<>(treeA, com.getResult(), fac);
-		final ITreeAutomaton<String, String> res = op.getResult();
+		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(treeB.toString() + "\n");

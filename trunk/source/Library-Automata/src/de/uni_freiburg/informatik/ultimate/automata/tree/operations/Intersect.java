@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -26,15 +26,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
-	private final ITreeAutomaton<LETTER, STATE> treeA;
-	private final ITreeAutomaton<LETTER, STATE> treeB;
-	protected final ITreeAutomaton<LETTER, STATE> result;
+	private final ITreeAutomatonBU<LETTER, STATE> treeA;
+	private final ITreeAutomatonBU<LETTER, STATE> treeB;
+	protected final ITreeAutomatonBU<LETTER, STATE> result;
 	
 	private final IStateFactory<STATE> stateFactory;
 	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
 	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
 
-	public Intersect(final ITreeAutomaton<LETTER, STATE> t1, final ITreeAutomaton<LETTER, STATE> t2, final IStateFactory<STATE> factory) {
+	public Intersect(final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2, final IStateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
 		pairsMap = new HashMap<>();
 		
@@ -157,7 +157,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return reducedResult;
 	}
 	@Override
-	public ITreeAutomaton<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return result;
 	}
 
@@ -187,7 +187,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 		final StringFactory fac = new StringFactory();
 		final Intersect<String, String> op = new Intersect<>(treeA, treeB, fac);
-		final ITreeAutomaton<String, String> res = op.getResult();
+		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(treeB.toString() + "\n");
