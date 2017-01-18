@@ -57,7 +57,7 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 	}
 	
 	@Override
-	public int getNumberOfPebbles() {
+	public int getNumberOfDoubleDeckerPebbles() {
 		return mDuplicatorDoubleDeckers.size();
 	}
 

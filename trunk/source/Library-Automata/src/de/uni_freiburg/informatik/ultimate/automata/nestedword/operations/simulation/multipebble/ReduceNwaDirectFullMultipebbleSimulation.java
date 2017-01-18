@@ -89,10 +89,10 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
 				+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
+
+		final DirectFullMultipebbleStateFactory<STATE> gameFactory = constructGameFactory();
 		
 		try {
-			final DirectFullMultipebbleStateFactory<STATE> gameFactory = new DirectFullMultipebbleStateFactory<>();
-			
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton = 
 					new FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>>(mServices, gameFactory, possibleEquivalentClasses, operand);
 			final IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> removed =
@@ -129,9 +129,9 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Una
 		}
 		mLogger.info(exitMessage());
 	}
-	
-	private boolean isFiniteAutomaton() {
-		return mOperand.getReturnAlphabet().isEmpty();
+
+	private DirectFullMultipebbleStateFactory<STATE> constructGameFactory() {
+		return new DirectFullMultipebbleStateFactory<>();
 	}
 	
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {
