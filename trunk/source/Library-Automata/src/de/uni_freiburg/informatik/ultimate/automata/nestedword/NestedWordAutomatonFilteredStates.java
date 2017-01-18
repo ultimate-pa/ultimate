@@ -70,6 +70,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	protected final Set<STATE> mNewFinals;
 	protected final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation mAncestorComputation;
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
+	protected final boolean mFilterCallTransitionsBasedOnDoubleDeckerInformation;
 	
 	/**
 	 * Constructor without ancestor computation.
@@ -137,6 +138,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		mNewInitials = initials;
 		mNewFinals = finals;
 		mAncestorComputation = ancestorComputation;
+		mFilterCallTransitionsBasedOnDoubleDeckerInformation = (ancestorComputation != null);
 		mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(mRemainingStates);
 	}
 	
@@ -390,8 +392,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// filter out also transitions that are not contained any more
 		// because (trans.getSucc(), state) is not a DoubleDecker of the
 		// resulting automaton
-		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate =
-				trans -> mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getSucc(), state);
+		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = trans -> 
+			mRemainingStates.contains(trans.getSucc()) && 
+				(!mFilterCallTransitionsBasedOnDoubleDeckerInformation || isDoubleDecker(trans.getSucc(), state));
 		return new FilteredIterable<>(mNwa.callSuccessors(state, letter), predicate);
 	}
 	
@@ -400,8 +403,9 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		// filter out also transitions that are not contained any more
 		// because (trans.getSucc(), state) is not a DoubleDecker of the
 		// resulting automaton
-		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate =
-				trans -> mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getSucc(), state);
+		final IPredicate<OutgoingCallTransition<LETTER, STATE>> predicate = trans -> 
+			mRemainingStates.contains(trans.getSucc()) && 
+				(!mFilterCallTransitionsBasedOnDoubleDeckerInformation || isDoubleDecker(trans.getSucc(), state));
 		return new FilteredIterable<>(mNwa.callSuccessors(state), predicate);
 	}
 	
