@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DirectSimulationComparison;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
@@ -103,6 +104,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		 * {@link ReduceNwaDelayedSimulationB}.
 		 */
 		REDUCE_NWA_DELAYED_SIMULATION_B,
+		/**
+		 * {@link ReduceNwaDelayedFullMultipebbleSimulation}.
+		 */
+		REDUCE_NWA_DELAYED_FULL_MULTIPEBBLE_SIMULATION,
 		/**
 		 * {@link ShrinkNwa}.
 		 */
@@ -168,6 +173,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 			
 			case REDUCE_NWA_DELAYED_SIMULATION_B:
 				operation = reduceNwaDelayedSimulationB(automaton, factory);
+				break;
+			
+			case REDUCE_NWA_DELAYED_FULL_MULTIPEBBLE_SIMULATION:
+				operation = reduceNwaDelayedFullMultipebbleSimulation(automaton, factory);
 				break;
 			
 			case SHRINK_NWA:
@@ -294,6 +303,22 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveNonLiveStates<>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedSimulationB<>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link ReduceNwaDelayedFullMultipebbleSimulation} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<LETTER, STATE> reduceNwaDelayedFullMultipebbleSimulation(
+			final INestedWordAutomaton<LETTER, STATE> automaton, final IStateFactory<STATE> factory) throws Throwable {
+		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
+				new RemoveUnreachable<>(mServices, automaton).getResult();
+		return new ReduceNwaDelayedFullMultipebbleSimulation<>(mServices, factory, preprocessed);
 	}
 	
 	/**
