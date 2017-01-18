@@ -95,8 +95,8 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return false;
+		// TODO implement a meaningful check
+		return true;
 	}
 	
 	public static void main(String[] args) {

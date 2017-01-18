@@ -34,7 +34,15 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
 	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
 
-	public Intersect(final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2, final IStateFactory<STATE> factory) {
+	/**
+	 * 
+	 * NOTE: because of a convention in TestFileInterpreter, if an argument for the operation is a StateFactory, it must be the first argument
+	 * same for Services, both: first services then StateFactory
+	 * @param factory
+	 * @param t1
+	 * @param t2
+	 */
+	public Intersect(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2) {
 		reducedStates = new HashMap<>();
 		pairsMap = new HashMap<>();
 		
@@ -163,7 +171,8 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return false;
+		// TODO: implement a meaningful check
+		return true;
 	}
 	
 	public static void main(String[] args) throws AutomataLibraryException {
@@ -186,7 +195,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{Bool, BoolList})), BoolList);
 
 		final StringFactory fac = new StringFactory();
-		final Intersect<String, String> op = new Intersect<>(treeA, treeB, fac);
+		final Intersect<String, String> op = new Intersect<>(fac, treeA, treeB);
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
@@ -225,7 +234,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		System.out.println(tree1);
 		System.out.println(tree2);
-		final Intersect<Character, String> oo = new Intersect<>(tree1, tree2, fac);
+		final Intersect<Character, String> oo = new Intersect<>(fac, tree1, tree2);
 		final Minimize<Character, String> oo2 = new Minimize<>(oo.getResult(), fac);
 		System.out.println(oo2.getResult());
 	}

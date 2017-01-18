@@ -1545,6 +1545,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				for (final Constructor<?> c : operationConstructors) {
 					// Convention: If the first parameter is a StateFactory, we
 					// prepend a StringFactory to the arguments.
+					assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes());
 					final Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
 					final Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 					if (allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
@@ -1594,6 +1595,39 @@ public class TestFileInterpreter implements IMessagePrinter {
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 	}
+	
+	/**
+	 * Helper method for an assertion.
+	 * By convention, if an operation has an argument of type AutomataLibraryServices, it must come first in the argument 
+	 * list.
+	 * If an operation has han argument of type IStateFactory, it must come second if there is an argument of type
+	 * AutomataLibraryServices, second otherwise.
+	 */
+	private static boolean servicesAndStateFactoryComeFirstIfPresent(Class<?>[] classes) {
+		boolean servicesOccur = false;
+		for (int i = 0; i < classes.length; i++) {
+			Class<?> cl = classes[i];
+			
+			if (AutomataLibraryServices.class.isAssignableFrom(cl)) {
+				if (i == 0) {
+					servicesOccur = true;
+				} else {
+					return false;
+				}
+			}
+			if (IStateFactory.class.isAssignableFrom(cl) && i != 0) {
+				if (i == 1 && !servicesOccur) {
+					return false;
+				} 
+				if (i > 1) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+
 	
 	/**
 	 * Prepend mServices to args if AutomataLibraryServices is the first parameter of the constructor. FIXME: This is

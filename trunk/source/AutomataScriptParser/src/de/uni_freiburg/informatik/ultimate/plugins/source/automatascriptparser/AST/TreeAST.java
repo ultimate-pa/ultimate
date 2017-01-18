@@ -44,6 +44,6 @@ public class TreeAST extends AtsASTNode {
 				.map(ta -> ta.getTree())
 				.collect(Collectors.toList());
 
-		return new Tree<String>(mSymbol.getAsString(), childTrees);
+		return new Tree<String>(mSymbol.toString(), childTrees);
 	}
 }

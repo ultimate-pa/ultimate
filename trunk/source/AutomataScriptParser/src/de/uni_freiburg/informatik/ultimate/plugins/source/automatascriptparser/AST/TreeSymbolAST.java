@@ -47,4 +47,9 @@ public class TreeSymbolAST extends AtsASTNode {
 	public String getSymbol() {
 		return mSymbol;
 	}
+	
+	@Override
+	public String toString() {
+		return mSymbol;
+	}
 }

@@ -187,7 +187,7 @@ public class AutomataDefinitionInterpreter {
 		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
 
 		for (final String ltr : astNode.getAlphabet()) {
-			treeAutomaton.addFinalState(ltr);
+			treeAutomaton.addLetter(ltr);
 		}
 		
 		for (final String s : astNode.getStates()) {

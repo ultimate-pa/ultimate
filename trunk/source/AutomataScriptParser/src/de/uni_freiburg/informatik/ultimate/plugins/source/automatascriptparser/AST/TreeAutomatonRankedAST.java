@@ -6,7 +6,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class TreeAutomatonRankedAST extends AutomatonAST {
 	
-//	String mId;
+	private static final long serialVersionUID = -6821752595035882929L;
+
+	//	String mId;
 	List<RankedAlphabetEntryAST> mRankedAlphabet;
 	List<String> mStates;
 	List<String> mFinalStates;
