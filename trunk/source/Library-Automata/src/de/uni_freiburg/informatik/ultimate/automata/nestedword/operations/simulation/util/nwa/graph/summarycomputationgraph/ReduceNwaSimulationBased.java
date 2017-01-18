@@ -99,7 +99,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		super(services);
 		mOperand = operand;
 		final MinimizationBackend backend;
-		if (isFiniteAutomaton()) {
+		if (NestedWordAutomataUtils.isFiniteAutomaton(mOperand)) {
 			backend = MinimizationBackend.FINITE_AUTOMATON;
 		} else if (DEFAULT_USE_BISIMULATION) {
 			backend = MinimizationBackend.BISIMULATION;
@@ -171,9 +171,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		mLogger.info(exitMessage());
 	}
 	
-	private boolean isFiniteAutomaton() {
-		return mOperand.getCallAlphabet().isEmpty();
-	}
+
 	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
 		return new SpoilerNwaVertex<>(1, false, null, null, new SpoilerWinningSink<>(null));

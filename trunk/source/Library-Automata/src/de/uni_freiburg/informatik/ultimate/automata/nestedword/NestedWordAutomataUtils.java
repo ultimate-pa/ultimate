@@ -230,4 +230,12 @@ public final class NestedWordAutomataUtils {
 		final Function<OutgoingReturnTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
 		return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
 	}
+	
+	
+	/**
+	 * We can consider an NWA empty if call and return alphabet are empty.
+	 */
+	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
+	}
 }
