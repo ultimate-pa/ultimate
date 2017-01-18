@@ -61,7 +61,6 @@ public class HybridIcfgGenerator {
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
 	private final CfgSmtToolkit mSmtToolkit;
 	private BasicIcfg<IcfgLocation> mIcfg;
-	private List<IcfgLocation> mIcfgLocations;
 	private List<IcfgInternalTransition> mIcfgTransitions;
 	private Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
@@ -72,7 +71,6 @@ public class HybridIcfgGenerator {
 		mSmtToolkit = smtToolkit;
 		mIcfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
 		mPayload = mIcfg.getPayload();
-		mIcfgLocations = new ArrayList<>();
 		mIcfgTransitions = new ArrayList<>();
 		mCfgComponents = new HashMap<>();
 		// create a root + error location;
@@ -83,7 +81,17 @@ public class HybridIcfgGenerator {
 	}
 	
 	public BasicIcfg<IcfgLocation> createIfcgFromComponents() {
+		// root, initial state
+		mIcfg.addLocation(mCfgComponents.get("root").getStart(), true, false, false, false, false);
+		mCfgComponents.remove("root");
+		// error, error state
+		mIcfg.addLocation(mCfgComponents.get("error").getStart(), false, true, false, false, false);
+		mCfgComponents.remove("error");
+		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
+			// start is proc_entry + end is proc_exit
+			mIcfg.addLocation(comp.getStart(), false, false, true, false, false);
+			mIcfg.addLocation(comp.getEnd(), false, false, false, true, false);
 			for (IcfgLocation loc : comp.getLocations()) {
 				mIcfg.addOrdinaryLocation(loc);
 			}
@@ -170,9 +178,7 @@ public class HybridIcfgGenerator {
 		List<IcfgInternalTransition> transitions = new ArrayList<>();
 		String id = "varAssignment";
 		IcfgLocation start = new IcfgLocation(id + "_start", id);
-		locations.add(start);
 		IcfgLocation end = new IcfgLocation(id + "_end", id);
-		locations.add(end);
 		// TODO: transformula
 		UnmodifiableTransFormula tfStartEnd = null;
 		IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, tfStartEnd);
@@ -214,9 +220,7 @@ public class HybridIcfgGenerator {
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
 			IcfgLocation start = new IcfgLocation(autid + "_start", autid.toString());
-			locations.add(start);
 			IcfgLocation end = new IcfgLocation(autid + "_end", autid.toString());
-			locations.add(end);
 			IcfgLocation flow = new IcfgLocation(autid + "_flow", autid.toString());
 			locations.add(flow);
 			IcfgLocation invCheck = new IcfgLocation(autid + "_invCheck", autid.toString());
