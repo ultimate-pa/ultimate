@@ -73,12 +73,12 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> extends Re
 				allBitsAreTrue.add(state);
 			}
 		}
-		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp2 = 
+		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp2 =
 				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, allBitsAreTrue, allBitsAreTrue, allBitsAreTrue);
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp3 = new RemoveNonLiveStates<>(mServices, tmp2).getResult();
 		
-		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp4 = 
-				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, tmp1.getStates(), tmp3.getStates(), tmp1.getInitialStates());
+		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp4 =
+				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, tmp1.getStates(), tmp1.getInitialStates(), tmp3.getStates());
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> result = new RemoveDeadEnds<>(mServices, tmp4).getResult();
 		return result;
 	}
