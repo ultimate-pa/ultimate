@@ -72,23 +72,23 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 //			"examples/Automata/BuchiNwa/reduceBuchiNwa",
 //			"examples/Automata/nwaOperations/MinimizationBenchmarks",
 
-//			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
-			"examples/Automata/nwaOperations/MinimizationBenchmarks/quickeval",
+			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
+//			"examples/Automata/nwaOperations/MinimizationBenchmarks/quickeval",
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
 
 	private static final String[] SETTINGS = { 
-//			"AutomataScript/minimizeSevpa.epf", 
+			"AutomataScript/minimizeSevpa.epf", 
 			"AutomataScript/shrinkNwa.epf",
 			"AutomataScript/minimizeNwaPmaxSat.epf", 
-//			"AutomataScript/minimizeNwaPmaxSatAsymmetric.epf",
-//			"AutomataScript/reduceNwaDirectSimulation.epf",
+			"AutomataScript/minimizeNwaPmaxSatAsymmetric.epf",
+			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
-//			"AutomataScript/reduceNwaDelayedSimulation.epf",
+			"AutomataScript/reduceNwaDelayedSimulation.epf",
 			"AutomataScript/reduceNwaDelayedSimulationB.epf",
 			"AutomataScript/reduceNwaDirectFullMultipebbleSimulation.epf",
-//			"AutomataScript/reduceNwaDelayedFullMultipebbleSimulation.epf",
+			"AutomataScript/reduceNwaDelayedFullMultipebbleSimulation.epf",
 			};
 
 	private static final String[] INTERESTING_COLUMNS = { 
