@@ -2,14 +2,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
+import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -33,10 +36,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
 
-public class TreeAutomizerCEGAR {
+public class TreeAutomizerCEGAR {// implements
+									// IRefinementEngine<Tree<HCTransFormula>> {
 
 	public TreeAutomatonBU<HCTransFormula, HCPredicate> mAbstraction;
 
@@ -50,7 +57,7 @@ public class TreeAutomizerCEGAR {
 
 	private ILogger mLogger;
 
-	//private final HashMap<Term, Integer> termCounter;
+	// private final HashMap<Term, Integer> termCounter;
 	private final BasePayloadContainer mRootNode;
 	private final HCPredicate mInitialPredicate;
 	private final HCPredicate mFinalPredicate;
@@ -72,7 +79,7 @@ public class TreeAutomizerCEGAR {
 			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, Script script) {
 		mPredicateFactory = new HCPredicateFactory(script);
 		mBackendSmtSolverScript = script;
-		//termCounter = new HashMap<>();
+		// termCounter = new HashMap<>();
 		mLogger = logger;
 		mRootNode = rootNode;
 		mIteration = 0;
@@ -99,16 +106,17 @@ public class TreeAutomizerCEGAR {
 				tail.add(mInitialPredicate);
 			}
 			if (clause.getHeadPredicate() instanceof HornClauseFalsePredicateSymbol) {
-				mAbstraction.addRule(clause.getTransitionFormula(), tail, mFinalPredicate);
+				mAbstraction.addRule(new TreeAutomatonRule<HCTransFormula, HCPredicate>(clause.getTransitionFormula(),
+						tail, mFinalPredicate));
 			} else {
-				mAbstraction.addRule(clause.getTransitionFormula(), tail,
-						mPredicateFactory.truePredicate(clause.getHeadPredicate()));
+				mAbstraction.addRule(new TreeAutomatonRule<HCTransFormula, HCPredicate>(clause.getTransitionFormula(),
+						tail, mPredicateFactory.truePredicate(clause.getHeadPredicate())));
 			}
 		}
 
 		mAbstraction.addInitialState(mInitialPredicate);
 		mAbstraction.addFinalState(mFinalPredicate);
-		
+
 		mLogger.debug("Initial abstraction tree Automaton:");
 		mLogger.debug(mAbstraction);
 	}
@@ -123,21 +131,22 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.debug("Error trace found.");
 		mLogger.debug(mCounterexample.toString());
-		
+
 		return false;
 	}
 
-	protected LBool isCounterexampleFeasible() {
-		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript,
-				mInitialPredicate, mFinalPredicate, mLogger);
+	// @Override
+	public LBool getCounterexampleFeasibility() {
+		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
+				mLogger);
 		mSSA = mChecker.getSSA();
 		return mChecker.checkTrace();
 	}
 
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		// Using simple interpolant automaton : the counterexample's automaton.
-		//mInterpolAutomaton = mCounterexample.getAutomaton();
-		
+		// mInterpolAutomaton = mCounterexample.getAutomaton();
+
 		PostfixTree<Term, HCPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
 
 		Term[] ts = new Term[postfixT.getPostFix().size()];
@@ -150,58 +159,71 @@ public class TreeAutomizerCEGAR {
 		}
 		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(ts, idx);
 
-		//Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
+		// Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
 
 		Map<HCPredicate, Term> interpolantsMap = new HashMap<>();
 		for (int i = 0; i < interpolants.length; ++i) {
 			HCPredicate p = postfixT.getPostFixStates().get(i);
-			//predsMap.put(p, new HCPredicate(interpolants[i], p));
+			// predsMap.put(p, new HCPredicate(interpolants[i], p));
 			interpolantsMap.put(p, interpolants[i]);
 		}
 
-		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(mChecker.rebuild(interpolantsMap))
-				.getAutomaton();
-		//mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
-		//		.getAutomaton();
-		
+		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample)
+				.reconstruct(mChecker.rebuild(interpolantsMap)).getAutomaton();
+		// mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>)
+		// mCounterexample).reconstruct(predsMap)
+		// .getAutomaton();
+
 		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 	}
-	
-	
+
 	private void generalizeCounterExample(final TreeAutomatonBU<HCTransFormula, HCPredicate> cExample) {
 		boolean printed = false;
+		final Set<TreeAutomatonRule<HCTransFormula, HCPredicate>> rules = new HashSet<>();
 		for (final TreeAutomatonRule<HCTransFormula, HCPredicate> r : cExample.getRules()) {
 			for (final HCPredicate pf : cExample.getStates()) {
-				if (mPredicateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf)) { 
+				if (mPredicateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf)) {
 					if (!printed) {
 						mLogger.debug("Generalizing counterExample:");
 						printed = true;
 					}
-					mLogger.debug("Adding Rule: " + r.getLetter() + "("+r.getSource()+")" + " --> " + pf);
-					cExample.addRule(new TreeAutomatonRule<HCTransFormula, HCPredicate>(r.getLetter(), r.getSource(), pf));
+					mLogger.debug("Adding Rule: " + r.getLetter() + "(" + r.getSource() + ")" + " --> " + pf);
+					rules.add(new TreeAutomatonRule<HCTransFormula, HCPredicate>(r.getLetter(), r.getSource(), pf));
 				}
 			}
+		}
+		for (final TreeAutomatonRule<HCTransFormula, HCPredicate> rule : rules) {
+			cExample.addRule(rule);
 		}
 	}
 
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {
-	
+
 		mLogger.debug("Refine begins...");
-		//mLogger.debug(mAbstraction);
-		
-		final ITreeAutomatonBU<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
+		mLogger.debug(mAbstraction);
+
+		mLogger.debug("");
+		ITreeAutomatonBU<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
 				mPredicateFactory, mInterpolAutomaton)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
 		generalizeCounterExample((TreeAutomatonBU<HCTransFormula, HCPredicate>) cExample);
-		
+
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
 				mPredicateFactory, mAbstraction, cExample)).getResult();
+		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
+				((Set<TreeAutomatonRule<HCTransFormula, HCPredicate>>) mAbstraction.getRules()).size()));
+
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Totalize<HCTransFormula, HCPredicate>(
 				mPredicateFactory, mAbstraction)).getResult();
+		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
+				((Set<TreeAutomatonRule<HCTransFormula, HCPredicate>>) mAbstraction.getRules()).size()));
+
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Minimize<HCTransFormula, HCPredicate>(
 				mPredicateFactory, mAbstraction)).getResult();
-		
+		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
+				((Set<TreeAutomatonRule<HCTransFormula, HCPredicate>>) mAbstraction.getRules()).size()));
+
 		mLogger.debug("Refine ends...");
 
 		++mIteration;
@@ -221,7 +243,7 @@ public class TreeAutomizerCEGAR {
 			}
 
 			mBackendSmtSolverScript.push(1);
-			if (isCounterexampleFeasible() == LBool.SAT) {
+			if (getCounterexampleFeasibility() == LBool.SAT) {
 				mLogger.info("The program is unsafe, feasible counterexample.");
 				mLogger.info(mCounterexample.getTree());
 				mBackendSmtSolverScript.pop(1);
@@ -233,9 +255,9 @@ public class TreeAutomizerCEGAR {
 
 			mLogger.debug("Interpolant automaton:");
 			mLogger.debug(mInterpolAutomaton);
-			
+
 			mBackendSmtSolverScript.pop(1);
-			
+
 			mLogger.debug("Refining abstract model...");
 			refineAbstraction();
 			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
@@ -253,4 +275,22 @@ public class TreeAutomizerCEGAR {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	/*
+	 * @Override public Tree<HCTransFormula> getInfeasibilityProof() { // TODO
+	 * Auto-generated method stub return mCounterexample.getTree(); }
+	 * 
+	 * @Override public PredicateUnifier getPredicateUnifier() { // TODO
+	 * Auto-generated method stub return null; }
+	 * 
+	 * @Override public boolean providesICfgProgramExecution() { // TODO
+	 * Auto-generated method stub return false; }
+	 * 
+	 * 
+	 * @Override public CachingHoareTripleChecker getHoareTripleChecker() { //
+	 * TODO Auto-generated method stub return null; }
+	 * 
+	 * @Override public Object getIcfgProgramExecution() { // TODO
+	 * Auto-generated method stub return null; }
+	 */
 }

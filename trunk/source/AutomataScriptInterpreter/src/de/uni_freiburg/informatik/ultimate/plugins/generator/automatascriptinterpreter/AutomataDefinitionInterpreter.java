@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -208,7 +209,7 @@ public class AutomataDefinitionInterpreter {
 						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
 						+ "rules where the source state list is empty");
 			} else {
-				treeAutomaton.addRule(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState());
+				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
 			}
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);
@@ -245,11 +246,11 @@ public class AutomataDefinitionInterpreter {
 		
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
 			if (trans.getSourceStates().size() == 0) {
-				treeAutomaton.addRule(trans.getSymbol(), 
+				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), 
 						Collections.singletonList(nullaryString + trans.getSymbol()), 
-						trans.getTargetState());
+						trans.getTargetState()));
 			} else {
-				treeAutomaton.addRule(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState());
+				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
 			}
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);

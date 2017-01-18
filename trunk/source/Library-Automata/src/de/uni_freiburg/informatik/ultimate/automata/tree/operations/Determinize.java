@@ -191,7 +191,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				final Set<STATE> sDest = mp.get(sSrc);
 				final STATE dest = reduceState(sDest);
-				res.addRule(letter, src, dest);
+				res.addRule(new TreeAutomatonRule<>(letter, src, dest));
 				
 				for (final Set<STATE> sub : sSrc) {
 					final STATE state = reduceState(sub);
@@ -236,12 +236,12 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		treeA.addInitialState(Q0);
 		treeA.addFinalState(Q3);
-		treeA.addRule("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q2);
-		treeA.addRule("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q3);
-		treeA.addRule("G", new ArrayList<>(Arrays.asList(new String[]{Q2})), Q3);
-		treeA.addRule("G", new ArrayList<>(Arrays.asList(new String[]{Q3})), Q3);
-		treeA.addRule("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q2})), Q1);
-		treeA.addRule("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q3})), Q1);
+		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q2));
+		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{Q0, Q1})), Q3));
+		treeA.addRule(new TreeAutomatonRule<>("G", new ArrayList<>(Arrays.asList(new String[]{Q2})), Q3));
+		treeA.addRule(new TreeAutomatonRule<>("G", new ArrayList<>(Arrays.asList(new String[]{Q3})), Q3));
+		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q2})), Q1));
+		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q3})), Q1));
 		
 		final StringFactory fac = new StringFactory();
 		final Determinize<String, String> op = new Determinize<>(fac, treeA);
@@ -255,10 +255,10 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final String NAT = "NAT", NatList = "NatList", Bool = "Bool", BoolList = "BoolList", initA = "_", initB = "_";
 		treeB.addInitialState(initA);
 		treeB.addFinalState(NatList);
-		treeB.addRule("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT);
-		treeB.addRule("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT);
-		treeB.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
-		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
+		treeB.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT));
+		treeB.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT));
+		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList));
+		treeB.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 
 		final Determinize<String, String> opB = new Determinize<>(fac, treeB);
 		final ITreeAutomatonBU<String, String> resB = opB.getResult();

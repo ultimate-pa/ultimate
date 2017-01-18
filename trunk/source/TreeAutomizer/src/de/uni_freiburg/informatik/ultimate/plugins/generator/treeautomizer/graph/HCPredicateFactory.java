@@ -122,7 +122,6 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 	}
 
 	public boolean isSatisfiable(final List<HCPredicate> src, final HCTransFormula pf, final HCPredicate dest) {
-		
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
 				if (!pf.getInVars().containsKey((HCVar) v)) {

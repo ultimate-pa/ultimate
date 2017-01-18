@@ -7,31 +7,30 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public class HCTransFormula {
+
+
+public class HCTransFormula extends TransFormula {
 	
 	// f: in -> out { f(x1, ..., xn) = formula[] ; } 
 	private final Term formula;
-	private final Map<HCVar, TermVariable> inVars;
-	private final Map<HCVar, TermVariable> outVars;
 	
 	public int getArity() {
-		return Math.max(1, inVars.size());
+		return Math.max(1, mInVars.size());
 	}
-	public Map<HCVar, TermVariable> getInVars() {
-		return inVars;
-	}
-
-	public Map<HCVar, TermVariable> getOutVars() {
-		return outVars;
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mInVars;
 	}
 
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mOutVars;
+	}
 	
-	public HCTransFormula(Term form, Map<HCVar, TermVariable> inV, Map<HCVar, TermVariable> outV) {
+	public HCTransFormula(final Term form, final Map<IProgramVar, TermVariable> inV, final Map<IProgramVar, TermVariable> outV) {
+		super(inV, outV, new HashSet<>(), new HashSet<>());
 		formula = form;
-		
-		inVars = inV;
-		outVars = outV;
 	}
 	
 	
@@ -56,7 +55,7 @@ public class HCTransFormula {
 	
 	@Override
 	public String toString() {
-		return formula.toString() + ",in: " + inVars + ",out: " + outVars;
+		return formula.toString() + ",in: " + mInVars + ",out: " + mOutVars;
 	}
 	/*
 	@Override
@@ -64,4 +63,9 @@ public class HCTransFormula {
 		return formula.hashCode();
 	}
 	*/
+	@Override
+	public Set<IProgramVar> getAssignedVars() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

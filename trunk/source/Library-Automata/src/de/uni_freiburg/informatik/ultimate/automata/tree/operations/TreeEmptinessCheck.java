@@ -132,11 +132,11 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		
 		treeA.addInitialState(init);
 		treeA.addFinalState(NatList);
-		treeA.addRule("0", new ArrayList<>(Arrays.asList(new String[]{init})), NAT);
-		treeA.addRule("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT);
-		treeA.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{init})), EmptyList);
-		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, EmptyList})), NatList);
-		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
+		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[]{init})), NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{init})), EmptyList));
+		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, EmptyList})), NatList));
+		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 
 		final TreeEmptinessCheck<String, String> op = new TreeEmptinessCheck<>(treeA);
 		final TreeRun<String, String> res = op.getResult();

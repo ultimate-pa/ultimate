@@ -105,10 +105,10 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final String NAT = "NAT", NatList = "NatList", initA = "_";
 		treeA.addInitialState(initA);
 		treeA.addFinalState(NatList);
-		treeA.addRule("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT);
-		treeA.addRule("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT);
-		treeA.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
-		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
+		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList));
+		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 		
 		// cons(0, cons(s(0), nil))
 		final Tree<String> nil = new Tree<String>("nil");

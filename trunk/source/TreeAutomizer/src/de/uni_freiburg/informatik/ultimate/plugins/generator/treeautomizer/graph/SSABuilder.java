@@ -239,10 +239,11 @@ public class SSABuilder {
 		}
 
 		public void versionInVars() {
-			for (final HCVar bv : mTF.getInVars().keySet()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
-				final Term versioneered = getCurrentVarVersion(bv);
-				mConstants2HCVar.put(versioneered, bv);
+			for (final IProgramVar bv : mTF.getInVars().keySet()) {
+				HCVar hv = (HCVar) bv;
+				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(hv));
+				final Term versioneered = getCurrentVarVersion(hv);
+				mConstants2HCVar.put(versioneered, hv);
 				mSubstitutionMapping.put(tv, versioneered);
 				//mBackSubstitutionMapping.put(versioneered, bv);
 			}
@@ -250,20 +251,22 @@ public class SSABuilder {
 
 		public void versionAssignedVars(final int currentPos) {
 
-			for (final HCVar bv : mTF.getInVars().keySet()) {
+			for (final IProgramVar bv : mTF.getInVars().keySet()) {
+				HCVar hv = (HCVar) bv;
 				//final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
-				final Term versioneered = getCurrentVarVersion(bv);
+				final Term versioneered = getCurrentVarVersion(hv);
 				//mConstants2HCVar.put(versioneered, bv);
 				//mSubstitutionMapping.put(tv, versioneered);
-				mBackSubstitutionMapping.put(versioneered, bv);
+				mBackSubstitutionMapping.put(versioneered, hv);
 			}
 			
-			for (final HCVar bv : mTF.getOutVars().keySet()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
-				final Term versioneered = setCurrentVarVersion(bv, currentPos);
-				mConstants2HCVar.put(versioneered, bv);
+			for (final IProgramVar bv : mTF.getOutVars().keySet()) {
+				HCVar hv = (HCVar) bv;
+				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(hv));
+				final Term versioneered = setCurrentVarVersion(hv, currentPos);
+				mConstants2HCVar.put(versioneered, hv);
 				mSubstitutionMapping.put(tv, versioneered);
-				mBackSubstitutionMapping.put(versioneered, bv);
+				mBackSubstitutionMapping.put(versioneered, hv);
 			}
 		}
 

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * This is our internal representation of a Horn clause.
@@ -68,12 +69,12 @@ public class HornClause {
 		mHeadPredicate = body;
 		mBodyPredToTermVariables = cobody;
 		
-		final Map<HCVar, TermVariable> outVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		for (int i = 0; i < bodyVars.size(); ++i) {
 			outVars.put(new HCVar(body, i, bodyVars.get(i)), bodyVars.get(i));
 		}
 
-		final Map<HCVar, TermVariable> inVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (final HornClausePredicateSymbol pred : cobody.keySet()) {
 			final ArrayList<TermVariable> vars = cobody.get(pred);
 

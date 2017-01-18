@@ -7,10 +7,12 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
+ Library-UltimateUtil,
  Library-UltimateModel,
  Library-SMTLIB,
  Library-ModelCheckerUtils;bundle-version="0.0.1",
- de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1"
+ de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1",
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;bundle-version="0.0.1"
 Import-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.tree,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations,
@@ -18,9 +20,11 @@ Import-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
- de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
+ de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script,
+ de.uni_freiburg.informatik.ultimate.util
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
 
