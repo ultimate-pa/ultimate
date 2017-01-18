@@ -33,7 +33,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	final Map<Set<STATE>, STATE> minimizedStates;
 	
-	public Minimize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Minimize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
 		stateFactory = factory;
 		minimizedStates = new HashMap<>();
@@ -292,9 +292,9 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule("F", new ArrayList<>(Arrays.asList(new String[]{Y})), Y);
 		
 		System.out.println(treeA.toString() + "\n");
-		final Determinize<String, String> det = new Determinize<>(treeA, new StringFactory());
+		final Determinize<String, String> det = new Determinize<>(new StringFactory(), treeA);
 		System.out.println(det.getResult());
-		final Minimize<String, String> op = new Minimize<>(det.getResult(), new StringFactory());
+		final Minimize<String, String> op = new Minimize<>(new StringFactory(), det.getResult());
 		System.out.println(op.getResult());
 		
 	}

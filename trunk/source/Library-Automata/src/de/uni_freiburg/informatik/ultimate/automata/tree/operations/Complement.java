@@ -24,7 +24,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 	
-	public Complement(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Complement(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton = tree;
 		stateFactory = factory;
 		
@@ -46,10 +46,10 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-		final Determinize<LETTER, STATE> op = new Determinize<>(treeAutomaton, stateFactory);
+		final Determinize<LETTER, STATE> op = new Determinize<>(stateFactory, treeAutomaton);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		final Minimize<LETTER, STATE> mini = new Minimize<>(res, stateFactory);
+		final Minimize<LETTER, STATE> mini = new Minimize<>(stateFactory, res);
 		return mini.getResult();
 	}
 	
@@ -85,9 +85,9 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{Bool, BoolList})), BoolList);
 
 		final StringFactory fac = new StringFactory();
-		final Complement<String, String> com = new Complement<>(treeB, fac);
+		final Complement<String, String> com = new Complement<>(fac, treeB);
 		
-		final Intersect<String, String> op = new Intersect<>(treeA, com.getResult(), fac);
+		final Intersect<String, String> op = new Intersect<>(fac, treeA, com.getResult());
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");

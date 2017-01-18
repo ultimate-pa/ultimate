@@ -32,7 +32,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
-	public Determinize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Determinize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		reducedStates = new HashMap<>();
 		stateFactory = factory;
 		treeAutomaton = tree;
@@ -215,7 +215,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 
-		final Totalize<LETTER, STATE> op = new Totalize<>(res, stateFactory);
+		final Totalize<LETTER, STATE> op = new Totalize<>(stateFactory, res);
 		return op.getResult();
 	}
 	
@@ -244,7 +244,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q3})), Q1);
 		
 		final StringFactory fac = new StringFactory();
-		final Determinize<String, String> op = new Determinize<>(treeA, fac);
+		final Determinize<String, String> op = new Determinize<>(fac, treeA);
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
@@ -260,7 +260,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
 		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
 
-		final Determinize<String, String> opB = new Determinize<>(treeB, fac);
+		final Determinize<String, String> opB = new Determinize<>(fac, treeB);
 		final ITreeAutomatonBU<String, String> resB = opB.getResult();
 		
 

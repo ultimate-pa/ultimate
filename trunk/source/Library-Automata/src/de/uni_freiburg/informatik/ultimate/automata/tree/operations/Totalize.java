@@ -29,7 +29,7 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final STATE dummyState;
 	private final Set<STATE> states;
 	
-	public Totalize(final ITreeAutomatonBU<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
+	public Totalize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton =  tree;
 		stateFactory = factory;
 		memCombinations = new HashMap<>();
@@ -169,7 +169,7 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
 		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
 		
-		Totalize<String, String> op2 = new Totalize<>(treeA, new StringFactory());
+		Totalize<String, String> op2 = new Totalize<>(new StringFactory(), treeA);
 		System.out.println(treeA);
 		System.out.println(op2.getResult());
 		

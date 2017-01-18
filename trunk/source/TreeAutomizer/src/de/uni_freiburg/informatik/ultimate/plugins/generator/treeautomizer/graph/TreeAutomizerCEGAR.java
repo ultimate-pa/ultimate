@@ -190,17 +190,17 @@ public class TreeAutomizerCEGAR {
 		//mLogger.debug(mAbstraction);
 		
 		final ITreeAutomatonBU<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
-				mInterpolAutomaton, mPredicateFactory)).getResult();
+				mPredicateFactory, mInterpolAutomaton)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
 		generalizeCounterExample((TreeAutomatonBU<HCTransFormula, HCPredicate>) cExample);
 		
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
-				mAbstraction, cExample, mPredicateFactory)).getResult();
+				mPredicateFactory, mAbstraction, cExample)).getResult();
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Totalize<HCTransFormula, HCPredicate>(
-				mAbstraction, mPredicateFactory)).getResult();
+				mPredicateFactory, mAbstraction)).getResult();
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Minimize<HCTransFormula, HCPredicate>(
-				mAbstraction, mPredicateFactory)).getResult();
+				mPredicateFactory, mAbstraction)).getResult();
 		
 		mLogger.debug("Refine ends...");
 

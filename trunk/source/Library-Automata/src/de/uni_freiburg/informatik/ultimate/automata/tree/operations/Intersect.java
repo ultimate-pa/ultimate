@@ -235,7 +235,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		System.out.println(tree1);
 		System.out.println(tree2);
 		final Intersect<Character, String> oo = new Intersect<>(fac, tree1, tree2);
-		final Minimize<Character, String> oo2 = new Minimize<>(oo.getResult(), fac);
+		final Minimize<Character, String> oo2 = new Minimize<>(fac, oo.getResult());
 		System.out.println(oo2.getResult());
 	}
 }
