@@ -181,7 +181,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	/**
 	 * Return true iff pred is the representative IPredicate for the Term pred.getFormula().
 	 */
-	boolean isRepresentative(final IPredicate pred) {
+	public boolean isRepresentative(final IPredicate pred) {
 		final IPredicate representative = mTerm2Predicates.get(pred.getFormula());
 		return pred == representative;
 	}

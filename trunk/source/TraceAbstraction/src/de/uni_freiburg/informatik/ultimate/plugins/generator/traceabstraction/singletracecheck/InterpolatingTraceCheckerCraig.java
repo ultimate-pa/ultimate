@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -87,7 +88,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
+			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final boolean instanticateArrayExt,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence, final boolean innerRecursiveNestedInterpolationCall) {
@@ -148,7 +149,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
+			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence) {

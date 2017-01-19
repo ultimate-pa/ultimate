@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * CachingHoareTripleChecker that does not directly iterate over covered predicates and covering predicates in order to
  * do an exteded cache check (like {@link CachingHoareTripleChecker_Iterative}) but also takes the current cache into
  * account.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker implements IHoareTripleChecker {
 
 	public CachingHoareTripleChecker_Map(final IUltimateServiceProvider services,
-			final IHoareTripleChecker protectedHoareTripleChecker, final PredicateUnifier predicateUnifer) {
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
 		super(services, protectedHoareTripleChecker, predicateUnifer);
 	}
 
@@ -209,7 +209,7 @@ public class CachingHoareTripleChecker_Map extends CachingHoareTripleChecker imp
 
 	/**
 	 * Allows iteration over intersection of two sets. Does the iteration efficiently over the smaller set.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
 	 * @param <E>

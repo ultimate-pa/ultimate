@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -120,7 +121,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final UnsatCores unsatCores, final boolean useLiveVariables, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier,
+			final boolean computeRcfgProgramExecution, final IPredicateUnifier predicateUnifier,
 			final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence) {
@@ -188,7 +189,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				|| mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
 						&& !isForwardSequencePerfect();
 	}
-	
+
 	public boolean wasBackwardSequenceConstructed() {
 		return mInterpolantsBp != null;
 	}
@@ -323,7 +324,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
-				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout).getInterpolants();
+				mInterpolantsBp =
+						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
+								.getInterpolants();
 
 				assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
@@ -336,7 +339,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				if (mControlLocationSequence != null) {
 					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
 							getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-					mPerfectBackwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+					mPerfectBackwardSequence =
+							bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 					if (mPerfectBackwardSequence) {
 						mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
 					}
@@ -370,7 +374,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (DEBUG_CHECK_SP_IMPLIES_WP && mConstructForwardInterpolantSequence && wasBackwardSequenceConstructed()) {
 			checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
 		}
-		
+
 		if (mConstructForwardInterpolantSequence && wasBackwardSequenceConstructed()) {
 			final boolean omitMixedSequence = true;
 			if (omitMixedSequence) {

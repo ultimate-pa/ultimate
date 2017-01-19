@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 /**
  * Implementation of AbstractInterpolantAutomaton that already provides basic operations for successor computation.
@@ -48,11 +48,11 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 		extends AbstractInterpolantAutomaton<LETTER> {
 
 	protected final IPredicate mIaTrueState;
-	protected final PredicateUnifier mPredicateUnifier;
+	protected final IPredicateUnifier mPredicateUnifier;
 
 	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
-			final PredicateUnifier predicateUnifier,
+			final IPredicateUnifier predicateUnifier,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
 		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping,
 				predicateUnifier.getFalsePredicate(), inputInterpolantAutomaton);

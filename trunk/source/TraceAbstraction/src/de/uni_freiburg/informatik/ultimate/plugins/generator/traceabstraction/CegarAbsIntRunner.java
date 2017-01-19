@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -294,7 +295,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	}
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
-			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final IRun<LETTER, IPredicate, ?> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return null;
@@ -353,13 +354,13 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private static abstract class BaseAbsIntInterpolantGenerator implements IInterpolantGenerator {
 
-		private final PredicateUnifier mPredicateUnifier;
+		private final IPredicateUnifier mPredicateUnifier;
 		private final Word<? extends IAction> mCex;
 		private final IPredicate mPrecondition;
 		private final IPredicate mPostcondition;
 		private final InterpolantComputationStatus mStatus;
 
-		private BaseAbsIntInterpolantGenerator(final PredicateUnifier predicateUnifier,
+		private BaseAbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier,
 				final Word<? extends IAction> cex, final InterpolantComputationStatus status) {
 			mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
 			mCex = cex;
@@ -384,7 +385,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		public PredicateUnifier getPredicateUnifier() {
+		public IPredicateUnifier getPredicateUnifier() {
 			return mPredicateUnifier;
 		}
 

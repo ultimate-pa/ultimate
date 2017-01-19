@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -61,7 +61,7 @@ public class CoverageAnalysis<CL> {
 	protected final ILogger mLogger;
 
 	private final List<CL> mProgramPointSequence;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	private final Map<CL, List<Integer>> mProgramPoint2Occurence = new HashMap<>();
 
@@ -74,7 +74,7 @@ public class CoverageAnalysis<CL> {
 	protected final InterpolantsPreconditionPostcondition mIpp;
 
 	public CoverageAnalysis(final IUltimateServiceProvider services, final InterpolantsPreconditionPostcondition ipp,
-			final List<CL> programPointSequence, final ILogger logger, final PredicateUnifier predicateUnifier) {
+			final List<CL> programPointSequence, final ILogger logger, final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = logger;
 		mProgramPointSequence = programPointSequence;

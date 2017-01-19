@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -61,7 +62,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
-	protected final PredicateUnifier mPredicateUnifier;
+	protected final IPredicateUnifier mPredicateUnifier;
 	protected final PredicateFactory mPredicateFactory;
 
 	protected IPredicate[] mInterpolants;
@@ -72,7 +73,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
-	 * 
+	 *
 	 * @param assertCodeBlocksIncrementally
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
@@ -82,7 +83,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, final ManagedScript tcSmtManager,
+			final IPredicateUnifier predicateUnifier, final ManagedScript tcSmtManager,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final List<? extends Object> controlLocationSequence) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit,
@@ -90,7 +91,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 						csToolkit.getOldVarsAssignmentCache(), false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
-		mPredicateFactory = predicateUnifier.getPredicateFactory();
+		mPredicateFactory = (PredicateFactory) predicateUnifier.getPredicateFactory();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mControlLocationSequence = controlLocationSequence;
@@ -115,7 +116,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            <p>
 	 *            interpolatedPositions has to be sorted (ascending) and its entries have to be smaller than or equal to
 	 *            mTrace.size()
-	 * @param predicateUnifier
+	 * @param mPedicateUnifier
 	 *            A PredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
@@ -156,7 +157,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	}
 
 	@Override
-	public final PredicateUnifier getPredicateUnifier() {
+	public final IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 

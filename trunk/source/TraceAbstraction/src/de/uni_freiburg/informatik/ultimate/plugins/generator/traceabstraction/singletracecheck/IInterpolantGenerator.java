@@ -32,6 +32,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -49,46 +50,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public interface IInterpolantGenerator {
-	
+
 	Word<? extends IAction> getTrace();
-	
+
 	IPredicate getPrecondition();
-	
+
 	IPredicate getPostcondition();
-	
+
 	Map<Integer, IPredicate> getPendingContexts();
-	
+
 	/**
 	 * @return A sequence of predicates that is a sequence of interpolations according to the definition given above.
 	 */
 	IPredicate[] getInterpolants();
-	
+
 	/**
 	 * @return The PredicateUnifier that was used to construct the interpolants.
 	 */
-	PredicateUnifier getPredicateUnifier();
-	
+	IPredicateUnifier getPredicateUnifier();
+
 	default InterpolantsPreconditionPostcondition getIpp() {
 		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(),
 				Arrays.asList(getInterpolants()));
 	}
-	
+
 	/**
 	 * @return {@code true} iff the interpolant sequence is perfect.
 	 */
 	boolean isPerfectSequence();
-	
+
 	/**
 	 * @return {@code true} iff the {@link IInterpolantGenerator} returns a usable interpolant sequence even if it is
 	 *         imperfect. Certain interpolant generators (e.g. {@link CegarAbsIntRunner}) can only deliver perfect
 	 *         sequences.
-	 * @deprecated Matthias: Either your provide a sequence or not, why shouldn't
-	 * the sequence be usable.
+	 * @deprecated Matthias: Either your provide a sequence or not, why shouldn't the sequence be usable.
 	 */
 	@Deprecated
 	default boolean imperfectSequencesUsable() {
 		return true;
 	}
-	
+
 	InterpolantComputationStatus getInterpolantComputationStatus();
 }

@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  *
@@ -67,7 +67,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction, final IPredicateUnifier predUnifier,
 			final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
 			final IRun<LETTER, IPredicate, ?> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique,
@@ -89,13 +89,13 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomaton(
 			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
-			final PredicateUnifier predicateUnifier) {
+			final IPredicateUnifier predicateUnifier) {
 		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomatonNew(
 			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
-			final PredicateUnifier predicateUnifier) {
+			final IPredicateUnifier predicateUnifier) {
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;

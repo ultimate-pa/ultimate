@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	private static final boolean REVIEW_SMT_RESULTS_IF_ASSERTIONS_ENABLED = true;
@@ -45,7 +45,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	private final IHoareTripleChecker mHoareTripleCheckerForReview;
 
 	public EfficientHoareTripleChecker(final IHoareTripleChecker smtBasedHoareTripleChecker,
-			final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) {
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) {
 		super();
 		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
 		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, predicateUnifier,

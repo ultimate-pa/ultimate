@@ -88,4 +88,9 @@ public interface IPredicateUnifier {
 	 */
 	BasicPredicateFactory getPredicateFactory();
 
+	/**
+	 * Return true iff pred is the representative IPredicate for the Term pred.getFormula().
+	 */
+	boolean isRepresentative(final IPredicate pred);
+
 }

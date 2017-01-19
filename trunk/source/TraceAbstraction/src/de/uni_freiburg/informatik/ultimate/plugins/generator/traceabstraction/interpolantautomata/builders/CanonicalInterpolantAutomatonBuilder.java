@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -67,7 +67,7 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
 			final InCaReAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
 			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
-			final PredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
+			final IPredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;
 		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),

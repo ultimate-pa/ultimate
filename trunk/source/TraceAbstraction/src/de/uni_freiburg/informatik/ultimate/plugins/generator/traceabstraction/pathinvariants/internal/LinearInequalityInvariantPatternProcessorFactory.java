@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 /**
  * Factory producing {@link LinearInequalityInvariantPatternProcessor}s.
@@ -56,7 +56,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final IToolchainStorage mStorage;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	protected final PredicateUnifier predUnifier;
+	protected final IPredicateUnifier predUnifier;
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy;
 	private final boolean mUseNonlinearConstraints;
@@ -83,9 +83,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @param axioms
 	 */
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
-			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final boolean useUnsatCoresForDynamicPatternChanges, final Settings solverSettings,
+			final IToolchainStorage storage, final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
+			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
+			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore,
+			final boolean useUnsatCoresForDynamicPatternChanges, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate axioms) {
 		mServices = services;
@@ -161,8 +162,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
-				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseUnsatCoresForDynamicPatternChanges, mSimplificationTechnique,
-				mXnfConversionTechnique);
+				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseUnsatCoresForDynamicPatternChanges,
+				mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 }

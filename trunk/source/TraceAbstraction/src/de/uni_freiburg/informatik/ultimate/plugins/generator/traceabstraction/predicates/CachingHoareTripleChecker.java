@@ -38,15 +38,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * IHoareTripleChecker that caches already computed results. Also tries to use these results for more intelligent
  * checks.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -55,7 +55,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final IHoareTripleChecker mComputingHoareTripleChecker;
-	protected final PredicateUnifier mPredicateUnifer;
+	protected final IPredicateUnifier mPredicateUnifer;
 	protected final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 
 	private final InCaReCounter mResultFromSolver = new InCaReCounter();
@@ -67,7 +67,7 @@ public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 	private final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> mReturnCache = new HashMap<>();
 
 	public CachingHoareTripleChecker(final IUltimateServiceProvider services,
-			final IHoareTripleChecker protectedHoareTripleChecker, final PredicateUnifier predicateUnifer) {
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

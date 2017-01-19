@@ -64,12 +64,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SdHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Builder for an interpolant automaton from abstract interpretation counterexamples using total interpolation (all
@@ -81,10 +81,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?>>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
-	
+
 	private static final long PRINT_PREDS_LIMIT = 30;
 	private static final boolean SIMPLE_HOARE_CHECK = true;
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
@@ -95,7 +95,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	private final IIcfgSymbolTable mSymbolTable;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
-	
+
 	/**
 	 * Constructs a new AbsIntTotalInterpolationAutomatonBuilder which preforms total interpolation on a given counter
 	 * example and constructs an interpolant automaton.
@@ -113,7 +113,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final IRun<LETTER, IPredicate, ?> currentCounterExample, final IIcfgSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -128,44 +128,44 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
-	
+
 	private NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
 			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predicateUnifier) {
-		
+			final IPredicateUnifier predicateUnifier) {
+
 		mLogger.info("Creating interpolant automaton from AI predicates (total)");
-		
+
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
 				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
-		
+
 		final NestedRun<LETTER, IPredicate> counterExample = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = counterExample.getWord();
-		
+
 		final int wordLength = word.length();
 		assert wordLength > 1 : "Unexpected: length of word smaller or equal to 1.";
-		
+
 		final Map<LETTER, IPredicate> callHierarchyPredicates = new HashMap<>();
-		
+
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
 		IPredicate previous = predicateUnifier.getTruePredicate();
 		alreadyThereAsState.add(previous);
 		result.addState(true, false, previous);
-		
+
 		final Map<IPredicate, Set<IAbstractState<?, IBoogieVar>>> predicateToStates = new HashMap<>();
-		
+
 		for (int i = 0; i < wordLength; i++) {
 			final LETTER symbol = word.getSymbol(i);
-			
+
 			final Set<IAbstractState<?, IBoogieVar>> nextStates =
 					(Set<IAbstractState<?, IBoogieVar>>) aiResult.getLoc2States().get(symbol.getTarget());
-			
+
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
-				
+
 				if (mLogger.isDebugEnabled()) {
 					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
@@ -179,7 +179,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
 						nextStates.stream().map(s -> s.getTerm(mCsToolkit.getManagedScript().getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
-				
+
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is
 				// originating from.
 				if (!predicateToStates.containsKey(target)) {
@@ -187,16 +187,16 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				} else {
 					predicateToStates.get(target).addAll(nextStates.stream().collect(Collectors.toSet()));
 				}
-				
+
 				if (mLogger.isDebugEnabled()) {
 					writeTransitionAddLog(i, symbol, nextStates, previous, target);
 				}
 			}
-			
+
 			if (alreadyThereAsState.add(target)) {
 				result.addState(false, falsePredicate.equals(target), target);
 			}
-			
+
 			// Add transition
 			if (symbol instanceof IIcfgCallTransition<?>) {
 				result.addCallTransition(previous, symbol, target);
@@ -209,15 +209,15 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			} else {
 				result.addInternalTransition(previous, symbol, target);
 			}
-			
+
 			previous = target;
 		}
-		
+
 		// Add self-loops to final states
 		for (final IPredicate finalState : result.getFinalStates()) {
 			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
 		}
-		
+
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
 					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
@@ -227,12 +227,12 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			mLogger.info("Using " + alreadyThereAsState.size() + " predicates from AI: " + String.join(",",
 					alreadyThereAsState.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		}
-		
+
 		enhanceResult(oldAbstraction, aiResult, result, predicateToStates, predicateUnifier);
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Adds additional possible internal edges to the result automaton by iterating over all predicates and states and
 	 * checking whether the abstract post is compatible with another predicate.
@@ -247,43 +247,43 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
 			final NestedWordAutomaton<LETTER, IPredicate> result,
 			final Map<IPredicate, Set<IAbstractState<?, IBoogieVar>>> predicateToStates,
-			final PredicateUnifier predicateUnifier) {
-		
+			final IPredicateUnifier predicateUnifier) {
+
 		mLogger.info("Enhancing interpolant automaton by introducing valid transitions between predicates.");
-		
+
 		// Used for debugging reasons to determine impact of enhancement.
 		int numberOfTransitionsBeforeEnhancement = -1;
-		
+
 		if (mLogger.isDebugEnabled()) {
 			final Analyze<LETTER, IPredicate> analyze = new Analyze<>(new AutomataLibraryServices(mServices), result);
 			numberOfTransitionsBeforeEnhancement = analyze.getNumberOfTransitions(SymbolType.TOTAL);
 		}
-		
+
 		final Set<IPredicate> allPredicates = predicateToStates.keySet();
 		final IAbstractPostOperator<?, LETTER, IBoogieVar> postOperator = aiResult.getUsedDomain().getPostOperator();
 		final SdHoareTripleChecker sdChecker =
 				new SdHoareTripleChecker(mCsToolkit, predicateUnifier, new HoareTripleCheckerStatisticsGenerator());
-		
+
 		// Iterate over all letters in the alphabet to find matching inductive transitions.
 		for (final LETTER currentLetter : oldAbstraction.getAlphabet()) {
-			
+
 			final IInternalAction internalAction = (IInternalAction) currentLetter;
-			
+
 			// Skip call and return symbols.
 			if (currentLetter instanceof IIcfgCallTransition<?>
 					|| currentLetter instanceof IIcfgReturnTransition<?, ?>) {
 				continue;
 			}
-			
+
 			// Collect all occurring variables in the current letter.
 			// TODO: Die here if letter is not codeblock
 			final Set<IBoogieVar> variableNames = mVariableCollector.collectVariableNames((CodeBlock) currentLetter,
 					mStatementExtractor, mSymbolTable);
-			
+
 			// Iterate over all predicates to find matching candidates for a transition.
 			for (final IPredicate currentPredicate : allPredicates) {
 				final Set<IAbstractState<?, IBoogieVar>> currentGenerators = predicateToStates.get(currentPredicate);
-				
+
 				for (final IPredicate otherPredicate : allPredicates) {
 					if (SIMPLE_HOARE_CHECK) {
 						if (internalAction != null) {
@@ -301,24 +301,24 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 							}
 						}
 					}
-					
+
 					final Set<IAbstractState<?, IBoogieVar>> otherGenerators = predicateToStates.get(otherPredicate);
-					
+
 					boolean allIncompatible = true;
 					boolean noMatchingPostStateFound = false;
-					
+
 					for (final IAbstractState<?, IBoogieVar> currentState : currentGenerators) {
 						if (!areCompatible(currentState, variableNames)) {
 							continue;
 						}
-						
+
 						allIncompatible = false;
-						
+
 						final List<IAbstractState> currentPost =
 								applyPostInternally(currentState, postOperator, currentLetter);
-						
+
 						boolean subsetFound = false;
-						
+
 						otherFor: for (final IAbstractState<?, IBoogieVar> otherState : otherGenerators) {
 							for (final IAbstractState postState : currentPost) {
 								if (isSubsetInternally(postState, otherState)) {
@@ -327,17 +327,17 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 								}
 							}
 						}
-						
+
 						if (!subsetFound) {
 							noMatchingPostStateFound = true;
 							break;
 						}
 					}
-					
+
 					if (allIncompatible || noMatchingPostStateFound) {
 						continue;
 					}
-					
+
 					// Add transition
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("Adding new transition: [" + currentPredicate.hashCode() + "] -> " + currentLetter
@@ -347,18 +347,18 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 				}
 			}
 		}
-		
+
 		if (mLogger.isDebugEnabled()) {
 			final Analyze<LETTER, IPredicate> analyze = new Analyze<>(new AutomataLibraryServices(mServices), result);
 			final int numberOfTransitionsAfter = analyze.getNumberOfTransitions(SymbolType.TOTAL);
-			
+
 			mLogger.debug("Enhancement added " + (numberOfTransitionsAfter - numberOfTransitionsBeforeEnhancement)
 					+ " transitions.");
 			mLogger.debug("# Transitions before: " + numberOfTransitionsBeforeEnhancement);
 			mLogger.debug("# Transitions after : " + numberOfTransitionsAfter);
 		}
 	}
-	
+
 	private void writeTransitionAddLog(final int i, final LETTER symbol,
 			final Set<IAbstractState<?, IBoogieVar>> nextStates, final IPredicate source, final IPredicate target) {
 		final String divider = "------------------------------------------------";
@@ -371,43 +371,43 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mLogger.debug("Target Term: " + target);
 		mLogger.debug(divider);
 	}
-	
+
 	@Override
 	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
-	
+
 	private List<IAbstractState> applyPostInternally(final IAbstractState<?, IBoogieVar> currentState,
 			final IAbstractPostOperator postOperator, final LETTER transition) {
 		return postOperator.apply(currentState, transition);
 	}
-	
+
 	private static boolean isSubsetInternally(final IAbstractState firstState, final IAbstractState secondState) {
 		if (firstState.getVariables().size() != secondState.getVariables().size()) {
 			return false;
 		}
-		
+
 		if (!firstState.getVariables().stream().allMatch(secondState.getVariables()::contains)) {
 			return false;
 		}
-		
+
 		final SubsetResult subs = firstState.isSubsetOf(secondState);
 		return subs != SubsetResult.NONE;
 	}
-	
+
 	private static boolean areCompatible(final IAbstractState state, final Set<IBoogieVar> variableNames) {
 		assert state != null;
 		assert variableNames != null;
-		
+
 		if (variableNames.isEmpty()) {
 			return true;
 		}
 		if (state.getVariables().isEmpty()) {
 			return false;
 		}
-		
+
 		final Set<IBoogieVar> varsInState = state.getVariables();
-		
+
 		for (final IBoogieVar var : variableNames) {
 			if (!varsInState.contains(var)) {
 				return false;
@@ -415,17 +415,17 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Collects all variable identifiers for a given statement.
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
 	private static final class VariableCollector extends BoogieVisitor {
-		
+
 		private Set<IBoogieVar> mVariables;
 		private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
-		
+
 		private Set<IBoogieVar> collectVariableNames(final CodeBlock codeBlock,
 				final RcfgStatementExtractor statementExtractor, final IIcfgSymbolTable boogie2SmtSymbolTable) {
 			mVariables = new HashSet<>();
@@ -435,18 +435,18 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			}
 			return mVariables;
 		}
-		
+
 		@Override
 		protected void visit(final IdentifierExpression expr) {
 			mVariables.add(
 					mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
 		}
-		
+
 		@Override
 		protected void visit(final VariableLHS lhs) {
 			mVariables.add(
 					mBoogie2SmtSymbolTable.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
 		}
-		
+
 	}
 }

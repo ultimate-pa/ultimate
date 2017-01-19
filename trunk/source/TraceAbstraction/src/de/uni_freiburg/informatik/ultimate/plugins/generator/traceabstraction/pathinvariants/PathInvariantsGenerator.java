@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -83,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -114,7 +114,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicate[] mInterpolants;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final PredicateTransformer mPredicateTransformer;
@@ -140,7 +140,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate axioms,
@@ -194,7 +194,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final IIcfg<?> icfg,
+			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
 			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVariables,
 			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants,
 			final Settings solverSettings, final SimplificationTechnique simplificationTechnique,
@@ -305,18 +305,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	/**
 	 * Check for each loop location of the path program if it contains some inner statements.
+	 *
 	 * @param pathProgram
 	 * @return
 	 */
-	private Set<IcfgLocation> extractLocationsOfNonEmptyLoops(IIcfg<IcfgLocation> pathProgram) {
-		Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
-		Set<IcfgLocation> locationsOfNonEmptyLoops = new HashSet<>(loopLocations.size());
-		for (IcfgLocation currLoc : loopLocations) {
-			List<IcfgEdge> outEdges = currLoc.getOutgoingEdges();
-//			if (outEdges.isEmpty()) {
-//				break;
-//			}
-			for (IcfgEdge e : outEdges) {
+	private Set<IcfgLocation> extractLocationsOfNonEmptyLoops(final IIcfg<IcfgLocation> pathProgram) {
+		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
+		final Set<IcfgLocation> locationsOfNonEmptyLoops = new HashSet<>(loopLocations.size());
+		for (final IcfgLocation currLoc : loopLocations) {
+			final List<IcfgEdge> outEdges = currLoc.getOutgoingEdges();
+			// if (outEdges.isEmpty()) {
+			// break;
+			// }
+			for (final IcfgEdge e : outEdges) {
 				if (nodeIsReachable(currLoc, e)) {
 					locationsOfNonEmptyLoops.add(currLoc);
 					break;
@@ -326,13 +327,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return locationsOfNonEmptyLoops;
 	}
 
-	private boolean nodeIsReachable(IcfgLocation currLoc, IcfgEdge e) {
-		Set<IcfgLocation> visitedNodes = new HashSet<>();
-		List<IcfgEdge> edgesToProcess = new LinkedList<IcfgEdge>();
+	private boolean nodeIsReachable(final IcfgLocation currLoc, final IcfgEdge e) {
+		final Set<IcfgLocation> visitedNodes = new HashSet<>();
+		final List<IcfgEdge> edgesToProcess = new LinkedList<IcfgEdge>();
 		edgesToProcess.add(e);
 		while (!edgesToProcess.isEmpty()) {
-			IcfgEdge currEdge = edgesToProcess.remove(edgesToProcess.size()-1);
-			IcfgLocation targ = currEdge.getTarget();
+			final IcfgEdge currEdge = edgesToProcess.remove(edgesToProcess.size() - 1);
+			final IcfgLocation targ = currEdge.getTarget();
 			if (targ == currLoc) {
 				return true;
 			} else if (!visitedNodes.contains(targ)) {
@@ -652,7 +653,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	@Override
-	public PredicateUnifier getPredicateUnifier() {
+	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 
