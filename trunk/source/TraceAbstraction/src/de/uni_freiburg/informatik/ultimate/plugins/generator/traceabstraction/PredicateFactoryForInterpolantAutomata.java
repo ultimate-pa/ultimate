@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
-	private final IPredicate memtpyStack;
+	private final IPredicate mEmtpyStack;
 	protected final ManagedScript mMgdScript;
 	protected final PredicateFactory mPredicateFactory;
 
@@ -57,7 +57,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
-		memtpyStack = mPredicateFactory.newEmptyStackPredicate();
+		mEmtpyStack = mPredicateFactory.newEmptyStackPredicate();
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 	@Override
 	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 		if (mComputeHoareAnnotation) {
-			final List<IPredicate> upPredicates = new ArrayList<IPredicate>();
+			final List<IPredicate> upPredicates = new ArrayList<>();
 			for (final IPredicate caller : down2up.keySet()) {
 				for (final IPredicate current : down2up.get(caller)) {
 					if (mPredicateFactory.isDontCare(current)) {
@@ -81,9 +81,8 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 			final Term conjunction = mPredicateFactory.and(upPredicates);
 			final IPredicate result = mPredicateFactory.newPredicate(conjunction);
 			return result;
-		} else {
-			return mPredicateFactory.newDontCarePredicate(null);
 		}
+		return mPredicateFactory.newDontCarePredicate(null);
 	}
 
 	@Override
@@ -93,7 +92,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	@Override
 	public IPredicate createEmptyStackState() {
-		return memtpyStack;
+		return mEmtpyStack;
 	}
 
 	@Override
