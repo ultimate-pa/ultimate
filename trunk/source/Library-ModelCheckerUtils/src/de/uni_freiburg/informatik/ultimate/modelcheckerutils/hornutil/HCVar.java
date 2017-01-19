@@ -6,29 +6,31 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class HCVar implements IProgramVar {
-	private final HornClausePredicateSymbol predicate;
-	private final TermVariable termVariable;
-	private final int idx;
-	
-	public HCVar(HornClausePredicateSymbol pr, int pos, TermVariable v) {
-		predicate = pr;
-		idx = pos;
-		termVariable = v;
+	private static final long serialVersionUID = 1L;
+
+	private final HornClausePredicateSymbol mPredicate;
+	private final TermVariable mTermVariable;
+	private final int mIdx;
+
+	public HCVar(final HornClausePredicateSymbol pr, final int pos, final TermVariable v) {
+		mPredicate = pr;
+		mIdx = pos;
+		mTermVariable = v;
 	}
-	
+
 	@Override
 	public TermVariable getTermVariable() {
-		return termVariable;
+		return mTermVariable;
 	}
-	
+
 	@Override
 	public String toString() {
-		return predicate.getName() + "{" + idx + "}" + ":" + termVariable.toString();
+		return mPredicate.getName() + "{" + mIdx + "}" + ":" + mTermVariable.toString();
 	}
-	
+
 	@Override
 	public String getGloballyUniqueId() {
-		return String.format("%s_%d", predicate.getName(), idx);
+		return String.format("%s_%d", mPredicate.getName(), mIdx);
 	}
 
 	@Override
@@ -66,9 +68,10 @@ public class HCVar implements IProgramVar {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public int hashCode() {
+		// TODO: Sooooo expensive!! String is always recomputed. Also, override equals!!!
 		return getGloballyUniqueId().hashCode();
 	}
 }

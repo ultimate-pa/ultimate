@@ -58,12 +58,12 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	 * Check if the Hoare triple {pre} act {succ} is valid for an internal action act. Internal transition means that
 	 * the program is in the same procedure before and after the action act was executed.
 	 */
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ);
+	Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ);
 
 	/**
 	 * Check if the Hoare triple {pre} call {succ} is valid for a call action.
 	 */
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ);
+	Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ);
 
 	/**
 	 * Check if the Hoare quadruple {preLin} {preHier} return {succ} is valid for a return transition. Here, the action
@@ -71,9 +71,22 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 	 * return, preHier is the IPredicate that describes a set of states of the calling procedure before the call, and
 	 * succ is the IPredicate that describes a set of states of the called procedure.
 	 */
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ);
+	Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ);
 
-	public abstract HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark();
+	HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark();
+
+	static Validity convertLBool2Validity(final LBool lbool) {
+		switch (lbool) {
+		case SAT:
+			return Validity.INVALID;
+		case UNKNOWN:
+			return Validity.UNKNOWN;
+		case UNSAT:
+			return Validity.VALID;
+		default:
+			throw new AssertionError();
+		}
+	}
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
@@ -120,19 +133,6 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 		@Override
 		public Class<?> getDataType() {
 			return mClazz;
-		}
-	}
-
-	public static Validity lbool2validity(final LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
 		}
 	}
 

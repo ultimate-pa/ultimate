@@ -88,7 +88,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 			if (!oldVarEqualities.isEmpty()) {
 				Term nonModOldVarsEquality = Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 				if (mUseNamedTerms) {
-					final Annotation annot = new Annotation(":named", s_PrecondNonModGlobalEquality);
+					final Annotation annot = new Annotation(":named", ID_PRECONDITION_NON_MOD_GLOBAL_EQUALITY);
 					nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);
 				}
 				quickCheck = mManagedScript.assertTerm(this, nonModOldVarsEquality);
@@ -99,7 +99,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 
 
 		private String getIdentifierForPrecond(final int i) {
-			return s_IdPrecondition + i;
+			return ID_PRECONDITION + i;
 		}
 		
 		private void unAssertPrecondition() {

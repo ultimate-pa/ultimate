@@ -85,7 +85,7 @@ public class MonolithicImplicationChecker {
 		mManagedScript.pop(this, 1);
 		mManagedScript.echo(this, new QuotedObject("Finished implication check"));
 		mManagedScript.unlock(this);
-		return IHoareTripleChecker.lbool2validity(lbool);
+		return IHoareTripleChecker.convertLBool2Validity(lbool);
 	}
 
 	private Validity dataflowBasedImplicationCheck(final Term antecedent, final Term succedent) {
