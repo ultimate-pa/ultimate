@@ -368,8 +368,17 @@ public class ExpressionFactory extends BoogieTransformer {
 	 * @param low inclusive
 	 * @return
 	 */
-	public static BitVectorAccessExpression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
+	public static Expression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
 			final int high, final int low) {
-		return new BitVectorAccessExpression(loc, operand, high, low);
+		final Expression operandLiteral = filterLiteral(operand);
+		if (operandLiteral instanceof BitvecLiteral) {
+			final BigInteger biValue = new BigInteger(((BitvecLiteral) operandLiteral).getValue());
+			final BigInteger two = BigInteger.valueOf(2);
+			final BigInteger dividedByLow = biValue.divide(two.pow(low));
+			final BigInteger biresult = dividedByLow.mod(two.pow(high));
+			return new BitvecLiteral(loc, biresult.toString(), high - low);
+		} else {
+			return new BitVectorAccessExpression(loc, operand, high, low);
+		}
 	}
 }
