@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -26,15 +26,15 @@ public class Body {
 		cobody.addPredicate(literal);
 	}
 
-	public HornClause convertToHornClause(Map<String, HornClausePredicateSymbol> predicates, 
-			Theory theory, ManagedScript script) {
-		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(predicates);
+	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable,
+			Theory theory) {
+		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 		assert tt.size() <= 1;
 		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-		return new HornClause(script, getTransitionFormula(theory),
+		return new HornClause(script, symbolTable, getTransitionFormula(theory),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
-				getCobodyPredicateToVars(predicates));
+				getCobodyPredicateToVars(symbolTable));
 
 	}
 	public boolean setHead(ApplicationTerm literal) {
@@ -60,17 +60,18 @@ public class Body {
 		return '(' + cobody.toString() + " ==> " + (head == null ? "false" : head.toString()) + ')';
 	}
 
-	private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func,
-			Map<String, HornClausePredicateSymbol> predicateSymbols) {
-		if (!predicateSymbols.containsKey(func.getName())) {
-			predicateSymbols.put(func.getName(),
-					new HornClausePredicateSymbol(func.getName(), func.getParameterCount()));
-		}
-		return predicateSymbols.get(func.getName());
-	}
+	// moved this to HCSymbolTable
+//	private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func,
+//			Map<String, HornClausePredicateSymbol> predicateSymbols) {
+//		if (!predicateSymbols.containsKey(func.getName())) {
+//			predicateSymbols.put(func.getName(),
+//					new HornClausePredicateSymbol(symbolTable, func.getName(), func.getParameterSorts().length));
+//		}
+//		return predicateSymbols.get(func.getName());
+//	}
 
-	public Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
-			Map<String, HornClausePredicateSymbol> predicateSymbols) {
+	private Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
+			final HCSymbolTable symbolTable) {
 
 		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
 		if (head != null) {
@@ -79,14 +80,17 @@ public class Body {
 				vars.add((TermVariable) par);
 			}
 
-			res.put(getHornPredicateSymbol(head.getFunction(), predicateSymbols), vars);
+//			res.put(getHornPredicateSymbol(head.getFunction(), predicateSymbols), vars);
+			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
+						head.getFunction()), 
+					vars);
 		}
 		return res;
 	}
 
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
-			Map<String, HornClausePredicateSymbol> predicateSymbols) {
-		return cobody.getPredicateToVars(predicateSymbols);
+			HCSymbolTable symbolTable) {
+		return cobody.getPredicateToVars(symbolTable);
 	}
 
 	public Term getTransitionFormula(Theory theory) {

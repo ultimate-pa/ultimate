@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 
@@ -49,15 +49,6 @@ public class Cobody {
 		return res;
 	}
 
-	private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func,
-			Map<String, HornClausePredicateSymbol> predicateSymbols) {
-		if (!predicateSymbols.containsKey(func.getName())) {
-			predicateSymbols.put(func.getName(),
-					new HornClausePredicateSymbol(func.getName(), func.getParameterCount()));
-		}
-		return predicateSymbols.get(func.getName());
-	}
-
 	public Term getTransitionFormula(Theory theory) {
 		if (transitions.isEmpty()) {
 			return theory.mTrue;
@@ -67,7 +58,7 @@ public class Cobody {
 	}
 
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getPredicateToVars(
-			Map<String, HornClausePredicateSymbol> predicateSymbols) {
+			final HCSymbolTable symbolTable) {
 
 		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
 		for (final ApplicationTerm predicate : predicates) {
@@ -76,7 +67,7 @@ public class Cobody {
 				vars.add((TermVariable) par);
 			}
 
-			res.put(getHornPredicateSymbol(predicate.getFunction(), predicateSymbols), vars);
+			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(predicate.getFunction()), vars);
 		}
 		return res;
 	}

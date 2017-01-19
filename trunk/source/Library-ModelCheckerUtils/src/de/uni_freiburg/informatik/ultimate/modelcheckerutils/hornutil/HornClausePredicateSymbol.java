@@ -27,6 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses. This class is the node class for
  * the Horn clause graph.
@@ -36,42 +42,98 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
  */
 public class HornClausePredicateSymbol {
 
-	private final int mArity;
-	private final String mName;
+//	private final int mArity;
+//	private final String mName;
+	private final FunctionSymbol mFunctionSymbol;
+	private final List<HCVar> mVars;
 
-	public HornClausePredicateSymbol(final String name, final int arity) {
-		mName = name;
-		mArity = arity;
+	public HornClausePredicateSymbol(final HCSymbolTable symbolTable, final FunctionSymbol function) {
+		mFunctionSymbol = function;
+		List<HCVar> vars = new ArrayList<>();
+		for (int i = 0; i < function.getParameterSorts().length; i++) {
+			vars.add(symbolTable.getOrConstructHCVar(this, i, function.getParameterSorts()[i]));
+		}
+		mVars = Collections.unmodifiableList(vars);
 	}
 
 	public String getName() {
-		return mName;
+		return mFunctionSymbol.getName();
+//		return mName;
 	}
 
 	public int getArity() {
-		return mArity;
+		return mFunctionSymbol.getParameterSorts().length;
+//		return mArity;
 	}
 
 	@Override
 	public String toString() {
-		return mName;
+		return mFunctionSymbol.toString();
+	}
+	
+	public List<HCVar> getHCVars() {
+		return mVars;
 	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
 		public HornClauseFalsePredicateSymbol() {
-			super("false", 0);
+			super(null, null);
+		}
+
+		@Override
+		public String getName() {
+			return "false";
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public String toString() {
+			return "false";
 		}
 	}
 
 	public static class HornClauseTruePredicateSymbol extends HornClausePredicateSymbol {
 		public HornClauseTruePredicateSymbol() {
-			super("true", 0);
+			super(null, null);
+		}
+		@Override
+		public String getName() {
+			return "true";
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public String toString() {
+			return "true";
 		}
 	}
 
 	public static class HornClauseDontCareSymbol extends HornClausePredicateSymbol {
 		public HornClauseDontCareSymbol() {
-			super("€", 0);
+			super(null, null);
+		}
+
+		@Override
+		public String getName() {
+			return "€";
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public String toString() {
+			return "€";
 		}
 	}
 }

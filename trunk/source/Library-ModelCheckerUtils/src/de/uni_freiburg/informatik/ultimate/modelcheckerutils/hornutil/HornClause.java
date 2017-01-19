@@ -3,10 +3,12 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,29 +45,29 @@ public class HornClause implements IInternalAction {
 
 	UnmodifiableTransFormula mTransitionFormula;
 	
-	public HornClause(final ManagedScript script, Term transitionFormula, List<TermVariable> bodyVars, 
-			HornClausePredicateSymbol body, Map<HornClausePredicateSymbol, List<TermVariable>> cobody) {
+	public HornClause(final ManagedScript script, final IIcfgSymbolTable symbolTable, 
+			final Term transitionFormula, final List<TermVariable> bodyVars, 
+			final HornClausePredicateSymbol body, final Map<HornClausePredicateSymbol, List<TermVariable>> cobody) {
 		mHeadPredTermVariables = bodyVars;
 		mHeadPredicate = body;
 		mBodyPredToTermVariables = cobody;
 
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		for (int i = 0; i < bodyVars.size(); ++i) {
-			outVars.put(new HCVar(body, i, bodyVars.get(i)), bodyVars.get(i));
+			outVars.put(body.getHCVars().get(i), bodyVars.get(i));
 		}
 	
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		for (final HornClausePredicateSymbol pred : cobody.keySet()) {
-			final List<TermVariable> vars = cobody.get(pred);
+		for (final Entry<HornClausePredicateSymbol, List<TermVariable>> en : cobody.entrySet()) {
+			final List<TermVariable> vars = en.getValue();
 	
 			for (int i = 0; i < vars.size(); ++i) {
-				inVars.put(new HCVar(pred, i, vars.get(i)), vars.get(i));
+				inVars.put(en.getKey().getHCVars().get(i), vars.get(i));
 			}
 	
 		}
 
-		TransFormulaBuilder tb = new TransFormulaBuilder(
-				inVars, outVars, true, null, true, null, true);
+		final TransFormulaBuilder tb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
 		tb.setFormula(transitionFormula);
 		mTransitionFormula = tb.finishConstruction(script);
 	}
@@ -108,6 +110,7 @@ public class HornClause implements IInternalAction {
 	@Override
 	public String getPrecedingProcedure() {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
+//		return null;
 	}
 
 	/**
@@ -116,6 +119,7 @@ public class HornClause implements IInternalAction {
 	@Override
 	public String getSucceedingProcedure() {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
+//		return null;
 	}
 
 

@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
@@ -69,11 +70,14 @@ public class TreeAutomizerCEGAR {// implements
 	 */
 	protected ITreeAutomatonBU<HornClause, HCPredicate> mInterpolAutomaton;
 
+	private final HCSymbolTable mSymbolTable;
+
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
-			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script) {
+			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script, 
+			HCSymbolTable hcSymbolTable) {
 		mPredicateFactory = new HCPredicateFactory(script);
 		mBackendSmtSolverScript = script;
-		// termCounter = new HashMap<>();
+		mSymbolTable = hcSymbolTable;
 		mLogger = logger;
 		mRootNode = rootNode;
 		mIteration = 0;

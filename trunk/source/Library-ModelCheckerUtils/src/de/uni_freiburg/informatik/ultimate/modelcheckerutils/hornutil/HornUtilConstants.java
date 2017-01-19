@@ -40,6 +40,8 @@ public final class HornUtilConstants {
 	 * to give a procedure name.
 	 */
 	public static final String HORNCLAUSEMETHODNAME = "dummy-HornClauseMethod";
+
+	public static final String HORN_ANNOT_NAME = "HoRNClauses";
 	
 	private HornUtilConstants() {
 		// hides public constructor

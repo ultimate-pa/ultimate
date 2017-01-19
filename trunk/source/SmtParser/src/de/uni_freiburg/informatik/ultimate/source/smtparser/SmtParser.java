@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -67,7 +67,7 @@ public class SmtParser implements ISource {
 
 	public SmtParser() {
 		mFileTypes = new String[] { "smt2" };
-		mFileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<>();
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class SmtParser implements ISource {
 
 	@Override
 	public void init() {
-		mFileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<>();
 	}
 
 	@Override

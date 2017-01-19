@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +22,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -39,9 +39,9 @@ public class HornClauseParserScript extends NoopScript {
 	private final Settings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mCurrentHornClause;
-	private final ArrayList<Term> mcurrentPredicateAtoms;
-	private final ArrayList<Term> mcurrentTransitionAtoms;
-	private final Map<String, HornClausePredicateSymbol> predicates;
+	private final ArrayList<Term> mCurrentPredicateAtoms;
+	private final ArrayList<Term> mCurrentTransitionAtoms;
+	private final HCSymbolTable mSymbolTable;
 
 	public HornClauseParserScript(ManagedScript smtSolverScript, String logic, Settings settings) {
 		mBackendSmtSolver = smtSolverScript;
@@ -51,17 +51,20 @@ public class HornClauseParserScript extends NoopScript {
 		mDeclaredPredicateSymbols = new HashSet<>();
 
 		mCurrentHornClause = new ArrayList<>();
-		mcurrentPredicateAtoms = new ArrayList<>();
-		mcurrentTransitionAtoms = new ArrayList<>();
-		predicates = new HashMap<>();
+		mCurrentPredicateAtoms = new ArrayList<>();
+		mCurrentTransitionAtoms = new ArrayList<>();
+		
+		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
 
 	}
 
 	public IElement getHornClauses() {
-		final Payload payload = new Payload();
-		payload.getAnnotations().put("HoRNClauses", new HornAnnot(mCurrentHornClause, mBackendSmtSolver));
+		mSymbolTable.finishConstruction();
 		
-		//payload.getAnnotations().put("HoRNClausesScript", mBackendSmtSolver);
+		final Payload payload = new Payload();
+		final HornAnnot annot = new HornAnnot(mCurrentHornClause, mBackendSmtSolver, mSymbolTable);
+		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
+		
 		return new HornClauseAST(payload);
 	}
 	
@@ -281,7 +284,7 @@ public class HornClauseParserScript extends NoopScript {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final Body body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory(), mBackendSmtSolver));
+				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -293,7 +296,7 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final Cobody cobody = parseCobody(thisTerm.getSubformula());
 					final Body body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory(), mBackendSmtSolver));
+					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
 					
 					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}
@@ -357,10 +360,10 @@ public class HornClauseParserScript extends NoopScript {
 			i++;
 
 		} else if (mDeclaredPredicateSymbols.contains(funcname)) {
-			mcurrentPredicateAtoms.add(result);
+			mCurrentPredicateAtoms.add(result);
 
 		} else {
-			mcurrentTransitionAtoms.add(result);
+			mCurrentTransitionAtoms.add(result);
 		}
 
 		// return mBackendSmtSolver.term(funcname, indices, returnSort, params);

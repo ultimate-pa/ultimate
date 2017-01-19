@@ -3,19 +3,27 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class HornAnnot implements IAnnotations {
 
+	private static final long serialVersionUID = -3542578811318106167L;
 	private final ManagedScript mBackendSolverScript;
-	final Map<String, Object> mp = new HashMap<>();
+	private final Map<String, Object> mp = new HashMap<>();
+	private final HCSymbolTable mSymbolTable;
 
-	public HornAnnot(final List<HornClause> clauses, final ManagedScript backendSolver) {
-		mp.put("HoRNClauses", clauses);
+	public HornAnnot(final List<HornClause> clauses, 
+			final ManagedScript backendSolver,
+			final HCSymbolTable symbolTable) {
+		mp.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
 		mBackendSolverScript = backendSolver;
+		mSymbolTable = symbolTable;
 	}
 
 	@Override
@@ -26,16 +34,20 @@ public class HornAnnot implements IAnnotations {
 	public ManagedScript getScript() {
 		return mBackendSolverScript;
 	}
+	
+	public HCSymbolTable getSymbolTable() {
+		return mSymbolTable;
+	}
 
 	@Override
 	public String toString() {
-		String res = "";
-		for (final String key : mp.keySet()) {
-			if (!res.isEmpty()) {
-				res += '\t';
+		StringBuilder res = new StringBuilder();
+		for (final Entry<String, Object> en : mp.entrySet()) {
+			if (res.length() != 0) {
+				res.append('\t');
 			}
-			res += "{{" + mp.get(key).toString() + "}}";
+			res.append("{{" + en.getValue().toString() + "}}");
 		}
-		return res;
+		return res.toString();
 	}
 }

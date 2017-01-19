@@ -87,7 +87,7 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		mLogger.debug((annot.getAnnotationsAsMap().get("HoRNClauses")));
 		
 		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, "TreeCegar",
-				rootNode, taPrefs, mLogger, annot.getScript());
+				rootNode, taPrefs, mLogger, annot.getScript(), annot.getSymbolTable());
 		
 		cegar.iterate();
 		

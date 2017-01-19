@@ -45,15 +45,25 @@ public class HCVar implements IProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
-	private final HornClausePredicateSymbol mPredicate;
+	private final HornClausePredicateSymbol mPredicateSymbol;
 	private final TermVariable mTermVariable;
 	private final int mIdx;
 	
-	public HCVar(HornClausePredicateSymbol pr, int pos, TermVariable v) {
-		mPredicate = pr;
+	private final ApplicationTerm mDefaultConstant;
+	private final ApplicationTerm mPrimedConstant;
+
+	private final String mGloballyUniqueId;
+	
+	public HCVar(HornClausePredicateSymbol pr, int pos, TermVariable v, 
+			ApplicationTerm defaultConstant, ApplicationTerm primedConstant) {
+		mPredicateSymbol = pr;
 		mIdx = pos;
 		mTermVariable = v;
+		mDefaultConstant = defaultConstant;
+		mPrimedConstant = primedConstant;
+		mGloballyUniqueId = String.format("%s_%d", mPredicateSymbol.getName(), mIdx);
 	}
+
 
 	@Override
 	public TermVariable getTermVariable() {
@@ -62,53 +72,65 @@ public class HCVar implements IProgramVar {
 
 	@Override
 	public String toString() {
-		return mPredicate.getName() + "{" + mIdx + "}" + ":" + mTermVariable.toString();
+		return mPredicateSymbol.getName() + "{" + mIdx + "}" + ":" + mTermVariable.toString();
 	}
 
 	@Override
 	public String getGloballyUniqueId() {
-		return String.format("%s_%d", mPredicate.getName(), mIdx);
+		return mGloballyUniqueId;
 	}
 
 	@Override
 	public String getProcedure() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean isGlobal() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean isOldvar() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public ApplicationTerm getDefaultConstant() {
-		// TODO Auto-generated method stub
-		return null;
+		return mDefaultConstant;
 	}
 
 	@Override
 	public ApplicationTerm getPrimedConstant() {
-		// TODO Auto-generated method stub
-		return null;
+		return mPrimedConstant;
 	}
 
 	@Override
 	public Term getTerm() {
-		// TODO Auto-generated method stub
-		return null;
+		return mTermVariable;
 	}
 
 	@Override
 	public int hashCode() {
-		// TODO: Sooooo expensive!! String is always recomputed. Also, override equals!!!
-		return getGloballyUniqueId().hashCode();
+		return mGloballyUniqueId.hashCode();
+	}
+
+
+	@Override
+	public boolean equals(Object arg0) {
+		if (this == arg0) {
+			return true; // just for speedup
+		}
+		if (!(arg0 instanceof HCVar)) {
+			return false;
+		}
+		HCVar otherHcVar = (HCVar) arg0;
+		if (!mPredicateSymbol.equals(otherHcVar.mPredicateSymbol)) {
+			return false;
+		}
+		if (mIdx != otherHcVar.mIdx) {
+			return false;
+		}
+		return true;
 	}
 }
