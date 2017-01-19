@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
@@ -39,19 +39,19 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
- * 
+ *
  * Note: This summary is work in progress and not complete! Do not use it until this message vanishes.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *  
+ * 
  */
 public class LatexPlotSummary extends LatexSummary {
 
 	private final int mLatexTableHeaderCount;
 
-	public LatexPlotSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
-			ColumnDefinition[] columnDefinitions) {
+	public LatexPlotSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexColumnTitle() != null).count();
 	}
@@ -69,11 +69,11 @@ public class LatexPlotSummary extends LatexSummary {
 		return ".tex";
 	}
 
-	private void makeTables(StringBuilder sb, PartitionedResults results) {
+	private void makeTables(final StringBuilder sb, final PartitionedResults results) {
 
 		final Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+			public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
 			}
 		});
@@ -124,10 +124,10 @@ public class LatexPlotSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			final PartitionedResults resultsPerTool = partitionResults(
-					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
+			final PartitionedResults resultsPerTool =
+					partitionResults(CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().getName().equals(tool);
 						}
 					}));
@@ -141,21 +141,22 @@ public class LatexPlotSummary extends LatexSummary {
 		appendEnd(sb, br);
 	}
 
-//	private void appendLatexFigureBegin(StringBuilder sb, String br) {
-//	    sb.append("\\onecolumn").append(br);
-//	    sb.append("\\begin{figure}").append(br);
-//	    sb.append("\\centering").append(br);
-//	    sb.append("    \\begin{tikzpicture}").append(br);
-//	    sb.append("    \\begin{customlegend}[legend columns=' + str(len(namesAndStyles) / 2) + ',legend style={align=left,draw=none,column sep=2ex,thick},").append(br);
-//	    sb.append("                          legend entries={' + legendentriesstr + '}]").append(br);
-//	    for name, (file, style) in namesAndStyles:
-//	        sb.append("        \\addlegendimage{' + style + '}").append(br);
-//	    sb.append("    \\end{customlegend}").append(br);
-//	    sb.append("    \\end{tikzpicture}").append(br);
-//		
-//	}
+	// private void appendLatexFigureBegin(StringBuilder sb, String br) {
+	// sb.append("\\onecolumn").append(br);
+	// sb.append("\\begin{figure}").append(br);
+	// sb.append("\\centering").append(br);
+	// sb.append(" \\begin{tikzpicture}").append(br);
+	// sb.append(" \\begin{customlegend}[legend columns=' + str(len(namesAndStyles) / 2) + ',legend
+	// style={align=left,draw=none,column sep=2ex,thick},").append(br);
+	// sb.append(" legend entries={' + legendentriesstr + '}]").append(br);
+	// for name, (file, style) in namesAndStyles:
+	// sb.append(" \\addlegendimage{' + style + '}").append(br);
+	// sb.append(" \\end{customlegend}").append(br);
+	// sb.append(" \\end{tikzpicture}").append(br);
+	//
+	// }
 
-	private void appendEnd(final StringBuilder sb, String br) {
+	private void appendEnd(final StringBuilder sb, final String br) {
 		sb.append("\\end{document}").append(br);
 	}
 
@@ -261,8 +262,8 @@ public class LatexPlotSummary extends LatexSummary {
 				"TealBlue", "Thistle", "Turquoise", "Violet", "VioletRed", "White", "WildStrawberry", "Yellow",
 				"YellowGreen", "YellowOrange" };
 
-		private static final String[] LATEX_MARKS = new String[] { null, "star", "triangle", "diamond", "x", "|",
-				"10-pointed-star", "pentagon", "o" };
+		private static final String[] LATEX_MARKS =
+				new String[] { null, "star", "triangle", "diamond", "x", "|", "10-pointed-star", "pentagon", "o" };
 		private static final String[] LATEX_LINES = new String[] { "solid", "dotted", "dashed" };
 
 		private static final int LATEX_PLOT_MARK_REPEAT = 10;
@@ -271,13 +272,13 @@ public class LatexPlotSummary extends LatexSummary {
 		private final String mLinestyle;
 		private final String mMarkstyle;
 
-		private PlotStyleProvider(String color, String linestyle, String markstyle) {
+		private PlotStyleProvider(final String color, final String linestyle, final String markstyle) {
 			mColor = color;
 			mLinestyle = linestyle;
 			mMarkstyle = markstyle;
 		}
 
-		private static List<PlotStyleProvider> getPlotStyles(int totalStyles) {
+		private static List<PlotStyleProvider> getPlotStyles(final int totalStyles) {
 			final List<PlotStyleProvider> rtr = new ArrayList<>();
 
 			int color = 0;

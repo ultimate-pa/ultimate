@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class LatexDetailedSummary extends LatexSummary {
 
@@ -59,8 +59,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 
-		mLatexTableHeaderCount = CoreUtil.reduce(mColumnDefinitions,
-				new CoreUtil.IMapReduce<Integer, ColumnDefinition>() {
+		mLatexTableHeaderCount =
+				CoreUtil.reduce(mColumnDefinitions, new CoreUtil.IMapReduce<Integer, ColumnDefinition>() {
 					@Override
 					public Integer reduce(Integer lastValue, final ColumnDefinition entry) {
 						if (lastValue == null) {
@@ -139,10 +139,10 @@ public class LatexDetailedSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			final PartitionedResults resultsPerTool = partitionResults(
-					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
+			final PartitionedResults resultsPerTool =
+					partitionResults(CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
-						public boolean check(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().getName().equals(tool);
 						}
 					}));
@@ -189,16 +189,19 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
-					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
-					.collect(Collectors.toList()));
+			final PartitionedResults resultsPerFolder =
+					partitionResults(
+							results.All.stream()
+									.filter(entry -> Arrays.stream(entry.getKey().getInput())
+											.anyMatch(a -> a.getParent().endsWith(suffix)))
+									.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
 		}
 	}
 
-	private void makeFolderRow(final StringBuilder sb, final PartitionedResults results, final String folder, final boolean last,
-			final int additionalTableHeaders) {
+	private void makeFolderRow(final StringBuilder sb, final PartitionedResults results, final String folder,
+			final boolean last, final int additionalTableHeaders) {
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final int additionalHeaders = additionalTableHeaders;
 
@@ -280,8 +283,8 @@ public class LatexDetailedSummary extends LatexSummary {
 		}
 	}
 
-	private void makeFileEntry(final StringBuilder sb, final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
-			final List<String> files) {
+	private void makeFileEntry(final StringBuilder sb,
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current, final List<String> files) {
 
 		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
 				.filter(a -> files.contains(a.getKey().getInputFileNames())).collect(Collectors.toList());
@@ -322,8 +325,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			sb.append(removeInvalidCharsForLatex(result.getKey().getSettingsName()));
 			sb.append(sep);
 
-			ICsvProvider<String> csv = makePrintCsvProviderFromResults(Collections.singleton(result),
-					mColumnDefinitions);
+			ICsvProvider<String> csv =
+					makePrintCsvProviderFromResults(Collections.singleton(result), mColumnDefinitions);
 
 			csv = CsvUtils.projectColumn(csv,
 					CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {

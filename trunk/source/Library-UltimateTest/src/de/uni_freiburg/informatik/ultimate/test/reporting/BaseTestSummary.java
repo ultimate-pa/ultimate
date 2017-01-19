@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -271,8 +272,7 @@ public abstract class BaseTestSummary implements ITestSummary {
 			de.uni_freiburg.informatik.ultimate.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
-	protected interface ITestSummaryResultPredicate extends
-			de.uni_freiburg.informatik.ultimate.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface ITestSummaryResultPredicate extends Predicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

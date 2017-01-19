@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -51,11 +51,12 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Predicate;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class CoreUtil {
 
@@ -127,17 +128,17 @@ public class CoreUtil {
 
 	/**
 	 * Returns all elements of a collection that match the check defined by predicate.
-	 * 
+	 *
 	 * @param collection
 	 *            The collection you want to filter. May not be null.
 	 * @param predicate
 	 *            The predicate you want to use to filter said collection. May not be null.
 	 * @return A new collection that only contains elements for which {@link IPredicate#check(Object)} returned true.
 	 */
-	public static <E> Collection<E> where(final Collection<E> collection, final IPredicate<E> predicate) {
+	public static <E> Collection<E> where(final Collection<E> collection, final Predicate<E> predicate) {
 		final ArrayList<E> rtr = new ArrayList<>();
 		for (final E entry : collection) {
-			if (predicate.check(entry)) {
+			if (predicate.test(entry)) {
 				rtr.add(entry);
 			}
 		}
@@ -146,7 +147,7 @@ public class CoreUtil {
 
 	/**
 	 * Returns a {@link Set} of elements that are created by applying the reducer to every element in the collection.
-	 * 
+	 *
 	 * @param collection
 	 *            May not be null.
 	 * @param reducer
@@ -196,7 +197,7 @@ public class CoreUtil {
 	/**
 	 * Indents a (possibly multiline) String such that the resulting StringBuilder object contains the same String, but
 	 * indented with the indentPrefix. It also converts line breaks to the system-specific line separator.
-	 * 
+	 *
 	 * @param original
 	 * @param indentPrefix
 	 * @param forceRemoveLastLinebreak
@@ -227,7 +228,7 @@ public class CoreUtil {
 
 	/**
 	 * Flattens a string, i.e. removes all line breaks and replaces them with separator
-	 * 
+	 *
 	 * @param original
 	 * @param separator
 	 * @return
@@ -281,7 +282,7 @@ public class CoreUtil {
 	/**
 	 * Determines if an {@link Iterable} is sorted according to the natural comparator. The order of objects that are
 	 * equal according to the natural ordering is irrelevant.
-	 * 
+	 *
 	 * @param iterable
 	 *            The {@link Iterable} that should be checked.
 	 * @return true if the {@link Iterable} is sorted, false otherwise.
@@ -306,7 +307,7 @@ public class CoreUtil {
 	/**
 	 * Determines if an {@link Iterable} is sorted according to the provided {@link Comparator}omparator. The order of
 	 * objects that are equal according to the comparator is irrelevant.
-	 * 
+	 *
 	 * @param iterable
 	 *            The {@link Iterable} that should be checked.
 	 * @param comparator
@@ -339,10 +340,5 @@ public class CoreUtil {
 	@FunctionalInterface
 	public interface IMapReduce<T, K> {
 		T reduce(T lastValue, K entry);
-	}
-
-	@FunctionalInterface
-	public interface IPredicate<T> {
-		boolean check(T entry);
 	}
 }
