@@ -155,7 +155,7 @@ public class BasicPredicateFactory {
 	}
 
 	public <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbsIntPredicate<STATE, VARDECL>
-			newAbstractStatePredicate(final IAbstractState<STATE, VARDECL> abstractState) {
+			newAbstractStatePredicate(final STATE abstractState) {
 		final Term stateTerm = abstractState.getTerm(mScript);
 		final BasicPredicate predicate = newPredicate(stateTerm);
 		return new AbsIntPredicate<>(predicate, abstractState);

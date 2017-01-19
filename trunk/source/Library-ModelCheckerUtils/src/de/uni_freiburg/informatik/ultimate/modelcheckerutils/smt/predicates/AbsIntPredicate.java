@@ -47,20 +47,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> implements IPredicate {
 
-	private final IAbstractState<STATE, VARDECL> mAbstractState;
+	private final STATE mAbstractState;
 	private final IPredicate mPredicate;
 
 	/**
 	 * Default constructor of an abstract state predicate, constructed from an abstract state and a matching IPredicate.
 	 *
 	 */
-	public AbsIntPredicate(final IPredicate classicPredicate, final IAbstractState<STATE, VARDECL> abstractState) {
+	public AbsIntPredicate(final IPredicate classicPredicate, final STATE abstractState) {
 		mAbstractState = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
 	}
 
 	@Visualizable
-	public IAbstractState<STATE, VARDECL> getAbstractState() {
+	public STATE getAbstractState() {
 		return mAbstractState;
 	}
 
