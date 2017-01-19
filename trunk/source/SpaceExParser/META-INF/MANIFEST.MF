@@ -7,12 +7,10 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Act
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-UltimateUtil,
- org.junit;bundle-version="4.12.0"
+ org.junit;bundle-version="4.12.0",
+ Library-ModelCheckerUtils;bundle-version="0.0.1",
+ Library-SMTLIB,
+ SMTSolverBridge,
+ de.uni_freiburg.informatik.ultimate.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Import-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
- de.uni_freiburg.informatik.ultimate.logic,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript

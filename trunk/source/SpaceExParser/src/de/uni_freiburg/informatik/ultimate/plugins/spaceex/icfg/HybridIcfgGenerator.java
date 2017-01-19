@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2017 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
 
 /**
  * Class that handles conversion of Hybrid Models/Systems/Automata to an ICFG
- * 
+ *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
@@ -60,23 +60,29 @@ public class HybridIcfgGenerator {
 	private final ILogger mLogger;
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
 	private final CfgSmtToolkit mSmtToolkit;
-	private BasicIcfg<IcfgLocation> mIcfg;
-	private List<IcfgInternalTransition> mIcfgTransitions;
-	private Map<String, HybridCfgComponent> mCfgComponents;
+	private final BasicIcfg<IcfgLocation> mIcfg;
+	private final List<IcfgInternalTransition> mIcfgTransitions;
+	private final Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
 	
-	public HybridIcfgGenerator(ILogger logger, SpaceExPreferenceManager preferenceManager, CfgSmtToolkit smtToolkit) {
+	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
+			final CfgSmtToolkit smtToolkit) {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
+		mSmtToolkit.getProcedures().add("root");
+		mSmtToolkit.getProcedures().add("error");
+		mSmtToolkit.getProcedures().add("varAssignment");
+		mSmtToolkit.getProcedures().add("1");
+		mSmtToolkit.getProcedures().add("2");
 		mIcfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
 		mPayload = mIcfg.getPayload();
 		mIcfgTransitions = new ArrayList<>();
 		mCfgComponents = new HashMap<>();
 		// create a root + error location;
-		IcfgLocation root = new IcfgLocation("root", "root");
+		final IcfgLocation root = new IcfgLocation("root", "root");
 		mCfgComponents.put("root", new HybridCfgComponent("root", root, root, null, null));
-		IcfgLocation error = new IcfgLocation("error", "error");
+		final IcfgLocation error = new IcfgLocation("error", "error");
 		mCfgComponents.put("error", new HybridCfgComponent("error", error, error, null, null));
 	}
 	
@@ -90,26 +96,32 @@ public class HybridIcfgGenerator {
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
 			// start is proc_entry + end is proc_exit
-			mIcfg.addLocation(comp.getStart(), false, false, true, false, false);
-			mIcfg.addLocation(comp.getEnd(), false, false, false, true, false);
-			for (IcfgLocation loc : comp.getLocations()) {
+			mIcfg.addOrdinaryLocation(comp.getStart());
+			mIcfg.addOrdinaryLocation(comp.getEnd());
+			for (final IcfgLocation loc : comp.getLocations()) {
 				mIcfg.addOrdinaryLocation(loc);
 			}
 		});
 		return mIcfg;
 	}
 	
-	public void modelToIcfg(HybridModel model) {
+	public void modelToIcfg(final HybridModel model) {
 		/*
 		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
 		 * system.
 		 */
-		String configSystem = mSpaceExPreferenceManager.getSystem();
-		Map<String, HybridSystem> systems = model.getSystems();
-		Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
+		// final String configSystem = mSpaceExPreferenceManager.getSystem();
+		final String configSystem = "sys1";
+		final Map<String, HybridSystem> systems = model.getSystems();
+		final Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
 		HybridAutomaton aut;
 		// if the system specified in the config file is present in the models systems
 		// else, throw an exception
+		mLogger.debug("SYSTEM:");
+		mLogger.debug(systems);
+		mLogger.debug("");
+		mLogger.debug("CONFIG SYSTEM:");
+		mLogger.debug(configSystem);
 		if (systems.containsKey(configSystem)) {
 			// if the system exists, we check if the system has a mergedAutomaton
 			// if not it has to be a single automaton (at least it should be)
@@ -123,14 +135,15 @@ public class HybridIcfgGenerator {
 									+ systems.get(configSystem).getAutomata().size());
 				} else {
 					// should be a single automaton, thus just get it with an iterator.
-					Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
-					Iterator<HybridAutomaton> it = autcol.iterator();
+					final Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
+					final Iterator<HybridAutomaton> it = autcol.iterator();
 					aut = it.hasNext() ? it.next() : null;
 				}
 			}
 		} else {
-			throw new UnsupportedOperationException("the system specified in the config file: " + configSystem
-					+ " is not part of the hybrid model parsed from file: " + mSpaceExPreferenceManager.getFileName());
+			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
+					+ "\" is not part of the hybrid model parsed from file: "
+					+ mSpaceExPreferenceManager.getFileName());
 		}
 		if (aut == null) {
 			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
@@ -139,12 +152,12 @@ public class HybridIcfgGenerator {
 		}
 	}
 	
-	private void automatonToIcfg(HybridAutomaton automaton) {
-		Location initialLocation = automaton.getInitialLocation();
-		Map<Integer, Location> locations = automaton.getLocations();
-		List<Transition> transitions = automaton.getTransitions();
+	private void automatonToIcfg(final HybridAutomaton automaton) {
+		final Location initialLocation = automaton.getInitialLocation();
+		final Map<Integer, Location> locations = automaton.getLocations();
+		final List<Transition> transitions = automaton.getTransitions();
 		// we can merge all variables into one set.
-		Set<String> variables = automaton.getGlobalParameters();
+		final Set<String> variables = automaton.getGlobalParameters();
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
@@ -159,29 +172,29 @@ public class HybridIcfgGenerator {
 	/*
 	 * variable methods
 	 */
-	private void variablesToIcfg(Set<String> variables) {
+	private void variablesToIcfg(final Set<String> variables) {
 		// get initial values of the variable
-		Map<String, List<SignValuePair>> initialVars = mSpaceExPreferenceManager.getInitialVariables();
+		final Map<String, List<SignValuePair>> initialVars = mSpaceExPreferenceManager.getInitialVariables();
 		// create a location/transition which holds ALL variable assignments.
-		int value;
-		for (String var : variables) {
+		final int value;
+		for (final String var : variables) {
 			// if the variable got an initial value, assign it.
 			if (initialVars.containsKey(var)) {
-				List<SignValuePair> init = initialVars.get(var);
+				final List<SignValuePair> init = initialVars.get(var);
 				// TODO: convert initial values to a reasonable value or interval
 			} else {
 				// TODO: assume invariant of initial location.
 			}
 		}
 		// create variable component of the form start ----variable assignment----> end
-		List<IcfgLocation> locations = new ArrayList<>();
-		List<IcfgInternalTransition> transitions = new ArrayList<>();
-		String id = "varAssignment";
-		IcfgLocation start = new IcfgLocation(id + "_start", id);
-		IcfgLocation end = new IcfgLocation(id + "_end", id);
+		final List<IcfgLocation> locations = new ArrayList<>();
+		final List<IcfgInternalTransition> transitions = new ArrayList<>();
+		final String id = "varAssignment";
+		final IcfgLocation start = new IcfgLocation(id + "_start", id);
+		final IcfgLocation end = new IcfgLocation(id + "_end", id);
 		// TODO: transformula
-		UnmodifiableTransFormula tfStartEnd = null;
-		IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, tfStartEnd);
+		final UnmodifiableTransFormula tfStartEnd = null;
+		final IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, tfStartEnd);
 		start.addOutgoing(startEnd);
 		end.addIncoming(startEnd);
 		transitions.add(startEnd);
@@ -191,12 +204,12 @@ public class HybridIcfgGenerator {
 		 * Transition from Root to varAssignment
 		 */
 		// the source of the transition is the the end of the source CFG component
-		IcfgLocation source = mCfgComponents.get("root").getEnd();
+		final IcfgLocation source = mCfgComponents.get("root").getEnd();
 		// the target of the transition is the the start of the target CFG component
-		IcfgLocation target = mCfgComponents.get("varAssignment").getStart();
+		final IcfgLocation target = mCfgComponents.get("varAssignment").getStart();
 		// TODO: transformula
-		UnmodifiableTransFormula transFormula = null;
-		IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		final UnmodifiableTransFormula transFormula = null;
+		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
 		source.addOutgoing(transition);
 		target.addIncoming(transition);
 		mIcfgTransitions.add(transition);
@@ -205,38 +218,38 @@ public class HybridIcfgGenerator {
 	/*
 	 * Location methods
 	 */
-	private void locationsToIcfg(Map<Integer, Location> autLocations) {
+	private void locationsToIcfg(final Map<Integer, Location> autLocations) {
 		/*
 		 * locations consist of Flow and the invariant. -> Startnode (1) -> if/else invariant (2) -> apply flow (3) ->
 		 * if/else invariant (4) -> transition/back to (3) if the invariant is injured and no transition can be taken,
 		 * go to exit node.
 		 */
-		for (Map.Entry<Integer, Location> entry : autLocations.entrySet()) {
-			Integer autid = entry.getKey();
-			Location loc = entry.getValue();
-			List<IcfgInternalTransition> transitions = new ArrayList<>();
-			List<IcfgLocation> locations = new ArrayList<>();
+		for (final Map.Entry<Integer, Location> entry : autLocations.entrySet()) {
+			final Integer autid = entry.getKey();
+			final Location loc = entry.getValue();
+			final List<IcfgInternalTransition> transitions = new ArrayList<>();
+			final List<IcfgLocation> locations = new ArrayList<>();
 			/*
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
-			IcfgLocation start = new IcfgLocation(autid + "_start", autid.toString());
-			IcfgLocation end = new IcfgLocation(autid + "_end", autid.toString());
-			IcfgLocation flow = new IcfgLocation(autid + "_flow", autid.toString());
+			final IcfgLocation start = new IcfgLocation(autid + "_start", autid.toString());
+			final IcfgLocation end = new IcfgLocation(autid + "_end", autid.toString());
+			final IcfgLocation flow = new IcfgLocation(autid + "_flow", autid.toString());
 			locations.add(flow);
-			IcfgLocation invCheck = new IcfgLocation(autid + "_invCheck", autid.toString());
+			final IcfgLocation invCheck = new IcfgLocation(autid + "_invCheck", autid.toString());
 			locations.add(invCheck);
 			/*
 			 * Transitions from start to Flow/Exit if invariant true, go to flow, else to error loc
 			 */
 			// TODO: transformula
-			UnmodifiableTransFormula tfStartFlow = null;
-			IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
+			final UnmodifiableTransFormula tfStartFlow = null;
+			final IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
 			start.addOutgoing(startFlow);
 			flow.addIncoming(startFlow);
 			transitions.add(startFlow);
 			// TODO: transformula
-			UnmodifiableTransFormula tfStartError = null;
-			IcfgInternalTransition startError =
+			final UnmodifiableTransFormula tfStartError = null;
+			final IcfgInternalTransition startError =
 					new IcfgInternalTransition(start, mCfgComponents.get("error").getStart(), mPayload, tfStartError);
 			start.addOutgoing(startError);
 			mCfgComponents.get("error").getStart().addIncoming(startError);
@@ -245,8 +258,8 @@ public class HybridIcfgGenerator {
 			 * Transition flow to invCheck
 			 */
 			// TODO: transformula
-			UnmodifiableTransFormula tfFlowInv = null;
-			IcfgInternalTransition flowInv = new IcfgInternalTransition(flow, invCheck, mPayload, tfFlowInv);
+			final UnmodifiableTransFormula tfFlowInv = null;
+			final IcfgInternalTransition flowInv = new IcfgInternalTransition(flow, invCheck, mPayload, tfFlowInv);
 			flow.addOutgoing(flowInv);
 			invCheck.addIncoming(flowInv);
 			transitions.add(flowInv);
@@ -255,15 +268,15 @@ public class HybridIcfgGenerator {
 			 */
 			// invcheck -> end
 			// TODO: transformula
-			UnmodifiableTransFormula tfInvEnd = null;
-			IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, mPayload, tfInvEnd);
+			final UnmodifiableTransFormula tfInvEnd = null;
+			final IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, mPayload, tfInvEnd);
 			invCheck.addOutgoing(invEnd);
 			end.addIncoming(invEnd);
 			transitions.add(invEnd);
 			// invcheck -> exit
 			// TODO: transformula
-			UnmodifiableTransFormula tfInvError = null;
-			IcfgInternalTransition invError =
+			final UnmodifiableTransFormula tfInvError = null;
+			final IcfgInternalTransition invError =
 					new IcfgInternalTransition(invCheck, mCfgComponents.get("error").getStart(), mPayload, tfInvError);
 			invCheck.addOutgoing(invError);
 			mCfgComponents.get("error").getStart().addIncoming(invError);
@@ -272,8 +285,8 @@ public class HybridIcfgGenerator {
 			 * Transition End to flow
 			 */
 			// TODO: transformula
-			UnmodifiableTransFormula tfEndFlow = null;
-			IcfgInternalTransition endFlow = new IcfgInternalTransition(end, flow, mPayload, tfEndFlow);
+			final UnmodifiableTransFormula tfEndFlow = null;
+			final IcfgInternalTransition endFlow = new IcfgInternalTransition(end, flow, mPayload, tfEndFlow);
 			end.addOutgoing(endFlow);
 			flow.addIncoming(endFlow);
 			transitions.add(endFlow);
@@ -286,17 +299,18 @@ public class HybridIcfgGenerator {
 	/*
 	 * Transition methods
 	 */
-	private void transitionsToIcfg(List<Transition> transitions) {
+	private void transitionsToIcfg(final List<Transition> transitions) {
 		// a transition in a hybrid automaton is simply an edge from one location to another.
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
 			// the source of the transition is the the end of the source CFG component
-			IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
+			final IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
 			// the target of the transition is the the start of the target CFG component
-			IcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
+			final IcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
 			// TODO: transformula
-			UnmodifiableTransFormula transFormula = null;
-			IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+			final UnmodifiableTransFormula transFormula = null;
+			final IcfgInternalTransition transition =
+					new IcfgInternalTransition(source, target, mPayload, transFormula);
 			source.addOutgoing(transition);
 			target.addIncoming(transition);
 			mIcfgTransitions.add(transition);

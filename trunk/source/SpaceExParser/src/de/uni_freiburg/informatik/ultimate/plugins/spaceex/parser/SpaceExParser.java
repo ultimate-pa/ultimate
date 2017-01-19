@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
@@ -32,7 +32,12 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -44,11 +49,28 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Marius Greitschus
@@ -60,6 +82,7 @@ public class SpaceExParser implements ISource {
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
+	private IToolchainStorage mToolchainStorage;
 	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
@@ -70,13 +93,13 @@ public class SpaceExParser implements ISource {
 	}
 	
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		// TODO Auto-generated method stub
-		
+		mToolchainStorage = storage;
 	}
 	
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -107,7 +130,7 @@ public class SpaceExParser implements ISource {
 	}
 	
 	@Override
-	public boolean parseable(File[] files) {
+	public boolean parseable(final File[] files) {
 		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
@@ -117,7 +140,7 @@ public class SpaceExParser implements ISource {
 	}
 	
 	@Override
-	public boolean parseable(File file) {
+	public boolean parseable(final File file) {
 		
 		boolean knownExtension = false;
 		
@@ -157,21 +180,94 @@ public class SpaceExParser implements ISource {
 	}
 	
 	@Override
-	public IElement parseAST(File[] files) throws Exception {
+	public IElement parseAST(final File[] files) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
-	public IElement parseAST(File file) throws Exception {
+	public IElement parseAST(final File file) throws Exception {
 		mFileNames.add(file.getName());
 		final FileInputStream fis = new FileInputStream(file);
 		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
-		SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		final SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
 		final HybridModel system = new HybridModel(spaceEx, mLogger, preferenceManager);
+
+		final Set<String> functions = new HashSet<>();
+		
+		final ManagedScript script = new ManagedScript(mServices,
+				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
+						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
+								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
+						false, false, "", "SMTINTERPOL"));
+		
+		final CfgSmtToolkit smtToolkit =
+				new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), script, new IIcfgSymbolTable() {
+					
+					Set<ILocalProgramVar> mLocals = new HashSet<>();
+					Map<TermVariable, IProgramVar> mVars = new HashMap<>();
+
+					@Override
+					public Set<ILocalProgramVar> getLocals(final String procedurename) {
+						return mLocals;
+					}
+
+					@Override
+					public Set<IProgramNonOldVar> getGlobals() {
+						return Collections.emptySet();
+					}
+
+					@Override
+					public Set<IProgramConst> getConstants() {
+						return Collections.emptySet();
+					}
+
+					@Override
+					public IProgramVar getProgramVar(final TermVariable tv) {
+						return mVars.get(tv);
+					}
+
+					@Override
+					public IProgramConst getProgramConst(final ApplicationTerm at) {
+						return new IProgramConst() {
+							
+							@Override
+							public String getGloballyUniqueId() {
+								return "asd";
+							}
+
+							@Override
+							public boolean isGlobal() {
+								return false;
+							}
+
+							@Override
+							public Term getTerm() {
+								return script.getScript().term("false");
+							}
+
+							@Override
+							public String getIdentifier() {
+								// TODO Auto-generated method stub
+								return null;
+							}
+
+							@Override
+							public ApplicationTerm getDefaultConstant() {
+								// TODO Auto-generated method stub
+								return null;
+							}
+						};
+					}
+				}, null, functions);
+
+		final HybridIcfgGenerator gen = new HybridIcfgGenerator(mLogger, preferenceManager, smtToolkit);
+
+		gen.modelToIcfg(system);
+		return gen.createIfcgFromComponents();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new
@@ -180,7 +276,7 @@ public class SpaceExParser implements ISource {
 		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get("ofOnn||controller||clock")); String targetfile =
 		 * "" ; // some path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
 		 */
-		return new SpaceExModelBuilder(system, mLogger).getModel();
+		// return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 	
 	@Override
@@ -200,7 +296,7 @@ public class SpaceExParser implements ISource {
 	}
 	
 	@Override
-	public void setPreludeFile(File prelude) {
+	public void setPreludeFile(final File prelude) {
 		// TODO Auto-generated method stub
 		
 	}
