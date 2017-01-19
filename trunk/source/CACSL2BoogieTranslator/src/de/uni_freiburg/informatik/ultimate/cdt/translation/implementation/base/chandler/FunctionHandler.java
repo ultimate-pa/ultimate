@@ -1436,7 +1436,7 @@ public class FunctionHandler {
 														// Boogie
 				type = main.mTypeHandler.constructPointerType(loc);
 			} else {
-				type = main.mTypeHandler.cType2AstType(loc, paramDec.getType());
+				type = main.mTypeHandler.cType2AstType(loc, paramDec.getType().getUnderlyingType());
 			}
 
 			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
