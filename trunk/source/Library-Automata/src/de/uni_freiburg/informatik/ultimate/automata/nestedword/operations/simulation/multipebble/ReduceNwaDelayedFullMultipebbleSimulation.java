@@ -67,14 +67,14 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> extends Re
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> gameAutomaton)
 			throws AutomataOperationCanceledException {
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp1 = new RemoveNonLiveStates<>(mServices, gameAutomaton).getResult();
-		final Set<DelayedFullMultipebbleGameState<STATE>> allBitsAreTrue = new HashSet<>();
+		final Set<DelayedFullMultipebbleGameState<STATE>> goodForSpoiler = new HashSet<>();
 		for (final DelayedFullMultipebbleGameState<STATE> state : tmp1.getStates()) {
-			if (state.areAllBitsTrue()) {
-				allBitsAreTrue.add(state);
+			if (state.isEmptyOrSomeBitIsTrue()) {
+				goodForSpoiler.add(state);
 			}
 		}
 		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp2 =
-				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, allBitsAreTrue, allBitsAreTrue, allBitsAreTrue);
+				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, goodForSpoiler, goodForSpoiler, goodForSpoiler);
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp3 = new RemoveNonLiveStates<>(mServices, tmp2).getResult();
 		
 		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp4 =

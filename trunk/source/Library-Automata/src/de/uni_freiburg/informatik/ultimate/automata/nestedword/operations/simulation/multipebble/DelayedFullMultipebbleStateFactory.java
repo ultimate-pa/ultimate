@@ -176,11 +176,14 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		}
 
 		@Override
-		protected boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+		protected boolean checkIfAllBitsAreTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 			return true;
 		}
 		
-		
+		@Override
+		protected boolean checkIfEmptyOrSomeBitIsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+			return true;
+		}
 		
 		
 	}

@@ -39,13 +39,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
 	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
 	private final boolean mAllBitsAreTrue;
+	private final boolean mEmptyOrSomeBitIsTrue;
 	
 	
 	public DelayedFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
 			final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		super(spoilerDoubleDecker);
 		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
-		mAllBitsAreTrue = areAllBitsTrue(duplicatorDoubleDeckers);
+		mAllBitsAreTrue = checkIfAllBitsAreTrue(duplicatorDoubleDeckers);
+		mEmptyOrSomeBitIsTrue = checkIfEmptyOrSomeBitIsTrue(duplicatorDoubleDeckers);
 	}
 
 
@@ -53,17 +55,16 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 		return mDuplicatorDoubleDeckers;
 	}
 
-
 	@Override
 	public boolean isAccepting() {
-		return mAllBitsAreTrue;
+		return isEmptyOrSomeBitIsTrue();
 	}
 
 	/**
 	 * @return true iff all DoubleDeckers are mapped to true. This includes the
 	 * special case where we have the empty set of DeckerDeckers.
 	 */
-	protected boolean areAllBitsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+	protected boolean checkIfAllBitsAreTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
 			if (triple.getThird() == false) {
 				return false;
@@ -72,12 +73,28 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 		return true;
 	}
 	
-	
+	protected boolean checkIfEmptyOrSomeBitIsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
+		if (mDuplicatorDoubleDeckers.isEmpty()) {
+			return true;
+		} else {
+			for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
+				if (triple.getThird() == true) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
 	
 	
 	public boolean areAllBitsTrue() {
 		return mAllBitsAreTrue;
 	}
+	
+	public boolean isEmptyOrSomeBitIsTrue() {
+		return mEmptyOrSomeBitIsTrue;
+	}
+
 
 
 	@Override
