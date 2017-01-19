@@ -1138,10 +1138,7 @@ public class MemoryHandler {
 			return;
 		} else {
 			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
-			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, getValidArray(loc),
-					new Expression[] { ptrBase });
-			final Expression isValid = mBooleanArrayHelper.compareWithTrue(aae);
+			final Expression isValid = constructPointerBaseValidityCheck(loc, ptrExpr);
 			final boolean isFreeRequires;
 			if (mPointerBaseValidity == PointerCheckMode.ASSERTandASSUME) {
 				isFreeRequires = false;
@@ -1154,6 +1151,26 @@ public class MemoryHandler {
 			check.addToNodeAnnot(spec);
 			specList.add(spec);
 		}
+	}
+
+	/**
+	 * Construct expression that states that the base address of ptr is valid.
+	 * Depending on the settings this expression is one of the following
+	 * <ul> 
+	 * <li> #valid[#ptr!base]
+	 * <li> #valid[#ptr!base] == 1
+	 * <li> #valid[#ptr!base] == 1bv1
+	 * </ul>
+	 * 
+	 * 
+	 * 
+	 */
+	public Expression constructPointerBaseValidityCheck(final ILocation loc, final Expression ptr) {
+		final Expression ptrBase = getPointerBaseAddress(ptr, loc);
+		final ArrayAccessExpression aae = new ArrayAccessExpression(loc, getValidArray(loc),
+				new Expression[] { ptrBase });
+		final Expression isValid = mBooleanArrayHelper.compareWithTrue(aae);
+		return isValid;
 	}
 
 	/**
