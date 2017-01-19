@@ -1,0 +1,23 @@
+// Testfile dumped by Ultimate at 2017/01/14 09:22:18
+//
+// 
+
+reduceNwaDelayedSimulationB(removeNonLiveStates(nwa));
+
+NestedWordAutomaton nwa = (
+	alphabet = {"b" "a" },
+	states = {"q1" "q4" "q2" "qF1" "q3" "qF2" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"qF1" "qF2" },
+	transitions = {
+		("q0" "a" "q1")
+		("q1" "a" "qF1")
+		("qF1" "a" "qF1")
+		("q1" "b" "q2")
+		("q2" "a" "qF2")
+		("qF2" "a" "q3")
+		("q3" "a" "qF1")
+		("q2" "a" "q4")
+		("q4" "a" "q1")
+	}
+);
