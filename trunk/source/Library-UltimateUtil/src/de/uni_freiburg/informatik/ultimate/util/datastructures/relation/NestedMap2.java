@@ -201,11 +201,15 @@ public class NestedMap2<K1, K2, V> {
 	}
 
 	public NestedMap2<K1, K2, V> copy() {
-		NestedMap2<K1, K2, V> result = new NestedMap2<>();
-		for (K1 k1 : this.keySet()) {
+		final NestedMap2<K1, K2, V> result = new NestedMap2<>();
+		for (final K1 k1 : this.keySet()) {
 			mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
 		}
 		return result;
+	}
+	
+	public boolean isEmpty() {
+		return mK1ToK2ToV.isEmpty();
 	}
 	
 	
