@@ -47,6 +47,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 		super();
 	}
 	
+	protected abstract <LETTER> GS constructSpoilerWinningSink();
 	
 	protected abstract <LETTER> GS computeSuccessorsInternalGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
 	protected abstract <LETTER> GS computeSuccessorsCallGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);

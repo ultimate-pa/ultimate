@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.IFullMultipebbleAuxiliaryGameState.AuxiliaryGameStateType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -47,12 +48,17 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 
 	@Override
 	public DelayedFullMultipebbleGameState<STATE> createSinkStateContent() {
-		return new AuxiliaryDelayedFullMultipebbleGameState<>("sink");
+		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
 	}
 
 	@Override
 	public DelayedFullMultipebbleGameState<STATE> createEmptyStackState() {
-		return new AuxiliaryDelayedFullMultipebbleGameState<>("EmptyStack");
+		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.EMPTY_STACK);
+	}
+
+	@Override
+	protected <LETTER> DelayedFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
+		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.SPOILER_WINNING_SINK);
 	}
 	
 	
@@ -151,13 +157,14 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 	
 	
 	
-	public static class AuxiliaryDelayedFullMultipebbleGameState<STATE> extends DelayedFullMultipebbleGameState<STATE> {
+	public static class AuxiliaryDelayedFullMultipebbleGameState<STATE> extends DelayedFullMultipebbleGameState<STATE> 
+		implements IFullMultipebbleAuxiliaryGameState {
 
-		private final String mDebugIdentifier;
+		private final AuxiliaryGameStateType mAuxiliaryGameStateType;
 
-		public AuxiliaryDelayedFullMultipebbleGameState(final String debugIdentifier) {
+		public AuxiliaryDelayedFullMultipebbleGameState(final AuxiliaryGameStateType auxiliaryGameStateType) {
 			super(null, null);
-			mDebugIdentifier = debugIdentifier;
+			mAuxiliaryGameStateType = auxiliaryGameStateType;
 		}
 
 		@Override
@@ -167,12 +174,17 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 
 		@Override
 		public boolean isAccepting() {
-			throw new UnsupportedOperationException();
+			return true;
 		}
 
 		@Override
 		public String toString() {
-			return mDebugIdentifier;
+			return getAuxiliaryGameStateType().toString();
+		}
+
+		@Override
+		public AuxiliaryGameStateType getAuxiliaryGameStateType() {
+			return mAuxiliaryGameStateType;
 		}
 
 		@Override
@@ -207,6 +219,7 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);
 		return new DelayedFullMultipebbleGameState<>(new DoubleDecker<STATE>(operand.getEmptyStackState(), q0), duplicatorDoubleDeckers);
 	}
+
 	
 
 	
