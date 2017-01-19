@@ -97,7 +97,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getPartition());
+				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
 	}
 
 	/**
@@ -127,10 +127,10 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
-				new FairNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new FairNwaSimulation<>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new FairNwaGameGraph<>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory, possibleEquivalentClasses)));
 	}
@@ -145,7 +145,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(getServices(), stateFactory, getOperand(),
+		final boolean correct = (new TestBuchiEquivalence<>(getServices(), stateFactory, getOperand(),
 				getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;

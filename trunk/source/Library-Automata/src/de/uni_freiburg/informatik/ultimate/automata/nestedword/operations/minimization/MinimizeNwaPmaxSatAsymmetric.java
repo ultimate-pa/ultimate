@@ -140,7 +140,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	private static <LETTER, STATE> Iterable<Pair<STATE, STATE>> createAtsInitialPairs(
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
-			createNestedMapWithInitialPartition(new LookaheadPartitionConstructor<>(services, operand).getPartition());
+			createNestedMapWithInitialPartition(
+					new LookaheadPartitionConstructor<>(services, operand, false).getPartition());
 		}
 		return createPairs(operand.getStates());
 	}

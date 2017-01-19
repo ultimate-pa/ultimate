@@ -83,7 +83,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		mLogger.info(startMessage());
 		
 		final Collection<Set<STATE>> possibleEquivalentClasses =
-				new LookaheadPartitionConstructor<>(mServices, mOperand).getPartition();
+				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition();
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
@@ -92,7 +92,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory();
 		
 		try {
-			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton = 
+			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton =
 					new FullMultipebbleGameAutomaton<>(mServices, gameFactory, possibleEquivalentClasses, operand);
 			final IDoubleDeckerAutomaton<LETTER, GS> readoutAutomaton = computeSimulation(gameAutomaton);
 			final int gameAutomatonSize = readoutAutomaton.size();
@@ -154,7 +154,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			if (mGameFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand) ||
 					mGameFactory.isImmediatelyWinningForSpoiler(q1, q0, mOperand)) {
 				return false;
-			} 
+			}
 			final GS s1 = mGameStateMapping.get(q0, q1);
 			if (mRemoved.isInitial(s1)) {
 				return false;

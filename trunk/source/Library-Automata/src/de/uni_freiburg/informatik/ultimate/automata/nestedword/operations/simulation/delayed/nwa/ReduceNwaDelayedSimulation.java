@@ -100,7 +100,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand).getPartition());
+				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand, true).getPartition());
 	}
 
 	/**

@@ -133,7 +133,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		
 		mInitialPartition = applyInitialPartitionPreprocessing
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,
-						mSettings.getFinalStateConstraints()).getPartition()
+						mSettings.getFinalStateConstraints(), false).getPartition()
 				: initialPartition;
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;

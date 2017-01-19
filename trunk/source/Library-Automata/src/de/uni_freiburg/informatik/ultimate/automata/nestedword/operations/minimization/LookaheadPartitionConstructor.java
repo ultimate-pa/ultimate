@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class LookaheadPartitionConstructor<LETTER, STATE> {
 	// fast enable/disable for deterministic lookahead (<0 to deactivate)
-	// TODO activate this again after making benchmarks
 	private static final int LOOKAHEAD = Integer.MAX_VALUE;
 	
 	private final AutomataLibraryServices mServices;
@@ -85,6 +85,14 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final Set<Set<STATE>> mPartition;
 	private final List<Pair<STATE, STATE>> mPairs;
+	
+	/*
+	 * used to split states in a block if they have different successors even if they are nondeterministic
+	 * <p>
+	 * TODO This should be replaced by providing a set of pairs instead of a partition; this would fix problems for
+	 * simulation that require this hack.
+	 */
+	private final boolean mUseSimulationHack;
 	
 	/**
 	 * Standard constructor.
@@ -95,8 +103,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 *            input automaton
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand, false);
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSimulationHack) {
+		this(services, operand, false, useSimulationHack);
 	}
 	
 	/**
@@ -111,8 +119,9 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 *            states can be in a set
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean separateAcceptingStates) {
-		this(services, operand, Collections.singleton(operand.getStates()), separateAcceptingStates);
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean separateAcceptingStates,
+			final boolean useSimulationHack) {
+		this(services, operand, Collections.singleton(operand.getStates()), separateAcceptingStates, useSimulationHack);
 	}
 	
 	/**
@@ -127,13 +136,17 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 * @param separateAcceptingStates
 	 *            true iff only accepting or non-accepting
 	 *            states can be in a set
+	 * @param useSimulationHack
+	 *            {@code true} iff simulation hack should be used
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
-			final boolean separateAcceptingStates) {
+			final boolean separateAcceptingStates, final boolean useSimulationHack) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
+		mUseSimulationHack = useSimulationHack;
+		
 		mPartition = createPartition(initialPartition, separateAcceptingStates);
 		mPairs = findDifferentPairs(mPartition);
 	}
@@ -300,18 +313,20 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			final LETTER letter, final Set<Set<STATE>> partition, final boolean isInternal) {
 		final Map<Set<STATE>, Set<STATE>> targetBlock2states = new HashMap<>();
 		for (final STATE state : block) {
-			final STATE targetState = getSuccessor(letter, state, isInternal);
-			if (targetState == null) {
-				// state is nondeterministic wrt. letter
+			final Collection<STATE> targetStates = getSuccessors(letter, state, isInternal);
+			if (targetStates.isEmpty()) {
+				// state is nondeterministic wrt. letter and we ignore such cases
 				return false;
 			}
-			final Set<STATE> targetBlock = state2block.get(targetState);
-			Set<STATE> states = targetBlock2states.get(targetBlock);
-			if (states == null) {
-				states = new LinkedHashSet<>();
-				targetBlock2states.put(targetBlock, states);
+			for (final STATE targetState : targetStates) {
+				final Set<STATE> targetBlock = state2block.get(targetState);
+				Set<STATE> states = targetBlock2states.get(targetBlock);
+				if (states == null) {
+					states = new LinkedHashSet<>();
+					targetBlock2states.put(targetBlock, states);
+				}
+				states.add(state);
 			}
-			states.add(state);
 		}
 		
 		// modify the partition since all states are deterministic wrt. letter
@@ -364,18 +379,27 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		}
 	}
 	
-	private STATE getSuccessor(final LETTER letter, final STATE state, final boolean isInternal) {
+	private Collection<STATE> getSuccessors(final LETTER letter, final STATE state, final boolean isInternal) {
 		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it = isInternal
 				? mOperand.internalSuccessors(state, letter).iterator()
 				: mOperand.callSuccessors(state, letter).iterator();
 		assert it.hasNext() : "There should be at least one outgoing transition.";
-		@SuppressWarnings("squid:S1941")
 		final IOutgoingTransitionlet<LETTER, STATE> trans = it.next();
 		if (it.hasNext()) {
 			// state is nondeterministic wrt. letter
-			return null;
+			if (mUseSimulationHack) {
+				// collect all successors
+				final List<STATE> succs = new ArrayList<>();
+				succs.add(trans.getSucc());
+				while (it.hasNext()) {
+					succs.add(it.next().getSucc());
+				}
+				return succs;
+			}
+			// ignore these successors
+			return Collections.emptyList();
 		}
-		return trans.getSucc();
+		return Collections.singletonList(trans.getSucc());
 	}
 	
 	private boolean partitionsConsistency(final Set<Set<STATE>> partition1, final Set<Set<STATE>> partition2) {
@@ -428,7 +452,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	}
 	
 	private List<Pair<STATE, STATE>> splitHierarchicalPredecessors(final Set<Set<STATE>> partition) {
-		// TODO Auto-generated method stub
+		// TODO
 		return Collections.emptyList();
 	}
 	

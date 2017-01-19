@@ -203,7 +203,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
 		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<LETTER, STATE>(
-				services, operand).getResult();
+				services, operand, true).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
