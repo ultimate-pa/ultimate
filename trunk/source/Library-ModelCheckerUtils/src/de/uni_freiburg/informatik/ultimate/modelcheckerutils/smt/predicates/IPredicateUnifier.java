@@ -25,15 +25,12 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -94,6 +91,6 @@ public interface IPredicateUnifier {
 	/**
 	 * @return the predicateFactory
 	 */
-	PredicateFactory getPredicateFactory();
+	BasicPredicateFactory getPredicateFactory();
 
 }
