@@ -352,50 +352,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return transitions;
 	}
 
-	private static abstract class BaseAbsIntInterpolantGenerator implements IInterpolantGenerator {
-
-		private final IPredicateUnifier mPredicateUnifier;
-		private final Word<? extends IAction> mCex;
-		private final IPredicate mPrecondition;
-		private final IPredicate mPostcondition;
-		private final InterpolantComputationStatus mStatus;
-
-		private BaseAbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier,
-				final Word<? extends IAction> cex, final InterpolantComputationStatus status) {
-			mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
-			mCex = cex;
-			mStatus = Objects.requireNonNull(status);
-			mPrecondition = mPredicateUnifier.getTruePredicate();
-			mPostcondition = mPredicateUnifier.getFalsePredicate();
-		}
-
-		@Override
-		public Word<? extends IAction> getTrace() {
-			return mCex;
-		}
-
-		@Override
-		public IPredicate getPrecondition() {
-			return mPrecondition;
-		}
-
-		@Override
-		public IPredicate getPostcondition() {
-			return mPostcondition;
-		}
-
-		@Override
-		public IPredicateUnifier getPredicateUnifier() {
-			return mPredicateUnifier;
-		}
-
-		@Override
-		public InterpolantComputationStatus getInterpolantComputationStatus() {
-			return mStatus;
-		}
-	}
-
-	private static final class AbsIntInterpolantGenerator extends BaseAbsIntInterpolantGenerator {
+	private static final class AbsIntInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
 
 		private final IPredicate[] mInterpolants;
 
@@ -424,7 +381,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	}
 
-	private static final class AbsIntFailedInterpolantGenerator extends BaseAbsIntInterpolantGenerator {
+	private static final class AbsIntFailedInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
 
 		private AbsIntFailedInterpolantGenerator(final PredicateUnifier predicateUnifier,
 				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
