@@ -79,7 +79,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mVariableCollector = new VariableCollector();
-
 	}
 
 	private Validity checkInternalTransition(final AbsIntPredicate pre, final IInternalAction act,

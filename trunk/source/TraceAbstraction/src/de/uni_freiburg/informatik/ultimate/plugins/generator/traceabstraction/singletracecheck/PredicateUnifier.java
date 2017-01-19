@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -89,9 +89,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 /**
  * Data structure that stores for each term a unique predicate. Initially a predicate unifier constructs a "true"
  * predicate and a "false" predicate.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class PredicateUnifier {
 
@@ -292,7 +292,7 @@ public class PredicateUnifier {
 
 	/**
 	 * Get the predicate for term. If there is not yet a predicate for term, construct the predicate using vars.
-	 * 
+	 *
 	 * @param vars
 	 *            The BoogieVars of the TermVariables contained in term.
 	 * @param proc
@@ -380,7 +380,7 @@ public class PredicateUnifier {
 			final AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 			final Annotation[] annotations = annotatedTerm.getAnnotations();
 			if (annotations.length == 1) {
-				if (annotations[0].getKey().equals(":quoted")) {
+				if (":quoted".equals(annotations[0].getKey())) {
 					withoutAnnotation = annotatedTerm.getSubterm();
 				} else {
 					throw new UnsupportedOperationException();
@@ -396,7 +396,7 @@ public class PredicateUnifier {
 
 	/**
 	 * Add a new predicate.
-	 * 
+	 *
 	 * @param pred
 	 * @param simplifiedTerm
 	 * @param term
@@ -414,13 +414,441 @@ public class PredicateUnifier {
 		mKnownPredicates.add(pred);
 	}
 
+	// Matthias 2016-11-4: at the moment we believe that for the backward
+	// predicates universal quantification is better than existential
+	// quantification.
+	private static boolean thisIsLessQuantifiedThanOther(final Term thisTerm, final Term otherTerm) {
+		final ContainsQuantifier thisQuantifierCheck = new ContainsQuantifier();
+		thisQuantifierCheck.containsQuantifier(thisTerm);
+		final ContainsQuantifier otherQuantifierCheck = new ContainsQuantifier();
+		otherQuantifierCheck.containsQuantifier(otherTerm);
+		return thisQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.FORALL
+				&& otherQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.EXISTS;
+	}
+
+	public String collectPredicateUnifierStatistics() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append(PredicateUnifierStatisticsType.getInstance()
+				.prettyprintBenchmarkData(mPredicateUnifierBenchmarkGenerator));
+		builder.append(mCoverageRelation.getCoverageRelationStatistics());
+		return builder.toString();
+	}
+
+	/**
+	 * We call a predicate "intricate" if we were unable to find our if it is equivalent to "true" or if we were unable
+	 * to find out it it is equivalent to "false".
+	 */
+	public boolean isIntricatePredicate(final IPredicate pred) {
+		final Validity equivalentToTrue = getCoverageRelation().isCovered(mTruePredicate, pred);
+		final Validity equivalentToFalse = getCoverageRelation().isCovered(pred, mFalsePredicate);
+		return equivalentToTrue == Validity.UNKNOWN || equivalentToFalse == Validity.UNKNOWN;
+	}
+
+	/**
+	 * Given a term "cut up" all its conjuncts. We bring the term in CNF and return an IPredicate for each conjunct.
+	 */
+	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
+		final Set<IPredicate> result = new HashSet<>();
+		final Term cnf = new Cnf(mMgnScript, mServices).transform(term);
+		Term[] conjuncts;
+		if (splitNumericEqualities) {
+			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));
+		} else {
+			conjuncts = SmtUtils.getConjuncts(cnf);
+		}
+		for (final Term conjunct : conjuncts) {
+			final IPredicate predicate = getOrConstructPredicate(conjunct);
+			result.add(predicate);
+		}
+		return result;
+	}
+
+	private Term[] splitNumericEqualities(final Term[] conjuncts) {
+		final ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
+		for (final Term conjunct : conjuncts) {
+			try {
+				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
+				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
+					final Term leq = mScript.term("<=", bnr.getLhs(), bnr.getRhs());
+					result.add(leq);
+					final Term geq = mScript.term(">=", bnr.getLhs(), bnr.getRhs());
+					result.add(geq);
+				} else {
+					result.add(conjunct);
+				}
+			} catch (final NoRelationOfThisKindException e) {
+				result.add(conjunct);
+			}
+		}
+		return result.toArray(new Term[result.size()]);
+	}
+
+	public Set<IPredicate> cannibalizeAll(final boolean splitNumericEqualities,
+			final Collection<IPredicate> predicates) {
+		final Set<IPredicate> result = new HashSet<>();
+		for (final IPredicate pred : predicates) {
+			result.addAll(cannibalize(splitNumericEqualities, pred.getFormula()));
+		}
+		return result;
+	}
+
+	public IPredicateCoverageChecker getCoverageRelation() {
+		return mCoverageRelation;
+	}
+
+	public IStatisticsDataProvider getPredicateUnifierBenchmark() {
+		return mPredicateUnifierBenchmarkGenerator;
+	}
+
+	/**
+	 * @return the predicateFactory
+	 */
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
+	}
+
+	public class CoverageRelation implements IPredicateCoverageChecker {
+
+		private final NestedMap2<IPredicate, IPredicate, Validity> mLhs2RhsValidity = new NestedMap2<>();
+		private final HashRelation<IPredicate, IPredicate> mImpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mExpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mNotImpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mNotExpliedPredicates = new HashRelation<>();
+
+		void addPredicate(final IPredicate pred, final Map<IPredicate, Validity> implied,
+				final Map<IPredicate, Validity> explied) {
+			assert !mKnownPredicates.contains(pred) : "predicate already known";
+			assert coverageMapIsComplete();
+			for (final IPredicate known : mKnownPredicates) {
+				final Validity implies = implied.get(known);
+				assert implies != null : "unknown implies for " + known;
+				final Validity explies = explied.get(known);
+				assert explies != null : "unknown explies for " + known;
+				final Validity oldimpl = mLhs2RhsValidity.put(pred, known, implies);
+				assert oldimpl == null : "entry existed !";
+				final Validity oldexpl = mLhs2RhsValidity.put(known, pred, explies);
+				assert oldexpl == null : "entry existed !";
+				if (implies == Validity.VALID) {
+					mImpliedPredicates.addPair(pred, known);
+					mExpliedPredicates.addPair(known, pred);
+				} else if (implies == Validity.INVALID) {
+					mNotImpliedPredicates.addPair(pred, known);
+					mNotExpliedPredicates.addPair(known, pred);
+				}
+				if (explies == Validity.VALID) {
+					mImpliedPredicates.addPair(known, pred);
+					mExpliedPredicates.addPair(pred, known);
+				} else if (implies == Validity.INVALID) {
+					mNotImpliedPredicates.addPair(known, pred);
+					mNotExpliedPredicates.addPair(pred, known);
+				}
+			}
+			mImpliedPredicates.addPair(pred, pred);
+			mExpliedPredicates.addPair(pred, pred);
+			assert coverageMapIsComplete();
+		}
+
+		@Override
+		public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
+			if (lhs == rhs) {
+				return Validity.VALID;
+			}
+			final Validity result = mLhs2RhsValidity.get(lhs, rhs);
+			if (result == null) {
+				throw new AssertionError("at least one of both input predicates is unknown");
+			}
+			return result;
+		}
+
+		@Override
+		public Set<IPredicate> getCoveringPredicates(final IPredicate pred) {
+			return mImpliedPredicates.getImage(pred);
+		}
+
+		public Set<IPredicate> getNonCoveringPredicates(final IPredicate pred) {
+			return mNotImpliedPredicates.getImage(pred);
+		}
+
+		@Override
+		public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
+			return mExpliedPredicates.getImage(pred);
+		}
+
+		public Set<IPredicate> getNonCoveredPredicates(final IPredicate pred) {
+			return mNotExpliedPredicates.getImage(pred);
+		}
+
+		public CoverageRelationStatistics getCoverageRelationStatistics() {
+			return new CoverageRelationStatistics(mLhs2RhsValidity);
+		}
+
+		private boolean coverageMapIsComplete() {
+			boolean nothingMissing = true;
+			for (final IPredicate p1 : mKnownPredicates) {
+				for (final IPredicate p2 : mKnownPredicates) {
+					if (p1 != p2) {
+						final Validity validity = mLhs2RhsValidity.get(p1, p2);
+						assert validity != null : "value missing for pair " + p1 + ", " + p2;
+						if (validity == null) {
+							nothingMissing = false;
+						}
+					}
+				}
+			}
+			return nothingMissing;
+		}
+
+		@Override
+		public IPartialComparator<IPredicate> getPartialComperator() {
+			return (o1, o2) -> {
+				if (o1 == o2) {
+					return ComparisonResult.EQUAL;
+				}
+				final Validity implies = mLhs2RhsValidity.get(o1, o2);
+				if (implies == null) {
+					throw new AssertionError("one of the predicates is unknown");
+				}
+				final Validity explies = mLhs2RhsValidity.get(o2, o1);
+				if (explies == null) {
+					throw new AssertionError("one of the predicates is unknown");
+				}
+				if (implies == Validity.VALID) {
+					if (explies == Validity.VALID) {
+						return ComparisonResult.EQUAL;
+					}
+					return ComparisonResult.STRICTLY_SMALLER;
+				}
+				if (explies == Validity.VALID) {
+					return ComparisonResult.STRICTLY_GREATER;
+				}
+				return ComparisonResult.INCOMPARABLE;
+			};
+		}
+	}
+
+	public class CoverageRelationStatistics {
+		private final int mValidCoverageRelations;
+		private final int mInvalidCoverageRelations;
+		private final int mUnknownCoverageRelations;
+		private final int mNotCheckedCoverageRelations;
+
+		public CoverageRelationStatistics(final NestedMap2<IPredicate, IPredicate, Validity> lhs2RhsValidity) {
+			int invalid = 0;
+			int valid = 0;
+			int unknown = 0;
+			int notChecked = 0;
+			for (final Triple<IPredicate, IPredicate, Validity> entry : lhs2RhsValidity.entrySet()) {
+				switch (entry.getThird()) {
+				case INVALID:
+					invalid++;
+					break;
+				case NOT_CHECKED:
+					notChecked++;
+					break;
+				case UNKNOWN:
+					unknown++;
+					break;
+				case VALID:
+					valid++;
+					break;
+				default:
+					throw new AssertionError();
+				}
+			}
+			mValidCoverageRelations = valid;
+			mInvalidCoverageRelations = invalid;
+			mUnknownCoverageRelations = unknown;
+			mNotCheckedCoverageRelations = notChecked;
+		}
+
+		@Override
+		public String toString() {
+			return String.format("CoverageRelationStatistics Valid=%s, Invalid=%s, Unknown=%s, NotChecked=%s, Total=%s",
+					mValidCoverageRelations, mInvalidCoverageRelations, mUnknownCoverageRelations,
+					mNotCheckedCoverageRelations, mValidCoverageRelations + mInvalidCoverageRelations
+							+ mUnknownCoverageRelations + mNotCheckedCoverageRelations);
+		}
+
+	}
+
+	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
+
+		DeclaredPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		GetRequests(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		SyntacticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		SemanticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		ConstructedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		IntricatePredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		DeprecatedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		ImplicationChecksByTransitivity(Integer.class, AStatisticsType.s_IntegerAddition,
+				AStatisticsType.s_DataBeforeKey),
+
+		Time(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),;
+
+		private final Class<?> mClazz;
+		private final Function<Object, Function<Object, Object>> mAggr;
+		private final Function<String, Function<Object, String>> mPrettyprinter;
+
+		PredicateUniferStatisticsDefinitions(final Class<?> clazz,
+				final Function<Object, Function<Object, Object>> aggr,
+				final Function<String, Function<Object, String>> prettyprinter) {
+			mClazz = clazz;
+			mAggr = aggr;
+			mPrettyprinter = prettyprinter;
+		}
+
+		@Override
+		public Object aggregate(final Object o1, final Object o2) {
+			return mAggr.apply(o1).apply(o2);
+		}
+
+		@Override
+		public String prettyprint(final Object o) {
+			return mPrettyprinter.apply(name()).apply(o);
+		}
+
+		@Override
+		public Class<?> getDataType() {
+			return mClazz;
+		}
+	}
+
+	public static class PredicateUnifierStatisticsType extends AStatisticsType<PredicateUniferStatisticsDefinitions> {
+
+		private static final PredicateUnifierStatisticsType INSTANCE = new PredicateUnifierStatisticsType();
+
+		public PredicateUnifierStatisticsType() {
+			super(PredicateUniferStatisticsDefinitions.class);
+		}
+
+		public static PredicateUnifierStatisticsType getInstance() {
+			return INSTANCE;
+		}
+	}
+
+	public class PredicateUnifierStatisticsGenerator implements IStatisticsDataProvider {
+
+		private int mDeclaredPredicates = 0;
+		private int mGetRequests = 0;
+		private int mSyntacticMatches = 0;
+		private int mSemanticMatches = 0;
+		private int mConstructedPredicates = 0;
+		private int mIntricatePredicates = 0;
+		private int mDeprecatedPredicates = 0;
+		private int mImplicationChecksByTransitivity = 0;
+		protected final Benchmark mBenchmark;
+
+		protected boolean mRunning = false;
+
+		public PredicateUnifierStatisticsGenerator() {
+			mBenchmark = new Benchmark();
+			mBenchmark.register(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
+		}
+
+		public void incrementDeclaredPredicates() {
+			mDeclaredPredicates++;
+		}
+
+		public void incrementGetRequests() {
+			mGetRequests++;
+		}
+
+		public void incrementSyntacticMatches() {
+			mSyntacticMatches++;
+		}
+
+		public void incrementSemanticMatches() {
+			mSemanticMatches++;
+		}
+
+		public void incrementConstructedPredicates() {
+			mConstructedPredicates++;
+		}
+
+		public void incrementIntricatePredicates() {
+			mIntricatePredicates++;
+		}
+
+		public void incrementDeprecatedPredicates() {
+			mDeprecatedPredicates++;
+			assert mDeprecatedPredicates == PredicateUnifier.this.mDeprecatedPredicates
+					.size() : "number of deprecated predicates inconsistent";
+		}
+
+		public void incrementImplicationChecksByTransitivity() {
+			mImplicationChecksByTransitivity++;
+		}
+
+		public long getTime() {
+			return (long) mBenchmark.getElapsedTime(String.valueOf(PredicateUniferStatisticsDefinitions.Time),
+					TimeUnit.NANOSECONDS);
+		}
+
+		public void continueTime() {
+			assert !mRunning : "Timing already running";
+			mRunning = true;
+			mBenchmark.unpause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
+		}
+
+		public void stopTime() {
+			assert mRunning : "Timing not running";
+			mRunning = false;
+			mBenchmark.pause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
+		}
+
+		@Override
+		public Collection<String> getKeys() {
+			return PredicateUnifierStatisticsType.getInstance().getKeys();
+		}
+
+		@Override
+		public Object getValue(final String key) {
+			final PredicateUniferStatisticsDefinitions keyEnum =
+					Enum.valueOf(PredicateUniferStatisticsDefinitions.class, key);
+			switch (keyEnum) {
+			case DeclaredPredicates:
+				return mDeclaredPredicates;
+			case GetRequests:
+				return mGetRequests;
+			case SyntacticMatches:
+				return mSyntacticMatches;
+			case SemanticMatches:
+				return mSemanticMatches;
+			case ConstructedPredicates:
+				return mConstructedPredicates;
+			case IntricatePredicates:
+				return mIntricatePredicates;
+			case DeprecatedPredicates:
+				return mDeprecatedPredicates;
+			case ImplicationChecksByTransitivity:
+				return mImplicationChecksByTransitivity;
+			case Time:
+				return getTime();
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public IStatisticsType getBenchmarkType() {
+			return PredicateUnifierStatisticsType.getInstance();
+		}
+	}
+
 	/**
 	 * Compare Term term whose free variables represent the BoogieVars vars with all predicates that this Predicate
 	 * unifier knows. If there exists a predicate for which we can prove that it is equivalent to term, this predicate
 	 * is returned. Otherwise we return null and HashMaps impliedPredicats and expliedPredicates are filled with
 	 * information about implications between term and existing Predicates. ImpliedPredicates will be filled with all
 	 * IPredicates implied by term. ImpliedPredicates will be filled with all IPredicates that imply term.
-	 * 
+	 *
 	 * @return
 	 */
 	private final class PredicateComparison {
@@ -432,6 +860,33 @@ public class PredicateUnifier {
 		private final IPredicate mEquivalentLeqQuantifiedPredicate;
 		private IPredicate mEquivalentGtQuantifiedPredicate;
 		private boolean mIsIntricatePredicate;
+
+		/**
+		 * Compare a new term/vars with all known predicates of this PredicateUnifier. Information about predicates that
+		 * are implied/explied by term can be provided as an input by the Maps impliedPredicates/expliedPredicates both
+		 * maps will be modified by (new predicates added) by this method.
+		 */
+		PredicateComparison(final Term term, final Set<IProgramVar> vars,
+				final HashMap<IPredicate, Validity> impliedPredicates,
+				final HashMap<IPredicate, Validity> expliedPredicates) {
+			if (impliedPredicates == null) {
+				if (expliedPredicates != null) {
+					throw new IllegalArgumentException("both or none null");
+				}
+				mImpliedPredicates = new HashMap<>();
+				mExpliedPredicates = new HashMap<>();
+			} else {
+				mImpliedPredicates = impliedPredicates;
+				mExpliedPredicates = expliedPredicates;
+			}
+			mTerm = term;
+			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
+			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
+
+			mScript.echo(new QuotedObject("begin unification"));
+			mEquivalentLeqQuantifiedPredicate = compare();
+			mScript.echo(new QuotedObject("end unification"));
+		}
 
 		public Term getClosedTerm() {
 			if (mEquivalentLeqQuantifiedPredicate != null) {
@@ -481,33 +936,6 @@ public class PredicateUnifier {
 
 		public boolean isEquivalentToExistingPredicateWithGtQuantifiers() {
 			return mEquivalentGtQuantifiedPredicate != null;
-		}
-
-		/**
-		 * Compare a new term/vars with all known predicates of this PredicateUnifier. Information about predicates that
-		 * are implied/explied by term can be provided as an input by the Maps impliedPredicates/expliedPredicates both
-		 * maps will be modified by (new predicates added) by this method.
-		 */
-		PredicateComparison(final Term term, final Set<IProgramVar> vars,
-				final HashMap<IPredicate, Validity> impliedPredicates,
-				final HashMap<IPredicate, Validity> expliedPredicates) {
-			if (impliedPredicates == null) {
-				if (expliedPredicates != null) {
-					throw new IllegalArgumentException("both or none null");
-				}
-				mImpliedPredicates = new HashMap<>();
-				mExpliedPredicates = new HashMap<>();
-			} else {
-				mImpliedPredicates = impliedPredicates;
-				mExpliedPredicates = expliedPredicates;
-			}
-			mTerm = term;
-			mClosedTerm = PredicateUtils.computeClosedFormula(term, vars, mScript);
-			mTermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
-
-			mScript.echo(new QuotedObject("begin unification"));
-			mEquivalentLeqQuantifiedPredicate = compare();
-			mScript.echo(new QuotedObject("end unification"));
 		}
 
 		private IPredicate compare() {
@@ -690,427 +1118,6 @@ public class PredicateUnifier {
 			}
 			return result;
 		}
-	}
-
-	// Matthias 2016-11-4: at the moment we believe that for the backward
-	// predicates universal quantification is better than existential
-	// quantification.
-	private static boolean thisIsLessQuantifiedThanOther(final Term thisTerm, final Term otherTerm) {
-		final ContainsQuantifier thisQuantifierCheck = new ContainsQuantifier();
-		thisQuantifierCheck.containsQuantifier(thisTerm);
-		final ContainsQuantifier otherQuantifierCheck = new ContainsQuantifier();
-		otherQuantifierCheck.containsQuantifier(otherTerm);
-		return thisQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.FORALL
-				&& otherQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.EXISTS;
-	}
-
-	public String collectPredicateUnifierStatistics() {
-		final StringBuilder builder = new StringBuilder();
-		builder.append(PredicateUnifierStatisticsType.getInstance()
-				.prettyprintBenchmarkData(mPredicateUnifierBenchmarkGenerator));
-		builder.append(mCoverageRelation.getCoverageRelationStatistics());
-		return builder.toString();
-	}
-
-	/**
-	 * We call a predicate "intricate" if we were unable to find our if it is equivalent to "true" or if we were unable
-	 * to find out it it is equivalent to "false".
-	 */
-	public boolean isIntricatePredicate(final IPredicate pred) {
-		final Validity equivalentToTrue = getCoverageRelation().isCovered(mTruePredicate, pred);
-		final Validity equivalentToFalse = getCoverageRelation().isCovered(pred, mFalsePredicate);
-		return equivalentToTrue == Validity.UNKNOWN || equivalentToFalse == Validity.UNKNOWN;
-	}
-
-	/**
-	 * Given a term "cut up" all its conjuncts. We bring the term in CNF and return an IPredicate for each conjunct.
-	 */
-	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
-		final Set<IPredicate> result = new HashSet<>();
-		final Term cnf = new Cnf(mMgnScript, mServices).transform(term);
-		Term[] conjuncts;
-		if (splitNumericEqualities) {
-			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));
-		} else {
-			conjuncts = SmtUtils.getConjuncts(cnf);
-		}
-		for (final Term conjunct : conjuncts) {
-			final IPredicate predicate = getOrConstructPredicate(conjunct);
-			result.add(predicate);
-		}
-		return result;
-	}
-
-	private Term[] splitNumericEqualities(final Term[] conjuncts) {
-		final ArrayList<Term> result = new ArrayList<>(conjuncts.length * 2);
-		for (final Term conjunct : conjuncts) {
-			try {
-				final BinaryNumericRelation bnr = new BinaryNumericRelation(conjunct);
-				if (bnr.getRelationSymbol() == RelationSymbol.EQ) {
-					final Term leq = mScript.term("<=", bnr.getLhs(), bnr.getRhs());
-					result.add(leq);
-					final Term geq = mScript.term(">=", bnr.getLhs(), bnr.getRhs());
-					result.add(geq);
-				} else {
-					result.add(conjunct);
-				}
-			} catch (final NoRelationOfThisKindException e) {
-				result.add(conjunct);
-			}
-		}
-		return result.toArray(new Term[result.size()]);
-	}
-
-	public Set<IPredicate> cannibalizeAll(final boolean splitNumericEqualities, final Collection<IPredicate> predicates) {
-		final Set<IPredicate> result = new HashSet<>();
-		for (final IPredicate pred : predicates) {
-			result.addAll(cannibalize(splitNumericEqualities, pred.getFormula()));
-		}
-		return result;
-	}
-
-	public IPredicateCoverageChecker getCoverageRelation() {
-		return mCoverageRelation;
-	}
-
-	public class CoverageRelation implements IPredicateCoverageChecker {
-
-		private final NestedMap2<IPredicate, IPredicate, Validity> mLhs2RhsValidity = new NestedMap2<>();
-		private final HashRelation<IPredicate, IPredicate> mImpliedPredicates = new HashRelation<>();
-		private final HashRelation<IPredicate, IPredicate> mExpliedPredicates = new HashRelation<>();
-		private final HashRelation<IPredicate, IPredicate> mNotImpliedPredicates = new HashRelation<>();
-		private final HashRelation<IPredicate, IPredicate> mNotExpliedPredicates = new HashRelation<>();
-
-		void addPredicate(final IPredicate pred, final Map<IPredicate, Validity> implied,
-				final Map<IPredicate, Validity> explied) {
-			assert !mKnownPredicates.contains(pred) : "predicate already known";
-			assert coverageMapIsComplete();
-			for (final IPredicate known : mKnownPredicates) {
-				final Validity implies = implied.get(known);
-				assert implies != null : "unknown implies for " + known;
-				final Validity explies = explied.get(known);
-				assert explies != null : "unknown explies for " + known;
-				final Validity oldimpl = mLhs2RhsValidity.put(pred, known, implies);
-				assert oldimpl == null : "entry existed !";
-				final Validity oldexpl = mLhs2RhsValidity.put(known, pred, explies);
-				assert oldexpl == null : "entry existed !";
-				if (implies == Validity.VALID) {
-					mImpliedPredicates.addPair(pred, known);
-					mExpliedPredicates.addPair(known, pred);
-				} else if (implies == Validity.INVALID) {
-					mNotImpliedPredicates.addPair(pred, known);
-					mNotExpliedPredicates.addPair(known, pred);
-				}
-				if (explies == Validity.VALID) {
-					mImpliedPredicates.addPair(known, pred);
-					mExpliedPredicates.addPair(pred, known);
-				} else if (implies == Validity.INVALID) {
-					mNotImpliedPredicates.addPair(known, pred);
-					mNotExpliedPredicates.addPair(pred, known);
-				}
-			}
-			mImpliedPredicates.addPair(pred, pred);
-			mExpliedPredicates.addPair(pred, pred);
-			assert coverageMapIsComplete();
-		}
-
-		@Override
-		public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
-			if (lhs == rhs) {
-				return Validity.VALID;
-			}
-			final Validity result = mLhs2RhsValidity.get(lhs, rhs);
-			if (result == null) {
-				throw new AssertionError("at least one of both input predicates is unknown");
-			}
-			return result;
-		}
-
-		@Override
-		public Set<IPredicate> getCoveringPredicates(final IPredicate pred) {
-			return mImpliedPredicates.getImage(pred);
-		}
-
-		public Set<IPredicate> getNonCoveringPredicates(final IPredicate pred) {
-			return mNotImpliedPredicates.getImage(pred);
-		}
-
-		@Override
-		public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
-			return mExpliedPredicates.getImage(pred);
-		}
-
-		public Set<IPredicate> getNonCoveredPredicates(final IPredicate pred) {
-			return mNotExpliedPredicates.getImage(pred);
-		}
-
-		public CoverageRelationStatistics getCoverageRelationStatistics() {
-			return new CoverageRelationStatistics(mLhs2RhsValidity);
-		}
-
-		private boolean coverageMapIsComplete() {
-			boolean nothingMissing = true;
-			for (final IPredicate p1 : mKnownPredicates) {
-				for (final IPredicate p2 : mKnownPredicates) {
-					if (p1 != p2) {
-						final Validity validity = mLhs2RhsValidity.get(p1, p2);
-						assert validity != null : "value missing for pair " + p1 + ", " + p2;
-						if (validity == null) {
-							nothingMissing = false;
-						}
-					}
-				}
-			}
-			return nothingMissing;
-		}
-
-		@Override
-		public IPartialComparator<IPredicate> getPartialComperator() {
-			return (o1, o2) -> {
-				if (o1 == o2) {
-					return ComparisonResult.EQUAL;
-				}
-				final Validity implies = mLhs2RhsValidity.get(o1, o2);
-				if (implies == null) {
-					throw new AssertionError("one of the predicates is unknown");
-				}
-				final Validity explies = mLhs2RhsValidity.get(o2, o1);
-				if (explies == null) {
-					throw new AssertionError("one of the predicates is unknown");
-				}
-				if (implies == Validity.VALID) {
-					if (explies == Validity.VALID) {
-						return ComparisonResult.EQUAL;
-					}
-					return ComparisonResult.STRICTLY_SMALLER;
-				}
-				if (explies == Validity.VALID) {
-					return ComparisonResult.STRICTLY_GREATER;
-				}
-				return ComparisonResult.INCOMPARABLE;
-			};
-		}
-	}
-
-	public class CoverageRelationStatistics {
-		private final int mValidCoverageRelations;
-		private final int mInvalidCoverageRelations;
-		private final int mUnknownCoverageRelations;
-		private final int mNotCheckedCoverageRelations;
-
-		public CoverageRelationStatistics(final NestedMap2<IPredicate, IPredicate, Validity> lhs2RhsValidity) {
-			int invalid = 0;
-			int valid = 0;
-			int unknown = 0;
-			int notChecked = 0;
-			for (final Triple<IPredicate, IPredicate, Validity> entry : lhs2RhsValidity.entrySet()) {
-				switch (entry.getThird()) {
-				case INVALID:
-					invalid++;
-					break;
-				case NOT_CHECKED:
-					notChecked++;
-					break;
-				case UNKNOWN:
-					unknown++;
-					break;
-				case VALID:
-					valid++;
-					break;
-				default:
-					throw new AssertionError();
-				}
-			}
-			mValidCoverageRelations = valid;
-			mInvalidCoverageRelations = invalid;
-			mUnknownCoverageRelations = unknown;
-			mNotCheckedCoverageRelations = notChecked;
-		}
-
-		@Override
-		public String toString() {
-			return String.format("CoverageRelationStatistics Valid=%s, Invalid=%s, Unknown=%s, NotChecked=%s, Total=%s",
-					mValidCoverageRelations, mInvalidCoverageRelations, mUnknownCoverageRelations,
-					mNotCheckedCoverageRelations, mValidCoverageRelations + mInvalidCoverageRelations
-							+ mUnknownCoverageRelations + mNotCheckedCoverageRelations);
-		}
-
-	}
-
-	/**
-	 * @return the predicateFactory
-	 */
-	public PredicateFactory getPredicateFactory() {
-		return mPredicateFactory;
-	}
-
-	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
-
-		DeclaredPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		GetRequests(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-
-		SyntacticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		SemanticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		ConstructedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		IntricatePredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		DeprecatedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		ImplicationChecksByTransitivity(Integer.class, AStatisticsType.s_IntegerAddition,
-				AStatisticsType.s_DataBeforeKey),
-		Time(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),;
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		PredicateUniferStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
-	}
-
-	public static class PredicateUnifierStatisticsType extends AStatisticsType<PredicateUniferStatisticsDefinitions> {
-
-		public PredicateUnifierStatisticsType() {
-			super(PredicateUniferStatisticsDefinitions.class);
-		}
-
-		private static final PredicateUnifierStatisticsType s_Instance = new PredicateUnifierStatisticsType();
-
-		public static PredicateUnifierStatisticsType getInstance() {
-			return s_Instance;
-		}
-
-	}
-
-	public class PredicateUnifierStatisticsGenerator implements IStatisticsDataProvider {
-
-		private int mDeclaredPredicates = 0;
-		private int mGetRequests = 0;
-		private int mSyntacticMatches = 0;
-		private int mSemanticMatches = 0;
-		private int mConstructedPredicates = 0;
-		private int mIntricatePredicates = 0;
-		private int mDeprecatedPredicates = 0;
-		private int mImplicationChecksByTransitivity = 0;
-		protected final Benchmark mBenchmark;
-
-		protected boolean mRunning = false;
-
-		public PredicateUnifierStatisticsGenerator() {
-			mBenchmark = new Benchmark();
-			mBenchmark.register(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		public void incrementDeclaredPredicates() {
-			mDeclaredPredicates++;
-		}
-
-		public void incrementGetRequests() {
-			mGetRequests++;
-		}
-
-		public void incrementSyntacticMatches() {
-			mSyntacticMatches++;
-		}
-
-		public void incrementSemanticMatches() {
-			mSemanticMatches++;
-		}
-
-		public void incrementConstructedPredicates() {
-			mConstructedPredicates++;
-		}
-
-		public void incrementIntricatePredicates() {
-			mIntricatePredicates++;
-		}
-
-		public void incrementDeprecatedPredicates() {
-			mDeprecatedPredicates++;
-			assert mDeprecatedPredicates == PredicateUnifier.this.mDeprecatedPredicates
-					.size() : "number of deprecated predicates inconsistent";
-		}
-
-		public void incrementImplicationChecksByTransitivity() {
-			mImplicationChecksByTransitivity++;
-		}
-
-		public long getTime() {
-			return (long) mBenchmark.getElapsedTime(String.valueOf(PredicateUniferStatisticsDefinitions.Time),
-					TimeUnit.NANOSECONDS);
-		}
-
-		public void continueTime() {
-			assert !mRunning : "Timing already running";
-			mRunning = true;
-			mBenchmark.unpause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		public void stopTime() {
-			assert mRunning : "Timing not running";
-			mRunning = false;
-			mBenchmark.pause(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return PredicateUnifierStatisticsType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			final PredicateUniferStatisticsDefinitions keyEnum =
-					Enum.valueOf(PredicateUniferStatisticsDefinitions.class, key);
-			switch (keyEnum) {
-			case DeclaredPredicates:
-				return mDeclaredPredicates;
-			case GetRequests:
-				return mGetRequests;
-			case SyntacticMatches:
-				return mSyntacticMatches;
-			case SemanticMatches:
-				return mSemanticMatches;
-			case ConstructedPredicates:
-				return mConstructedPredicates;
-			case IntricatePredicates:
-				return mIntricatePredicates;
-			case DeprecatedPredicates:
-				return mDeprecatedPredicates;
-			case ImplicationChecksByTransitivity:
-				return mImplicationChecksByTransitivity;
-			case Time:
-				return getTime();
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return PredicateUnifierStatisticsType.getInstance();
-		}
-	}
-
-	public IStatisticsDataProvider getPredicateUnifierBenchmark() {
-		return mPredicateUnifierBenchmarkGenerator;
 	}
 
 }
