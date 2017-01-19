@@ -93,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class PredicateUnifier {
+public class PredicateUnifier implements IPredicateUnifier {
 
 	private final ManagedScript mMgnScript;
 	private final PredicateFactory mPredicateFactory;
@@ -156,10 +156,12 @@ public class PredicateUnifier {
 		}
 	}
 
+	@Override
 	public IPredicate getTruePredicate() {
 		return mTruePredicate;
 	}
 
+	@Override
 	public IPredicate getFalsePredicate() {
 		return mFalsePredicate;
 	}
@@ -208,6 +210,7 @@ public class PredicateUnifier {
 	 * GetOrConstruct a predicate that is a conjunction of IPredicates that were construction by (resp. declared in)
 	 * this PredicateUnifier.
 	 */
+	@Override
 	public IPredicate getOrConstructPredicateForConjunction(final Collection<IPredicate> conjunction) {
 		final Set<IPredicate> minimalSubset =
 				PosetUtils.filterMinimalElements(conjunction, mCoverageRelation.getPartialComperator())
@@ -239,6 +242,7 @@ public class PredicateUnifier {
 	 * GetOrConstruct a predicate that is a disjunction of IPredicates that were constructed by (resp. declared in) this
 	 * PredicateUnifier.
 	 */
+	@Override
 	public IPredicate getOrConstructPredicateForDisjunction(final Collection<IPredicate> disjunction) {
 		final Set<IPredicate> minimalSubset =
 				PosetUtils.filterMaximalElements(disjunction, mCoverageRelation.getPartialComperator())
@@ -298,6 +302,7 @@ public class PredicateUnifier {
 	 * @param proc
 	 *            All procedures of which vars contains local variables.
 	 */
+	@Override
 	public IPredicate getOrConstructPredicate(final Term term) {
 		return getOrConstructPredicate(term, null, null);
 	}
@@ -426,6 +431,7 @@ public class PredicateUnifier {
 				&& otherQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.EXISTS;
 	}
 
+	@Override
 	public String collectPredicateUnifierStatistics() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append(PredicateUnifierStatisticsType.getInstance()
@@ -438,6 +444,7 @@ public class PredicateUnifier {
 	 * We call a predicate "intricate" if we were unable to find our if it is equivalent to "true" or if we were unable
 	 * to find out it it is equivalent to "false".
 	 */
+	@Override
 	public boolean isIntricatePredicate(final IPredicate pred) {
 		final Validity equivalentToTrue = getCoverageRelation().isCovered(mTruePredicate, pred);
 		final Validity equivalentToFalse = getCoverageRelation().isCovered(pred, mFalsePredicate);
@@ -447,6 +454,7 @@ public class PredicateUnifier {
 	/**
 	 * Given a term "cut up" all its conjuncts. We bring the term in CNF and return an IPredicate for each conjunct.
 	 */
+	@Override
 	public Set<IPredicate> cannibalize(final boolean splitNumericEqualities, final Term term) {
 		final Set<IPredicate> result = new HashSet<>();
 		final Term cnf = new Cnf(mMgnScript, mServices).transform(term);
@@ -483,6 +491,7 @@ public class PredicateUnifier {
 		return result.toArray(new Term[result.size()]);
 	}
 
+	@Override
 	public Set<IPredicate> cannibalizeAll(final boolean splitNumericEqualities,
 			final Collection<IPredicate> predicates) {
 		final Set<IPredicate> result = new HashSet<>();
@@ -492,10 +501,12 @@ public class PredicateUnifier {
 		return result;
 	}
 
+	@Override
 	public IPredicateCoverageChecker getCoverageRelation() {
 		return mCoverageRelation;
 	}
 
+	@Override
 	public IStatisticsDataProvider getPredicateUnifierBenchmark() {
 		return mPredicateUnifierBenchmarkGenerator;
 	}
@@ -503,6 +514,7 @@ public class PredicateUnifier {
 	/**
 	 * @return the predicateFactory
 	 */
+	@Override
 	public PredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
 	}
