@@ -30,8 +30,8 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
  * An {@link IAbstractStateStorage} allows to store the relation between abstract states, program locations (of a

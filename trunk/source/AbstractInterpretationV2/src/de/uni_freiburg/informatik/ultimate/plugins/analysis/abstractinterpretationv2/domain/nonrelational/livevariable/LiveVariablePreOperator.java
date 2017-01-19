@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;

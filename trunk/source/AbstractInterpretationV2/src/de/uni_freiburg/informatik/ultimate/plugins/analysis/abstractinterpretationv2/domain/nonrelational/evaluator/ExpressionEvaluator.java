@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an

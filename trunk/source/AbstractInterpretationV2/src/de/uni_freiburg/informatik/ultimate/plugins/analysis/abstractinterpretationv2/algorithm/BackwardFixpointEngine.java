@@ -35,15 +35,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState.SubsetResult;
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 

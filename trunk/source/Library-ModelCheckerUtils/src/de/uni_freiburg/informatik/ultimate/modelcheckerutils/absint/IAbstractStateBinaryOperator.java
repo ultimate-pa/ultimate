@@ -26,33 +26,18 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
-
-import java.util.List;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 /**
- * {@link IAbstractPostOperator} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
- * the abstract post or pre state given an old {@link IAbstractState} and a transition.
+ * Interface for a binary operator on abstract states.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
-		extends IAbstractTransformer<STATE, ACTION, VARDECL> {
+@FunctionalInterface
+public interface IAbstractStateBinaryOperator<STATE> {
 
-	/**
-	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
-	 *
-	 * @param stateBeforeLeaving
-	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
-	 * @param stateAfterLeaving
-	 *            The abstract state in the new scope, i.e., the scope that we are entering. This state has already all
-	 *            non-scope related variables set ({@link IAbstractState#patch(IAbstractState)} was already applied).
-	 * @param transition
-	 *            The transition that caused the scope change.
-	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
-	 *         effects of the taken transition.
-	 */
-	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
+	STATE apply(STATE first, STATE second);
+
 }

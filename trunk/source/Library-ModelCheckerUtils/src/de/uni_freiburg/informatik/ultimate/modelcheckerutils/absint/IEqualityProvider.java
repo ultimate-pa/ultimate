@@ -26,11 +26,11 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 /**
  * Interface to provide the equality provider for an abstract domain. The equality provider allows for checking whether
- * two variables of an abstract state are qual or not equal.
+ * two variables of an abstract state are equal or not equal.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
@@ -42,7 +42,7 @@ package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
  *            The type of the expressions of this equality provider.
  */
 public interface IEqualityProvider<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, EXPRESSION> {
-	
+
 	/**
 	 * Checks whether two expressions over a given abstract state are equal, i.e. whether they evaluate to the same
 	 * value. Returns <code>true</code> if and only if the expressions are equal, <code>false</code> otherwise. Note
@@ -58,7 +58,7 @@ public interface IEqualityProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	 * @return <code>true</code> if and only if the expressions are equal, <code>false</code> otherwise.
 	 */
 	boolean isDefinitelyEqual(final STATE state, final EXPRESSION first, final EXPRESSION second);
-	
+
 	/**
 	 * Checks whether two expressions over a given abstract state are not equal, i.e. whether they do not evaluate to
 	 * the same value. Returns <code>true</code> if and only if the expressions are not equal, <code>false</code>

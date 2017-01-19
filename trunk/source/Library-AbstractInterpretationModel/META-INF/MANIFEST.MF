@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: Library-AbstractInterpretationModel
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.abstractinterpretation.model
-Bundle-Version: 0.0.1
-Bundle-ClassPath: .
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.abstractinterpretation.model
-Require-Bundle: Library-SMTLIB

@@ -26,18 +26,49 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 /**
- * Interface for a binary operator on abstract states.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-@FunctionalInterface
-public interface IAbstractStateBinaryOperator<STATE> {
+public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
 
-	STATE apply(STATE first, STATE second);
+	/**
+	 * @return A new state of the current abstract domain.
+	 */
+	STATE createFreshState();
 
+	/**
+	 * @return A new state of the current abstract domain representing &top;.
+	 */
+	STATE createTopState();
+
+	/**
+	 * @return A new state of the current abstract domain representing &bot;.
+	 */
+	STATE createBottomState();
+
+	/**
+	 * @return The widening operator appropriate for the current abstract domain.
+	 */
+	IAbstractStateBinaryOperator<STATE> getWideningOperator();
+
+	/**
+	 * @return The merge operator appropriate for the current abstract domain.
+	 */
+	IAbstractStateBinaryOperator<STATE> getMergeOperator();
+
+	/**
+	 * @return The post operator for the current abstract domain.
+	 */
+	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {
+		throw new UnsupportedOperationException("This domain does not support the post operator");
+	}
+
+	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
+		throw new UnsupportedOperationException("This domain does not support the pre operator");
+	}
 }

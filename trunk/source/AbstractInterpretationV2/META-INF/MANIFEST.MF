@@ -6,7 +6,6 @@ Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
- de.uni_freiburg.informatik.ultimate.abstractinterpretation.model,
  Library-UltimateUtil,
  Library-BoogieAST,
  Library-ojAlgo,

@@ -10,7 +10,6 @@ Require-Bundle: Library-UltimateCore,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  Library-SMTLIB,
- de.uni_freiburg.informatik.ultimate.abstractinterpretation.model,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

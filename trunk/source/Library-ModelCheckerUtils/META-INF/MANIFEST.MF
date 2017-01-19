@@ -4,7 +4,8 @@ Bundle-Name: Library-ModelCheckerUtils
 Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
+Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure,
@@ -24,7 +25,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-SMTLIB,
- de.uni_freiburg.informatik.ultimate.abstractinterpretation.model,
  Library-UltimateUtil,
  Library-BoogieAST,
  BoogiePreprocessor,

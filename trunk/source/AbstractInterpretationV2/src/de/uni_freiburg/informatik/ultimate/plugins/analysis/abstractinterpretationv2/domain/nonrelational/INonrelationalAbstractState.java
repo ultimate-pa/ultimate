@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
  * Interface that provides methods that all non-relational abstract states have in common.

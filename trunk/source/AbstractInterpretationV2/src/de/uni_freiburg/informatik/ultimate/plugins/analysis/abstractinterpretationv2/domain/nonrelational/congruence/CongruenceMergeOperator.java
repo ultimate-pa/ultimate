@@ -29,7 +29,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 
 public class CongruenceMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<CongruenceDomainState<VARDECL>> {
 	@Override

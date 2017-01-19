@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Collection;
 import java.util.Map;

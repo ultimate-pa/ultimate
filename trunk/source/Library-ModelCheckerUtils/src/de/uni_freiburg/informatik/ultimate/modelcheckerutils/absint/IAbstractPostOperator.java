@@ -26,49 +26,33 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
+
+import java.util.List;
 
 /**
+ * {@link IAbstractPostOperator} describes a post or pre operator for an {@link IAbstractDomain}. It is used to compute
+ * the abstract post or pre state given an old {@link IAbstractState} and a transition.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
+		extends IAbstractTransformer<STATE, ACTION, VARDECL> {
 
 	/**
-	 * @return A new state of the current abstract domain.
+	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
+	 *
+	 * @param stateBeforeLeaving
+	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
+	 * @param stateAfterLeaving
+	 *            The abstract state in the new scope, i.e., the scope that we are entering. This state has already all
+	 *            non-scope related variables set ({@link IAbstractState#patch(IAbstractState)} was already applied).
+	 * @param transition
+	 *            The transition that caused the scope change.
+	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
+	 *         effects of the taken transition.
 	 */
-	STATE createFreshState();
-
-	/**
-	 * @return A new state of the current abstract domain representing &top;.
-	 */
-	STATE createTopState();
-
-	/**
-	 * @return A new state of the current abstract domain representing &bot;.
-	 */
-	STATE createBottomState();
-
-	/**
-	 * @return The widening operator appropriate for the current abstract domain.
-	 */
-	IAbstractStateBinaryOperator<STATE> getWideningOperator();
-
-	/**
-	 * @return The merge operator appropriate for the current abstract domain.
-	 */
-	IAbstractStateBinaryOperator<STATE> getMergeOperator();
-
-	/**
-	 * @return The post operator for the current abstract domain.
-	 */
-	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {
-		throw new UnsupportedOperationException("This domain does not support the post operator");
-	}
-
-	default IAbstractTransformer<STATE, ACTION, VARDECL> getPreOperator() {
-		throw new UnsupportedOperationException("This domain does not support the pre operator");
-	}
+	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

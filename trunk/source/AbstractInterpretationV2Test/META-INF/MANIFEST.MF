@@ -9,8 +9,7 @@ Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- Library-UltimateTest,
- de.uni_freiburg.informatik.ultimate.abstractinterpretation.model
+ Library-UltimateTest
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

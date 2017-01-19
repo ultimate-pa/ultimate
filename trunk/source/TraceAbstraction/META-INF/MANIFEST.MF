@@ -15,7 +15,6 @@ Require-Bundle: Library-UltimateCore,
  SMTSolverBridge,
  de.uni_freiburg.informatik.ultimate.witnessparser,
  Library-LassoRanker,
- de.uni_freiburg.informatik.ultimate.abstractinterpretation.model,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
  Library-UltimateModel
 Bundle-ActivationPolicy: lazy

@@ -297,7 +297,6 @@
 		<module>../Library-jdom</module>
 		<module>../Library-UltimateUtil</module>
 		<module>../Library-SMTLIB</module>
-		<module>../Library-AbstractInterpretationModel</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-Automata</module>
 		<module>../Library-BoogieAST</module>
