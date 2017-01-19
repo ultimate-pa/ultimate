@@ -45,14 +45,14 @@ public class HCVar implements IProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
-	private final HornClausePredicateSymbol predicate;
-	private final TermVariable termVariable;
-	private final int idx;
+	private final HornClausePredicateSymbol mPredicate;
+	private final TermVariable mTermVariable;
+	private final int mIdx;
 	
 	public HCVar(HornClausePredicateSymbol pr, int pos, TermVariable v) {
-		predicate = pr;
-		idx = pos;
-		termVariable = v;
+		mPredicate = pr;
+		mIdx = pos;
+		mTermVariable = v;
 	}
 
 	@Override
