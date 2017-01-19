@@ -171,6 +171,11 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		public NestedMap2<STATE, STATE, Boolean> getDuplicatorDoubleDeckers() {
 			throw new UnsupportedOperationException();
 		}
+		
+		@Override
+		public int getNumberOfDoubleDeckerPebbles() {
+			return 0;
+		}
 
 		@Override
 		public boolean isAccepting() {

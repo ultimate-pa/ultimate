@@ -149,6 +149,11 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 		public HashRelation<STATE, STATE> getDuplicatorDoubleDeckers() {
 			throw new UnsupportedOperationException();
 		}
+		
+		@Override
+		public int getNumberOfDoubleDeckerPebbles() {
+			return 0;
+		}
 
 		@Override
 		public boolean isAccepting() {
