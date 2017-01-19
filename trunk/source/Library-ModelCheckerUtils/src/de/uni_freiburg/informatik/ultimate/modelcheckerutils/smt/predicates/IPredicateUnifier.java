@@ -60,12 +60,7 @@ public interface IPredicateUnifier {
 	IPredicate getOrConstructPredicateForDisjunction(Collection<IPredicate> disjunction);
 
 	/**
-	 * Get the predicate for term. If there is not yet a predicate for term, construct the predicate using vars.
-	 *
-	 * @param vars
-	 *            The BoogieVars of the TermVariables contained in term.
-	 * @param proc
-	 *            All procedures of which vars contains local variables.
+	 * Get the predicate for a term.
 	 */
 	IPredicate getOrConstructPredicate(Term term);
 
