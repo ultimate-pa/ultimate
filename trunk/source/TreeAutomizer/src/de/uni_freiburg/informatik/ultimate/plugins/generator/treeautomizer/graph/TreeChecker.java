@@ -7,22 +7,22 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class TreeChecker {
 	
-	private final ITreeRun<HCTransFormula, HCPredicate> mTree;
-	private final Script mBackendSmtSolverScript;
+	private final ITreeRun<HornClause, HCPredicate> mTree;
+	private final ManagedScript mBackendSmtSolverScript;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
 	private final SSABuilder mSSABuilder;
 	private ILogger mLogger;
 	
-	public TreeChecker(final ITreeRun<HCTransFormula, HCPredicate> tree,
-			final Script backendSmtSolverScript, final HCPredicate preCondition,
+	public TreeChecker(final ITreeRun<HornClause, HCPredicate> tree,
+			final ManagedScript backendSmtSolverScript, final HCPredicate preCondition,
 			final HCPredicate postCondition, ILogger logger) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
@@ -42,6 +42,7 @@ public class TreeChecker {
 	}
 
 	protected LBool checkTrace() {
+		mBackendSmtSolverScript.lock(this);
 		final HCSsa ssa = getSSA();
 		final List<Term> nestedExp = ssa.flatten();
 		HashSet<Integer> visited = new HashSet<>();
@@ -51,11 +52,13 @@ public class TreeChecker {
 				mLogger.debug("assert: " + ssa.getName(t) + " :: " + t.toString());
 				visited.add(ssa.getCounter(t));
 				//mBackendSmtSolverScript.term(annT, {});
-				final Term annT = mBackendSmtSolverScript.annotate(t, ann);
-				mBackendSmtSolverScript.assertTerm(annT);
+				final Term annT = mBackendSmtSolverScript.annotate(this, t, ann);
+				mBackendSmtSolverScript.assertTerm(this, annT);
 			}
 		}
-		return mBackendSmtSolverScript.checkSat();
+		final LBool result = mBackendSmtSolverScript.checkSat(this);
+		mBackendSmtSolverScript.unlock(this);
+		return result;
 	}
 
 }

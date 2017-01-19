@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
 
 /**
  * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**

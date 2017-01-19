@@ -1,8 +1,9 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -65,12 +66,12 @@ public class Cobody {
 		}
 	}
 
-	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getPredicateToVars(
+	public Map<HornClausePredicateSymbol, List<TermVariable>> getPredicateToVars(
 			Map<String, HornClausePredicateSymbol> predicateSymbols) {
 
-		final HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
+		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
 		for (final ApplicationTerm predicate : predicates) {
-			final ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
+			final ArrayList<TermVariable> vars = new ArrayList<>();
 			for (final Term par : predicate.getParameters()) {
 				vars.add((TermVariable) par);
 			}

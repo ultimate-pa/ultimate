@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;

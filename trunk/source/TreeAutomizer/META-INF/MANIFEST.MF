@@ -24,7 +24,7 @@ Import-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences,
- de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing,
  de.uni_freiburg.informatik.ultimate.util
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing
 

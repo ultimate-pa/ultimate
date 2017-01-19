@@ -1,13 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * This is our internal representation of a Horn clause. A Horn clause consists of - a body with -- n uninterpreted
@@ -19,29 +23,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * complex expression in one of the arguments of the corresponding atom, this has to be encoded into the transition
  * formula.
  *
- * @author alex
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HornClause {
+public class HornClause implements IInternalAction {
 
 	/**
 	 * Stores for each predicate symbol in the body and, every argument position of the represented atom, which
 	 * TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	Map<HornClausePredicateSymbol, ArrayList<TermVariable>> mBodyPredToTermVariables;
+	Map<HornClausePredicateSymbol, List<TermVariable>> mBodyPredToTermVariables;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of the represented atom, which
 	 * TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	ArrayList<TermVariable> mHeadPredTermVariables;
+	List<TermVariable> mHeadPredTermVariables;
 	HornClausePredicateSymbol mHeadPredicate;
 
-	HCTransFormula mTransitionFormula;
-
-	public HornClause(final Term transitionFormula, final ArrayList<TermVariable> bodyVars,
-			final HornClausePredicateSymbol body,
-			final Map<HornClausePredicateSymbol, ArrayList<TermVariable>> cobody) {
+	UnmodifiableTransFormula mTransitionFormula;
+	
+	public HornClause(final ManagedScript script, Term transitionFormula, List<TermVariable> bodyVars, 
+			HornClausePredicateSymbol body, Map<HornClausePredicateSymbol, List<TermVariable>> cobody) {
 		mHeadPredTermVariables = bodyVars;
 		mHeadPredicate = body;
 		mBodyPredToTermVariables = cobody;
@@ -50,32 +53,36 @@ public class HornClause {
 		for (int i = 0; i < bodyVars.size(); ++i) {
 			outVars.put(new HCVar(body, i, bodyVars.get(i)), bodyVars.get(i));
 		}
-
+	
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (final HornClausePredicateSymbol pred : cobody.keySet()) {
-			final ArrayList<TermVariable> vars = cobody.get(pred);
-
+			final List<TermVariable> vars = cobody.get(pred);
+	
 			for (int i = 0; i < vars.size(); ++i) {
 				inVars.put(new HCVar(pred, i, vars.get(i)), vars.get(i));
 			}
-
+	
 		}
 
-		mTransitionFormula = new HCTransFormula(transitionFormula, inVars, outVars);
+		TransFormulaBuilder tb = new TransFormulaBuilder(
+				inVars, outVars, true, null, true, null, true);
+		tb.setFormula(transitionFormula);
+		mTransitionFormula = tb.finishConstruction(script);
 	}
 
-	public HCTransFormula getTransitionFormula() {
+	@Override
+	public UnmodifiableTransFormula getTransformula() {
 		return mTransitionFormula;
 	}
-
+	
 	public HornClausePredicateSymbol getHeadPredicate() {
 		return mHeadPredicate;
 	}
-
+	
 	public Set<HornClausePredicateSymbol> getTailPredicates() {
 		return mBodyPredToTermVariables.keySet();
 	}
-
+	
 	@Override
 	public String toString() {
 		String cobody = "";
@@ -94,4 +101,22 @@ public class HornClause {
 		return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body,
 				mTransitionFormula.getInVars(), mTransitionFormula.getOutVars());
 	}
+
+	/**
+	 * This method is added only for fulfilling the IInternalAction interface.
+	 */
+	@Override
+	public String getPrecedingProcedure() {
+		return HornUtilConstants.HORNCLAUSEMETHODNAME;
+	}
+
+	/**
+	 * This method is added only for fulfilling the IInternalAction interface.
+	 */
+	@Override
+	public String getSucceedingProcedure() {
+		return HornUtilConstants.HORNCLAUSEMETHODNAME;
+	}
+
+
 }

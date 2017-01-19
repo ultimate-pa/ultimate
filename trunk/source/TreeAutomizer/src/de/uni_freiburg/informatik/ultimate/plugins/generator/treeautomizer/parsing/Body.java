@@ -1,7 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class Body {
 	Cobody cobody;
@@ -24,12 +26,13 @@ public class Body {
 		cobody.addPredicate(literal);
 	}
 
-	public HornClause convertToHornClause(Map<String, HornClausePredicateSymbol> predicates, Theory theory) {
-		final Map<HornClausePredicateSymbol, ArrayList<TermVariable>> tt = getBodyPredicateToVars(predicates);
+	public HornClause convertToHornClause(Map<String, HornClausePredicateSymbol> predicates, 
+			Theory theory, ManagedScript script) {
+		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(predicates);
 		assert tt.size() <= 1;
 		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-		return new HornClause(getTransitionFormula(theory),
+		return new HornClause(script, getTransitionFormula(theory),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
 				getCobodyPredicateToVars(predicates));
 
@@ -66,12 +69,12 @@ public class Body {
 		return predicateSymbols.get(func.getName());
 	}
 
-	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getBodyPredicateToVars(
+	public Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
 			Map<String, HornClausePredicateSymbol> predicateSymbols) {
 
-		final HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>();
+		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
 		if (head != null) {
-			final ArrayList<TermVariable> vars = new ArrayList<TermVariable>();
+			final ArrayList<TermVariable> vars = new ArrayList<>();
 			for (final Term par : head.getParameters()) {
 				vars.add((TermVariable) par);
 			}
@@ -81,7 +84,7 @@ public class Body {
 		return res;
 	}
 
-	public Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getCobodyPredicateToVars(
+	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
 			Map<String, HornClausePredicateSymbol> predicateSymbols) {
 		return cobody.getPredicateToVars(predicateSymbols);
 	}

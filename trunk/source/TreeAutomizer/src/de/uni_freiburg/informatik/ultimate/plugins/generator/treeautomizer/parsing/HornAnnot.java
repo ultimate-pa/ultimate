@@ -1,19 +1,19 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class HornAnnot implements IAnnotations {
 
-	private final Script mBackendSolverScript;
+	private final ManagedScript mBackendSolverScript;
 	final Map<String, Object> mp = new HashMap<>();
 
-	public HornAnnot(final List<HornClause> clauses, final Script backendSolver) {
+	public HornAnnot(final List<HornClause> clauses, final ManagedScript backendSolver) {
 		mp.put("HoRNClauses", clauses);
 		mBackendSolverScript = backendSolver;
 	}
@@ -23,7 +23,7 @@ public class HornAnnot implements IAnnotations {
 		return mp;
 	}
 
-	public Script getScript() {
+	public ManagedScript getScript() {
 		return mBackendSolverScript;
 	}
 

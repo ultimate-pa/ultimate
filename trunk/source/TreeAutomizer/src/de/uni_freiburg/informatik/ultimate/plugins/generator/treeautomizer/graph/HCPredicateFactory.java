@@ -9,24 +9,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseDontCareSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionStarter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class HCPredicateFactory implements IStateFactory<HCPredicate> {
@@ -35,34 +30,46 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 	// final protected TAPreferences mPref;
 	private final HCPredicate memtpyStack;
 
-	private final Script mBackendSmtSolverScript;
+	private final ManagedScript mBackendSmtSolverScript;
 	private final SimplifyDDA mSimplifier;
 	private final TermTransferrer mTermTransferrer;
 	private final boolean mTransferToScriptNeeded;
 
-	public HCPredicateFactory(final Script backendSmtSolverScript) {
+	public HCPredicateFactory(final ManagedScript backendSmtSolverScript) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		memtpyStack = createDontCarePredicate(new HornClauseDontCareSymbol());
 
-		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript);
+		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
 		mTransferToScriptNeeded = true;
-		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript);
+		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 	}
 
-	public HCPredicate createDontCarePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, mBackendSmtSolverScript.term("true"), new HashMap<>());
+	public HCPredicate createDontCarePredicate(final HornClausePredicateSymbol loc) {
+		mBackendSmtSolverScript.lock(this); 
+		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+		mBackendSmtSolverScript.unlock(this); 
+		return result;
 	}
 
 	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, mBackendSmtSolverScript.term(loc.toString()), new HashMap<>());
+		mBackendSmtSolverScript.lock(this); 
+		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, loc.toString()), new HashMap<>());
+		mBackendSmtSolverScript.unlock(this); 
+		return result;
 	}
 
 	public HCPredicate truePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, mBackendSmtSolverScript.term("true"), new HashMap<>());
+		mBackendSmtSolverScript.lock(this); 
+		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+		mBackendSmtSolverScript.unlock(this); 
+		return result;
 	}
 
 	public HCPredicate falsePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, mBackendSmtSolverScript.term("false"), new HashMap<>());
+		mBackendSmtSolverScript.lock(this); 
+		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "false"), new HashMap<>());
+		mBackendSmtSolverScript.unlock(this); 
+		return result;
 	}
 
 	private HCPredicate reduceFormula(final HCPredicate[] preds, boolean andOp) {
@@ -92,7 +99,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 			predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), predHash, p, p.mProgramPoint);
 		}
 		final Term formula = mSimplifier.getSimplifiedTerm(
-				andOp ? Util.and(mBackendSmtSolverScript, terms) : Util.or(mBackendSmtSolverScript, terms));
+				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) : Util.or(mBackendSmtSolverScript.getScript(), terms));
 		
 		final Set<String> prodVars = new HashSet<>();
 		for (final TermVariable var : formula.getFreeVars()) {
@@ -121,26 +128,27 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		return reduceFormula(states.toArray(new HCPredicate[]{}), false);
 	}
 
-	public boolean isSatisfiable(final List<HCPredicate> src, final HCTransFormula pf, final HCPredicate dest) {
+	public boolean isSatisfiable(final List<HCPredicate> src, final HornClause pf, final HCPredicate dest) {
+		mBackendSmtSolverScript.lock(this);
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
-				if (!pf.getInVars().containsKey((HCVar) v)) {
+				if (!pf.getTransformula().getInVars().containsKey((HCVar) v)) {
 					return false;
 				}
 			}
 		}
 		for (final IProgramVar v : dest.getVars()) {
-			if (!pf.getOutVars().containsKey((HCVar) v)) {
+			if (!pf.getTransformula().getOutVars().containsKey((HCVar) v)) {
 				return false;
 			}
 		}
-		mBackendSmtSolverScript.push(1);
+		mBackendSmtSolverScript.push(this, 1);
 		final Term[] terms = new Term[src.size()];
 		//System.err.println("Check: " + src + " " + pf + " " + dest);
 		for (int i = 0; i < src.size(); ++i) {
 			final Map<Term, Term> substMap = new HashMap<>();
 			for (final IProgramVar v : src.get(i).getVars()) {
-				substMap.put(v.getTermVariable(), pf.getInVars().get((HCVar) v));
+				substMap.put(v.getTermVariable(), pf.getTransformula().getInVars().get((HCVar) v));
 			}
 			final Substitution subst = new Substitution(mBackendSmtSolverScript, substMap);
 			terms[i] = subst.transform(src.get(i).getFormula());
@@ -148,30 +156,32 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		}
 		final Map<Term, Term> substMap = new HashMap<>();
 		for (final IProgramVar v : dest.getVars()) {
-			substMap.put(v.getTermVariable(), pf.getOutVars().get((HCVar) v));
+			substMap.put(v.getTermVariable(), pf.getTransformula().getOutVars().get((HCVar) v));
 		}
 		//System.err.println(dest.getFormula() + " " + substMap);
 		//System.err.println(pf);
 		//System.err.println();
 		final Substitution subst = new Substitution(mBackendSmtSolverScript, substMap);
 		
-		final Term A = Util.and(mBackendSmtSolverScript, terms);
-		final Term S = transferToCurrentScriptIfNecessary(pf.getFormula());
+		final Term A = Util.and(mBackendSmtSolverScript.getScript(), terms);
+		final Term S = transferToCurrentScriptIfNecessary(pf.getTransformula().getFormula());
 		final Term B = subst.transform(dest.getFormula());
 		
-		final Term T = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript, new Term[]{A, S, Util.not(mBackendSmtSolverScript, B)}));
+		final Term T = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript.getScript(), new Term[]{A, S, Util.not(mBackendSmtSolverScript.getScript(), B)}));
 		//System.err.println(T);
 		//System.err.print(A + " o " + S + " ==> " + B);// + " :: " + (result == LBool.SAT));
 		if (T.getFreeVars().length > 0) {
 			//System.err.println(":: non-sat");
+			mBackendSmtSolverScript.unlock(this);
 			return false;
 		}
-		mBackendSmtSolverScript.assertTerm(T);
-		final LBool result = mBackendSmtSolverScript.checkSat();
+		mBackendSmtSolverScript.assertTerm(this, T);
+		final LBool result = mBackendSmtSolverScript.checkSat(this);
 		
-		mBackendSmtSolverScript.pop(1);
+		mBackendSmtSolverScript.pop(this, 1);
 		//System.err.println(result != LBool.SAT ? ":=: sat" : ":=: non-sat");
 		//return false;
+		mBackendSmtSolverScript.unlock(this);
 		return result != LBool.SAT;
 		
 	}

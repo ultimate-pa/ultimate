@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -27,8 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Body;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Cobody;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class HornClauseParserScript extends NoopScript {
 
@@ -36,7 +34,7 @@ public class HornClauseParserScript extends NoopScript {
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used
 	 * the HornClauseGraph) will use as a backend.
 	 */
-	private final Script mBackendSmtSolver;
+	private final ManagedScript mBackendSmtSolver;
 	private final String mLogic;
 	private final Settings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
@@ -45,7 +43,7 @@ public class HornClauseParserScript extends NoopScript {
 	private final ArrayList<Term> mcurrentTransitionAtoms;
 	private final Map<String, HornClausePredicateSymbol> predicates;
 
-	public HornClauseParserScript(Script smtSolverScript, String logic, Settings settings) {
+	public HornClauseParserScript(ManagedScript smtSolverScript, String logic, Settings settings) {
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
 		mSolverSettings = settings;
@@ -283,7 +281,7 @@ public class HornClauseParserScript extends NoopScript {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final Body body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
+				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory(), mBackendSmtSolver));
 				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -295,7 +293,7 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final Cobody cobody = parseCobody(thisTerm.getSubformula());
 					final Body body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
+					mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory(), mBackendSmtSolver));
 					
 					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}

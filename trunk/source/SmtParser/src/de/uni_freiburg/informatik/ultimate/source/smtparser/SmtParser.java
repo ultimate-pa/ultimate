@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HCGBuilderHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClauseParserScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;

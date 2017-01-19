@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**HCSsa HornClause-SSA
  * */
@@ -69,13 +69,16 @@ public class HCSsa {
 		return mNestedFormulas;
 	}
 
-	protected Term getPredicateVariable(final Term term, final Script script) {
+	protected Term getPredicateVariable(final Term term, final ManagedScript script) {
+		script.lock(this);
 		if (!mTermToAssertion.containsKey(term)) {
 			final String name = getName(term);
-			mTermToAssertion.put(term, script.term(name));
+			mTermToAssertion.put(term, script.term(this, name));
 		}
 
-		return mTermToAssertion.get(term);
+		final Term result = mTermToAssertion.get(term);
+		script.unlock(this);
+		return result;
 	}
 }
 

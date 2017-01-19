@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
@@ -16,7 +17,7 @@ public class HCGBuilderHelper {
 
 		private Settings mSolverSettings;
 		private String mLogicForExternalSolver;
-		private Script mScript;
+		private ManagedScript mScript;
 
 		public ConstructAndInitializeBackendSmtSolver(final IUltimateServiceProvider services,
 				final IToolchainStorage storage,
@@ -43,7 +44,7 @@ public class HCGBuilderHelper {
 					filename, solverMode, fakeNonIncrementalSolver , 
 					commandExternalSolver, false, null);
 
-			mScript = SolverBuilder.buildAndInitializeSolver(services,
+			final Script script = SolverBuilder.buildAndInitializeSolver(services,
 					storage,
 					solverMode,
 					mSolverSettings,
@@ -53,6 +54,8 @@ public class HCGBuilderHelper {
 					false,
 					mLogicForExternalSolver,
 					"HornClauseSolverBackendSolverScript");
+			
+			mScript = new ManagedScript(services, script);
 		}
 
 		public Settings getSolverSettings() {
@@ -63,7 +66,7 @@ public class HCGBuilderHelper {
 			return mLogicForExternalSolver;
 		}
 
-		public Script getScript() {
+		public ManagedScript getScript() {
 			return mScript;
 		}
 	}
