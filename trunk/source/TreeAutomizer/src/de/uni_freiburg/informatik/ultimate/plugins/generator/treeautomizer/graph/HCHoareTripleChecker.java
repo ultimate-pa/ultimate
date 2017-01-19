@@ -31,10 +31,12 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -50,6 +52,12 @@ public class HCHoareTripleChecker {
 	
 	private IHoareTripleChecker mHoareTripleChecker;
 	private PredicateUnifier mPredicateUnifier;
+	
+	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, CfgSmtToolkit cfgSmtToolkit) {
+		mPredicateUnifier = predicateUnifier;
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
+	}
+	
 
 	/**
 	 * Checks the validity of a Hoare triple that is given by a set of HCPredicates (precondition),
