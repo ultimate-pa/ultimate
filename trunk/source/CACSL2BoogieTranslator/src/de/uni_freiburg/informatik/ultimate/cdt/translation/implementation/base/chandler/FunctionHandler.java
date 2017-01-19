@@ -1229,28 +1229,16 @@ public class FunctionHandler {
 		if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
 			// valid[s.base] 
-			final Expression validBase = new ArrayAccessExpression(loc, memoryHandler.getValidArray(loc),
-									new Expression[] {
-											MemoryHandler.getPointerBaseAddress(pointerValue, loc) });
-			
-			// valid[s.base] == 1
-			final Expression baseValueValid = expressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_equals, 
-					validBase, 
-					expressionTranslation.getCTypeOfPointerComponents(),
-					expressionTranslation.constructLiteralForIntegerType(loc,
-							expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("1")),
-					expressionTranslation.getCTypeOfPointerComponents()
-					);
+			final Expression validBase = memoryHandler.constructPointerBaseValidityCheck(loc, pointerValue); 
 			
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
-				final AssertStatement assertion = new AssertStatement(loc, baseValueValid);
+				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.addToNodeAnnot(assertion);
 				result.add(assertion);
 			} else {
 				assert memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSUME : "missed a case?";
-				final Statement assume = new AssumeStatement(loc, baseValueValid);
+				final Statement assume = new AssumeStatement(loc, validBase);
 				result.add(assume);
 			}
 		}
