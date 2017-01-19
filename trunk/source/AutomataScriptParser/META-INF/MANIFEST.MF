@@ -7,7 +7,7 @@ Require-Bundle: Library-UltimateCore,
  Library-UltimateModel,
  UltimateCore,
  JavaCup,
- de.uni_freiburg.informatik.ultimate.automata;bundle-version="0.0.1"
+ de.uni_freiburg.informatik.ultimate.automata
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
