@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -433,9 +432,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
-		final Expression bv = new BitVectorAccessExpression(loc, operand, high, low);
+		final Expression bv = ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 		return bv;
 	}
+
 
 	private void extend(final ILocation loc, final ExpressionResult operand, final CType resultType,
 			final CPrimitive resultPrimitive, final int resultLength, final int operandLength) {

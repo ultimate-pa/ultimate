@@ -32,6 +32,7 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -357,5 +358,18 @@ public class ExpressionFactory extends BoogieTransformer {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * 
+	 * @param loc
+	 * @param operand
+	 * @param high exclusive
+	 * @param low inclusive
+	 * @return
+	 */
+	public static BitVectorAccessExpression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
+			final int high, final int low) {
+		return new BitVectorAccessExpression(loc, operand, high, low);
 	}
 }
