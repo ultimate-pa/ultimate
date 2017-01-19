@@ -432,8 +432,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
-		final Expression bv = ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
-		return bv;
+		return ExpressionFactory.constructBitvectorAccessExpression(loc, operand, high, low);
 	}
 
 
