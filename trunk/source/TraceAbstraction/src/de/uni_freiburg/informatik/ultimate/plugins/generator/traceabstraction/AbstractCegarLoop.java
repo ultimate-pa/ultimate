@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -60,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.Server;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.TraceAbstractionProtos;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.TraceAbstractionProtos.Question;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -68,9 +71,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 
 /**
- * CEGAR loop of a trace abstraction. Can be used to check safety and termination of sequential and concurrent programs.
- * Defines roughly the structure of the CEGAR loop, concrete algorithms are implemented in classes which extend this
- * one.
+ * CEGAR loop of a trace abstraction. Can be used to check safety and
+ * termination of sequential and concurrent programs. Defines roughly the
+ * structure of the CEGAR loop, concrete algorithms are implemented in classes
+ * which extend this one.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -80,10 +84,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * Result of CEGAR loop iteration
 	 * <ul>
 	 * <li>SAFE: there is no feasible trace to an error location
-	 * <li>UNSAFE: there is a feasible trace to an error location (the underlying program has at least one execution
-	 * which violates its specification)
-	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility or we found an infeasible trace but were
-	 * not able to exclude it in abstraction refinement.
+	 * <li>UNSAFE: there is a feasible trace to an error location (the
+	 * underlying program has at least one execution which violates its
+	 * specification)
+	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility
+	 * or we found an infeasible trace but were not able to exclude it in
+	 * abstraction refinement.
 	 * <li>TIMEOUT:
 	 */
 	public enum Result {
@@ -95,13 +101,15 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
-	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
-	 * Important only for debugging and debugging output written to files.
+	 * Unique mName of this CEGAR loop to distinguish this instance from other
+	 * instances in a complex verification task. Important only for debugging
+	 * and debugging output written to files.
 	 */
 	private final String mName;
 
 	/**
-	 * Node of a recursive control flow graph which stores additional information about the program.
+	 * Node of a recursive control flow graph which stores additional
+	 * information about the program.
 	 */
 	protected final IIcfg<?> mIcfgContainer;
 
@@ -132,7 +140,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected IRun<LETTER, IPredicate, ?> mCounterexample;
 
 	/**
-	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is
+	 * Abstraction of this iteration. The language of mAbstraction is a set of
+	 * traces which is
 	 * <ul>
 	 * <li>a superset of the feasible program traces.
 	 * <li>a subset of the traces which respect the control flow of the program.
@@ -150,8 +159,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton;
 
 	/**
-	 * Program execution that leads to error. Only computed in the last iteration of the CEGAR loop if the program is
-	 * incorrect.
+	 * Program execution that leads to error. Only computed in the last
+	 * iteration of the CEGAR loop if the program is incorrect.
 	 */
 	protected IcfgProgramExecution mRcfgProgramExecution;
 
@@ -173,7 +182,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	protected Dumper mDumper;
 	/**
-	 * only != null if analysis result is UNKNOWN Textual explanation why result is unknown.
+	 * only != null if analysis result is UNKNOWN Textual explanation why result
+	 * is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
@@ -201,9 +211,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	}
 
 	/**
-	 * Construct the automaton mAbstraction such that the language recognized by mAbstation is a superset of the
-	 * language of the program. The initial abstraction in our implementations will usually be an automaton that has the
-	 * same graph as the program.
+	 * Construct the automaton mAbstraction such that the language recognized by
+	 * mAbstation is a superset of the language of the program. The initial
+	 * abstraction in our implementations will usually be an automaton that has
+	 * the same graph as the program.
 	 *
 	 * @throws AutomataLibraryException
 	 */
@@ -217,7 +228,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected abstract boolean isAbstractionCorrect() throws AutomataOperationCanceledException;
 
 	/**
-	 * Determine if the trace of mCounterexample is a feasible sequence of CodeBlocks. Return
+	 * Determine if the trace of mCounterexample is a feasible sequence of
+	 * CodeBlocks. Return
 	 * <ul>
 	 * <li>SAT if the trace is feasible
 	 * <li>UNSAT if the trace is infeasible
@@ -226,8 +238,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *
-	 *             TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and
-	 *             constructInterpolantAutomaton() after {@link TreeAutomizerCEGAR} does not depend on this class
+	 *             TODO Christian 2016-11-11: Merge the methods
+	 *             isCounterexampleFeasible() and
+	 *             constructInterpolantAutomaton() after
+	 *             {@link TreeAutomizerCEGAR} does not depend on this class
 	 *             anymore.
 	 */
 	protected abstract LBool isCounterexampleFeasible() throws AutomataOperationCanceledException;
@@ -246,29 +260,33 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * Construct a new automaton mAbstraction such that
 	 * <ul>
-	 * <li>the language of the new mAbstraction is (not necessary strictly) smaller than the language of the old
-	 * mAbstraction
-	 * <li>the new mAbstraction accepts all feasible traces of the old mAbstraction (only infeasible traces are removed)
+	 * <li>the language of the new mAbstraction is (not necessary strictly)
+	 * smaller than the language of the old mAbstraction
+	 * <li>the new mAbstraction accepts all feasible traces of the old
+	 * mAbstraction (only infeasible traces are removed)
 	 * <ul>
 	 *
-	 * @return true iff the trace of mCounterexample (which was accepted by the old mAbstraction) is not accepted by the
-	 *         mAbstraction.
+	 * @return true iff the trace of mCounterexample (which was accepted by the
+	 *         old mAbstraction) is not accepted by the mAbstraction.
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
 
 	/**
-	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
-	 * the control flow graph with invariants.
+	 * Add Hoare annotation to the control flow graph. Use the information
+	 * computed so far annotate the ProgramPoints of the control flow graph with
+	 * invariants.
 	 */
 	protected abstract void computeCFGHoareAnnotation();
 
 	/**
-	 * Return the Artifact whose computation was requested. This artifact can be either the control flow graph, an
-	 * abstraction, an interpolant automaton, or a negated interpolant automaton. The artifact is only used for
+	 * Return the Artifact whose computation was requested. This artifact can be
+	 * either the control flow graph, an abstraction, an interpolant automaton,
+	 * or a negated interpolant automaton. The artifact is only used for
 	 * debugging.
 	 *
-	 * @return The root node of the artifact after it was transformed to an ULTIMATE model.
+	 * @return The root node of the artifact after it was transformed to an
+	 *         ULTIMATE model.
 	 */
 	public abstract IElement getArtifact();
 
@@ -346,6 +364,23 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				final TraceAbstractionProtos.IterationInfo itinfo = TraceAbstractionProtos.IterationInfo.newBuilder()
 						.setIteration(mIteration).build();
 				Server.get().send(itinfo);
+
+				try {
+					Server.get().waitForConnection();
+
+					CompletableFuture<Question> fut = Server.get().request(Question.class, null);
+
+					Question q = fut.get();
+
+					mLogger.info("Client response: " + q.getAnswer());
+					if (!q.getAnswer()) {
+						return Result.UNKNOWN;
+					} else {
+
+					}
+				} catch (ExecutionException | InterruptedException e) {
+					mLogger.error("got no answer", e.getCause());
+				}
 			}
 
 			try {
@@ -413,8 +448,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 
-			final boolean newMaximumReached =
-					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+			final boolean newMaximumReached = mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(),
+					mIteration);
 			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
 				final String filename = mIcfgContainer.getIdentifier();
 				writeAutomatonToFile(mAbstraction, filename);

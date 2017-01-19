@@ -17,6 +17,7 @@ public class Server {
 			mServer.register(TraceAbstractionProtos.TAPreferences.class);
 			mServer.register(TraceAbstractionProtos.IterationInfo.class);
 			mServer.register(TraceAbstractionProtos.CegarResult.class);
+			mServer.register(TraceAbstractionProtos.Question.class);
 		}
 	}
 

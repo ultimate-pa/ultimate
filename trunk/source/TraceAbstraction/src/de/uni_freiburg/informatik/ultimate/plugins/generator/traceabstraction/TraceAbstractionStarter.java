@@ -286,10 +286,13 @@ public class TraceAbstractionStarter {
 					+ " and wait for confirmation from client...");
 
 			server.start();
-			server.waitForConnection();
-			mLogger.info("client connected.");
+			try {
+				server.waitForConnection();
+				mLogger.info("client connected.");
+			} catch (InterruptedException e) {
+				mLogger.error(e);
+			}
 
-			server.hello(null);
 			final TraceAbstractionProtos.TAPreferences pmsg = Converter.fromTAPreferences(taPrefs);
 			server.send(pmsg);
 			// final TraceAbstractionProtos.IterationInfo.Builder info =

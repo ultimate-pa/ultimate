@@ -17,14 +17,6 @@ public interface IProtoServer {
 	void stop();
 
 	/**
-	 * initial message to the client. must be called before other transactions
-	 * 
-	 * @param data
-	 *            optional data object
-	 */
-	void hello(GeneratedMessageV3 data);
-
-	/**
 	 * sends a data Object
 	 * 
 	 * @param data
@@ -76,6 +68,7 @@ public interface IProtoServer {
 
 	/**
 	 * Blocks the calling Thread until a connection is established.
+	 * @throws InterruptedException 
 	 */
-	void waitForConnection();
+	void waitForConnection() throws InterruptedException;
 }

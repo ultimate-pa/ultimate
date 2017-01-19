@@ -108,6 +108,10 @@ enum Result {
 	UNKNOWN = 3;
 }
 
+message Question {
+	bool answer = 1;
+}
+
 message CegarResult {
 	Result result = 1;
 }
