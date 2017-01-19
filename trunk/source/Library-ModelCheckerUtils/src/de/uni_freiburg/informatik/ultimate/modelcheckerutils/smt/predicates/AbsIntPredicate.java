@@ -27,9 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
+import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -39,74 +39,81 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * Representation of an abstract state predicate that contains an abstract state from abstract interpretation.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <STATE>
  * @param <ACTION>
  * @param <VARDECL>
  */
-public class AbstractStatePredicate extends BasicPredicate {
-	
-	private static final long serialVersionUID = 1L;
+public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> implements IPredicate {
 
-	private final IAbstractState<?, ?> mAbstractState;
-	private final IAbstractPostOperator<?, ?, ?> mPostOperator;
-	
+	private final IAbstractState<STATE, VARDECL> mAbstractState;
+	private final IPredicate mPredicate;
+
 	/**
-	 * Default constructor of an abstract state predicate, constructed from an abstract state.
+	 * Default constructor of an abstract state predicate, constructed from an abstract state and a matching IPredicate.
 	 *
-	 * @param serialNumber
-	 * @param procedures
-	 * @param term
-	 * @param vars
-	 * @param closedFormula
-	 * @param abstractState
-	 * @param postOperator
 	 */
-	public AbstractStatePredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final IAbstractState<?, ?> abstractState,
-			final IAbstractPostOperator<?, ?, ?> postOperator) {
-		super(serialNumber, procedures, term, vars, closedFormula);
-		
-		mAbstractState = abstractState;
-		mPostOperator = postOperator;
+	public AbsIntPredicate(final IPredicate classicPredicate, final IAbstractState<STATE, VARDECL> abstractState) {
+		mAbstractState = Objects.requireNonNull(abstractState);
+		mPredicate = Objects.requireNonNull(classicPredicate);
 	}
 
 	@Visualizable
-	public IAbstractState<?, ?> getAbstractState() {
+	public IAbstractState<STATE, VARDECL> getAbstractState() {
 		return mAbstractState;
 	}
 
-	public IAbstractPostOperator<?, ?, ?> getPostOperator() {
-		return mPostOperator;
+	@Visualizable
+	public IPredicate getBackingPredicate() {
+		return mPredicate;
 	}
-	
+
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(mSerialNumber).append("#");
-		sb.append(mFormula.toStringDirect());
-		return sb.toString();
+	public String[] getProcedures() {
+		return mPredicate.getProcedures();
 	}
-	
+
+	@Override
+	public Term getFormula() {
+		return mPredicate.getFormula();
+	}
+
+	@Override
+	public Term getClosedFormula() {
+		return mPredicate.getClosedFormula();
+	}
+
+	@Override
+	public Set<IProgramVar> getVars() {
+		return mPredicate.getVars();
+	}
+
 	@Override
 	public int hashCode() {
-		return mSerialNumber;
+		return mPredicate.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null) {
-			return false;
-		}
 		if (this == obj) {
 			return true;
+		}
+		if (obj == null) {
+			return false;
 		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		final AbsIntPredicate<?, ?> other = (AbsIntPredicate<?, ?>) obj;
+		return mPredicate.equals(other.mPredicate);
+	}
 
-		final AbstractStatePredicate other = (AbstractStatePredicate) obj;
-		
-		return mSerialNumber == other.mSerialNumber;
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mPredicate.toString()).append(" (");
+		sb.append(mAbstractState.toLogString()).append(")");
+		return sb.toString();
 	}
 }

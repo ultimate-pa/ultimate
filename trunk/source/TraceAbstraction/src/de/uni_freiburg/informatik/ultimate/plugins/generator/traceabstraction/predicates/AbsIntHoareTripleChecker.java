@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
@@ -42,16 +43,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbstractStatePredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -62,44 +64,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleChecker_Map {
-	
+public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
+		implements IHoareTripleChecker {
+
 	private final ILogger mLogger;
-
 	private final VariableCollector mVariableCollector;
+	private final IAbstractPostOperator<STATE, ACTION, VARDECL> mPostOp;
+	private final PredicateUnifier mPredicateUnifier;
 
-	public AbstractPredicateHoareTripleChecker(final IUltimateServiceProvider services,
-			final IHoareTripleChecker protectedHoareTripleChecker, final PredicateUnifier predicateUnifer) {
-		super(services, protectedHoareTripleChecker, predicateUnifer);
+	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
+			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp, final PredicateUnifier predicateUnifer) {
+		mPostOp = Objects.requireNonNull(postOp);
+		// TODO: Build AbsIntPredicate unifier and use it here
+		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mVariableCollector = new VariableCollector();
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-	}
-	
-	@Override
-	protected Validity extendedBinaryCacheCheck(final IPredicate pre, final IAction act, final IPredicate succ,
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> binaryCache) {
-		
-		if ((pre instanceof AbstractStatePredicate) && (succ instanceof AbstractStatePredicate)) {
-			if (true) {
-				throw new UnsupportedOperationException();
-			}
-			final AbstractStatePredicate preAbs = (AbstractStatePredicate) pre;
-			final AbstractStatePredicate succAbs = (AbstractStatePredicate) succ;
-			
-			if (act instanceof IInternalAction) {
-				final Validity validity = checkInternalTransition(preAbs, (IInternalAction) act, succAbs);
-				if (validity == Validity.VALID) {
-					mLogger.debug("Valid abstract interpretation transition found");
-					return validity;
-				}
-			}
-		}
-		
-		return super.extendedBinaryCacheCheck(pre, act, succ, binaryCache);
+
 	}
 
-	private static Validity checkInternalTransition(final AbstractStatePredicate pre, final IInternalAction act,
-			final AbstractStatePredicate succ) {
+	private Validity checkInternalTransition(final AbsIntPredicate pre, final IInternalAction act,
+			final AbsIntPredicate succ) {
 		assert act != null;
 		assert pre != null;
 		assert succ != null;
@@ -108,13 +92,13 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 			throw new IllegalArgumentException("Action must be of type CodeBlock");
 			// return Validity.UNKNOWN;
 		}
-		
+
 		final IAbstractState<?, ?> preState = pre.getAbstractState();
 		final IAbstractState<?, ?> postState = succ.getAbstractState();
-		
+
 		final CodeBlock block = (CodeBlock) act;
-		final List<IAbstractState<?, ?>> postStates = applyPostInternally(preState, pre.getPostOperator(), block);
-		
+		final List<IAbstractState<?, ?>> postStates = applyPostInternally(preState, mPostOp, block);
+
 		for (final IAbstractState post : postStates) {
 			if (isSubsetInternally(post, postState)) {
 				return Validity.VALID;
@@ -123,7 +107,7 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 
 		return Validity.UNKNOWN;
 	}
-	
+
 	private static List<IAbstractState<?, ?>> applyPostInternally(final IAbstractState<?, ?> currentState,
 			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
@@ -137,19 +121,18 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 		if (!firstState.getVariables().stream().allMatch(secondState.getVariables()::contains)) {
 			return false;
 		}
-		
+
 		final SubsetResult subs = firstState.isSubsetOf(secondState);
 		return subs != SubsetResult.NONE;
 	}
 
-	private Pair<AbstractStatePredicate, AbstractStatePredicate> convertPredicates(final IPredicate p1,
-			final IPredicate p2) {
-		if (!(p1 instanceof AbstractStatePredicate) || !(p2 instanceof AbstractStatePredicate)) {
+	private Pair<AbsIntPredicate, AbsIntPredicate> convertPredicates(final IPredicate p1, final IPredicate p2) {
+		if (!(p1 instanceof AbsIntPredicate) || !(p2 instanceof AbsIntPredicate)) {
 			throw new UnsupportedOperationException(
 					"The pre or post predicate is not a valid abstract state predicate.");
 		}
 
-		return new Pair<>((AbstractStatePredicate) p1, (AbstractStatePredicate) p2);
+		return new Pair<>((AbsIntPredicate) p1, (AbsIntPredicate) p2);
 	}
 
 	private static final class VariableCollector extends BoogieVisitor {
@@ -171,11 +154,42 @@ public class AbstractPredicateHoareTripleChecker extends CachingHoareTripleCheck
 			mVariables.add(
 					mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
 		}
-		
+
 		@Override
 		protected void visit(final VariableLHS lhs) {
 			mVariables.add(
 					mBoogie2SmtSymbolTable.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
 		}
+	}
+
+	@Override
+	public void releaseLock() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
+			final IPredicate succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

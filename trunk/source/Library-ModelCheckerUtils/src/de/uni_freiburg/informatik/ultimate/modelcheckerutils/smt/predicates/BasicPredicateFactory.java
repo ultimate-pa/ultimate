@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -59,14 +58,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class BasicPredicateFactory {
-	
+
 	protected final IIcfgSymbolTable mSymbolTable;
 	protected final Script mScript;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 	/**
-	 * Serial numbers for predicates start with 1, because 0 is reserved for
-	 * the axioms.
+	 * Serial numbers for predicates start with 1, because 0 is reserved for the axioms.
 	 */
 	protected int mSerialNumberCounter = 1;
 	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
@@ -156,15 +154,11 @@ public class BasicPredicateFactory {
 				tvp.getClosedFormula(), inputPreds);
 	}
 
-	public AbstractStatePredicate newAbstractStatePredicate(final IAbstractState<?, ?> abstractState,
-			final IAbstractPostOperator<?, ?, ?> postOperator) {
-		assert abstractState != null;
-		assert postOperator != null;
-
+	public <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbsIntPredicate<STATE, VARDECL>
+			newAbstractStatePredicate(final IAbstractState<STATE, VARDECL> abstractState) {
 		final Term stateTerm = abstractState.getTerm(mScript);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(stateTerm, mScript, mSymbolTable);
-		return new AbstractStatePredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(),
-				tvp.getVars(), tvp.getClosedFormula(), abstractState, postOperator);
+		final BasicPredicate predicate = newPredicate(stateTerm);
+		return new AbsIntPredicate<>(predicate, abstractState);
 	}
 
 	public Term and(final IPredicate... preds) {
@@ -208,7 +202,7 @@ public class BasicPredicateFactory {
 	}
 
 	private static final class AuxiliaryTerm extends Term {
-		
+
 		String mName;
 
 		AuxiliaryTerm(final String name) {
