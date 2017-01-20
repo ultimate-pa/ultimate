@@ -95,7 +95,7 @@ public class SpaceExPreferenceManager {
 		prop.load(fis);
 		// get properties
 		// system holds the hybridsystem which is regarded.
-		mSystem = prop.getProperty("system");
+		mSystem = prop.getProperty("system").replaceAll("\"", "");
 		// initially holds the initial variable assignment, as well as initial locations.
 		String initially = prop.getProperty("initially").replaceAll("\"", "");
 		/*

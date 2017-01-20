@@ -11,6 +11,8 @@ Require-Bundle: Library-UltimateCore,
  Library-ModelCheckerUtils;bundle-version="0.0.1",
  Library-SMTLIB,
  SMTSolverBridge,
- de.uni_freiburg.informatik.ultimate.automata
+ de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ Library-BoogieAST
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

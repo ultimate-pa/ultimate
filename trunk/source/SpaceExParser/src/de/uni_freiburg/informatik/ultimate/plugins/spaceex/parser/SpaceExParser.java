@@ -32,9 +32,9 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,22 +49,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -83,6 +81,7 @@ public class SpaceExParser implements ISource {
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private IToolchainStorage mToolchainStorage;
+	private SpaceExPreferenceManager mPreferenceManager;
 	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
@@ -193,80 +192,13 @@ public class SpaceExParser implements ISource {
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
-		final SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
-		final HybridModel system = new HybridModel(spaceEx, mLogger, preferenceManager);
-
-		final Set<String> functions = new HashSet<>();
-		
-		final ManagedScript script = new ManagedScript(mServices,
-				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
-						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
-								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
-						false, false, "", "SMTINTERPOL"));
-		
-		final CfgSmtToolkit smtToolkit =
-				new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), script, new IIcfgSymbolTable() {
-					
-					Set<ILocalProgramVar> mLocals = new HashSet<>();
-					Map<TermVariable, IProgramVar> mVars = new HashMap<>();
-
-					@Override
-					public Set<ILocalProgramVar> getLocals(final String procedurename) {
-						return mLocals;
-					}
-
-					@Override
-					public Set<IProgramNonOldVar> getGlobals() {
-						return Collections.emptySet();
-					}
-
-					@Override
-					public Set<IProgramConst> getConstants() {
-						return Collections.emptySet();
-					}
-
-					@Override
-					public IProgramVar getProgramVar(final TermVariable tv) {
-						return mVars.get(tv);
-					}
-
-					@Override
-					public IProgramConst getProgramConst(final ApplicationTerm at) {
-						return new IProgramConst() {
-							
-							@Override
-							public String getGloballyUniqueId() {
-								return "asd";
-							}
-
-							@Override
-							public boolean isGlobal() {
-								return false;
-							}
-
-							@Override
-							public Term getTerm() {
-								return script.getScript().term("false");
-							}
-
-							@Override
-							public String getIdentifier() {
-								// TODO Auto-generated method stub
-								return null;
-							}
-
-							@Override
-							public ApplicationTerm getDefaultConstant() {
-								// TODO Auto-generated method stub
-								return null;
-							}
-						};
-					}
-				}, null, functions);
-
-		final HybridIcfgGenerator gen = new HybridIcfgGenerator(mLogger, preferenceManager, smtToolkit);
-
-		gen.modelToIcfg(system);
+		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		final HybridModel system = new HybridModel(spaceEx, mLogger, mPreferenceManager);
+		HybridAutomaton automaton = getRegardedAutomaton(system);
+		// toolkit
+		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
+		final HybridIcfgGenerator gen = new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit);
+		gen.modelToIcfg(automaton);
 		return gen.createIfcgFromComponents();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
@@ -277,6 +209,83 @@ public class SpaceExParser implements ISource {
 		 * "" ; // some path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
 		 */
 		// return new SpaceExModelBuilder(system, mLogger).getModel();
+	}
+	
+	private CfgSmtToolkit generateToolkit(HybridAutomaton automaton) {
+		Script script =
+				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
+						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
+								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
+						false, false, "", "SMTINTERPOL");
+		ManagedScript managedScript = new ManagedScript(mServices, script);
+		HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton, "MAIN");
+		HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
+		// we can merge all variables into one set.
+		final Set<String> variables = automaton.getGlobalParameters();
+		variables.addAll(automaton.getGlobalConstants());
+		variables.addAll(automaton.getLocalConstants());
+		variables.addAll(automaton.getLocalParameters());
+		variables.forEach(var -> {
+			// proc2globals.addPair("MAIN", symbolTable.constructProgramNonOldVar(var, "MAIN"));
+		});
+		ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
+		IPredicate axioms = null;
+		Set<String> procedures = new HashSet<>();
+		procedures.add("MAIN");
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable, axioms, procedures);
+	}
+	
+	private HybridAutomaton getRegardedAutomaton(HybridModel model) {
+		/*
+		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
+		 * system.
+		 */
+		final String configSystem = mPreferenceManager.getSystem() != null ? mPreferenceManager.getSystem() : "";
+		final Map<String, HybridSystem> systems = model.getSystems();
+		final Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
+		HybridAutomaton aut;
+		if (configSystem.isEmpty()) {
+			if (!systems.isEmpty()) {
+				HybridSystem firstsys = systems.values().iterator().next();
+				if (mergedAutomata.containsKey(firstsys.getName())) {
+					aut = mergedAutomata.get(firstsys.getName());
+				} else {
+					aut = firstsys.getAutomata().values().iterator().next();
+				}
+			} else {
+				throw new IllegalStateException("Hybridmodel" + model.toString() + " is empty");
+			}
+			return aut;
+		}
+		// if the system specified in the config file is present in the models systems
+		if (systems.containsKey(configSystem)) {
+			// if the system exists, we check if the system has a mergedAutomaton
+			// if not it has to be a single automaton (at least it should be)
+			if (mergedAutomata.containsKey(configSystem)) {
+				aut = mergedAutomata.get(configSystem);
+			} else {
+				if (systems.get(configSystem).getAutomata().size() != 1) {
+					throw new UnsupportedOperationException(
+							"The automata of system" + systems.get(configSystem).getName()
+									+ " have not been merged or are empty, the size of automata is:"
+									+ systems.get(configSystem).getAutomata().size());
+				} else {
+					// should be a single automaton, thus just get it with an iterator.
+					final Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
+					final Iterator<HybridAutomaton> it = autcol.iterator();
+					aut = it.hasNext() ? it.next() : null;
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
+					+ "\" is not part of the hybrid model parsed from file: " + mPreferenceManager.getFileName());
+		}
+		
+		if (aut == null) {
+			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
+		} else {
+			return aut;
+		}
 	}
 	
 	@Override
