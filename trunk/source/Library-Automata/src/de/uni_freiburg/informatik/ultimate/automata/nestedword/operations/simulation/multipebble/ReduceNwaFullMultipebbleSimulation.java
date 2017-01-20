@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -89,7 +90,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
 				+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
 
-		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory();
+		final HashRelation<STATE, STATE> initialPartition = NestedWordAutomataUtils.constructHashRelation(mServices, possibleEquivalentClasses);
+		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(initialPartition);
 		
 		try {
 			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton =
@@ -130,7 +132,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	protected abstract IDoubleDeckerAutomaton<LETTER, GS> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
 
-	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory();
+	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final HashRelation<STATE, STATE> initialPartition);
 
 	
 	

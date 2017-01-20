@@ -43,6 +43,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  */
 public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>  {
+	
+	public DirectFullMultipebbleStateFactory(final HashRelation<STATE, STATE> initialPartition) {
+		super(initialPartition);
+	}
 
 	@Override
 	public DirectFullMultipebbleGameState<STATE> createSinkStateContent() {
@@ -60,7 +64,6 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 	}
 	
 	
-	
 	@Override
 	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
 			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
@@ -73,7 +76,8 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 					// duplicator succs contains spoiler succ, hence spoiler cannot win 
 					return null;
 				}
-				if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
+				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
+						isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
@@ -99,7 +103,8 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 					// duplicator succs contains spoiler succ, hence spoiler cannot win 
 					return null;
 				}
-				if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
+				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
+						isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
@@ -126,7 +131,8 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 						// duplicator succs contains spoiler succ, hence spoiler cannot win 
 						return null;
 					}
-					if (!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) {
+					if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
+							isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 						duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 					}
 				}

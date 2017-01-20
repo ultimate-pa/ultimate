@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * TODO: documentation
@@ -58,8 +59,8 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> extends Re
 	}
 		
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory() {
-		return new DelayedFullMultipebbleStateFactory<>();
+	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
+		return new DelayedFullMultipebbleStateFactory<>(initialPartition);
 	}
 	
 	@Override

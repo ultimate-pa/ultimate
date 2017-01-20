@@ -34,10 +34,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.InitialPartitionProcessor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Provides static methods that are helpful for working with nested word automata.
@@ -147,6 +151,29 @@ public final class NestedWordAutomataUtils {
 		for (final Set<STATE> eqClass : partition) {
 			result += eqClass.size() * eqClass.size();
 		}
+		return result;
+	}
+	
+	/**
+	 * Convert binary relation given as partition into binary relation given
+	 * as {@link HashRelation}
+	 */
+	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services, 
+			final Collection<Set<STATE>> partition) throws AutomataOperationCanceledException {
+		final HashRelation<STATE, STATE> result = new HashRelation<>();
+		final InitialPartitionProcessor<STATE> ipp = new InitialPartitionProcessor<STATE>(services) {
+
+			@Override
+			public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
+				return true;
+			}
+
+			@Override
+			public void doProcess(final STATE q0, final STATE q1) {
+				result.addPair(q0, q1);
+			}
+		};
+		ipp.process(partition);
 		return result;
 	}
 	

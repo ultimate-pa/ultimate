@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -46,6 +47,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>>  {
 
+	
+	public DelayedFullMultipebbleStateFactory(final HashRelation<STATE, STATE> initialPartition) {
+		super(initialPartition);
+	}
+	
+	
 	@Override
 	public DelayedFullMultipebbleGameState<STATE> createSinkStateContent() {
 		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
@@ -76,14 +83,19 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 					// duplicator succs contains spoiler succ, hence spoiler cannot win 
 					return null;
 				}
-				if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
-					// do nothing, DoubleDecker without obligation already contained
-				} else {
+				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+				} else {
+					// do nothing
+					// pairs that are not in the initial partition cannot help Duplicator
 				}
 			}
 		}
-		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 
@@ -103,14 +115,19 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 					// duplicator succs contains spoiler succ, hence spoiler cannot win 
 					return null;
 				}
-				if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
-					// do nothing, DoubleDecker without obligation already contained
-				} else {
+				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+				} else {
+					// do nothing
+					// pairs that are not in the initial partition cannot help Duplicator
 				}
 			}
 		}
-		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 
@@ -135,14 +152,23 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 						if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
 							// do nothing, DoubleDecker without obligation already contained
 						} else {
-							duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+							if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+							} else {
+								// do nothing
+								// pairs that are not in the initial partition cannot help Duplicator
+							}
 						}
 					}
 				}
 			}
 			
 		}
-		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 	

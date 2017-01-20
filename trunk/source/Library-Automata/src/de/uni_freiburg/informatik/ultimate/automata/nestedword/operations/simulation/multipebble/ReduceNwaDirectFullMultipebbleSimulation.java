@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * TODO: documentation
@@ -51,8 +52,8 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Red
 	}
 		
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>> constructGameFactory() {
-		return new DirectFullMultipebbleStateFactory<>();
+	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>> constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
+		return new DirectFullMultipebbleStateFactory<>(initialPartition);
 	}
 	
 	@Override

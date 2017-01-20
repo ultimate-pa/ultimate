@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 /**
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -44,11 +45,19 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	
 	private int mMaxNumberOfDoubleDeckerPebbles = 0;
 	protected final GS mSpoilerWinningSink;
+	
+	private final HashRelation<STATE, STATE> mInitialPartition;
 
-	public FullMultipebbleStateFactory() {
+	public FullMultipebbleStateFactory(final HashRelation<STATE, STATE> initialPartition) {
 		super();
+		mInitialPartition = initialPartition;
 		mSpoilerWinningSink = constructSpoilerWinningSink();
 	}
+	
+	protected boolean isInInitialPartition(final STATE spoilerState, final STATE duplicatorState) {
+		return mInitialPartition.containsPair(spoilerState, duplicatorState);
+	}
+
 	
 	protected abstract <LETTER> GS constructSpoilerWinningSink();
 	
