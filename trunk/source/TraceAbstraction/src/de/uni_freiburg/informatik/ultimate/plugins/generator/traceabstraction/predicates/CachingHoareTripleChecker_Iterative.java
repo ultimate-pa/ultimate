@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
- * CachingHoareTripleChecker that iterates over covered predicates and covering predicates in order to do an exteded
- * cache check
+ * {@link CachingHoareTripleChecker} that iterates over covered predicates and covering predicates in order to do an
+ * extended cache check. If in doubt which caching checker you should use, use {@link CachingHoareTripleChecker_Map}.
  *
  * @author Matthias Heizmann
  *

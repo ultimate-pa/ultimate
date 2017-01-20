@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
- * CachingHoareTripleChecker that does not directly iterate over covered predicates and covering predicates in order to
- * do an exteded cache check (like {@link CachingHoareTripleChecker_Iterative}) but also takes the current cache into
- * account.
+ * {@link CachingHoareTripleChecker} that does not directly iterate over covered predicates and covering predicates in
+ * order to do an extended cache check (like {@link CachingHoareTripleChecker_Iterative}) but also takes the current
+ * cache into account. If in doubt which {@link CachingHoareTripleChecker} you should use, use this one.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
