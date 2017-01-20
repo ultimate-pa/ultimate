@@ -255,7 +255,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 				new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
 						equivalenceRelation.getAllEquivalenceClasses(),
 						new MinimizeNwaMaxSat2.Settings<STATE>()
-								.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+								.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+								.setUseInternalCallConstraints(false));
 		return maxSatMinimizer.getResult();
 	}
 	
@@ -270,7 +271,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer =
 				new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand, simRelation.getRelation(),
 						new MinimizeNwaMaxSat2.Settings<STATE>()
-								.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+								.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+								.setUseInternalCallConstraints(false));
 		return maxSatMinimizer.getResult();
 	}
 	

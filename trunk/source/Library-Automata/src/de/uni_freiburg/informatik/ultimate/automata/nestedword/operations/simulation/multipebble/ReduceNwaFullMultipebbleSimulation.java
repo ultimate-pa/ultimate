@@ -109,7 +109,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
 							equivalenceRelation.getAllEquivalenceClasses(),
 							new MinimizeNwaMaxSat2.Settings<STATE>()
-									.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+									.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+									.setUseInternalCallConstraints(false));
 			mResult = maxSatMinimizer.getResult();
 			
 			mStatistics = new AutomataOperationStatistics();
