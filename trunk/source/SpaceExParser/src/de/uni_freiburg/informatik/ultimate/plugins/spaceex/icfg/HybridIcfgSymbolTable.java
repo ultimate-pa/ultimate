@@ -4,14 +4,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -31,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	
 	private Set<ILocalProgramVar> mLocals = new HashSet<>();
-	private Map<TermVariable, IProgramVar> mVars = new HashMap<>();
 	private final ManagedScript mScript;
 	private final HybridAutomaton mAutomaton;
 	
@@ -50,9 +46,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
 		variables.forEach(var -> {
-			mVars.put(script.constructFreshTermVariable(var, script.getScript().sort("Real")),
-					constructProgramVar(var, procedure));
-			// mLocals.add(constructLocalProgramVar(var, procedure));
+			mLocals.add(constructLocalProgramVar(var, procedure));
 		});
 	}
 	
@@ -102,41 +96,15 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 	
 	@Override
-	public IProgramVar getProgramVar(final TermVariable tv) {
-		return mVars.get(tv);
+	public IProgramVar getProgramVar(TermVariable tv) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	@Override
-	public IProgramConst getProgramConst(final ApplicationTerm at) {
-		return new IProgramConst() {
-			
-			@Override
-			public String getGloballyUniqueId() {
-				return "asd";
-			}
-			
-			@Override
-			public boolean isGlobal() {
-				return false;
-			}
-			
-			@Override
-			public Term getTerm() {
-				return mScript.getScript().term("false");
-			}
-			
-			@Override
-			public String getIdentifier() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-			
-			@Override
-			public ApplicationTerm getDefaultConstant() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		};
+	public IProgramConst getProgramConst(ApplicationTerm at) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
@@ -76,7 +77,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mSmtToolkit = smtToolkit;
 		mIcfg = new BasicIcfg<>("icfg", mSmtToolkit, BoogieIcfgLocation.class);
 		mPayload = mIcfg.getPayload();
-		mPayload.getAnnotations();
+		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
 		mIcfgTransitions = new ArrayList<>();
 		mCfgComponents = new HashMap<>();
 		mBoogieASTNode = new BoogieASTNode(new ILocation() {
@@ -128,7 +129,6 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 				// TODO Auto-generated method stub
 				return false;
 			}
-			
 		});
 		// create a root + error location;
 		final BoogieIcfgLocation root = new BoogieIcfgLocation("root", mProcedure, false, mBoogieASTNode);

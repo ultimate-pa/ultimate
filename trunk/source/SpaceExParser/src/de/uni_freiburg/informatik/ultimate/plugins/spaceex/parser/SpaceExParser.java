@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -212,6 +213,9 @@ public class SpaceExParser implements ISource {
 	}
 	
 	private CfgSmtToolkit generateToolkit(HybridAutomaton automaton) {
+		IPredicate axioms = null;
+		Set<String> procedures = new HashSet<>();
+		procedures.add("MAIN");
 		Script script =
 				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
@@ -219,20 +223,10 @@ public class SpaceExParser implements ISource {
 						false, false, "", "SMTINTERPOL");
 		ManagedScript managedScript = new ManagedScript(mServices, script);
 		HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton, "MAIN");
+		DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
-		// we can merge all variables into one set.
-		final Set<String> variables = automaton.getGlobalParameters();
-		variables.addAll(automaton.getGlobalConstants());
-		variables.addAll(automaton.getLocalConstants());
-		variables.addAll(automaton.getLocalParameters());
-		variables.forEach(var -> {
-			// proc2globals.addPair("MAIN", symbolTable.constructProgramNonOldVar(var, "MAIN"));
-		});
 		ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		IPredicate axioms = null;
-		Set<String> procedures = new HashSet<>();
-		procedures.add("MAIN");
-		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, symbolTable, axioms, procedures);
+		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures);
 	}
 	
 	private HybridAutomaton getRegardedAutomaton(HybridModel model) {
@@ -280,7 +274,6 @@ public class SpaceExParser implements ISource {
 			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
 					+ "\" is not part of the hybrid model parsed from file: " + mPreferenceManager.getFileName());
 		}
-		
 		if (aut == null) {
 			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
 		} else {
