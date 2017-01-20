@@ -33,13 +33,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -77,7 +77,7 @@ public abstract class BaseCsvProviderSummary extends BaseTestSummary {
 		ICsvProvider<Object> aggregate = new SimpleCsvProvider<>(new ArrayList<String>());
 		ICsvProvider<Object> current = null;
 		for (final Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
-			for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil
+			for (final ICsvProviderProvider<?> benchmarkResultWildcard : ResultUtil
 					.getCsvProviderProviderFromUltimateResults(resultService.getResults(), benchmark)) {
 				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCsvProvider();
 				aggregate = CsvUtils.concatenateRows(aggregate, current);

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  *
@@ -176,5 +177,25 @@ public class ResultUtil {
 				logger.info("    [...]");
 			}
 		}
+	}
+
+	/**
+	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored in the BenchmarkResults of
+	 * ultimateIResults.
+	 */
+	@SuppressWarnings("rawtypes")
+	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
+			final Map<String, List<IResult>> ultimateIResults, final Class<E> benchmarkClass) {
+		final Collection<BenchmarkResult> benchmarks =
+				filterResults(ultimateIResults, BenchmarkResult.class);
+		final List<E> filteredList = new ArrayList<>();
+		for (final BenchmarkResult<?> benchmarkResult : benchmarks) {
+			@SuppressWarnings("unchecked")
+			final E benchmark = (E) benchmarkResult.getBenchmark();
+			if (benchmark.getClass().isAssignableFrom(benchmarkClass)) {
+				filteredList.add(benchmark);
+			}
+		}
+		return filteredList;
 	}
 }

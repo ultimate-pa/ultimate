@@ -32,12 +32,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 public class AutomataScriptTestSummary implements ITestSummary {
@@ -88,7 +88,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	@Override
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
 			String category, String message, String testname, IResultService resultService) {
-		final Collection<Benchmark> benchmarkSingleton = TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
+		final Collection<Benchmark> benchmarkSingleton = ResultUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
 		if (benchmarkSingleton.size() != 1) {
 			throw new AssertionError("expected single benchmark result");
 		} else {

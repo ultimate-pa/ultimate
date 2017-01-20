@@ -44,8 +44,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -55,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.Terminatio
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  *
@@ -592,36 +589,6 @@ public final class TestUtil {
 			throw new AssertionError("unable to read file " + file);
 		}
 		return line;
-	}
-
-	/**
-	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored in the BenchmarkResults
-	 * benchmarkResults.
-	 */
-	@SuppressWarnings("rawtypes")
-	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
-			final Collection<BenchmarkResult> benchmarkResults, final Class<E> benchmarkClass) {
-		final List<E> filteredList = new ArrayList<>();
-		for (final BenchmarkResult<?> benchmarkResult : benchmarkResults) {
-			@SuppressWarnings("unchecked")
-			final E benchmark = (E) benchmarkResult.getBenchmark();
-			if (benchmark.getClass().isAssignableFrom(benchmarkClass)) {
-				filteredList.add(benchmark);
-			}
-		}
-		return filteredList;
-	}
-
-	/**
-	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored in the BenchmarkResults of
-	 * ultimateIResults.
-	 */
-	@SuppressWarnings("rawtypes")
-	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
-			final Map<String, List<IResult>> ultimateIResults, final Class<E> benchmarkClass) {
-		final Collection<BenchmarkResult> benchmarks =
-				ResultUtil.filterResults(ultimateIResults, BenchmarkResult.class);
-		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 
 	/**

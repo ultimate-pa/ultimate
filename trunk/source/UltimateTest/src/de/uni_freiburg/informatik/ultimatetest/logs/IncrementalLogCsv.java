@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -89,7 +89,7 @@ public class IncrementalLogCsv extends DefaultIncrementalLogfile {
 
 		ICsvProvider<Object> combinedProvider = new SimpleCsvProvider<>(Collections.emptyList());
 		final List<ICsvProviderProvider<?>> csvProviders =
-				TestUtil.getCsvProviderProviderFromUltimateResults(results, mBenchmark).stream()
+				ResultUtil.getCsvProviderProviderFromUltimateResults(results, mBenchmark).stream()
 						.map(a -> (ICsvProviderProvider<?>) a).collect(Collectors.toList());
 
 		for (final ICsvProviderProvider<?> csvProvider : csvProviders) {

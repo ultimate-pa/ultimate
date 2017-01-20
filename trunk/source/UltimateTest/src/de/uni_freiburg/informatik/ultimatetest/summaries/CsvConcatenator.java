@@ -31,12 +31,12 @@ package de.uni_freiburg.informatik.ultimatetest.summaries;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -136,7 +136,7 @@ public class CsvConcatenator implements ITestSummary {
 		if (resultService == null) {
 			return;
 		}
-		for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil
+		for (final ICsvProviderProvider<?> benchmarkResultWildcard : ResultUtil
 				.getCsvProviderProviderFromUltimateResults(resultService.getResults(), mBenchmark)) {
 			final ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCsvProvider();
