@@ -105,7 +105,7 @@ public class CsvConcatenator implements ITestSummary {
 	public String getSummaryLog() {
 		final ICsvProvider<Object> csvProvider =
 				(mTransformer == null) ? mCsvProvider : mTransformer.transform(mCsvProvider);
-		return csvProvider.toCsv(null, null).toString();
+		return csvProvider.toCsv(null, null, true).toString();
 	}
 
 	@Override

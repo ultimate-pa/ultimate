@@ -30,7 +30,7 @@ public final class FilterByFileName {
 		
 		final ICsvProvider<String> output = partitionCopy.toCsvProvider();
 		final StringBuilder builder = new StringBuilder();
-		output.toCsv(builder, ",");
+		output.toCsv(builder, ",", true);
 		System.out.println(builder.toString());
 	}
 }

@@ -74,7 +74,7 @@ public final class GetMean {
 	
 	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName) {
 		final StringBuilder predefinedBuilder = new StringBuilder();
-		final StringBuilder builder = csv.toCsv(predefinedBuilder, ",");
+		final StringBuilder builder = csv.toCsv(predefinedBuilder, ",", true);
 		if (VERBOSE) {
 			System.out.println(builder.toString());
 		}

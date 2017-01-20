@@ -52,7 +52,7 @@ public class CsvSummary extends BaseCsvProviderSummary {
 		final StringBuilder sb = new StringBuilder();
 		final PartitionedResults results = partitionResults(mResults.entrySet());
 		final ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
-		csvTotal.toCsv(sb, null);
+		csvTotal.toCsv(sb, null, true);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		return sb.toString();
 	}

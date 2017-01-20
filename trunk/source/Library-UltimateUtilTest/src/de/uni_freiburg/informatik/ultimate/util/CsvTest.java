@@ -134,10 +134,10 @@ public class CsvTest {
 		final boolean isEqual = contentAsStringIsEqual(C.getTable(), something.getTable());
 		if (!isEqual) {
 			System.err.println("B");
-			System.err.println(B.toCsv(null, null));
+			System.err.println(B.toCsv(null, null, true));
 
 			System.err.println("something");
-			System.err.println(something.toCsv(null, null));
+			System.err.println(something.toCsv(null, null, true));
 		}
 
 		Assert.assertTrue("something is not equal to B", isEqual);
@@ -185,7 +185,7 @@ public class CsvTest {
 		boolean isOk = true;
 		final StringBuilder sb = new StringBuilder();
 		try {
-			A.toCsv(sb, ",");
+			A.toCsv(sb, ",", true);
 		} catch (final Exception ex) {
 			isOk = false;
 		}

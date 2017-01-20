@@ -275,7 +275,7 @@ public final class PrepareOnlineCsv {
 		if (aggregation) {
 			predefinedBuilder.append(AGGREGATION);
 		}
-		final StringBuilder builder = csv.toCsv(predefinedBuilder, ",");
+		final StringBuilder builder = csv.toCsv(predefinedBuilder, ",", true);
 		if (VERBOSE) {
 			System.out.println(builder.toString());
 		}

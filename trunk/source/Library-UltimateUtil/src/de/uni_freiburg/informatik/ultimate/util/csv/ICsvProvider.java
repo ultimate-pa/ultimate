@@ -49,7 +49,7 @@ public interface ICsvProvider<T> {
 
 	List<List<T>> getTable();
 
-	StringBuilder toCsv(StringBuilder sb, String cellSeparator);
+	StringBuilder toCsv(StringBuilder sb, String cellSeparator, boolean printColumnHeader);
 
 	/**
 	 * @return true iff this {@link ICsvProvider} does not contain any rows.

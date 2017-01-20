@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,9 +36,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class CsvUtils {
 
@@ -48,7 +48,7 @@ public class CsvUtils {
 
 	/**
 	 * Just convert one provider to another
-	 * 
+	 *
 	 * @param provider
 	 * @param converter
 	 * @return
@@ -59,14 +59,14 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Converts one CsvProvider to another with an explicit converter. The
-	 * converter is called for each value in the provider. This is always
-	 * type-safe.
-	 * 
+	 * Converts one CsvProvider to another with an explicit converter. The converter is called for each value in the
+	 * provider. This is always type-safe.
+	 *
 	 * @param provider
 	 * @return
 	 */
-	public static <T, K> ICsvProvider<K> convertPerValue(final ICsvProvider<T> provider, final IExplicitConverter<T, K> converter) {
+	public static <T, K> ICsvProvider<K> convertPerValue(final ICsvProvider<T> provider,
+			final IExplicitConverter<T, K> converter) {
 		final ICsvProvider<K> rtr = new SimpleCsvProvider<>(provider.getColumnTitles());
 		final List<String> rowTitles = provider.getRowHeaders();
 		final List<List<T>> table = provider.getTable();
@@ -86,15 +86,13 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Constructs the cross-product of row headers and column headers and
-	 * returns a ICsvProvider that contains only one row but the cross product
-	 * as column headers.
-	 * 
-	 * The original column headers are on the front, i.e. for [A,B] as column
-	 * headers and [C,D] as row headers (in that order), you get a new
-	 * ICsvProvider with [AyC, AyD, ByC, ByD] as column header and [] as row
-	 * header, where y == headerSeparator.
-	 * 
+	 * Constructs the cross-product of row headers and column headers and returns a ICsvProvider that contains only one
+	 * row but the cross product as column headers.
+	 *
+	 * The original column headers are on the front, i.e. for [A,B] as column headers and [C,D] as row headers (in that
+	 * order), you get a new ICsvProvider with [AyC, AyD, ByC, ByD] as column header and [] as row header, where y ==
+	 * headerSeparator.
+	 *
 	 * @param provider
 	 * @param headerSeparator
 	 * @return
@@ -119,9 +117,8 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Creates a new ICsvProvider that has only the columns in columnTitles in
-	 * the order of the original ICsvProvider.
-	 * 
+	 * Creates a new ICsvProvider that has only the columns in columnTitles in the order of the original ICsvProvider.
+	 *
 	 * @param provider
 	 * @param newColumnTitles
 	 * @return
@@ -131,9 +128,8 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Creates a new ICsvProvider that has only the columns in columnTitles in
-	 * the order of the original ICsvProvider.
-	 * 
+	 * Creates a new ICsvProvider that has only the columns in columnTitles in the order of the original ICsvProvider.
+	 *
 	 * @param provider
 	 * @param newColumnTitles
 	 * @return
@@ -143,14 +139,14 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Creates a new ICsvProvider that has only the columns in columnTitles in
-	 * the order of the original ICsvProvider.
-	 * 
+	 * Creates a new ICsvProvider that has only the columns in columnTitles in the order of the original ICsvProvider.
+	 *
 	 * @param provider
 	 * @param newColumnTitles
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> projectColumn(final ICsvProvider<T> provider, final Collection<String> newColumnTitles) {
+	public static <T> ICsvProvider<T> projectColumn(final ICsvProvider<T> provider,
+			final Collection<String> newColumnTitles) {
 		final ICsvProvider<T> newProvider = new SimpleCsvProvider<>(new ArrayList<>(newColumnTitles));
 
 		if (provider.isEmpty()) {
@@ -189,13 +185,14 @@ public class CsvUtils {
 
 	/**
 	 * Adds a new column at position index with column values values.
-	 * 
+	 *
 	 * @param provider
 	 * @param columnTitle
 	 * @param values
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> addColumn(final ICsvProvider<T> provider, final String columnTitle, final int index, final List<T> values) {
+	public static <T> ICsvProvider<T> addColumn(final ICsvProvider<T> provider, final String columnTitle,
+			final int index, final List<T> values) {
 		if (index < 0 || index > provider.getColumnTitles().size()) {
 			throw new IllegalArgumentException();
 		}
@@ -234,9 +231,8 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Creates a new provider where column titles are row titles and row titles
-	 * are column titles.
-	 * 
+	 * Creates a new provider where column titles are row titles and row titles are column titles.
+	 *
 	 * @param provider
 	 * @return
 	 */
@@ -264,21 +260,26 @@ public class CsvUtils {
 		return rtr;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static ICsvProvider<Object> concatenateRowsUnchecked(final ICsvProvider<?> a, final ICsvProvider<?> b) {
+		return concatenateRows((ICsvProvider<Object>) a, (ICsvProvider<Object>) b);
+	}
+
 	/**
-	 * Creates a new ICsvProvider that contains the rows of providerA and then
-	 * the rows of providerB.
-	 * 
-	 * If the providers have different columns the missing columns are added and
-	 * the missing cells are filled with null values.
-	 * 
-	 * The case where providerA and providerB contain the same column titles in
-	 * different order is unsupported and an Exception is thrown.
-	 * 
+	 * Creates a new ICsvProvider that contains the rows of providerA and then the rows of providerB.
+	 *
+	 * If the providers have different columns the missing columns are added and the missing cells are filled with null
+	 * values.
+	 *
+	 * The case where providerA and providerB contain the same column titles in different order is unsupported and an
+	 * Exception is thrown.
+	 *
 	 * @param providerA
 	 * @param providerB
 	 * @return
 	 */
-	public static <T> ICsvProvider<T> concatenateRows(final ICsvProvider<T> providerA, final ICsvProvider<T> providerB) {
+	public static <T> ICsvProvider<T> concatenateRows(final ICsvProvider<T> providerA,
+			final ICsvProvider<T> providerB) {
 		final List<String> providerAColumns = providerA.getColumnTitles();
 		final List<String> providerBColumns = providerB.getColumnTitles();
 		List<String> resultColumns;
@@ -307,9 +308,9 @@ public class CsvUtils {
 					pAindex++;
 					pBindex++;
 				} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
-					if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol) && 
-							currentPBCol.compareTo(currentPACol) < 0) {
-						// special case: 
+					if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)
+							&& currentPBCol.compareTo(currentPACol) < 0) {
+						// special case:
 						// currentPACol does not occur in providerBColumns
 						// currentPBCol does not occur in providerAColumns
 						// hence we may add both next
@@ -328,8 +329,8 @@ public class CsvUtils {
 					additionalColumnForProviderA.add(pAindex);
 					pBindex++;
 				} else {
-					throw new IllegalArgumentException("unable to merge, both "
-							+ "providers have similar columns but in different order");
+					throw new IllegalArgumentException(
+							"unable to merge, both " + "providers have similar columns but in different order");
 				}
 			}
 		}
@@ -348,11 +349,10 @@ public class CsvUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Creates a new ICsvProvider that contains the rows of all input CSV providers.
-	 * The result is obtained by an iterative application of
-	 * {@link #concatenateRows(ICsvProvider, ICsvProvider)}.
+	 * Creates a new ICsvProvider that contains the rows of all input CSV providers. The result is obtained by an
+	 * iterative application of {@link #concatenateRows(ICsvProvider, ICsvProvider)}.
 	 */
 	public static <T, K extends ICsvProvider<T>> ICsvProvider<T> concatenateRows(final List<K> csvProviders) {
 		ICsvProvider<T> result = new SimpleCsvProvider<>(new ArrayList<String>());
@@ -363,12 +363,11 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Given a list of values and a list of (not strictly) ascending positive
-	 * integers, return a list that has at each position that occurs in the
-	 * integer list additionalNullValuePositions an additional cell whose value
-	 * is null.
+	 * Given a list of values and a list of (not strictly) ascending positive integers, return a list that has at each
+	 * position that occurs in the integer list additionalNullValuePositions an additional cell whose value is null.
 	 */
-	private static <T> List<T> insertNullElements(final List<T> array, final List<Integer> additionalNullValuePositions) {
+	private static <T> List<T> insertNullElements(final List<T> array,
+			final List<Integer> additionalNullValuePositions) {
 		final List<T> result = new LinkedList<>(array);
 		for (int i = additionalNullValuePositions.size() - 1; i >= 0; i--) {
 			result.add(additionalNullValuePositions.get(i), null);
@@ -377,9 +376,8 @@ public class CsvUtils {
 	}
 
 	/**
-	 * Given a map, return an ICsvProvider that has a single row. Its column
-	 * header are the keys of the map, the row entries are the values of the
-	 * map.
+	 * Given a map, return an ICsvProvider that has a single row. Its column header are the keys of the map, the row
+	 * entries are the values of the map.
 	 */
 	public static <T> ICsvProvider<T> constructCvsProviderFromMap(final Map<String, T> map) {
 		final List<String> keys = new ArrayList<>(map.keySet());
@@ -476,4 +474,5 @@ public class CsvUtils {
 		}
 		return false;
 	}
+
 }

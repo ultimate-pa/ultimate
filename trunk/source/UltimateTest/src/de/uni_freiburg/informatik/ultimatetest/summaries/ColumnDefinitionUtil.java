@@ -262,6 +262,13 @@ public final class ColumnDefinitionUtil {
 		return newProvider;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static ICsvProvider<Object> prefixCsvProvider(final UltimateRunDefinition urd, final TestResult testResult,
+			final String category, final String message, final ICsvProvider<?> provider) {
+		final ICsvProvider<Object> uncheckedProvider = (ICsvProvider<Object>) provider;
+		return prefixCsvProvider(urd, testResult, category, message, uncheckedProvider, a -> (Object) a);
+	}
+
 	public static <T> ICsvProvider<T> prefixCsvProvider(final UltimateRunDefinition urd, final TestResult testResult,
 			final String category, final String message, final ICsvProvider<T> provider,
 			final Function<String, T> typeConverter) {

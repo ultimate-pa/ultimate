@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
+import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.suites.evals.InterpolationTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
@@ -67,20 +68,18 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { getIncrementalLogWithVMParameters(),
-				new IncrementalLogWithBenchmarkResults(this.getClass()) };
+		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = getBenchmarks();
+		final List<IIncrementalLog> incLogs = new ArrayList<>();
+		incLogs.add(getIncrementalLogWithVMParameters());
+		incLogs.add(new IncrementalLogWithBenchmarkResults(getClass()));
+		benchmarks.stream().map(a -> new IncrementalLogCsv(getClass(), a)).forEach(incLogs::add);
+		return incLogs.toArray(new IIncrementalLog[incLogs.size()]);
 	}
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
-		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
-		benchmarks.add(Benchmark.class);
-		benchmarks.add(TraceAbstractionBenchmarks.class);
-		benchmarks.add(CodeCheckBenchmarks.class);
-		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
-		benchmarks.add(GraphSizeCsvProvider.class);
 
+		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = getBenchmarks();
 		final ColumnDefinition[] columnDef = getColumnDefinitions();
 
 		final List<ITestSummary> rtr = new ArrayList<>();
@@ -94,6 +93,17 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
 
 		return rtr.toArray(new ITestSummary[rtr.size()]);
+	}
+
+	private static List<Class<? extends ICsvProviderProvider<? extends Object>>> getBenchmarks() {
+		final List<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
+		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
+		benchmarks.add(Benchmark.class);
+		benchmarks.add(TraceAbstractionBenchmarks.class);
+		benchmarks.add(CodeCheckBenchmarks.class);
+		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
+		benchmarks.add(GraphSizeCsvProvider.class);
+		return benchmarks;
 	}
 
 	/**
