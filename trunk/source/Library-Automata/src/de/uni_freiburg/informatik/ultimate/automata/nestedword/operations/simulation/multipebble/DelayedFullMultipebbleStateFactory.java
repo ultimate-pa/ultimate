@@ -201,6 +201,30 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		protected boolean checkIfEmptyOrSomeBitIsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 			return true;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + ((mAuxiliaryGameStateType == null) ? 0 : mAuxiliaryGameStateType.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final AuxiliaryDelayedFullMultipebbleGameState other = (AuxiliaryDelayedFullMultipebbleGameState) obj;
+			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType)
+				return false;
+			return true;
+		}
+		
+		
 		
 		
 	}

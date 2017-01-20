@@ -78,7 +78,11 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 				}
 			}
 		}
-		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 
@@ -100,7 +104,11 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 				}
 			}
 		}
-		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 
@@ -123,9 +131,12 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 					}
 				}
 			}
-			
 		}
-		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		if (duplicatorSuccStates.isEmpty()) {
+			return mSpoilerWinningSink;
+		} else {
+			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+		}
 	}
 	
 
@@ -169,6 +180,30 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 		public AuxiliaryGameStateType getAuxiliaryGameStateType() {
 			return mAuxiliaryGameStateType;
 		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + ((mAuxiliaryGameStateType == null) ? 0 : mAuxiliaryGameStateType.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final AuxiliaryDirectFullMultipebbleGameState other = (AuxiliaryDirectFullMultipebbleGameState) obj;
+			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType)
+				return false;
+			return true;
+		}
+		
+		
 		
 	}
 

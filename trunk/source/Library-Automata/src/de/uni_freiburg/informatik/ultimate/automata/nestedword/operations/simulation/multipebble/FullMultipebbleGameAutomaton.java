@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -133,17 +134,29 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 	@Override
 	public Set<LETTER> lettersInternal(final GS state) {
-		return mOperand.lettersInternal(state.getSpoilerDoubleDecker().getUp());
+		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
+			return Collections.emptySet();
+		} else {
+			return mOperand.lettersInternal(state.getSpoilerDoubleDecker().getUp());
+		}
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final GS state) {
-		return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
+		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
+			return Collections.emptySet();
+		} else {
+			return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
+		}
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final GS state) {
-		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
+		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
+			return Collections.emptySet();
+		} else {
+			return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
+		}
 	}
 
 	@Override
