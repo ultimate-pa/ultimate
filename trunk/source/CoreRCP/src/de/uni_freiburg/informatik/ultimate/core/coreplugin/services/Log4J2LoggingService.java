@@ -71,17 +71,17 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	private static final String[] RELEVANT_SETTINGS = new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN,
-	        CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
-	        CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
-	        CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
-	        CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
-	        CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
-	        CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
-	        CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
-	        CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
-	        CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
-	        CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
-	        CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
+			CorePreferenceInitializer.LABEL_LOGFILE, CorePreferenceInitializer.LABEL_LOGFILE_NAME,
+			CorePreferenceInitializer.LABEL_LOGFILE_DIR, CorePreferenceInitializer.LABEL_APPEXLOGFILE,
+			CorePreferenceInitializer.LABEL_LOGLEVEL_ROOT, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGINS,
+			CorePreferenceInitializer.LABEL_LOGLEVEL_TOOLS, CorePreferenceInitializer.LABEL_LOGLEVEL_CONTROLLER,
+			CorePreferenceInitializer.LABEL_LOGLEVEL_CORE, CorePreferenceInitializer.LABEL_LOGLEVEL_PLUGIN_SPECIFIC,
+			CorePreferenceInitializer.LABEL_ROOT_PREF, CorePreferenceInitializer.LABEL_TOOLS_PREF,
+			CorePreferenceInitializer.LABEL_CORE_PREF, CorePreferenceInitializer.LABEL_CONTROLLER_PREF,
+			CorePreferenceInitializer.LABEL_PLUGINS_PREF, CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF,
+			CorePreferenceInitializer.LABEL_COLOR_DEBUG, CorePreferenceInitializer.LABEL_COLOR_INFO,
+			CorePreferenceInitializer.LABEL_COLOR_WARNING, CorePreferenceInitializer.LABEL_COLOR_ERROR,
+			CorePreferenceInitializer.LABEL_COLOR_FATAL, CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN };
 
 	private static final String LOGGER_NAME_CONTROLLER = "controller";
 	private static final String LOGGER_NAME_PLUGINS = "plugins";
@@ -155,8 +155,8 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		reinitializeDefaultConsoleAppenders();
 		reinitializeFileAppender();
 
-		final AppenderRef[] refs = mAppenderReferences.values()
-		        .toArray(new AppenderRef[mAppenderReferences.values().size()]);
+		final AppenderRef[] refs =
+				mAppenderReferences.values().toArray(new AppenderRef[mAppenderReferences.values().size()]);
 
 		final Level rootLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_ROOT_PREF);
 		final LoggerConfig rootLoggerConfig = mConfig.getRootLogger();
@@ -168,32 +168,32 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 		// controller
 		final Level controllerLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
-		final LoggerConfig controllerLoggerConfig = LoggerConfig.createLogger(true, controllerLevel,
-		        LOGGER_NAME_CONTROLLER, "true", refs, null, mConfig,
-		        ThresholdFilter.createFilter(controllerLevel, Result.ACCEPT, Result.NEUTRAL));
+		final LoggerConfig controllerLoggerConfig =
+				LoggerConfig.createLogger(true, controllerLevel, LOGGER_NAME_CONTROLLER, "true", refs, null, mConfig,
+						ThresholdFilter.createFilter(controllerLevel, Result.ACCEPT, Result.NEUTRAL));
 		mConfig.addLogger(LOGGER_NAME_CONTROLLER, controllerLoggerConfig);
 
 		// all non-controller loggers share a common parent
 		final LoggerConfig nonControllerLoggerConfig = LoggerConfig.createLogger(true, rootLevel,
-		        LOGGER_NAME_NONCONTROLLER, "true", refs, null, mConfig, null);
+				LOGGER_NAME_NONCONTROLLER, "true", refs, null, mConfig, null);
 		mConfig.addLogger(LOGGER_NAME_NONCONTROLLER, nonControllerLoggerConfig);
 
 		// plug-ins parent
 		final Level pluginsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
-		final LoggerConfig pluginsParentLoggerConfig = LoggerConfig.createLogger(true, pluginsLevel,
-		        getPluginLoggerName(), "true", refs, null, mConfig, null);
+		final LoggerConfig pluginsParentLoggerConfig =
+				LoggerConfig.createLogger(true, pluginsLevel, getPluginLoggerName(), "true", refs, null, mConfig, null);
 		mConfig.addLogger(getPluginLoggerName(), pluginsParentLoggerConfig);
 
 		// external tools parent
 		final Level toolsLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_TOOLS_PREF);
-		final LoggerConfig externalToolsLoggerConfig = LoggerConfig.createLogger(true, toolsLevel, getToolLoggerName(),
-		        "true", refs, null, mConfig, null);
+		final LoggerConfig externalToolsLoggerConfig =
+				LoggerConfig.createLogger(true, toolsLevel, getToolLoggerName(), "true", refs, null, mConfig, null);
 		mConfig.addLogger(getToolLoggerName(), externalToolsLoggerConfig);
 
 		// actual core logger
 		final Level coreLevel = getLogLevelPreference(CorePreferenceInitializer.LABEL_CORE_PREF);
-		final LoggerConfig coreLoggerConfig = LoggerConfig.createLogger(true, coreLevel, getCoreLoggerName(), "true",
-		        refs, null, mConfig, null);
+		final LoggerConfig coreLoggerConfig =
+				LoggerConfig.createLogger(true, coreLevel, getCoreLoggerName(), "true", refs, null, mConfig, null);
 		mConfig.addLogger(getCoreLoggerName(), coreLoggerConfig);
 
 		// actual plugin loggers
@@ -202,21 +202,21 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		for (final String plugin : plugins) {
 			final String loggerName = getPluginLoggerName(plugin);
 			final Level pluginLevel = getLogLevel(plugin);
-			final LoggerConfig pluginLoggerConfig = LoggerConfig.createLogger(true, pluginLevel, loggerName, "true",
-			        refs, null, mConfig, null);
+			final LoggerConfig pluginLoggerConfig =
+					LoggerConfig.createLogger(true, pluginLevel, loggerName, "true", refs, null, mConfig, null);
 			mConfig.addLogger(loggerName, pluginLoggerConfig);
 			mLiveLoggerIds.add(loggerName);
 		}
 
 		// actual tool loggers
-		final String[] tools = getIdsWithDefinedLogLevels(
-		        CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
+		final String[] tools =
+				getIdsWithDefinedLogLevels(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC);
 
 		for (final String tool : tools) {
 			final String loggerName = getToolLoggerName(tool);
 			final Level toolLevel = getLogLevel(tool);
-			final LoggerConfig toolLoggerConfig = LoggerConfig.createLogger(true, toolLevel, loggerName, "true", refs,
-			        null, mConfig, null);
+			final LoggerConfig toolLoggerConfig =
+					LoggerConfig.createLogger(true, toolLevel, loggerName, "true", refs, null, mConfig, null);
 			mConfig.addLogger(loggerName, toolLoggerConfig);
 			mLiveLoggerIds.add(loggerName);
 		}
@@ -235,14 +235,14 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		}
 
 		final PatternLayout layout = PatternLayout.newBuilder()
-		        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
+				.withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
 
 		mConsoleAppender = ConsoleAppender.createAppender(layout, null, Target.SYSTEM_OUT, APPENDER_NAME_CONSOLE, true,
-		        false, false);
+				false, false);
 		mConsoleAppender.start();
 		mConfig.addAppender(mConsoleAppender);
 		mAppenderReferences.put(mConsoleAppender.getName(),
-		        AppenderRef.createAppenderRef(mConsoleAppender.getName(), null, null));
+				AppenderRef.createAppenderRef(mConsoleAppender.getName(), null, null));
 		mRootAppenders.add(mConsoleAppender);
 
 		if (mControllerAppender != null) {
@@ -255,15 +255,15 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		}
 
 		final PatternLayout controllerLayout = PatternLayout.newBuilder()
-		        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN))
-		        .build();
+				.withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_CONTROLLER_PATTERN))
+				.build();
 
 		mControllerAppender = ConsoleAppender.createAppender(controllerLayout, null, Target.SYSTEM_OUT,
-		        APPENDER_NAME_CONTROLLER, true, false, false);
+				APPENDER_NAME_CONTROLLER, true, false, false);
 		mControllerAppender.start();
 		mConfig.addAppender(mControllerAppender);
 		mAppenderReferences.put(mControllerAppender.getName(),
-		        AppenderRef.createAppenderRef(mControllerAppender.getName(), null, null));
+				AppenderRef.createAppenderRef(mControllerAppender.getName(), null, null));
 		mControllerAppenders.add(mControllerAppender);
 	}
 
@@ -296,19 +296,19 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 			}
 
 			final PatternLayout layout = PatternLayout.newBuilder()
-			        .withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
+					.withPattern(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)).build();
 			final String logName = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
 			final String logDir = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
 			final Boolean append = mPreferenceStore.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
-			final String fileName = new StringBuilder().append(logDir).append(File.separator).append(logName)
-			        .append(".log").toString();
+			final String fileName =
+					new StringBuilder().append(logDir).append(File.separator).append(logName).append(".log").toString();
 
 			final String falsePredicate = "false";
 			final String truePredicate = "true";
 
 			mFileAppender = FileAppender.createAppender(fileName, append.toString(), falsePredicate,
-			        APPENDER_NAME_LOGFILE, truePredicate, truePredicate, falsePredicate, "8192", layout, null,
-			        falsePredicate, null, mConfig);
+					APPENDER_NAME_LOGFILE, truePredicate, truePredicate, falsePredicate, "8192", layout, null,
+					falsePredicate, null, mConfig);
 			mFileAppender.start();
 			mConfig.addAppender(mFileAppender);
 			mRootAppenders.add(mFileAppender);
@@ -358,7 +358,7 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		return Level.toLevel(level);
 	}
 
-	private LoggerContext initializeConfiguration() {
+	private static LoggerContext initializeConfiguration() {
 		final ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
 		builder.setStatusLevel(Level.ERROR);
 		builder.setConfigurationName("DefaultConfiguration");
@@ -428,7 +428,7 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 		mRootAppenders.add(appender);
 
 		mConfig.getRootLogger().addAppender(appender, mConfig.getRootLogger().getLevel(),
-		        mConfig.getRootLogger().getFilter());
+				mConfig.getRootLogger().getFilter());
 
 		mContext.updateLoggers();
 	}
@@ -532,8 +532,8 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 	}
 
 	private static String[] convert(final String preferenceValue) {
-		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-		        CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
+		final StringTokenizer tokenizer =
+				new StringTokenizer(preferenceValue, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();
 		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
