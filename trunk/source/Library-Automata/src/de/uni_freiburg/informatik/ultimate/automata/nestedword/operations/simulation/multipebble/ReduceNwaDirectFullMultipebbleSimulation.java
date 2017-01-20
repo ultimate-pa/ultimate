@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: documentation
@@ -57,10 +58,11 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends Red
 	}
 	
 	@Override
-	protected IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>> computeSimulation(
+	protected Pair<IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>>,Integer> computeSimulation(
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton)
 			throws AutomataOperationCanceledException {
-		return new RemoveDeadEnds<>(mServices, gameAutomaton).getResult();
+		final RemoveDeadEnds<LETTER, DirectFullMultipebbleGameState<STATE>> rde = new RemoveDeadEnds<>(mServices, gameAutomaton);
+		return new Pair<>(rde.getResult(),rde.getInputSize());
 	}
 	
 	

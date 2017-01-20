@@ -121,6 +121,15 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		return mResult;
 	}
 	
+	/**
+	 * @return Size of the input automaton. If input was an automaton for
+	 * on-demand construction. This is the size after the on-demand construction.
+	 */
+	public int getInputSize() {
+		return mReach.size();
+	}
+
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		if (mLogger.isInfoEnabled()) {

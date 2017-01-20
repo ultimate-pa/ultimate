@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: documentation
@@ -64,10 +65,12 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> extends Re
 	}
 	
 	@Override
-	protected IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> computeSimulation(
+	protected Pair<IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>>, Integer> computeSimulation(
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> gameAutomaton)
 			throws AutomataOperationCanceledException {
-		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp1 = new RemoveNonLiveStates<>(mServices, gameAutomaton).getResult();
+		final RemoveNonLiveStates<LETTER, DelayedFullMultipebbleGameState<STATE>> rnls = new RemoveNonLiveStates<>(mServices, gameAutomaton);
+		final int maxGameAutomatonSize = rnls.getInputSize();
+		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp1 = rnls.getResult();
 		final Set<DelayedFullMultipebbleGameState<STATE>> goodForSpoiler = new HashSet<>();
 		for (final DelayedFullMultipebbleGameState<STATE> state : tmp1.getStates()) {
 			if (state.isEmptyOrSomeBitIsTrue()) {
@@ -81,7 +84,7 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> extends Re
 		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp4 =
 				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, tmp1.getStates(), tmp1.getInitialStates(), tmp3.getStates());
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> result = new RemoveDeadEnds<>(mServices, tmp4).getResult();
-		return result;
+		return new Pair<>(result, maxGameAutomatonSize);
 	}
 	
 	

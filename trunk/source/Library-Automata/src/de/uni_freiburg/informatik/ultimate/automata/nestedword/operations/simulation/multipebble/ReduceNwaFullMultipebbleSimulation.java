@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * TODO: documentation
@@ -96,11 +97,11 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		try {
 			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton =
 					new FullMultipebbleGameAutomaton<>(mServices, gameFactory, possibleEquivalentClasses, operand);
-			final IDoubleDeckerAutomaton<LETTER, GS> readoutAutomaton = computeSimulation(gameAutomaton);
-			final int gameAutomatonSize = readoutAutomaton.size();
+			final Pair<IDoubleDeckerAutomaton<LETTER, GS>, Integer> simRes = computeSimulation(gameAutomaton);
+			final int maxGameAutomatonSize = simRes.getSecond();
 			final NestedMap2<STATE, STATE, GS> gsm = gameAutomaton.getGameStateMapping();
 			
-			final ReadoutSimulation rs = new ReadoutSimulation(gsm, readoutAutomaton, gameFactory);
+			final ReadoutSimulation rs = new ReadoutSimulation(gsm, simRes.getFirst(), gameFactory);
 			rs.process(possibleEquivalentClasses);
 			final UnionFind<STATE> equivalenceRelation = rs.getMutuallySimulating();
 			final boolean mergeFinalAndNonFinalStates = !false;
@@ -116,7 +117,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
-					gameAutomatonSize);
+					maxGameAutomatonSize);
 			mStatistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
 			mStatistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, mResult.size());
 			
@@ -130,7 +131,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		mLogger.info(exitMessage());
 	}
 
-	protected abstract IDoubleDeckerAutomaton<LETTER, GS> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
+	protected abstract Pair<IDoubleDeckerAutomaton<LETTER, GS>,Integer> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
 
 	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final HashRelation<STATE, STATE> initialPartition);
 

@@ -122,6 +122,14 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		return mResult;
 	}
 	
+	/**
+	 * @return Size of the input automaton. If input was an automaton for
+	 * on-demand construction. This is the size after the on-demand construction.
+	 */
+	public int getInputSize() {
+		return mReach.size();
+	}
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
