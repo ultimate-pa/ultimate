@@ -133,4 +133,18 @@ public class HCVar implements IProgramVar {
 		}
 		return true;
 	}
+
+
+//	@Override
+//	public String getIdentifier() {
+//		return mGloballyUniqueId;
+//	}
+//
+//
+//	@Override
+//	public IProgramOldVar getOldVar() {
+//		// TODO Auto-generated method stub
+//		assert false : "HCVars don't need oldVars, right?..";
+//		return null;
+//	}
 }

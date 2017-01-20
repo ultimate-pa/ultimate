@@ -53,7 +53,7 @@ public class TreeAutomizerCEGAR {// implements
 
 	public ITreeRun<HornClause, HCPredicate> mCounterexample;
 
-	private final HCPredicateFactory mStateFactory;
+	private final HCStateFactory mStateFactory;
 
 	private final ManagedScript mBackendSmtSolverScript;
 
@@ -91,21 +91,23 @@ public class TreeAutomizerCEGAR {// implements
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
 			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script, 
 			HCSymbolTable hcSymbolTable) {
-		mStateFactory = new HCPredicateFactory(script);
 		mBackendSmtSolverScript = script;
 		mSymbolTable = hcSymbolTable;
 		mLogger = logger;
 		mRootNode = rootNode;
 		mIteration = 0;
 
-		mInitialPredicate = mStateFactory
-				.truePredicate(new HornClausePredicateSymbol.HornClauseTruePredicateSymbol());
-		mFinalPredicate = mStateFactory
-				.falsePredicate(new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol());
-		
 		mPredicateFactory = new PredicateFactory(services, mBackendSmtSolverScript, 
 				hcSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
+
+		mStateFactory = new HCStateFactory(script, mPredicateFactory, hcSymbolTable);
+	
+		mInitialPredicate = mStateFactory
+				.truePredicate(mSymbolTable.getTrueHornClausePredicateSymbol());
+		mFinalPredicate = mStateFactory
+				.falsePredicate(mSymbolTable.getFalseHornClausePredicateSymbol());
 		
+	
 		mCfgSmtToolkit = new CfgSmtToolkit(
 				new ModifiableGlobalsTable(new HashRelation<>()), 
 				mBackendSmtSolverScript, 
@@ -129,7 +131,8 @@ public class TreeAutomizerCEGAR {// implements
 
 		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
+		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
+				.get(HornUtilConstants.HORN_ANNOT_NAME);
 
 		mAbstraction = new TreeAutomatonBU<>();
 		for (final HornClause clause : hornClauses) {

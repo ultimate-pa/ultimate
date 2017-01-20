@@ -31,7 +31,8 @@ public class Body {
 		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 		assert tt.size() <= 1;
 		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
-				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
+				: symbolTable.getFalseHornClausePredicateSymbol();
+//				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
 		return new HornClause(script, symbolTable, getTransitionFormula(theory),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
 				getCobodyPredicateToVars(symbolTable));

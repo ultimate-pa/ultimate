@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 
-	private final Map<TermVariable, IProgramVar> mTermVariable2ProgramVar = new HashMap<>();
-	private final Map<ApplicationTerm, IProgramConst> mAppTerm2ProgramConst = new HashMap<>();
+	protected final Map<TermVariable, IProgramVar> mTermVariable2ProgramVar = new HashMap<>();
+	protected final Map<ApplicationTerm, IProgramConst> mAppTerm2ProgramConst = new HashMap<>();
 
 	private final Set<IProgramNonOldVar> mGlobals = new HashSet<>();
 	private final Set<IProgramConst> mConstants = new HashSet<>();

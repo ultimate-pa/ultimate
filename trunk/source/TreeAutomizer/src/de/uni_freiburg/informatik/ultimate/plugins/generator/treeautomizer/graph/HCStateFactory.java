@@ -15,38 +15,46 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseDontCareSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
-public class HCPredicateFactory implements IStateFactory<HCPredicate> {
+public class HCStateFactory implements IStateFactory<HCPredicate> {
 
 	// final protected boolean mComputeHoareAnnotation;
 	// final protected TAPreferences mPref;
-	private final HCPredicate memtpyStack;
+	private final HCPredicate mEmtpyStack;
 
 	private final ManagedScript mBackendSmtSolverScript;
 	private final SimplifyDDA mSimplifier;
 	private final TermTransferrer mTermTransferrer;
 	private final boolean mTransferToScriptNeeded;
 
-	public HCPredicateFactory(final ManagedScript backendSmtSolverScript) {
+	private final PredicateFactory mPredicateFactory;
+
+	public HCStateFactory(final ManagedScript backendSmtSolverScript, final PredicateFactory predicateFactory,
+			final HCSymbolTable symbolTable) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		memtpyStack = createDontCarePredicate(new HornClauseDontCareSymbol());
+		mEmtpyStack = createDontCarePredicate(symbolTable.getDontCareHornClausePredicateSymbol());
 
 		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
 		mTransferToScriptNeeded = true;
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
+		mPredicateFactory = predicateFactory;
 	}
 
 	public HCPredicate createDontCarePredicate(final HornClausePredicateSymbol loc) {
 		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+		final HCPredicate result = new HCPredicate(loc, 
+				mBackendSmtSolverScript.term(this, HornUtilConstants.DONTCARE), 
+				new HashMap<>());
 		mBackendSmtSolverScript.unlock(this); 
 		return result;
 	}
@@ -208,6 +216,6 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 	
 	@Override
 	public HCPredicate createEmptyStackState() {
-		return memtpyStack;
+		return mEmtpyStack;
 	}
 }

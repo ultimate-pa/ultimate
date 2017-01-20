@@ -42,6 +42,8 @@ public final class HornUtilConstants {
 	public static final String HORNCLAUSEMETHODNAME = "dummy-HornClauseMethod";
 
 	public static final String HORN_ANNOT_NAME = "HoRNClauses";
+
+	public static final String DONTCARE = "DontCare";
 	
 	private HornUtilConstants() {
 		// hides public constructor

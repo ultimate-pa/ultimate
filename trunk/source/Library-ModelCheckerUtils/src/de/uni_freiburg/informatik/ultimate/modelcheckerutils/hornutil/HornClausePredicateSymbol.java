@@ -76,8 +76,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
-		public HornClauseFalsePredicateSymbol() {
-			super(null, null);
+		public HornClauseFalsePredicateSymbol(FunctionSymbol falseFunSym) {
+			super(null, falseFunSym);
 		}
 
 		@Override
@@ -97,8 +97,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseTruePredicateSymbol extends HornClausePredicateSymbol {
-		public HornClauseTruePredicateSymbol() {
-			super(null, null);
+		public HornClauseTruePredicateSymbol(FunctionSymbol trueFunSym) {
+			super(null, trueFunSym);
 		}
 		@Override
 		public String getName() {
@@ -117,8 +117,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseDontCareSymbol extends HornClausePredicateSymbol {
-		public HornClauseDontCareSymbol() {
-			super(null, null);
+		public HornClauseDontCareSymbol(FunctionSymbol dontCareFunSym) {
+			super(null, dontCareFunSym);
 		}
 
 		@Override
