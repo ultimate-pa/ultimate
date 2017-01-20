@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -265,6 +267,12 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			break;
 		}
+		case FULLMULTIPEBBLE_DIRECT_SIMULATION: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceNwaDirectFullMultipebbleSimulation<LETTER, IPredicate>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			break;
+		}
 		case NWA_COMBINATOR_MULTI_DEFAULT: {
 			final IMinimizeNwa<LETTER, IPredicate> minNwa = new MinimizeNwaMulti<>(autServices,
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
@@ -311,6 +319,12 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		}
 		case RAQ_DELAYED_SIMULATION_B: {
 			minimizationResult = new MinimizationResult(true, true, new ReduceNwaDelayedSimulationB<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			break;
+		}
+		case FULLMULTIPEBBLE_DELAYED_SIMULATION: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceNwaDelayedFullMultipebbleSimulation<LETTER, IPredicate>(autServices,
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			break;
 		}
