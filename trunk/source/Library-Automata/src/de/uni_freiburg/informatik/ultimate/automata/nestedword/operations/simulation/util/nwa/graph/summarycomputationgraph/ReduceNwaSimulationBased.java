@@ -163,7 +163,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-					NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(mOperand,
+					NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(), mOperand,
 							possibleEquivalentClasses));
 			aoce.addRunningTaskInfo(rti);
 			throw aoce;

@@ -189,10 +189,11 @@ public final class NestedWordAutomataUtils {
 	 * @return string summary of initial partition
 	 */
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
+			final String operationName,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition) {
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialPartition);
-		return generateGenericMinimizationRunningTaskDescription(operand, initialPartition.size(),
+		return generateGenericMinimizationRunningTaskDescription(operationName, operand, initialPartition.size(),
 				sizeOfLargestEquivalenceClass);
 	}
 	
@@ -210,9 +211,10 @@ public final class NestedWordAutomataUtils {
 	 * @return string summary of initial partition
 	 */
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
+			final String operationName,
 			final INestedWordAutomaton<LETTER, STATE> operand, final int initialPartitionSize,
 			final int sizeOfLargestBlock) {
-		return "minimizing NWA with " + operand.size() + " states" + " (initial partition has "
+		return "applying " + operationName + " to NWA with " + operand.size() + " states" + " (initial partition has "
 				+ initialPartitionSize + " blocks, largest block has " + sizeOfLargestBlock + " states)";
 	}
 	
