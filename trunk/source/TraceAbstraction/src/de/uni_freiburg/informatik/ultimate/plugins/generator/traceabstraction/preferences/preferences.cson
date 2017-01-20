@@ -1,0 +1,311 @@
+data:
+    [
+        {
+            name: 'INTERACTIVE_VERIFICATION'
+            label: '"Enable interactive Verification?"'
+            default: 'false'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+        {
+            name: 'INTERPROCEDUTAL'
+            label: '"Interprocedural analysis (Nested Interpolants)"'
+            default: 'true'
+            type: "Boolean"
+            tooltip: '"If checked, The plugin will enable an interactive verification interface."'
+        }
+    ]
