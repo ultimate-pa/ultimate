@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -68,13 +69,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntTotalInterpolationAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.AbsIntHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  *
@@ -97,9 +100,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	private boolean mSkipIteration;
-	private IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mAbsIntResult;
-	private IRun<LETTER, IPredicate, ?> mLastCex;
+	private AbsIntCurrentIteration mCurrentIteration;
+	private IPredicateUnifier mPredicateUnifier;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
 			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
@@ -110,8 +112,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mRoot = root;
-		mAbsIntResult = null;
-		mSkipIteration = false;
 		mKnownPathPrograms = new HashSet<>();
 		mCsToolkit = csToolkit;
 
@@ -120,6 +120,145 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		mMode = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE,
 				AbstractInterpretationMode.class);
 		checkSettings();
+	}
+
+	/**
+	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
+	 * current abstraction.
+	 *
+	 * Do not run if
+	 * <ul>
+	 * <li>We have already analyzed the exact same path program.
+	 * <li>The path program does not contain any loops.
+	 * </ul>
+	 */
+	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> currentAbstraction, final IPredicateUnifier unifier) {
+		assert currentCex != null : "Cannot run AI on empty counterexample";
+		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
+
+		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
+			// TODO: AI only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented.
+			throw new UnsupportedOperationException(
+					"AbsInt only supports BoogieIcfgLocations and Codeblocks at the moment");
+		}
+		mPredicateUnifier = Objects.requireNonNull(unifier);
+		mCurrentIteration = null;
+
+		if (mMode == AbstractInterpretationMode.NONE) {
+			return;
+		}
+
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		try {
+
+			final Set<LETTER> pathProgramSet = convertCex2Set(currentCex);
+
+			if (!mKnownPathPrograms.add(pathProgramSet)) {
+				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
+				return;
+			}
+			if (!containsLoop(pathProgramSet)) {
+				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
+				return;
+			}
+
+			mCegarLoopBenchmark.announceNextAbsIntIteration();
+
+			// allow for 20% of the remaining time
+			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
+					+ " with the following transitions: ");
+			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
+					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
+			if (mLogger.isDebugEnabled()) {
+				for (final LETTER trans : pathProgramSet) {
+					mLogger.debug("[" + trans.hashCode() + "] " + trans);
+				}
+			}
+			@SuppressWarnings("unchecked")
+			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result =
+					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter.runOnPathProgram(
+							(IIcfg<BoogieIcfgLocation>) mRoot,
+							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
+							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
+							mServices);
+			mCurrentIteration = new AbsIntCurrentIteration(currentCex, result);
+			if (hasShownInfeasibility()) {
+				mCegarLoopBenchmark.announceStrongAbsInt();
+			}
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		}
+	}
+
+	/**
+	 *
+	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
+	 */
+	public boolean hasShownInfeasibility() {
+		return mMode != AbstractInterpretationMode.NONE && mCurrentIteration != null
+				&& !mCurrentIteration.hasReachedError();
+	}
+
+	public boolean isDisabled() {
+		return mMode == AbstractInterpretationMode.NONE;
+	}
+
+	public CachingHoareTripleChecker getHoareTripleChecker() {
+		if (mCurrentIteration == null) {
+			throw createNoFixpointsException();
+		}
+		return mCurrentIteration.getHoareTripleChecker();
+	}
+
+	public IInterpolantGenerator getInterpolantGenerator() {
+		if (mCurrentIteration == null) {
+			return new AbsIntFailedInterpolantGenerator(mPredicateUnifier, null, ItpErrorStatus.OTHER,
+					createNoFixpointsException());
+		}
+		return mCurrentIteration.getInterpolantGenerator();
+	}
+
+	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
+			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+			final IRun<LETTER, IPredicate, ?> currentCex) {
+		if (mCurrentIteration == null) {
+			throw createNoFixpointsException();
+		}
+
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		try {
+			mLogger.info("Constructing AI automaton with mode " + mMode);
+			final IInterpolantAutomatonBuilder<LETTER, IPredicate> aiInterpolAutomatonBuilder;
+			switch (mMode) {
+			case NONE:
+				throw new AssertionError("Mode should have been checked earlier");
+			case USE_PATH_PROGRAM:
+				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
+						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getSymboltable(), currentCex,
+						mSimplificationTechnique, mXnfConversionTechnique);
+				break;
+			case USE_PREDICATES:
+				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getSymboltable());
+				break;
+			case USE_CANONICAL:
+				throw new UnsupportedOperationException(
+						"Canonical interpolant automaton generation not yet implemented.");
+			case USE_TOTAL:
+				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex, mRoot.getSymboltable(),
+						mSimplificationTechnique, mXnfConversionTechnique);
+				break;
+			default:
+				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
+			}
+			return aiInterpolAutomatonBuilder;
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
+		}
 	}
 
 	private void checkSettings() {
@@ -138,208 +277,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	/**
-	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
-	 * current abstraction.
-	 *
-	 * Do not run if
-	 * <ul>
-	 * <li>We have already analyzed the exact same path program.
-	 * <li>The path program does not contain any loops.
-	 * </ul>
-	 */
-	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> currentAbstraction) {
-		assert currentCex != null : "Cannot run AI on empty counterexample";
-		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
-
-		if (!mRoot.getLocationClass().equals(BoogieIcfgLocation.class)) {
-			// TODO: AI only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented.
-			throw new UnsupportedOperationException(
-					"AbsInt only supports BoogieIcfgLocations and Codeblocks atm, so die if this is not the type presented");
-		}
-		if (mMode == AbstractInterpretationMode.NONE) {
-			return;
-		}
-		mLastCex = currentCex;
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		try {
-			mAbsIntResult = null;
-
-			final Set<LETTER> pathProgramSet = convertCex2Set(currentCex);
-
-			if (!mKnownPathPrograms.add(pathProgramSet)) {
-				mSkipIteration = true;
-				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
-				return;
-			}
-			if (!containsLoop(pathProgramSet)) {
-				mSkipIteration = true;
-				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
-				return;
-			}
-
-			mSkipIteration = false;
-			mCegarLoopBenchmark.announceNextAbsIntIteration();
-
-			// allow for 20% of the remaining time
-			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
-					+ " with the following transitions: ");
-			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
-					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
-			if (mLogger.isDebugEnabled()) {
-				for (final LETTER trans : pathProgramSet) {
-					mLogger.debug("[" + trans.hashCode() + "] " + trans);
-				}
-			}
-			@SuppressWarnings("unchecked")
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
-					AbstractInterpreter.runOnPathProgram((IIcfg<BoogieIcfgLocation>) mRoot,
-							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
-							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
-							mServices);
-			mAbsIntResult = (IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) result;
-			if (hasShownInfeasibility()) {
-				mCegarLoopBenchmark.announceStrongAbsInt();
-			}
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		}
-	}
-
 	private boolean containsLoop(final Set<LETTER> pathProgramSet) {
 		final Set<IcfgLocation> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
 
-	/**
-	 *
-	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
-	 */
-	public boolean hasShownInfeasibility() {
-		return mMode != AbstractInterpretationMode.NONE && mAbsIntResult != null && !mAbsIntResult.hasReachedError();
-	}
-
-	public boolean isDisabled() {
-		return mMode == AbstractInterpretationMode.NONE;
-	}
-
-	public IInterpolantGenerator getInterpolantGenerator(final PredicateUnifier predicateUnifier) {
-
-		if (mMode == AbstractInterpretationMode.NONE) {
-			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
-		}
-		if (mSkipIteration) {
-			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
-		}
-		if (mAbsIntResult == null) {
-			return new AbsIntFailedInterpolantGenerator(predicateUnifier, null, ItpErrorStatus.OTHER, null);
-		}
-		if (mAbsIntResult.hasReachedError()) {
-			// analysis was not strong enough
-			return new AbsIntFailedInterpolantGenerator(predicateUnifier, mLastCex.getWord(),
-					ItpErrorStatus.ALGORITHM_FAILED, null);
-		}
-		// we were strong enough!
-		final Word<LETTER> word = mLastCex.getWord();
-		final List<IPredicate> interpolants = generateInterpolants(predicateUnifier, word, mAbsIntResult);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Interpolant sequence:");
-			mLogger.debug(interpolants);
-		}
-		assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
-				+ " but interpolant sequence has length " + interpolants.size();
-		return new AbsIntInterpolantGenerator(predicateUnifier, mLastCex.getWord(),
-				interpolants.toArray(new IPredicate[interpolants.size()]));
-	}
-
-	private <STATE extends IAbstractState<STATE, IBoogieVar>> List<IPredicate> generateInterpolants(
-			final PredicateUnifier predicateUnifier, final Word<LETTER> word,
-			final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult) {
-		mLogger.info("Generating AI predicates...");
-
-		final int wordlength = word.length();
-		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
-
-		Set<STATE> previousStates = Collections.emptySet();
-		final List<IPredicate> rtr = new ArrayList<>();
-		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-		final Deque<LETTER> callstack = new ArrayDeque<>();
-		final Script script = mCsToolkit.getManagedScript().getScript();
-		for (int i = 0; i < wordlength - 1; i++) {
-			final LETTER symbol = word.getSymbol(i);
-			if (symbol instanceof ICallAction) {
-				callstack.addFirst(symbol);
-			} else if (symbol instanceof IReturnAction) {
-				callstack.removeFirst();
-			}
-			final Set<STATE> postStates = aiResult.getPostStates(callstack, symbol, previousStates);
-
-			final IPredicate next;
-			if (postStates.isEmpty()) {
-				next = falsePredicate;
-			} else {
-				final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
-						.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
-				next = predicateUnifier.getOrConstructPredicateForDisjunction(predicates);
-			}
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(symbol + " " + next);
-			}
-			previousStates = postStates;
-			rtr.add(next);
-		}
-
-		return rtr;
-	}
-
-	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
-			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> currentCex) {
-		if (mMode == AbstractInterpretationMode.NONE) {
-			return null;
-		}
-		if (mSkipIteration) {
-			return null;
-		}
-		if (mAbsIntResult == null) {
-			mLogger.warn("Cannot construct AI interpolant automaton without calculating fixpoint first");
-			return null;
-		}
-
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		try {
-			mLogger.info("Constructing AI automaton with mode " + mMode);
-			final IInterpolantAutomatonBuilder<LETTER, IPredicate> aiInterpolAutomatonBuilder;
-			switch (mMode) {
-			case NONE:
-				throw new AssertionError("Mode should have been checked earlier");
-			case USE_PATH_PROGRAM:
-				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
-						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getSymboltable(), currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique);
-				break;
-			case USE_PREDICATES:
-				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
-						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mSimplificationTechnique,
-						mXnfConversionTechnique, mRoot.getSymboltable());
-				break;
-			case USE_CANONICAL:
-				throw new UnsupportedOperationException(
-						"Canonical interpolant automaton generation not yet implemented.");
-			case USE_TOTAL:
-				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
-						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mRoot.getSymboltable(),
-						mSimplificationTechnique, mXnfConversionTechnique);
-				break;
-			default:
-				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
-			}
-			return aiInterpolAutomatonBuilder;
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		}
+	private static UnsupportedOperationException createNoFixpointsException() {
+		return new UnsupportedOperationException(
+				"AbsInt can only provide a hoare triple checker if it generated fixpoints");
 	}
 
 	private Set<LETTER> convertCex2Set(final IRun<LETTER, IPredicate, ?> currentCex) {
@@ -352,11 +297,105 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return transitions;
 	}
 
+	private final class AbsIntCurrentIteration {
+		private final IRun<LETTER, IPredicate, ?> mCex;
+		private final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mResult;
+
+		private IInterpolantGenerator mInterpolantGenerator;
+		private CachingHoareTripleChecker mHtc;
+
+		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
+				final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result) {
+			mCex = Objects.requireNonNull(cex);
+			mResult = Objects.requireNonNull(result);
+		}
+
+		public IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> getResult() {
+			return mResult;
+		}
+
+		public boolean hasReachedError() {
+			return mResult.hasReachedError();
+		}
+
+		public CachingHoareTripleChecker getHoareTripleChecker() {
+			if (mHtc == null) {
+				final IHoareTripleChecker htc =
+						new AbsIntHoareTripleChecker<>(mServices, mResult.getUsedDomain(), mPredicateUnifier);
+				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
+			}
+			return mHtc;
+		}
+
+		public IInterpolantGenerator getInterpolantGenerator() {
+			if (mInterpolantGenerator == null) {
+				mInterpolantGenerator = createInterpolantGenerator();
+			}
+			return mInterpolantGenerator;
+		}
+
+		private IInterpolantGenerator createInterpolantGenerator() {
+			if (mResult.hasReachedError()) {
+				// analysis was not strong enough
+				return new AbsIntFailedInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
+						ItpErrorStatus.ALGORITHM_FAILED, null);
+			}
+			// we were strong enough!
+			final Word<LETTER> word = mCex.getWord();
+			final List<IPredicate> interpolants = generateInterpolants(mPredicateUnifier, word, mResult);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Interpolant sequence:");
+				mLogger.debug(interpolants);
+			}
+			assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
+					+ " but interpolant sequence has length " + interpolants.size();
+			return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
+					interpolants.toArray(new IPredicate[interpolants.size()]));
+		}
+
+		private <STATE extends IAbstractState<STATE, IBoogieVar>> List<IPredicate> generateInterpolants(
+				final IPredicateUnifier predicateUnifier, final Word<LETTER> word,
+				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult) {
+			mLogger.info("Generating AI predicates...");
+
+			final int wordlength = word.length();
+			Set<STATE> previousStates = Collections.emptySet();
+			final List<IPredicate> rtr = new ArrayList<>();
+			final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+			final Deque<LETTER> callstack = new ArrayDeque<>();
+			final Script script = mCsToolkit.getManagedScript().getScript();
+			for (int i = 0; i < wordlength - 1; i++) {
+				final LETTER symbol = word.getSymbol(i);
+				if (symbol instanceof ICallAction) {
+					callstack.addFirst(symbol);
+				} else if (symbol instanceof IReturnAction) {
+					callstack.removeFirst();
+				}
+				final Set<STATE> postStates = aiResult.getPostStates(callstack, symbol, previousStates);
+
+				final IPredicate next;
+				if (postStates.isEmpty()) {
+					next = falsePredicate;
+				} else {
+					final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
+							.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
+					next = predicateUnifier.getOrConstructPredicateForDisjunction(predicates);
+				}
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(symbol + " " + next);
+				}
+				previousStates = postStates;
+				rtr.add(next);
+			}
+			return rtr;
+		}
+	}
+
 	private static final class AbsIntInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
 
 		private final IPredicate[] mInterpolants;
 
-		private AbsIntInterpolantGenerator(final PredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
+		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
 				final IPredicate[] sequence) {
 			super(predicateUnifier, cex, new InterpolantComputationStatus(true, null, null));
 			mInterpolants = Objects.requireNonNull(sequence);
@@ -383,7 +422,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	private static final class AbsIntFailedInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
 
-		private AbsIntFailedInterpolantGenerator(final PredicateUnifier predicateUnifier,
+		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier,
 				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
 			super(predicateUnifier, cex, new InterpolantComputationStatus(false, status, ex));
 		}

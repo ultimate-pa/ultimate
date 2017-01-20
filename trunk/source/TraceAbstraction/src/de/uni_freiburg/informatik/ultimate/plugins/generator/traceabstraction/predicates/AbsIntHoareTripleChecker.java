@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Hoare triple checker that computes predicates that are obtained from abstract interpretation in a lazy, cached
@@ -53,17 +53,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
 		implements IHoareTripleChecker {
 
 	private final ILogger mLogger;
 	private final IAbstractPostOperator<STATE, ACTION, VARDECL> mPostOp;
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
-	private final PredicateUnifier mPredicateUnifier;
+	private final IPredicateUnifier mPredicateUnifier;
 
 	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain, final PredicateUnifier predicateUnifer) {
+			final IAbstractDomain<STATE, ACTION, VARDECL> domain, final IPredicateUnifier predicateUnifer) {
 		final IAbstractDomain<STATE, ACTION, VARDECL> localDomain = Objects.requireNonNull(domain);
 		mPostOp = Objects.requireNonNull(localDomain.getPostOperator());
 		mMergeOp = Objects.requireNonNull(localDomain.getMergeOperator());
@@ -133,18 +132,21 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		// no lock needed
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		return checkNonReturnTransition((AbsIntPredicate<STATE, VARDECL>) pre, (ACTION) act,
 				(AbsIntPredicate<STATE, VARDECL>) succ);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		return checkNonReturnTransition((AbsIntPredicate<STATE, VARDECL>) pre, (ACTION) act,
 				(AbsIntPredicate<STATE, VARDECL>) succ);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {

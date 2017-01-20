@@ -441,8 +441,8 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		case ABSTRACT_INTERPRETATION:
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction);
-			return mAbsIntRunner.getInterpolantGenerator(getPredicateUnifier());
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, getPredicateUnifier());
+			return mAbsIntRunner.getInterpolantGenerator();
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
