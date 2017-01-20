@@ -219,7 +219,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			return;
 		}
 		
-		if (!haveSameOutgoingInternalCallSymbols(state1, state2)) {
+		if (mSettings.getUseInternalCallConstraints() && !haveSameOutgoingInternalCallSymbols(state1, state2)) {
 			// not known to be different, report to the solver
 			setVariableFalse(pair);
 			
@@ -823,6 +823,12 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * Currently always deactivated.
 		 */
 		private final boolean mUsePathCompression = false;
+		/**
+		 * Use constraints for closure under internal/call successors.
+		 * <p>
+		 * Some users already ensure this fact.
+		 */
+		private boolean mUseInternalCallConstraints = true;
 		
 		public Settings() {
 			// default constructor
@@ -898,6 +904,15 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 */
 		public Settings<STATE> setSolverModeGeneral() {
 			mSolverMode = SolverMode.GENERAL;
+			return this;
+		}
+		
+		public boolean getUseInternalCallConstraints() {
+			return mUseInternalCallConstraints;
+		}
+		
+		public Settings<STATE> setUseInternalCallConstraints(final boolean useInternalCallConstraints) {
+			mUseInternalCallConstraints = useInternalCallConstraints;
 			return this;
 		}
 		
