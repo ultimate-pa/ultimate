@@ -38,9 +38,17 @@ public enum ESimulationType {
 	 */
 	DELAYED,
 	/**
+	 * Delayed full multi-pebble simulation.
+	 */
+	DELAYED_FULL_MULTIPEBBLE,
+	/**
 	 * Direct simulation.
 	 */
 	DIRECT,
+	/**
+	 * Direct full multi-pebble simulation.
+	 */
+	DIRECT_FULL_MULTIPEBBLE,
 	/**
 	 * External minimization method, MinimizeNwaPmaxSat.
 	 */

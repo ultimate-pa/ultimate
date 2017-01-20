@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.FullMultipebbleGameState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -575,6 +577,15 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			}
 			performance.setName(name);
 			saveStateOfPerformance(performance);
+		} else if (method instanceof ReduceNwaFullMultipebbleSimulation) {
+			final ReduceNwaFullMultipebbleSimulation<LETTER, STATE, FullMultipebbleGameState<STATE>> fullMultipebbleSimulation =
+					(ReduceNwaFullMultipebbleSimulation<LETTER, STATE, FullMultipebbleGameState<STATE>>) method;
+			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = fullMultipebbleSimulation.getResult();
+			// Performance data
+			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
+					(INestedWordAutomaton<LETTER, STATE>) methodResult);
+			// Overall time
+			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeSevpa) {
 			final MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();

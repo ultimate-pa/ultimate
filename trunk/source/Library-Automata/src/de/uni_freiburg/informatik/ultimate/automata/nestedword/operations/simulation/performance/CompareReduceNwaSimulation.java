@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.DirectNwaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.nwa.FairNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.nwa.FairNwaSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -234,6 +236,14 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
+			} else if (type.equals(ESimulationType.DIRECT_FULL_MULTIPEBBLE)) {
+				final long startTime = System.currentTimeMillis();
+				method = new ReduceNwaDirectFullMultipebbleSimulation<>(services, stateFactory, operand);
+				setExternalOverallTime(System.currentTimeMillis() - startTime);
+			} else if (type.equals(ESimulationType.DELAYED_FULL_MULTIPEBBLE)) {
+				final long startTime = System.currentTimeMillis();
+				method = new ReduceNwaDelayedFullMultipebbleSimulation<>(services, stateFactory, operand);
+				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
@@ -277,14 +287,20 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
-		// stateFactory, reachableOperand);
+//				stateFactory, reachableOperand);
+		
+		// Full multi-pebble simulation
+//		measureMethodPerformance(automatonName, ESimulationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
+//				timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED_FULL_MULTIPEBBLE, false, getServices(),
+				timeOutMillis, stateFactory, reachableOperand);
 
 		// Other minimization methods
 //		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
 //				stateFactory, reachableOperand);
 //		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
 //				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
+//		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices, timeOutMillis,
+//				stateFactory, reachableOperand);
 	}
 }
