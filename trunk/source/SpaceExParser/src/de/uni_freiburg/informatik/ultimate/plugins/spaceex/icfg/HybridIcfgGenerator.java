@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
@@ -44,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
@@ -63,8 +63,6 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 	private final ILogger mLogger;
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
 	private final CfgSmtToolkit mSmtToolkit;
-	private final BasicIcfg<BoogieIcfgLocation> mIcfg;
-	private final List<IcfgInternalTransition> mIcfgTransitions;
 	private final Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
 	private final String mProcedure = "MAIN";
@@ -75,10 +73,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
-		mIcfg = new BasicIcfg<>("icfg", mSmtToolkit, BoogieIcfgLocation.class);
-		mPayload = mIcfg.getPayload();
-		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
-		mIcfgTransitions = new ArrayList<>();
+		mPayload = new Payload();
 		mCfgComponents = new HashMap<>();
 		mBoogieASTNode = new BoogieASTNode(new ILocation() {
 			
@@ -154,9 +149,9 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mCfgComponents.forEach((id, comp) -> {
 			// start is proc_entry + end is proc_exit
 			icfg.addOrdinaryLocation(comp.getStart());
-			mIcfg.addOrdinaryLocation(comp.getEnd());
+			icfg.addOrdinaryLocation(comp.getEnd());
 			for (final BoogieIcfgLocation loc : comp.getLocations()) {
-				mIcfg.addOrdinaryLocation(loc);
+				icfg.addOrdinaryLocation(loc);
 			}
 		});
 		mLogger.info("#################ICFG###################");
@@ -240,7 +235,6 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
 		source.addOutgoing(transition);
 		target.addIncoming(transition);
-		mIcfgTransitions.add(transition);
 	}
 	
 	/*
@@ -350,7 +344,6 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 					new IcfgInternalTransition(source, target, mPayload, transFormula);
 			source.addOutgoing(transition);
 			target.addIncoming(transition);
-			mIcfgTransitions.add(transition);
 		});
 	}
 }
