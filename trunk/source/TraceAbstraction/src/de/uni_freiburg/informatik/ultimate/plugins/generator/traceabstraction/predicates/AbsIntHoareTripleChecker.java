@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -61,6 +62,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
 	private final IPredicateUnifier mPredicateUnifier;
 
+	private final HoareTripleCheckerStatisticsGenerator mBenchmark;
+
 	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain, final IPredicateUnifier predicateUnifer) {
 		final IAbstractDomain<STATE, ACTION, VARDECL> localDomain = Objects.requireNonNull(domain);
@@ -70,6 +73,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		// PredicateUnifier
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 
 	private Validity checkNonReturnTransition(final AbsIntPredicate<STATE, VARDECL> pre, final ACTION act,
@@ -132,31 +136,38 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		// no lock needed
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		return checkNonReturnTransition((AbsIntPredicate<STATE, VARDECL>) pre, (ACTION) act,
+	private Validity checkNonReturn(final IPredicate pre, final IAction act, final IPredicate succ) {
+		mBenchmark.continueEdgeCheckerTime();
+		@SuppressWarnings("unchecked")
+		final Validity rtr = checkNonReturnTransition((AbsIntPredicate<STATE, VARDECL>) pre, (ACTION) act,
 				(AbsIntPredicate<STATE, VARDECL>) succ);
+		mBenchmark.stopEdgeCheckerTime();
+		return rtr;
 	}
 
-	@SuppressWarnings("unchecked")
+	@Override
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		return checkNonReturn(pre, act, succ);
+	}
+
 	@Override
 	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		return checkNonReturnTransition((AbsIntPredicate<STATE, VARDECL>) pre, (ACTION) act,
-				(AbsIntPredicate<STATE, VARDECL>) succ);
+		return checkNonReturn(pre, act, succ);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
-		return checkReturnTransition((AbsIntPredicate<STATE, VARDECL>) preLin,
+		mBenchmark.continueEdgeCheckerTime();
+		final Validity rtr = checkReturnTransition((AbsIntPredicate<STATE, VARDECL>) preLin,
 				(AbsIntPredicate<STATE, VARDECL>) preHier, (ACTION) act, (AbsIntPredicate<STATE, VARDECL>) succ);
+		mBenchmark.stopEdgeCheckerTime();
+		return rtr;
 	}
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		// we dont do benchmarking
-		return null;
+		return mBenchmark;
 	}
 }

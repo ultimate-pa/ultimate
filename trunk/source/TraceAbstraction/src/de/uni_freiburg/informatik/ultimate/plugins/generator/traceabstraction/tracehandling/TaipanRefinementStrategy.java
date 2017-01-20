@@ -352,6 +352,9 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		} else {
 			modeHack = mCurrentMode;
 		}
+		if (modeHack != mCurrentMode) {
+			mLogger.warn("Poor windows users use " + modeHack + " instead of " + mCurrentMode);
+		}
 		return modeHack;
 	}
 

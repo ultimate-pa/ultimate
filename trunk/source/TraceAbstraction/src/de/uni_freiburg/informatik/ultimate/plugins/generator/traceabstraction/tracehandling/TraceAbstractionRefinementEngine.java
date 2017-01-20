@@ -297,7 +297,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			// set Hoare triple checker
 			mHoareTripleChecker = ((InterpolantConsolidation<?>) interpolantGenerator).getHoareTripleChecker();
 		} else if (interpolantGenerator instanceof AbsIntBaseInterpolantGenerator) {
-			// TODO: Create hoare triple checker for AI
+			mHoareTripleChecker = ((AbsIntBaseInterpolantGenerator) interpolantGenerator).getHoareTripleChecker();
 		}
 
 		if (interpolantGenerator instanceof TraceCheckerSpWp) {

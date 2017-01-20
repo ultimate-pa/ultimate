@@ -350,7 +350,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
 					+ " but interpolant sequence has length " + interpolants.size();
 			return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
-					interpolants.toArray(new IPredicate[interpolants.size()]));
+					interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
 		}
 
 		private <STATE extends IAbstractState<STATE, IBoogieVar>> List<IPredicate> generateInterpolants(
@@ -394,11 +394,19 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private static final class AbsIntInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
 
 		private final IPredicate[] mInterpolants;
+		private final CachingHoareTripleChecker mHtc;
 
 		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
-				final IPredicate[] sequence) {
+				final IPredicate[] sequence, final CachingHoareTripleChecker htc) {
 			super(predicateUnifier, cex, new InterpolantComputationStatus(true, null, null));
 			mInterpolants = Objects.requireNonNull(sequence);
+			mHtc = Objects.requireNonNull(htc);
+		}
+
+		@Override
+		public CachingHoareTripleChecker getHoareTripleChecker() {
+			// evil hack but Matthias does not want to change the architecture.
+			return mHtc;
 		}
 
 		@Override
@@ -441,6 +449,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		public boolean isPerfectSequence() {
 			// if we fail there is no sequence
 			return false;
+		}
+
+		@Override
+		public CachingHoareTripleChecker getHoareTripleChecker() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }
