@@ -83,8 +83,10 @@ public class HCSSABuilder {
 	private int mCurrentTree = -1;
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
 
+	private final HCPredicateFactory mPredicateFactory;
+
 	public HCSSABuilder(final ITreeRun<HornClause, HCPredicate> trace, final HCPredicate preCondition,
-			final HCPredicate postCondition, final ManagedScript script) {
+			final HCPredicate postCondition, final ManagedScript script, final HCPredicateFactory predicateFactory) {
 		mTreeRun = trace;
 		mScript = script;
 		mTermTransferrer = new TermTransferrer(mScript.getScript());
@@ -93,13 +95,15 @@ public class HCSSABuilder {
 		mPostCondition = postCondition;
 		mCounters = new HashMap<>();
 		mSubsMap = new HashMap<>();
+		mPredicateFactory = predicateFactory;
 
 		mCurrentLocalAndOldVarVersion = new HashMap<>();
 		mResult = buildSSA();
 	}
 
-	public HCSSABuilder(final ITreeRun<HornClause, HCPredicate> trace, final ManagedScript script) {
-		this(trace, null, null, script);
+	public HCSSABuilder(final ITreeRun<HornClause, HCPredicate> trace, final ManagedScript script, 
+			final HCPredicateFactory predicateFactory) {
+		this(trace, null, null, script, predicateFactory);
 	}
 
 	public HCSsa getSSA() {
@@ -349,7 +353,7 @@ public class HCSSABuilder {
 			final Term t = transferToCurrentScriptIfNecessary(term);
 			final Term formula = subst.transform(t);
 			
-			return new HCPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, substit);
+			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, substit);
 		}
 		
 		public Map<Term, Term> getSubstitutionMapping() {

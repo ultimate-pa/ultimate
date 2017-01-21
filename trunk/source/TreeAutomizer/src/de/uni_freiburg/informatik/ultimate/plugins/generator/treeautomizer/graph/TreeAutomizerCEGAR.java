@@ -202,7 +202,7 @@ public class TreeAutomizerCEGAR {// implements
 	// @Override
 	public LBool getCounterexampleFeasibility() {
 		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
-				mLogger);
+				mLogger, mPredicateFactory);
 		mSSA = mChecker.getSSA();
 		return mChecker.checkTrace();
 	}

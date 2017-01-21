@@ -121,7 +121,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 			}
 		}
 		
-		return new HCPredicate(loc, predHash, formula, progVars, varsMap);
+		return mPredicateFactory.newPredicate(loc, predHash, formula, progVars, varsMap);
 	}
 	
 	@Override

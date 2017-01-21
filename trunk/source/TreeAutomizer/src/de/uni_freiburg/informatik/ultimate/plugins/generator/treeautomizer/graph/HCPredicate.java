@@ -58,18 +58,19 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	 */
 	private static final String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap) {
-		super(serialNumber, new String[]{}, term, vars, null);
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap, final Term closedFormula) {
+		super(serialNumber, new String[]{}, term, vars, closedFormula);
 		mProgramPoint = programPoint;
 		mProgramVars = varsMap;
 	}
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
-			final Map<Term, HCVar> varsMap) {
+			final Map<Term, HCVar> varsMap, final Term closedFormula) {
 		this(programPoint, HashUtils.hashHsieh(serialHCPredicate, programPoint, term),
-			term, new HashSet<>(varsMap.values()), varsMap);
+			term, new HashSet<>(varsMap.values()), varsMap, closedFormula);
 	}
+	
 
 	@Override
 	public Term getFormula() {
