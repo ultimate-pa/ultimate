@@ -73,38 +73,36 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
-		mPayload = new Payload();
-		mCfgComponents = new HashMap<>();
-		mBoogieASTNode = new BoogieASTNode(new ILocation() {
+		ILocation dummyLoc = new ILocation() {
 			
 			@Override
 			public int getStartLine() {
 				// TODO Auto-generated method stub
-				return -1;
+				return 1;
 			}
 			
 			@Override
 			public int getStartColumn() {
 				// TODO Auto-generated method stub
-				return -1;
+				return 1;
 			}
 			
 			@Override
 			public String getFileName() {
 				// TODO Auto-generated method stub
-				return "";
+				return preferenceManager.getFileName();
 			}
 			
 			@Override
 			public int getEndLine() {
 				// TODO Auto-generated method stub
-				return -1;
+				return 3;
 			}
 			
 			@Override
 			public int getEndColumn() {
 				// TODO Auto-generated method stub
-				return -1;
+				return 1;
 			}
 			
 			@Override
@@ -124,12 +122,15 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 				// TODO Auto-generated method stub
 				return false;
 			}
-		});
+		};
+		mPayload = new Payload(dummyLoc);
+		mCfgComponents = new HashMap<>();
+		mBoogieASTNode = new BoogieASTNode(dummyLoc);
 		// create a root + error location;
 		final BoogieIcfgLocation root = new BoogieIcfgLocation("root", mProcedure, false, mBoogieASTNode);
 		mCfgComponents.put("root",
 				new HybridCfgComponent("root", root, root, Collections.EMPTY_LIST, Collections.EMPTY_LIST));
-		final BoogieIcfgLocation error = new BoogieIcfgLocation("error", mProcedure, true, mBoogieASTNode);
+		final BoogieIcfgLocation error = new BoogieIcfgLocation("error", mProcedure, false, mBoogieASTNode);
 		mCfgComponents.put("error",
 				new HybridCfgComponent("error", error, error, Collections.EMPTY_LIST, Collections.EMPTY_LIST));
 	}
@@ -140,10 +141,10 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 			mLogger.info("ID:" + key + ", Component:" + value.toString());
 		});
 		// root, initial state
-		icfg.addLocation(mCfgComponents.get("root").getStart(), true, false, false, false, false);
+		icfg.addLocation(mCfgComponents.get("root").getStart(), true, false, true, false, false);
 		mCfgComponents.remove("root");
 		// error, error state
-		icfg.addLocation(mCfgComponents.get("error").getStart(), false, true, false, false, false);
+		icfg.addLocation(mCfgComponents.get("error").getStart(), false, true, false, true, false);
 		mCfgComponents.remove("error");
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
@@ -187,7 +188,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		// for locations
 		locationsToIcfg(locations);
 		// for transitions
-		transitionsToIcfg(transitions);
+		transitionsToIcfg(transitions, initialLocation);
 	}
 	
 	/*
@@ -329,7 +330,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 	/*
 	 * Transition methods
 	 */
-	private void transitionsToIcfg(final List<Transition> transitions) {
+	private void transitionsToIcfg(final List<Transition> transitions, Location initialLocation) {
 		// a transition in a hybrid automaton is simply an edge from one location to another.
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
@@ -345,5 +346,17 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 			source.addOutgoing(transition);
 			target.addIncoming(transition);
 		});
+		
+		// the source of the transition is the the end of the source CFG component
+		final BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
+		// the target of the transition is the the start of the target CFG component
+		final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
+		// TODO: transformula
+		final UnmodifiableTransFormula transFormula =
+				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		source.addOutgoing(transition);
+		target.addIncoming(transition);
+		
 	}
 }
