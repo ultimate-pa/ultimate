@@ -87,8 +87,8 @@ public final class RandomNwaBenchmarkCreator {
 	public static void main(final String[] args) throws IOException {
 		// Settings for both methods
 		final int n = 100;
-		final int k = 1;
-		final int amount = 500;
+		final int k = 2;
+		final int amount = 20;
 		final int operationSwitch = 0;
 		final boolean useRandomTvModel = true;
 
@@ -103,13 +103,13 @@ public final class RandomNwaBenchmarkCreator {
 		final float acceptanceInPercMin = 50f;
 		final float acceptanceInPercMax = 50f;
 		final float totalityInternalInPercMin = 1f;
-		final float totalityInternalInPercMax = 200f;
-		final float totalityCallInPercMin = 1f;
-		final float totalityCallInPercMax = 200f;
-		final float totalityReturnInPercMin = 1f;
-		final float totalityReturnInPercMax = 200f;
-		final float totalityHierPredInPercMin = 50f;
-		final float totalityHierPredInPercMax = 50f;
+		final float totalityInternalInPercMax = 300f;
+		final float totalityCallInPercMin = 0f;
+		final float totalityCallInPercMax = 0f;
+		final float totalityReturnInPercMin = 0f;
+		final float totalityReturnInPercMax = 0f;
+		final float totalityHierPredInPercMin = 0f;
+		final float totalityHierPredInPercMax = 0f;
 		final int stepSize = 2;
 		boolean uniformStep = true;
 

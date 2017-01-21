@@ -290,8 +290,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 		
 		// Full multi-pebble simulation
-//		measureMethodPerformance(automatonName, ESimulationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
-//				timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
+				timeOutMillis, stateFactory, reachableOperand);
 		measureMethodPerformance(automatonName, ESimulationType.DELAYED_FULL_MULTIPEBBLE, false, getServices(),
 				timeOutMillis, stateFactory, reachableOperand);
 
