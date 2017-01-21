@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,7 +49,9 @@ import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -60,7 +63,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * The {@link CommandLineController} class provides a user interface for command lines based on the {@link IController}
@@ -279,6 +285,36 @@ public class CommandLineController implements IController<RunDefinition> {
 		default:
 			mLogger.info("RESULT: Ultimate could not prove your program: " + summarizer.getResultDescription());
 			break;
+		}
+
+		// TODO: Add option to control the writing of .csv files
+		final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, BenchmarkResult.class)
+				.stream().map(a -> a.getBenchmark()).collect(Collectors.toList());
+		writeCsvLogs(csvProviders);
+	}
+
+	private void writeCsvLogs(final List<ICsvProviderProvider<?>> csvProviders) {
+		if (csvProviders == null || csvProviders.isEmpty()) {
+			return;
+		}
+		final String timestamp = CoreUtil.getCurrentDateTimeAsString();
+		for (final ICsvProviderProvider<?> provider : csvProviders) {
+			if (provider == null) {
+				continue;
+			}
+			final ICsvProvider<?> csvProvider = provider.createCsvProvider();
+			if (csvProvider.isEmpty()) {
+				continue;
+			}
+			final String filename = "Csv-" + provider.getClass().getSimpleName() + "-" + timestamp + ".csv";
+			try {
+				final File file = CoreUtil.writeFile(filename, csvProvider.toCsv(null, null, true).toString());
+				if (file != null) {
+					mLogger.info("Written .csv to " + file.getAbsolutePath());
+				}
+			} catch (final IOException e) {
+				mLogger.error("Could not write .csv log for " + filename + ":", e);
+			}
 		}
 	}
 

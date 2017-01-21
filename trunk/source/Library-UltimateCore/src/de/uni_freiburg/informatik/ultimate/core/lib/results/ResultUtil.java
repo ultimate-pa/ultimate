@@ -53,7 +53,11 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  * @author Jan Leike
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class ResultUtil {
+public final class ResultUtil {
+
+	private ResultUtil() {
+		// do not instantiate utility class
+	}
 
 	public static <TE extends IElement, E> List<ILocation> getLocationSequence(final IProgramExecution<TE, E> pe) {
 		final List<ILocation> result = new ArrayList<>();
@@ -70,11 +74,10 @@ public class ResultUtil {
 	 */
 	public static <E extends IResult> Collection<E> filterResults(final Map<String, List<IResult>> ultimateIResults,
 			final Class<E> resClass) {
-		final ArrayList<E> filteredList = new ArrayList<>();
+		final List<E> filteredList = new ArrayList<>();
 		for (final Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
 			for (final IResult res : entry.getValue()) {
 				if (resClass.isAssignableFrom(res.getClass())) {
-					// if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
 					final E benchmarkResult = (E) res;
 					filteredList.add(benchmarkResult);
@@ -186,8 +189,7 @@ public class ResultUtil {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			final Map<String, List<IResult>> ultimateIResults, final Class<E> benchmarkClass) {
-		final Collection<BenchmarkResult> benchmarks =
-				filterResults(ultimateIResults, BenchmarkResult.class);
+		final Collection<BenchmarkResult> benchmarks = filterResults(ultimateIResults, BenchmarkResult.class);
 		final List<E> filteredList = new ArrayList<>();
 		for (final BenchmarkResult<?> benchmarkResult : benchmarks) {
 			@SuppressWarnings("unchecked")

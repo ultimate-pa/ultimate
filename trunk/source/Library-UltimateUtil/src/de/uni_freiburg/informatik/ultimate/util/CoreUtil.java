@@ -30,11 +30,13 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -66,19 +68,6 @@ public class CoreUtil {
 		return sPlatformLineSeparator;
 	}
 
-	public static File writeFile(final String filename, final String content) throws IOException {
-		final File outputFile = new File(filename);
-		outputFile.createNewFile();
-
-		final Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
-		try {
-			out.write(content);
-			return outputFile;
-		} finally {
-			out.close();
-		}
-	}
-
 	public static String getIsoUtcTimestamp() {
 		final TimeZone tz = TimeZone.getTimeZone("UTC");
 		// Quoted "Z" to indicate UTC, no timezone offset
@@ -87,21 +76,66 @@ public class CoreUtil {
 		return df.format(new Date());
 	}
 
-	public static void writeFile(final String filename, final String[] content) throws IOException {
+	public static File writeFile(final String filename, final String content) throws IOException {
+		return writeFile(filename, content, false);
+	}
 
-		final File outputFile = new File(filename);
-		outputFile.createNewFile();
+	public static File writeFile(final String filename, final String[] content) throws IOException {
+		return writeFile(filename, content, false);
+	}
 
-		final Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
-		try {
-			for (final String s : content) {
-				out.write(s);
-				out.write(sPlatformLineSeparator);
-			}
+	public static File appendFile(final String filename, final String content) throws IOException {
+		return writeFile(filename, content, true);
+	}
 
-		} finally {
-			out.close();
+	public static File appendFile(final String filename, final String[] content) throws IOException {
+		return writeFile(filename, content, true);
+	}
+
+	private static File writeFile(final String filename, final String[] content, final boolean append)
+			throws IOException {
+		if (content == null || content.length == 0) {
+			return null;
 		}
+		final File file = createFile(filename);
+		final IWriterConsumer funWrite = fw -> {
+			for (final String line : content) {
+				fw.append(line);
+				fw.append(sPlatformLineSeparator);
+			}
+		};
+		writeFile(funWrite, append, file);
+		return file;
+	}
+
+	private static File writeFile(final String filename, final String content, final boolean append)
+			throws IOException {
+		if (content == null || content.isEmpty()) {
+			return null;
+		}
+		final File file = createFile(filename);
+		writeFile(fw -> fw.append(content), append, file);
+		return file;
+	}
+
+	private static void writeFile(final IWriterConsumer funWrite, final boolean append, final File file)
+			throws FileNotFoundException, UnsupportedEncodingException, IOException {
+		try (FileOutputStream os = new FileOutputStream(file, append);
+				Writer fw = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"))) {
+			funWrite.consume(fw);
+			fw.close();
+		}
+	}
+
+	private static File createFile(final String filename) {
+		final File file = new File(filename);
+		if (!file.isDirectory()) {
+			final File parentFile = file.getParentFile();
+			if (parentFile != null) {
+				parentFile.mkdirs();
+			}
+		}
+		return file;
 	}
 
 	public static String readFile(final String filename) throws IOException {
@@ -216,7 +250,7 @@ public class CoreUtil {
 		}
 
 		final char last = original.charAt(original.length() - 1);
-		if (forceRemoveLastLinebreak || last != '\n' && last != '\r') {
+		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
 			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");
 		}
 		return sb;
@@ -275,6 +309,7 @@ public class CoreUtil {
 	}
 
 	public static String convertStreamToString(final InputStream is) {
+		@SuppressWarnings("resource")
 		final Scanner s = new Scanner(is).useDelimiter("\\A");
 		return s.hasNext() ? s.next() : "";
 	}
@@ -340,5 +375,10 @@ public class CoreUtil {
 	@FunctionalInterface
 	public interface IMapReduce<T, K> {
 		T reduce(T lastValue, K entry);
+	}
+
+	@FunctionalInterface
+	private interface IWriterConsumer {
+		void consume(Writer fw) throws IOException;
 	}
 }
