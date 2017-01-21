@@ -19,11 +19,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTa
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class HCStateFactory implements IStateFactory<HCPredicate> {
@@ -37,12 +35,12 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 	private final TermTransferrer mTermTransferrer;
 	private final boolean mTransferToScriptNeeded;
 
-	private final PredicateFactory mPredicateFactory;
+	private final HCPredicateFactory mPredicateFactory;
 
-	public HCStateFactory(final ManagedScript backendSmtSolverScript, final PredicateFactory predicateFactory,
+	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
 			final HCSymbolTable symbolTable) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		mEmtpyStack = createDontCarePredicate(symbolTable.getDontCareHornClausePredicateSymbol());
+		mEmtpyStack = predicateFactory.createDontCarePredicate(symbolTable.getDontCareHornClausePredicateSymbol());
 
 		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
 		mTransferToScriptNeeded = true;
@@ -50,35 +48,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 		mPredicateFactory = predicateFactory;
 	}
 
-	public HCPredicate createDontCarePredicate(final HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = new HCPredicate(loc, 
-				mBackendSmtSolverScript.term(this, HornUtilConstants.DONTCARE), 
-				new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
-	}
 
-	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, loc.toString()), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
-	}
-
-	public HCPredicate truePredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
-	}
-
-	public HCPredicate falsePredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = new HCPredicate(loc, mBackendSmtSolverScript.term(this, "false"), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
-	}
 
 	private HCPredicate reduceFormula(final HCPredicate[] preds, boolean andOp) {
 		// TODO: Check hashing of TermVariable and HCVar.

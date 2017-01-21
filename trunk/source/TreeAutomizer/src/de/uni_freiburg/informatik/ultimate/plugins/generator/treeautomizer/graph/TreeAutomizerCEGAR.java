@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
@@ -86,7 +85,7 @@ public class TreeAutomizerCEGAR {// implements
 
 	private PredicateUnifier mPredicateUnifier;
 
-	private final PredicateFactory mPredicateFactory;
+	private final HCPredicateFactory mPredicateFactory;
 
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
 			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script, 
@@ -97,14 +96,14 @@ public class TreeAutomizerCEGAR {// implements
 		mRootNode = rootNode;
 		mIteration = 0;
 
-		mPredicateFactory = new PredicateFactory(services, mBackendSmtSolverScript, 
+		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, 
 				hcSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
 		mStateFactory = new HCStateFactory(script, mPredicateFactory, hcSymbolTable);
 	
-		mInitialPredicate = mStateFactory
+		mInitialPredicate = mPredicateFactory
 				.truePredicate(mSymbolTable.getTrueHornClausePredicateSymbol());
-		mFinalPredicate = mStateFactory
+		mFinalPredicate = mPredicateFactory
 				.falsePredicate(mSymbolTable.getFalseHornClausePredicateSymbol());
 		
 	
@@ -138,7 +137,7 @@ public class TreeAutomizerCEGAR {// implements
 		for (final HornClause clause : hornClauses) {
 			final List<HCPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getTailPredicates()) {
-				tail.add(mStateFactory.truePredicate(sym));
+				tail.add(mPredicateFactory.truePredicate(sym));
 			}
 			if (tail.isEmpty()) {
 				tail.add(mInitialPredicate);
@@ -148,7 +147,7 @@ public class TreeAutomizerCEGAR {// implements
 						tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<HornClause, HCPredicate>(clause,
-						tail, mStateFactory.truePredicate(clause.getHeadPredicate())));
+						tail, mPredicateFactory.truePredicate(clause.getHeadPredicate())));
 			}
 		}
 

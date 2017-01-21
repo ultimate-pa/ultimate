@@ -26,47 +26,25 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 
 	private final Map<Term, HCVar> mProgramVars;
 	
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap) {
-		
-		super(serialNumber, new String[]{}, term, vars, null);
-		mProgramPoint = programPoint;
-		
-		mProgramVars = varsMap;
-	}
-	
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
-			final Map<Term, HCVar> varsMap) {
-
-		super(HashUtils.hashHsieh(serialHCPredicate, programPoint, term), new String[] {}, term, vars, null);
-		mProgramPoint = programPoint;
-		mProgramVars = varsMap;
-	}
-	
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
-			final Map<Term, HCVar> varsMap) {
-		this(programPoint, term, new HashSet<>(varsMap.values()), varsMap);
-	}
-
-	
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new attributes.
 	 */
 	private final static String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
 
-
-	//@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap) {
+		super(serialNumber, new String[]{}, term, vars, null);
+		mProgramPoint = programPoint;
+		
+		mProgramVars = varsMap;
 	}
 
-	public HCPredicate(final Term formula, final HCPredicate oldPredicate, final Map<Term, HCVar> varsMap) {
-		// TODO: Intersect oldPredicate.mVars with formula.vars
-		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula,
-				new HashSet<>(varsMap.values()), varsMap);
-
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
+			final Map<Term, HCVar> varsMap) {
+		this(programPoint, HashUtils.hashHsieh(serialHCPredicate, programPoint, term),
+			term, new HashSet<>(varsMap.values()), varsMap);
 	}
-	
+
 	@Override
 	public Term getFormula() {
 		return mFormula;
@@ -110,5 +88,10 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	@Override
 	public int hashCode() {
 		return super.mSerialNumber;
+	}
+
+	//@Override
+	protected String[] getFieldNames() {
+		return s_AttribFields;
 	}
 }

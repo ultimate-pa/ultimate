@@ -18,7 +18,7 @@ public class TreeChecker {
 	private final ManagedScript mBackendSmtSolverScript;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
-	private final SSABuilder mSSABuilder;
+	private final HCSSABuilder mSSABuilder;
 	private ILogger mLogger;
 	
 	public TreeChecker(final ITreeRun<HornClause, HCPredicate> tree,
@@ -28,7 +28,7 @@ public class TreeChecker {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
-		mSSABuilder = new SSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript);
+		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript);
 		
 		mLogger = logger;
 	}
