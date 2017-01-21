@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final MinimizationResult mMinimizationResult;
 	private final IDoubleDeckerAutomaton<LETTER, IPredicate> mMinimizedAutomaton;
@@ -103,6 +104,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final IStateFactory<IPredicate> resultCheckPredFac, final Function<LCSP, LCS> lcsProvider,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataMinimizationTimeout {
 
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final long startTime = System.nanoTime();
 
@@ -249,11 +251,19 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case NWA_MAX_SAT2: {
-			minimizationResult = new MinimizationResult(true, true,
-					new MinimizeNwaPmaxSat<>(autServices, predicateFactoryRefinement,
-							(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
-							new MinimizeNwaMaxSat2.Settings<IPredicate>()
-									.setAddMapOldState2NewState(computeOldState2NewStateMapping)));
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			MinimizationResult localResult = null;
+			try {
+				localResult = new MinimizationResult(true, true,
+						new MinimizeNwaPmaxSat<>(autServicesWithTimeout, predicateFactoryRefinement,
+								(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
+								new MinimizeNwaMaxSat2.Settings<IPredicate>()
+								.setAddMapOldState2NewState(computeOldState2NewStateMapping)));
+			} catch (final AutomataOperationCanceledException aoce) {
+				// just catch and ignore the exception, probably only a local timeout
+				localResult = constructNoopMinimizationResult(true, operand);
+			}
+			minimizationResult = localResult;
 			break;
 		}
 		case RAQ_DIRECT_SIMULATION: {
@@ -268,9 +278,17 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DIRECT_SIMULATION: {
-			minimizationResult = new MinimizationResult(true, true, 
-					new ReduceNwaDirectFullMultipebbleSimulation<LETTER, IPredicate>(autServices,
-					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			MinimizationResult localResult = null;
+			try {
+				localResult = new MinimizationResult(true, true, 
+						new ReduceNwaDirectFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
+								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			} catch (final AutomataOperationCanceledException aoce) {
+				// just catch and ignore the exception, probably only a local timeout
+				localResult = constructNoopMinimizationResult(true, operand);
+			}
+			minimizationResult = localResult;
 			break;
 		}
 		case NWA_COMBINATOR_MULTI_DEFAULT: {
@@ -323,30 +341,46 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DELAYED_SIMULATION: {
-			minimizationResult = new MinimizationResult(true, true, 
-					new ReduceNwaDelayedFullMultipebbleSimulation<LETTER, IPredicate>(autServices,
-					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			MinimizationResult localResult = null;
+			try {
+				localResult = new MinimizationResult(true, true, 
+						new ReduceNwaDelayedFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
+								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
+			} catch (final AutomataOperationCanceledException aoce) {
+				// just catch and ignore the exception, probably only a local timeout
+				localResult = constructNoopMinimizationResult(true, operand);
+			}
+			minimizationResult = localResult;
 			break;
 		}
 		case NONE: {
 			// no-op minimization
-			minimizationResult = new MinimizationResult(false, false, new IMinimizeNwa<LETTER, IPredicate>() {
-				@Override
-				public INestedWordAutomaton<LETTER, IPredicate> getResult() {
-					return operand;
-				}
-
-				@Override
-				public boolean checkResult(final IStateFactory<IPredicate> stateFactory)
-						throws AutomataLibraryException {
-					return true;
-				}
-			});
+			final boolean minimizationAttempt = false;
+			minimizationResult = constructNoopMinimizationResult(minimizationAttempt, operand);
 			break;
 		}
 		default:
 			throw new AssertionError("Unknown minimization method.");
 		}
+		return minimizationResult;
+	}
+
+	private MinimizationResult constructNoopMinimizationResult(final boolean minimizationAttempt,
+			final INestedWordAutomaton<LETTER, IPredicate> operand) {
+		final MinimizationResult minimizationResult;
+		minimizationResult = new MinimizationResult(minimizationAttempt, false, new IMinimizeNwa<LETTER, IPredicate>() {
+			@Override
+			public INestedWordAutomaton<LETTER, IPredicate> getResult() {
+				return operand;
+			}
+
+			@Override
+			public boolean checkResult(final IStateFactory<IPredicate> stateFactory)
+					throws AutomataLibraryException {
+				return true;
+			}
+		});
 		return minimizationResult;
 	}
 

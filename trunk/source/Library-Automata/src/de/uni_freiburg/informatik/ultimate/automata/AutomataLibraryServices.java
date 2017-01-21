@@ -53,6 +53,11 @@ public class AutomataLibraryServices {
 		mProgressAwareTimer = ultimateServices.getProgressMonitorService();
 	}
 	
+	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices, final long timeoutInMilliseconds) {
+		mLoggingService = ultimateServices.getLoggingService();
+		mProgressAwareTimer = ultimateServices.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
+	}
+	
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}
