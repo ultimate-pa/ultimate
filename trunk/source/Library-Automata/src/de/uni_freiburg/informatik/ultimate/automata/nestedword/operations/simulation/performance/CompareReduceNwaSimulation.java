@@ -195,7 +195,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			final AutomataLibraryServices services, final long timeout, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
-		final IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
+		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
 		boolean timedOut = false;
 		boolean outOfMemory = false;
 		Object method = null;

@@ -321,8 +321,8 @@ class RunConstructor<LETTER, STATE> {
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws AutomataOperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
-		if (mServices.getProgressMonitorService() != null
-				&& !mServices.getProgressMonitorService().continueProcessing()) {
+		if (mServices.getProgressAwareTimer() != null
+				&& !mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		assert !mSummaryMustContainAccepting || mGoal != null;

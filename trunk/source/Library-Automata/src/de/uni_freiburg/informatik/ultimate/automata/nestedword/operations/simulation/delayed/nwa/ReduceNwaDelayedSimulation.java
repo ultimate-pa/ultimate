@@ -130,9 +130,9 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
-				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DelayedNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new DelayedNwaGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory, possibleEquivalenceClasses)));
 	}

@@ -303,7 +303,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 				
 		@SuppressWarnings("unchecked")
 		public  LinkedList<NodeData> expand(final boolean iteration1, final boolean init) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			final LinkedList<NodeData> newNodes = new LinkedList<NodeData>();
@@ -414,7 +414,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void calculateAcceptingStates() throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			for(final NodeData currentNodeSet1:currentTree){
@@ -438,7 +438,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public boolean cover(final boolean acc) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			//cover() will need to write appropriate outgoing transition for previous nodes
@@ -576,7 +576,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void finishACCover(final HashSet<NodeData> nodes) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			final HashSet<NodeData> nodesToBeFinishedFirst = new HashSet<NodeData>();
@@ -618,7 +618,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 		
 		public void finishACCover2(final NodeData parentNode,final LinkedList<NodeData> nodes) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			final HashSet<NodeData> nodesToBeFinishedFirst = new HashSet<NodeData>();

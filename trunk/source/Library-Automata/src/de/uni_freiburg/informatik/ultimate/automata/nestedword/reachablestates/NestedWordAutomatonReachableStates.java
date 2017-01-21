@@ -830,7 +830,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	final boolean checkTransitionsReturnedConsistent() throws AutomataOperationCanceledException {
 		boolean result = true;
 		for (final STATE state : getStates()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
@@ -969,7 +969,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 			do {
 				while (!mForwardWorklist.isEmpty()) {
-					if (!getServices().getProgressMonitorService().continueProcessing()) {
+					if (!getServices().getProgressAwareTimer().continueProcessing()) {
 						final RunningTaskInfo rti = constructRunningTaskInfo();
 						throw new AutomataOperationCanceledException(rti);
 					}
@@ -1007,7 +1007,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 				}
 				while (mForwardWorklist.isEmpty() && !mDownPropagationWorklist.isEmpty()) {
-					if (!getServices().getProgressMonitorService().continueProcessing()) {
+					if (!getServices().getProgressAwareTimer().continueProcessing()) {
 						// TODO: Check if this has a performance impact
 						// This exception was included because of timeouts on
 						// e.g.

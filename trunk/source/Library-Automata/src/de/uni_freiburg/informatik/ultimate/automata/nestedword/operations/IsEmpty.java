@@ -438,7 +438,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		
 		while (!isQueueEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
 				throw new AutomataOperationCanceledException(rti);

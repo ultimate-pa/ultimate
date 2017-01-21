@@ -398,7 +398,7 @@ final class Generator {
 	}
 	
 	private static void checkTimeout(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
-		if (!services.getProgressMonitorService().continueProcessing()) {
+		if (!services.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(Generator.class);
 		}
 	}

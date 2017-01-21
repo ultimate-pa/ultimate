@@ -162,7 +162,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 		}
 		if(result!=null){
 			do{
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				counter_run++;
@@ -203,7 +203,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 				}
 			}
 			else{
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 	                throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedLeaf = null;

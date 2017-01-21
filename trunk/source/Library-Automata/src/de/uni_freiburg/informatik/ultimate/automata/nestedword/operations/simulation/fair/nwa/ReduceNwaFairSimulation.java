@@ -127,10 +127,10 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
-				new FairNwaSimulation<>(services.getProgressMonitorService(),
+				new FairNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairNwaGameGraph<>(services, services.getProgressMonitorService(),
+						new FairNwaGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory, possibleEquivalentClasses)));
 	}

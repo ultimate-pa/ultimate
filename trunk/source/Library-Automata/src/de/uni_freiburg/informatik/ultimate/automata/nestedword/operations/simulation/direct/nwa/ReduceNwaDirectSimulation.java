@@ -127,9 +127,9 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Iterable<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
-				new DirectNwaSimulation<>(services.getProgressMonitorService(),
+				new DirectNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DirectNwaGameGraph<>(services, services.getProgressMonitorService(),
+						new DirectNwaGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory, possibleEquivalenceClasses)));
 	}

@@ -53,7 +53,7 @@ public abstract class InitialPartitionProcessor<STATE> {
 	
 	public void process(final Collection<Set<STATE>> equivalenceClasses) throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : equivalenceClasses) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final long initialNodes =
 						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(equivalenceClasses);
 				final RunningTaskInfo rti =

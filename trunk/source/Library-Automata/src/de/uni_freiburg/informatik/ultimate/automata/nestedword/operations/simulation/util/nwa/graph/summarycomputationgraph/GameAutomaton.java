@@ -91,7 +91,7 @@ public class GameAutomaton<LETTER, STATE>
 	@Override
 	protected void constructInitialStates() throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final long initialNodes =
 						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
 				final RunningTaskInfo rti =

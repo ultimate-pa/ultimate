@@ -116,7 +116,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 					deadEndRemove();
 					break;
 				}
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedTree = null;
@@ -152,7 +152,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 					break;
 				}
 			} else {
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				bufferedTree = expand(false);

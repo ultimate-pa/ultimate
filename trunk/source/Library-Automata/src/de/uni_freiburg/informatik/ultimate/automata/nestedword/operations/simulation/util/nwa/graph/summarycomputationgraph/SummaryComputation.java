@@ -122,7 +122,7 @@ public class SummaryComputation<LETTER, STATE> {
 		mNeedSpoilerWinningSink = computeSpoilerWinningSink();
 		initialize();
 		while (!mWorklist.isEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "processing worklist (game automaton has " + 
 						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + " elements)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
@@ -210,7 +210,7 @@ public class SummaryComputation<LETTER, STATE> {
 
 	private void initialize() throws AutomataOperationCanceledException {
 		for (final IGameState gs : mGameAutomaton.getStates()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "initializing worklist (game automaton has " + 
 						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + 
 						" elements, input had " + mOperand.size() + " states)";

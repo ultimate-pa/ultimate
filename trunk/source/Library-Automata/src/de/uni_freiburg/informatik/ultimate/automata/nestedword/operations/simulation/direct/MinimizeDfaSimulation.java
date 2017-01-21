@@ -99,9 +99,9 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 	public MinimizeDfaSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new DirectSimulation<>(services.getProgressMonitorService(),
+				new DirectSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
-						new DirectGameGraph<>(services, services.getProgressMonitorService(),
+						new DirectGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
@@ -138,10 +138,10 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
 			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
-					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
+					mServices.getProgressAwareTimer(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
 			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<LETTER, STATE>(
-					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
 			final INestedWordAutomatonSimple<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {

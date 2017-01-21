@@ -71,7 +71,7 @@ public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETT
 	 * @return true iff {@link AutomataLibraryServices} object requests cancellation
 	 */
 	protected final boolean isCancellationRequested() {
-		return !mServices.getProgressMonitorService().continueProcessing();
+		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
 	
 	@Override

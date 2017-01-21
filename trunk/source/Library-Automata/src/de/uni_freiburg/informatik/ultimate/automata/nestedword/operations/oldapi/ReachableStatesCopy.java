@@ -136,7 +136,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {
 		assert sinkState != null : "sink state must not be null";
 		for (final STATE state : mTraversedNwa.getStates()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			

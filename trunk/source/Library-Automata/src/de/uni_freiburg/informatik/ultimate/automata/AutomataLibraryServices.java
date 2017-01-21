@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 public class AutomataLibraryServices {
 	
 	private final ILoggingService mLoggingService;
-	private final IProgressMonitorService mProgressMonitorService;
+	private final IProgressAwareTimer mProgressAwareTimer;
 	
 	/**
 	 * Constructor.
@@ -49,14 +50,14 @@ public class AutomataLibraryServices {
 	 */
 	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices) {
 		mLoggingService = ultimateServices.getLoggingService();
-		mProgressMonitorService = ultimateServices.getProgressMonitorService();
+		mProgressAwareTimer = ultimateServices.getProgressMonitorService();
 	}
 	
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}
 	
-	public IProgressMonitorService getProgressMonitorService() {
-		return mProgressMonitorService;
+	public IProgressAwareTimer getProgressAwareTimer() {
+		return mProgressAwareTimer;
 	}
 }

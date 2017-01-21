@@ -133,7 +133,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 				
 		@SuppressWarnings("unchecked")
 		public  HashMap<NodeData, LinkedList<NodeData>> expand(boolean iteration1, boolean init) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			final HashMap<NodeData, LinkedList<NodeData>> newNodes = new HashMap<NodeData, LinkedList<NodeData>>();
@@ -308,7 +308,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 		}*/
 		
 		public boolean cover(boolean acc) throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			//cover() will need to write appropriate outgoing transition for previous nodes
@@ -460,7 +460,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 		
 		@SuppressWarnings("unchecked")
 		public void finishACCover() throws AutomataOperationCanceledException{
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
                 throw new AutomataOperationCanceledException(this.getClass());
 			}
 			assert !ACCNodes.isEmpty();

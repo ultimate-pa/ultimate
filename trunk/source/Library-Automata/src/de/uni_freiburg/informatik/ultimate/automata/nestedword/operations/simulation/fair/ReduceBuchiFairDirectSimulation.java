@@ -124,10 +124,10 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
-				new FairDirectSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new FairDirectSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}

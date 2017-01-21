@@ -204,7 +204,7 @@ final class Solver {
 	}
 	
 	private void checkTimeout() throws AutomataOperationCanceledException {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}

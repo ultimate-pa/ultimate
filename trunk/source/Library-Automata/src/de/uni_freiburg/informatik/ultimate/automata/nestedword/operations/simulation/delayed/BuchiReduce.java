@@ -95,9 +95,9 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	public BuchiReduce(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new DelayedSimulation<>(services.getProgressMonitorService(),
+				new DelayedSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
-						new DelayedGameGraph<>(services, services.getProgressMonitorService(),
+						new DelayedGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
@@ -134,10 +134,10 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
-					mServices.getProgressMonitorService(), mLogger, mOperand, stateFactory);
+					mServices.getProgressAwareTimer(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
 			final DelayedSimulation<LETTER, STATE> sccSim = new DelayedSimulation<>(
-					mServices.getProgressMonitorService(), mLogger, true, stateFactory, graph);
+					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
 			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {

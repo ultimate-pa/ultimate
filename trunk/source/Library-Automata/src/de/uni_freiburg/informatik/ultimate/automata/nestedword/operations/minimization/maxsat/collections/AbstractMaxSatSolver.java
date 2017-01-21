@@ -182,7 +182,7 @@ public abstract class AbstractMaxSatSolver<V> {
 			if (mConjunctionEquivalentToFalse) {
 				return false;
 			}
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(getRunningTaskInfo());
 			}
 		}

@@ -541,10 +541,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new FairSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new FairGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}

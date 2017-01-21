@@ -342,8 +342,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 					enqueueAndMark(summarySuccDoubleDecker);
 				}
 			}
-			if (mServices.getProgressMonitorService() != null
-					&& !mServices.getProgressMonitorService().continueProcessing()) {
+			if (mServices.getProgressAwareTimer() != null
+					&& !mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			
@@ -758,7 +758,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 		
 		for (final STATE state : mDeadEnds) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).removeState(state);

@@ -141,7 +141,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					result.addInternalTransition(state, letter, succState);
 				}
 			}
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -811,7 +811,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				mRejectingPairsR2L.put(iState, new HashSet<>(0));
 			}
 			for (Integer iState = iInit; iState < numOfStates; ++iState) {
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
+				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 				

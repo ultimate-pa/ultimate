@@ -298,7 +298,7 @@ public class SenwaWalker<LETTER, STATE> {
 			}
 		}
 		
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
