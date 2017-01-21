@@ -162,7 +162,7 @@ public class TreeAutomizerCEGAR {// implements
 		for (final HornClause clause : hornClauses) {
 			final List<HCPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getTailPredicates()) {
-				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
+				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym, this));
 			}
 			if (tail.isEmpty()) {
 				tail.add(mInitialPredicate);
@@ -172,7 +172,7 @@ public class TreeAutomizerCEGAR {// implements
 						tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<HornClause, HCPredicate>(clause,
-						tail, mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate())));
+						tail, mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate(), this)));
 			}
 		}
 

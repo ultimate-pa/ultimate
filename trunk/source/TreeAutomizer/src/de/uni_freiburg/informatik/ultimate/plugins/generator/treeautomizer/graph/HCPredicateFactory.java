@@ -71,12 +71,11 @@ public class HCPredicateFactory extends PredicateFactory {
 		mBackendSmtSolverScript.unlock(this); 
 	}
 	
-	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate) {
-		mTruePredicate = newPredicate(headPredicate, 
-				mBackendSmtSolverScript.term(this, "true"), 
+	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate, Object scriptLockOwner) {
+		final HCPredicate result = newPredicate(headPredicate, 
+				mBackendSmtSolverScript.term(scriptLockOwner, "true"), 
 				new HashMap<>());
-
-		return null;
+		return result;
 	}
 
 	
