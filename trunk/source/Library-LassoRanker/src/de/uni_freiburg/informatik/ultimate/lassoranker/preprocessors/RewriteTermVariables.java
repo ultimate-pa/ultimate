@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -199,7 +199,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 			tf.addOutVar(repVar, newOutVar);
 		}
 		
-		final Set<TermVariable> auxVars = tf.getAuxVars();
+		final List<TermVariable> auxVars = new ArrayList<>(tf.getAuxVars());
 		for (final TermVariable tv : auxVars) {
 			if (hasToBeReplaced(tv)) {
 				final TermVariable newAuxVar = mVarFactory.getOrConstructAuxVar(
@@ -207,6 +207,8 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 						mrepVarSort);
 				tf.removeAuxVar(tv);
 				tf.addAuxVars(Collections.singleton(newAuxVar));
+				final Term replacementTerm = constructReplacementTerm(newAuxVar);
+				mSubstitutionMapping.put(tv, replacementTerm);
 			}
 		}
 	}
