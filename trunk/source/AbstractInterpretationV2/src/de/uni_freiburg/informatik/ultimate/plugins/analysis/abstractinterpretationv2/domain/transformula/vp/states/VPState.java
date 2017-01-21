@@ -90,9 +90,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVar> vars,
 			final VPDomain<ACTION> domain,
-			// final ManagedScript script,
-			// final VPDomainPreanalysis preAnalysis,
-			// final VPStateFactory<ACTION> factory,
 			final boolean isTop) {
 		super(disEqualitySet, isTop, vars);
 		// mVars = Collections.unmodifiableSet(vars);
@@ -217,14 +214,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			// TODO inefficient.. (we only need edges from the tree but add the clique..)
 			final Set<EqNode> equalEqNodes = this.getEquivalentEqNodes(nodeFromVar);
 			for (final EqNode equalEqNode : equalEqNodes) {
-				//// Set<VPState<ACTION>> newStates = mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode,
-				//// resultStates);
-				// Set<VPState<ACTION>> newStates = new HashSet<>();
-				// for (VPState<ACTION> rs : resultStates) {
-				// newStates.addAll(mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode, rs));
-				//// resultStates.addAll(newStates);
-				// }
-				// resultStates.addAll(newStates);
 				// TODO: this disjoinAll-strategy is a fallback essentially --> is there something better??
 				final Set<VPState<ACTION>> states =
 						VPFactoryHelpers.addEquality(nodeFromVar, equalEqNode, resultState, mFactory);
@@ -247,8 +236,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			}
 		}
 
-		// VPState<ACTION> resultState = mDomain.getVpStateFactory().disjoinAll(resultStates);
-
 		return resultState;
 	}
 
@@ -261,10 +248,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	public boolean isBottom() {
 		return false;
 	}
-
-	// public boolean isTop() {
-	// return mIsTop;
-	// }
 
 	@Override
 	public boolean isEqualTo(final VPState<ACTION> other) {
@@ -307,7 +290,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public String toLogString() {
-		// return "VPState<ACTION>:\n" + mTerm.toString();
 		final StringBuilder sb = new StringBuilder();
 		sb.append("VPState\n");
 		sb.append("vars: " + mVars.toString() + "\n");
@@ -320,31 +302,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		sb.append("DisEqualities:" + getDisEqualities() + "\n");
 		return sb.toString();
-
-		// final StringBuilder sb = new StringBuilder();
-		//
-		// sb.append("VPState<ACTION>:\n");
-		// sb.append("Vars: " + mVars + "\n");
-		// sb.append("Graph: \n");
-		// for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
-		// if (graphNode.getRepresentative() == graphNode) {
-		// // print only the interesting graph nodes in full
-		// sb.append(graphNode.eqNode.toString());
-		// } else {
-		// sb.append(graphNode.toString());
-		// }
-		// sb.append('\n');
-		// }
-		//
-		// sb.append("Disequality Set: \n");
-		// for (final VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
-		// sb.append(pair.getFirst().toString());
-		// sb.append(", ");
-		// sb.append(pair.getSecond().toString());
-		// sb.append('\n');
-		// }
-		//
-		// return sb.toString();
 	}
 
 	@Override
@@ -444,18 +401,10 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		return result;
 	}
 
-	// public VPDomain<ACTION> getDomain() {
-	// return mDomain;
-	// }
-
 	public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
 		return accessingNode1 == accessingNode2 || !getDisEqualities()
 				.contains(new VPDomainSymmetricPair<>(find(accessingNode1), find(accessingNode2)));
 	}
-
-	// private EqNode find(EqNode node) {
-	// return mEqNodeToEqGraphNodeMap.get(node).find().nodeIdentifier.getEqNode();
-	// }
 
 	public Set<EqNode> getUnequalNodes(final EqNode callParamNode) {
 		final Set<EqNode> result = new HashSet<>();
@@ -482,10 +431,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	public EqNode find(final EqNode id) {
 		return mEqNodeToEqGraphNodeMap.get(id).find().nodeIdentifier;
 	}
-
-	// public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
-	// return mayEqual(new VPNodeIdentifier(accessingNode1), new VPNodeIdentifier(accessingNode2));
-	// }
 
 	@Override
 	public int hashCode() {

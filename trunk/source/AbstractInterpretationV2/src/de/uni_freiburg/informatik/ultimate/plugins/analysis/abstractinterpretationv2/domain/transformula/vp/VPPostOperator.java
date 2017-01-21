@@ -297,13 +297,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			// two "normal" terms are equated
 			
 			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping --> vanilla builder should suffice
-//			VPTfStateBuilder tfStateBuilder = mTfStateFactory.copy(tfPreState); 
-			//TODO: the wrapping could be done up front in tfStatePreparer..
-//			IElementWrapper lhsWrapper = WrapperFactory.wrapElement(lhs, tfStateBuilder);
 			IElementWrapper lhsWrapper = tfStateBuilder.getElementWrapper(lhs);
-//			IElementWrapper rhsWrapper = WrapperFactory.wrapElement(rhs, tfStateBuilder);
 			IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
-//			Set<ISingleElementWrapper> rhsWrappers = WrapperFactory.wrapElement(rhs, tfStateBuilder).getElements();
 			
 			if (lhsWrapper == null || rhsWrapper == null) {
 				return Collections.singleton(tfPreState);
@@ -325,18 +320,12 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 					// add (dis)equality
 					if (!negated) {
 						resultStatesForCurrentNodePair = 
-//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 										VPFactoryHelpers.addEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory)
-//										, mTfStateFactory)
-										;
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
 					} else {
 						resultStatesForCurrentNodePair = 
-//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
 										VPFactoryHelpers.addDisEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory)
-//										, mTfStateFactory)
-										;
+												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
 					
 					}
 					resultStates.addAll(resultStatesForCurrentNodePair);
@@ -419,9 +408,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			return Collections.singletonList(stateAfterLeaving);
 		}
 
-		// Set<VPState<ACTION>> resultStates = new HashSet<>();
 		final VPState<ACTION> copy = mDomain.getVpStateFactory().copy(stateAfterLeaving).build();
-		// resultStates.add(copy);
 
 		VPState<ACTION> resultState = copy;
 
@@ -439,10 +426,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<Pair<EqNode, EqNode>> equalitiesWithGlobals =
 					extractEqualitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (final Pair<EqNode, EqNode> pair : equalitiesWithGlobals) {
-				// resultStates.addAll(
-				// mDomain.getVpStateFactory().addEquality(
-				// pair.getFirst(), pair.getSecond(), resultStates));
-
 				// TODO: fallback, think through
 				final Set<VPState<ACTION>> newStates =
 						VPFactoryHelpers.addEquality(pair.getFirst(),
@@ -452,10 +435,6 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = extractDisequalitiesWithGlobals(callParam,
 					funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (final Pair<EqNode, EqNode> pair : disequalitiesWithGlobals) {
-				// resultStates.addAll(
-				// mDomain.getVpStateFactory().addDisEquality(
-				// pair.getFirst(), pair.getSecond(), resultStates));
-				// TODO: fallback, think through
 				final Set<VPState<ACTION>> newStates =
 						VPFactoryHelpers.addDisEquality(pair.getFirst(),
 								pair.getSecond(), resultState, mDomain.getVpStateFactory());
@@ -497,7 +476,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private Set<Pair<EqNode, EqNode>> extractEqualitiesWithGlobals(final Term callParam, final Term funcParam,
 			final VPState<ACTION> stateBeforeLeaving, final TransFormula varAssignment, final VPDomain<ACTION> domain) {
 		return extractEqualitiesWithProperty(callParam, funcParam, stateBeforeLeaving, varAssignment, domain,
-				node -> node.isGlobal());
+				EqNode::isGlobal);
 	}
 
 	/**

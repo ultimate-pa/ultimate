@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Yu-Wen Chen (yuwenchen1105@gmail.com
+ * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
@@ -44,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VpTfStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -109,12 +110,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		public VPState<ACTION> apply(final VPState<ACTION> first, final VPState<ACTION> second) {
 			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
 		}
-	}
-
-	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
-		// TODO: implement
-		assert false;
-		return null;
 	}
 
 	public ManagedScript getManagedScript() {
