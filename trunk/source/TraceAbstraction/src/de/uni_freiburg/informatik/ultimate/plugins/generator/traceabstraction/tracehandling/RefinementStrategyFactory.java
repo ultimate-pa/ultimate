@@ -139,6 +139,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
 					iteration, benchmark);
+		case RUBBER_TAIPAN:
+			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
+					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
+					benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,

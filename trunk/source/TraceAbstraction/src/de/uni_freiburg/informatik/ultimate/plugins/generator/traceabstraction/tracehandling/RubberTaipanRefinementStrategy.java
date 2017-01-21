@@ -58,22 +58,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
- * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
- * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceChecker} {@code Z3} and, if again not successful, {@code CVC4}.<br>
- * If none of those is successful, the strategy gives up.<br>
- * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
- * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
- * {@link InterpolationTechnique#FPandBP}.
+ * {@link RubberTaipanRefinementStrategy} is the small brother of the {@link TaipanRefinementStrategy}. It behaves the
+ * same except that it does not use abstract interpretation. We use it for comparisons.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
+public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
 	/**
 	 * @see #getModeForWindowsUsers().
 	 */
@@ -130,7 +123,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 	 * @param cegarLoopBenchmark
 	 *            benchmark
 	 */
-	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
+	public RubberTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateUnifier predicateUnifier, final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
@@ -220,9 +213,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		final boolean resetTraceChecker;
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
-			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
-			resetTraceChecker = false;
-			break;
 		case ABSTRACT_INTERPRETATION:
 			mCurrentMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
 			resetTraceChecker = true;
@@ -444,6 +434,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
+			assert false : "The rubber Taipan doesnt strike";
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
 					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, getPredicateUnifier());
