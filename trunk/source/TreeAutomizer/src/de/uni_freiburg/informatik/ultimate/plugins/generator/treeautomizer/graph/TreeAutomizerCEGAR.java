@@ -128,10 +128,8 @@ public class TreeAutomizerCEGAR {// implements
 
 		mStateFactory = new HCStateFactory(script, mPredicateFactory, hcSymbolTable);
 	
-		mInitialPredicate = mPredicateFactory
-				.truePredicate(mSymbolTable.getTrueHornClausePredicateSymbol());
-		mFinalPredicate = mPredicateFactory
-				.falsePredicate(mSymbolTable.getFalseHornClausePredicateSymbol());
+		mInitialPredicate = mPredicateFactory.getTruePredicate();
+		mFinalPredicate = mPredicateFactory.getFalsePredicate();
 		
 	
 		mCfgSmtToolkit = new CfgSmtToolkit(
@@ -164,7 +162,7 @@ public class TreeAutomizerCEGAR {// implements
 		for (final HornClause clause : hornClauses) {
 			final List<HCPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getTailPredicates()) {
-				tail.add(mPredicateFactory.truePredicate(sym));
+				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
 			if (tail.isEmpty()) {
 				tail.add(mInitialPredicate);
@@ -174,7 +172,7 @@ public class TreeAutomizerCEGAR {// implements
 						tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<HornClause, HCPredicate>(clause,
-						tail, mPredicateFactory.truePredicate(clause.getHeadPredicate())));
+						tail, mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate())));
 			}
 		}
 
@@ -311,7 +309,9 @@ public class TreeAutomizerCEGAR {// implements
 			}
 
 			mBackendSmtSolverScript.push(this, 1);
+			mBackendSmtSolverScript.unlock(this);
 			if (getCounterexampleFeasibility() == LBool.SAT) {
+				mBackendSmtSolverScript.lock(this);
 				mLogger.info("The program is unsafe, feasible counterexample.");
 				mLogger.info(mCounterexample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
@@ -319,6 +319,7 @@ public class TreeAutomizerCEGAR {// implements
 				return Result.UNSAFE;
 
 			}
+			mBackendSmtSolverScript.lock(this);
 			mLogger.debug("Getting Interpolants...");
 			constructInterpolantAutomaton();
 

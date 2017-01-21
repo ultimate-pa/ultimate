@@ -32,66 +32,84 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public class HCPredicateFactory extends PredicateFactory {
 
 	private ManagedScript mBackendSmtSolverScript;
+	private HCPredicate mDontCarePredicate;
+	private HCPredicate mTruePredicate;
+	private HCPredicate mFalsePredicate;
 
-	public HCPredicateFactory(IUltimateServiceProvider services, ManagedScript mgdScript, IIcfgSymbolTable symbolTable,
+	public HCPredicateFactory(IUltimateServiceProvider services, ManagedScript mgdScript, HCSymbolTable symbolTable,
 			SimplificationTechnique simplificationTechnique, XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		mBackendSmtSolverScript = mgdScript;
+		
+		mBackendSmtSolverScript.lock(this); 
+		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
+				mBackendSmtSolverScript.term(this, HornUtilConstants.DONTCARE), 
+				new HashMap<>());
+		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(), 
+				mBackendSmtSolverScript.term(this, "false"), 
+				new HashMap<>());
+		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(), 
+				mBackendSmtSolverScript.term(this, "true"), 
+				new HashMap<>());
+		mBackendSmtSolverScript.unlock(this); 
+	}
+	
+	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate) {
+		mTruePredicate = newPredicate(headPredicate, 
+				mBackendSmtSolverScript.term(this, "true"), 
+				new HashMap<>());
+
+		return null;
 	}
 
 	
-	public HCPredicate createDontCarePredicate(final HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = newPredicate(loc, 
-				mBackendSmtSolverScript.term(this, HornUtilConstants.DONTCARE), 
-				new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
+	public HCPredicate getTruePredicate() {
+		return mTruePredicate;
 	}
 
-	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = newPredicate(loc, mBackendSmtSolverScript.term(this, loc.toString()), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
+	public HCPredicate getFalsePredicate() {
+		return mFalsePredicate;
 	}
 
-	public HCPredicate truePredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = newPredicate(loc, mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
-	}
-
-	public HCPredicate falsePredicate(HornClausePredicateSymbol loc) {
-		mBackendSmtSolverScript.lock(this); 
-		final HCPredicate result = newPredicate(loc, mBackendSmtSolverScript.term(this, "false"), new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
-		return result;
+	public HCPredicate getDontCarePredicate() {
+		return mDontCarePredicate;
 	}
 
 
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, Map<Term, HCVar> varsMap) {
-		return new HCPredicate(loc, term, varsMap, null);
+		return new HCPredicate(loc, term, varsMap, computeClosedFormula(term));
 	}
-
 
 	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
 			Set<IProgramVar> vars, Map<Term, HCVar> substit) {
-		return new HCPredicate(mProgramPoint, hashCode, formula, vars, substit, null);
+		return new HCPredicate(mProgramPoint, hashCode, formula, vars, substit, computeClosedFormula(formula));
 	}	
+	
+	private Term computeClosedFormula(final Term formula) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (TermVariable fv : formula.getFreeVars()) {
+			ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
+			substitutionMapping.put(fv, defaultConstantForFv);
+		}
+		return new Substitution(mBackendSmtSolverScript, substitutionMapping).transform(formula);
+	}
+
+	
 }

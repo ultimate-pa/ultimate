@@ -68,7 +68,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 			final HCSymbolTable symbolTable) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 
-		mEmtpyStack = predicateFactory.createDontCarePredicate(symbolTable.getDontCareHornClausePredicateSymbol());
+		mEmtpyStack = predicateFactory.getDontCarePredicate();
 
 		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
 		mTransferToScriptNeeded = true;
