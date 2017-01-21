@@ -107,6 +107,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * non-strict inequality. If set to false we use only one non-strict inequality.
 	 */
 	private final static boolean mAlwaysStrictAndNonStrictCopies = false;
+	/**
+	 * If a template contains more than 1 conjunct, then use alternatingly strict and non-strict inequalities.
+	 * I.e. the even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
+	 */
+	private final static boolean mUseStrictInequalitiesAlternatingly = !false;
 
 	private final boolean mUseLiveVariables;
 
@@ -158,16 +163,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
-						mAlwaysStrictAndNonStrictCopies);
+						mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 			}
 			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
-					mAlwaysStrictAndNonStrictCopies);
+					mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 		} else if (useLiveVars) {
 			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
-					mAlwaysStrictAndNonStrictCopies);
+					mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 		}
 		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables,
-				mAlwaysStrictAndNonStrictCopies);
+				mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 	}
 
 	/**

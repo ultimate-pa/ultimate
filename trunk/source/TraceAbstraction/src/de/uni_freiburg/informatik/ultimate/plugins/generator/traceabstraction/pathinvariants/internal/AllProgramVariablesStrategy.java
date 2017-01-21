@@ -15,9 +15,9 @@ public class AllProgramVariablesStrategy extends LocationIndependentLinearInequa
 	
 	public AllProgramVariablesStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
-			boolean alwaysStrictAndNonStrictCopies) {
+			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, patternVariables,
-				alwaysStrictAndNonStrictCopies);
+				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 	}
 
 	@Override

@@ -26,9 +26,10 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	
 	public VarsInUnsatCoreStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
 			int maxRounds, Set<IProgramVar> allProgramVariables,
-			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies) {
+			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies,
+			boolean useStrictInequalitiesAlternatingly) {
 		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
-				locs2LiveVariables, alwaysStrictAndNonStrictCopies);
+				locs2LiveVariables, alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLocations2PatternVariables = new HashMap<>();
 	}
 
@@ -50,11 +51,15 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				final boolean[] invariantPatternCopies;
+				boolean[] invariantPatternCopies = new boolean[] { false };
+				if (super.mUseStrictInequalitiesAlternatingly) {
+					// if it is an odd conjunct, then construct a strict inequality
+					if (j % 2 == 1) { 
+						invariantPatternCopies = new boolean[] { true };
+					} 
+				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
-				} else {
-					invariantPatternCopies = new boolean[] { false };
 				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (

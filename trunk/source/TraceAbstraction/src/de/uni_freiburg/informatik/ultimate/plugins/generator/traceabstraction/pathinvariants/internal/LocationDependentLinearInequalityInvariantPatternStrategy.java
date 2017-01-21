@@ -20,8 +20,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  */
 public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
-		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
-	
+implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
+
 	protected final int baseDisjuncts;
 	protected final int baseConjuncts;
 	private final int disjunctsPerRound;
@@ -31,6 +31,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 	protected int mPrefixCounter;
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	protected boolean mAlwaysStrictAndNonStrictCopies;
+	protected boolean mUseStrictInequalitiesAlternatingly;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -55,7 +56,8 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 	public LocationDependentLinearInequalityInvariantPatternStrategy(
 			final int baseDisjuncts, final int baseConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound,
-			final int maxRounds, Set<IProgramVar> allProgramVariables, boolean alwaysStrictAndNonStrictCopies) {
+			final int maxRounds, Set<IProgramVar> allProgramVariables, boolean alwaysStrictAndNonStrictCopies,
+			boolean useStrictInequalitiesAlternatingly) {
 		this.baseConjuncts = baseConjuncts;
 		this.baseDisjuncts = baseDisjuncts;
 		this.disjunctsPerRound = disjunctsPerRound;
@@ -65,6 +67,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		mPrefixCounter = 0;
 		mLoc2PatternCoefficents = new HashMap<>();
 		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
+		mUseStrictInequalitiesAlternatingly = useStrictInequalitiesAlternatingly;
 	}
 
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
@@ -76,12 +79,16 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				final boolean[] invariantPatternCopies;
-					if (mAlwaysStrictAndNonStrictCopies) {
-						invariantPatternCopies = new boolean[] { false, true };
-					} else {
-						invariantPatternCopies = new boolean[] { false };
-					}
+				boolean[] invariantPatternCopies = new boolean[] { false };
+				if (mUseStrictInequalitiesAlternatingly) {
+					// if it is an odd conjunct, then construct a strict inequality
+					if (j % 2 == 1) { 
+						invariantPatternCopies = new boolean[] { true };
+					} 
+				}
+				if (mAlwaysStrictAndNonStrictCopies) {
+					invariantPatternCopies = new boolean[] { false, true };
+				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
 							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
@@ -95,7 +102,7 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 		mLoc2PatternCoefficents.put(location, patternCoefficients);
 		return disjunction;
 	}
-	
+
 
 	/**
 	 * {@inheritDoc}
@@ -114,13 +121,13 @@ public abstract class LocationDependentLinearInequalityInvariantPatternStrategy
 				baseConjuncts + round * conjunctsPerRound };
 		// 2015-10-27: Use the following instead to obtain two disjuncts
 		// consisting of one strict-nonstrict conjunction pair each. 
-//		return new int[] { 2, 1};
+		//		return new int[] { 2, 1};
 	}
-	
+
 	public void resetSettings() {
 		mPrefixCounter = 0;
 	}
-	
+
 	protected String newPrefix() {
 		return Integer.toString(mPrefixCounter++);
 	}

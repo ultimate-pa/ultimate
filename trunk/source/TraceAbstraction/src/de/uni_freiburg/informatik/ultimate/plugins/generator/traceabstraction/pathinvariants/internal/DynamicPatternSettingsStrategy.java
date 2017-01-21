@@ -20,16 +20,18 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 	
 	public DynamicPatternSettingsStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables,
-			boolean alwaysStrictAndNonStrictCopies) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
+			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, 
+				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLocations2LiveVariables = new HashMap<>();
 		mLoc2PatternSetting = new HashMap<>();
 	}
 	
 	public DynamicPatternSettingsStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
-			boolean alwaysStrictAndNonStrictCopies) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies);
+			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
+		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables, 
+				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLocations2LiveVariables = loc2LiveVariables;
 		if (loc2LiveVariables == null) {
 			mLocations2LiveVariables = new HashMap<>();
@@ -54,11 +56,15 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					ps.mNumOfConjuncts);
 			for (int j = 0; j < ps.mNumOfConjuncts; j++) {
-				final boolean[] invariantPatternCopies;
-				if (super.mAlwaysStrictAndNonStrictCopies) {
+				boolean[] invariantPatternCopies = new boolean[] { false };
+				if (super.mUseStrictInequalitiesAlternatingly) {
+					// if it is an odd conjunct, then construct a strict inequality
+					if (j % 2 == 1) { 
+						invariantPatternCopies = new boolean[] { true };
+					} 
+				}
+				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
-				} else {
-					invariantPatternCopies = new boolean[] { false };
 				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (

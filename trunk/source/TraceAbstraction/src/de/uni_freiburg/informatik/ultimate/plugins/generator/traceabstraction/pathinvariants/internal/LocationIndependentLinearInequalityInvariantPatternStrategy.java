@@ -58,6 +58,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	protected int mPrefixCounter;
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	private boolean mAlwaysStrictAndNonStrictCopies;
+	private boolean mUseStrictInequalitiesAlternatingly;
 	
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -84,7 +85,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 			final int baseDisjuncts, final int baseConjuncts,
 			final int disjunctsPerRound, final int conjunctsPerRound,
 			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
-			boolean alwaysStrictAndNonStrictCopies) {
+			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		this.baseConjuncts = baseConjuncts;
 		this.baseDisjuncts = baseDisjuncts;
 		this.disjunctsPerRound = disjunctsPerRound;
@@ -95,6 +96,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		mPrefixCounter = 0;
 		mLoc2PatternCoefficents = new HashMap<>();
 		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
+		mUseStrictInequalitiesAlternatingly = useStrictInequalitiesAlternatingly;
 	}
 
 //	/**
@@ -127,11 +129,15 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				final boolean[] invariantPatternCopies;
+				boolean[] invariantPatternCopies = new boolean[] { false };
+				if (mUseStrictInequalitiesAlternatingly) {
+					// if it is an odd conjunct, then construct a strict inequality
+					if (j % 2 == 1) { 
+						invariantPatternCopies = new boolean[] { true };
+					} 
+				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
-				} else {
-					invariantPatternCopies = new boolean[] { false };
 				}
 				for (final boolean strict : invariantPatternCopies) {
 					final LinearPatternBase inequality = new LinearPatternBase (
