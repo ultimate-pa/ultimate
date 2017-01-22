@@ -70,4 +70,15 @@ public class HybridProgramVar implements IProgramVar {
 		return false;
 	}
 	
+	@Override
+	public String toString() {
+		String str = "(ID: " + mId;
+		str += ", TV: " + mTermVariable;
+		str += ", Procedure: " + mProcedure;
+		str += ", PrimedConst: " + mPrimedConstant;
+		str += ", DefaultConst: " + mDefaultConstant;
+		str += ")";
+		return str;
+	}
+	
 }

@@ -8,14 +8,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 
@@ -29,7 +27,6 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	
 	private Set<ILocalProgramVar> mLocals = new HashSet<>();
 	private final ManagedScript mScript;
-	private final HybridAutomaton mAutomaton;
 	
 	/**
 	 * Constructor
@@ -39,45 +36,6 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	 */
 	public HybridIcfgSymbolTable(ManagedScript script, HybridAutomaton automaton, String procedure) {
 		mScript = script;
-		mAutomaton = automaton;
-		// we can merge all variables into one set.
-		final Set<String> variables = automaton.getGlobalParameters();
-		variables.addAll(automaton.getGlobalConstants());
-		variables.addAll(automaton.getLocalConstants());
-		variables.addAll(automaton.getLocalParameters());
-		variables.forEach(var -> {
-			mLocals.add(constructLocalProgramVar(var, procedure));
-		});
-	}
-	
-	private HybridLocalProgramVar constructLocalProgramVar(String identifier, String procedure) {
-		final Sort sort = mScript.getScript().sort("Real");
-		final String id = identifier;
-		final TermVariable termVariable = mScript.variable(id, sort);
-		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, id);
-		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, id);
-		return new HybridLocalProgramVar(termVariable, defaultConstant, primedConstant, id, procedure);
-	}
-	
-	public HybridProgramVar constructProgramVar(final String identifier, final String procedure) {
-		final Sort sort = mScript.getScript().sort("Real");
-		final String id = identifier;
-		final TermVariable termVariable = mScript.variable(id, sort);
-		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, id);
-		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, id);
-		return new HybridProgramVar(termVariable, defaultConstant, primedConstant, id, procedure);
-	}
-	
-	/*
-	 * Function to construct a ProgramNonOldVar
-	 */
-	public HybridProgramNonOldVar constructProgramNonOldVar(final String identifier, final String procedure) {
-		final Sort sort = mScript.getScript().sort("Real");
-		final String id = identifier;
-		final TermVariable termVariable = mScript.variable(id, sort);
-		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, id);
-		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, id);
-		return new HybridProgramNonOldVar(termVariable, defaultConstant, primedConstant, id);
 	}
 	
 	@Override
