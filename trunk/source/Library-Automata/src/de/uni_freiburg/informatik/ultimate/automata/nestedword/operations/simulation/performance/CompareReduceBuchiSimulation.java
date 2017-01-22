@@ -815,7 +815,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		// false, true)));
 		tables.add(new Pair<>("averagedSimulationPerDirectoryTable",
 				ComparisonTables.createAveragedSimulationPerDirectoryTable(performanceEntries, LOG_SEPARATOR,
-						ESimulationType.DELAYED_FULL_MULTIPEBBLE, false, false, true)));
+						ESimulationType.EXT_RABIT_LIGHT_1, false, false, true)));
 		// tables.add(new Pair<>("averagedSimulationTimePartitioning",
 		// ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 		// tables.add(new Pair<>("averagedSimulationAlgoWork",

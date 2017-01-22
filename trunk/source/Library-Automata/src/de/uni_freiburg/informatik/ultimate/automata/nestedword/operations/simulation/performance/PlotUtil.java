@@ -35,7 +35,7 @@ public final class PlotUtil {
 		writeBenchmarkPlotToTransitionDensityCsv(new File(path, "plot_averagedSimulationPerDirectoryTable.csv"));
 		System.out.println("Terminated");
 	}
-
+	
 	/**
 	 * Reads a given benchmark file in the plot format and writes the benchmark
 	 * data to a CSV file next to it containing the transition densities and
@@ -51,7 +51,7 @@ public final class PlotUtil {
 		final String noValue = CompareReduceBuchiSimulation.PLOT_NO_VALUE;
 
 		// Skips stuff like call and return transition data
-		boolean skipNwaStuff = false;
+		boolean skipNwaStuff = true;
 		// Skips trying to read data from directory name
 		boolean skipDirectoryNameExtraction = false;
 

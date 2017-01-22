@@ -58,6 +58,14 @@ public enum ESimulationType {
 	 */
 	EXT_MINIMIZESEVPA,
 	/**
+	 * External minimization method, heavy-1 of the Rabit tool.
+	 */
+	EXT_RABIT_HEAVY_1,
+	/**
+	 * External minimization method, light-1 of the Rabit tool.
+	 */
+	EXT_RABIT_LIGHT_1,
+	/**
 	 * External minimization method, ShrinkNwa.
 	 */
 	EXT_SHRINKNWA,
