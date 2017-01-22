@@ -49,6 +49,9 @@ public final class PlotUtil {
 	public static void writeBenchmarkPlotToTransitionDensityCsv(final File benchmarkPlotFile) throws IOException {
 		final String separator = CompareReduceBuchiSimulation.PLOT_SEPARATOR;
 		final String noValue = CompareReduceBuchiSimulation.PLOT_NO_VALUE;
+		
+		// Skips stuff like call and return transition data
+		final boolean skipNwaStuff = true;
 
 		BufferedReader br = null;
 		PrintWriter pw = null;
@@ -103,15 +106,28 @@ public final class PlotUtil {
 				if (line == null) {
 					break;
 				}
-
+				
 				final String[] values = line.split(separator);
 				final String directory = values[directoryIndex];
 				final String internalAfterPreProcText = values[internalAfterPreProcIndex];
-				final String callAfterPreProcText = values[callAfterPreProcIndex];
-				final String returnAfterPreProcText = values[returnAfterPreProcIndex];
 				final String internalOutputText = values[internalOutputIndex];
-				final String callOutputText = values[callOutputIndex];
-				final String returnOutputText = values[returnOutputIndex];
+				
+				final String callAfterPreProcText;
+				final String returnAfterPreProcText;
+				final String callOutputText;
+				final String returnOutputText;
+				if (skipNwaStuff) {
+					callAfterPreProcText = noValue;
+					returnAfterPreProcText = noValue;
+					callOutputText = noValue;
+					returnOutputText = noValue;
+				} else {
+					callAfterPreProcText = values[callAfterPreProcIndex];
+					returnAfterPreProcText = values[returnAfterPreProcIndex];
+					callOutputText = values[callOutputIndex];
+					returnOutputText = values[returnOutputIndex];
+				}
+				
 				final String sizeAfterPreProcText = values[sizeAfterPreProcIndex];
 				final String removedText = values[removedIndex];
 				final String overallTimeText = values[overallTimeIndex];
