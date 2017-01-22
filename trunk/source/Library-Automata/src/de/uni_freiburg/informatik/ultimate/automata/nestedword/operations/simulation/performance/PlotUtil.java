@@ -49,9 +49,11 @@ public final class PlotUtil {
 	public static void writeBenchmarkPlotToTransitionDensityCsv(final File benchmarkPlotFile) throws IOException {
 		final String separator = CompareReduceBuchiSimulation.PLOT_SEPARATOR;
 		final String noValue = CompareReduceBuchiSimulation.PLOT_NO_VALUE;
-		
+
 		// Skips stuff like call and return transition data
-		final boolean skipNwaStuff = true;
+		boolean skipNwaStuff = false;
+		// Skips trying to read data from directory name
+		boolean skipDirectoryNameExtraction = false;
 
 		BufferedReader br = null;
 		PrintWriter pw = null;
@@ -106,12 +108,12 @@ public final class PlotUtil {
 				if (line == null) {
 					break;
 				}
-				
+
 				final String[] values = line.split(separator);
 				final String directory = values[directoryIndex];
 				final String internalAfterPreProcText = values[internalAfterPreProcIndex];
 				final String internalOutputText = values[internalOutputIndex];
-				
+
 				final String callAfterPreProcText;
 				final String returnAfterPreProcText;
 				final String callOutputText;
@@ -127,7 +129,7 @@ public final class PlotUtil {
 					callOutputText = values[callOutputIndex];
 					returnOutputText = values[returnOutputIndex];
 				}
-				
+
 				final String sizeAfterPreProcText = values[sizeAfterPreProcIndex];
 				final String removedText = values[removedIndex];
 				final String overallTimeText = values[overallTimeIndex];
@@ -197,16 +199,18 @@ public final class PlotUtil {
 				Pattern directoryPattern = Pattern.compile(
 						".*#\\d+_n(\\d+)_k\\d+_f(\\d+)(?:\\.\\d+)?%_ti(\\d+)(?:\\.\\d+)?%_tc(\\d+)(?:\\.\\d+)?%_tr(\\d+)(?:\\.\\d+)?%_th(\\d+)(?:\\.\\d+)?%$");
 				Matcher directoryMatcher = directoryPattern.matcher(directory);
-				if (directoryMatcher.find()) {
-					sizeInitial = Integer.parseInt(directoryMatcher.group(1));
-					acceptance = Integer.parseInt(directoryMatcher.group(2));
-					internalDensity = Integer.parseInt(directoryMatcher.group(3));
-					callDensity = Integer.parseInt(directoryMatcher.group(4));
-					returnDensity = Integer.parseInt(directoryMatcher.group(5));
-					hierPredDensity = Integer.parseInt(directoryMatcher.group(6));
-				} else {
-					System.out.println(directory);
-					throw new IllegalStateException();
+				if (!skipDirectoryNameExtraction) {
+					if (directoryMatcher.find()) {
+						sizeInitial = Integer.parseInt(directoryMatcher.group(1));
+						acceptance = Integer.parseInt(directoryMatcher.group(2));
+						internalDensity = Integer.parseInt(directoryMatcher.group(3));
+						callDensity = Integer.parseInt(directoryMatcher.group(4));
+						returnDensity = Integer.parseInt(directoryMatcher.group(5));
+						hierPredDensity = Integer.parseInt(directoryMatcher.group(6));
+					} else {
+						System.out.println(directory);
+						throw new IllegalStateException();
+					}
 				}
 
 				pw.println(internalDensity + separator + callDensity + separator + returnDensity + separator
