@@ -38,6 +38,18 @@ public final class RabitUtil {
 	 */
 	public static final File FILE_OUTPUT = new File(ENVIRONMENT, "testData.tsv");
 	/**
+	 * After how many processed automata a logging message should be printed.
+	 */
+	public static final int LOG_EVERY = 5;
+	/**
+	 * The maximal heap size in gigabyte to use for the Rabit tool.
+	 */
+	public static final int MAX_HEAP_SIZE_GB = 14;
+	/**
+	 * The minimal heap size in gigabyte to use for the Rabit tool.
+	 */
+	public static final int MIN_HEAP_SIZE_GB = 2;
+	/**
 	 * The separator used by the Rabit tool for its output.
 	 */
 	public static final String RABIT_SEPARATOR = " ";
@@ -49,10 +61,6 @@ public final class RabitUtil {
 	 * Name of the tool to use.
 	 */
 	public static final String TOOL = "Reduce_test.jar";
-	/**
-	 * After how many processed automata a logging message should be printed.
-	 */
-	private static final int LOG_EVERY = 100;
 
 	/**
 	 * Appends the given content to the output file.
@@ -90,7 +98,13 @@ public final class RabitUtil {
 	 */
 	public static List<String> executeRabit(final File automaton, final String arguments) throws IOException {
 		final Runtime rt = Runtime.getRuntime();
-		final String command = "java -jar " + TOOL + " \"" + automaton.getAbsolutePath() + "\" " + arguments;
+		String command = "java";
+		command += " -Xms" + MIN_HEAP_SIZE_GB + "g -Xms" + MIN_HEAP_SIZE_GB + "G";
+		command += " -Xmx" + MAX_HEAP_SIZE_GB + "g -Xmx" + MAX_HEAP_SIZE_GB + "G";
+		command += " -jar";
+		command += " " + TOOL;
+		command += " \"" + automaton.getAbsolutePath() + "\"";
+		command += " " + arguments;
 		final Process proc = rt.exec(command, null, ENVIRONMENT);
 
 		final BufferedReader rabitOutput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
