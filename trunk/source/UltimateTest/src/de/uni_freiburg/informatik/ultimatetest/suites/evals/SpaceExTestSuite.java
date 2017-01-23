@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -44,15 +44,25 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class SpaceExTestSuite extends AbstractEvalTestSuite {
-
+	
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-
+	
+	//@formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-	        new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"), };
+	        new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
+	};
+	//@formatter:on
+	
+	//@formatter:off
+	private static final String[] INPUT = new String[] {
+//			"examples/programs/spaceex/",
 
-	private static final String[] INPUT = new String[] { "examples/programs/spaceex/", };
-
+			"examples/programs/spaceex/toy.xml",
+	};
+	//@formatter:on
+	
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		// @formatter:off
@@ -65,17 +75,17 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 		                ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average), };
 		// @formatter:on
 	}
-
+	
 	@Override
 	protected long getTimeout() {
 		return 10 * 1000;
 	}
-
+	
 	@Override
-	protected ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, true);
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
+		return new SafetyCheckTestResultDecider(urd, !true);
 	}
-
+	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String, String> triple : TOOLCHAINS) {
@@ -87,5 +97,5 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 		}
 		return super.createTestCases();
 	}
-
+	
 }

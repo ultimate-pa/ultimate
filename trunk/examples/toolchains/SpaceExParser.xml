@@ -1,8 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <rundefinition>
-	<name>Ultimate Toolchain</name>
+	<name>SpaceEx Parser Toolchain</name>
 	<toolchain>
-		
-	<plugin id="de.uni_freiburg.informatik.ultimate.output.cfgconsoleout"/>
-
+		<plugin	id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
 	</toolchain>
 </rundefinition>

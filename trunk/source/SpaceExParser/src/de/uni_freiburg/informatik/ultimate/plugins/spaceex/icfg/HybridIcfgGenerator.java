@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -155,7 +156,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		// get initial values of the variable
 		final Map<String, List<SignValuePair>> initialVars = mSpaceExPreferenceManager.getInitialVariables();
 		TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-		ArrayList<Term> terms = new ArrayList<Term>();
+		ArrayList<Term> terms = new ArrayList<>();
 		final int value;
 		for (final String var : variables) {
 			// Termvariables for the transformula.
@@ -175,7 +176,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 					SignValuePair svPair = init.get(0);
 					// create a term of the form (<operator>,<variable>,<value>)
 					Term t = script.term(svPair.getSign().replaceAll("==", "="), inVar,
-							script.numeral(svPair.getValue()));
+							script.decimal(svPair.getValue()));
 					terms.add(t);
 					mLogger.debug("Term added: " + t + " for variable: " + var);
 				} else if (init.size() == 2) {
@@ -183,9 +184,9 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 					SignValuePair svPair2 = init.get(1);
 					// create 2 terms of the form (<operator>,<variable>,<value>)
 					Term t1 = script.term(svPair1.getSign().replaceAll("==", "="), inVar,
-							script.numeral(svPair1.getValue()));
+							script.decimal(svPair1.getValue()));
 					Term t2 = script.term(svPair2.getSign().replaceAll("==", "="), inVar,
-							script.numeral(svPair2.getValue()));
+							script.decimal(svPair2.getValue()));
 					// merge the terms into a new one.
 					Term tm = script.term("and", t1, t2);
 					terms.add(tm);

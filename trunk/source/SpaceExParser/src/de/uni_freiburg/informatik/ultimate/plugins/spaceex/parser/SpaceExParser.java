@@ -33,6 +33,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -50,10 +51,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
@@ -226,6 +229,28 @@ public class SpaceExParser implements ISource {
 		DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
 		ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
+		axioms = new IPredicate() {
+			
+			@Override
+			public Set<IProgramVar> getVars() {
+				return Collections.emptySet();
+			}
+			
+			@Override
+			public String[] getProcedures() {
+				return procedures.toArray(new String[procedures.size()]);
+			}
+			
+			@Override
+			public Term getFormula() {
+				return script.term("true");
+			}
+			
+			@Override
+			public Term getClosedFormula() {
+				return script.term("true");
+			}
+		};
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures);
 	}
 	
