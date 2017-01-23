@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2013-2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2016 University of Freiburg
+ * Copyright (C) 2016-2017 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
