@@ -410,11 +410,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				super.writeAutomatonToFile(interpolantAutomaton, filename);
 			}
 
-			assert new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
-					(NestedWord<LETTER>) mCounterexample.getWord(), true, false)
-							.getResult() : "enhanced interpolant automaton in iteration " + mIteration
-									+ " broken: counterexample of length " + mCounterexample.getLength()
-									+ " not accepted";
+			if (new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
+					(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
+				throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
+						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
+			}
 			assert new InductivityCheck<>(mServices,
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
 					false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
