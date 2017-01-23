@@ -410,7 +410,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				super.writeAutomatonToFile(interpolantAutomaton, filename);
 			}
 
-			if (new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
+			if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 					(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
 				throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
 						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
