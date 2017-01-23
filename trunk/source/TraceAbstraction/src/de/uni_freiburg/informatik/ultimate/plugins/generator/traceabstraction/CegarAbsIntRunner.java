@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -100,7 +102,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	private AbsIntCurrentIteration mCurrentIteration;
+	private AbsIntCurrentIteration<?> mCurrentIteration;
 	private IPredicateUnifier mPredicateUnifier;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
@@ -183,7 +185,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
 							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
 							mServices);
-			mCurrentIteration = new AbsIntCurrentIteration(currentCex, result);
+			mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result);
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
 			}
@@ -297,20 +299,23 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return transitions;
 	}
 
-	private final class AbsIntCurrentIteration {
+	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE, IBoogieVar>> {
 		private final IRun<LETTER, IPredicate, ?> mCex;
-		private final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> mResult;
+		private final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> mResult;
 
 		private IInterpolantGenerator mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
+		private final IPredicate mFalsePredicate;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
-				final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result) {
+				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result) {
 			mCex = Objects.requireNonNull(cex);
 			mResult = Objects.requireNonNull(result);
+			mFalsePredicate = new AbsIntPredicate<>(mPredicateUnifier.getFalsePredicate(),
+					mResult.getUsedDomain().createBottomState());
 		}
 
-		public IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> getResult() {
+		public IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> getResult() {
 			return mResult;
 		}
 
@@ -320,8 +325,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
-				final IHoareTripleChecker htc =
-						new AbsIntHoareTripleChecker<>(mServices, mResult.getUsedDomain(), mPredicateUnifier);
+				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mServices, mResult.getUsedDomain(),
+						mResult.getHtcPostOperator(), mPredicateUnifier);
 				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
 			}
 			return mHtc;
@@ -342,7 +347,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			// we were strong enough!
 			final Word<LETTER> word = mCex.getWord();
-			final List<IPredicate> interpolants = generateInterpolants(mPredicateUnifier, word, mResult);
+			final List<IPredicate> interpolants = generateInterpolants(word);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Interpolant sequence:");
 				mLogger.debug(interpolants);
@@ -353,17 +358,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
 		}
 
-		private <STATE extends IAbstractState<STATE, IBoogieVar>> List<IPredicate> generateInterpolants(
-				final IPredicateUnifier predicateUnifier, final Word<LETTER> word,
-				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult) {
+		private List<IPredicate> generateInterpolants(final Word<LETTER> word) {
 			mLogger.info("Generating AI predicates...");
 
-			final int wordlength = word.length();
-			Set<STATE> previousStates = Collections.emptySet();
 			final List<IPredicate> rtr = new ArrayList<>();
-			final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 			final Deque<LETTER> callstack = new ArrayDeque<>();
 			final Script script = mCsToolkit.getManagedScript().getScript();
+			final int wordlength = word.length();
+			Set<STATE> previousStates = Collections.emptySet();
 			for (int i = 0; i < wordlength - 1; i++) {
 				final LETTER symbol = word.getSymbol(i);
 				if (symbol instanceof ICallAction) {
@@ -371,16 +373,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				} else if (symbol instanceof IReturnAction) {
 					callstack.removeFirst();
 				}
-				final Set<STATE> postStates = aiResult.getPostStates(callstack, symbol, previousStates);
-
-				final IPredicate next;
-				if (postStates.isEmpty()) {
-					next = falsePredicate;
-				} else {
-					final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
-							.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
-					next = predicateUnifier.getOrConstructPredicateForDisjunction(predicates);
-				}
+				final Set<STATE> postStates = mResult.getPostStates(callstack, symbol, previousStates);
+				final IPredicate next = getPredicateFromStates(postStates, script);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(symbol + " " + next);
 				}
@@ -388,6 +382,18 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				rtr.add(next);
 			}
 			return rtr;
+		}
+
+		private IPredicate getPredicateFromStates(final Set<STATE> postStates, final Script script) {
+			if (postStates.isEmpty()) {
+				return mFalsePredicate;
+			}
+			final IAbstractStateBinaryOperator<STATE> mergeOp = mResult.getUsedDomain().getMergeOperator();
+			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
+					.map(mPredicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
+			final IPredicate disjunction = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicates);
+			final STATE oneState = postStates.stream().reduce(mergeOp::apply).orElseThrow(AssertionError::new);
+			return new AbsIntPredicate<>(disjunction, oneState);
 		}
 	}
 

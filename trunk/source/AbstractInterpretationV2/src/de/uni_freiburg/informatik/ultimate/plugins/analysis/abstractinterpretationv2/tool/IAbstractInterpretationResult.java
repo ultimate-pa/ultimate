@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 
@@ -96,6 +97,8 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 * @return The {@link IAbstractDomain} used during the analysis.
 	 */
 	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
+
+	IAbstractPostOperator<STATE, ACTION, VARDECL> getHtcPostOperator();
 
 	Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates);
 }

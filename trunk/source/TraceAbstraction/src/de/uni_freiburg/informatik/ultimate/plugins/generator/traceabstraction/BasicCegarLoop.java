@@ -166,7 +166,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mInterpolation = interpolation;
 			mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
 		}
-		// InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		if (mComputeHoareAnnotation) {
 			mHoareAnnotationLocations = (Set<IcfgLocation>) TraceAbstractionUtils
@@ -268,12 +267,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
-		if (TRACE_HISTOGRAMM_BAILOUT) {
-			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
-				final String message = "bailout by trace histogram " + traceHistogram.toString();
-				final String taskDescription = "trying to verify (iteration " + mIteration + ")";
-				throw new ToolchainCanceledException(message, getClass(), taskDescription);
-			}
+		if (TRACE_HISTOGRAMM_BAILOUT
+				&& traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
+			final String message = "bailout by trace histogram " + traceHistogram.toString();
+			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
+			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
 		return false;
 	}
@@ -356,23 +354,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 
 		final IHoareTripleChecker htc;
-		{
-			if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
-				htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
-			} else {
-				htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-						mPref.getHoareTripleChecks(), super.mCsToolkit,
-						mTraceCheckAndRefinementEngine.getPredicateUnifier());
-			}
+
+		if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
+			htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
+		} else {
+			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					mPref.getHoareTripleChecks(), super.mCsToolkit,
+					mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		}
 
-		final InterpolantAutomatonEnhancement enhanceMode;
-		if (mAbsIntRunner.hasShownInfeasibility()) {
-			// Do not enhance if abstract interpretation was strong enough to prove infeasibility.
-			enhanceMode = InterpolantAutomatonEnhancement.NONE;
-		} else {
-			enhanceMode = mPref.interpolantAutomatonEnhancement();
-		}
+		final InterpolantAutomatonEnhancement enhanceMode = mPref.interpolantAutomatonEnhancement();
 
 		final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton;
 		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
@@ -418,15 +409,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
 				super.writeAutomatonToFile(interpolantAutomaton, filename);
 			}
-			if (mAbsIntRunner.isDisabled()) {
-				// check only if AI did not run
-				final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
-						(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
-				if (!ctxAccepted) {
-					throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-							+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
-				}
-			}
+
+			assert new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
+					(NestedWord<LETTER>) mCounterexample.getWord(), true, false)
+							.getResult() : "enhanced interpolant automaton in iteration " + mIteration
+									+ " broken: counterexample of length " + mCounterexample.getLength()
+									+ " not accepted";
 			assert new InductivityCheck<>(mServices,
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
 					false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
@@ -478,16 +466,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new AssertionError();
 		}
 
-		// MinimizeSevpa<LETTER, Predicate> sev = new
-		// MinimizeSevpa<LETTER, Predicate>(abstraction);
-		// new MinimizeSevpa<LETTER, Predicate>.Partitioning(0);
-
-		// for (Predicate p : a.getStates()) {
-		// assert a.numberOfOutgoingInternalTransitions(p) <= 2 : p + " has "
-		// +a.numberOfOutgoingInternalTransitions(p);
-		// assert a.numberOfIncomingInternalTransitions(p) <= 25 : p + " has "
-		// +a.numberOfIncomingInternalTransitions(p);
-		// }
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
@@ -504,34 +482,43 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new IllegalArgumentException("In setting NONE we will not do any enhancement");
 		case PREDICATE_ABSTRACTION:
 		case PREDICATE_ABSTRACTION_CONSERVATIVE:
-		case PREDICATE_ABSTRACTION_CANNIBALIZE: {
-			final boolean conservativeSuccessorCandidateSelection =
-					enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
-			final boolean cannibalize =
-					enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
-			final DeterministicInterpolantAutomaton<LETTER> determinized =
-					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-							mTraceCheckAndRefinementEngine.getPredicateUnifier(),
-							conservativeSuccessorCandidateSelection, cannibalize);
-			result = determinized;
-		}
+		case PREDICATE_ABSTRACTION_CANNIBALIZE:
+			result = constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
+					htc, enhanceMode);
 			break;
 		case EAGER:
 		case NO_SECOND_CHANCE:
-		case EAGER_CONSERVATIVE: {
-			final boolean conservativeSuccessorCandidateSelection =
-					enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
-			final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
-			final NondeterministicInterpolantAutomaton<LETTER> nondet =
-					new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-							predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
-			result = nondet;
-		}
+		case EAGER_CONSERVATIVE:
+			result = constructInterpolantAutomatonForOnDemandEnhancementEager(inputInterpolantAutomaton,
+					predicateUnifier, htc, enhanceMode);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown " + enhanceMode);
 		}
 		return result;
+	}
+
+	private NondeterministicInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancementEager(
+			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final PredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
+		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
+		return new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
+				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+	}
+
+	private DeterministicInterpolantAutomaton<LETTER>
+			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+					final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
+		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
+		return new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
+				mTraceCheckAndRefinementEngine.getPredicateUnifier(), conservativeSuccessorCandidateSelection,
+				cannibalize);
 	}
 
 	/**

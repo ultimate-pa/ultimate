@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public final class OctDomainState implements IAbstractState<OctDomainState, IBoogieVar> {
-	
+
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
 
@@ -326,7 +326,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	@Override
 	public OctDomainState removeVariables(final Collection<IBoogieVar> variables) {
-		
+
 		final OctDomainState newState = shallowCopy();
 		final Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (final IBoogieVar name : variables) {
@@ -461,8 +461,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public SubsetResult isSubsetOf(final OctDomainState other) {
-		assert mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar);
-
 		if (isBottom() && other.isBottom()) {
 			return SubsetResult.EQUAL;
 		}
@@ -476,6 +474,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		for (final Entry<IBoogieVar, BoolValue> thisEntry : mBooleanAbstraction.entrySet()) {
 			final BoolValue thisVal = thisEntry.getValue();
 			final BoolValue otherVal = other.mBooleanAbstraction.get(thisEntry.getKey());
+			if (otherVal == null) {
+				// if the other state has no value for this value, it means top for the other state
+				continue;
+			}
 			if (!thisVal.isSubsetEqual(otherVal)) {
 				return SubsetResult.NONE;
 			}
@@ -730,7 +732,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	public OctDomainState copyValuesOnScopeChange(final OctDomainState source,
 			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
-		
+
 		assert assertNotBottomBeforeAssign();
 
 		// TODO closure in advance to reduce information loss
@@ -1021,7 +1023,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @param mapTargetVarToSourceVar
 	 */
 	protected void copyVars(final List<Pair<IBoogieVar, IBoogieVar>> mapTargetVarToSourceVar) {
-		
+
 		assert assertNotBottomBeforeAssign();
 
 		boolean usedClosure = false;
@@ -1243,7 +1245,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 		return log.toString();
 	}
-	
+
 	@Override
 	public Class<IBoogieVar> getVariablesType() {
 		return IBoogieVar.class;
