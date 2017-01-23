@@ -94,6 +94,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 	private final IDoubleDeckerAutomaton<LETTER, IPredicate> mMinimizedAutomaton;
 	private final Map<IPredicate, IPredicate> mOldState2newState;
 	private final AutomataMinimizationStatisticsGenerator mStatistics;
+	private final static long DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS = 5_000;
 
 	public AutomataMinimization(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<LETTER, IPredicate> operand, final Minimization minimization,
@@ -251,7 +252,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case NWA_MAX_SAT2: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
@@ -278,7 +280,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DIRECT_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true, 
@@ -341,7 +344,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DELAYED_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 5_000);
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true, 
