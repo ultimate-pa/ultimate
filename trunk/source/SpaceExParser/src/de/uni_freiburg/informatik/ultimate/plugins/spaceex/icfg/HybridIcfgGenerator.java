@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,8 +69,8 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 	private final Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
 	private final String mProcedure = "MAIN";
-	private BoogieASTNode mBoogieASTNode;
-	private HybridVariableManager mVariableManager;
+	private final BoogieASTNode mBoogieASTNode;
+	private final HybridVariableManager mVariableManager;
 	
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
 			final CfgSmtToolkit smtToolkit) {
@@ -79,7 +78,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
 		mVariableManager = new HybridVariableManager(smtToolkit.getManagedScript());
-		ILocation dummyLoc = new DummyLocation(preferenceManager.getFileName());
+		final ILocation dummyLoc = new DummyLocation(preferenceManager.getFileName());
 		mPayload = new Payload(dummyLoc);
 		mCfgComponents = new HashMap<>();
 		mBoogieASTNode = new BoogieASTNode(dummyLoc);
@@ -93,7 +92,7 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 	}
 	
 	public BasicIcfg<BoogieIcfgLocation> createIfcgFromComponents() {
-		BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
+		final BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
 		mCfgComponents.forEach((key, value) -> {
 			mLogger.debug("ID:" + key + ", Component:" + value.toString());
 		});
@@ -152,20 +151,22 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 	 * variable methods
 	 */
 	private void variablesToIcfg(final Set<String> variables) {
-		Script script = mSmtToolkit.getManagedScript().getScript();
+		final Script script = mSmtToolkit.getManagedScript().getScript();
 		// get initial values of the variable
 		final Map<String, List<SignValuePair>> initialVars = mSpaceExPreferenceManager.getInitialVariables();
-		TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-		ArrayList<Term> terms = new ArrayList<>();
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		final ArrayList<Term> terms = new ArrayList<>();
 		final int value;
 		for (final String var : variables) {
 			// Termvariables for the transformula.
-			TermVariable inVar = mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
-			TermVariable outVar = mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
+			final TermVariable inVar =
+					mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
+			final TermVariable outVar =
+					mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
 			mVariableManager.addInVarTermVariable(var, inVar);
 			mVariableManager.addOutVarTermVariable(var, outVar);
 			// IProgramVar for the transformula.
-			HybridProgramVar progVar = mVariableManager.constructProgramVar(var, mProcedure);
+			final HybridProgramVar progVar = mVariableManager.constructProgramVar(var, mProcedure);
 			mVariableManager.addProgramVar(var, progVar);
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
@@ -173,22 +174,22 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 			if (initialVars.containsKey(var)) {
 				final List<SignValuePair> init = initialVars.get(var);
 				if (init.size() == 1) {
-					SignValuePair svPair = init.get(0);
+					final SignValuePair svPair = init.get(0);
 					// create a term of the form (<operator>,<variable>,<value>)
-					Term t = script.term(svPair.getSign().replaceAll("==", "="), inVar,
+					final Term t = script.term(svPair.getSign().replaceAll("==", "="), inVar,
 							script.decimal(svPair.getValue()));
 					terms.add(t);
 					mLogger.debug("Term added: " + t + " for variable: " + var);
 				} else if (init.size() == 2) {
-					SignValuePair svPair1 = init.get(0);
-					SignValuePair svPair2 = init.get(1);
+					final SignValuePair svPair1 = init.get(0);
+					final SignValuePair svPair2 = init.get(1);
 					// create 2 terms of the form (<operator>,<variable>,<value>)
-					Term t1 = script.term(svPair1.getSign().replaceAll("==", "="), inVar,
+					final Term t1 = script.term(svPair1.getSign().replaceAll("==", "="), inVar,
 							script.decimal(svPair1.getValue()));
-					Term t2 = script.term(svPair2.getSign().replaceAll("==", "="), inVar,
+					final Term t2 = script.term(svPair2.getSign().replaceAll("==", "="), inVar,
 							script.decimal(svPair2.getValue()));
 					// merge the terms into a new one.
-					Term tm = script.term("and", t1, t2);
+					final Term tm = script.term("and", t1, t2);
 					terms.add(tm);
 					mLogger.debug("Term added: " + tm + " for variable: " + var);
 				}
@@ -197,12 +198,20 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 			}
 		}
 		// connect all terms with "and"
-		Term all = script.term("and", terms.toArray(new Term[terms.size()]));
+		final Term all = script.term("and", terms.toArray(new Term[terms.size()]));
 		tfb.setFormula(all);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
-		UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
 		mLogger.debug("Transformula for varAssignment: " + transformula);
+		
+		// TERMBUILDING TEST
+		/*
+		 * final String infix = "x <= 5 & t <= 2 & time_glob == x"; final String[] infixArray =
+		 * HybridMathHelper.expressionToArray(infix); final List<String> postfixList =
+		 * HybridMathHelper.postfix(infixArray); final Term test = HybridMathHelper.postfixToTerm(postfixList, script,
+		 * mVariableManager); mLogger.info(test);
+		 */
 		// create variable component of the form start ----variable assignment----> end
 		final List<BoogieIcfgLocation> locations = new ArrayList<>();
 		final List<IcfgInternalTransition> transitions = new ArrayList<>();

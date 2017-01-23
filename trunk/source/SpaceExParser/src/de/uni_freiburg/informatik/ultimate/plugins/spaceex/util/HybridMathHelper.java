@@ -1,167 +1,251 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
 
 /**
- * Helper class to convert math expressions to SMT stuff //TODO: not done yet, don't use
+ * Helper class to convert math expressions to SMT stuff
  * 
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
 public class HybridMathHelper {
 	
-	public static enum Operator {
-		ADD(1, "+"), SUB(1, "-"), DIV(2, "/"), MUL(2, "*"), LT(3, "<"), GT(3, ">"), LTEQ(3, "<="), GTEQ(3, ">="),
-		EQUALS(3, "=="), AND(4, "&"), OR(5, "|"), LBRACE(6, "("), RBRACE(6, ")");
-		int precedence;
-		String operator;
+	private enum Operator {
+		ADD(1), SUBTRACT(1), MULTIPLY(2), DIVIDE(2), LTEQ(5), GTEQ(5), LT(5), GT(5), EQ(5), DOUBLEEQ(5), AND(4),
+		DOUBLEAND(4), OR(3);
+		final int precedence;
 		
-		Operator(int p, String op) {
+		Operator(int p) {
 			precedence = p;
-			operator = op;
 		}
-		
 	}
 	
-	public HybridMathHelper() {
-		
+	private static Map<String, Operator> mOperators = new HashMap<>();
+	static {
+		mOperators.put("+", Operator.ADD);
+		mOperators.put("-", Operator.SUBTRACT);
+		mOperators.put("*", Operator.MULTIPLY);
+		mOperators.put("/", Operator.DIVIDE);
+		mOperators.put("<=", Operator.LTEQ);
+		mOperators.put(">=", Operator.GTEQ);
+		mOperators.put("<", Operator.LT);
+		mOperators.put(">", Operator.GT);
+		mOperators.put("==", Operator.DOUBLEEQ);
+		mOperators.put("=", Operator.EQ);
+		mOperators.put("&&", Operator.DOUBLEAND);
+		mOperators.put("&", Operator.AND);
+		mOperators.put("|", Operator.OR);
 	}
 	
 	/**
-	 * This function splits a given expression into an array. e.g "x == 5" will get [x,==,5]. Operators are defined as
-	 * follows: Operator(precedence, operator): ADD(1, "+"), SUB(1, "-"), DIV(2, "/"), MUL(2,"*"), LT(3, "<"), GT(3,
-	 * ">"), LTEQ(3, "<="), GTEQ(3, ">="), EQUALS(3, "=="), AND(4, "&"), OR(5, "|");
+	 * This function splits a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 * 
-	 * Note that the expression can only contain operators from the list above.
-	 * 
-	 * @param operators
 	 * @param expression
 	 * @return
 	 */
-	public static String[] expressionToArray(List<Operator> operators, String expression) {
-		String regex = "(?<=\\G(\\w+(?!\\w+)";
-		int lbraceCount = 0;
-		int rbraceCount = 0;
-		// build a regex out of the operators.
-		for (Iterator<Operator> iterator = operators.iterator(); iterator.hasNext();) {
-			Operator op = iterator.next();
-			regex += "|";
-			if (op.operator == "+" || op.operator == "*" || op.operator == "/" || op.operator == "|"
-					|| op.operator == "&" || op.operator == "(" || op.operator == ")") {
-				regex += "\\" + op.operator;
-			} else if (op.operator == "<" || op.operator == ">") {
-				regex += op.operator + "(?!=)";
-			} else {
-				regex += op.operator;
-			}
-			if (op.operator == "(") {
-				lbraceCount += 1;
-			}
-			if (op.operator == ")") {
-				rbraceCount += 1;
-			}
-		}
-		regex += "))\\s*";
-		// if bracecount is equal, split and return
-		if (lbraceCount == rbraceCount) {
-			String[] arr = expression.split(regex);
-			return arr;
-		} else {
-			throw new IllegalStateException(
-					"input expression is invalid because it contains an inconsistent amount of braces \n"
-							+ "expession: " + expression + "\n left brace count: " + lbraceCount
-							+ "\n right brace count: " + rbraceCount);
-		}
+	public static String[] expressionToArray(String expression) {
+		final String regex = "(?<=\\G(\\w+(?!\\w+)|\\+|-|\\/|\\*|\\&|\\||<(?!=)|>(?!=)|<=|>=|==|\\(|\\)))\\s*";
+		return expression.split(regex);
+		
 	}
 	
-	public static SyntaxTree<String> arrayToTree(List<Operator> operators, String[] expressionArray) {
-		SyntaxTree<String> tree = new SyntaxTree<String>("root");
-		SyntaxTreeNode<String> currentNode = tree.getRootNode();
-		for (int i = 0; i < expressionArray.length; i++) {
-			String sign = expressionArray[i];
-			if (isOperator(operators, sign)) {
-				if (sign.equals("&") || sign.equals("|")) {
-					SyntaxTreeNode<String> node = currentNode;
-					while (!node.getParent().isRoot()) {
-						node = node.getParent();
-					}
-					SyntaxTreeNode<String> newNode = new SyntaxTreeNode<>(sign);
-					node.getParent().addChild(newNode);
-					newNode.addChild(node);
-					newNode.getParent().removeChild(node);
-					currentNode = newNode;
+	private static boolean isHigherPrec(String op, String sub) {
+		return mOperators.containsKey(sub) && mOperators.get(sub).precedence >= mOperators.get(op).precedence;
+	}
+	
+	/**
+	 * Function to convert infix to postfix (Shunting yard algorithm)
+	 * 
+	 * @param infix
+	 * @return
+	 */
+	public static List<String> postfix(String[] infix) {
+		final List<String> output = new ArrayList<>();
+		final Deque<String> stack = new LinkedList<>();
+		
+		for (final String element : infix) {
+			// operator
+			if (mOperators.containsKey(element)) {
+				while (!stack.isEmpty() && isHigherPrec(element, stack.peek()))
+					output.add(stack.pop());
+				stack.push(element);
+				
+				// left bracket
+			} else if ("(".equals(element)) {
+				stack.push(element);
+				
+				// right bracket
+			} else if (")".equals(element)) {
+				while (!"(".equals(stack.peek()))
+					output.add(stack.pop());
+				stack.pop();
+				
+				// digit
+			} else {
+				output.add(element);
+			}
+		}
+		
+		while (!stack.isEmpty())
+			output.add(stack.pop());
+		
+		return output;
+	}
+	
+	/**
+	 * Function to convert a given formula postfix notation as array, into a term.
+	 * 
+	 * @param postfix
+	 * @param script
+	 * @param variableManager
+	 * @return
+	 */
+	public static Term postfixToTerm(List<String> postfix, Script script, HybridVariableManager variableManager) {
+		/*
+		 * 1. Create an empty stack that can hold string values. 2. Scan the postfix expression from left to right 2a.
+		 * If operand then push into stack 2b. If operator then 1. Pop first two elements 2. Now make a term of the form
+		 * (operand2,operator,operand1)" 3. Push the new term onto stack
+		 */
+		
+		Term term = null;
+		final Deque<String> stack = new LinkedList<>();
+		final Map<String, Term> strTerm = new HashMap<>();
+		for (final String el : postfix) {
+			String element = el;
+			
+			if (isOperator(element)) {
+				// & is "and" in SMT
+				// == is "=" in SMT
+				if ("&".equals(el)) {
+					element = "and";
+				} else if ("==".equals(el)) {
+					element = "=";
+				}
+				
+				final String operand1 = stack.pop();
+				final String operand2 = stack.pop();
+				final String operator = element;
+				final Map<String, TermVariable> outVarTVMap = variableManager.getVar2OutVarTermVariable();
+				final Term tmpTerm = checkAndbuildTerm(operand1, operand2, operator, strTerm, outVarTVMap, script);
+				
+				if (term == null) {
+					term = tmpTerm;
+					stack.push(term.toString());
+					strTerm.put(term.toString(), term);
+				} else if (tmpTerm != null) {
+					term = tmpTerm;
+					stack.push(tmpTerm.toString());
+					strTerm.put(tmpTerm.toString(), term);
 				} else {
-					SyntaxTreeNode<String> newNode = new SyntaxTreeNode<>(currentNode.getData());
-					currentNode.setData(sign);
-					currentNode.addChild(newNode);
+					throw new IllegalStateException("this exception should not happen, ever");
 				}
 			} else {
-				SyntaxTreeNode<String> newNode = new SyntaxTreeNode<>(sign);
-				currentNode.addChild(newNode);
-				currentNode = newNode;
+				stack.push(element);
 			}
-		}
-		return tree;
-	}
-	
-	public static Term syntaxTreeToTerm(SyntaxTree<String> tree) {
-		Term term = null;
-		SyntaxTreeNode<String> root = tree.getRootNode();
-		// go to the bottom of the tree
-		SyntaxTreeNode<String> node = root;
-		// get preorder
-		List<SyntaxTreeNode<String>> preorder = preOrder(root);
-		for (SyntaxTreeNode<String> n : preorder) {
-			System.out.println(n.getData());
-		}
-		System.out.println("#######");
-		// reverse the preorder
-		Collections.reverse(preorder);
-		for (SyntaxTreeNode<String> n : preorder) {
-			System.out.println(n.getData());
 		}
 		return term;
 	}
 	
-	private static List<SyntaxTreeNode<String>> preOrder(SyntaxTreeNode<String> treenode) {
-		List<SyntaxTreeNode<String>> postOrder = new ArrayList<>();
-		postOrder.add(treenode);
-		for (SyntaxTreeNode<String> child : treenode.getChildren()) {
-			postOrder.addAll(preOrder(child));
+	private static Term checkAndbuildTerm(String operand1, String operand2, String operator, Map<String, Term> strTerm,
+			Map<String, TermVariable> outVarTVMap, Script script) {
+		// check if the operand already got a term.
+		Term tmpTerm;
+		if (strTerm.containsKey(operand1) && strTerm.containsKey(operand2)) {
+			final Term t1 = strTerm.get(operand1);
+			final Term t2 = strTerm.get(operand2);
+			tmpTerm = script.term(operator, t2, t1);
+		} else if (strTerm.containsKey(operand1) && !strTerm.containsKey(operand2)) {
+			final Term t1 = strTerm.get(operand1);
+			tmpTerm = buildTerm(t1, operand2, operator, strTerm, outVarTVMap, script);
+		} else if (!strTerm.containsKey(operand1) && strTerm.containsKey(operand2)) {
+			final Term t2 = strTerm.get(operand2);
+			tmpTerm = buildTerm(operand1, t2, operator, strTerm, outVarTVMap, script);
+		} else {
+			tmpTerm = buildTerm(operand1, operand2, operator, strTerm, outVarTVMap, script);
 		}
-		return postOrder;
+		return tmpTerm;
 	}
 	
-	private static boolean isOperator(List<Operator> operators, String sign) {
-		for (Operator operator : operators) {
-			if (sign.equals(operator.operator)) {
-				return true;
-			}
+	private static Term buildTerm(String operand1, Term term2, String operator, Map<String, Term> strTerm,
+			Map<String, TermVariable> outVarTVMap, Script script) {
+		Term tmpTerm;
+		TermVariable tv1;
+		// operand 2
+		if (outVarTVMap.containsKey(operand1)) {
+			tv1 = outVarTVMap.get(operand1);
+		} else {
+			tv1 = null;
 		}
-		return false;
+		// build term
+		if (tv1 == null) {
+			tmpTerm = script.term(operator, term2, script.decimal(operand1));
+		} else {
+			tmpTerm = script.term(operator, term2, tv1);
+		}
+		return tmpTerm;
 	}
 	
-	public static List<Operator> getAllAvailableOperators() {
-		List<Operator> operators = new ArrayList<>();
-		operators.add(Operator.ADD);
-		operators.add(Operator.SUB);
-		operators.add(Operator.DIV);
-		operators.add(Operator.MUL);
-		operators.add(Operator.AND);
-		operators.add(Operator.OR);
-		operators.add(Operator.LT);
-		operators.add(Operator.GT);
-		operators.add(Operator.LTEQ);
-		operators.add(Operator.GTEQ);
-		operators.add(Operator.EQUALS);
-		operators.add(Operator.LBRACE);
-		operators.add(Operator.RBRACE);
-		return operators;
+	private static Term buildTerm(String operand1, String operand2, String operator, Map<String, Term> strTerm,
+			Map<String, TermVariable> outVarTVMap, Script script) {
+		Term tmpTerm;
+		TermVariable tv1;
+		TermVariable tv2;
+		// get variables
+		// operand 1
+		if (outVarTVMap.containsKey(operand1)) {
+			tv1 = outVarTVMap.get(operand1);
+		} else {
+			tv1 = null;
+		}
+		// operand 2
+		if (outVarTVMap.containsKey(operand2)) {
+			tv2 = outVarTVMap.get(operand2);
+		} else {
+			tv2 = null;
+		}
+		// build term
+		if (tv1 == null && tv2 == null) {
+			tmpTerm = script.term(operator, script.decimal(operand2), script.decimal(operand1));
+		} else if (tv1 != null && tv2 == null) {
+			tmpTerm = script.term(operator, script.decimal(operand2), tv1);
+		} else if (tv1 == null) {
+			tmpTerm = script.term(operator, tv2, script.decimal(operand1));
+		} else {
+			tmpTerm = script.term(operator, tv2, tv1);
+		}
+		return tmpTerm;
 	}
 	
+	private static Term buildTerm(Term term1, String operand2, String operator, Map<String, Term> strTerm,
+			Map<String, TermVariable> outVarTVMap, Script script) {
+		Term tmpTerm;
+		TermVariable tv2;
+		// operand 2
+		if (outVarTVMap.containsKey(operand2)) {
+			tv2 = outVarTVMap.get(operand2);
+		} else {
+			tv2 = null;
+		}
+		// build term
+		if (tv2 == null) {
+			tmpTerm = script.term(operator, script.decimal(operand2), term1);
+		} else {
+			tmpTerm = script.term(operator, tv2, term1);
+		}
+		return tmpTerm;
+	}
+	
+	private static boolean isOperator(String sign) {
+		return mOperators.containsKey(sign);
+	}
 }
