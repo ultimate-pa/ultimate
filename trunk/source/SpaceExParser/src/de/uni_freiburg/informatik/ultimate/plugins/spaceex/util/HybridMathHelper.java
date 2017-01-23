@@ -116,7 +116,6 @@ public class HybridMathHelper {
 		 * If operand then push into stack 2b. If operator then 1. Pop first two elements 2. Now make a term of the form
 		 * (operand2,operator,operand1)" 3. Push the new term onto stack
 		 */
-		
 		Term term = null;
 		final Deque<String> stack = new LinkedList<>();
 		final Map<String, Term> strTerm = new HashMap<>();
@@ -188,7 +187,9 @@ public class HybridMathHelper {
 		}
 		// build term
 		if (tv1 == null) {
-			tmpTerm = script.term(operator, term2, script.decimal(operand1));
+			final TermVariable[] free = term2.getFreeVars();
+			final Term t1 = script.term(operator, free[0], script.decimal(operand1));
+			tmpTerm = script.term("and", term2, t1);
 		} else {
 			tmpTerm = script.term(operator, term2, tv1);
 		}
@@ -217,7 +218,7 @@ public class HybridMathHelper {
 		if (tv1 == null && tv2 == null) {
 			tmpTerm = script.term(operator, script.decimal(operand2), script.decimal(operand1));
 		} else if (tv1 != null && tv2 == null) {
-			tmpTerm = script.term(operator, script.decimal(operand2), tv1);
+			tmpTerm = script.term(operator, tv1, script.decimal(operand2));
 		} else if (tv1 == null) {
 			tmpTerm = script.term(operator, tv2, script.decimal(operand1));
 		} else {

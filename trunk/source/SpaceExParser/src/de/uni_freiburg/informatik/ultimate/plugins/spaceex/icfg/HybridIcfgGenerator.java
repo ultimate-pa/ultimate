@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SignValuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridMathHelper;
 
 /**
  * Class that handles conversion of Hybrid Models/Systems/Automata to an ICFG
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
-public class HybridIcfgGenerator extends ModernAnnotations {
+public class HybridIcfgGenerator {
 	
 	private final ILogger mLogger;
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
@@ -206,12 +206,13 @@ public class HybridIcfgGenerator extends ModernAnnotations {
 		mLogger.debug("Transformula for varAssignment: " + transformula);
 		
 		// TERMBUILDING TEST
-		/*
-		 * final String infix = "x <= 5 & t <= 2 & time_glob == x"; final String[] infixArray =
-		 * HybridMathHelper.expressionToArray(infix); final List<String> postfixList =
-		 * HybridMathHelper.postfix(infixArray); final Term test = HybridMathHelper.postfixToTerm(postfixList, script,
-		 * mVariableManager); mLogger.info(test);
-		 */
+		
+		final String infix = "4 <= x <= 5 & t <= 2 & time_glob == x";
+		final String[] infixArray = HybridMathHelper.expressionToArray(infix);
+		final List<String> postfixList = HybridMathHelper.postfix(infixArray);
+		final Term test = HybridMathHelper.postfixToTerm(postfixList, script, mVariableManager);
+		mLogger.info(test);
+		
 		// create variable component of the form start ----variable assignment----> end
 		final List<BoogieIcfgLocation> locations = new ArrayList<>();
 		final List<IcfgInternalTransition> transitions = new ArrayList<>();
