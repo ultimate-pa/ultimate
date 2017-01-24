@@ -30,6 +30,8 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -48,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -132,64 +133,16 @@ public final class NwaSimulationUtil {
 			final STATE leftState = supposedSimulation.getKey();
 			final STATE rightState = supposedSimulation.getValue();
 			
-			// Each from leftState outgoing transitions also needs an matching
-			// outgoing transition from rightState whose destination also
-			// simulates the other
-			// Internal transitions
-			for (final OutgoingInternalTransition<LETTER, STATE> leftTrans : nwa.internalSuccessors(leftState)) {
-				final STATE leftDest = leftTrans.getSucc();
-				final LETTER letter = leftTrans.getLetter();
-				final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
-				
-				boolean foundMatchingTrans = false;
-				for (final OutgoingInternalTransition<LETTER, STATE> rightTrans : nwa.internalSuccessors(rightState,
-						letter)) {
-					final STATE rightDest = rightTrans.getSucc();
-					// If the right destination also simulates the left
-					// destination, we found a matching transition
-					if (destinationSimulation.contains(rightDest)) {
-						foundMatchingTrans = true;
-						break;
-					}
-				}
-				
-				// If no matching transition could be found, the underlying
-				// simulation is incorrect
-				if (!foundMatchingTrans) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Supposedly " + rightState + " simulates " + leftState
-								+ ". But there is no matching partner for " + leftTrans);
-					}
-					return false;
-				}
+			// internal successors
+			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
+					() -> nwa.internalSuccessors(leftState), nwa::internalSuccessors)) {
+				return false;
 			}
 			
-			// Call transitions
-			for (final OutgoingCallTransition<LETTER, STATE> leftTrans : nwa.callSuccessors(leftState)) {
-				final STATE leftDest = leftTrans.getSucc();
-				final LETTER letter = leftTrans.getLetter();
-				final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
-				
-				boolean foundMatchingTrans = false;
-				for (final OutgoingCallTransition<LETTER, STATE> rightTrans : nwa.callSuccessors(rightState, letter)) {
-					final STATE rightDest = rightTrans.getSucc();
-					// If the right destination also simulates the left
-					// destination, we found a matching transition
-					if (destinationSimulation.contains(rightDest)) {
-						foundMatchingTrans = true;
-						break;
-					}
-				}
-				
-				// If no matching transition could be found, the underlying
-				// simulation is incorrect
-				if (!foundMatchingTrans) {
-					if (logger.isDebugEnabled()) {
-						logger.debug("Supposedly " + rightState + " simulates " + leftState
-								+ ". But there is no matching partner for " + leftTrans);
-					}
-					return false;
-				}
+			// call successors
+			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
+					() -> nwa.callSuccessors(leftState), nwa::callSuccessors)) {
+				return false;
 			}
 			
 			// Return transitions do not need to get matched
@@ -197,6 +150,44 @@ public final class NwaSimulationUtil {
 		
 		if (logger.isInfoEnabled()) {
 			logger.info("Finished checking correctness of simulation results, they are correct.");
+		}
+		return true;
+	}
+	
+	private static <LETTER, STATE> boolean findSuccessorSimulationWitness(final ILogger logger,
+			final HashRelation<STATE, STATE> supposedSimulations, final STATE leftState, final STATE rightState,
+			final Supplier<Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> succFromState,
+			final BiFunction<STATE, LETTER, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> succFromStateAndLetter) {
+		// Each from leftState outgoing transitions also needs an matching
+		// outgoing transition from rightState whose destination also
+		// simulates the other
+		// Internal transitions
+		for (final IOutgoingTransitionlet<LETTER, STATE> leftTrans : succFromState.get()) {
+			final STATE leftDest = leftTrans.getSucc();
+			final LETTER letter = leftTrans.getLetter();
+			final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
+			
+			boolean foundMatchingTrans = false;
+			for (final IOutgoingTransitionlet<LETTER, STATE> rightTrans : succFromStateAndLetter.apply(rightState,
+					letter)) {
+				final STATE rightDest = rightTrans.getSucc();
+				// If the right destination also simulates the left
+				// destination, we found a matching transition
+				if (destinationSimulation.contains(rightDest)) {
+					foundMatchingTrans = true;
+					break;
+				}
+			}
+			
+			// If no matching transition could be found, the underlying
+			// simulation is incorrect
+			if (!foundMatchingTrans) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Supposedly " + rightState + " simulates " + leftState
+							+ ". But there is no matching partner for " + leftTrans);
+				}
+				return false;
+			}
 		}
 		return true;
 	}
