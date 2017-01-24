@@ -659,6 +659,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// At this point we may validate the correctness of the simulation
 		// results
 		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(mGameGraph, mNwa, mSimulationType,
+				new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(mPossibleEquivalenceClasses),
 				mLogger)) : "The computed simulation results are incorrect.";
 
 		final FairGameGraph<LETTER, STATE> fairGraph = castGraphToFairGameGraph();

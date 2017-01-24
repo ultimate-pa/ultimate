@@ -133,6 +133,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			sim.doSimulation();
 			
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
+					new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(possibleEquivalentClasses),
 					mLogger) : "The computed simulation results are incorrect.";
 			
 			switch (backend) {
@@ -170,8 +171,6 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		}
 		mLogger.info(exitMessage());
 	}
-	
-
 	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
 		return new SpoilerNwaVertex<>(1, false, null, null, new SpoilerWinningSink<>(null));

@@ -26,11 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -77,6 +80,8 @@ public final class NwaSimulationUtil {
 	 *            The underlying NWA
 	 * @param simulationType
 	 *            simulation type
+	 * @param isInitialPairPredicate
+	 *            returns {@code true} iff a given pair of states is initial
 	 * @param logger
 	 *            logger
 	 * @param <LETTER>
@@ -87,7 +92,7 @@ public final class NwaSimulationUtil {
 	 */
 	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final ESimulationType simulationType,
-			final ILogger logger) {
+			final BiPredicate<STATE, STATE> isInitialPairPredicate, final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");
 		}
@@ -132,16 +137,20 @@ public final class NwaSimulationUtil {
 		for (final Entry<STATE, STATE> supposedSimulation : supposedSimulations.entrySet()) {
 			final STATE leftState = supposedSimulation.getKey();
 			final STATE rightState = supposedSimulation.getValue();
+			if (!isInitialPairPredicate.test(leftState, rightState)) {
+				// ignore states that are not considered by the user
+				continue;
+			}
 			
 			// internal successors
 			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
-					() -> nwa.internalSuccessors(leftState), nwa::internalSuccessors)) {
+					isInitialPairPredicate, () -> nwa.internalSuccessors(leftState), nwa::internalSuccessors)) {
 				return false;
 			}
 			
 			// call successors
 			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
-					() -> nwa.callSuccessors(leftState), nwa::callSuccessors)) {
+					isInitialPairPredicate, () -> nwa.callSuccessors(leftState), nwa::callSuccessors)) {
 				return false;
 			}
 			
@@ -156,6 +165,7 @@ public final class NwaSimulationUtil {
 	
 	private static <LETTER, STATE> boolean findSuccessorSimulationWitness(final ILogger logger,
 			final HashRelation<STATE, STATE> supposedSimulations, final STATE leftState, final STATE rightState,
+			final BiPredicate<STATE, STATE> isInitialPairPredicate,
 			final Supplier<Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> succFromState,
 			final BiFunction<STATE, LETTER, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> succFromStateAndLetter) {
 		// Each from leftState outgoing transitions also needs an matching
@@ -176,6 +186,10 @@ public final class NwaSimulationUtil {
 				if (destinationSimulation.contains(rightDest)) {
 					foundMatchingTrans = true;
 					break;
+				}
+				if (!isInitialPairPredicate.test(leftDest, rightDest)) {
+					// we should ignore cases where one successor pair is not considered by the user
+					return true;
 				}
 			}
 			
@@ -380,5 +394,36 @@ public final class NwaSimulationUtil {
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
+	}
+	
+	/**
+	 * Predicate representing a binary relation that is backed by a partition.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <STATE>
+	 *            state type
+	 */
+	public static class BinaryRelationPredicateFromPartition<STATE> implements BiPredicate<STATE, STATE> {
+		private final Map<STATE, Set<STATE>> mState2states;
+		
+		/**
+		 * @param partition
+		 *            Partition.
+		 */
+		public BinaryRelationPredicateFromPartition(final Iterable<Set<STATE>> partition) {
+			mState2states = new HashMap<>();
+			for (final Set<STATE> block : partition) {
+				for (final STATE state : block) {
+					mState2states.put(state, block);
+				}
+			}
+		}
+		
+		@SuppressWarnings("squid:S1698")
+		@Override
+		public boolean test(final STATE state1, final STATE state2) {
+			// equality intended here
+			return mState2states.get(state1) == mState2states.get(state2);
+		}
 	}
 }
