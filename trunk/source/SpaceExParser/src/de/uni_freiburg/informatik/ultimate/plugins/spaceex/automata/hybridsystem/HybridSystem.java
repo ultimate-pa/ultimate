@@ -104,14 +104,15 @@ public class HybridSystem {
 		});
 		// rename variables according to binds
 		// TODO: find out how IDS are set, we need autName instead of autName_1
-		mLogger.info("Binds before replacements: " + mBinds);
+		mLogger.debug("########## Rename variables according to Binds ###########");
+		mLogger.debug("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
-			mLogger.info("before replace: " + aut);
-			Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id.replaceAll("_1", "")));
+			mLogger.debug("before replace: " + aut);
+			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id.replaceAll("_1", "")));
 			mBinds.put(id.replaceAll("_1", ""), newBinds);
-			mLogger.info("after replace: " + aut);
+			mLogger.debug("after replace: " + aut);
 		});
-		mLogger.info("Binds after replacements: " + mBinds);
+		mLogger.debug("Binds after replacements: " + mBinds);
 	}
 	
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,

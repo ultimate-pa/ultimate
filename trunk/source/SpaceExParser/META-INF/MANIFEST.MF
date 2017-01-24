@@ -13,6 +13,7 @@ Require-Bundle: Library-UltimateCore,
  SMTSolverBridge,
  de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- Library-BoogieAST
+ Library-BoogieAST,
+ Library-UltimateTest
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

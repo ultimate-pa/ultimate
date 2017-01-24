@@ -12,7 +12,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- *
+ * Class to build Terms from Hybrid automata expressions like Initial values, Invariants and Jumps
+ * 
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
@@ -20,7 +21,6 @@ public class HybridTermBuilder {
 	private final HybridVariableManager mVariableManager;
 	private final Script mScript;
 	private final Map<String, Term> mStringTerm;
-	
 	private final Map<String, Operator> mOperators;
 	
 	public enum BuildScenario {
@@ -55,11 +55,16 @@ public class HybridTermBuilder {
 		mOperators.put("&", Operator.AND);
 		mOperators.put("|", Operator.OR);
 		mStringTerm = new HashMap<>();
-		
+	}
+	
+	public Term infixToTerm(String infix, final BuildScenario scenario) {
+		final String[] infixArray = expressionToArray(infix);
+		final List<String> postfix = postfix(infixArray);
+		return postfixToTerm(postfix, scenario);
 	}
 	
 	/**
-	 * Function to convert a given formula postfix notation as array, into a term.
+	 * Function to convert a given formula postfix notation as array, into a term., sali ge
 	 *
 	 * @param postfix
 	 * @param script

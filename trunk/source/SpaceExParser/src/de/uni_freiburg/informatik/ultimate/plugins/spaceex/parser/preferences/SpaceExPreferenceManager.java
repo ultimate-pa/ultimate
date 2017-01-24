@@ -30,7 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -40,6 +42,10 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
  * Class that shall parse the config file of a SpaceEx model.
@@ -49,22 +55,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class SpaceExPreferenceManager {
 	
-	private IUltimateServiceProvider mServices;
-	private ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private String mSystem;
-	private String mModelFilename;
-	private Map<String, String> mInitialLocations;
-	private Map<String, List<SignValuePair>> mInitialVariables;
+	private final String mModelFilename;
+	private final Map<String, String> mInitialLocations;
+	private final Map<String, List<SignValuePair>> mInitialVariables;
+	private String mInitialVariableInfix = "";
 	
 	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger, File spaceExFile)
 			throws Exception {
 		mServices = services;
 		mLogger = logger;
-		IPreferenceProvider preferenceProvider = mServices
-				.getPreferenceProvider(de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator.PLUGIN_ID);
+		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		String configfile =
 				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
-		boolean loadconfig = preferenceProvider
+		final boolean loadconfig = preferenceProvider
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mInitialVariables = new HashMap<>();
@@ -72,13 +78,13 @@ public class SpaceExPreferenceManager {
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
-			File config = new File(configfile);
+			final File config = new File(configfile);
 			if (config.exists() && !config.isDirectory()) {
 				parseConfigFile(config);
 			}
 		} else if (loadconfig) {
 			configfile = spaceExFile.getAbsolutePath().replaceAll(".xml", ".cfg");
-			File config = new File(configfile);
+			final File config = new File(configfile);
 			if (config.exists() && !config.isDirectory()) {
 				parseConfigFile(config);
 			} else {
@@ -89,7 +95,7 @@ public class SpaceExPreferenceManager {
 	
 	private void parseConfigFile(File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
-		Properties prop = new Properties();
+		final Properties prop = new Properties();
 		final FileInputStream fis = new FileInputStream(configfile);
 		// load properties file
 		prop.load(fis);
@@ -97,7 +103,7 @@ public class SpaceExPreferenceManager {
 		// system holds the hybridsystem which is regarded.
 		mSystem = prop.getProperty("system").replaceAll("\"", "");
 		// initially holds the initial variable assignment, as well as initial locations.
-		String initially = prop.getProperty("initially").replaceAll("\"", "");
+		final String initially = prop.getProperty("initially").replaceAll("\"", "");
 		/*
 		 * split "initially" into parts, split string at separator "&" initial location assignments are of the form:
 		 * loc(#AUTOMATON NAME#)==#INITIAL LOCATION NAME# variable assignments are of the form: #VAR NAME#==#VALUE# OR
@@ -105,7 +111,7 @@ public class SpaceExPreferenceManager {
 		 */
 		if (!"".equals(initially)) {
 			// split at &
-			String[] splitted = initially.split("&");
+			final String[] splitted = initially.split("&");
 			// for each initial statement, find out if it is variable or initial location definition.
 			String property;
 			// regex stuff for initial locations
@@ -126,31 +132,85 @@ public class SpaceExPreferenceManager {
 				varMatcher = varPattern.matcher(property);
 				varMatcher2 = varPattern2.matcher(property);
 				if (locMatcher.matches()) {
-					String aut = locMatcher.group(1);
-					String loc = locMatcher.group(2);
+					final String aut = locMatcher.group(1);
+					final String loc = locMatcher.group(2);
 					mInitialLocations.put(aut, loc);
 				} else if (varMatcher.matches()) {
-					String value1 = varMatcher.group(1);
-					String sign1 = varMatcher.group(2);
-					String var = varMatcher.group(3);
-					String sign2 = varMatcher.group(4);
-					String value2 = varMatcher.group(5);
-					List<SignValuePair> svPairs = new ArrayList<>();
+					final String value1 = varMatcher.group(1);
+					final String sign1 = varMatcher.group(2);
+					final String var = varMatcher.group(3);
+					final String sign2 = varMatcher.group(4);
+					final String value2 = varMatcher.group(5);
+					final List<SignValuePair> svPairs = new ArrayList<>();
 					svPairs.add(new SignValuePair(sign1, value1));
 					svPairs.add(new SignValuePair(sign2, value2));
 					mInitialVariables.put(var, svPairs);
+					mInitialVariableInfix += varMatcher.group(0) + ((i == splitted.length - 1) ? "" : "&");
 				} else if (varMatcher2.matches()) {
-					String var = varMatcher2.group(1);
-					String sign = varMatcher2.group(2);
-					String value = varMatcher2.group(3);
-					List<SignValuePair> svPairs = new ArrayList<>();
+					final String var = varMatcher2.group(1);
+					final String sign = varMatcher2.group(2);
+					final String value = varMatcher2.group(3);
+					final List<SignValuePair> svPairs = new ArrayList<>();
 					svPairs.add(new SignValuePair(sign, value));
 					mInitialVariables.put(var, svPairs);
+					mInitialVariableInfix += varMatcher2.group(0) + ((i == splitted.length - 1) ? "" : "&");
 				}
 			}
+			mLogger.info(mInitialVariableInfix);
 		}
 		fis.close();
-		mLogger.info("Done");
+	}
+	
+	public HybridAutomaton getRegardedAutomaton(HybridModel model) {
+		/*
+		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
+		 * system.
+		 */
+		final String configSystem = mSystem != null ? mSystem : "";
+		final Map<String, HybridSystem> systems = model.getSystems();
+		final Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
+		HybridAutomaton aut;
+		if (configSystem.isEmpty()) {
+			if (!systems.isEmpty()) {
+				final HybridSystem firstsys = systems.values().iterator().next();
+				if (mergedAutomata.containsKey(firstsys.getName())) {
+					aut = mergedAutomata.get(firstsys.getName());
+				} else {
+					aut = firstsys.getAutomata().values().iterator().next();
+				}
+			} else {
+				throw new IllegalStateException("Hybridmodel" + model.toString() + " is empty");
+			}
+			return aut;
+		}
+		// if the system specified in the config file is present in the models systems
+		if (systems.containsKey(configSystem)) {
+			// if the system exists, we check if the system has a mergedAutomaton
+			// if not it has to be a single automaton (at least it should be)
+			if (mergedAutomata.containsKey(configSystem)) {
+				aut = mergedAutomata.get(configSystem);
+			} else {
+				if (systems.get(configSystem).getAutomata().size() != 1) {
+					throw new UnsupportedOperationException(
+							"The automata of system" + systems.get(configSystem).getName()
+									+ " have not been merged or are empty, the size of automata is:"
+									+ systems.get(configSystem).getAutomata().size());
+				} else {
+					// should be a single automaton, thus just get it with an iterator.
+					final Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
+					final Iterator<HybridAutomaton> it = autcol.iterator();
+					aut = it.hasNext() ? it.next() : null;
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
+					+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
+		}
+		if (aut == null) {
+			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
+		} else {
+			return aut;
+		}
 	}
 	
 	public String getSystem() {
@@ -167,6 +227,10 @@ public class SpaceExPreferenceManager {
 	
 	public String getFileName() {
 		return mModelFilename;
+	}
+	
+	public String getInitialInfix() {
+		return mInitialVariableInfix;
 	}
 	
 }

@@ -92,7 +92,7 @@ public class SpaceExParser implements ISource {
 	 */
 	public SpaceExParser() {
 		mFileTypes = new String[] { "xml", };
-		mFileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<>();
 	}
 	
 	@Override
@@ -197,13 +197,12 @@ public class SpaceExParser implements ISource {
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
-		final HybridModel system = new HybridModel(spaceEx, mLogger, mPreferenceManager);
-		HybridAutomaton automaton = getRegardedAutomaton(system);
+		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
+		final HybridAutomaton automaton = mPreferenceManager.getRegardedAutomaton(model);
 		// toolkit
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
 		final HybridIcfgGenerator gen = new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit);
-		gen.modelToIcfg(automaton);
-		return gen.createIfcgFromComponents();
+		return gen.createIfcgFromComponents(automaton);
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new
@@ -217,18 +216,18 @@ public class SpaceExParser implements ISource {
 	
 	private CfgSmtToolkit generateToolkit(HybridAutomaton automaton) {
 		IPredicate axioms = null;
-		Set<String> procedures = new HashSet<>();
+		final Set<String> procedures = new HashSet<>();
 		procedures.add("MAIN");
-		Script script =
+		final Script script =
 				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
 								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
 						false, false, "", "SMTINTERPOL");
-		ManagedScript managedScript = new ManagedScript(mServices, script);
-		HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton, "MAIN");
-		DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
-		HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
-		ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
+		final ManagedScript managedScript = new ManagedScript(mServices, script);
+		final HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton, "MAIN");
+		final DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
+		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
+		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		axioms = new IPredicate() {
 			
 			@Override
@@ -265,7 +264,7 @@ public class SpaceExParser implements ISource {
 		HybridAutomaton aut;
 		if (configSystem.isEmpty()) {
 			if (!systems.isEmpty()) {
-				HybridSystem firstsys = systems.values().iterator().next();
+				final HybridSystem firstsys = systems.values().iterator().next();
 				if (mergedAutomata.containsKey(firstsys.getName())) {
 					aut = mergedAutomata.get(firstsys.getName());
 				} else {

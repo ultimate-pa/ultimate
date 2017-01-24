@@ -90,18 +90,18 @@ public class HybridModel {
 		}
 		
 		if (systems.isEmpty()) {
-			HybridSystem hybsys = createDefaultSystem(automata);
-			mLogger.info("hybridsystem created:\n" + hybsys.toString());
+			final HybridSystem hybsys = createDefaultSystem(automata);
+			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
-				mLogger.info("creating hybridsystem for system: " + id);
-				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
-						mPreferenceManager);
-				mLogger.info("hybridsystem created:\n" + hybsys.toString());
+				mLogger.debug("creating hybridsystem for system: " + id);
+				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata,
+						systems, mPreferenceManager);
+				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
-				HybridAutomaton hybAut = mergeAutomata(hybsys);
+				final HybridAutomaton hybAut = mergeAutomata(hybsys);
 				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
@@ -144,18 +144,18 @@ public class HybridModel {
 		}
 		
 		if (systems.isEmpty()) {
-			HybridSystem hybsys = createDefaultSystem(automata);
-			mLogger.info("hybridsystem created:\n" + hybsys.toString());
+			final HybridSystem hybsys = createDefaultSystem(automata);
+			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
-				mLogger.info("creating hybridsystem for system: " + id);
-				HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata, systems,
-						mPreferenceManager);
-				mLogger.info("hybridsystem created:\n" + hybsys.toString());
+				mLogger.debug("creating hybridsystem for system: " + id);
+				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata,
+						systems, mPreferenceManager);
+				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
-				HybridAutomaton hybAut = mergeAutomata(hybsys);
+				final HybridAutomaton hybAut = mergeAutomata(hybsys);
 				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
@@ -197,18 +197,18 @@ public class HybridModel {
 	 */
 	public HybridAutomaton mergeAutomata(HybridSystem system) {
 		HybridAutomaton merged;
-		Collection<HybridAutomaton> automata = system.getAutomata().values();
+		final Collection<HybridAutomaton> automata = system.getAutomata().values();
 		HybridAutomaton aut1 = automata.iterator().next();
 		merged = aut1;
 		automata.remove(aut1);
 		while (automata.iterator().hasNext()) {
-			HybridAutomaton aut2 = automata.iterator().next();
+			final HybridAutomaton aut2 = automata.iterator().next();
 			automata.remove(aut2);
-			mLogger.info("merging: " + aut1.getName() + " and " + aut2.getName());
+			mLogger.debug("merging: " + aut1.getName() + " and " + aut2.getName());
 			merged = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2);
 			aut1 = merged;
 		}
-		mLogger.info(merged.toString());
+		mLogger.debug(merged.toString());
 		return merged;
 	}
 	
