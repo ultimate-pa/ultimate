@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SignValuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridMathHelper;
 
 /**
  * Class that handles conversion of Hybrid Models/Systems/Automata to an ICFG
@@ -208,9 +208,10 @@ public class HybridIcfgGenerator {
 		// TERMBUILDING TEST
 		
 		final String infix = "4 <= x <= 5 & t <= 2 & time_glob == x";
-		final String[] infixArray = HybridMathHelper.expressionToArray(infix);
-		final List<String> postfixList = HybridMathHelper.postfix(infixArray);
-		final Term test = HybridMathHelper.postfixToTerm(postfixList, script, mVariableManager);
+		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
+		final String[] infixArray = tb.expressionToArray(infix);
+		final List<String> postfixList = tb.postfix(infixArray);
+		final Term test = tb.postfixToTerm(postfixList, BuildScenario.INITIALLY);
 		mLogger.info(test);
 		
 		// create variable component of the form start ----variable assignment----> end
