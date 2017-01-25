@@ -26,7 +26,7 @@ public class HybridTermBuilder {
 	private final Map<HybridProgramVar, TermVariable> mOutVars;
 	
 	public enum BuildScenario {
-		INITIALLY, INVARIANT, JUMP
+		INITIALLY, INVARIANT, UPDATE, GUARD;
 	}
 	
 	public enum Operator {
@@ -141,7 +141,7 @@ public class HybridTermBuilder {
 	private Term buildInitialTerm(final String operand1, final Term term2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario);
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, true);
 		// build term
 		final TermVariable[] free = term2.getFreeVars();
 		if (tv1 == null) {
@@ -158,8 +158,8 @@ public class HybridTermBuilder {
 	private Term buildInitialTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario);
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario);
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, true);
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, false);
 		// build term
 		if (tv1 == null && tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), mScript.decimal(operand1));
@@ -177,7 +177,7 @@ public class HybridTermBuilder {
 	private Term buildInitialTerm(final Term term1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario);
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, false);
 		// build term
 		if (tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), term1);
@@ -188,7 +188,8 @@ public class HybridTermBuilder {
 	}
 	
 	// helper function to get the correct termvariable for each scenario
-	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario) {
+	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario,
+			boolean isAssignedValue) {
 		if (scenario == BuildScenario.INITIALLY) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
@@ -198,7 +199,7 @@ public class HybridTermBuilder {
 			} else {
 				return null;
 			}
-		} else {
+		} else if (scenario == BuildScenario.GUARD || scenario == BuildScenario.INVARIANT) {
 			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
@@ -207,6 +208,28 @@ public class HybridTermBuilder {
 			} else {
 				return null;
 			}
+		} else if (scenario == BuildScenario.UPDATE) {
+			if (isAssignedValue) {
+				if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
+					final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+					final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+					mOutVars.put(progvar, outvar);
+					return outvar;
+				} else {
+					return null;
+				}
+			} else {
+				if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
+					final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+					final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+					mInVars.put(progvar, invar);
+					return invar;
+				} else {
+					return null;
+				}
+			}
+		} else {
+			return null;
 		}
 	}
 	

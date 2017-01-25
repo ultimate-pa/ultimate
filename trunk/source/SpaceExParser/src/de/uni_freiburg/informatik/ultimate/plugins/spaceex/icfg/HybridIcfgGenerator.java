@@ -232,7 +232,9 @@ public class HybridIcfgGenerator {
 			 */
 			// invariant to term:
 			final String infix = preprocessLocationStatement(loc.getInvariant());
-			final UnmodifiableTransFormula invariantTransformula = buildTransformula(infix);
+			final UnmodifiableTransFormula invariantTransformula = buildTransformula(infix, BuildScenario.INVARIANT);
+			final String msg = createTransformulaLoggerMessage(invariantTransformula, infix);
+			mLogger.info(msg);
 			final UnmodifiableTransFormula tfStartFlow = invariantTransformula;
 			final IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
 			start.addOutgoing(startFlow);
@@ -242,7 +244,6 @@ public class HybridIcfgGenerator {
 			/*
 			 * Transition flow to invCheck
 			 */
-			// TODO: transformula
 			final UnmodifiableTransFormula tfFlowInv =
 					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
 			final IcfgInternalTransition flowInv = new IcfgInternalTransition(flow, invCheck, mPayload, tfFlowInv);
@@ -253,7 +254,6 @@ public class HybridIcfgGenerator {
 			 * Transition invCheck to end/exit if invariant true, go to end, else to error loc
 			 */
 			// invcheck -> end
-			// TODO: transformula
 			final UnmodifiableTransFormula tfInvEnd = invariantTransformula;
 			final IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, mPayload, tfInvEnd);
 			invCheck.addOutgoing(invEnd);
@@ -265,16 +265,73 @@ public class HybridIcfgGenerator {
 		}
 	}
 	
-	private String preprocessLocationStatement(String invariant) {
-		String inv = invariant.replaceAll("&&", "&");
-		inv = inv.replaceAll("==", "=");
-		return inv;
+	/*
+	 * Transition methods
+	 */
+	private void transitionsToIcfg(final List<Transition> transitions, Location initialLocation) {
+		// a transition in a hybrid automaton is simply an edge from one location to another.
+		// guard and update can be merged with &&
+		transitions.forEach(trans -> {
+			// the source of the transition is the the end of the source CFG component
+			final BoogieIcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
+			// the target of the transition is the the start of the target CFG component
+			final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
+			// invariant to term:
+			final UnmodifiableTransFormula transFormula =
+					buildTransitionTransformula(trans.getUpdate(), trans.getGuard());
+			final String msg =
+					createTransformulaLoggerMessage(transFormula, trans.getUpdate() + " && " + trans.getGuard());
+			mLogger.info(msg);
+			final IcfgInternalTransition transition =
+					new IcfgInternalTransition(source, target, mPayload, transFormula);
+			source.addOutgoing(transition);
+			target.addIncoming(transition);
+		});
+		
+		// the source of the transition is the the end of the source CFG component
+		final BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
+		// the target of the transition is the the start of the target CFG component
+		final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
+		final UnmodifiableTransFormula transFormula =
+				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		source.addOutgoing(transition);
+		target.addIncoming(transition);
+		
 	}
 	
-	private UnmodifiableTransFormula buildTransformula(String infix) {
+	private String createTransformulaLoggerMessage(UnmodifiableTransFormula transFormula, String infix) {
+		String msg = "######## CREATED TRANSFORMULA ######## \n";
+		msg += "created " + transFormula.toString() + "\n";
+		msg += "infix: " + infix;
+		return msg;
+	}
+	
+	private UnmodifiableTransFormula buildTransitionTransformula(String update, String guard) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
-		final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
+		final Term updateTerm = tb.infixToTerm(preprocessLocationStatement(update), BuildScenario.UPDATE);
+		final Term guardTerm = tb.infixToTerm(preprocessLocationStatement(guard), BuildScenario.GUARD);
+		final Term formula = mSmtToolkit.getManagedScript().getScript().term("and", updateTerm, guardTerm);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tb.getmInVars().forEach((progvar, invar) -> {
+			tfb.addInVar(progvar, invar);
+		});
+		tb.getmOutVars().forEach((progvar, outvar) -> {
+			tfb.addOutVar(progvar, outvar);
+		});
+		tfb.setFormula(formula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		// finish construction of the transformula.
+		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		mLogger.debug("Transformula for varAssignment: " + transformula);
+		return transformula;
+	}
+	
+	private UnmodifiableTransFormula buildTransformula(String infix, BuildScenario scenario) {
+		final HybridTermBuilder tb =
+				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
+		final Term term = tb.infixToTerm(infix, scenario);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		tb.getmInVars().forEach((progvar, invar) -> {
 			tfb.addInVar(progvar, invar);
@@ -290,36 +347,9 @@ public class HybridIcfgGenerator {
 		return transformula;
 	}
 	
-	/*
-	 * Transition methods
-	 */
-	private void transitionsToIcfg(final List<Transition> transitions, Location initialLocation) {
-		// a transition in a hybrid automaton is simply an edge from one location to another.
-		// guard and update can be merged with &&
-		transitions.forEach(trans -> {
-			// the source of the transition is the the end of the source CFG component
-			final BoogieIcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
-			// the target of the transition is the the start of the target CFG component
-			final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
-			// TODO: transformula
-			final UnmodifiableTransFormula transFormula =
-					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-			final IcfgInternalTransition transition =
-					new IcfgInternalTransition(source, target, mPayload, transFormula);
-			source.addOutgoing(transition);
-			target.addIncoming(transition);
-		});
-		
-		// the source of the transition is the the end of the source CFG component
-		final BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
-		// the target of the transition is the the start of the target CFG component
-		final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
-		// TODO: transformula
-		final UnmodifiableTransFormula transFormula =
-				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
-		source.addOutgoing(transition);
-		target.addIncoming(transition);
-		
+	private String preprocessLocationStatement(String invariant) {
+		String inv = invariant.replaceAll(":=", "==");
+		inv = inv.replaceAll("&&", "&");
+		return inv;
 	}
 }

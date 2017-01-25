@@ -15,7 +15,7 @@ public class HybridProgramVar implements IProgramVar {
 	private final ApplicationTerm mDefaultConstant;
 	private final ApplicationTerm mPrimedConstant;
 	private final String mId;
-	private String mProcedure;
+	private final String mProcedure;
 	
 	public HybridProgramVar(TermVariable termVariable, ApplicationTerm defaultConstant, ApplicationTerm primedConstant,
 			String id, String procedure) {
@@ -73,10 +73,10 @@ public class HybridProgramVar implements IProgramVar {
 	@Override
 	public String toString() {
 		String str = "(ID: " + mId;
-		str += ", TV: " + mTermVariable;
-		str += ", Procedure: " + mProcedure;
-		str += ", PrimedConst: " + mPrimedConstant;
-		str += ", DefaultConst: " + mDefaultConstant;
+		// str += ", TV: " + mTermVariable;
+		// str += ", Procedure: " + mProcedure;
+		// str += ", PrimedConst: " + mPrimedConstant;
+		// str += ", DefaultConst: " + mDefaultConstant;
 		str += ")";
 		return str;
 	}
