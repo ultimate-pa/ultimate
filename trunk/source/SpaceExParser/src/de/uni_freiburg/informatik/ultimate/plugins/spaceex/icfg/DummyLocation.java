@@ -26,7 +26,7 @@ public class DummyLocation implements ILocation {
 	@Override
 	public int getEndLine() {
 		// TODO Auto-generated method stub
-		return 0;
+		return 1;
 	}
 	
 	@Override
@@ -38,7 +38,7 @@ public class DummyLocation implements ILocation {
 	@Override
 	public int getEndColumn() {
 		// TODO Auto-generated method stub
-		return 0;
+		return 10;
 	}
 	
 	@Override

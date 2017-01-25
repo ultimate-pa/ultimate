@@ -84,10 +84,10 @@ public class HybridIcfgGenerator {
 		// create a root + error location;
 		final BoogieIcfgLocation root = new BoogieIcfgLocation("root", mProcedure, false, mBoogieASTNode);
 		mCfgComponents.put("root",
-				new HybridCfgComponent("root", root, root, Collections.EMPTY_LIST, Collections.EMPTY_LIST));
+				new HybridCfgComponent("root", root, root, Collections.emptyList(), Collections.emptyList()));
 		final BoogieIcfgLocation error = new BoogieIcfgLocation("error", mProcedure, true, mBoogieASTNode);
 		mCfgComponents.put("error",
-				new HybridCfgComponent("error", error, error, Collections.EMPTY_LIST, Collections.EMPTY_LIST));
+				new HybridCfgComponent("error", error, error, Collections.emptyList(), Collections.emptyList()));
 	}
 	
 	public BasicIcfg<BoogieIcfgLocation> createIfcgFromComponents(HybridAutomaton automaton) {
@@ -294,12 +294,23 @@ public class HybridIcfgGenerator {
 		});
 		
 		// the source of the transition is the the end of the source CFG component
-		final BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
+		BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
 		// the target of the transition is the the start of the target CFG component
-		final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
+		BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
 		final UnmodifiableTransFormula transFormula =
 				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		source.addOutgoing(transition);
+		target.addIncoming(transition);
+		
+		/*
+		 * Transition from Root to varAssignment
+		 */
+		// the source of the transition is the the end of the source CFG component
+		source = mCfgComponents.get("root").getEnd();
+		// the target of the transition is the the start of the target CFG component
+		target = mCfgComponents.get("error").getStart();
+		transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
 		source.addOutgoing(transition);
 		target.addIncoming(transition);
 		
