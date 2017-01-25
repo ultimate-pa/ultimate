@@ -453,11 +453,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public boolean finalIsTrap() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean isDeterministic() {
 		return false;
 	}

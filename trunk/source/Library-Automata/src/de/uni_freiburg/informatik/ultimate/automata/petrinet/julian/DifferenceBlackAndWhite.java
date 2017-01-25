@@ -106,11 +106,6 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			throw new UnsupportedOperationException(
 					"DifferenceBlackAndWhite needs an automaton with exactly one inital state");
 		}
-		if (!nwa.finalIsTrap()) {
-			throw new UnsupportedOperationException(
-					"Second operand has to be closed under concatenation with Sigma star.");
-			// otherwise the result won't be the intersection of languages
-		}
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
 		// mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();

@@ -103,13 +103,6 @@ public interface INestedWordAutomatonOldApi<LETTER, STATE> extends INestedWordAu
 	 */
 	Iterable<STATE> predCall(STATE state, LETTER letter);
 	
-	/**
-	 * @return true iff we can not leave the set of final states, i.e.,
-	 *         if q is final and there is a transitions (q,a,q') then q' is final.
-	 *         Not important. Only used to check correctness of one operation. Might
-	 *         be moved to this operation.
-	 */
-	boolean finalIsTrap();
 	
 	/**
 	 * @return true iff there is at most one initial state and for each state q

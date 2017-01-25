@@ -2221,37 +2221,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return (new ConcurrentProduct<>(mServices, this, nwa, true)).getResult();
 	}
 	
-	/**
-	 * @return true iff the language of this automaton is closed under
-	 *         concatenation with sigma star.
-	 * @deprecated do not use this anymore
-	 */
-	@Override
-	@Deprecated
-	public boolean finalIsTrap() {
-		if (!getCallAlphabet().isEmpty()) {
-			throw new UnsupportedOperationException("only finite automata supported");
-		}
-		if (!getReturnAlphabet().isEmpty()) {
-			throw new UnsupportedOperationException("only finite automata supported");
-		}
-		
-		for (final STATE finalState : mFinalStates) {
-			for (final LETTER symbol : getInternalAlphabet()) {
-				final Collection<STATE> succs = succInternal(finalState, symbol);
-				if (succs.isEmpty()) {
-					return false;
-				}
-				for (final STATE succ : succs) {
-					if (!isFinal(succ)) {
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
-	
+
 	/**
 	 * @param state
 	 *            A state.

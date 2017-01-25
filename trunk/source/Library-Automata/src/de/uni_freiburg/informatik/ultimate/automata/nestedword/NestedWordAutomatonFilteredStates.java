@@ -320,11 +320,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	@Override
-	public boolean finalIsTrap() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean isDeterministic() {
 		return false;
 	}
