@@ -181,6 +181,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	/**
 	 * Return true iff pred is the representative IPredicate for the Term pred.getFormula().
 	 */
+	@Override
 	public boolean isRepresentative(final IPredicate pred) {
 		final IPredicate representative = mTerm2Predicates.get(pred.getFormula());
 		return pred == representative;
@@ -619,11 +620,11 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 				final Validity implies = mLhs2RhsValidity.get(o1, o2);
 				if (implies == null) {
-					throw new AssertionError("one of the predicates is unknown");
+					throwAssertionErrorWithMessage(o1, o2);
 				}
 				final Validity explies = mLhs2RhsValidity.get(o2, o1);
 				if (explies == null) {
-					throw new AssertionError("one of the predicates is unknown");
+					throwAssertionErrorWithMessage(o1, o2);
 				}
 				if (implies == Validity.VALID) {
 					if (explies == Validity.VALID) {
@@ -636,6 +637,22 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 				return ComparisonResult.INCOMPARABLE;
 			};
+		}
+
+		/**
+		 * In case the pair of input predicates is not in the coverage relation
+		 * use this method to throw an AssertionError with a more detailed
+		 * error message. 
+		 * 
+		 */
+		private void throwAssertionErrorWithMessage(final IPredicate o1, final IPredicate o2) throws AssertionError {
+			if (!mLhs2RhsValidity.keySet().contains(o1)) {
+				throw new AssertionError("PredicateUnifier does not know the following predicate " + String.valueOf(o1));
+			}
+			if (!mLhs2RhsValidity.keySet().contains(o2)) {
+				throw new AssertionError("PredicateUnifier does not know the following predicate " + String.valueOf(o2));
+			}
+			throw new AssertionError("PredicateUnifier is in inconsistent state");
 		}
 	}
 
