@@ -22,6 +22,8 @@ public class HybridTermBuilder {
 	private final Script mScript;
 	private final Map<String, Term> mStringTerm;
 	private final Map<String, Operator> mOperators;
+	private final Map<HybridProgramVar, TermVariable> mInVars;
+	private final Map<HybridProgramVar, TermVariable> mOutVars;
 	
 	public enum BuildScenario {
 		INITIALLY, INVARIANT, JUMP
@@ -55,6 +57,8 @@ public class HybridTermBuilder {
 		mOperators.put("&", Operator.AND);
 		mOperators.put("|", Operator.OR);
 		mStringTerm = new HashMap<>();
+		mInVars = new HashMap<>();
+		mOutVars = new HashMap<>();
 	}
 	
 	public Term infixToTerm(String infix, final BuildScenario scenario) {
@@ -187,24 +191,22 @@ public class HybridTermBuilder {
 	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario) {
 		if (scenario == BuildScenario.INITIALLY) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-				return mVariableManager.getVar2OutVarTermVariable().get(operand1);
-			} else {
-				return null;
-			}
-		} else if (scenario == BuildScenario.INVARIANT) {
-			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-				return mVariableManager.getVar2InVarTermVariable().get(operand1);
-			} else {
-				return null;
-			}
-		} else if (scenario == BuildScenario.JUMP) {
-			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-				return mVariableManager.getVar2InVarTermVariable().get(operand1);
+				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+				mOutVars.put(progvar, outvar);
+				return outvar;
 			} else {
 				return null;
 			}
 		} else {
-			return null;
+			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
+				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+				mInVars.put(progvar, invar);
+				return invar;
+			} else {
+				return null;
+			}
 		}
 	}
 	
@@ -268,6 +270,14 @@ public class HybridTermBuilder {
 	
 	private boolean isOperator(final String sign) {
 		return mOperators.containsKey(sign);
+	}
+	
+	public Map<HybridProgramVar, TermVariable> getmInVars() {
+		return mInVars;
+	}
+	
+	public Map<HybridProgramVar, TermVariable> getmOutVars() {
+		return mOutVars;
 	}
 	
 }

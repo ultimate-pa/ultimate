@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SignValuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
@@ -154,10 +153,7 @@ public class HybridIcfgGenerator {
 	private void variablesToIcfg(final Set<String> variables) {
 		final Script script = mSmtToolkit.getManagedScript().getScript();
 		// get initial values of the variable
-		final Map<String, List<SignValuePair>> initialVars = mSpaceExPreferenceManager.getInitialVariables();
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-		final ArrayList<Term> terms = new ArrayList<>();
-		final int value;
 		for (final String var : variables) {
 			// Termvariables for the transformula.
 			final TermVariable inVar =
@@ -171,41 +167,12 @@ public class HybridIcfgGenerator {
 			mVariableManager.addProgramVar(var, progVar);
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
-			// //if the variable got an initial value, assign it.
-			// if (initialVars.containsKey(var)) {
-			// final List<SignValuePair> init = initialVars.get(var);
-			// if (init.size() == 1) {
-			// final SignValuePair svPair = init.get(0);
-			// // create a term of the form (<operator>,<variable>,<value>)
-			// final Term t = script.term(svPair.getSign().replaceAll("==", "="), inVar,
-			// script.decimal(svPair.getValue()));
-			// terms.add(t);
-			// mLogger.debug("Term added: " + t + " for variable: " + var);
-			// } else if (init.size() == 2) {
-			// final SignValuePair svPair1 = init.get(0);
-			// final SignValuePair svPair2 = init.get(1);
-			// // create 2 terms of the form (<operator>,<variable>,<value>)
-			// final Term t1 = script.term(svPair1.getSign().replaceAll("==", "="), inVar,
-			// script.decimal(svPair1.getValue()));
-			// final Term t2 = script.term(svPair2.getSign().replaceAll("==", "="), inVar,
-			// script.decimal(svPair2.getValue()));
-			// // merge the terms into a new one.
-			// final Term tm = script.term("and", t1, t2);
-			// terms.add(tm);
-			// mLogger.debug("Term added: " + tm + " for variable: " + var);
-			// }
-			// } else {
-			// terms.add(script.term("true"));
-			// }
 		}
 		final String infix = mSpaceExPreferenceManager.getInitialInfix();
 		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
-		final Term test = tb.infixToTerm(infix, BuildScenario.INITIALLY);
-		mLogger.info(test);
-		// connect all terms with "and"
-		// final Term all = script.term("and", terms.toArray(new Term[terms.size()]));
-		// mLogger.info(all);
-		tfb.setFormula(test);
+		final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
+		mLogger.info(term);
+		tfb.setFormula(term);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
@@ -216,8 +183,7 @@ public class HybridIcfgGenerator {
 		final String id = "varAssignment";
 		final BoogieIcfgLocation start = new BoogieIcfgLocation(id + "_start", mProcedure, false, mBoogieASTNode);
 		final BoogieIcfgLocation end = new BoogieIcfgLocation(id + "_end", mProcedure, false, mBoogieASTNode);
-		final UnmodifiableTransFormula tfStartEnd = transformula;
-		final IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, tfStartEnd);
+		final IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, transformula);
 		start.addOutgoing(startEnd);
 		end.addIncoming(startEnd);
 		transitions.add(startEnd);
@@ -243,8 +209,7 @@ public class HybridIcfgGenerator {
 	private void locationsToIcfg(final Map<Integer, Location> autLocations) {
 		/*
 		 * locations consist of Flow and the invariant. -> Startnode (1) -> if/else invariant (2) -> apply flow (3) ->
-		 * if/else invariant (4) -> transition/back to (3) if the invariant is injured and no transition can be taken,
-		 * go to exit node.
+		 * if/else invariant (4)
 		 */
 		for (final Map.Entry<Integer, Location> entry : autLocations.entrySet()) {
 			final Integer autid = entry.getKey();
@@ -266,10 +231,9 @@ public class HybridIcfgGenerator {
 			 * Transitions from start to Flow if invariant true
 			 */
 			// invariant to term:
-			
-			// TODO: transformula
-			final UnmodifiableTransFormula tfStartFlow =
-					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+			final String infix = preprocessLocationStatement(loc.getInvariant());
+			final UnmodifiableTransFormula invariantTransformula = buildTransformula(infix);
+			final UnmodifiableTransFormula tfStartFlow = invariantTransformula;
 			final IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
 			start.addOutgoing(startFlow);
 			flow.addIncoming(startFlow);
@@ -290,8 +254,7 @@ public class HybridIcfgGenerator {
 			 */
 			// invcheck -> end
 			// TODO: transformula
-			final UnmodifiableTransFormula tfInvEnd =
-					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+			final UnmodifiableTransFormula tfInvEnd = invariantTransformula;
 			final IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, mPayload, tfInvEnd);
 			invCheck.addOutgoing(invEnd);
 			end.addIncoming(invEnd);
@@ -300,6 +263,31 @@ public class HybridIcfgGenerator {
 			mCfgComponents.put(autid.toString(),
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
 		}
+	}
+	
+	private String preprocessLocationStatement(String invariant) {
+		String inv = invariant.replaceAll("&&", "&");
+		inv = inv.replaceAll("==", "=");
+		return inv;
+	}
+	
+	private UnmodifiableTransFormula buildTransformula(String infix) {
+		final HybridTermBuilder tb =
+				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
+		final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tb.getmInVars().forEach((progvar, invar) -> {
+			tfb.addInVar(progvar, invar);
+		});
+		tb.getmOutVars().forEach((progvar, outvar) -> {
+			tfb.addOutVar(progvar, outvar);
+		});
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		// finish construction of the transformula.
+		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		mLogger.debug("Transformula for varAssignment: " + transformula);
+		return transformula;
 	}
 	
 	/*
