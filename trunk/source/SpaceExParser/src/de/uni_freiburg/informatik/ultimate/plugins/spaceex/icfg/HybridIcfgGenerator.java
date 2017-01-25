@@ -168,14 +168,19 @@ public class HybridIcfgGenerator {
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
 		}
+		UnmodifiableTransFormula transformula;
 		final String infix = mSpaceExPreferenceManager.getInitialInfix();
-		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
-		final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
-		mLogger.info(term);
-		tfb.setFormula(term);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		// finish construction of the transformula.
-		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		if (infix.isEmpty()) {
+			transformula = TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+		} else {
+			final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
+			final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
+			mLogger.info(term);
+			tfb.setFormula(term);
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			// finish construction of the transformula.
+			transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		}
 		mLogger.debug("Transformula for varAssignment: " + transformula);
 		// create variable component of the form start ----variable assignment----> end
 		final List<BoogieIcfgLocation> locations = new ArrayList<>();
@@ -310,9 +315,20 @@ public class HybridIcfgGenerator {
 	private UnmodifiableTransFormula buildTransitionTransformula(String update, String guard) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
-		final Term updateTerm = tb.infixToTerm(preprocessLocationStatement(update), BuildScenario.UPDATE);
-		final Term guardTerm = tb.infixToTerm(preprocessLocationStatement(guard), BuildScenario.GUARD);
-		final Term formula = mSmtToolkit.getManagedScript().getScript().term("and", updateTerm, guardTerm);
+		UnmodifiableTransFormula transformula;
+		Term formula = null;
+		if (update.isEmpty() && guard.isEmpty()) {
+			formula = mSmtToolkit.getManagedScript().getScript().term("true");
+		} else if (!update.isEmpty() && !guard.isEmpty()) {
+			final Term guardTerm = tb.infixToTerm(preprocessLocationStatement(guard), BuildScenario.GUARD);
+			final Term updateTerm = tb.infixToTerm(preprocessLocationStatement(update), BuildScenario.UPDATE);
+			formula = mSmtToolkit.getManagedScript().getScript().term("and", updateTerm, guardTerm);
+		} else if (update.isEmpty() && !guard.isEmpty()) {
+			formula = tb.infixToTerm(preprocessLocationStatement(guard), BuildScenario.GUARD);
+		} else if (!update.isEmpty() && guard.isEmpty()) {
+			formula = tb.infixToTerm(preprocessLocationStatement(update), BuildScenario.UPDATE);
+		}
+		// TFB
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		tb.getmInVars().forEach((progvar, invar) -> {
 			tfb.addInVar(progvar, invar);
@@ -323,7 +339,7 @@ public class HybridIcfgGenerator {
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
-		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+		transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
 		mLogger.debug("Transformula for varAssignment: " + transformula);
 		return transformula;
 	}
