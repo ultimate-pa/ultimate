@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -67,8 +66,7 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 	}
 	
 	private static boolean isDeterministicTotalNwa(final INestedWordAutomatonSimple<?, ?> operand) {
-		return (operand instanceof NestedWordAutomaton) && ((NestedWordAutomaton<?, ?>) operand).isDeterministic()
-				&& ((NestedWordAutomaton<?, ?>) operand).isTotal();
+		throw new UnsupportedOperationException("this check is currently not supported");
 	}
 	
 	@Override

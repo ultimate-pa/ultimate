@@ -35,10 +35,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -75,9 +77,10 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
+	 * @throws AutomataOperationCanceledException 
 	 */
 	public DeterminizeSadd(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		if (mLogger.isInfoEnabled()) {
@@ -181,7 +184,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 		return callerStates;
 	}
 	
-	private void determinize() {
+	private void determinize() throws AutomataOperationCanceledException {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Starting determinizeSadd. Operand " + mOperand.sizeInformation());
 		}
@@ -208,7 +211,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 				
 			}
 		}
-		assert mResult.isDeterministic();
+		assert (new IsDeterministic<>(mServices, mResult)).getResult();
 	}
 	
 	// private void processSummary(IState<LETTER,STATE> summaryPred, IState<LETTER,STATE> summaryPredCaller)

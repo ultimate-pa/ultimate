@@ -2047,9 +2047,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	
 	/**
 	 * Return true iff this automaton is deterministic.
+	 * TODO: Currently not used. Should we keep it?
 	 */
-	@Override
-	public boolean isDeterministic() {
+	private boolean isDeterministic() {
 		if (getInitialStates().size() > 1) {
 			return false;
 		}
@@ -2077,9 +2077,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	
 	/**
 	 * Return true iff this automaton is total.
+	 * TODO: Currently not used. Should we keep it?
 	 */
-	@Override
-	public boolean isTotal() {
+	private boolean isTotal() {
 		if (getInitialStates().isEmpty()) {
 			return false;
 		}

@@ -452,16 +452,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return mStates.get(state).predCall(letter);
 	}
 
-	@Override
-	public boolean isDeterministic() {
-		return false;
-	}
-
-	@Override
-	public boolean isTotal() {
-		throw new UnsupportedOperationException();
-	}
-
 	void addReturnSummary(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(hier);
 		if (letter2pred2succs == null) {

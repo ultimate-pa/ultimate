@@ -320,16 +320,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	@Override
-	public boolean isDeterministic() {
-		return false;
-	}
-
-	@Override
-	public boolean isTotal() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
 			final LETTER letter) {
 		final Predicate<IncomingInternalTransition<LETTER, STATE>> predicate =

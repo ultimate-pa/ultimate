@@ -103,29 +103,4 @@ public interface INestedWordAutomatonOldApi<LETTER, STATE> extends INestedWordAu
 	 */
 	Iterable<STATE> predCall(STATE state, LETTER letter);
 	
-	
-	/**
-	 * @return true iff there is at most one initial state and for each state q
-	 *         of the automaton the following holds
-	 *         <ul>
-	 *         <li>for each letter a of the internal alphabet there is at most one
-	 *         transition (q,a,q').
-	 *         <li>for each letter a of the call alphabet there is at most one
-	 *         transition (q,a,q').
-	 *         <li>for each letter a of the return alphabet and each state q̀ of the
-	 *         automaton there is at most one transition (q,q̀,a,q').
-	 *         </ul>
-	 */
-	boolean isDeterministic();
-	
-	/**
-	 * @return true iff there is at least one initial state and for each state
-	 *         q and each letter a
-	 *         <ul>
-	 *         <li>q has an outgoing internal transition labeled with a.
-	 *         <li>q has an outgoing call transition labeled with a.
-	 *         <li>q has an outgoing return transition labeled with a.
-	 *         </ul>
-	 */
-	boolean isTotal();
 }
