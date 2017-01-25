@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
  * @param <STATE>
  *            state type
  */
-public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
+public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 	protected final NestedWordAutomatonReachableStates<LETTER, STATE> mNwa;
@@ -269,13 +269,11 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return letters;
 	}
 
-	@Override
-	public Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
-		return new FilteredIterable<>(mNwa.succInternal(state, letter), mRemainingStates::contains);
-	}
+//	private Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
+//		return new FilteredIterable<>(mNwa.succInternal(state, letter), mRemainingStates::contains);
+//	}
 
-	@Override
-	public Iterable<STATE> succCall(final STATE state, final LETTER letter) {
+	private Iterable<STATE> succCall(final STATE state, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
 		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state, letter)) {
 			result.add(outTrans.getSucc());
@@ -294,8 +292,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return result;
 	}
 
-	@Override
-	public Iterable<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
+	private Iterable<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, hier, letter)) {
 			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
@@ -305,13 +302,11 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return result;
 	}
 
-	@Override
-	public Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
-		return new FilteredIterable<>(mNwa.predInternal(state, letter), mRemainingStates::contains);
-	}
+//	private Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
+//		return new FilteredIterable<>(mNwa.predInternal(state, letter), mRemainingStates::contains);
+//	}
 
-	@Override
-	public Iterable<STATE> predCall(final STATE state, final LETTER letter) {
+	private Iterable<STATE> predCall(final STATE state, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
 		for (final IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state, letter)) {
 			result.add(inTrans.getPred());

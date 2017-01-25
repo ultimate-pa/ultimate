@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -83,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  *            state type
  */
-public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
-		IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
+public class NestedWordAutomatonReachableStates<LETTER, STATE> implements 
+	IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
 	/**
 	 * Construct a run for each accepting state. Use this only while developing/debugging/testing the construction of
 	 * runs.
@@ -422,13 +421,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return lettersSummaryNoAssertion(state);
 	}
 
-	@Override
-	public Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
+	private Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
 		return mStates.get(state).succInternal(letter);
 	}
 
-	@Override
-	public Iterable<STATE> succCall(final STATE state, final LETTER letter) {
+	private Iterable<STATE> succCall(final STATE state, final LETTER letter) {
 		return mStates.get(state).succCall(letter);
 	}
 
@@ -437,18 +434,15 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return mStates.get(state).hierPred(letter);
 	}
 
-	@Override
-	public Iterable<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
+	private Iterable<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		return mStates.get(state).succReturn(hier, letter);
 	}
 
-	@Override
-	public Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
+	private Iterable<STATE> predInternal(final STATE state, final LETTER letter) {
 		return mStates.get(state).predInternal(letter);
 	}
 
-	@Override
-	public Iterable<STATE> predCall(final STATE state, final LETTER letter) {
+	private Iterable<STATE> predCall(final STATE state, final LETTER letter) {
 		return mStates.get(state).predCall(letter);
 	}
 

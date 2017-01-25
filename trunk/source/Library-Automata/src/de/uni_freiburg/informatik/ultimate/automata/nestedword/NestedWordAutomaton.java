@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
+public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE> {
 	private static final String LETTER2 = "Letter ";
 	private static final String NOT_IN_AUTOMATON = " not in automaton";
 	private static final String STATE2 = "State ";
@@ -328,7 +328,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 	
-	@Override
+	@Deprecated
 	public Set<STATE> succInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mInternalOut.get(state);
@@ -339,8 +339,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return result == null ? mEmptySetOfStates : result;
 	}
 	
-	@Override
-	public Set<STATE> predInternal(final STATE state, final LETTER letter) {
+	private Set<STATE> predInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mInternalIn.get(state);
 		if (map == null) {
@@ -350,7 +349,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return result == null ? mEmptySetOfStates : result;
 	}
 	
-	@Override
+	@Deprecated
 	public Set<STATE> succCall(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mCallOut.get(state);
@@ -361,8 +360,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return result == null ? mEmptySetOfStates : result;
 	}
 	
-	@Override
-	public Set<STATE> predCall(final STATE state, final LETTER letter) {
+	private Set<STATE> predCall(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mCallIn.get(state);
 		if (map == null) {
@@ -383,7 +381,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		return hier2succs == null ? mEmptySetOfStates : hier2succs.keySet();
 	}
 	
-	@Override
+	@Deprecated
 	public Set<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		assert contains(state);
 		assert contains(hier);
