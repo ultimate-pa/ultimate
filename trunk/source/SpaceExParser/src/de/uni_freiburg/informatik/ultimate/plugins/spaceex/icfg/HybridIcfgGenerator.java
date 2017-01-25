@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -72,15 +73,16 @@ public class HybridIcfgGenerator {
 	private final HybridVariableManager mVariableManager;
 	
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
-			final CfgSmtToolkit smtToolkit) {
+			final CfgSmtToolkit smtToolkit, HybridVariableManager variableManager) {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
-		mVariableManager = new HybridVariableManager(smtToolkit.getManagedScript());
+		mVariableManager = variableManager;
 		final ILocation dummyLoc = new DummyLocation(preferenceManager.getFileName());
 		mPayload = new Payload(dummyLoc);
 		mCfgComponents = new HashMap<>();
-		mBoogieASTNode = new BoogieASTNode(dummyLoc);
+		mBoogieASTNode = new Procedure(dummyLoc, null, mProcedure, null, null, null, null, null);
+		// mBoogieASTNode = new BoogieASTNode(dummyLoc);
 		// create a root + error location;
 		final BoogieIcfgLocation root = new BoogieIcfgLocation("root", mProcedure, false, mBoogieASTNode);
 		mCfgComponents.put("root",
@@ -155,16 +157,19 @@ public class HybridIcfgGenerator {
 		// get initial values of the variable
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		for (final String var : variables) {
-			// Termvariables for the transformula.
-			final TermVariable inVar =
-					mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
-			final TermVariable outVar =
-					mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
-			mVariableManager.addInVarTermVariable(var, inVar);
-			mVariableManager.addOutVarTermVariable(var, outVar);
-			// IProgramVar for the transformula.
-			final HybridProgramVar progVar = mVariableManager.constructProgramVar(var, mProcedure);
-			mVariableManager.addProgramVar(var, progVar);
+			// // Termvariables for the transformula.
+			// final TermVariable inVar =
+			// mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
+			// final TermVariable outVar =
+			// mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
+			// mVariableManager.addInVarTermVariable(var, inVar);
+			// mVariableManager.addOutVarTermVariable(var, outVar);
+			// // IProgramVar for the transformula.
+			// final HybridProgramVar progVar = mVariableManager.constructProgramVar(var, mProcedure);
+			// mVariableManager.addProgramVar(var, progVar);
+			final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
+			final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
+			final TermVariable outVar = mVariableManager.getVar2OutVarTermVariable().get(var);
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
 		}
@@ -310,10 +315,9 @@ public class HybridIcfgGenerator {
 		source = mCfgComponents.get("root").getEnd();
 		// the target of the transition is the the start of the target CFG component
 		target = mCfgComponents.get("error").getStart();
-		transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
+		transition = new IcfgInternalTransition(source, target, mPayload, buildFalseTransformula());
 		source.addOutgoing(transition);
 		target.addIncoming(transition);
-		
 	}
 	
 	private String createTransformulaLoggerMessage(UnmodifiableTransFormula transFormula, String infix) {
@@ -371,6 +375,17 @@ public class HybridIcfgGenerator {
 		// finish construction of the transformula.
 		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
 		mLogger.debug("Transformula for varAssignment: " + transformula);
+		return transformula;
+	}
+	
+	private UnmodifiableTransFormula buildFalseTransformula() {
+		final HybridTermBuilder tb =
+				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("false"));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		// finish construction of the transformula.
+		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
 		return transformula;
 	}
 	

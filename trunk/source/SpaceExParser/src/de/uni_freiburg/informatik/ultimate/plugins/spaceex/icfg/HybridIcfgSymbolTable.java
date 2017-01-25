@@ -4,7 +4,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -25,7 +27,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
  */
 public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	
-	private Set<ILocalProgramVar> mLocals = new HashSet<>();
+	private final Set<ILocalProgramVar> mLocals = new HashSet<>();
+	private final Map<TermVariable, ILocalProgramVar> mTVtoProgVar;
 	private final ManagedScript mScript;
 	
 	/**
@@ -34,8 +37,28 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	 * @param script
 	 * @param automaton
 	 */
-	public HybridIcfgSymbolTable(ManagedScript script, HybridAutomaton automaton, String procedure) {
+	public HybridIcfgSymbolTable(ManagedScript script, HybridAutomaton automaton, String procedure,
+			HybridVariableManager variableManager) {
 		mScript = script;
+		mTVtoProgVar = new HashMap<>();
+		final Set<String> variables = automaton.getGlobalParameters();
+		variables.addAll(automaton.getGlobalConstants());
+		variables.addAll(automaton.getLocalConstants());
+		variables.addAll(automaton.getLocalParameters());
+		for (final String var : variables) {
+			// Termvariables for the transformula.
+			final TermVariable inVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
+			final TermVariable outVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
+			// IProgramVar for the transformula.
+			final HybridProgramVar progVar = variableManager.constructProgramVar(var, procedure);
+			variableManager.addInVarTermVariable(var, inVar);
+			variableManager.addOutVarTermVariable(var, outVar);
+			variableManager.addProgramVar(var, progVar);
+			mTVtoProgVar.put(inVar, progVar);
+			mTVtoProgVar.put(outVar, progVar);
+			mLocals.add(progVar);
+		}
+		
 	}
 	
 	@Override
@@ -55,8 +78,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	
 	@Override
 	public IProgramVar getProgramVar(TermVariable tv) {
-		// TODO Auto-generated method stub
-		return null;
+		return mTVtoProgVar.get(tv);
 	}
 	
 	@Override

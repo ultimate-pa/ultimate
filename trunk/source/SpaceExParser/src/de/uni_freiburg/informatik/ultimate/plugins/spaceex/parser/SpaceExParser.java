@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -86,6 +87,7 @@ public class SpaceExParser implements ISource {
 	private ILogger mLogger;
 	private IToolchainStorage mToolchainStorage;
 	private SpaceExPreferenceManager mPreferenceManager;
+	private HybridVariableManager mVariableManager;
 	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
@@ -201,7 +203,8 @@ public class SpaceExParser implements ISource {
 		final HybridAutomaton automaton = mPreferenceManager.getRegardedAutomaton(model);
 		// toolkit
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
-		final HybridIcfgGenerator gen = new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit);
+		final HybridIcfgGenerator gen =
+				new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit, mVariableManager);
 		return gen.createIfcgFromComponents(automaton);
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
@@ -224,7 +227,9 @@ public class SpaceExParser implements ISource {
 								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
 						false, false, "", "SMTINTERPOL");
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
-		final HybridIcfgSymbolTable symbolTable = new HybridIcfgSymbolTable(managedScript, automaton, "MAIN");
+		mVariableManager = new HybridVariableManager(managedScript);
+		final HybridIcfgSymbolTable symbolTable =
+				new HybridIcfgSymbolTable(managedScript, automaton, "MAIN", mVariableManager);
 		final DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);

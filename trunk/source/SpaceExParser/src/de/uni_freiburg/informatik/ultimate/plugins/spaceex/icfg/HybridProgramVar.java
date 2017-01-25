@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 
-public class HybridProgramVar implements IProgramVar {
+public class HybridProgramVar implements ILocalProgramVar {
 	
 	/**
 	 * 
@@ -79,6 +79,12 @@ public class HybridProgramVar implements IProgramVar {
 		// str += ", DefaultConst: " + mDefaultConstant;
 		str += ")";
 		return str;
+	}
+	
+	@Override
+	public String getIdentifier() {
+		// TODO Auto-generated method stub
+		return mId;
 	}
 	
 }
