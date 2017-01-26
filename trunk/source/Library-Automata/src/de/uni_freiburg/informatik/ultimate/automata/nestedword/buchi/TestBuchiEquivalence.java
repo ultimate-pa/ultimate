@@ -31,10 +31,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -236,9 +235,7 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 	private void addRandomLassoWords(final List<NestedLassoWord<LETTER>> nestedLassoWords, final int lengthOfWords,
 			final int numberOfWords) {
 		for (int i = 0; i < numberOfWords; ++i) {
-			final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(mFstOperand, lengthOfWords)).getResult();
-			final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(mFstOperand, lengthOfWords)).getResult();
-			nestedLassoWords.add(new NestedLassoWord<>(stem, loop));
+			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(mFstOperand, lengthOfWords));
 		}
 	}
 	
