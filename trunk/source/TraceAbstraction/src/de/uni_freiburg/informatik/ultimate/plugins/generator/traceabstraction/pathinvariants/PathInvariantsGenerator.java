@@ -84,6 +84,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -111,7 +114,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * If a template contains more than 1 conjunct, then use alternatingly strict and non-strict inequalities.
 	 * I.e. the even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
 	 */
-	private final static boolean mUseStrictInequalitiesAlternatingly = !false;
+	private final static boolean mUseStrictInequalitiesAlternatingly = false;
 
 	private final boolean mUseLiveVariables;
 
@@ -127,6 +130,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IToolchainStorage mStorage;
 	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> mAbstractInterpretationResult;
 	private final boolean mUseAbstractInterpretationPredicates;
+	private PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
 
 	/**
 	 * Creates a default factory.
@@ -157,9 +161,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
-			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-					final Set<IProgramVar> allProgramVariables,
-					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
+			final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
@@ -217,6 +221,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mPathInvariantsBenchmarks = new PathInvariantsBenchmarkGenerator();
+		
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
 		final IIcfg<IcfgLocation> pathProgram =
@@ -238,7 +244,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram =
 						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-								.collect(Collectors.toList()).get(0);
+						.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
 				mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
@@ -516,7 +522,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
 			// pathprogramLocs2LiveVars = applyAbstractInterpretationOnPathProgram(pathProgram);
 			assert (mAbstractInterpretationResult != null) : "Abstract Interpretation has not been applied on path program to"
-					+ " generate live variables";
+			+ " generate live variables";
 			final Map<IcfgLocation, LiveVariableState<IcfgEdge>> loc2states =
 					mAbstractInterpretationResult.getLoc2SingleStates();
 			pathprogramLocs2LiveVars = new HashMap<>();
@@ -531,7 +537,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
 		if (mUseWeakestPrecondition) {
 			pathprogramLocs2Predicates
-					.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
+			.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
 		}
 		if (mUseAbstractInterpretationPredicates) {
 			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
@@ -546,7 +552,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants
-		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices);
+		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsBenchmarks);
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
@@ -609,7 +615,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return
 	 */
 	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
-			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
+	applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
@@ -686,10 +692,107 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
 		return isPerfect;
 	}
+	
+	
 
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
 	}
+	
+	public PathInvariantsBenchmarkGenerator getPathInvariantsBenchmarks () {
+		return mPathInvariantsBenchmarks;
+	}
 
+	// Benchmarks Section
+	public static class PathInvariantsBenchmarkType implements IStatisticsType {
+		private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
+
+		/* Keys */
+		// 
+		protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
+
+		protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
+
+//		protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
+		
+		public static PathInvariantsBenchmarkType getInstance() {
+			return s_Instance;
+		}
+
+		@Override
+		public Collection<String> getKeys() {
+			final ArrayList<String> result = new ArrayList<>();
+			result.add(s_MaxSizeOfTemplate);
+			result.add(s_MaxNumOfRounds);
+			return result;
+		}
+
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_MaxSizeOfTemplate:
+			case s_MaxNumOfRounds: {
+				if ((int) value1 >= (int) value2) {
+					return (int)value1;
+				} else {
+					return (int)value2;
+				}
+			}
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+			final StringBuilder sb = new StringBuilder();
+			
+			sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
+			sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
+			sb.append(" conjuncts");
+			sb.append("\t").append(s_MaxNumOfRounds).append(": ");
+			sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
+			
+			return sb.toString();
+		}
+	}
+	
+	public class PathInvariantsBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
+	implements IStatisticsDataProvider {
+		private int mSizeOfTemplate = 0;
+		private int mNumOfRounds = 0;
+		
+		public void setPathInvariantsData(final int sizeOfTemplate, final int numOfRounds) {
+			mSizeOfTemplate = sizeOfTemplate;
+			mNumOfRounds = numOfRounds;
+		}
+		
+		@Override
+		public Collection<String> getKeys() {
+			return PathInvariantsBenchmarkType.getInstance().getKeys();
+		}
+
+		@Override
+		public Object getValue(String key) {
+			switch(key) {
+			case PathInvariantsBenchmarkType.s_MaxSizeOfTemplate:
+				return mSizeOfTemplate;
+			case PathInvariantsBenchmarkType.s_MaxNumOfRounds:
+				return mNumOfRounds;
+			default:
+				throw new AssertionError("unknown data");				
+			}
+		}
+
+		@Override
+		public IStatisticsType getBenchmarkType() {
+			return PathInvariantsBenchmarkType.getInstance();
+		}
+
+		@Override
+		public String[] getStopwatches() {
+			return new String[0];
+		}
+	}
 }

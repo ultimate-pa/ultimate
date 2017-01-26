@@ -43,6 +43,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	InterpolantConsolidationStatistics(StatisticsData.class,
 
 			AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+	PathInvariantsStatistics(StatisticsData.class,
+
+			AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
 
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
 			AStatisticsType.s_DataBeforeKey),

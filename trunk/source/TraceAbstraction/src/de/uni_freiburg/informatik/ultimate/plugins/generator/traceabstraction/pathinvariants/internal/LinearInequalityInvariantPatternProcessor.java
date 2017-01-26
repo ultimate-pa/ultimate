@@ -127,7 +127,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private Collection<Collection<AbstractLinearInvariantPattern>> mExitInvariantPattern;
 	private int mPrefixCounter;
 	private int mCurrentRound;
-	private final int mMaxRounds;
+	private int mMaxRounds;
 	private final boolean mUseNonlinearConstraints;
 	private final SimplificationType mSimplifySatisfyingAssignment = SimplificationType.TWO_MODE;
 
@@ -572,13 +572,19 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (PRINT_CONSTRAINTS) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("\nStartPattern: ");
-			startInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
+			startInvariantDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(")OR ");});
 			sb.append("\nTransition: ");
 			transitionDNF.forEach(dis -> dis.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
 			// sb.append(" AND ");
 			sb.append("\nEndPattern: ");
-			endInvariantDNF.forEach(disjunct -> disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
-			mLogger.info(sb.toString());
+			endInvariantDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(")OR ");});
+			String s = sb.toString();
+			s = s.replaceAll("AND \\)OR", "\\)OR");
+			s = s.replaceAll("OR \n", "\n");
+			s = s.replaceAll("AND \n", "\n");
+			s = s.replaceAll("StartPattern: \\(\\)", "StartPattern: (true)");
+			s = s.replaceAll("EndPattern: \\(\\)", "EndPattern: (false)");
+			mLogger.info(s);
 		}
 		// Respect timeout / toolchain cancellation
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -724,9 +730,9 @@ public final class LinearInequalityInvariantPatternProcessor
 		final LBool result = mSolver.checkSat();
 		mLogger.info("Check-sat result: " + result);
 		if (result == LBool.UNKNOWN) {
-			// mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
-			// // Prevent additional rounds
-			// mMaxRounds = mCurrentRound + 1;
+			 mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
+			 // Prevent additional rounds
+			 mMaxRounds = mCurrentRound + 1;
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
@@ -1049,6 +1055,15 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		return totalNumOfDisjuncts + " disjuncts with each " + Arrays.toString(conjunctsEachDisjunct)
 				+ " conjuncts (Total: " + totalNumOfConjuncts + " cojuncts)";
+	}
+	
+	public int getTotalNumberOfConjunctsInPattern(final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
+		int totalNumOfConjuncts = 1;
+		for (final Collection<?> conjuncts : pattern) {
+			totalNumOfConjuncts = totalNumOfConjuncts * conjuncts.size();
+		}
+		
+		return totalNumOfConjuncts;
 	}
 
 	private Collection<Collection<AbstractLinearInvariantPattern>>

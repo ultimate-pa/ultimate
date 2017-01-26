@@ -269,11 +269,11 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";
 			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
-			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:60000";
+			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:120000";
 			// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
 		} else {
 			// solverCommand = "yices-smt2 --incremental";
-			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:60000";
+			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:120000";
 		}
 		final boolean fakeNonIncrementalSolver = false;
 		final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
@@ -283,7 +283,8 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
 				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, useLiveVariables, useAbstractInterpretationPredicates,
-				useWeakestPrecondition, settings, xnfConversionTechnique, simplificationTechnique, icfgContainer);
+				useWeakestPrecondition, settings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
+				mCegarLoopBenchmark);
 	}
 
 }

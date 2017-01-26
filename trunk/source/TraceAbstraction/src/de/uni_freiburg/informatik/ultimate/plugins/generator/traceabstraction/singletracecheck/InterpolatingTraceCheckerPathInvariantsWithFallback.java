@@ -42,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
@@ -64,6 +66,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseLiveVariables;
 	private final boolean mUseWPForPathInvariants;
 	private final boolean mUseAbstractInterpretationPredicates;
+	private PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -74,7 +77,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final boolean useVarsFromUnsatCore, final boolean useLiveVariables, final boolean useAbstractInterpretationPredicates,
 			final boolean useWeakestPrecondition,
 			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer) {
+			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer, 
+			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, csToolkit.getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
@@ -91,8 +95,11 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			mTraceCheckFinished = true;
 			super.unlockSmtManager();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
+			// Add benchmarks from PathInvariants
+			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsBenchmarks);
 		}
 		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
+		
 	}
 
 	@Override
@@ -116,6 +123,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 				mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
 				mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		mInterpolants = interpolants;
+		// Store path invariants benchmarks
+		mPathInvariantsBenchmarks = pathInvariantsGenerator.getPathInvariantsBenchmarks();
 	}
 
 	private static IPredicate[] fallbackInterpolantComputation() {

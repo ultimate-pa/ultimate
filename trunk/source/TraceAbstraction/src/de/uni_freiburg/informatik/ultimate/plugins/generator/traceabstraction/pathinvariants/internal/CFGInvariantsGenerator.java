@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsBenchmarkGenerator;
 
 /**
  * A generator for a map of invariants to {@link ControlFlowGraph.Location}s within a {@link ControlFlowGraph}, using a
@@ -55,6 +56,7 @@ public final class CFGInvariantsGenerator {
 
 	private final ILogger mLogger;
 	private final IProgressMonitorService pmService;
+	private PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
 	private static boolean INIT_USE_EMPTY_PATTERNS = true;
 	private static boolean USE_VARS_FROM_UNSAT_CORE_FOR_EACH_LOC = true;
 
@@ -63,15 +65,16 @@ public final class CFGInvariantsGenerator {
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
+	 * @param athInvariantsBenchmarks 
 	 * @param errorLocation - the location where the nested run ends
 	 * @param startLocation - the location where the nested run starts
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 */
-	public CFGInvariantsGenerator(final IUltimateServiceProvider services) {
+	public CFGInvariantsGenerator(final IUltimateServiceProvider services, PathInvariantsBenchmarkGenerator pathInvariantsBenchmarks) {
 		pmService = services.getProgressMonitorService();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
+		mPathInvariantsBenchmarks = pathInvariantsBenchmarks;
 	}
 
 	/**
@@ -165,15 +168,33 @@ public final class CFGInvariantsGenerator {
 
 			// Build transition predicates
 			predicates.clear();
+			int maxSizeOfTemplate = 1;
 			for (final IcfgInternalTransition transition : transitions) {
 				final IPT invStart = locs2Patterns.get(transition.getSource());
 				final IPT invEnd = locs2Patterns.get(transition.getTarget());
 				predicates.add(new InvariantTransitionPredicate<IPT>(invStart, invEnd, transition.getSource(), transition.getTarget(), 
 						locs2PatternVariables.get(transition.getSource()),
 						locs2PatternVariables.get(transition.getTarget()), transition.getTransformula()));
+				// Compute the max. size of template
+				int sizeOfTemplate1 = ((LinearInequalityInvariantPatternProcessor)processor).getTotalNumberOfConjunctsInPattern(
+						(Collection<Collection<AbstractLinearInvariantPattern>>) invStart);
+				int sizeOfTemplate2 = ((LinearInequalityInvariantPatternProcessor)processor).getTotalNumberOfConjunctsInPattern(
+						(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
+				if (sizeOfTemplate1 > sizeOfTemplate2) {
+					if (sizeOfTemplate1 > maxSizeOfTemplate) {
+						maxSizeOfTemplate = sizeOfTemplate1;
+					}
+				} else {
+					if (sizeOfTemplate2 > maxSizeOfTemplate) {
+						maxSizeOfTemplate = sizeOfTemplate2;
+					}
+				}
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
-
+			
+			// Set the benchmarks
+			mPathInvariantsBenchmarks.setPathInvariantsData(maxSizeOfTemplate, round);
+			
 			// Attempt to find a valid configuration
 			if (processor.hasValidConfiguration(predicates, round)) {
 				mLogger.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
