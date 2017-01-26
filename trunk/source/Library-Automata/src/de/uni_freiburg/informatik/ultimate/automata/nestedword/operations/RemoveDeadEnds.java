@@ -32,7 +32,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -158,16 +157,15 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		rsc.removeDeadEnds();
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
-		correct &= mResult.getStates().isEmpty()
-				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
+		correct &= mResult.getStates().isEmpty() || mResult.getStates().containsAll(reachableStatesCopy.getStates());
 		assert correct;
-		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
+		correct = correct && reachableStatesCopy.getStates().containsAll(mResult.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
 		final Collection<STATE> rscStates = reachableStatesCopy.getStates();
-		correct = correct && ResultChecker.isSubset(rsaStates, rscStates);
+		correct = correct && rscStates.containsAll(rsaStates);
 		assert correct;
-		correct = correct && ResultChecker.isSubset(rscStates, rsaStates);
+		correct = correct && rsaStates.containsAll(rscStates);
 		assert correct;
 		correct = correct && checkEachState(reachableStatesCopy);
 		if (!correct) {
@@ -216,7 +214,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			}
 			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
 			final Set<STATE> rCAdownStates = mReach.getWithOutDeadEnds().getDownStates(state);
-			correct = correct && ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+			correct = correct && rCSdownStates.containsAll(rCAdownStates);
 			assert correct;
 			// After enhanced non-live/dead end removal the following does not hold.
 			// correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);

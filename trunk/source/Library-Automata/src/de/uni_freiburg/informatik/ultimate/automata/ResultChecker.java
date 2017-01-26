@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.util.Collection;
-
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -80,15 +78,6 @@ public final class ResultChecker {
 		logger.info("Finished testing correctness of complementBuchi");
 		sResultCheckStackHeight--;
 		return correct;
-	}
-	
-	public static <E> boolean isSubset(final Collection<E> lhs, final Collection<E> rhs) {
-		for (final E elem : lhs) {
-			if (!rhs.contains(elem)) {
-				return false;
-			}
-		}
-		return true;
 	}
 	
 	public static <LETTER, STATE> NestedLassoWord<LETTER>

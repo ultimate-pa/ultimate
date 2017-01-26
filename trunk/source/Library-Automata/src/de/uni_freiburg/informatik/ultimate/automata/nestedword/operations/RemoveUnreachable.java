@@ -31,7 +31,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -119,9 +118,9 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<>(mServices, mOperand,
 						false, false, false, false)).getResult();
-		correct &= ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
+		correct &= mResult.getStates().containsAll(reachableStatesCopy.getStates());
 		assert correct : "remove unreachable incorrect: too few states";
-		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
+		correct = correct && reachableStatesCopy.getStates().containsAll(mResult.getStates());
 		assert correct : "remove unreachable incorrect: too many states";
 		correct = correct && checkEachState(reachableStatesCopy);
 		if (!correct) {
@@ -170,12 +169,11 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			final Set<STATE> rCSdownStates = reachableStatesCopy
-					.getDownStates(state);
+			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
 			final Set<STATE> rCAdownStates = mResult.getDownStates(state);
-			correct = correct && ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+			correct = correct && rCSdownStates.containsAll(rCAdownStates);
 			assert correct;
-			correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			correct = correct && rCAdownStates.containsAll(rCSdownStates);
 			assert correct;
 		}
 		return correct;

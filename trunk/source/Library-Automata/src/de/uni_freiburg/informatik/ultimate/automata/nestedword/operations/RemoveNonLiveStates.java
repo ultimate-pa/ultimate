@@ -108,7 +108,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Reduced from " + mOperand.sizeInformation() + " to "
+		return "Finished " + operationName() + ". Reduced from " + mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
 	
@@ -163,11 +163,11 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
 		assert correct;
 		*/
-		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
+		correct = correct && reachableStatesCopy.getStates().containsAll(mResult.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
 		final Collection<STATE> rscStates = reachableStatesCopy.getStates();
-		correct = correct && ResultChecker.isSubset(rsaStates, rscStates);
+		correct = correct && rscStates.containsAll(rsaStates);
 		assert correct;
 		// does not hold. Old non-live removal has bugs, see 'removeNonLive-Bug05.ats' example
 		/*
@@ -244,7 +244,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 			}
 			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
 			final Set<STATE> rCAdownStates = mReach.getOnlyLiveStates().getDownStates(state);
-			correct = correct && ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+			correct = correct && rCSdownStates.containsAll(rCAdownStates);
 			assert correct;
 			// After enhanced non-live/dead end removal the following does not hold.
 			// correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
