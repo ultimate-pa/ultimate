@@ -95,15 +95,15 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	public String toString() {
 		String result = "#"; // super.mSerialNumber + "#";
 		if (mProgramPoint != null) {
-			if (mProgramPoint.toString().equals("true")) {
+			if (mProgramPoint.getName().equals("true")) {
 				result += "True";
-			} else if (mProgramPoint.toString().equals("false")) {
+			} else if (mProgramPoint.getName().equals("false")) {
 				result += "False";
 			} else {
-				result += mProgramPoint.toString();
+				result += mProgramPoint.getName();
 			}
 		}
-		result += "@(" + mFormula.toString() + "::" + mProgramVars.toString() + ")";
+		result += "@(" + mFormula.toString() + ")";//+ "::" + mProgramVars.toString() + ")";
 		return result;
 	}
 	

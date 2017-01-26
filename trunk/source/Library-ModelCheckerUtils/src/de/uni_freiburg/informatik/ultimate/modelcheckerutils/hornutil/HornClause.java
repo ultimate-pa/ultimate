@@ -92,7 +92,7 @@ public class HornClause implements IInternalAction {
 		String cobody = "";
 
 		for (final HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
-			cobody += " " + symbol.toString() + mBodyPredToTermVariables.get(symbol);
+			cobody += " " + symbol.getName() + mBodyPredToTermVariables.get(symbol);
 		}
 		if (cobody.length() > 0) {
 			cobody = "and" + cobody;
@@ -100,10 +100,11 @@ public class HornClause implements IInternalAction {
 			cobody = "true";
 		}
 
-		final String body = mHeadPredicate.toString() + mHeadPredTermVariables;
+		final String body = mHeadPredicate.getName() + mHeadPredTermVariables;
 
-		return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body,
-				mTransitionFormula.getInVars(), mTransitionFormula.getOutVars());
+		return mTransitionFormula.getFormula().toString();
+		//return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body,
+		//return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mTransitionFormula.getFormula(), body);
 	}
 
 	/**

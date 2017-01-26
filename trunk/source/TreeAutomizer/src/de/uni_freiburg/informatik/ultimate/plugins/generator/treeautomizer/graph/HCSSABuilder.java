@@ -190,10 +190,10 @@ public class HCSSABuilder {
 
 	private Term getCurrentVarVersion(final HCVar bv) {
 		Term result = mCurrentLocalAndOldVarVersion.get(bv);
-		// if (result == null) {
+		 if (result == null) {
 		// variable was not yet assigned in the calling context
-		result = setCurrentVarVersion(bv, mCurrentTree);
-		// }
+			 result = setCurrentVarVersion(bv, mCurrentTree);
+		}
 		return result;
 	}
 
@@ -353,7 +353,7 @@ public class HCSSABuilder {
 			final Term t = transferToCurrentScriptIfNecessary(term);
 			final Term formula = subst.transform(t);
 			
-			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, substit);
+			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, substit, term);
 		}
 		
 		public Map<Term, Term> getSubstitutionMapping() {

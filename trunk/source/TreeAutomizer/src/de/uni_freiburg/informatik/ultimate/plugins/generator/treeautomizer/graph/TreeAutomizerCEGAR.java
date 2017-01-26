@@ -45,8 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -154,7 +152,7 @@ public class TreeAutomizerCEGAR {// implements
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
 		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
+		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
 		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
 				.get(HornUtilConstants.HORN_ANNOT_NAME);
 
@@ -208,7 +206,6 @@ public class TreeAutomizerCEGAR {// implements
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		// Using simple interpolant automaton : the counterexample's automaton.
 		// mInterpolAutomaton = mCounterexample.getAutomaton();
-		mBackendSmtSolverScript.lock(this);
 
 		PostfixTree<Term, HCPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
 
@@ -220,7 +217,9 @@ public class TreeAutomizerCEGAR {// implements
 		for (int i = 0; i < idx.length; ++i) {
 			idx[i] = postfixT.getStartIdx().get(i);
 		}
+		mBackendSmtSolverScript.lock(this);
 		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
+		mBackendSmtSolverScript.unlock(this);
 
 		// Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
 
@@ -238,7 +237,6 @@ public class TreeAutomizerCEGAR {// implements
 		// .getAutomaton();
 
 		((TreeAutomatonBU<HornClause, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
-		mBackendSmtSolverScript.unlock(this);
 	}
 
 	private void generalizeCounterExample(final TreeAutomatonBU<HornClause, HCPredicate> cExample) {
@@ -263,21 +261,19 @@ public class TreeAutomizerCEGAR {// implements
 
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {
 
-		mLogger.debug("Refine begins...");
-		mLogger.debug(mAbstraction);
-
-		mLogger.debug("");
+		mInterpolAutomaton = mCounterexample.getAutomaton();
 		ITreeAutomatonBU<HornClause, HCPredicate> cExample = (new Complement<HornClause, HCPredicate>(
 				mStateFactory, mInterpolAutomaton)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
-		generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
+		//generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
 
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Intersect<HornClause, HCPredicate>(
 				mStateFactory, mAbstraction, cExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
 
+		/*
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Totalize<HornClause, HCPredicate>(
 				mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
@@ -287,6 +283,7 @@ public class TreeAutomizerCEGAR {// implements
 				mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
+				*/
 
 		mLogger.debug("Refine ends...");
 
@@ -300,7 +297,7 @@ public class TreeAutomizerCEGAR {// implements
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
-		while (true) {
+		while (mIteration < 20) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			if (isAbstractionCorrect()) {
 				mLogger.info("The program is safe.");
@@ -319,13 +316,13 @@ public class TreeAutomizerCEGAR {// implements
 				return Result.UNSAFE;
 
 			}
-			mBackendSmtSolverScript.lock(this);
 			mLogger.debug("Getting Interpolants...");
-			constructInterpolantAutomaton();
+			//constructInterpolantAutomaton();
 
 			mLogger.debug("Interpolant automaton:");
 			mLogger.debug(mInterpolAutomaton);
 
+			mBackendSmtSolverScript.lock(this);
 			mBackendSmtSolverScript.pop(this, 1);
 
 			mLogger.debug("Refining abstract model...");
@@ -333,6 +330,7 @@ public class TreeAutomizerCEGAR {// implements
 			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 			mLogger.debug(mAbstraction);
 		}
+		return Result.UNKNOWN;
 	}
 
 	// @Override

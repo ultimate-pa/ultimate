@@ -33,13 +33,13 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 		FunctionSymbol falseFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "false")).getFunction();
 		mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol(falseFunctionSymbol);
 		FunctionSymbol trueFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "true")).getFunction();
-		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol(trueFunctionSymbol);
+		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol(trueFunctionSymbol);
 		
 		// TODO a bit hacky.. --> is there a more elegant solution?
-		String dontCare = HornUtilConstants.DONTCARE;
-		mManagedScript.declareFun(this, dontCare, new Sort[0], trueFunctionSymbol.getReturnSort());
-		FunctionSymbol dontCareFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, dontCare)).getFunction();
-		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol(dontCareFunctionSymbol);
+		//String dontCare = HornUtilConstants.DONTCARE;
+		//mManagedScript.declareFun(this, dontCare, new Sort[0], trueFunctionSymbol.getReturnSort());
+		//FunctionSymbol dontCareFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, dontCare)).getFunction();
+		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol(trueFunctionSymbol);//dontCareFunctionSymbol);
 		mManagedScript.unlock(this);
 	}
 

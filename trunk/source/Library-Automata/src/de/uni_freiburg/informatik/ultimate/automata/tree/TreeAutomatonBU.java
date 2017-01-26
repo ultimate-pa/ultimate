@@ -52,6 +52,11 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 	 * @param rule
 	 */
 	public void addRule(final TreeAutomatonRule<LETTER, STATE> rule) {
+		for (TreeAutomatonRule<LETTER, STATE> x : mRules) {
+			System.err.println("\t" + x);
+		}
+		System.err.println(rule);
+		System.err.println();
 		if (mRules.contains(rule)) {
 			// If rule already exists, do nothing
 			return;

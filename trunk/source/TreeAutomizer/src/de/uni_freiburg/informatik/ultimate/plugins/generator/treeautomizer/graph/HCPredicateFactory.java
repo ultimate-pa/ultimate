@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -60,7 +59,7 @@ public class HCPredicateFactory extends PredicateFactory {
 		
 		mBackendSmtSolverScript.lock(this); 
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, HornUtilConstants.DONTCARE), 
+				mBackendSmtSolverScript.term(this, "true"),
 				new HashMap<>());
 		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(), 
 				mBackendSmtSolverScript.term(this, "false"), 
@@ -95,6 +94,11 @@ public class HCPredicateFactory extends PredicateFactory {
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, Map<Term, HCVar> varsMap) {
 		return new HCPredicate(loc, term, varsMap, computeClosedFormula(term));
 	}
+
+	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
+			Set<IProgramVar> vars, Map<Term, HCVar> substit, Term closedFormula) {
+		return new HCPredicate(mProgramPoint, hashCode, formula, vars, substit, closedFormula);
+	}	
 
 	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
 			Set<IProgramVar> vars, Map<Term, HCVar> substit) {

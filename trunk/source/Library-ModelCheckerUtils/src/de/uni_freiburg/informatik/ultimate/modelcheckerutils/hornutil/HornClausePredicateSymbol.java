@@ -82,7 +82,7 @@ public class HornClausePredicateSymbol {
 
 		@Override
 		public String getName() {
-			return "false";
+			return "False";
 		}
 
 		@Override
@@ -92,7 +92,7 @@ public class HornClausePredicateSymbol {
 
 		@Override
 		public String toString() {
-			return "false";
+			return "False";
 		}
 	}
 
@@ -102,7 +102,7 @@ public class HornClausePredicateSymbol {
 		}
 		@Override
 		public String getName() {
-			return "true";
+			return "True";
 		}
 
 		@Override
@@ -112,7 +112,7 @@ public class HornClausePredicateSymbol {
 
 		@Override
 		public String toString() {
-			return "true";
+			return "True";
 		}
 	}
 
