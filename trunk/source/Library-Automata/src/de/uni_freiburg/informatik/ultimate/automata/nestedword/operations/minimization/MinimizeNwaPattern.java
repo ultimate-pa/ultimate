@@ -154,7 +154,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState, final MinimizationMethods[] pattern, final int iteration)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaPattern", operand);
+		super(services, stateFactory, operand);
 		mPattern = Arrays.copyOf(pattern, pattern.length);
 		final int counter = iteration % mPattern.length;
 		mMode = mPattern[counter];

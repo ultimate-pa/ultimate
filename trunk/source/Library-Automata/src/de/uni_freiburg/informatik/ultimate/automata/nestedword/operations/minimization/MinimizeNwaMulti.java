@@ -109,7 +109,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 	public MinimizeNwaMulti(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> partition,
 			final boolean addMapOldState2newState, final Strategy strategy) throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaMulti", operand);
+		super(services, stateFactory, operand);
 		mMode = chooseMinimization(operand, strategy);
 		super.run(partition, addMapOldState2newState);
 	}

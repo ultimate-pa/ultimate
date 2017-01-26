@@ -125,7 +125,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaOverapproximation", operand);
+		super(services, stateFactory, operand);
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
 		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, operand,
 				initialPartition, stateFactory, addMapOldState2newState, timeout, false);

@@ -129,7 +129,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
 			final Settings<STATE> settings, final boolean applyInitialPartitionPreprocessing)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaPmaxSat", operand, settings, new NestedMap2<>());
+		super(services, stateFactory, operand, settings, new NestedMap2<>());
 		
 		mInitialPartition = applyInitialPartitionPreprocessing
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,

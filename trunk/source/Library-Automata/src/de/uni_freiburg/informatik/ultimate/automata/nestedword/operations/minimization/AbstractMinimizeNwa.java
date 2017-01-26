@@ -76,11 +76,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
-	 * The operation name.
-	 */
-	protected final String mName;
-	
-	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
 	protected final IStateFactory<STATE> mStateFactory;
@@ -104,24 +99,18 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param name
-	 *            operation name
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final String name,
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
-		mName = name;
 		mResult = null;
 		mTemporaryResult = null;
 		mOldState2NewState = null;
 		
-		mStateFactory = (stateFactory == null)
-				? operand.getStateFactory()
-				: stateFactory;
+		mStateFactory = (stateFactory == null) ? operand.getStateFactory() : stateFactory;
 		mLogger.info(startMessage());
 	}
 	
@@ -130,29 +119,20 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param name
-	 *            operation name
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AbstractMinimizeNwa(
-			final AutomataLibraryServices services,
-			final String name,
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand.getStateFactory(), name, operand);
+		this(services, operand.getStateFactory(), operand);
 	}
 	
 	/* ------ interface methods ------ */
 	
 	@Override
-	public final String operationName() {
-		return mName;
-	}
-	
-	@Override
 	public final String exitMessage() {
-		return "Finished " + operationName() + ". Reduced states from "
-				+ mOperand.size() + " to " + getResult().size() + '.';
+		return "Finished " + operationName() + ". Reduced states from " + mOperand.size() + " to " + getResult().size()
+				+ '.';
 	}
 	
 	@Override
@@ -290,8 +270,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param result
 	 *            result automaton
 	 */
-	protected final void directResultConstruction(
-			final INestedWordAutomaton<LETTER, STATE> result) {
+	protected final void directResultConstruction(final INestedWordAutomaton<LETTER, STATE> result) {
 		if (mResult != null) {
 			throw new AssertionError(
 					"The result has already been constructed.");
@@ -352,15 +331,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected final void startResultConstruction() {
 		if (mResult != null) {
-			throw new AssertionError(
-					"The result has already been constructed.");
+			throw new AssertionError("The result has already been constructed.");
 		}
-		mTemporaryResult = new DoubleDeckerAutomaton<>(
-				mServices,
-				mOperand.getInternalAlphabet(),
-				mOperand.getCallAlphabet(),
-				mOperand.getReturnAlphabet(),
-				mStateFactory);
+		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getInternalAlphabet(),
+				mOperand.getCallAlphabet(), mOperand.getReturnAlphabet(), mStateFactory);
 	}
 	
 	/**
@@ -373,8 +347,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param state
 	 *            state
 	 */
-	protected final void addState(final boolean isInitial,
-			final boolean isFinal, final STATE state) {
+	protected final void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		mTemporaryResult.addState(isInitial, isFinal, state);
 	}
 	
@@ -389,8 +362,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            collection of states
 	 * @return new state (automatically added to the result)
 	 */
-	protected final STATE addState(final boolean isInitial,
-			final boolean isFinal, final Collection<STATE> oldStates) {
+	protected final STATE addState(final boolean isInitial, final boolean isFinal, final Collection<STATE> oldStates) {
 		assert !oldStates.isEmpty();
 		final STATE newState = mStateFactory.minimize(oldStates);
 		mTemporaryResult.addState(isInitial, isFinal, newState);
@@ -407,8 +379,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param succ
 	 *            successor
 	 */
-	protected final void addInternalTransition(final STATE pred,
-			final LETTER letter, final STATE succ) {
+	protected final void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		mTemporaryResult.addInternalTransition(pred, letter, succ);
 	}
 	
@@ -422,8 +393,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param succ
 	 *            successor
 	 */
-	protected final void addCallTransition(final STATE pred,
-			final LETTER letter, final STATE succ) {
+	protected final void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		mTemporaryResult.addCallTransition(pred, letter, succ);
 	}
 	
@@ -439,8 +409,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param succ
 	 *            successor
 	 */
-	protected final void addReturnTransition(final STATE pred,
-			final STATE hier, final LETTER letter, final STATE succ) {
+	protected final void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter,
+			final STATE succ) {
 		mTemporaryResult.addReturnTransition(pred, hier, letter, succ);
 	}
 	
@@ -450,8 +420,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param oldState2newState
 	 *            map 'old state -> new state'
 	 */
-	protected final void finishResultConstruction(
-			final Map<STATE, STATE> oldState2newState,
+	protected final void finishResultConstruction(final Map<STATE, STATE> oldState2newState,
 			final boolean constructDoubleDeckerInformation) {
 		if (oldState2newState != null) {
 			setOld2NewStateMap(oldState2newState);
@@ -471,14 +440,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void constructDoubleDeckerInformation() {
-		assert (mTemporaryResult instanceof DoubleDeckerAutomaton) : "The result must be a DoubleDeckerAutomaton.";
-		final DoubleDeckerAutomaton<LETTER, STATE> result =
-				(DoubleDeckerAutomaton<LETTER, STATE>) mTemporaryResult;
-		assert (mOperand instanceof IDoubleDeckerAutomaton) : "The operand must be an IDoubleDeckerAutomaton.";
-		final IDoubleDeckerAutomaton<LETTER, STATE> operand =
-				(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
-		assert (!result.up2DownIsSet()) : "The down state map was already set.";
-		assert (mOldState2NewState != null) : "Need the mapping for construction.";
+		assert mTemporaryResult instanceof DoubleDeckerAutomaton : "The result must be a DoubleDeckerAutomaton.";
+		final DoubleDeckerAutomaton<LETTER, STATE> result = (DoubleDeckerAutomaton<LETTER, STATE>) mTemporaryResult;
+		assert mOperand instanceof IDoubleDeckerAutomaton : "The operand must be an IDoubleDeckerAutomaton.";
+		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
+		assert !result.up2DownIsSet() : "The down state map was already set.";
+		assert mOldState2NewState != null : "Need the mapping for construction.";
 		
 		final Map<STATE, Map<STATE, ReachFinal>> up2Down = new HashMap<>();
 		result.setUp2Down(up2Down);
@@ -522,14 +489,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param oldState2newState
 	 *            map 'old state -> new state'
 	 */
-	protected final void setOld2NewStateMap(
-			final Map<STATE, STATE> oldState2newState) {
+	protected final void setOld2NewStateMap(final Map<STATE, STATE> oldState2newState) {
 		if (oldState2newState == null) {
 			throw new AssertionError(
 					"The map must not be set to null.");
 		} else if (mOldState2NewState != null) {
-			throw new AssertionError(
-					"The map has already been set.");
+			throw new AssertionError("The map has already been set.");
 		}
 		mOldState2NewState = Collections.unmodifiableMap(oldState2newState);
 	}
@@ -547,7 +512,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *             if operation was canceled
 	 */
 	protected final boolean isDfa() throws AutomataOperationCanceledException {
-		return (isDeterministic() && isFiniteAutomaton());
+		return isDeterministic() && isFiniteAutomaton();
 	}
 	
 	/**
@@ -575,8 +540,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean isFiniteAutomaton() {
-		return ((mOperand.getCallAlphabet().size() == 0)
-				&& (mOperand.getReturnAlphabet().size() == 0));
+		return (mOperand.getCallAlphabet().isEmpty()) && (mOperand.getReturnAlphabet().isEmpty());
 	}
 	
 	/**
@@ -620,8 +584,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @return the parameter for initializing the hash structure
 	 */
 	@SuppressWarnings("squid:S2164")
-	protected final int computeHashCap(final int size) {
-		final float inverseOfPointSevenFive = 1.34f;
+	protected static final int computeHashCap(final int size) {
+		final float inverseOfPointSevenFive = 1.34F;
 		return (int) (size * inverseOfPointSevenFive + 1);
 	}
 }

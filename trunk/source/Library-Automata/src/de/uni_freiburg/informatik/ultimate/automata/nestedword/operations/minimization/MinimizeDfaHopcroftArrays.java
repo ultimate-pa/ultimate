@@ -94,17 +94,15 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 * Constructor.
 	 */
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
 			final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}
 	
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
-		super(services, stateFactory, "MinimizeDfaHopcroftPaper", operand);
+		super(services, stateFactory, operand);
 		
 		// added by Christian
 		if (!isFiniteAutomaton()) {
@@ -235,7 +233,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		mInt2letter = new ArrayList<>(mNumberOfLetters);
 		mLetter2int = new HashMap<>(
 				computeHashCap(mNumberOfLetters));
-				
+		
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
@@ -398,7 +396,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		final Map<STATE, STATE> mOldState2newState = addMapping
 				? new HashMap<>(computeHashCap(mOperand.size()))
 				: null;
-				
+		
 		startResultConstruction();
 		// Iterate over number of blocks for getting every first element.
 		for (int i = 0; i < mBlocks.mNumberOfSets; ++i) {
@@ -434,7 +432,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 					isFinalState = true;
 				}
 			}
-			final boolean isInitialState = (i == blockOfInitState);
+			final boolean isInitialState = i == blockOfInitState;
 			addState(isInitialState, isFinalState, newState);
 		}
 		
@@ -490,7 +488,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		public void init(final int numberOfStates) {
 			// After initialization, partition contains either one
 			// or none block of states.
-			this.mNumberOfSets = (numberOfStates > 0 ? 1 : 0);
+			this.mNumberOfSets = numberOfStates > 0 ? 1 : 0;
 			// all states of the automaton.
 			this.mElements = new int[numberOfStates];
 			// location in mElements of a state

@@ -125,8 +125,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaPmaxSatAsymmetric", operand, settings.setSolverModeGeneral(),
-				initialStatePairs);
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs);
 		mEmptyStackState = mOperand.getEmptyStackState();
 		
 		run();

@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	public static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
+	
 	private static final String MAP_NOT_SUPPORTED_MESSAGE = "Map from old to new automaton is not supported with ";
 	
 	/**
@@ -80,16 +82,14 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 		UNDEFINED;
 	}
 	
-	public static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
-	
 	// current minimization object (input automaton in case of no minimization)
 	protected Object mBackingMinimization;
 	// current minimization method
 	protected MinimizationMethods mMode;
 	
 	protected MinimizeNwaCombinator(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final String name, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		super(services, stateFactory, name, operand);
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		super(services, stateFactory, operand);
 		mMode = MinimizationMethods.UNDEFINED;
 	}
 	

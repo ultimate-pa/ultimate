@@ -67,12 +67,11 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	/**
 	 * Next usable unique id for a block.
 	 */
-	private int mBlockId = 0;
+	private int mBlockId;
 	/**
 	 * List of all blocks the automata currently has. (Also known as "Q").
 	 */
-	private final LinkedList<LinkedHashSet<Integer>> mBlocks =
-			new LinkedList<LinkedHashSet<Integer>>();
+	private final LinkedList<LinkedHashSet<Integer>> mBlocks = new LinkedList<>();
 	/**
 	 * Mapping for block to a unique id.
 	 */
@@ -117,12 +116,10 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * size of the alphabet.
 	 */
 	public MinimizeDfaHopcroftLists(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory,
-			final Collection<Set<STATE>> initialPartition,
+			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
-		super(services, stateFactory, "minimizeIncompleteDFA", operand);
+		super(services, stateFactory, operand);
 		
 		// added by Christian
 		if (!isFiniteAutomaton()) {
@@ -130,23 +127,23 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 					"This class only supports minimization of finite automata.");
 		}
 		
-		mBlockToId = new HashMap<LinkedHashSet<Integer>, Integer>(
+		mBlockToId = new HashMap<>(
 				INITIAL_BLOCK_AMOUNT);
-		mIdToBlock = new HashMap<Integer, LinkedHashSet<Integer>>(
+		mIdToBlock = new HashMap<>(
 				INITIAL_BLOCK_AMOUNT);
 		final int stateAmount = operand.getStates().size();
-		mIdToState = new HashMap<Integer, STATE>(stateAmount);
-		mStateToId = new HashMap<STATE, Integer>(stateAmount);
-		mStateToBlockId = new HashMap<Integer, Integer>(stateAmount);
+		mIdToState = new HashMap<>(stateAmount);
+		mStateToId = new HashMap<>(stateAmount);
+		mStateToBlockId = new HashMap<>(stateAmount);
 		mStateToIncomingEdges =
-				new HashMap<Integer, Iterable<IncomingInternalTransition<LETTER, STATE>>>(
+				new HashMap<>(
 						stateAmount);
 		// Christian: not used anymore
 //		stateToOutgoingEdges = new HashMap<Integer,
 //				Iterable<OutgoingInternalTransition<LETTER, STATE>>>(
 //				stateAmount);
 		final int letterAmount = operand.getInternalAlphabet().size();
-		mLetterToId = new HashMap<LETTER, Integer>(letterAmount);
+		mLetterToId = new HashMap<>(letterAmount);
 		
 		init(stateAmount, letterAmount);
 		
@@ -181,17 +178,17 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 */
 	private void buildMinimizedAutomaton(final boolean addMapping) {
 		// Select a representative state for every block
-		final LinkedList<STATE> representatives = new LinkedList<STATE>();
+		final LinkedList<STATE> representatives = new LinkedList<>();
 		final HashMap<Integer, STATE> blockToNewState =
-				new HashMap<Integer, STATE>();
+				new HashMap<>();
 //		HashMap<Integer, STATE> representativeIdToNewState =
 //				new HashMap<Integer, STATE>();
 		
 		// Christian: edited for proper state factory usage
 		final Map<STATE, STATE> oldState2newState = addMapping
-				? new HashMap<STATE, STATE>()
+				? new HashMap<>()
 				: null;
-		final HashSet<Integer> initialBlocks = new HashSet<Integer>();
+		final HashSet<Integer> initialBlocks = new HashSet<>();
 		for (final STATE initialState : mOperand.getInitialStates()) {
 			initialBlocks.add(mStateToBlockId.get(mStateToId.get(initialState)));
 		}
@@ -201,7 +198,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 				continue;
 			}
 			
-			final ArrayList<STATE> allStates = new ArrayList<STATE>(block.size());
+			final ArrayList<STATE> allStates = new ArrayList<>(block.size());
 			final Iterator<Integer> blockIt = block.iterator();
 			final int representativeId = blockIt.next();
 			final int blockId = mBlockToId.get(block);
@@ -217,7 +214,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			blockToNewState.put(blockId, newState);
 			addState(initialBlocks.contains(blockId),
 					mOperand.isFinal(representative), newState);
-					
+			
 			// update mapping 'old state -> new state'
 			if (addMapping) {
 				for (final STATE oldState : allStates) {
@@ -349,14 +346,14 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
 		// Initial blocks
-		final LinkedList<Integer> finalStates = new LinkedList<Integer>();
-		final LinkedList<Integer> otherStates = new LinkedList<Integer>();
+		final LinkedList<Integer> finalStates = new LinkedList<>();
+		final LinkedList<Integer> otherStates = new LinkedList<>();
 		final Set<STATE> allStates = mStateToId.keySet();
 		
 		// List also known as "L"
 		final LinkedHashSet<LinkedHashSet<Integer>> splitCandidates =
-				new LinkedHashSet<LinkedHashSet<Integer>>();
-				
+				new LinkedHashSet<>();
+		
 		if (initialPartition == null) {
 			for (final STATE state : allStates) {
 				if (mOperand.isFinal(state)) {
@@ -371,7 +368,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			LinkedHashSet<Integer> finalStatesBlock = null;
 			if (existsFinal) {
 				finalStatesBlockId = getUniqueBlocKId();
-				finalStatesBlock = new LinkedHashSet<Integer>(
+				finalStatesBlock = new LinkedHashSet<>(
 						finalStates);
 				mBlockToId.put(finalStatesBlock, finalStatesBlockId);
 				mIdToBlock.put(finalStatesBlockId, finalStatesBlock);
@@ -382,7 +379,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			LinkedHashSet<Integer> otherStatesBlock = null;
 			if (existsOther) {
 				otherStatesBlockId = getUniqueBlocKId();
-				otherStatesBlock = new LinkedHashSet<Integer>(
+				otherStatesBlock = new LinkedHashSet<>(
 						otherStates);
 				mBlockToId.put(otherStatesBlock, otherStatesBlockId);
 				mIdToBlock.put(otherStatesBlockId, otherStatesBlock);
@@ -412,14 +409,14 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		} else {
 			// Christian: added this case
 			for (final Set<STATE> block : initialPartition) {
-				final LinkedList<Integer> newBlockStates = new LinkedList<Integer>();
+				final LinkedList<Integer> newBlockStates = new LinkedList<>();
 				final int blockId = getUniqueBlocKId();
 				for (final STATE state : block) {
 					final int stateId = mStateToId.get(state);
 					newBlockStates.add(stateId);
 					mStateToBlockId.put(stateId, blockId);
 				}
-				final LinkedHashSet<Integer> newBlock = new LinkedHashSet<Integer>(
+				final LinkedHashSet<Integer> newBlock = new LinkedHashSet<>(
 						newBlockStates);
 				mBlockToId.put(newBlock, blockId);
 				mIdToBlock.put(blockId, newBlock);
@@ -454,7 +451,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			
 			final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 					split(splitter, mOperand.getInternalAlphabet().size());
-					
+			
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}
 		
@@ -479,40 +476,40 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		
 		// Represents the set of letters that belong to edges incoming in the
 		// splitter block. (Also known as "l").
-		final LinkedList<Integer> letterList = new LinkedList<Integer>();
+		final LinkedList<Integer> letterList = new LinkedList<>();
 		// Represents a set of sets that contain all the, splitter block,
 		// incoming states, accessible by the letter of the incoming edge.
 		// (Also known as "l(a)").
 		final HashMap<Integer, LinkedList<Integer>> stateListByLetter =
-				new HashMap<Integer, LinkedList<Integer>>();
+				new HashMap<>();
 		// Signatures of the states.
 		final HashMap<Integer, LinkedList<Integer>> signatures =
-				new HashMap<Integer, LinkedList<Integer>>();
+				new HashMap<>();
 		// Contains states that are used in splitting procedure.
 		// (Also known as "s").
-		final LinkedList<Integer> splitStates = new LinkedList<Integer>();
+		final LinkedList<Integer> splitStates = new LinkedList<>();
 		// Numbers of blocks that are used in splitting procedure.
 		// (Also known as "l1").
-		final LinkedList<Integer> splitBlockNumbers = new LinkedList<Integer>();
+		final LinkedList<Integer> splitBlockNumbers = new LinkedList<>();
 		// Maps block numbers with respective states. (Also known as "t_b[i]").
 		final HashMap<Integer, LinkedList<Integer>> blockStateMap =
-				new HashMap<Integer, LinkedList<Integer>>();
+				new HashMap<>();
 		// Contains letters that are used in splitting procedure.
 		// (Also known as "l2").
-		final LinkedList<Integer> splitLetters = new LinkedList<Integer>();
+		final LinkedList<Integer> splitLetters = new LinkedList<>();
 		// Maps letters with respective states that are used in splitting
 		// procedure.
 		// (Also known as "t" or "t[a]").
 		final HashMap<Integer, LinkedList<Integer>> splitStatesOfLetter =
-				new HashMap<Integer, LinkedList<Integer>>();
-				
+				new HashMap<>();
+		
 		// Step 1
 		// Iterate over all states in the splitter block
 		// and setup some data structures
 		for (final int stateInSplitter : splitter) {
 			final Iterator<IncomingInternalTransition<LETTER, STATE>> incomingTransitions =
 					mStateToIncomingEdges.get(stateInSplitter).iterator();
-					
+			
 			while (incomingTransitions.hasNext()) {
 				final IncomingInternalTransition<LETTER, STATE> incomingTrans =
 						incomingTransitions.next();
@@ -580,7 +577,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		blockStateMap.clear();
 		//Keep references to iterator alive.
 		final HashMap<Integer, Iterator<Integer>> signaturesIter =
-				new HashMap<Integer, Iterator<Integer>>();
+				new HashMap<>();
 		// Iterate over all signature elements
 		for (int j = 0; j < maxSignatureSize; j++) {
 			for (final Integer state : splitStates) {
@@ -631,8 +628,8 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		// where the content is separated by blocks.
 		// Also remove duplicate content by using a set.
 		final LinkedHashMap<Integer, LinkedHashSet<Integer>> splitStatesBlockWrapper =
-				new LinkedHashMap<Integer, LinkedHashSet<Integer>>(mBlocks.size());
-		LinkedHashSet<Integer> curBlockContent = new LinkedHashSet<Integer>();
+				new LinkedHashMap<>(mBlocks.size());
+		LinkedHashSet<Integer> curBlockContent = new LinkedHashSet<>();
 		int lastBlockNumber = -1;
 		int curBlockNumber = -1;
 		for (final int state : splitStates) {
@@ -654,7 +651,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 								oldBlockContent);
 					}
 				}
-				curBlockContent = new LinkedHashSet<Integer>();
+				curBlockContent = new LinkedHashSet<>();
 			}
 			curBlockContent.add(state);
 			lastBlockNumber = curBlockNumber;
@@ -681,14 +678,14 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		// Save blockNumber of current splitter (before it gets removed)
 		final int splitterBlockNumber = mBlockToId.get(splitter);
 		final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
-				new LinkedList<LinkedHashSet<Integer>>();
-				
+				new LinkedList<>();
+		
 		// Iterate over block content and determine splittings
 		for (final LinkedHashSet<Integer> blockContent : splitStatesBlockWrapper.values()) {
 			// Setup splittings
 			final LinkedList<LinkedHashSet<Integer>> splittings =
-					new LinkedList<LinkedHashSet<Integer>>();
-			LinkedHashSet<Integer> curSplit = new LinkedHashSet<Integer>();
+					new LinkedList<>();
+			LinkedHashSet<Integer> curSplit = new LinkedHashSet<>();
 			LinkedList<Integer> lastSignature = null;
 			for (final int state : blockContent) {
 				final LinkedList<Integer> curSignature = signatures.get(state);
@@ -698,7 +695,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 					if (!curSplit.isEmpty()) {
 						splittings.add(curSplit);
 					}
-					curSplit = new LinkedHashSet<Integer>();
+					curSplit = new LinkedHashSet<>();
 				}
 				curSplit.add(state);
 				lastSignature = curSignature;
@@ -710,14 +707,14 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			LinkedHashSet<Integer> originalBlock = mIdToBlock.get(mStateToBlockId
 					.get(blockContent.iterator().next()));
 			if (!blockContent.equals(originalBlock)) {
-				final HashSet<Integer> missingStates = new HashSet<Integer>();
+				final HashSet<Integer> missingStates = new HashSet<>();
 				for (final int state : originalBlock) {
 					if (!blockContent.contains(state)) {
 						missingStates.add(state);
 					}
 				}
 				if (!missingStates.isEmpty()) {
-					splittings.add(new LinkedHashSet<Integer>(missingStates));
+					splittings.add(new LinkedHashSet<>(missingStates));
 				}
 			}
 			

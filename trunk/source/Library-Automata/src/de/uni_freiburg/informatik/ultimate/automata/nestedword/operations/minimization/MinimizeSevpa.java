@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -118,9 +117,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, null, operand.getStateFactory(), false, false);
 	}
@@ -141,13 +138,9 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> equivalenceClasses,
-			final IStateFactory<STATE> stateFactory,
-			final boolean addMapOldState2newState,
-			final boolean initialPartitionSeparatesFinalsAndNonfinals)
+	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> equivalenceClasses, final IStateFactory<STATE> stateFactory,
+			final boolean addMapOldState2newState, final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException {
 		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag(),
 				initialPartitionSeparatesFinalsAndNonfinals);
@@ -171,16 +164,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> equivalenceClasses,
-			final IStateFactory<STATE> stateFactory,
-			final boolean addMapOldState2newState,
-			final IFlag timeout,
-			final boolean initialPartitionSeparatesFinalsAndNonfinals)
-			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "minimizeSevpa", operand);
+	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> equivalenceClasses, final IStateFactory<STATE> stateFactory,
+			final boolean addMapOldState2newState, final IFlag timeout,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand);
 		if (mOperand instanceof IDoubleDeckerAutomaton) {
 			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
 		} else {
@@ -215,9 +203,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	private void minimize(
-			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapping)
+	private void minimize(final Collection<Set<STATE>> equivalenceClasses, final boolean addMapping)
 			throws AutomataOperationCanceledException {
 		
 		// cancel if signal is received
@@ -245,11 +231,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	private void mergeStates(
-			StatesContainer states,
-			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapping)
-			throws AutomataOperationCanceledException {
+	private void mergeStates(StatesContainer states, final Collection<Set<STATE>> equivalenceClasses,
+			final boolean addMapping) throws AutomataOperationCanceledException {
 		
 		assert (mPartition == null);
 		if (equivalenceClasses == null) {
@@ -313,8 +296,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *            partition passed in constructor
 	 * @return true iff equivalence classes respect final status of states
 	 */
-	private boolean assertStatesSeparation(
-			final Collection<Set<STATE>> equivalenceClasses) {
+	private boolean assertStatesSeparation(final Collection<Set<STATE>> equivalenceClasses) {
 		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
 			final Iterator<STATE> it = equivalenceClass.iterator();
 			assert (it.hasNext());
@@ -336,8 +318,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *            container with reachable states
 	 * @return initial partition of the states
 	 */
-	private Partition createInitialPartition(
-			final StatesContainer states) {
+	private Partition createInitialPartition(final StatesContainer states) {
 		// build two sets with final and non-final states, respectively
 		HashSet<STATE> finals;
 		HashSet<STATE> nonfinals;
@@ -390,8 +371,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	private void refinePartition()
-			throws AutomataOperationCanceledException {
+	private void refinePartition() throws AutomataOperationCanceledException {
 		/*
 		 * naiveSplit used as long as possible
 		 * then switch to more complicated but sound split
@@ -513,10 +493,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *            finds the predecessor set X
 	 */
 	private void findXByInternalOrCall(final TargetSet targetSet, final Partition partition,
-			final Collection<LETTER> alphabet,
-			final APredecessorSetFinder predecessorFinder) {
+			final Collection<LETTER> alphabet, final APredecessorSetFinder predecessorFinder) {
 		for (final LETTER letter : alphabet) {
-			
 			/*
 			 * X = predecessor set of A = all states s1
 			 * with transition (s1, l, s2) for letter l and s2 in A
@@ -540,8 +518,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @param naiveSplit
 	 *            true iff naive split shall be used
 	 */
-	private void findXByReturn(final TargetSet targetSet, final Partition partition,
-			final Collection<LETTER> alphabet, final boolean naiveSplit) {
+	private void findXByReturn(final TargetSet targetSet, final Partition partition, final Collection<LETTER> alphabet,
+			final boolean naiveSplit) {
 		if (naiveSplit) {
 			findXByLinPred(targetSet, partition, alphabet);
 			findXByHierPred(targetSet, partition, alphabet);
@@ -563,7 +541,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	private void findXByLinPred(final TargetSet targetSet, final Partition partition,
 			final Collection<LETTER> alphabet) {
 		for (final LETTER letter : alphabet) {
-			
 			if (SPLIT_ALL_RETURNS_LIN) {
 				// trivial split: every linear predecessor is different
 				final ReturnPredecessorLinSetFinder finder =
@@ -716,7 +693,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	private void findXByDownStates(final TargetSet targetSet, final Partition partition,
 			final Collection<LETTER> alphabet) {
 		for (final LETTER letter : alphabet) {
-			
 			// maps hierarchical states to linear states to return transitions
 			final HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>> hier2lin2trans =
 					new HashMap<>();
@@ -798,8 +774,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *            list of similar sets
 	 * @return set of similar return transitions if possible, else null
 	 */
-	private Set<ReturnTransition> getSimilarSet(
-			final Partition partition, final ReturnTransition transition,
+	private Set<ReturnTransition> getSimilarSet(final Partition partition, final ReturnTransition transition,
 			final LETTER letter, final List<Set<ReturnTransition>> similarSetsList) {
 		for (final Set<ReturnTransition> result : similarSetsList) {
 			boolean found = true;
@@ -832,8 +807,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @param hier2lin2trans
 	 *            hash map with distinguished return transitions
 	 */
-	private void createAndSplitXByDownStates(
-			final TargetSet targetSet, final Partition partition,
+	private void createAndSplitXByDownStates(final TargetSet targetSet, final Partition partition,
 			final HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>> hier2lin2trans) {
 		for (final HashMap<EquivalenceClass, List<Set<ReturnTransition>>> lin2trans : hier2lin2trans.values()) {
 			for (final List<Set<ReturnTransition>> similarSetsList : lin2trans.values()) {
@@ -873,8 +847,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *            finds the predecessor set X
 	 */
 	private void findXByOutgoingReturn(final TargetSet targetSet, final Partition partition,
-			final Collection<LETTER> alphabet,
-			final ReturnSuccessorSetFinder predecessorFinder) {
+			final Collection<LETTER> alphabet, final ReturnSuccessorSetFinder predecessorFinder) {
 		for (final LETTER letter : alphabet) {
 			/*
 			 * X = predecessor set of A in hierarchical view
@@ -897,8 +870,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @param predSet
 	 *            predecessor set X
 	 */
-	private void searchY(final Partition partition, final TargetSet targetSet,
-			final PredecessorSet predSet) {
+	private void searchY(final Partition partition, final TargetSet targetSet, final PredecessorSet predSet) {
 		assert (predSet.size() > 0);
 		
 		/*
@@ -1946,7 +1918,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 * @return true iff state has an incoming return transition
 		 */
 		public boolean hasIncomingReturns(final STATE state) {
-			return mParentOperand.lettersReturnIncoming(state).size() > 0;
+			return !mParentOperand.lettersReturnIncoming(state).isEmpty();
 		}
 		
 		/**
@@ -2315,14 +2287,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				// special case where automaton has no reachable states
 				size = 1;
 			}
-			mQueue = new PriorityQueue<>(size,
-					new Comparator<EquivalenceClass>() {
-						@Override
-						public int compare(final EquivalenceClass ec1,
-								final EquivalenceClass ec2) {
-							return ec1.size() - ec2.size();
-						}
-					});
+			mQueue = new PriorityQueue<>(size, (ec1, ec2) -> ec1.size() - ec2.size());
 		}
 		
 		/**
@@ -2495,7 +2460,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				case SAVE_REMOVED:
 					return ((mParentOperand.getFinalStates().size() - mFinals.size()) > 0);
 				case NONE:
-					return (mParentOperand.getFinalStates().size() > 0);
+					return (!mParentOperand.getFinalStates().isEmpty());
 				default:
 					assert false;
 					return false;

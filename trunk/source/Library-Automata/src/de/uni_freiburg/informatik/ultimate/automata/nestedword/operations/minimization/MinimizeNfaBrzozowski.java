@@ -37,42 +37,45 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This class implements Brzozowski's minimization algorithm.
- * 
- * <p>The key idea is to reverse and determinize the automaton twice.
+ * <p>
+ * The key idea is to reverse and determinize the automaton twice.
  * After each reversal the resulting DFA is minimal wrt. its language
  * (i.e., the reversed DFA minimally accepts the reverse language and the
  * twice reversed DFA minimally accepts the original language).
- * 
- * <p>Reversal means that
+ * <p>
+ * Reversal means that
  * - the transitions are turned around,
  * - the final states become the initial states,
  * - the initial states become the final states.
- * 
- * <p>NOTE: The implementation is naive in the sense that both a new automaton is
+ * <p>
+ * NOTE: The implementation is naive in the sense that both a new automaton is
  * created after each operation and the reversal and determinization do not
  * know each other (potentially they may .
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param operand input (finite, possibly nondeterministic) automaton
-	 * @throws AutomataOperationCanceledException when execution is cancelled
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input (finite, possibly nondeterministic) automaton
+	 * @throws AutomataOperationCanceledException
+	 *             when execution is cancelled
 	 */
-	public MinimizeNfaBrzozowski(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeBrzozowski", operand);
+	public MinimizeNfaBrzozowski(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand);
 		
-		assert super.isFiniteAutomaton() :
-			"The input automaton contains call or return transitions.";
+		assert super.isFiniteAutomaton() : "The input automaton contains call or return transitions.";
 		
 		minimize();
 		mLogger.info(exitMessage());
@@ -82,7 +85,8 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * This method simply reverses and determinizes the automaton twice, which
 	 * results in the minimal DFA.
 	 * 
-	 * @throws AutomataOperationCanceledException when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             when execution is cancelled
 	 */
 	private void minimize() throws AutomataOperationCanceledException {
 		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
@@ -98,23 +102,21 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	
 	/**
 	 * This method reverses the automaton.
+	 * <p>
+	 * Reversal means that
+	 * - the transitions are turned around,
+	 * - the final states become the initial states,
+	 * - the initial states become the final states.
 	 * 
-	 * <p>Reversal means that
-     * - the transitions are turned around,
-     * - the final states become the initial states,
-     * - the initial states become the final states.
-     * 
-	 * @param automaton automaton
+	 * @param automaton
+	 *            automaton
 	 * @return the reversed automaton
 	 */
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<LETTER, STATE>(mServices,
-						automaton.getInternalAlphabet(),
-						automaton.getCallAlphabet(),
-						automaton.getReturnAlphabet(),
-						automaton.getStateFactory());
+				new NestedWordAutomaton<>(mServices, automaton.getInternalAlphabet(), automaton.getCallAlphabet(),
+						automaton.getReturnAlphabet(), automaton.getStateFactory());
 		
 		// add states
 		for (final STATE state : automaton.getStates()) {
@@ -123,8 +125,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 		}
 		// add (only internal) transitions
 		for (final STATE state : automaton.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					automaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton.internalSuccessors(state)) {
 				reversed.addInternalTransition(
 						trans.getSucc(), trans.getLetter(), state);
 			}
@@ -136,13 +137,15 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	/**
 	 * This method determinizes the automaton.
 	 * 
-	 * @param automaton automaton
+	 * @param automaton
+	 *            automaton
 	 * @return the determinized automaton
-	 * @throws AutomataOperationCanceledException when execution is cancelled
+	 * @throws AutomataOperationCanceledException
+	 *             when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton)
-					throws AutomataOperationCanceledException {
-		return new Determinize<LETTER, STATE>(mServices, mStateFactory, automaton).getResult();
+			throws AutomataOperationCanceledException {
+		return new Determinize<>(mServices, mStateFactory, automaton).getResult();
 	}
 }

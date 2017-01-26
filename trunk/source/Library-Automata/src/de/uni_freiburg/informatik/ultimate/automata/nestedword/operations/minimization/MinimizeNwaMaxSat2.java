@@ -103,8 +103,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 *            Ultimate services.
 	 * @param stateFactory
 	 *            state factory
-	 * @param operationName
-	 *            operation name
 	 * @param operand
 	 *            input nested word automaton
 	 * @param partitionPairsWrapper
@@ -115,10 +113,9 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 *             thrown by cancel request
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final String operationName, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePairs)
-			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operationName, operand);
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings,
+			final NestedMap2<STATE, STATE, T> statePairs) throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		mStatePairs = statePairs;
@@ -836,6 +833,9 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		
 		/**
 		 * Validates the settings object for inconsistencies.
+		 * 
+		 * @param operand
+		 *            operand
 		 */
 		public <LETTER> void validate(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 			if (mSolverMode == null) {

@@ -194,7 +194,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
+		super(services, stateFactory, operand, interrupt);
 		
 		/*
 		 * Christian: 2016-08-02:
@@ -226,7 +226,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
+		super(services, stateFactory, operand, interrupt);
 		mInt2state = int2state;
 		mState2int = state2int;
 

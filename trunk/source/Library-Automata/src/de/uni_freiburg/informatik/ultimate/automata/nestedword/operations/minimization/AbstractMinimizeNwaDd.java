@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * as result.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-@SuppressWarnings("squid:UselessParenthesesCheck")
-public abstract class AbstractMinimizeNwaDd<LETTER, STATE>
-		extends AbstractMinimizeNwa<LETTER, STATE>
+public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimizeNwaDD<LETTER, STATE> {
 	/**
 	 * This constructor should be called by all subclasses and only by them.
@@ -51,26 +51,22 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE>
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param name
-	 *            operation name
 	 * @param operand
 	 *            input automaton
 	 */
-	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final String name,
+	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		super(services, stateFactory, name, operand);
+		super(services, stateFactory, operand);
 	}
 	
 	/**
 	 * @return result as
-	 *     #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
+	 *         #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
 	 */
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		final INestedWordAutomaton<LETTER, STATE> result = super.getResult();
-		assert (result instanceof IDoubleDeckerAutomaton) :
-			"The result constructed must be an IDoubleDeckerAutomaton.";
+		assert result instanceof IDoubleDeckerAutomaton : "The result constructed must be an IDoubleDeckerAutomaton.";
 		return (IDoubleDeckerAutomaton<LETTER, STATE>) result;
 	}
 }

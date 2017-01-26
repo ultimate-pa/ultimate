@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -42,66 +41,68 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Minimization of NWA by reduction to MaxSAT.
  * 
  * @author Jens Stimpfle (stimpflj@informatik.uni-freiburg.de)
- *
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE> {
+public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory
-	 * @param automaton input NWA
-	 * @throws AutomataOperationCanceledException if operation was canceled
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param automaton
+	 *            input NWA
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	public MinimizeNwaMaxSAT(
 			final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeNwaMaxSAT", automaton);
-
+		super(services, stateFactory, automaton);
+		
 		final ILogger convertLog = services.getLoggingService().getLogger(
 				"Converter");
 		final ILogger generateLog = services.getLoggingService().getLogger(
 				"NwaMinimizationClausesGenerator");
 		final ILogger solveLog = services.getLoggingService().getLogger(
 				"Solver");
-
+		
 		convertLog.info("starting conversion");
-		final Converter<LETTER, STATE> converter =
-				new Converter<LETTER, STATE>(services, stateFactory, automaton);
+		final Converter<LETTER, STATE> converter = new Converter<>(services, stateFactory, automaton);
 		final NwaWithArrays nwa = converter.getNwa();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
 		convertLog.info(
 				"finished conversion. "
-				+ nwa.mNumStates + " states, "
-				+ nwa.mNumISyms + " iSyms, "
-				+ nwa.mNumCSyms + " cSyms, "
-				+ nwa.mNumRSyms + " rSyms, "
-				+ nwa.mITrans.length + " iTrans, "
-				+ nwa.mCTrans.length + " cTrans, "
-				+ nwa.mRTrans.length + " rTrans."
-		);
-
+						+ nwa.mNumStates + " states, "
+						+ nwa.mNumISyms + " iSyms, "
+						+ nwa.mNumCSyms + " cSyms, "
+						+ nwa.mNumRSyms + " rSyms, "
+						+ nwa.mITrans.length + " iTrans, "
+						+ nwa.mCTrans.length + " cTrans, "
+						+ nwa.mRTrans.length + " rTrans.");
+		
 		generateLog.info("starting clauses generation");
 		final Horn3Array clauses = Generator.generateClauses(mServices, nwa, history);
 		generateLog.info("finished clauses generation. "
 				+ clauses.size() + " clauses");
-
+		
 		solveLog.info("starting Solver");
 		final char[] assignments = new Solver(mServices, clauses).solve();
 		solveLog.info("finished Solver");
-
+		
 		generateLog.info("making equivalence classes from assignments");
 		final Partition eqCls = Generator.makeMergeRelation(nwa.mNumStates, assignments);
 		generateLog.info("finished making equivalence classes");
-
+		
 		directResultConstruction(converter.constructMerged(eqCls));
 		convertLog.info("constructed minimized automaton");
-
+		
 		mLogger.info(exitMessage());
 	}
 }

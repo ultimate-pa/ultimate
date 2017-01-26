@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
 /**
- * Class for minimize deterministic finite automaton by the Hopcroft -
- * Algorithm.
+ * Class for minimize deterministic finite automaton by the Hopcroft-Algorithm.
  * 
  * @author Layla Franke
  * @param <LETTER>
@@ -71,7 +70,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory(), "minimizeDfaHopcroftWiki", operand);
+		super(services, operand.getStateFactory(), operand);
 		
 		// Start minimization.
 		initializeData();
@@ -254,7 +253,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	 *            second array
 	 * @return True if arrays contain the same numbers, false otherwise.
 	 */
-	private boolean arrayEquals(final int[] a, final int[] b) {
+	private static boolean arrayEquals(final int[] a, final int[] b) {
 		if (b.length != a.length) {
 			return false;
 		}
@@ -273,7 +272,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		return true;
 	}
 	
-	private int[] toIntArray(final List<Integer> list) {
+	private static int[] toIntArray(final List<Integer> list) {
 		final int[] ret = new int[list.size()];
 		int i = 0;
 		for (final Integer e : list) {
@@ -295,7 +294,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 				computeHashCap(state2equivStates.size()));
 		
 		// add states
-		assert (mOperand.getInitialStates().iterator().hasNext()) : "There is no initial state in the automaton.";
+		assert mOperand.getInitialStates().iterator().hasNext() : "There is no initial state in the automaton.";
 		
 		final int initRepresentative = mState2representative[mState2int
 				.get(mOperand.getInitialStates().iterator().next())];
@@ -304,7 +303,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 				.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
-			final boolean isInitial = (representative == initRepresentative);
+			final boolean isInitial = representative == initRepresentative;
 			assert equivStates.iterator().hasNext() : "There is no equivalent state in the collection.";
 			final boolean isFinal = mOperand.isFinal(equivStates.iterator().next());
 			final STATE newSTate = addState(isInitial, isFinal, equivStates);
@@ -521,7 +520,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	 * 
 	 * @author bjoern
 	 */
-	private class Worklist {
+	private static class Worklist {
 		private final ArrayList<int[]> mSetsOfStates;
 		private int mSize;
 		
@@ -537,7 +536,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		 * Pop last element of worklist.
 		 */
 		public int[] popFromWorklist() {
-			assert (!mSetsOfStates.isEmpty());
+			assert !mSetsOfStates.isEmpty();
 			final int[] ret = mSetsOfStates.remove(mSize - 1);
 			mSize--;
 			return ret;
@@ -559,7 +558,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			final boolean aAdded = mSetsOfStates.add(a);
 			final boolean bAdded = mSetsOfStates.add(b);
 			mSize++;
-			return (aAdded && bAdded);
+			return aAdded && bAdded;
 		}
 		
 		/**

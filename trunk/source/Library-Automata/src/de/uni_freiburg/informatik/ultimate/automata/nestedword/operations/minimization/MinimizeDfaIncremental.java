@@ -147,7 +147,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	public MinimizeDfaIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
 	
@@ -165,17 +165,15 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeDfaIncremental(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Interrupt interrupt)
-					throws AutomataOperationCanceledException {
-		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
+	public MinimizeDfaIncremental(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, interrupt);
 		
 		assert super.isDfa() : "The input automaton is no DFA.";
 		
 		mSize = operand.size();
-		assert (mSize >= 0) : "The automaton size must be nonnegative.";
+		assert mSize >= 0 : "The automaton size must be nonnegative.";
 		
 		// trivial special cases
 		if (mSize <= 1) {
@@ -190,8 +188,8 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			
 			directResultConstruction(mOperand);
 		} else {
-			mState2int = new HashMap<STATE, Integer>(mSize);
-			mInt2state = new ArrayList<STATE>(mSize);
+			mState2int = new HashMap<>(mSize);
+			mInt2state = new ArrayList<>(mSize);
 			mUnionFind = new int[mSize];
 			
 			/*
@@ -213,10 +211,10 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 				mHashCapNoTuples = Integer.MAX_VALUE;
 			}
 			
-			mNeq = new HashSet<Tuple>(mHashCapNoTuples);
+			mNeq = new HashSet<>(mHashCapNoTuples);
 			mEquiv = new SetList();
 			mPath = new SetList();
-			mStack = new ArrayDeque<StackElem>();
+			mStack = new ArrayDeque<>();
 			
 			minimize();
 		}
@@ -249,12 +247,12 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
 			
-			assert (mState2int.get(state) == null) : "The state is already in the map.";
+			assert mState2int.get(state) == null : "The state is already in the map.";
 			mState2int.put(state, ++stateId);
 		}
 		
-		assert ((mState2int.size() == mInt2state.size())
-				&& (mState2int.size() == mSize)) : "The mappings do not have the same size as the input automaton";
+		assert (mState2int.size() == mInt2state.size())
+				&& (mState2int.size() == mSize) : "The mappings do not have the same size as the input automaton";
 	}
 	
 	/**
@@ -347,7 +345,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					 * optional separation of states with different outgoing
 					 * transitions
 					 */
-					final HashSet<LETTER> letters = new HashSet<LETTER>();
+					final HashSet<LETTER> letters = new HashSet<>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(state1)) {
 						letters.add(out.getLetter());
 					}
@@ -381,13 +379,13 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * @return true iff the pair of states is equivalent
 	 */
 	private boolean isPairEquiv(final Tuple origTuple) {
-		assert (mStack.isEmpty()) : "The stack must be empty.";
+		assert mStack.isEmpty() : "The stack must be empty.";
 		mStack.add(new StackElem(origTuple));
 		
 		// NOTE: This line was moved here for faster termination.
 		mEquiv.add(origTuple);
 		
-		assert (!mStack.isEmpty()) : "The stack must not be empty.";
+		assert !mStack.isEmpty() : "The stack must not be empty.";
 		do {
 			final StackElem elem = mStack.peekLast();
 			final Tuple eTuple = elem.mTuple;
@@ -400,31 +398,30 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 				// all successors and hence also this pair of states equivalent
 				mPath.remove(eTuple);
 				continue;
-			} else {
-				// not yet expanded: continue (explicit) recursion
-				elem.mExpanded = true;
-				
-				// tuple was already found to be not equivalent
-				if (mNeq.contains(eTuple)) {
-					mStack.clear();
-					return false;
-				}
-				
-				/*
-				 * tuple was already visited on the path, so the states are
-				 * equivalent
-				 */
-				if (mPath.contains(eTuple)) {
-					continue;
-				}
-				
-				mPath.add(eTuple);
-				
-				if (!putSuccOnStack(eTuple)) {
-					// one transition is only possible from one state
-					mStack.clear();
-					return false;
-				}
+			}
+			// not yet expanded: continue (explicit) recursion
+			elem.mExpanded = true;
+			
+			// tuple was already found to be not equivalent
+			if (mNeq.contains(eTuple)) {
+				mStack.clear();
+				return false;
+			}
+			
+			/*
+			 * tuple was already visited on the path, so the states are
+			 * equivalent
+			 */
+			if (mPath.contains(eTuple)) {
+				continue;
+			}
+			
+			mPath.add(eTuple);
+			
+			if (!putSuccOnStack(eTuple)) {
+				// one transition is only possible from one state
+				mStack.clear();
+				return false;
 			}
 		} while (!mStack.isEmpty());
 		
@@ -456,14 +453,14 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 */
 		for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand.internalSuccessors(firstState)) {
 			final LETTER letter = out.getLetter();
-			assert (mOperand.internalSuccessors(secondState, letter) != null);
+			assert mOperand.internalSuccessors(secondState, letter) != null;
 			
 			int succQ;
 			if (OPTION_NEQ_TRANS) {
-				assert (mOperand.internalSuccessors(secondState,
-						letter).iterator().hasNext()) : "States with different outgoing transitions "
+				assert mOperand.internalSuccessors(secondState,
+						letter).iterator().hasNext() : "States with different outgoing transitions "
 								+ "should have been marked as not equivalent.";
-								
+				
 				succQ = find(mState2int.get(mOperand.internalSuccessors(
 						secondState, letter).iterator().next().getSucc()));
 			} else {
@@ -514,22 +511,22 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		// mapping from states to their representative
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates =
 				computeMapState2Equiv();
-				
+		
 		// mapping from old state to new state
 		final HashMap<Integer, STATE> oldState2newState =
-				new HashMap<Integer, STATE>(
+				new HashMap<>(
 						computeHashCap(state2equivStates.size()));
-						
+		
 		// add states
-		assert (mOperand.getInitialStates().iterator().hasNext()) : "There is no initial state in the automaton.";
+		assert mOperand.getInitialStates().iterator().hasNext() : "There is no initial state in the automaton.";
 		final int initRepresentative = find(mState2int.get(
 				mOperand.getInitialStates().iterator().next()));
 		startResultConstruction();
 		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
-			final boolean isInitial = (representative == initRepresentative);
-			assert (equivStates.iterator().hasNext()) : "There is no equivalent state in the collection.";
+			final boolean isInitial = representative == initRepresentative;
+			assert equivStates.iterator().hasNext() : "There is no equivalent state in the collection.";
 			final boolean isFinal =
 					mOperand.isFinal(equivStates.iterator().next());
 			final STATE newSTate = addState(isInitial, isFinal, equivStates);
@@ -562,14 +559,14 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	private HashMap<Integer, ? extends Collection<STATE>>
 			computeMapState2Equiv() {
 		final HashMap<Integer, LinkedList<STATE>> state2equivStates =
-				new HashMap<Integer, LinkedList<STATE>>(
+				new HashMap<>(
 						computeHashCap(mSize));
 		for (int i = mSize - 1; i >= 0; --i) {
 			final int representative = find(i);
 			LinkedList<STATE> equivStates =
 					state2equivStates.get(representative);
 			if (equivStates == null) {
-				equivStates = new LinkedList<STATE>();
+				equivStates = new LinkedList<>();
 				state2equivStates.put(representative, equivStates);
 			}
 			equivStates.add(mInt2state.get(i));
@@ -607,7 +604,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 	 * @return representative of the given state
 	 */
 	private int find(int oldRepresentative) {
-		final LinkedList<Integer> path = new LinkedList<Integer>();
+		final LinkedList<Integer> path = new LinkedList<>();
 		
 		while (true) {
 			final int newRepresentative = mUnionFind[oldRepresentative];
@@ -620,10 +617,9 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 				}
 				
 				return newRepresentative;
-			} else {
-				path.add(oldRepresentative);
-				oldRepresentative = newRepresentative;
 			}
+			path.add(oldRepresentative);
+			oldRepresentative = newRepresentative;
 		}
 	}
 	
@@ -671,7 +667,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 *            second state
 		 */
 		public Tuple(final int first, final int second) {
-			assert (first < second) : "The first entry must be the smaller one";
+			assert first < second : "The first entry must be the smaller one";
 			mFirst = first;
 			mSecond = second;
 		}
@@ -753,7 +749,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 *            pair of states
 		 */
 		void add(final Tuple tuple) {
-			assert (!mMap.containsKey(tuple)) : "Elements should not be contained twice.";
+			assert !mMap.containsKey(tuple) : "Elements should not be contained twice.";
 			
 			// insert new pair of states
 			mMap.put(tuple, mList.add(tuple));
@@ -771,7 +767,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 		 *            pair of states
 		 */
 		void remove(final Tuple tuple) {
-			assert (mMap.containsKey(tuple)) : "Only elements contained should be removed.";
+			assert mMap.containsKey(tuple) : "Only elements contained should be removed.";
 			
 			// remove pair of states
 			mList.remove(mMap.remove(tuple));
@@ -813,13 +809,13 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 				final Iterator<Tuple> it = mList.iterator(mMap.size());
 				while (it.hasNext()) {
 					final Tuple t = it.next();
-					assert (mMap.containsKey(t)) : "The element was not in the map: " + t.toString();
+					assert mMap.containsKey(t) : "The element was not in the map: " + t.toString();
 					mMap.remove(t);
 				}
-				assert (mMap.isEmpty()) : "There are elements left in the map after cleaning.";
+				assert mMap.isEmpty() : "There are elements left in the map after cleaning.";
 			} else {
 				mIsInitialized = true;
-				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);
+				mMap = new HashMap<>(mHashCapNoTuples);
 			}
 			mList = new DoublyLinkedList();
 		}
@@ -905,11 +901,11 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			 * @return the new list node
 			 */
 			ListNode add(final Tuple tuple) {
-				assert (tuple != null) : "null should not be inserted in the list.";
+				assert tuple != null : "null should not be inserted in the list.";
 				
 				// first node
 				if (mLast == null) {
-					assert (mFirst == null) : "The last list element is null unexpectedly.";
+					assert mFirst == null : "The last list element is null unexpectedly.";
 					
 					mFirst = new ListNode(tuple, null, null);
 					mFirst.mPrev = mFirst;
@@ -917,7 +913,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					mLast = mFirst;
 				} else {
 					// further node
-					assert (mFirst != null) : "The first list element is null unexpectedly.";
+					assert mFirst != null : "The first list element is null unexpectedly.";
 					
 					final ListNode prev = mLast;
 					mLast = new ListNode(tuple, prev, mFirst);
@@ -936,7 +932,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			 *            list node
 			 */
 			void remove(final ListNode listNode) {
-				assert (listNode != null) : "null cannot not be removed from the list.";
+				assert listNode != null : "null cannot not be removed from the list.";
 				
 				// only node
 				if (listNode.mNext == listNode) {
@@ -952,7 +948,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					if (listNode == mFirst) {
 						mFirst = next;
 						
-						assert (listNode != mLast) : "The node must not be first and last element.";
+						assert listNode != mLast : "The node must not be first and last element.";
 					} else if (listNode == mLast) {
 						mLast = prev;
 					}
@@ -982,17 +978,17 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 					
 					@Override
 					public boolean hasNext() {
-						return (mItSize > 0);
+						return mItSize > 0;
 					}
 					
 					@Override
 					public Tuple next() {
-						assert (mItSize > 0) : "The next method must not be called when finished.";
+						assert mItSize > 0 : "The next method must not be called when finished.";
 						--mItSize;
-						assert (mItNext != null) : "An empty list should not be asked for the next "
+						assert mItNext != null : "An empty list should not be asked for the next "
 								+ "element.";
 						mItNext = mItNext.mNext;
-						assert (mItNext != null) : "An empty list should not be asked for the next "
+						assert mItNext != null : "An empty list should not be asked for the next "
 								+ "element.";
 						return mItNext.mTuple;
 					}
