@@ -59,8 +59,6 @@ public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutoma
 	 * @param upState
 	 *            up state
 	 * @return all down states of <tt>upState</tt>
-	 * @deprecated Use the {@link #isDoubleDecker(Object, Object) isDoubleDecker(up, down)} check instead.
 	 */
-	@Deprecated
 	Set<STATE> getDownStates(STATE upState);
 }
