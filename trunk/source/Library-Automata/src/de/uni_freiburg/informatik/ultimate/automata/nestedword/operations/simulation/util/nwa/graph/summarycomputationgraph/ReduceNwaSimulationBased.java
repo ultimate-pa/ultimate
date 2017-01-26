@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
@@ -73,11 +73,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  *            state type
  */
-public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final boolean DEFAULT_USE_BISIMULATION = true;
 	
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 	private final AutomataOperationStatistics mStatistics;
 	
 	/**
@@ -96,7 +95,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider)
 			throws AutomataOperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		mOperand = operand;
 		final MinimizationBackend backend;
 		if (NestedWordAutomataUtils.isFiniteAutomaton(mOperand)) {
@@ -107,7 +106,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			backend = MinimizationBackend.SIMULATION;
 		}
 		
-		mLogger.info(startMessage());
+		printStartMessage();
 		
 		final Collection<Set<STATE>> possibleEquivalentClasses =
 				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition();
@@ -135,26 +134,28 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
 					new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(possibleEquivalentClasses),
 					mLogger) : "The computed simulation results are incorrect.";
-			
+			IDoubleDeckerAutomaton<LETTER, STATE> result;
 			switch (backend) {
 				case FINITE_AUTOMATON:
-					mResult = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
+					result = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				case BISIMULATION:
-					mResult = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+					result = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				case SIMULATION:
-					mResult = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+					result = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				default:
 					throw new IllegalArgumentException("Unknown backend type: " + backend);
 			}
+			super.directResultConstruction(result);
 			
-			sim.triggerComputationOfPerformanceData(mResult);
+			sim.triggerComputationOfPerformanceData(result);
 			sim.getSimulationPerformance();
 			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(),
-					mOperand, mResult, mServices);
-			mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
+					mOperand, result, mServices);
+			mStatistics = super.getAutomataOperationStatistics();
+			sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(mStatistics);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
@@ -169,10 +170,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			aoce.addRunningTaskInfo(rti);
 			throw aoce;
 		}
-		mLogger.info(exitMessage());
+		printExitMessage();
 	}
 	
-	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
+	private static <LETTER, STATE> SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
 		return new SpoilerNwaVertex<>(1, false, null, null, new SpoilerWinningSink<>(null));
 	}
 	
@@ -271,11 +272,6 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 						new MinimizeNwaMaxSat2.Settings<STATE>()
 								.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 		return maxSatMinimizer.getResult();
-	}
-	
-	@Override
-	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
-		return mResult;
 	}
 	
 	@Override

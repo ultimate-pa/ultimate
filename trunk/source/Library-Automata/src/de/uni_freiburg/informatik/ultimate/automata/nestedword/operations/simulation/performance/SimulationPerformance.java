@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
@@ -231,6 +231,20 @@ public final class SimulationPerformance {
 	 */
 	public AutomataOperationStatistics exportToAutomataOperationStatistics() {
 		final AutomataOperationStatistics stats = new AutomataOperationStatistics();
+		exportToExistingAutomataOperationStatistics(stats);
+		return stats;
+	}
+	
+	/**
+	 * Exports this simulation performance object to an
+	 * AutomataOperationStatistics object.
+	 * 
+	 * @param stats
+	 *            existing statistics object to add data to
+	 * @return An AutomataOperationStatistics object holding the equivalent data
+	 *         than this object
+	 */
+	public void exportToExistingAutomataOperationStatistics(final AutomataOperationStatistics stats) {
 		// Meta data
 		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, getSimType());
 		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
@@ -253,8 +267,6 @@ public final class SimulationPerformance {
 				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
 			}
 		}
-
-		return stats;
 	}
 
 	/**
@@ -492,7 +504,7 @@ public final class SimulationPerformance {
 	private void saveTimeMeasureResult(final ETimeMeasure type, final long duration) {
 		List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null) {
-			measureList = new LinkedList<Long>();
+			measureList = new LinkedList<>();
 			mTimeMeasures.put(type, measureList);
 		}
 		measureList.add(duration);

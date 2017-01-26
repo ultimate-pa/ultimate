@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
@@ -57,11 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>> extends UnaryNwaOperation<LETTER, STATE> {
-	private static final boolean DEFAULT_USE_BISIMULATION = true;
-	
+public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
+		extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 	private final AutomataOperationStatistics mStatistics;
 	
 	/**
@@ -79,10 +77,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	public ReduceNwaFullMultipebbleSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		mOperand = operand;
 	
-		mLogger.info(startMessage());
+		printStartMessage();
 		
 		final Collection<Set<STATE>> possibleEquivalentClasses =
 				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition();
@@ -110,16 +108,17 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 							equivalenceRelation.getAllEquivalenceClasses(),
 							new MinimizeNwaMaxSat2.Settings<STATE>()
 									.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
-			mResult = maxSatMinimizer.getResult();
+			super.directResultConstruction(maxSatMinimizer.getResult());
+			super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
 			
-			mStatistics = new AutomataOperationStatistics();
+			mStatistics = super.getAutomataOperationStatistics();
 			mStatistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES, gameFactory.getMaxNumberOfDoubleDeckerPebbles());
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
 					maxGameAutomatonSize);
 			mStatistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
-			mStatistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, mResult.size());
+			mStatistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, getResult().size());
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -128,14 +127,12 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			aoce.addRunningTaskInfo(rti);
 			throw aoce;
 		}
-		mLogger.info(exitMessage());
+		printExitMessage();
 	}
 
 	protected abstract Pair<IDoubleDeckerAutomaton<LETTER, GS>,Integer> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
 
 	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final HashRelation<STATE, STATE> initialPartition);
-
-	
 	
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {
 		private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
@@ -174,24 +171,15 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final STATE rep0 = mMutuallySimulating.findAndConstructEquivalenceClassIfNeeded(q0);
 			final STATE rep1 = mMutuallySimulating.findAndConstructEquivalenceClassIfNeeded(q1);
 			mMutuallySimulating.union(rep0, rep1);
-			
 		}
 
 		public UnionFind<STATE> getMutuallySimulating() {
 			return mMutuallySimulating;
 		}
-		
-		
-		
 	}
 
 	@Override
-	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
-		return mResult;
-	}
-
-	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
@@ -199,6 +187,4 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}
-	
-
 }
