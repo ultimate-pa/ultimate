@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -57,9 +58,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -84,10 +87,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
  * Represents a map of invariants to a run that has been generated using a {@link IInvariantPatternProcessor} on the
@@ -130,7 +133,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IToolchainStorage mStorage;
 	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> mAbstractInterpretationResult;
 	private final boolean mUseAbstractInterpretationPredicates;
-	private PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
+	private final PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
 
 	/**
 	 * Creates a default factory.
@@ -286,9 +289,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				// Compute wp only if the source node is not an initial node
 				if (!e.getSource().getIncomingEdges().isEmpty()) {
 					// Compute WP for the formula of the current transition and the predicate at the target location.
-					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(mPredicateTransformer
-							.weakestPrecondition(locs2WP.get(e.getTarget()), ((IInternalAction) e).getTransformula()));
-
+					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()), ((IInternalAction) e).getTransformula());
+					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(
+							mServices, mLogger, managedScript, wpTerm, 
+							SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					if (new PrenexNormalForm(managedScript).transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
+						throw new UnsupportedOperationException("Quantifier elimination failed.");
+					}
+					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
 					locs2WP.put(e.getSource(), wp);
 					if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
 						newEdges.addAll(e.getSource().getIncomingEdges());
@@ -729,7 +737,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		@Override
-		public Object aggregate(String key, Object value1, Object value2) {
+		public Object aggregate(final String key, final Object value1, final Object value2) {
 			switch (key) {
 			case s_MaxSizeOfTemplate:
 			case s_MaxNumOfRounds: {
@@ -745,7 +753,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 			final StringBuilder sb = new StringBuilder();
 			
 			sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
@@ -774,7 +782,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		@Override
-		public Object getValue(String key) {
+		public Object getValue(final String key) {
 			switch(key) {
 			case PathInvariantsBenchmarkType.s_MaxSizeOfTemplate:
 				return mSizeOfTemplate;
