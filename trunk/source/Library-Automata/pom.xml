@@ -34,7 +34,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>NestedWordAutomata</groupId>
+  <groupId>Library-Automata</groupId>
   <artifactId>de.uni_freiburg.informatik.ultimate.automata</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>

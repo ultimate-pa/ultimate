@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: NestedWordAutomata
+Bundle-Name: Library-Automata
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata
 Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
