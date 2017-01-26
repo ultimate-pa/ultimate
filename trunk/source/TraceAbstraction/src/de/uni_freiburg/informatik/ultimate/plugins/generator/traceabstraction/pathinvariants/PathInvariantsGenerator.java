@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,13 +83,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LiveVariablesStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.VarsInUnsatCoreStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
@@ -133,7 +137,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IToolchainStorage mStorage;
 	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> mAbstractInterpretationResult;
 	private final boolean mUseAbstractInterpretationPredicates;
-	private final PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
+	private final PathInvariantsStatisticsGenerator mPathInvariantsStats;
 
 	/**
 	 * Creates a default factory.
@@ -224,7 +228,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mPathInvariantsBenchmarks = new PathInvariantsBenchmarkGenerator();
+		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
 		
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
@@ -560,7 +564,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
 
 		// Generate invariants
-		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsBenchmarks);
+		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
@@ -708,99 +712,99 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return mInterpolantComputationStatus;
 	}
 	
-	public PathInvariantsBenchmarkGenerator getPathInvariantsBenchmarks () {
-		return mPathInvariantsBenchmarks;
-	}
-
-	// Benchmarks Section
-	public static class PathInvariantsBenchmarkType implements IStatisticsType {
-		private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
-
-		/* Keys */
-		// 
-		protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
-
-		protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
-
-//		protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
-		
-		public static PathInvariantsBenchmarkType getInstance() {
-			return s_Instance;
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			final ArrayList<String> result = new ArrayList<>();
-			result.add(s_MaxSizeOfTemplate);
-			result.add(s_MaxNumOfRounds);
-			return result;
-		}
-
-		@Override
-		public Object aggregate(final String key, final Object value1, final Object value2) {
-			switch (key) {
-			case s_MaxSizeOfTemplate:
-			case s_MaxNumOfRounds: {
-				if ((int) value1 >= (int) value2) {
-					return (int)value1;
-				} else {
-					return (int)value2;
-				}
-			}
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-			final StringBuilder sb = new StringBuilder();
-			
-			sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
-			sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
-			sb.append(" conjuncts");
-			sb.append("\t").append(s_MaxNumOfRounds).append(": ");
-			sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
-			
-			return sb.toString();
-		}
+	public PathInvariantsStatisticsGenerator getPathInvariantsBenchmarks () {
+		return mPathInvariantsStats;
 	}
 	
-	public class PathInvariantsBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
-	implements IStatisticsDataProvider {
-		private int mSizeOfTemplate = 0;
-		private int mNumOfRounds = 0;
+	
+	// Benchmarks Section
+	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
+		SumOfLocs(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		SumOfTemplateConjuncts(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		MaxSizeOfTemplate(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData);
 		
-		public void setPathInvariantsData(final int sizeOfTemplate, final int numOfRounds) {
-			mSizeOfTemplate = sizeOfTemplate;
-			mNumOfRounds = numOfRounds;
+		private final Class<?> mClazz;
+		private final Function<Object, Function<Object, Object>> mAggr;
+		private final Function<String, Function<Object, String>> mPrettyprinter;
+
+		PathInvariantsStatisticsDefinitions(final Class<?> clazz,
+				final Function<Object, Function<Object, Object>> aggr,
+				final Function<String, Function<Object, String>> prettyprinter) {
+			mClazz = clazz;
+			mAggr = aggr;
+			mPrettyprinter = prettyprinter;
+		}
+
+
+		@Override
+		public Class<?> getDataType() {
+			return mClazz;
+		}
+
+		@Override
+		public Object aggregate(Object o1, Object o2) {
+			return mAggr.apply(o1).apply(o2);
+		}
+
+		@Override
+		public String prettyprint(Object o) {
+			return mPrettyprinter.apply(name()).apply(o);
 		}
 		
-		@Override
-		public Collection<String> getKeys() {
-			return PathInvariantsBenchmarkType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			switch(key) {
-			case PathInvariantsBenchmarkType.s_MaxSizeOfTemplate:
-				return mSizeOfTemplate;
-			case PathInvariantsBenchmarkType.s_MaxNumOfRounds:
-				return mNumOfRounds;
-			default:
-				throw new AssertionError("unknown data");				
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return PathInvariantsBenchmarkType.getInstance();
-		}
-
-		@Override
-		public String[] getStopwatches() {
-			return new String[0];
-		}
 	}
+
+
+//	public static class PathInvariantsBenchmarkType implements IStatisticsType {
+//		private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
+//
+//		/* Keys */
+//		// 
+//		protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
+//
+//		protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
+//
+////		protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
+//		
+//		public static PathInvariantsBenchmarkType getInstance() {
+//			return s_Instance;
+//		}
+//
+//		@Override
+//		public Collection<String> getKeys() {
+//			final ArrayList<String> result = new ArrayList<>();
+//			result.add(s_MaxSizeOfTemplate);
+//			result.add(s_MaxNumOfRounds);
+//			return result;
+//		}
+//
+//		@Override
+//		public Object aggregate(final String key, final Object value1, final Object value2) {
+//			switch (key) {
+//			case s_MaxSizeOfTemplate:
+//			case s_MaxNumOfRounds: {
+//				if ((int) value1 >= (int) value2) {
+//					return (int)value1;
+//				} else {
+//					return (int)value2;
+//				}
+//			}
+//			default:
+//				throw new AssertionError("unknown key");
+//			}
+//		}
+//
+//		@Override
+//		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
+//			final StringBuilder sb = new StringBuilder();
+//			
+//			sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
+//			sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
+//			sb.append(" conjuncts");
+//			sb.append("\t").append(s_MaxNumOfRounds).append(": ");
+//			sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
+//			
+//			return sb.toString();
+//		}
+//	}
+	
 }

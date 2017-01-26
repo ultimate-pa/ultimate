@@ -46,7 +46,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mAmData = new StatisticsData();
 	private final StatisticsData mHaData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
-	private final StatisticsData mPathInvariantsBenchmarks = new StatisticsData();
+	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
@@ -80,7 +80,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 	
 	public void addPathInvariantsData(final IStatisticsDataProvider tcbd) {
-		mPathInvariantsBenchmarks.aggregateBenchmarkData(tcbd);
+		mPathInvariantsStatistics.aggregateBenchmarkData(tcbd);
 	}
 
 	public void addTotalInterpolationData(final IStatisticsDataProvider tibd) {
@@ -154,7 +154,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case InterpolantConsolidationStatistics:
 			return mInterpolantConsolidationBenchmarks;
 		case PathInvariantsStatistics:
-			return mPathInvariantsBenchmarks;
+			return mPathInvariantsStatistics;
 		case TotalInterpolationStatistics:
 			return mTiData;
 		case OverallIterations:

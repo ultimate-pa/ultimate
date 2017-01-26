@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
@@ -66,7 +66,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseLiveVariables;
 	private final boolean mUseWPForPathInvariants;
 	private final boolean mUseAbstractInterpretationPredicates;
-	private PathInvariantsBenchmarkGenerator mPathInvariantsBenchmarks;
+	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -96,7 +96,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			super.unlockSmtManager();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 			// Add benchmarks from PathInvariants
-			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsBenchmarks);
+			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsStats);
 		}
 		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		
@@ -124,7 +124,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 				mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		mInterpolants = interpolants;
 		// Store path invariants benchmarks
-		mPathInvariantsBenchmarks = pathInvariantsGenerator.getPathInvariantsBenchmarks();
+		mPathInvariantsStats = pathInvariantsGenerator.getPathInvariantsBenchmarks();
 	}
 
 	private static IPredicate[] fallbackInterpolantComputation() {
