@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * The interrupt.
 	 */
@@ -66,9 +67,17 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 	protected AbstractMinimizeIncremental(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		mInterrupt = interrupt;
 		assert (mInterrupt == null)
 				|| (!mInterrupt.getStatus()) : "The interrupt tells to terminate right at the beginning.";
+		
+		printStartMessage();
+	}
+	
+	@Override
+	protected final INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 }

@@ -90,6 +90,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	
 	private static final boolean STATISTICS = false;
 	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	// old automaton
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// ID for equivalence classes
@@ -168,9 +169,12 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final Collection<Set<STATE>> equivalenceClasses, final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState, final IFlag timeout,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
-		if (mOperand instanceof IDoubleDeckerAutomaton) {
-			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
+		super(services, stateFactory);
+		mOperand = operand;
+		
+		printStartMessage();
+		if (operand instanceof IDoubleDeckerAutomaton) {
+			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 		} else {
 			if (!isFiniteAutomaton()) {
 				throw new IllegalArgumentException(
@@ -182,7 +186,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		mInitialPartitionSeparatesFinalsAndNonfinals = initialPartitionSeparatesFinalsAndNonfinals;
 		
 		minimize(equivalenceClasses, addMapOldState2newState);
-		mLogger.info(exitMessage());
+		
+		printExitMessage();
 		
 		if (STATISTICS) {
 			mLogger.info("positive splits: " + mSplitsWithChange);
@@ -190,6 +195,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			mLogger.info("quote (p/n): "
 					+ (mSplitsWithChange / Math.max(mSplitsWithoutChange, 1)));
 		}
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**
@@ -205,7 +215,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 */
 	private void minimize(final Collection<Set<STATE>> equivalenceClasses, final boolean addMapping)
 			throws AutomataOperationCanceledException {
-		
 		// cancel if signal is received
 		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(getClass());
@@ -233,7 +242,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 */
 	private void mergeStates(StatesContainer states, final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapping) throws AutomataOperationCanceledException {
-		
 		assert (mPartition == null);
 		if (equivalenceClasses == null) {
 			// creation of the initial partition (if not passed in the constructor)
@@ -390,7 +398,6 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			
 			// fixed point iteration
 			while (!mPartition.workListIsEmpty()) {
-				
 				// A = next equivalence class from W, also called target set
 				final TargetSet a = new TargetSet(mPartition.popFromWorkList());
 				assert !a.isEmpty();

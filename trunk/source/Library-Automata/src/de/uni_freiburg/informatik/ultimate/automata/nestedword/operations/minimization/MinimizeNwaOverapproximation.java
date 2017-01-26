@@ -62,6 +62,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 */
 	public static final int DEFAULT_TIMEOUT = 1_000;
 	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	/**
 	 * Basic constructor with default timeout.
 	 * 
@@ -125,12 +127,18 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
 		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, operand,
 				initialPartition, stateFactory, addMapOldState2newState, timeout, false);
 		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),
 				forbiddenLanguages, stateFactory);
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override

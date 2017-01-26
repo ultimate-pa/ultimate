@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            state type
  */
 public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -54,17 +56,17 @@ public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param automaton
+	 * @param operand
 	 *            input NWA
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeNwaMaxSAT(
-			final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
-		super(services, stateFactory, automaton);
-		
+	public MinimizeNwaMaxSAT(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services, stateFactory);
+		mOperand = operand;
+
+		printStartMessage();
 		final ILogger convertLog = services.getLoggingService().getLogger(
 				"Converter");
 		final ILogger generateLog = services.getLoggingService().getLogger(
@@ -73,7 +75,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER
 				"Solver");
 		
 		convertLog.info("starting conversion");
-		final Converter<LETTER, STATE> converter = new Converter<>(services, stateFactory, automaton);
+		final Converter<LETTER, STATE> converter = new Converter<>(services, stateFactory, operand);
 		final NwaWithArrays nwa = converter.getNwa();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
@@ -103,6 +105,11 @@ public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER
 		directResultConstruction(converter.constructMerged(eqCls));
 		convertLog.info("constructed minimized automaton");
 		
-		mLogger.info(exitMessage());
+		printExitMessage();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 }

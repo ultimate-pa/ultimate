@@ -103,6 +103,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private static final int HIER_PRED_MAX_SIZE = 150;
 	
 	// old automaton
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// partition object
 	private Partition mPartition;
@@ -258,7 +259,10 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			final int splitRandomSize, final boolean firstReturnSplit, final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive, final boolean nondeterministicTransitions,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
+		
+		printStartMessage();
 		if (STAT_RETURN_SIZE) {
 			try {
 				mWriter1 = new BufferedWriter(new FileWriter(new File("DEBUG-1.txt")));
@@ -271,8 +275,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			mWriter2 = null;
 		}
 		
-		if (mOperand instanceof IDoubleDeckerAutomaton) {
-			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
+		if (operand instanceof IDoubleDeckerAutomaton) {
+			mDoubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 		} else {
 			if (!isFiniteAutomaton()) {
 				throw new IllegalArgumentException(
@@ -342,7 +346,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		minimize(isFiniteAutomaton, equivalenceClasses, addMapOldState2newState);
 		constructAutomaton(addMapOldState2newState);
 		
-		mLogger.info(exitMessage());
+		printExitMessage();
 		
 		if (STATISTICS) {
 			mWholeTime += new GregorianCalendar().getTimeInMillis();
@@ -383,6 +387,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 							: (((double) mReturnFirstTimeHierAlternative) / ((double) mWholeTime)))
 					+ ", without: " + (mWholeTime - mReturnFirstTimeHierAlternative) + " ms");
 		}
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	@Override
@@ -445,7 +454,6 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				
 				// internals and calls
 				while (mWorkListIntCall.hasNext()) {
-					
 					final EquivalenceClass a = mWorkListIntCall.next();
 					
 					// internal split
@@ -473,7 +481,6 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				
 				// return predecessors
 				if (mWorkListRet.hasNext()) {
-					
 					// optional random split
 					if (mRandomReturnSplit) {
 						mRandomReturnSplit = false;

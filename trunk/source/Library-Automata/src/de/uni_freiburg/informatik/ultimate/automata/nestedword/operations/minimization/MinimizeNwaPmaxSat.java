@@ -131,6 +131,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings, new NestedMap2<>());
 		
+		printStartMessage();
+		
 		mInitialPartition = applyInitialPartitionPreprocessing
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,
 						mSettings.getFinalStateConstraints(), false).getPartition()

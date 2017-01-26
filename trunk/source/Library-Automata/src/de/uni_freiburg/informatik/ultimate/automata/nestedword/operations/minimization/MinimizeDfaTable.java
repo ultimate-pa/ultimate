@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/*_______________________________________________________________________*\
 	\* FIELDS / ATTRIBUTES                                                   */
-	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final boolean mIsDeterministic;
 	
 	/*_______________________________________________________________________*\
@@ -75,11 +75,13 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	 */
 	public MinimizeDfaTable(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		super(services, operand.getStateFactory(), operand);
+		super(services, operand.getStateFactory());
+		mOperand = operand;
 		
 		assert !new HasUnreachableStates<>(mServices, operand)
 				.getResult() : "No unreachable states allowed";
 		
+		printStartMessage();
 		mIsDeterministic = isDeterministic();
 		startMessageDebug();
 		
@@ -94,11 +96,16 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		generateResultAutomaton(states, table);
 		
 		exitMessageDebug();
-		mLogger.info(exitMessage());
+		printExitMessage();
 	}
 	
 	/*_______________________________________________________________________*\
 	\* METHODS                                                               */
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
 	
 	/**
 	 * Calculate, where in the table to set markers.

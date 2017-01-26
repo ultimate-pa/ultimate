@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -72,10 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE> {
 	/**
-	 * The operand.
-	 */
-	protected final INestedWordAutomaton<LETTER, STATE> mOperand;
-	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
 	protected final IStateFactory<STATE> mStateFactory;
@@ -99,19 +94,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param operand
-	 *            input automaton
 	 */
-	protected AbstractMinimizeNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
 		super(services);
-		mOperand = operand;
 		mResult = null;
 		mTemporaryResult = null;
 		mOldState2NewState = null;
 		
-		mStateFactory = (stateFactory == null) ? operand.getStateFactory() : stateFactory;
-		mLogger.info(startMessage());
+		mStateFactory = stateFactory;
 	}
 	
 	/**
@@ -124,20 +114,19 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand.getStateFactory(), operand);
+		this(services, operand.getStateFactory());
 	}
 	
 	/* ------ interface methods ------ */
 	
 	@Override
-	public final String exitMessage() {
-		return "Finished " + operationName() + ". Reduced states from " + mOperand.size() + " to " + getResult().size()
-				+ '.';
-	}
+	protected abstract INestedWordAutomaton<LETTER, STATE> getOperand();
 	
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
+	public final String exitMessage() {
+		return "Finished " + operationName() + ". Reduced states from " + getOperand().size() + " to "
+				+ getResult().size()
+				+ '.';
 	}
 	
 	@Override
@@ -155,7 +144,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();
 		
-		final int inputSize = mOperand.size();
+		final int inputSize = getOperand().size();
 		final int outputSize = mResult.size();
 		
 		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
@@ -168,7 +157,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
 		if (true) {
 			// Input automaton
-			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, mOperand, true);
+			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, getOperandCast(), true);
 			final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
 			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
 					inputAnalyzer.getNumberOfNondeterministicStates());
@@ -222,6 +211,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		return result;
 	}
 	
+	private INestedWordAutomaton<LETTER, STATE> getOperandCast() {
+		return getOperand();
+	}
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
@@ -237,7 +230,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		}
 		if (!equivalenceResult.getFirst()) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
-					equivalenceResult.getSecond(), mOperand);
+					equivalenceResult.getSecond(), getOperand());
 		}
 		return equivalenceResult.getFirst();
 	}
@@ -291,7 +284,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand, partition, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), partition, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	
@@ -305,7 +298,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, mOperand, unionFind, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	
@@ -333,8 +326,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		if (mResult != null) {
 			throw new AssertionError("The result has already been constructed.");
 		}
-		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getInternalAlphabet(),
-				mOperand.getCallAlphabet(), mOperand.getReturnAlphabet(), mStateFactory);
+		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, getOperand().getInternalAlphabet(),
+				getOperand().getCallAlphabet(), getOperand().getReturnAlphabet(), mStateFactory);
 	}
 	
 	/**
@@ -442,18 +435,18 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	private void constructDoubleDeckerInformation() {
 		assert mTemporaryResult instanceof DoubleDeckerAutomaton : "The result must be a DoubleDeckerAutomaton.";
 		final DoubleDeckerAutomaton<LETTER, STATE> result = (DoubleDeckerAutomaton<LETTER, STATE>) mTemporaryResult;
-		assert mOperand instanceof IDoubleDeckerAutomaton : "The operand must be an IDoubleDeckerAutomaton.";
-		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand;
+		assert getOperand() instanceof IDoubleDeckerAutomaton : "The operand must be an IDoubleDeckerAutomaton.";
+		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) getOperand();
 		assert !result.up2DownIsSet() : "The down state map was already set.";
 		assert mOldState2NewState != null : "Need the mapping for construction.";
 		
 		final Map<STATE, Map<STATE, ReachFinal>> up2Down = new HashMap<>();
 		result.setUp2Down(up2Down);
 		
-		final STATE oldEmptyStackState = mOperand.getEmptyStackState();
+		final STATE oldEmptyStackState = getOperand().getEmptyStackState();
 		final STATE newEmptyStackState = mStateFactory.createEmptyStackState();
 		
-		for (final STATE oldState : mOperand.getStates()) {
+		for (final STATE oldState : getOperandCast().getStates()) {
 			final STATE newState = mOldState2NewState.get(oldState);
 			
 			// get down state map
@@ -522,9 +515,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected final boolean isDeterministic()
-			throws AutomataOperationCanceledException {
-		return new IsDeterministic<>(mServices, mOperand).getResult();
+	protected final boolean isDeterministic() throws AutomataOperationCanceledException {
+		return new IsDeterministic<>(mServices, getOperand()).getResult();
 	}
 	
 	/**
@@ -540,7 +532,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean isFiniteAutomaton() {
-		return (mOperand.getCallAlphabet().isEmpty()) && (mOperand.getReturnAlphabet().isEmpty());
+		return (getOperand().getCallAlphabet().isEmpty()) && (getOperand().getReturnAlphabet().isEmpty());
 	}
 	
 	/**

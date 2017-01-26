@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  *            state type
  */
 public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/***********************************************************************/
 	/**
 	 * Necessary data elements for computing the minimal DFA.
@@ -66,8 +67,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private HashMap<STATE, Block> mPartition;
 	// Worklist
 	private Worklist mWorklist;
-	// alphabet of automaton.
-	private Collection<LETTER> mAlphabet;
 	
 	private HashMap<LETTER, Term> mLetter2Formular;
 	// Logic solver object.
@@ -90,14 +89,23 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 */
 	public MinimizeDfaSymbolic(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory(), operand);
+		super(services, operand.getStateFactory());
+		mOperand = operand;
 		
 		// Start minimization.
+		printStartMessage();
+		
 		final long startTime = System.currentTimeMillis();
 		minimizeDfaSymbolic();
 		final long endTime = System.currentTimeMillis();
 		mLogger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
-		mLogger.info(exitMessage());
+		
+		printExitMessage();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	private void minimizeDfaSymbolic() {
@@ -136,11 +144,11 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mInitialState = mOperand.getInitialStates().iterator().next();
 		
 		// get internal alphabet of moperand.
-		mAlphabet = mOperand.getInternalAlphabet();
+		final Collection<LETTER> alphabet = mOperand.getInternalAlphabet();
 		
 		// iterate over whole alphabet and construct letter --> atom mapping.
-		final Iterator<LETTER> alphabetIt = mAlphabet.iterator();
-		mLetter2Formular = new HashMap<>(computeHashCap(mAlphabet.size()));
+		final Iterator<LETTER> alphabetIt = alphabet.iterator();
+		mLetter2Formular = new HashMap<>(computeHashCap(alphabet.size()));
 		while (alphabetIt.hasNext()) {
 			final LETTER letter = alphabetIt.next();
 			try {
@@ -430,8 +438,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		final Term[] conjuncts = new Term[2];
 		conjuncts[0] = f1;
 		conjuncts[1] = f2;
-		final Term con = mSmtInterpol.term("and", conjuncts);
-		return con;
+		return mSmtInterpol.term("and", conjuncts);
 	}
 	
 	// Create a disjunction from a collection of formulas.
@@ -439,16 +446,14 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		final Term[] disjuncts = new Term[2];
 		disjuncts[0] = f1;
 		disjuncts[1] = f2;
-		final Term dis = mSmtInterpol.term("or", disjuncts);
-		return dis;
+		return mSmtInterpol.term("or", disjuncts);
 	}
 	
 	// Negate a given formula.
 	private Term negate(final Term formula) {
 		final Term[] negation = new Term[1];
 		negation[0] = formula;
-		final Term neg = mSmtInterpol.term("not", negation);
-		return neg;
+		return mSmtInterpol.term("not", negation);
 	}
 	
 	private boolean isSatFormula(final Term formula) {

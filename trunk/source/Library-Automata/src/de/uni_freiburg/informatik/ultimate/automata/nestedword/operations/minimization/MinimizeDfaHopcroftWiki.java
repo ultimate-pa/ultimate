@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  *            state type
  */
 public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
@@ -70,14 +71,23 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory(), operand);
+		super(services, operand.getStateFactory());
+		mOperand = operand;
 		
 		// Start minimization.
+		printStartMessage();
+		
 		initializeData();
 		mPartition = createInitialPartition();
 		minimizeDfaHopcroft();
 		constructResult();
-		mLogger.info(exitMessage());
+		
+		printExitMessage();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**

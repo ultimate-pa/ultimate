@@ -170,6 +170,8 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, interrupt);
 		
+		printExitMessage();
+		
 		assert super.isDfa() : "The input automaton is no DFA.";
 		
 		mSize = operand.size();
@@ -218,7 +220,7 @@ public class MinimizeDfaIncremental<LETTER, STATE> extends AbstractMinimizeIncre
 			
 			minimize();
 		}
-		mLogger.info(exitMessage());
+		printExitMessage();
 	}
 	
 	/**

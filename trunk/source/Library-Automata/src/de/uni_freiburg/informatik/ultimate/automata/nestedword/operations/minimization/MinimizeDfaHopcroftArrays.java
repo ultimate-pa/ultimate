@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	// ArrayList and HashMap for mapping STATE to int and vice versa.
 	private ArrayList<STATE> mInt2state;
 	private HashMap<STATE, Integer> mState2int;
@@ -102,7 +103,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
+
+		printStartMessage();
 		
 		// added by Christian
 		if (!isFiniteAutomaton()) {
@@ -117,7 +121,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			// Special case: empty automaton.
 			directResultConstruction(mOperand);
 		}
-		mLogger.info(exitMessage());
+		printExitMessage();
 	}
 	
 	/**
@@ -126,6 +130,11 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), false);
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**

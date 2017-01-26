@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -87,10 +88,18 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 	// current minimization method
 	protected MinimizationMethods mMode;
 	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	protected MinimizeNwaCombinator(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		mMode = MinimizationMethods.UNDEFINED;
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**

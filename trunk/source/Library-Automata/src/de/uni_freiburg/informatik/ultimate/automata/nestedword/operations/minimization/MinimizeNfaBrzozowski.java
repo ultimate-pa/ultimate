@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -73,12 +75,19 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 */
 	public MinimizeNfaBrzozowski(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
-		
+		super(services, stateFactory);
+		mOperand = operand;
+
+		printStartMessage();
 		assert super.isFiniteAutomaton() : "The input automaton contains call or return transitions.";
 		
 		minimize();
-		mLogger.info(exitMessage());
+		printExitMessage();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**
@@ -112,6 +121,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 *            automaton
 	 * @return the reversed automaton
 	 */
+	@SuppressWarnings("squid:S3047")
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final NestedWordAutomaton<LETTER, STATE> reversed =

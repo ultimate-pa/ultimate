@@ -127,6 +127,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs);
 		mEmptyStackState = mOperand.getEmptyStackState();
+
+		printStartMessage();
 		
 		run();
 	}

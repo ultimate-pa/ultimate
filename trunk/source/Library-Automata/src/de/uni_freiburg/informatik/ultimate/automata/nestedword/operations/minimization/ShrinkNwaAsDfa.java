@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	// old automaton
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private IDoubleDeckerAutomaton<LETTER, STATE> mDoubleDecker;
 	// partition object
 	private Partition mPartition;
@@ -113,8 +114,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> equivalenceClasses,
 			final boolean addMapping, final boolean considerNeutralStates) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		
+		printStartMessage();
 		mDoubleDecker = considerNeutralStates
 				? (IDoubleDeckerAutomaton<LETTER, STATE>) mOperand
 				: null;
@@ -124,7 +127,12 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		
 		// must be the last part of the constructor
 		minimize(equivalenceClasses, addMapping);
-		mLogger.info(exitMessage());
+		printExitMessage();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	// --- [start] main methods --- //
@@ -279,11 +287,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 				case INTERNAL:
 					block.mIncomingInt = EIncomingStatus.NONE;
 					break;
-				
 				case CALL:
 					block.mIncomingCall = EIncomingStatus.NONE;
 					break;
-				
 				case RETURN:
 					block.mIncomingRet = EIncomingStatus.NONE;
 					break;
@@ -303,11 +309,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 						case CALL:
 							letter = null;
 							break;
-						
 						case RETURN:
 							letter = entry.getKey();
 							break;
-						
 						default:
 							throw new IllegalArgumentException("Illegal type.");
 					}

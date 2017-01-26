@@ -51,12 +51,9 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinim
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param operand
-	 *            input automaton
 	 */
-	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		super(services, stateFactory, operand);
+	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
+		super(services, stateFactory);
 	}
 	
 	/**

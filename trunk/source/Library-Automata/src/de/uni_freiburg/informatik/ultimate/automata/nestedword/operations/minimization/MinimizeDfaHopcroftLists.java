@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            Class of the states from the automata
  */
 public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * Initial amount of blocks.
 	 */
@@ -119,7 +120,10 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> initialPartition,
 			final boolean addMapping) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
+		
+		printStartMessage();
 		
 		// added by Christian
 		if (!isFiniteAutomaton()) {
@@ -148,7 +152,8 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 		init(stateAmount, letterAmount);
 		
 		minimizeIcdfa(initialPartition, addMapping);
-		mLogger.info(exitMessage());
+		
+		printExitMessage();
 	}
 	
 	/**
@@ -167,6 +172,11 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), null, false);
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**

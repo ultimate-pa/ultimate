@@ -90,6 +90,18 @@ public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETT
 		return "Finished " + operationName() + '.';
 	}
 	
+	protected final void printStartMessage() {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+	}
+	
+	protected final void printExitMessage() {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {

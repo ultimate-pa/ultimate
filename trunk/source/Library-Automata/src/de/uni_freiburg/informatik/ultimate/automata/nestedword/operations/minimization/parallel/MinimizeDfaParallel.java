@@ -59,6 +59,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	public static final boolean PREFER_HELPER_THREADS = false;
 	public static final boolean PREFER_ALGORITHM_THREADS = false;
 	
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * Whether the result is constructed yet.
 	 */
@@ -128,11 +129,13 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	public MinimizeDfaParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
+		
+		printStartMessage();
 		
 		// added by Christian
-		if ((!operand.getCallAlphabet().isEmpty())
-				|| (!operand.getReturnAlphabet().isEmpty())) {
+		if (!isFiniteAutomaton()) {
 			throw new UnsupportedOperationException(
 					"This class only supports minimization of finite automata.");
 		}
@@ -209,6 +212,11 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		mLogger.info("MAIN: " + exitMessage());
 	}
 	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
 	/**
 	 * Getter for run time.
 	 */
@@ -265,9 +273,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		sb.append("CPU TIME needed for computation:\n");
 		
 		for (int j = 0; j < mThreads.size(); j++) {
-			
 			sb.append("Thread " + (j + 1) + ": " + mCpuTime[j] + "ns\n");
-			
 		}
 		sb.append("Incremental Thread: " + mCpuTime[mThreads.size()] + "ns\n");
 		sb.append("Hopcroft Thread: " + mCpuTime[mThreads.size() + 1]
@@ -323,7 +329,6 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 * threads.)
 	 */
 	private class WorkingThread extends Thread {
-		
 		/**
 		 * Creating the thread.
 		 * 
@@ -422,7 +427,6 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		public void run() {
 			try {
 				if (mChooseAlgorithm.equals(Algorithm.HOPCROFT)) {
-					
 					mLogger.debug("moep1");
 					mAlgorithm = new MinimizeDfaHopcroftParallel<>(
 							mServices, mOperand.getStateFactory(),

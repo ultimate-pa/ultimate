@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.DimacsMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
@@ -115,13 +116,18 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings,
 			final NestedMap2<STATE, STATE, T> statePairs) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		mStatePairs = statePairs;
 		mSettings = settings;
 		mSettings.validate(mOperand);
 		mSolver = createSolver();
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	private AbstractMaxSatSolver<T> createSolver() {
@@ -156,9 +162,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mTimer = System.currentTimeMillis();
 		mTimeSolving = mTimer - mTimeSolving;
 		
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info(exitMessage());
-		}
+		printExitMessage();
 	}
 	
 	private void feedSolver() throws AutomataOperationCanceledException {

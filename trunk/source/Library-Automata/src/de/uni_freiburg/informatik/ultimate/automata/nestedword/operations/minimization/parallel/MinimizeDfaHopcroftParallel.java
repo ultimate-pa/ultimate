@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimize {
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * True if Hopcroft algorithm shall help Incremental algorithm, false
 	 * otherwise.
@@ -155,11 +156,14 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 */
 	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		mInterrupt = interrupt;
 		// Initialize final partition
 		// mfinalPartition = Collections.synchronizedList(new
 		// LinkedList<HashSet<Integer>>());
+		
+		printStartMessage();
 		
 		/*
 		 * Christian: 2016-08-02:
@@ -170,6 +174,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 			executeAlgorithm();
 		}
 		assert mState2int != null && mInt2state != null;
+		
+		printExitMessage();
 	}
 	
 	/**
@@ -187,7 +193,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt,
 			final ArrayList<STATE> int2state, final HashMap<STATE, Integer> state2int) {
-		super(services, stateFactory, operand);
+		super(services, stateFactory);
+		mOperand = operand;
 		mInterrupt = interrupt;
 		mInt2state = int2state;
 		mState2int = state2int;
@@ -201,6 +208,11 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 		if (!sParallel) {
 			executeAlgorithm();
 		}
+	}
+	
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 	
 	/**
@@ -244,7 +256,6 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 */
 	public void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
 			final MinimizeDfaIncrementalParallel<LETTER, STATE> incremental) {
-		
 		mTaskQueue = taskQueue;
 		mIncrementalAlgorithm = incremental;
 		minimizeDfaHopcroft();
@@ -294,7 +305,6 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * Method for mapping STATE/LETTER to int and vice versa.
 	 */
 	private void initializeMappings() {
-		
 		final int nOfStates = mOperand.getStates().size();
 		
 		// Allocate the finite space in ArrayList and HashMap.
@@ -356,7 +366,6 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 				// test non-empty condition
 				for (final Block b : blocks) {
 					if (b.doSplit()) {
-						
 						final Block newBlock = b.split();
 						
 						// Remove singleton partitions.
