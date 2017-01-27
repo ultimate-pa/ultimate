@@ -104,13 +104,18 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			rs.process(possibleEquivalentClasses);
 			final UnionFind<STATE> equivalenceRelation = rs.getMutuallySimulating();
 			final boolean mergeFinalAndNonFinalStates = !false;
+			// TODO make this an option?
+			final boolean addMapOldState2NewState = false;
 			final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
 					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
 							new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
 							new MinimizeNwaMaxSat2.Settings<STATE>()
-									.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+									.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+									.setAddMapOldState2NewState(addMapOldState2NewState));
 			super.directResultConstruction(maxSatMinimizer.getResult());
-			super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
+			if (addMapOldState2NewState) {
+				super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
+			}
 			
 			mStatistics = super.getAutomataOperationStatistics();
 			mStatistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES, gameFactory.getMaxNumberOfDoubleDeckerPebbles());
