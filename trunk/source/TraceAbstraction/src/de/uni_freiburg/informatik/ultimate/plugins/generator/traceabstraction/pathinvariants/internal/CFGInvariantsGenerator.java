@@ -215,6 +215,12 @@ public final class CFGInvariantsGenerator {
 				}
 				return result;
 			} else {
+				// Set benchmarks
+				Set<IcfgLocation> locsInUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getLocationsInUnsatCore();
+				if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
+					mPathInvariantsStatistics.setLocsInUnsatCore(locsInUnsatCore);
+				}
+				
 				// If no configuration could have been found, the constraints may be unsatisfiable
 				if (useVariablesFromUnsatCore) {
 					final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
@@ -340,6 +346,12 @@ public final class CFGInvariantsGenerator {
 		} else {
 			// If no configuration could have been found, the constraints may be unsatisfiable
 			final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
+			// Set benchmarks
+			Set<IcfgLocation> locsInUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getLocationsInUnsatCore();
+			if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
+				mPathInvariantsStatistics.setLocsInUnsatCore(locsInUnsatCore);
+			}
+			
 			if (smtVarsFromUnsatCore != null) {
 				mLogger.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
 				// The result in pattern processor was 'unsat'

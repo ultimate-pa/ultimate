@@ -721,7 +721,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		SumOfLocs(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
 		SumOfTemplateConjuncts(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		MaxSizeOfTemplate(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData);
+		MaxSizeOfTemplate(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+		LocsInUnsatCore(Set.class, set -> locs -> {((Set<IcfgLocation>)set).addAll((Set<IcfgLocation>) locs); return set;}, AStatisticsType.s_KeyBeforeData),
+//		TransInUnsatCore(Set.class, set -> loc -> ((Set<IcfgLocation>)set).add((IcfgLocation) loc), AStatisticsType.s_KeyBeforeData)
+		;
 		
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
