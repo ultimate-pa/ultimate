@@ -8,4 +8,4 @@
 // - transition density (per mille)
 // - acceptance density (per mille)
 
-print(GetRandomBuchiAutomaton(50, 13, 1500, 500));
+print(GetRandomNwaTv(50, 13, 1500, 500));
