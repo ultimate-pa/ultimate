@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses. This class is the node class for
@@ -44,31 +44,33 @@ public class HornClausePredicateSymbol {
 
 //	private final int mArity;
 //	private final String mName;
-	private final FunctionSymbol mFunctionSymbol;
+//	private final FunctionSymbol mFunctionSymbol;
 	private final List<HCVar> mVars;
+	private final String mFunctionName;
+	private final List<Sort> mParameterSorts;
 
-	public HornClausePredicateSymbol(final HCSymbolTable symbolTable, final FunctionSymbol function) {
-		mFunctionSymbol = function;
+	public HornClausePredicateSymbol(final HCSymbolTable symbolTable, 
+			final String functionName, final List<Sort> functionParameters) {
+		mFunctionName = functionName;
+		mParameterSorts = functionParameters;
 		List<HCVar> vars = new ArrayList<>();
-		for (int i = 0; i < function.getParameterSorts().length; i++) {
-			vars.add(symbolTable.getOrConstructHCVar(this, i, function.getParameterSorts()[i]));
+		for (int i = 0; i < functionParameters.size(); i++) {
+			vars.add(symbolTable.getOrConstructHCVar(this, i, functionParameters.get(i)));
 		}
 		mVars = Collections.unmodifiableList(vars);
 	}
 
 	public String getName() {
-		return mFunctionSymbol.getName();
-//		return mName;
+		return mFunctionName;
 	}
 
 	public int getArity() {
-		return mFunctionSymbol.getParameterSorts().length;
-//		return mArity;
+		return mParameterSorts.size();
 	}
 
 	@Override
 	public String toString() {
-		return mFunctionSymbol.toString();
+		return mFunctionName;
 	}
 	
 	public List<HCVar> getHCVars() {
@@ -76,8 +78,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
-		public HornClauseFalsePredicateSymbol(FunctionSymbol falseFunSym) {
-			super(null, falseFunSym);
+		public HornClauseFalsePredicateSymbol() {
+			super(null, "false", Collections.emptyList());
 		}
 
 		@Override
@@ -97,8 +99,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseTruePredicateSymbol extends HornClausePredicateSymbol {
-		public HornClauseTruePredicateSymbol(FunctionSymbol trueFunSym) {
-			super(null, trueFunSym);
+		public HornClauseTruePredicateSymbol() {
+			super(null, "true", Collections.emptyList());
 		}
 		@Override
 		public String getName() {
@@ -117,8 +119,8 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseDontCareSymbol extends HornClausePredicateSymbol {
-		public HornClauseDontCareSymbol(FunctionSymbol dontCareFunSym) {
-			super(null, dontCareFunSym);
+		public HornClauseDontCareSymbol() {
+			super(null, "€", Collections.emptyList());
 		}
 
 		@Override

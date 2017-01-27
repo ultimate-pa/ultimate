@@ -1,10 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -17,7 +18,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class HCSymbolTable extends DefaultIcfgSymbolTable {
 	
 	final ManagedScript mManagedScript;
-	final Map<FunctionSymbol, HornClausePredicateSymbol> mNameToHornClausePredicateSymbol;
+//	final Map<FunctionSymbol, HornClausePredicateSymbol> mNameToHornClausePredicateSymbol;
+	final NestedMap2<String, List<Sort>, HornClausePredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
 	final NestedMap2<HornClausePredicateSymbol, Integer, HCVar> mHCPredSymbolToPositionToHCVar;
 	private HornClausePredicateSymbol mFalseHornClausePredSym;
 	private HornClausePredicateSymbol mDontCareHornClausePredSym;
@@ -25,21 +27,21 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 
 	public HCSymbolTable(ManagedScript mgdScript) {
 		super();
-		mNameToHornClausePredicateSymbol = new HashMap<>();
+		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
 		mHCPredSymbolToPositionToHCVar = new NestedMap2<>();
 		mManagedScript = mgdScript;
 		
 		mManagedScript.lock(this);
-		FunctionSymbol falseFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "false")).getFunction();
-		mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol(falseFunctionSymbol);
-		FunctionSymbol trueFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "true")).getFunction();
-		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol(trueFunctionSymbol);
+//		FunctionSymbol falseFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "false")).getFunction();
+		mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
+//		FunctionSymbol trueFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, "true")).getFunction();
+		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
 		
 		// TODO a bit hacky.. --> is there a more elegant solution?
 		//String dontCare = HornUtilConstants.DONTCARE;
 		//mManagedScript.declareFun(this, dontCare, new Sort[0], trueFunctionSymbol.getReturnSort());
 		//FunctionSymbol dontCareFunctionSymbol = ((ApplicationTerm) mManagedScript.term(this, dontCare)).getFunction();
-		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol(trueFunctionSymbol);//dontCareFunctionSymbol);
+		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();//dontCareFunctionSymbol);
 		mManagedScript.unlock(this);
 	}
 
@@ -84,11 +86,16 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 		}
 	}
 	
-	public HornClausePredicateSymbol getOrConstructHornClausePredicateSymbol(final FunctionSymbol function) {
-		HornClausePredicateSymbol result = mNameToHornClausePredicateSymbol.get(function);
+	public HornClausePredicateSymbol getOrConstructHornClausePredicateSymbol(
+			final String functionName, final Sort[] functionParamenterSorts) {
+		final List<Sort> convertedFunctionParamenterSorts = Arrays.asList(transferSorts(functionParamenterSorts));
+		
+		HornClausePredicateSymbol result = mNameToSortsToHornClausePredicateSymbol.get(
+				functionName, 
+				convertedFunctionParamenterSorts);
 		if (result == null) {
-			result = new HornClausePredicateSymbol(this, function);
-			mNameToHornClausePredicateSymbol.put(function, result);
+			result = new HornClausePredicateSymbol(this, functionName, convertedFunctionParamenterSorts);
+			mNameToSortsToHornClausePredicateSymbol.put(functionName, convertedFunctionParamenterSorts, result);
 		}
 		return result;
 	}
@@ -104,6 +111,35 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 
 	public HornClausePredicateSymbol getDontCareHornClausePredicateSymbol() {
 		return mDontCareHornClausePredSym;
+	}
+	
+	
+	/*
+	 * TODO: copied from TermTransferrer --> do something nicer..
+	 */
+	private Sort transferSort(Sort sort) {
+		final Sort[] arguments = transferSorts(sort.getArguments());
+		final BigInteger[] indices = sort.getIndices();
+		Sort result;
+		try {
+			result = mManagedScript.getScript().sort(sort.getName(), indices, arguments);
+		} catch (final SMTLIBException e) {
+			if (e.getMessage().equals("Sort " + sort.getName() + " not declared")) {
+				mManagedScript.getScript().declareSort(sort.getName(), sort.getArguments().length);
+				result = mManagedScript.getScript().sort(sort.getName(), arguments);
+			} else {
+				throw e;
+			}
+		}
+		return result;
+	}
+	
+	private Sort[] transferSorts(Sort[] sorts) {
+		final Sort[] result = new Sort[sorts.length];
+		for (int i=0; i<sorts.length; i++) {
+			result[i] = transferSort(sorts[i]);
+		}
+		return result;
 	}
 
 }

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
@@ -83,8 +84,8 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		final BasePayloadContainer rootNode = (BasePayloadContainer) root;
 		
 		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		mLogger.debug((annot.getAnnotationsAsMap().get("HoRNClauses")));
+		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
+		mLogger.debug(annot.getAnnotationsAsMap().get(HornUtilConstants.HORN_ANNOT_NAME));
 		
 		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, "TreeCegar",
 				rootNode, taPrefs, mLogger, annot.getScript(), annot.getSymbolTable());

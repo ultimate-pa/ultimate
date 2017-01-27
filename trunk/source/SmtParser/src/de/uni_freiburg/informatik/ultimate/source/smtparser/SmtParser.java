@@ -54,16 +54,20 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProx
 
 /**
  * There are currently two basic modes in which SMTParser can work:
- *  1. Directly run an SMTSolver on the input smtlib-script
+ *  <li> Directly run an SMTSolver on the input smtlib-script
  *    (which one is run depends on a setting)
  *     This means it works with an empty toolchain and does not return an IElement
  *     for further processing.
- *  2. Read an smtlib-script for further processing in TreeAutomizer.
+ *    </li>
+ *  <li> Read an smtlib-script for further processing in TreeAutomizer.
  *    This assumes that the logic is set to HORN and the script only contains
  *     Horn clauses as defined in
- *      https://github.com/sosy-lab/sv-benchmarks/tree/master/clauses
+ *     <a href="http://github.com/sosy-lab/sv-benchmarks/tree/master/clauses">
+ *       github.com/sosy-lab/sv-benchmarks/tree/master/clauses
+ *     </a>
  *    Then a set of HornClauses is extracted and returned as an IElement (with a HornAnnot) 
  *    for processing in TreeAutomizer.
+ *    </li>
  *
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)

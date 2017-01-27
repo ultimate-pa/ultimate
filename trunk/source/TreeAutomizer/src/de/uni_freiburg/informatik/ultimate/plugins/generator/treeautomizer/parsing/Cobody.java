@@ -37,10 +37,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class Cobody {
 	Set<Term> transitions;
@@ -76,11 +76,13 @@ public class Cobody {
 		return res;
 	}
 
-	public Term getTransitionFormula(Theory theory) {
+	public Term getTransitionFormula(ManagedScript script) {
 		if (transitions.isEmpty()) {
-			return theory.mTrue;
+			return script.getScript().term("true");
+		} else if (transitions.size() == 1) {
+			return transitions.iterator().next();
 		} else {
-			return theory.and(transitions.toArray(new Term[] {}));
+			return script.getScript().term("and", transitions.toArray(new Term[transitions.size()]));
 		}
 	}
 
@@ -94,7 +96,9 @@ public class Cobody {
 				vars.add((TermVariable) par);
 			}
 
-			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(predicate.getFunction()), vars);
+			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
+						predicate.getFunction().getName(), predicate.getFunction().getParameterSorts()), 
+					vars);
 		}
 		return res;
 	}

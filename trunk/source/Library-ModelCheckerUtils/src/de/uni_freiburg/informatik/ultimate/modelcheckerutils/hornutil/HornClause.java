@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -14,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -48,18 +50,28 @@ public class HornClause implements IInternalAction {
 	
 	public HornClause(final ManagedScript script, final IIcfgSymbolTable symbolTable, 
 			final Term transitionFormula, final List<TermVariable> bodyVars, 
-			final HornClausePredicateSymbol body, final Map<HornClausePredicateSymbol, List<TermVariable>> cobody) {
-		mHeadPredTermVariables = bodyVars;
+			final HornClausePredicateSymbol body, final Map<HornClausePredicateSymbol, List<TermVariable>> cobodyPredToTermVariables) {
+
+		TermTransferrer ttf = new TermTransferrer(script.getScript());
+		
+		mHeadPredTermVariables = bodyVars.stream().map(var -> (TermVariable) ttf.transform(var)).collect(Collectors.toList());
 		mHeadPredicate = body;
-		mBodyPredToTermVariables = cobody;
+		mBodyPredToTermVariables = cobodyPredToTermVariables.entrySet().stream().collect(
+				Collectors.toMap(
+						en -> en.getKey(), 
+						en -> en.getValue().stream()
+							.map(tv -> (TermVariable) ttf.transform(tv))
+							.collect(Collectors.toList())));
+		
+		final Term convertedFormula = ttf.transform(transitionFormula);
 
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		for (int i = 0; i < bodyVars.size(); ++i) {
-			outVars.put(body.getHCVars().get(i), bodyVars.get(i));
+		for (int i = 0; i < mHeadPredTermVariables.size(); ++i) {
+			outVars.put(body.getHCVars().get(i), mHeadPredTermVariables.get(i));
 		}
 	
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		for (final Entry<HornClausePredicateSymbol, List<TermVariable>> en : cobody.entrySet()) {
+		for (final Entry<HornClausePredicateSymbol, List<TermVariable>> en : mBodyPredToTermVariables.entrySet()) {
 			final List<TermVariable> vars = en.getValue();
 	
 			for (int i = 0; i < vars.size(); ++i) {
@@ -69,7 +81,7 @@ public class HornClause implements IInternalAction {
 		}
 
 		final TransFormulaBuilder tb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
-		tb.setFormula(transitionFormula);
+		tb.setFormula(convertedFormula);
 		tb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		mTransitionFormula = tb.finishConstruction(script);
 	}

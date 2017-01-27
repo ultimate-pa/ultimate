@@ -317,7 +317,7 @@ public class TreeAutomizerCEGAR {// implements
 
 			}
 			mLogger.debug("Getting Interpolants...");
-			//constructInterpolantAutomaton();
+			constructInterpolantAutomaton();
 
 			mLogger.debug("Interpolant automaton:");
 			mLogger.debug(mInterpolAutomaton);

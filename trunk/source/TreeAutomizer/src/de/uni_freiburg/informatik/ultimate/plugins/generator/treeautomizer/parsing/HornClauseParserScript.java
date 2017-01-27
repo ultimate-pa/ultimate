@@ -311,7 +311,7 @@ public class HornClauseParserScript extends NoopScript {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
 				final Body body = parseBody(thisTerm.getSubformula());
-				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
+				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -323,7 +323,7 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final Cobody cobody = parseCobody(thisTerm.getSubformula());
 					final Body body = cobody.negate();
-					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable, getTheory()));
+					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 					
 					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}

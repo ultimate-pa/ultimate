@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * SSABuilder
@@ -74,7 +75,8 @@ public class HCSSABuilder {
 
 	private final Map<HCVar, Term> mCurrentLocalAndOldVarVersion;
 
-	private final Map<HCVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
+//	private final Map<HCVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
+	private final NestedMap2<HCVar, Integer, Term> mIndexedVarRepresentative = new NestedMap2<>();
 
 	private final Map<TreeRun<HornClause, HCPredicate>, VariableVersioneer> mSubsMap;
 	
@@ -90,7 +92,7 @@ public class HCSSABuilder {
 		mTreeRun = trace;
 		mScript = script;
 		mTermTransferrer = new TermTransferrer(mScript.getScript());
-		mTransferToScriptNeeded = true;
+		mTransferToScriptNeeded = false;
 		mPreCondition = preCondition;
 		mPostCondition = postCondition;
 		mCounters = new HashMap<>();
@@ -191,7 +193,7 @@ public class HCSSABuilder {
 	private Term getCurrentVarVersion(final HCVar bv) {
 		Term result = mCurrentLocalAndOldVarVersion.get(bv);
 		 if (result == null) {
-		// variable was not yet assigned in the calling context
+			 // variable was not yet assigned in the calling context
 			 result = setCurrentVarVersion(bv, mCurrentTree);
 		}
 		return result;
@@ -216,16 +218,19 @@ public class HCSSABuilder {
 	 * value at position index.
 	 */
 	private Term buildVersion(final HCVar bv, final int index) {
-		TreeMap<Integer, Term> index2constant = mIndexedVarRepresentative.get(bv);
-		if (index2constant == null) {
-			index2constant = new TreeMap<>();
-			mIndexedVarRepresentative.put(bv, index2constant);
-		}
-		assert !index2constant.containsKey(index) : "version was already constructed";
+//		TreeMap<Integer, Term> index2constant = mIndexedVarRepresentative.get(bv);
+//		if (index2constant == null) {
+//			index2constant = new TreeMap<>();
+//			mIndexedVarRepresentative.put(bv, index2constant);
+//		}
+//		assert !index2constant.containsKey(index) : "version was already constructed";
+		assert mIndexedVarRepresentative.get(bv) == null || !mIndexedVarRepresentative.get(bv).containsKey(index) : 
+			"version was already constructed";
 		final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
 		final Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), sort, index,
 				mIndexedConstants, mScript.getScript());
-		index2constant.put(index, constant);
+//		index2constant.put(index, constant);
+		mIndexedVarRepresentative.put(bv, index, constant);
 		return constant;
 	}
 
@@ -337,15 +342,28 @@ public class HCSSABuilder {
 		}
 
 		public HCPredicate backVersion(final HCPredicate pl, final Term term) {
-			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
+//			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
+//			final Set<IProgramVar> vars = new HashSet<>();
+//			final Map<Term, HCVar> substit = new HashMap<>();
+//			for (final Term hcvar : mSubstitutionMapping.keySet()) {
+//				backSubstitutionMap.put(mSubstitutionMapping.get(hcvar), hcvar);
+//				if (mBackSubstitutionMapping.containsKey(mSubstitutionMapping.get(hcvar))) {
+//					vars.add(mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
+//					substit.put(hcvar, mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
+//				}
+//			}
 			final Set<IProgramVar> vars = new HashSet<>();
-			final Map<Term, HCVar> substit = new HashMap<>();
-			for (final Term hcvar : mSubstitutionMapping.keySet()) {
-				backSubstitutionMap.put(mSubstitutionMapping.get(hcvar), hcvar);
-				if (mBackSubstitutionMapping.containsKey(mSubstitutionMapping.get(hcvar))) {
-					vars.add(mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
-					substit.put(hcvar, mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
-				}
+			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
+			final Map<Term, HCVar> termToHcVar = new HashMap<>();
+			for (Entry<Term, HCVar> en : mBackSubstitutionMapping.entrySet()) {
+				vars.add(en.getValue());
+				Term ssaTerm = transferToCurrentScriptIfNecessary(en.getKey());
+				HCVar hcVarForSsaTerm = en.getValue();
+				Term hcVarForSsaTermTermVariable = transferToCurrentScriptIfNecessary(hcVarForSsaTerm.getTermVariable());
+
+				backSubstitutionMap.put(ssaTerm, hcVarForSsaTermTermVariable);
+				termToHcVar.put(en.getValue().getTerm(), en.getValue());
+
 			}
 			
 			
@@ -353,7 +371,7 @@ public class HCSSABuilder {
 			final Term t = transferToCurrentScriptIfNecessary(term);
 			final Term formula = subst.transform(t);
 			
-			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, substit, term);
+			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, termToHcVar);
 		}
 		
 		public Map<Term, Term> getSubstitutionMapping() {

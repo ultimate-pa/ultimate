@@ -35,39 +35,37 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class Body {
-	Cobody cobody;
-	ApplicationTerm head;
+	private final Cobody mCobody;
+	private ApplicationTerm mHead;
 	
 	public Body() {
-		cobody = new Cobody();
+		mCobody = new Cobody();
 	}
 
 	public void addPredicateToCobody(ApplicationTerm literal) {
-		cobody.addPredicate(literal);
+		mCobody.addPredicate(literal);
 	}
 
-	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable,
-			Theory theory) {
+	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable) {
 		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 		assert tt.size() <= 1;
 		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 				: symbolTable.getFalseHornClausePredicateSymbol();
 //				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-		return new HornClause(script, symbolTable, getTransitionFormula(theory),
+		return new HornClause(script, symbolTable, getTransitionFormula(script),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
 				getCobodyPredicateToVars(symbolTable));
 
 	}
 	public boolean setHead(ApplicationTerm literal) {
-		if (head == null) {
-			head = literal;
+		if (mHead == null) {
+			mHead = literal;
 			return true;
 		} else {
 			return false;
@@ -75,17 +73,17 @@ public class Body {
 	}
 
 	public void mergeCobody(Cobody cobody) {
-		this.cobody.mergeCobody(cobody);
+		this.mCobody.mergeCobody(cobody);
 	}
 
 	
 	public void addTransitionFormula(Term formula) {
-		cobody.addTransitionFormula(formula);
+		mCobody.addTransitionFormula(formula);
 	}
 
 	@Override
 	public String toString() {
-		return '(' + cobody.toString() + " ==> " + (head == null ? "false" : head.toString()) + ')';
+		return '(' + mCobody.toString() + " ==> " + (mHead == null ? "false" : mHead.toString()) + ')';
 	}
 
 	// moved this to HCSymbolTable
@@ -102,15 +100,15 @@ public class Body {
 			final HCSymbolTable symbolTable) {
 
 		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
-		if (head != null) {
+		if (mHead != null) {
 			final ArrayList<TermVariable> vars = new ArrayList<>();
-			for (final Term par : head.getParameters()) {
+			for (final Term par : mHead.getParameters()) {
 				vars.add((TermVariable) par);
 			}
 
 //			res.put(getHornPredicateSymbol(head.getFunction(), predicateSymbols), vars);
 			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-						head.getFunction()), 
+						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()), 
 					vars);
 		}
 		return res;
@@ -118,10 +116,10 @@ public class Body {
 
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
 			HCSymbolTable symbolTable) {
-		return cobody.getPredicateToVars(symbolTable);
+		return mCobody.getPredicateToVars(symbolTable);
 	}
 
-	public Term getTransitionFormula(Theory theory) {
-		return cobody.getTransitionFormula(theory);
+	public Term getTransitionFormula(ManagedScript script) {
+		return mCobody.getTransitionFormula(script);
 	}
 }
