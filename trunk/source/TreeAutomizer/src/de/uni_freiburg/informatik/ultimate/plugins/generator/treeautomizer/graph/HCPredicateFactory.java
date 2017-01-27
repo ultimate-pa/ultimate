@@ -95,11 +95,6 @@ public class HCPredicateFactory extends PredicateFactory {
 		return new HCPredicate(loc, term, varsMap, computeClosedFormula(term));
 	}
 
-//	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
-//			Set<IProgramVar> vars, Map<Term, HCVar> substit, Term closedFormula) {
-//		return new HCPredicate(mProgramPoint, hashCode, formula, vars, substit, closedFormula);
-//	}	
-
 	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
 			Set<IProgramVar> vars, Map<Term, HCVar> termToHcVar) {
 		return new HCPredicate(mProgramPoint, hashCode, formula, vars, termToHcVar, computeClosedFormula(formula));

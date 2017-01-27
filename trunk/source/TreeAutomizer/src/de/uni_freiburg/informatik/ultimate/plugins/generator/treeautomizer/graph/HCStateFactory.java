@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -42,9 +45,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class HCStateFactory implements IStateFactory<HCPredicate> {
 
@@ -74,9 +79,8 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 
 
 	private HCPredicate reduceFormula(final HCPredicate[] preds, boolean andOp) {
-		return preds[0];
 		// TODO: Check hashing of TermVariable and HCVar.
-		/*
+	
 		final Set<IProgramVar> progVars = new HashSet<>();
 		final Map<Term, HCVar> varsMap = new HashMap<>();
 
@@ -102,7 +106,8 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 			predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), predHash, p, p.mProgramPoint);
 		}
 		final Term formula = mSimplifier.getSimplifiedTerm(
-				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) : Util.or(mBackendSmtSolverScript.getScript(), terms));
+				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) : 
+					Util.or(mBackendSmtSolverScript.getScript(), terms));
 		
 		final Set<String> prodVars = new HashSet<>();
 		for (final TermVariable var : formula.getFreeVars()) {
@@ -119,7 +124,6 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 		}
 		
 		return mPredicateFactory.newPredicate(loc, predHash, formula, progVars, varsMap);
-		*/
 	}
 	
 	@Override

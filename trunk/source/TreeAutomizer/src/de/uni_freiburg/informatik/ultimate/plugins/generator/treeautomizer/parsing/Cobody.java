@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
@@ -77,13 +78,7 @@ public class Cobody {
 	}
 
 	public Term getTransitionFormula(ManagedScript script) {
-		if (transitions.isEmpty()) {
-			return script.getScript().term("true");
-		} else if (transitions.size() == 1) {
-			return transitions.iterator().next();
-		} else {
-			return script.getScript().term("and", transitions.toArray(new Term[transitions.size()]));
-		}
+		return Util.and(script.getScript(), transitions.toArray(new Term[transitions.size()]));
 	}
 
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getPredicateToVars(
