@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
@@ -185,7 +185,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ShrinkNwa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, 0, false, 0, false, false);
 	}
@@ -214,7 +214,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ShrinkNwa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
 			final boolean returnSplitNaive) throws AutomataOperationCanceledException {
@@ -254,7 +254,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ShrinkNwa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
 			final boolean isFiniteAutomaton, final boolean splitOutgoing, final int splitRandomSize,
@@ -3616,8 +3616,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		}
 		
 		@Override
-		public STATE minimize(final IStateFactory<STATE> stateFactory) {
-			return stateFactory.minimize(mStates);
+		public STATE minimize(final IMergeStateFactory<STATE> stateFactory) {
+			return stateFactory.merge(mStates);
 		}
 		
 		@Override

@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE> {
+public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> {
 	
-	public ReduceNwaDirectSimulationB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public ReduceNwaDirectSimulationB(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, new DirectSimulationInfoProvider<>());
 	}
 	

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -67,7 +67,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList());
 	}
@@ -91,7 +91,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
@@ -120,14 +120,14 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
-				new FairDirectSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
+				new FairDirectSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairDirectGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
+						new FairDirectGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}

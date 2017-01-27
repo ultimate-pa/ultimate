@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
@@ -80,7 +81,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 		// instances
 
 		final ToolchainStorage services = new ToolchainStorage();
-		final IStateFactory<String> snf = new StringFactory();
+		final IMergeStateFactory<String> snf = new StringFactory();
 
 		// Buechi automaton
 		final Set<String> alphabet = new HashSet<>();
@@ -271,7 +272,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 				logMessage("Start Cross-Simulation without SCC...", logger);
 			}
 
-			operationNoSCC = new ReduceBuchiFairSimulation<LETTER, STATE>(operation.mServices, operation.mStateFactory,
+			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, false);
 			simulationNoSCC = operationNoSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -281,7 +282,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 			if (logNoErrorDebug) {
 				logMessage("Start Cross-Simulation with SCC...", logger);
 			}
-			operationSCC = new ReduceBuchiFairSimulation<LETTER, STATE>(operation.mServices, operation.mStateFactory,
+			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
 					operation.mOperand, true);
 			simulationSCC = operationSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -426,7 +427,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	/**
 	 * State factory used for state creation.
 	 */
-	private final IStateFactory<STATE> mStateFactory;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	/**
 	 * Performance statistics of this operation.
 	 */
@@ -452,8 +453,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList(), false);
 	}
 
@@ -475,9 +477,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs)
-					throws AutomataOperationCanceledException {
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
 	}
 
@@ -504,9 +506,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
 
@@ -536,15 +539,15 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
-					throws AutomataOperationCanceledException {
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final boolean checkOperationDeeply) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
+				new FairSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
+						new FairGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory)));
 	}
@@ -572,9 +575,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
+	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		super(services);
 		mStateFactory = stateFactory;
@@ -614,7 +617,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, mOperand, mResult))
+		final boolean correct = (new TestBuchiEquivalence<>(mServices, stateFactory, mOperand, mResult))
 				.getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;

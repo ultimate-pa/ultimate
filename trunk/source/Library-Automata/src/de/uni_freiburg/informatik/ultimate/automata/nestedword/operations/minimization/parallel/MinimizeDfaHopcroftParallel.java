@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft -
@@ -137,8 +137,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param operand
 	 *            input automaton (DFA)
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, stateFactory, operand, new Interrupt());
 	}
 	
@@ -154,8 +154,9 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param interrupt
 	 *            interrupt
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt) {
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final Interrupt interrupt) {
 		super(services, stateFactory);
 		mOperand = operand;
 		mInterrupt = interrupt;
@@ -190,9 +191,9 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param interrupt
 	 *            interrupt
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt,
-			final ArrayList<STATE> int2state, final HashMap<STATE, Integer> state2int) {
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final Interrupt interrupt, final ArrayList<STATE> int2state, final HashMap<STATE, Integer> state2int) {
 		super(services, stateFactory);
 		mOperand = operand;
 		mInterrupt = interrupt;

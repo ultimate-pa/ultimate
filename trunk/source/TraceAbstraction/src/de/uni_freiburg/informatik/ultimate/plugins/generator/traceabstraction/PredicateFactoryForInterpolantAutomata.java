@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
-public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPredicate> {
+public class PredicateFactoryForInterpolantAutomata implements IMergeStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -101,7 +101,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 	}
 
 	@Override
-	public IPredicate minimize(final Collection<IPredicate> states) {
+	public IPredicate merge(final Collection<IPredicate> states) {
 		final Term disjunction = mPredicateFactory.or(false, states);
 		final IPredicate result = mPredicateFactory.newPredicate(disjunction);
 		return result;

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * Minimization method which returns an
@@ -52,7 +52,8 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinim
 	 * @param stateFactory
 	 *            state factory
 	 */
-	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
+	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory) {
 		super(services, stateFactory);
 	}
 	

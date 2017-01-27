@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft-Algorithm.
@@ -69,9 +70,9 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private int[] mState2representative;
 	
 	// Constructor.
-	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services,
+	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory());
+		super(services, stateFactory);
 		mOperand = operand;
 		
 		// Start minimization.

@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -186,17 +185,6 @@ public interface IStateFactory<STATE> {
 	 * @return state representing the state in the complement automaton
 	 */
 	default STATE complementBuchiDeterministicFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
-	 * Minimization ("merging") of several states.
-	 * 
-	 * @param states
-	 *            states
-	 * @return state representing the minimization
-	 */
-	default STATE minimize(final Collection<STATE> states) {
 		return null;
 	}
 	

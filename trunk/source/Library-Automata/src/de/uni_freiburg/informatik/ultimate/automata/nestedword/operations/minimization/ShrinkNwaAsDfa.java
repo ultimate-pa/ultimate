@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -88,7 +88,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false);
 	}
@@ -112,7 +112,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapping,
 			final boolean considerNeutralStates) throws AutomataOperationCanceledException {
@@ -948,8 +948,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 		
 		@Override
-		public Object minimize(final IStateFactory stateFactory) {
-			return stateFactory.minimize(mStates);
+		public STATE minimize(final IMergeStateFactory<STATE> stateFactory) {
+			return stateFactory.merge(mStates);
 		}
 		
 		@Override

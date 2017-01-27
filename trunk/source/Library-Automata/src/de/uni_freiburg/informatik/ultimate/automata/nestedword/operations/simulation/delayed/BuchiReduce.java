@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> 
+public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
@@ -92,7 +93,7 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public BuchiReduce(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiReduce(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressAwareTimer(),
@@ -119,7 +120,7 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected BuchiReduce(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	protected BuchiReduce(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		super(services);
@@ -158,7 +159,7 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, getOperand(),
+		final boolean correct = (new TestBuchiEquivalence<>(mServices, stateFactory, getOperand(),
 				getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;

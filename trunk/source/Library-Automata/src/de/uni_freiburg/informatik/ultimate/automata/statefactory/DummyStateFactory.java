@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
+import java.util.Collection;
+
 /**
  * A state factory that does nothing.
  * 
@@ -35,6 +37,9 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-public class DummyStateFactory<STATE> implements IStateFactory<STATE> {
-
+public class DummyStateFactory<STATE> implements IMergeStateFactory<STATE> {
+	@Override
+	public STATE merge(final Collection<STATE> states) {
+		return null;
+	}
 }

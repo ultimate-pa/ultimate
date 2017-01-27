@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 
 /**
@@ -80,7 +80,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeNwaMulti(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaMulti(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final ISetOfPairs<STATE, ?> partition,
 			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, Strategy.DEFAULT);
@@ -104,7 +104,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeNwaMulti(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaMulti(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final ISetOfPairs<STATE, ?> partition,
 			final boolean addMapOldState2newState, final Strategy strategy) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.VertexValueContainer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorSubSummaryChoiceVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -148,7 +148,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	/**
 	 * State factory used for state creation.
 	 */
-	private final IStateFactory<STATE> mStateFactory;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	/**
 	 * Data structure that allows a fast access to successors of a given vertex
 	 * in the game graph.
@@ -176,7 +176,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             framework.
 	 */
 	public AGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final IStateFactory<STATE> stateFactory,
+			final ILogger logger, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
 		// We assume the automaton has no dead ends, this is a requirement for
 		// the algorithm to work correctly.
@@ -931,7 +931,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @return The state factory used for state creation
 	 */
-	protected IStateFactory<STATE> getStateFactory() {
+	protected IMergeStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
 

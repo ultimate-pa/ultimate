@@ -95,7 +95,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	}
 
 	@Override
-	public IPredicate minimize(final Collection<IPredicate> states) {
+	public IPredicate merge(final Collection<IPredicate> states) {
 		assert !states.isEmpty() : "minimize empty set???";
 		assert sameProgramPoints(states) : "states do not have same program points";
 		final IPredicate someElement = states.iterator().next();

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -73,7 +74,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
-	protected final IStateFactory<STATE> mStateFactory;
+	protected final IMergeStateFactory<STATE> mStateFactory;
 	/**
 	 * The result automaton.
 	 */
@@ -95,26 +96,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param stateFactory
 	 *            state factory
 	 */
-	protected AbstractMinimizeNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory) {
 		super(services);
 		mResult = null;
 		mTemporaryResult = null;
 		mOldState2NewState = null;
 		
 		mStateFactory = stateFactory;
-	}
-	
-	/**
-	 * This constructor should be called by all subclasses and only by them.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            input automaton
-	 */
-	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand.getStateFactory());
 	}
 	
 	/* ------ interface methods ------ */
@@ -357,7 +346,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected final STATE addState(final boolean isInitial, final boolean isFinal, final Collection<STATE> oldStates) {
 		assert !oldStates.isEmpty();
-		final STATE newState = mStateFactory.minimize(oldStates);
+		final STATE newState = mStateFactory.merge(oldStates);
 		mTemporaryResult.addState(isInitial, isFinal, newState);
 		return newState;
 	}

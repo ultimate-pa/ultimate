@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.TimeoutFlag;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
@@ -77,7 +78,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, DEFAULT_TIMEOUT);
 	}
@@ -97,8 +98,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand, final int time)
-			throws AutomataOperationCanceledException {
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final int time) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, time, Collections.emptyList());
 	}
 	
@@ -123,7 +124,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapOldState2newState,
 			final int time, final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {

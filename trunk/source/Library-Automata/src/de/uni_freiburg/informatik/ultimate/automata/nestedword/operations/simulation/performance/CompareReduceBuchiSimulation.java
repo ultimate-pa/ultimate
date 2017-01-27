@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.FullMultipebbleGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -192,8 +193,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws IllegalArgumentException
 	 *             If the inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.
 	 */
-	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public CompareReduceBuchiSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services);
 		verifyAutomatonValidity(operand);
 
@@ -664,8 +666,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 *            The buechi automaton to reduce
 	 */
 	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
-			final AutomataLibraryServices services, final long timeout, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+			final AutomataLibraryServices services, final long timeout,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
 		boolean timedOut = false;
 		boolean outOfMemory = false;
@@ -706,7 +708,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<>(mServices, operand);
+				method = new MinimizeSevpa<>(mServices, stateFactory, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -746,7 +748,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 *            Operand where non reachable states are removed
 	 */
 	protected void measurePerformances(final String automatonName, final long timeOutMillis,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct simulation without SCC
 		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, mServices, timeOutMillis, stateFactory,

@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -21,11 +22,11 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IStateFactory<STATE> stateFactory;
+	private final IMergeStateFactory<STATE> stateFactory;
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 	
-	public Complement(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public Complement(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton = tree;
 		stateFactory = factory;
 		
@@ -65,7 +66,7 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return false;
 	}
 	
-	public static void main(String[] args) throws AutomataLibraryException {
+	public static void main(final String[] args) throws AutomataLibraryException {
 		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
 		final TreeAutomatonBU<String, String> treeB = new TreeAutomatonBU<>();
 		

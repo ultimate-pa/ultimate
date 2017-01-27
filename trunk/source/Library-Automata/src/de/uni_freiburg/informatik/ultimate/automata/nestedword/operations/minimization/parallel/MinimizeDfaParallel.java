@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
@@ -127,7 +127,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            input automaton
 	 */
-	public MinimizeDfaParallel(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeDfaParallel(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -428,10 +428,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 			try {
 				if (mChooseAlgorithm.equals(Algorithm.HOPCROFT)) {
 					mLogger.debug("moep1");
-					mAlgorithm = new MinimizeDfaHopcroftParallel<>(
-							mServices, mOperand.getStateFactory(),
-							mOperand,
-							mInterrupt, mInt2state, mState2int);
+					mAlgorithm = new MinimizeDfaHopcroftParallel<>(mServices, mStateFactory, mOperand, mInterrupt,
+							mInt2state, mState2int);
 					
 					if (isInterrupted()) {
 						return;
@@ -458,9 +456,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 					
 				} else {
 					mLogger.debug("miep1");
-					mAlgorithm = new MinimizeDfaIncrementalParallel<>(
-							mServices, mOperand.getStateFactory(), mOperand,
-							mInterrupt, mInt2state, mState2int);
+					mAlgorithm = new MinimizeDfaIncrementalParallel<>(mServices, mStateFactory, mOperand, mInterrupt,
+							mInt2state, mState2int);
 					
 					if (isInterrupted()) {
 						return;

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -80,7 +80,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>());
@@ -102,7 +102,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
@@ -127,7 +127,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final Settings<STATE> settings,
 			final boolean applyInitialPartitionPreprocessing) throws AutomataOperationCanceledException {

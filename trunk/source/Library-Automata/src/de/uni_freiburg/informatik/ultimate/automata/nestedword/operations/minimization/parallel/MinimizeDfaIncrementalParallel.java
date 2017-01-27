@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -176,7 +176,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
@@ -197,7 +197,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, interrupt);
@@ -229,7 +229,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 *             if operation was canceled
 	 */
 	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)
@@ -342,7 +342,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 					mHashCapNoTuples));
 			mEquiv = new SetList();
 			mPath = new SetList();
-			mStack = new ArrayDeque<StackElem>();
+			mStack = new ArrayDeque<>();
 			
 			if (mInt2state == null && mState2int == null) {
 				mLogger.info("preprocessing");
@@ -382,8 +382,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * vice versa.
 	 */
 	private void preprocess() {
-		mState2int = new HashMap<STATE, Integer>(mSize);
-		mInt2state = new ArrayList<STATE>(mSize);
+		mState2int = new HashMap<>(mSize);
+		mInt2state = new ArrayList<>(mSize);
 		int i = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
@@ -490,7 +490,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 					 * optional separation of states with different outgoing
 					 * transitions
 					 */
-					final HashSet<LETTER> letters = new HashSet<LETTER>();
+					final HashSet<LETTER> letters = new HashSet<>();
 					for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand
 							.internalSuccessors(state1)) {
 						letters.add(out.getLetter());
@@ -663,7 +663,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates = computeMapState2Equiv();
 		
 		// mapping from old state to new state
-		final HashMap<Integer, STATE> oldState2newState = new HashMap<Integer, STATE>(
+		final HashMap<Integer, STATE> oldState2newState = new HashMap<>(
 				computeHashCap(state2equivStates.size()));
 		
 		// add states
@@ -705,14 +705,14 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @return map old state -> new state
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
-		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<Integer, LinkedList<STATE>>(
+		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<>(
 				computeHashCap(mSize));
 		for (int i = mSize - 1; i >= 0; --i) {
 			final int representative = find(i);
 			LinkedList<STATE> equivStates = state2equivStates
 					.get(representative);
 			if (equivStates == null) {
-				equivStates = new LinkedList<STATE>();
+				equivStates = new LinkedList<>();
 				state2equivStates.put(representative, equivStates);
 			}
 			equivStates.add(mInt2state.get(i));
@@ -761,7 +761,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @return representative of the given state
 	 */
 	public int find(int oldRepresentative) {
-		final LinkedList<Integer> path = new LinkedList<Integer>();
+		final LinkedList<Integer> path = new LinkedList<>();
 		
 		while (true) {
 			int newRepresentative;
@@ -926,7 +926,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 				assert (mMap.isEmpty()) : "There are elements left in the map after cleaning.";
 			} else {
 				mIsInitialized = true;
-				mMap = new HashMap<Tuple, ListNode>(mHashCapNoTuples);
+				mMap = new HashMap<>(mHashCapNoTuples);
 			}
 			mList = new DoublyLinkedList();
 		}

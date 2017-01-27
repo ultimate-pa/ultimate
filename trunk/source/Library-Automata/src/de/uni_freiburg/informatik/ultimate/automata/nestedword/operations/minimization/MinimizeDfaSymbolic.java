@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -87,9 +88,9 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 * @param operand
 	 *            operand
 	 */
-	public MinimizeDfaSymbolic(final AutomataLibraryServices services,
+	public MinimizeDfaSymbolic(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
-		super(services, operand.getStateFactory());
+		super(services, stateFactory);
 		mOperand = operand;
 		
 		// Start minimization.
@@ -639,7 +640,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
 			// Build the new state by using the minimize-function of
 			// StateFactory.
-			final STATE newState = mStateFactory.minimize(statesOfBlock);
+			final STATE newState = mStateFactory.merge(statesOfBlock);
 			// Add new state to the new result automaton.
 			final STATE firstOfBlock = blockOfPartition.iterator().next();
 			blockToNewStates.put(blockOfPartition, newState);

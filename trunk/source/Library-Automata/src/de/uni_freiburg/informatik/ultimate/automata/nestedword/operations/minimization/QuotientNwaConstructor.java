@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  */
 public class QuotientNwaConstructor<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private GetOnlyMap mOldState2NewState;
@@ -89,7 +89,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 * @param newSize
 	 *            size of new (to be constructed) automaton
 	 */
-	private QuotientNwaConstructor(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	private QuotientNwaConstructor(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final int newSize) {
 		mServices = services;
 		mStateFactory = stateFactory;
@@ -126,7 +126,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 * @param addMapOldState2newState
 	 *            add a map from old to new states?
 	 */
-	public QuotientNwaConstructor(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public QuotientNwaConstructor(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, partition.size());
@@ -152,7 +152,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 *            add a map from old to new states?
 	 */
 	public QuotientNwaConstructor(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {
@@ -386,13 +386,13 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 							final boolean isInitial;
 							final boolean isFinal;
 							if (representative == null) {
-								resultState = mStateFactory.minimize(Collections.singleton(inputState));
+								resultState = mStateFactory.merge(Collections.singleton(inputState));
 								isInitial = mOperand.isInitial(inputState);
 								isFinal = mOperand.isFinal(inputState);
 							} else {
 								final Collection<STATE> equivalenceClass =
 										mUnionFind.getEquivalenceClassMembers(representative);
-								resultState = mStateFactory.minimize(equivalenceClass);
+								resultState = mStateFactory.merge(equivalenceClass);
 								final Predicate<STATE> pInitial = s -> mOperand.isInitial(s);
 								isInitial = equivalenceClass.stream().anyMatch(pInitial);
 								final Predicate<STATE> pFinal = s -> mOperand.isFinal(s);

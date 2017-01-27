@@ -39,7 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -96,13 +96,13 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 * Constructor.
 	 */
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final IMergeStateFactory<STATE> stateFactory,
 			final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}
 	
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final IMergeStateFactory<STATE> stateFactory,
 			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -123,14 +123,6 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			directResultConstruction(mOperand);
 		}
 		printExitMessage();
-	}
-	
-	/**
-	 * Constructor without state factory.
-	 */
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand, operand.getStateFactory(), false);
 	}
 	
 	@Override
@@ -424,7 +416,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 				tmp.add(mInt2state.get(elem));
 			}
 			// Build the new state by using the minimize - function of StateFactory.
-			final STATE newState = mStateFactory.minimize(tmp);
+			final STATE newState = mStateFactory.merge(tmp);
 			
 			// update mapping 'old state -> new state'
 			if (mOldState2newState != null) {

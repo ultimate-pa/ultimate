@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
@@ -68,14 +69,15 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		final IStateFactory<String> snf = new StringFactory();
+		final IMergeStateFactory<String> snf = new StringFactory();
 
 		final int n = 10;
 		final int k = 3;
@@ -96,7 +98,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 					(totalityCallInPerc + 0.0f) / 100, (totalityReturnInPerc + 0.0f) / 100,
 					(acceptanceInPerc + 0.0f) / 100).getResult();
 			try {
-				new CompareReduceNwaSimulation<String, String>(services, snf, nwa);
+				new CompareReduceNwaSimulation<>(services, snf, nwa);
 			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}

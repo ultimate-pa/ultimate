@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure.
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 final class Converter<LETTER, STATE> {
 	
 	private final AutomataLibraryServices mServices;
-	private final IStateFactory<STATE> mFactory;
+	private final IMergeStateFactory<STATE> mFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	
 	/* LETTERs are shared between old (input) and new (output) automaton
@@ -104,7 +104,7 @@ final class Converter<LETTER, STATE> {
 	 */
 	Converter(
 			final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 			
 		this.mServices = services;
@@ -119,16 +119,16 @@ final class Converter<LETTER, STATE> {
 		mCAlphabet = automaton.getCallAlphabet();
 		mRAlphabet = automaton.getReturnAlphabet();
 		
-		mOldStateIndex = new HashMap<STATE, Integer>();
-		mOldState = new ArrayList<STATE>();
+		mOldStateIndex = new HashMap<>();
+		mOldState = new ArrayList<>();
 		
-		mISymIndex = new HashMap<LETTER, Integer>();
-		mCSymIndex = new HashMap<LETTER, Integer>();
-		mRSymIndex = new HashMap<LETTER, Integer>();
+		mISymIndex = new HashMap<>();
+		mCSymIndex = new HashMap<>();
+		mRSymIndex = new HashMap<>();
 		
-		mISym = new ArrayList<LETTER>();
-		mCSym = new ArrayList<LETTER>();
-		mRSym = new ArrayList<LETTER>();
+		mISym = new ArrayList<>();
+		mCSym = new ArrayList<>();
+		mRSym = new ArrayList<>();
 		
 		for (final STATE st : mOldStates) {
 			assert !mOldStateIndex.containsKey(st);
@@ -174,9 +174,9 @@ final class Converter<LETTER, STATE> {
 			isFinal[i] = mOldFinalStates.contains(mOldState.get(i));
 		}
 		
-		final ArrayList<ITrans> iTrans = new ArrayList<ITrans>();
-		final ArrayList<CTrans> cTrans = new ArrayList<CTrans>();
-		final ArrayList<RTrans> rTrans = new ArrayList<RTrans>();
+		final ArrayList<ITrans> iTrans = new ArrayList<>();
+		final ArrayList<CTrans> cTrans = new ArrayList<>();
+		final ArrayList<RTrans> rTrans = new ArrayList<>();
 		
 		for (int i = 0; i < numStates; i++) {
 			final STATE st = mOldState.get(i);
@@ -233,9 +233,9 @@ final class Converter<LETTER, STATE> {
 		/* Avoid duplicate edges in the merged automaton
 		 */
 		
-		final HashSet<ITrans> newITrans = new HashSet<ITrans>();
-		final HashSet<CTrans> newCTrans = new HashSet<CTrans>();
-		final HashSet<RTrans> newRTrans = new HashSet<RTrans>();
+		final HashSet<ITrans> newITrans = new HashSet<>();
+		final HashSet<CTrans> newCTrans = new HashSet<>();
+		final HashSet<RTrans> newRTrans = new HashSet<>();
 		
 		for (final ITrans x : mConverted.mITrans) {
 			newITrans.add(new ITrans(classOf[x.mSrc], x.mSym, classOf[x.mDst]));
@@ -250,7 +250,7 @@ final class Converter<LETTER, STATE> {
 		/* For each equivalence class, remember the old STATEs in it
 		 */
 		
-		final ArrayList<ArrayList<STATE>> statesOfclass = new ArrayList<ArrayList<STATE>>();
+		final ArrayList<ArrayList<STATE>> statesOfclass = new ArrayList<>();
 		
 		for (int i = 0; i < numclasses; i++) {
 			statesOfclass.add(new ArrayList<STATE>());
@@ -267,12 +267,12 @@ final class Converter<LETTER, STATE> {
 		/* Make a new STATE for each equivalence class of old STATEs
 		 */
 		
-		final ArrayList<STATE> newState = new ArrayList<STATE>();
-		final HashSet<STATE> newInitialStates = new HashSet<STATE>();
-		final HashSet<STATE> newFinalStates = new HashSet<STATE>();
+		final ArrayList<STATE> newState = new ArrayList<>();
+		final HashSet<STATE> newInitialStates = new HashSet<>();
+		final HashSet<STATE> newFinalStates = new HashSet<>();
 		
 		for (int i = 0; i < numclasses; i++) {
-			final STATE newst = mFactory.minimize(statesOfclass.get(i));
+			final STATE newst = mFactory.merge(statesOfclass.get(i));
 			
 			newState.add(newst);
 			
@@ -327,7 +327,7 @@ final class Converter<LETTER, STATE> {
 		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) mAutomaton;
 		
 		final STATE bottomOfStackState = mAutomaton.getEmptyStackState();
-		final ArrayList<Hist> hist = new ArrayList<Hist>();
+		final ArrayList<Hist> hist = new ArrayList<>();
 		for (int i = 0; i < mOldState.size(); i++) {
 			if (doubleDecker.isDoubleDecker(mOldState.get(i), bottomOfStackState)) {
 				// -1 is bottom-of-stack

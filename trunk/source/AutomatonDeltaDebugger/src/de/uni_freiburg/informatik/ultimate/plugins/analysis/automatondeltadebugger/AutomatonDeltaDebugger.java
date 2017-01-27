@@ -35,6 +35,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -161,9 +162,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		
 		return new AbstractTester<LETTER, STATE>(throwable) {
 			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
-					throws Throwable {
-				final IStateFactory<STATE> factory = automaton.getStateFactory();
+			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
+				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
 				
 				getIOperation(automaton, factory);
 			}
@@ -181,9 +181,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		
 		return new AbstractTester<LETTER, STATE>(throwable) {
 			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton)
-					throws Throwable {
-				final IStateFactory<STATE> factory = automaton.getStateFactory();
+			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
+				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
 				
 				final IOperation<LETTER, STATE> op = getIOperation(automaton, factory);
 				
@@ -208,7 +207,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 */
 	@SuppressWarnings("squid:S00112")
 	private IOperation<LETTER, STATE> getIOperation(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IStateFactory<STATE> factory) throws Throwable {
+			final IMergeStateFactory<STATE> factory) throws Throwable {
 		final AutomatonDebuggerExamples<LETTER, STATE> examples = new AutomatonDebuggerExamples<>(mServices);
 		
 		return examples.getOperation(mOperationType, automaton, factory);

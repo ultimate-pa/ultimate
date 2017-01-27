@@ -11,6 +11,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -27,13 +28,13 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final TreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IStateFactory<STATE> stateFactory;
+	private final IMergeStateFactory<STATE> stateFactory;
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
 	final Map<Set<STATE>, STATE> minimizedStates;
 	
-	public Minimize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public Minimize(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
 		stateFactory = factory;
 		minimizedStates = new HashMap<>();
@@ -44,7 +45,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private STATE minimize(final Set<STATE> st) {
 		// minimize set of state to a new minimized state.
 		if (!minimizedStates.containsKey(st)) {
-			minimizedStates.put(st, stateFactory.minimize(st));
+			minimizedStates.put(st, stateFactory.merge(st));
 		}
 		return minimizedStates.get(st);
 	}
@@ -78,7 +79,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			s.set(idx, s2);
 			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
 			// Then we can replace s2 by s1 in this rule
-			// TODO(amin): Check if just one occurance or all of them is needed. 
+			// TODO(amin): Check if just one occurance or all of them is needed.
 			for (final STATE dest : treeAutomaton.getSuccessors(s, rule.getLetter())) {
 				if (worklist.equiv(dest, rule.getDest())) {
 					return true;
@@ -140,7 +141,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			oldWorklist = worklist;
 
 			worklist = new DisjointSet<>(treeAutomaton.getStates());
-			for (Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt.hasNext();) {
+			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt.hasNext();) {
 				final Set<STATE> partition = partitionsIt.next();
 				final ArrayList<STATE> states = new ArrayList<>();
 				for (final Iterator<STATE> it = partition.iterator(); it.hasNext();) {
@@ -179,7 +180,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			for (final STATE st : rule.getSource()) {
 				src.add(minimize(worklist.getPartition(st)));
 			}
-			res.addRule(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
+			res.addRule(new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
 		return removeUnreachables(res);
 	}
@@ -209,7 +210,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (allFound) {
 					worklist.add(rule.getDest());
 				}
-			} 
+			}
 			// no new reachable states
 		} while (!worklist.equals(oldWorklist));
 		
@@ -278,19 +279,19 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return false;
 	}
 	
-	public static void main(String[] args) throws AutomataLibraryException {
+	public static void main(final String[] args) throws AutomataLibraryException {
 	
-		HashSet<Integer> x = new HashSet<>();
+		final HashSet<Integer> x = new HashSet<>();
 		for (int i = 0; i < 15; ++i) {
 			x.add(i + 1);
 		}
-		DisjointSet<Integer> st = new DisjointSet<>(x);
+		final DisjointSet<Integer> st = new DisjointSet<>(x);
 
 		for (int i = 1; i < 15; i += 2) {
 			st.union(i, i + 2);
 		}
 		st.union(3, 1);
-		for (Iterator<Set<Integer>> it = st.getParitionsIterator(); it.hasNext();) {
+		for (final Iterator<Set<Integer>> it = st.getParitionsIterator(); it.hasNext();) {
 			System.out.println(it.next());
 		}
 		for (int i = 1; i <= 15; ++i) {
@@ -322,6 +323,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private final Map<T, T> repr;
 		private final Map<T, Set<T>> subsets;
 		
+		@Override
 		public String toString() {
 			String res = "Rep:";
 			for (final T s : repr.keySet()) {
@@ -349,7 +351,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			subsets = new HashMap<>();
 			for (final T x : elements) {
 				repr.put(x, x);
-				Set<T> sub = new HashSet<>();
+				final Set<T> sub = new HashSet<>();
 				sub.add(x);
 				subsets.put(x, sub);
 			}

@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -99,7 +100,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 	public AutomataMinimization(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<LETTER, IPredicate> operand, final Minimization minimization,
 			final boolean computeOldState2NewStateMapping, final int iteration,
-			final IStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
+			final IMergeStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
 			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final IStateFactory<IPredicate> resultCheckPredFac, final Function<LCSP, LCS> lcsProvider,
@@ -186,7 +187,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 
 	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
-			final IStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
+			final IMergeStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
 			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final PartitionBackedSetOfPairs<IPredicate> partition, final AutomataLibraryServices autServices,
@@ -285,7 +286,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
-						new ReduceNwaDirectFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
+						new ReduceNwaDirectFullMultipebbleSimulation<>(autServicesWithTimeout,
 								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			} catch (final AutomataOperationCanceledException aoce) {
 				// just catch and ignore the exception, probably only a local timeout
@@ -349,7 +350,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			MinimizationResult localResult = null;
 			try {
 				localResult = new MinimizationResult(true, true,
-						new ReduceNwaDelayedFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
+						new ReduceNwaDelayedFullMultipebbleSimulation<>(autServicesWithTimeout,
 								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			} catch (final AutomataOperationCanceledException aoce) {
 				// just catch and ignore the exception, probably only a local timeout

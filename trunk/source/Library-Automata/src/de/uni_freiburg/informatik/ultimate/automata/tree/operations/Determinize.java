@@ -11,6 +11,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -27,12 +28,12 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IStateFactory<STATE> stateFactory;
+	private final IMergeStateFactory<STATE> stateFactory;
 	private final Map<Set<STATE>, STATE> reducedStates;
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
-	public Determinize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public Determinize(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		reducedStates = new HashMap<>();
 		stateFactory = factory;
 		treeAutomaton = tree;
@@ -42,7 +43,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private STATE reduceState(final Set<STATE> key) {
 		if (!reducedStates.containsKey(key)) {
-			reducedStates.put(key, stateFactory.minimize(key));
+			reducedStates.put(key, stateFactory.merge(key));
 		}
 		return reducedStates.get(key);
 	}
@@ -65,7 +66,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
 		
-		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
+		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<>();
 		
 		/*
 		// Dummy rules
@@ -229,7 +230,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return false;
 	}
 
-	public static void main(String[] args) throws AutomataLibraryException {
+	public static void main(final String[] args) throws AutomataLibraryException {
 		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
 		
 		final String Q0 = "Q0", Q1 = "Q1", Q2 = "Q2", Q3 = "Q3";

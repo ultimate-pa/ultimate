@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  *
  */
-public class PredicateFactoryResultChecking implements IStateFactory<IPredicate> {
+public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
@@ -79,7 +79,7 @@ public class PredicateFactoryResultChecking implements IStateFactory<IPredicate>
 	}
 	
 	@Override
-	public IPredicate minimize(final Collection<IPredicate> states) {
+	public IPredicate merge(final Collection<IPredicate> states) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	

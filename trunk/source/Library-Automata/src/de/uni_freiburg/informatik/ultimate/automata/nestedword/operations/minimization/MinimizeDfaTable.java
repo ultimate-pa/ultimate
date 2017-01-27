@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * @author Markus Lindenmann
@@ -73,9 +74,9 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeDfaTable(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
-		super(services, operand.getStateFactory());
+	public MinimizeDfaTable(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		super(services, stateFactory);
 		mOperand = operand;
 		
 		assert !new HasUnreachableStates<>(mServices, operand)
@@ -255,7 +256,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 					}
 				}
 			}
-			final STATE minimizedStateName = mStateFactory.minimize(temp);
+			final STATE minimizedStateName = mStateFactory.merge(temp);
 			for (final STATE c : temp) {
 				oldSNames2newSNames.put(c, minimizedStateName);
 			}

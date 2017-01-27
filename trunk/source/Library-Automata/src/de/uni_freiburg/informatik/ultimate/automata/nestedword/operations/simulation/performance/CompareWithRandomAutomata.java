@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
@@ -73,15 +74,16 @@ public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOper
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public CompareWithRandomAutomata(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public CompareWithRandomAutomata(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mResult = operand;
 		mLogger.info(startMessage());
 
 		// Use operation with random automata
-		final IStateFactory<String> snf = new StringFactory();
+		final IMergeStateFactory<String> snf = new StringFactory();
 
 		final int n = 100;
 		final int k = 30;
@@ -104,7 +106,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOper
 			}
 
 			try {
-				new CompareReduceBuchiSimulation<String, String>(services, snf, buechi);
+				new CompareReduceBuchiSimulation<>(services, snf, buechi);
 			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}

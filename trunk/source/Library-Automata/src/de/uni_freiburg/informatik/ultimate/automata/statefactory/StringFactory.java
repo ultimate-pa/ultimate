@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class StringFactory implements IStateFactory<String> {
+public class StringFactory implements IMergeStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	public static final String INFINITY = "∞";
@@ -274,7 +274,7 @@ public class StringFactory implements IStateFactory<String> {
 	}
 
 	@Override
-	public String minimize(final Collection<String> states) {
+	public String merge(final Collection<String> states) {
 		if (states == null) {
 			return EMPTY_SET;
 		}

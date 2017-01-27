@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -118,7 +118,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 */
 	public MinimizeDfaHopcroftLists(
 			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
+			final IMergeStateFactory<STATE> stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -170,8 +170,8 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 *            Automaton to minimize
 	 */
 	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand, operand.getStateFactory(), null, false);
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
+		this(services, operand, stateFactory, null, false);
 	}
 	
 	@Override
@@ -220,7 +220,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 				allStates.add(mIdToState.get(blockIt.next()));
 			}
 			
-			final STATE newState = mStateFactory.minimize(allStates);
+			final STATE newState = mStateFactory.merge(allStates);
 			blockToNewState.put(blockId, newState);
 			addState(initialBlocks.contains(blockId),
 					mOperand.isFinal(representative), newState);

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -96,7 +97,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeDfaSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public MinimizeDfaSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DirectSimulation<>(services.getProgressAwareTimer(),
@@ -123,9 +124,9 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected MinimizeDfaSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
-					throws AutomataOperationCanceledException {
+	protected MinimizeDfaSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final DirectSimulation<LETTER, STATE> simulation) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
@@ -140,7 +141,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
 					mServices.getProgressAwareTimer(), mLogger, mOperand, stateFactory);
 			graph.generateGameGraphFromAutomaton();
-			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<LETTER, STATE>(
+			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<>(
 					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
 			final INestedWordAutomatonSimple<LETTER, STATE> sccResult = sccSim.getResult();

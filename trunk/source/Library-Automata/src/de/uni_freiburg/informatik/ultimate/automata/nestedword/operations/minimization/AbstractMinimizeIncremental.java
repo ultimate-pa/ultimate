@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * This is the superclass of all incremental minimization classes.
@@ -65,7 +65,7 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 	 *            interrupt
 	 */
 	protected AbstractMinimizeIncremental(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
 		super(services, stateFactory);
 		mOperand = operand;

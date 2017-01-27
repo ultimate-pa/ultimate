@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -678,7 +678,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			areThereRemoveableTransitions = transitionsToRemove != null && !transitionsToRemove.isEmpty();
 		}
 
-		final IStateFactory<STATE> stateFactory = mNwa.getStateFactory();
+		// TODO Christian 2017-01-27 somehow need a state factory here
+		final IMergeStateFactory<STATE> stateFactory = (IMergeStateFactory<STATE>) mNwa.getStateFactory();
 		INestedWordAutomaton<LETTER, STATE> result = null;
 
 		// Merge states

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -78,8 +78,9 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, createAtsInitialPairs(services, operand), new Settings<>());
 	}
 	
@@ -99,9 +100,10 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Iterable<Pair<STATE, STATE>> initialPairs,
-			final Settings<STATE> settings) throws AutomataOperationCanceledException {
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final Iterable<Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings);
 	}
 	
@@ -121,13 +123,13 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs);
 		mEmptyStackState = mOperand.getEmptyStackState();
-
+		
 		printStartMessage();
 		
 		run();

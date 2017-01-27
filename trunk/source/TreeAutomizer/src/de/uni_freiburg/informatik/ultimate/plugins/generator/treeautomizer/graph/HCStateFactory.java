@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
-public class HCStateFactory implements IStateFactory<HCPredicate> {
+public class HCStateFactory implements IMergeStateFactory<HCPredicate> {
 
 	// final protected boolean mComputeHoareAnnotation;
 	// final protected TAPreferences mPref;
@@ -78,7 +78,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 
 
 
-	private HCPredicate reduceFormula(final HCPredicate[] preds, boolean andOp) {
+	private HCPredicate reduceFormula(final HCPredicate[] preds, final boolean andOp) {
 		// TODO: Check hashing of TermVariable and HCVar.
 	
 		final Set<IProgramVar> progVars = new HashSet<>();
@@ -106,7 +106,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 			predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), predHash, p, p.mProgramPoint);
 		}
 		final Term formula = mSimplifier.getSimplifiedTerm(
-				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) : 
+				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) :
 					Util.or(mBackendSmtSolverScript.getScript(), terms));
 		
 		final Set<String> prodVars = new HashSet<>();
@@ -132,7 +132,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 	}
 
 	@Override
-	public HCPredicate minimize(final Collection<HCPredicate> states) {
+	public HCPredicate merge(final Collection<HCPredicate> states) {
 		return reduceFormula(states.toArray(new HCPredicate[]{}), false);
 	}
 
@@ -140,13 +140,13 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 		mBackendSmtSolverScript.lock(this);
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
-				if (!pf.getTransformula().getInVars().containsKey((HCVar) v)) {
+				if (!pf.getTransformula().getInVars().containsKey(v)) {
 					return false;
 				}
 			}
 		}
 		for (final IProgramVar v : dest.getVars()) {
-			if (!pf.getTransformula().getOutVars().containsKey((HCVar) v)) {
+			if (!pf.getTransformula().getOutVars().containsKey(v)) {
 				return false;
 			}
 		}
@@ -156,7 +156,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 		for (int i = 0; i < src.size(); ++i) {
 			final Map<Term, Term> substMap = new HashMap<>();
 			for (final IProgramVar v : src.get(i).getVars()) {
-				substMap.put(v.getTermVariable(), pf.getTransformula().getInVars().get((HCVar) v));
+				substMap.put(v.getTermVariable(), pf.getTransformula().getInVars().get(v));
 			}
 			final Substitution subst = new Substitution(mBackendSmtSolverScript, substMap);
 			terms[i] = subst.transform(src.get(i).getFormula());
@@ -164,7 +164,7 @@ public class HCStateFactory implements IStateFactory<HCPredicate> {
 		}
 		final Map<Term, Term> substMap = new HashMap<>();
 		for (final IProgramVar v : dest.getVars()) {
-			substMap.put(v.getTermVariable(), pf.getTransformula().getOutVars().get((HCVar) v));
+			substMap.put(v.getTermVariable(), pf.getTransformula().getOutVars().get(v));
 		}
 		//System.err.println(dest.getFormula() + " " + substMap);
 		//System.err.println(pf);

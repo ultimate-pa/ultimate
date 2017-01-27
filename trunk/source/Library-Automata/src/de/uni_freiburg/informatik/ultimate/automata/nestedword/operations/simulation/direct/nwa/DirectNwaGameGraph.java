@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -106,7 +106,7 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 			final IProgressAwareTimer progressTimer,
 			final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> nwa,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final Iterable<Set<STATE>> possibleEquivalenceClasses)
 					throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
@@ -116,9 +116,9 @@ public final class DirectNwaGameGraph<LETTER, STATE> extends DirectGameGraph<LET
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
 			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
-			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
+			mNwa = new RemoveUnreachable<>(services, preparedNwa).getResult();
 		}
-		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
+		mGeneration = new NwaGameGraphGeneration<>(services, getProgressTimer(), getLogger(), mNwa, this,
 				ESimulationType.DIRECT, possibleEquivalenceClasses, true);
 	}
 

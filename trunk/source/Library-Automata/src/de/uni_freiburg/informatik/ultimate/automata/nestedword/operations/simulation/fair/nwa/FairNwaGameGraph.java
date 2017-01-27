@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.nwa;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SummarizeEdge;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -107,7 +107,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			final IProgressAwareTimer progressTimer,
 			final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> nwa,
-			final IStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> possibleEquivalenceClasses)
 					throws AutomataOperationCanceledException {
 		super(services, progressTimer, logger, nwa, stateFactory);
@@ -117,9 +117,9 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 		if (preparedNwa instanceof IDoubleDeckerAutomaton<?, ?>) {
 			mNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) preparedNwa;
 		} else {
-			mNwa = new RemoveUnreachable<LETTER, STATE>(services, preparedNwa).getResult();
+			mNwa = new RemoveUnreachable<>(services, preparedNwa).getResult();
 		}
-		mGeneration = new NwaGameGraphGeneration<LETTER, STATE>(services, getProgressTimer(), getLogger(), mNwa, this,
+		mGeneration = new NwaGameGraphGeneration<>(services, getProgressTimer(), getLogger(), mNwa, this,
 				ESimulationType.FAIR, possibleEquivalenceClasses, true);
 	}
 
