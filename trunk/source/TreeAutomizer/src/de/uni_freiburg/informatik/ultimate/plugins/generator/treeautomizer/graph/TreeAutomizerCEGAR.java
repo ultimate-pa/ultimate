@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
@@ -160,7 +161,7 @@ public class TreeAutomizerCEGAR {// implements
 		for (final HornClause clause : hornClauses) {
 			final List<HCPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getTailPredicates()) {
-				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym, this));
+				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
 			if (tail.isEmpty()) {
 				tail.add(mInitialPredicate);
@@ -170,7 +171,7 @@ public class TreeAutomizerCEGAR {// implements
 						tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<HornClause, HCPredicate>(clause,
-						tail, mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate(), this)));
+						tail, mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate())));
 			}
 		}
 
@@ -237,6 +238,24 @@ public class TreeAutomizerCEGAR {// implements
 		// .getAutomaton();
 
 		((TreeAutomatonBU<HornClause, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
+		
+//		assert allRulesAreInductive(mInterpolAutomaton); //TODO comment this assertion back in
+	}
+
+	/**
+	 * Checks if all rules in the given (interpolant-)automaton correspond to a valid Hoare triple.
+	 * 
+	 * @param automaton
+	 * @return
+	 */
+	private boolean allRulesAreInductive(ITreeAutomatonBU<HornClause, HCPredicate> automaton) {
+		for (TreeAutomatonRule<HornClause, HCPredicate> rule : automaton.getRules()) {
+			Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
+			if (validity != Validity.VALID) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void generalizeCounterExample(final TreeAutomatonBU<HornClause, HCPredicate> cExample) {
@@ -245,6 +264,7 @@ public class TreeAutomizerCEGAR {// implements
 		for (final TreeAutomatonRule<HornClause, HCPredicate> r : cExample.getRules()) {
 			for (final HCPredicate pf : cExample.getStates()) {
 				if (mStateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf)) {
+//				if (mHoareTripleChecker.check(r.getSource(), r.getLetter(), pf) == Validity.VALID) { //TODO: use this line instead of the above one
 					if (!printed) {
 						mLogger.debug("Generalizing counterExample:");
 						printed = true;
@@ -266,7 +286,7 @@ public class TreeAutomizerCEGAR {// implements
 				mStateFactory, mInterpolAutomaton)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
-		//generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
+//		generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
 
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Intersect<HornClause, HCPredicate>(
 				mStateFactory, mAbstraction, cExample)).getResult();
@@ -292,7 +312,6 @@ public class TreeAutomizerCEGAR {// implements
 	}
 
 	public Result iterate() throws AutomataLibraryException {
-		mBackendSmtSolverScript.lock(this);
 		getInitialAbstraction();
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
@@ -301,10 +320,10 @@ public class TreeAutomizerCEGAR {// implements
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			if (isAbstractionCorrect()) {
 				mLogger.info("The program is safe.");
-				mBackendSmtSolverScript.unlock(this);
 				return Result.SAFE;
 			}
 
+			mBackendSmtSolverScript.lock(this);
 			mBackendSmtSolverScript.push(this, 1);
 			mBackendSmtSolverScript.unlock(this);
 			if (getCounterexampleFeasibility() == LBool.SAT) {
@@ -324,6 +343,7 @@ public class TreeAutomizerCEGAR {// implements
 
 			mBackendSmtSolverScript.lock(this);
 			mBackendSmtSolverScript.pop(this, 1);
+			mBackendSmtSolverScript.unlock(this);
 
 			mLogger.debug("Refining abstract model...");
 			refineAbstraction();
