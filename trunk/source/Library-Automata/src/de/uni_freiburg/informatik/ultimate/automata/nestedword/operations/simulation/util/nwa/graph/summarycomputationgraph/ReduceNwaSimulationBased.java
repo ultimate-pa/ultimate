@@ -46,9 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.HashRelationBackedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.IBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.NestedMapBackedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
@@ -57,6 +54,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -203,7 +203,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IBinaryRelation<STATE, ?> simulationRelation) {
+			final ISetOfPairs<STATE, ?> simulationRelation) {
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			if (isAuxiliaryVertex(spoilerVertex)) {
 				continue;
@@ -227,7 +227,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	private UnionFind<STATE> simulationToEquivalenceRelation(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
-		final HashRelationBackedBinaryRelation<STATE> simRelation = new HashRelationBackedBinaryRelation<>();
+		final HashRelationBackedSetOfPairs<STATE> simRelation = new HashRelationBackedSetOfPairs<>();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		return computeEquivalenceRelation(simRelation.getRelation(), operand.getStates());
 	}
@@ -263,7 +263,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) throws AutomataOperationCanceledException {
-		final NestedMapBackedBinaryRelation<STATE> simRelation = new NestedMapBackedBinaryRelation<>();
+		final NestedMapBackedSetOfPairs<STATE> simRelation = new NestedMapBackedSetOfPairs<>();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 		
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,34 +24,74 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
+package de.uni_freiburg.informatik.ultimate.automata.util;
+
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * {@link HashRelation} implementation of a binary relation.
+ * {@link HashRelation} implementation of a set of pairs.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
  */
-public class HashRelationBackedBinaryRelation<E> implements IBinaryRelation<E, HashRelation<E, E>> {
+public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelation<E, E>> {
 	private final HashRelation<E, E> mRelation;
 	
 	/**
 	 * Constructor.
 	 */
-	public HashRelationBackedBinaryRelation() {
+	public HashRelationBackedSetOfPairs() {
 		mRelation = new HashRelation<>();
 	}
 	
 	@Override
-	public void addPair(final E elem1, final E elem2) {
-		mRelation.addPair(elem1, elem2);
+	public Iterator<Pair<E, E>> iterator() {
+		return new IteratorFromHashRelation<>(mRelation);
+	}
+	
+	@Override
+	public void addPair(final E lhs, final E rhs) {
+		mRelation.addPair(lhs, rhs);
+	}
+	
+	@Override
+	public boolean containsPair(final E lhs, final E rhs) {
+		return mRelation.containsPair(lhs, rhs);
 	}
 	
 	@Override
 	public HashRelation<E, E> getRelation() {
 		return mRelation;
+	}
+	
+	/**
+	 * Iterator wrapper.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <E>
+	 *            element type
+	 */
+	private static final class IteratorFromHashRelation<E> implements Iterator<Pair<E, E>> {
+		private final Iterator<Entry<E, E>> mIt;
+		
+		public IteratorFromHashRelation(final HashRelation<E, E> hashRelation) {
+			mIt = hashRelation.entrySet().iterator();
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return mIt.hasNext();
+		}
+		
+		@Override
+		public Pair<E, E> next() {
+			final Entry<E, E> next = mIt.next();
+			return new Pair<>(next.getKey(), next.getValue());
+		}
 	}
 }

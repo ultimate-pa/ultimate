@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,35 +24,42 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
+package de.uni_freiburg.informatik.ultimate.automata.util;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * {@link NestedMap2} implementation of a binary relation.
+ * General data structure interface to represent sets of pairs, i.e., binary relations.
+ * <p>
+ * The interface abstracts from the data structure that is used in the background, but also allows to return the data
+ * structure for efficient use.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
+ * @param <T>
+ *            data structure type
  */
-public class NestedMapBackedBinaryRelation<E> implements IBinaryRelation<E, NestedMap2<E, E, Pair<E, E>>> {
-	private final NestedMap2<E, E, Pair<E, E>> mRelation;
+public interface ISetOfPairs<E, T> extends Iterable<Pair<E, E>> {
+	/**
+	 * @param lhs
+	 *            Left-hand side entry.
+	 * @param rhs
+	 *            right-hand side entry
+	 */
+	void addPair(E lhs, E rhs);
 	
 	/**
-	 * Constructor.
+	 * @param lhs
+	 *            Lhs element.
+	 * @param rhs
+	 *            rhs element
+	 * @return {@code true} iff the pair (lhs, rhs) is contained in the set of pairs.
 	 */
-	public NestedMapBackedBinaryRelation() {
-		mRelation = new NestedMap2<>();
-	}
+	boolean containsPair(E lhs, E rhs);
 	
-	@Override
-	public void addPair(final E elem1, final E elem2) {
-		mRelation.put(elem1, elem2, new Pair<>(elem1, elem2));
-	}
-	
-	@Override
-	public NestedMap2<E, E, Pair<E, E>> getRelation() {
-		return mRelation;
-	}
+	/**
+	 * @return The data structure implementing the relation.
+	 */
+	T getRelation();
 }

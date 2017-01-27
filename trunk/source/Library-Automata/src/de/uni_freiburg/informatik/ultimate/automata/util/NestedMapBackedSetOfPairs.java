@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,28 +24,47 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
+package de.uni_freiburg.informatik.ultimate.automata.util;
+
+import java.util.Iterator;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * General data structure interface to represent binary relations (sets of pairs).
+ * {@link NestedMap2} implementation of a set of pairs.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
- * @param <T>
- *            data structure type
  */
-public interface IBinaryRelation<E, T> {
-	/**
-	 * @param lhs
-	 *            Left-hand side entry.
-	 * @param rhs
-	 *            right-hand side entry
-	 */
-	void addPair(E lhs, E rhs);
+public class NestedMapBackedSetOfPairs<E> implements ISetOfPairs<E, NestedMap2<E, E, Pair<E, E>>> {
+	private final NestedMap2<E, E, Pair<E, E>> mRelation;
 	
 	/**
-	 * @return The data structure implementing the relation.
+	 * Constructor.
 	 */
-	T getRelation();
+	public NestedMapBackedSetOfPairs() {
+		mRelation = new NestedMap2<>();
+	}
+	
+	@Override
+	public Iterator<Pair<E, E>> iterator() {
+		return mRelation.keys2().iterator();
+	}
+	
+	@Override
+	public void addPair(final E lhs, final E rhs) {
+		mRelation.put(lhs, rhs, new Pair<>(lhs, rhs));
+	}
+	
+	@Override
+	public boolean containsPair(final E lhs, final E rhs) {
+		return mRelation.get(lhs).containsKey(rhs);
+	}
+	
+	@Override
+	public NestedMap2<E, E, Pair<E, E>> getRelation() {
+		return mRelation;
+	}
 }
