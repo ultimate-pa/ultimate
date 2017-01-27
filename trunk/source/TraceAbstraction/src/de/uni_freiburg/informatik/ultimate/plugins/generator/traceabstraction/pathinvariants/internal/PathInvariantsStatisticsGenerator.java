@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvider {
 	private int mNumOfLocations = 0;
+	private int mNumOfLocsInUnsatCore = 0;
 	private int mSizeOfBiggestTemplate = 0;
 	private int mSumOfTemplateConjuncts = 0;
 //	private Set<List<IcfgLocation>> mTransitionsInUnsatCore = new HashSet<>();
@@ -41,6 +42,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		case SumOfTemplateConjuncts: return mSumOfTemplateConjuncts;
 		case MaxSizeOfTemplate: return mSizeOfBiggestTemplate;
 		case LocsInUnsatCore: return mLocsInUnsatCore;
+		case SumOfLocsInUnsatCore: return mNumOfLocsInUnsatCore;
 		default:
 			throw new AssertionError("unknown key");
 		}
@@ -56,6 +58,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 //	}
 	public void setLocsInUnsatCore(Set<IcfgLocation> locsInUnsatCore) {
 		mLocsInUnsatCore = locsInUnsatCore;
+		mNumOfLocsInUnsatCore += locsInUnsatCore.size();
 	}
 	
 
