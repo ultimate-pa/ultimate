@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -34,21 +34,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Handles assignable tests for type checks. It is mainly used in the type checker
- * for automatascript test files. 
+ * Handles assignable tests for type checks. It is mainly used in the type checker for automatascript test files.
+ * 
  * @author musab@informatik.uni-freiburg.de
- *
  */
 public class AssignableTest {
-	/** 
+	/**
 	 * A map from primitive types to reference types.
 	 * e.g. (int -> Integer)
 	 */
 	private static Map<Class<?>, Class<?>> sPrimitiveToClassTypes;
 	
+	/**
+	 * Initializes primitive types.
+	 */
 	public static void initPrimitiveTypes() {
-		sPrimitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
-		/* 
+		sPrimitiveToClassTypes = new HashMap<>();
+		/*
 		 * In automata script test files, currently only two primitive types
 		 * are in use, namely int and boolean.
 		 */
@@ -56,16 +58,18 @@ public class AssignableTest {
 		sPrimitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
-	
 	/**
 	 * Performs an assignable test on two types. Can also handle
-	 * primitive types. 
-	 * @param left the type of the operand on the left-side of the assignment
-	 * @param right the type of the operand on the right-side of the assignment
-	 * @return true if and only if the right operand is equal to or a sub-type 
-	 * of the left operand, otherwise false.
+	 * primitive types.
+	 * 
+	 * @param left
+	 *            the type of the operand on the left-side of the assignment
+	 * @param right
+	 *            the type of the operand on the right-side of the assignment
+	 * @return true if and only if the right operand is equal to or a sub-type
+	 *         of the left operand, otherwise false.
 	 */
-	public static boolean isAssignableFrom(Class<?> left, Class<?> right) {
+	public static boolean isAssignableFrom(final Class<?> left, final Class<?> right) {
 		Class<?> leftWithoutPrimitive = left;
 		Class<?> rightWithoutPrimitive = right;
 		boolean result;
@@ -78,7 +82,7 @@ public class AssignableTest {
 		if (leftWithoutPrimitive != null && rightWithoutPrimitive != null) {
 			result = leftWithoutPrimitive.isAssignableFrom(rightWithoutPrimitive);
 		} else {
-			result = false; 
+			result = false;
 		}
 		return result;
 	}

@@ -230,10 +230,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	
 	private void readPreferences() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
-		mPath = prefs.getString(PreferenceInitializer.Name_Path);
-		mIgnoreOperationsAndExecuteCommandInstead = prefs.getBoolean(PreferenceInitializer.Name_ExecuteCommandFlag);
-		mCommandToExecute = prefs.getString(PreferenceInitializer.Name_ExecuteCommandString);
+		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.NAME_WRITE_TO_FILE);
+		mPath = prefs.getString(PreferenceInitializer.NAME_PATH);
+		mIgnoreOperationsAndExecuteCommandInstead = prefs.getBoolean(PreferenceInitializer.NAME_EXECUTE_COMMAND_FLAG);
+		mCommandToExecute = prefs.getString(PreferenceInitializer.NAME_EXECUTE_COMMAND_STRING);
 	}
 	
 	private static String getDateTime() {

@@ -35,19 +35,21 @@ import java.util.Set;
 
 /**
  * Create a list of all available operations.
- * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ListExistingOperations {
-	
 	private final Map<String, Set<Class<?>>> mExistingOperations;
-	private final List<String> mOperationList = new ArrayList<String>();
-
-	public ListExistingOperations(
-			final Map<String, Set<Class<?>>> existingOperations) {
+	private final List<String> mOperationList = new ArrayList<>();
+	
+	/**
+	 * @param existingOperations
+	 *            Existing operations (maps from string to class).
+	 */
+	public ListExistingOperations(final Map<String, Set<Class<?>>> existingOperations) {
 		mExistingOperations = existingOperations;
-		for (final String operation : mExistingOperations.keySet()) {
-			for (final Class<?> clazz : mExistingOperations.get(operation)) {
+		for (final Set<Class<?>> classes : mExistingOperations.values()) {
+			for (final Class<?> clazz : classes) {
 				for (final Constructor<?> constructor : clazz.getConstructors()) {
 					mOperationList.add(constructorStringRepresentation(constructor));
 				}
@@ -55,14 +57,13 @@ public class ListExistingOperations {
 		}
 	}
 	
-	
-	private String constructorStringRepresentation(final Constructor<?> constructor) {
+	private static String constructorStringRepresentation(final Constructor<?> constructor) {
 		final StringBuilder result = new StringBuilder();
 		result.append(constructor.getDeclaringClass().getSimpleName());
 		result.append("(");
-		for (int i=0; i<constructor.getParameterTypes().length; i++) {
+		for (int i = 0; i < constructor.getParameterTypes().length; i++) {
 			final Class<?> clazz = constructor.getParameterTypes()[i];
-			if (i!=0) {
+			if (i != 0) {
 				result.append(",");
 			}
 			result.append(clazz.getSimpleName());
@@ -72,17 +73,16 @@ public class ListExistingOperations {
 	}
 	
 	/**
-	 * Representation of available operations. One line for each operation.
+	 * @return Representation of available operations. One line for each operation.
 	 */
 	public String prettyPrint() {
 		final StringBuilder result = new StringBuilder();
 		final String[] sorted = mOperationList.toArray(new String[mOperationList.size()]);
 		Arrays.sort(sorted);
-		for(final String op : sorted) {
+		for (final String op : sorted) {
 			result.append(op);
 			result.append(System.getProperty("line.separator"));
 		}
 		return result.toString();
 	}
-
 }

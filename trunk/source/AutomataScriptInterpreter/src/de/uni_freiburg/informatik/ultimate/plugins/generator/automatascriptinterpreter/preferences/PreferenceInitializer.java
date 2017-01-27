@@ -42,20 +42,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
+	public static final String NAME_WRITE_TO_FILE = "Write results of print operation to file";
+	public static final boolean DEFAULT_WRITE_TO_FILE = false;
 	
-	public static final String Name_WriteToFile = "Write results of print operation to file";
-	public static final boolean Default_WriteToFile = false;
+	public static final String NAME_PATH = "Directory";
+	public static final String DEFAULT_PATH = ".";
 	
-	public static final String Name_Path = "Directory";
-	public static final String Default_Path = ".";
+	public static final String NAME_EXECUTE_COMMAND_FLAG = "Ignore all commands and only execute below command";
+	public static final boolean DEFAULT_EXECUTE_COMMAND_FLAG = false;
 	
-	public static final String Name_ExecuteCommandFlag = "Ignore all commands and only execute below command";
-	public static final boolean Default_ExecuteCommandFlag = false;
+	public static final String NAME_EXECUTE_COMMAND_STRING = "Command";
+	public static final String DEFAULT_EXECUTE_COMMAND_STRING = "print($1);";
 	
-	public static final String Name_ExecuteCommandString = "Command";
-	public static final String Default_ExecuteCommandString = "print($1);";
-	
-	
+	/**
+	 * Constructor.
+	 */
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -64,15 +65,13 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				// write automaton to file
-				new UltimatePreferenceItem<Boolean>(Name_WriteToFile,
-						Default_WriteToFile, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(Name_Path, Default_Path,
-						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(NAME_WRITE_TO_FILE, DEFAULT_WRITE_TO_FILE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(NAME_PATH, DEFAULT_PATH, PreferenceType.Directory),
 				
 				// execute command
-				new UltimatePreferenceItem<Boolean>(Name_ExecuteCommandFlag,
-						Default_ExecuteCommandFlag, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(Name_ExecuteCommandString, Default_ExecuteCommandString,
+				new UltimatePreferenceItem<>(NAME_EXECUTE_COMMAND_FLAG, DEFAULT_EXECUTE_COMMAND_FLAG,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(NAME_EXECUTE_COMMAND_STRING, DEFAULT_EXECUTE_COMMAND_STRING,
 						PreferenceType.String)
 		};
 	}

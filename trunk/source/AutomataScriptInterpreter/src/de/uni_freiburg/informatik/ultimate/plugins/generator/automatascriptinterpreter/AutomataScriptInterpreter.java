@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
@@ -41,53 +41,51 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
 
 /**
  * Main class of Plug-In AutomataScriptInterpreter
- * 
- * 
+ * <p>
  * TODO: refine comments
- * 
  */
 public class AutomataScriptInterpreter implements IGenerator {
-
+	
 	private AutomataScriptInterpreterObserver mObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public void init() {
 	}
-
+	
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
-
+	
 	@Override
 	public List<String> getDesiredToolIds() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mInputDefinition = graphType;
 	}
-
+	
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new AutomataScriptInterpreterObserver(mServices);
 		return Collections.singletonList((IObserver) mObserver);
 	}
-
+	
 	@Override
 	public ModelType getOutputDefinition() {
 		/*
@@ -96,36 +94,34 @@ public class AutomataScriptInterpreter implements IGenerator {
 		 */
 		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
-
+	
 	@Override
 	public IElement getModel() {
 		return mObserver.getUltimateModelOfLastPrintedAutomaton();
 	}
-
+	
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
-
+	
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-
+	public void setToolchainStorage(final IToolchainStorage services) {
+		
 	}
-
+	
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-
+	
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
 	}
-
 }

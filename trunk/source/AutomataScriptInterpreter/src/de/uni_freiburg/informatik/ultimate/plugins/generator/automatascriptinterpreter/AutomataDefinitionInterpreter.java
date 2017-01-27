@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -70,19 +70,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
 
 /**
+ * Responsible for interpretation of automata definitions.
  * 
  * @author musab@informatik.uni-freiburg.de
- * 
- * Responsible for interpretation of automata definitions.
- *
  */
 public class AutomataDefinitionInterpreter {
+	private static final String UNDEFINED_PLACE = "undefined place: ";
+	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+	private static final String EXCEPTION_THROWN = "Exception thrown";
 	
 	/**
-	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the automata
-	 * definitions an entry. 
+	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the
+	 * automata
+	 * definitions an entry.
 	 */
-	private final Map<String,Object> mAutomata;
+	private final Map<String, Object> mAutomata;
 	/**
 	 * Contains the location of current interpreting automaton.
 	 */
@@ -91,102 +93,94 @@ public class AutomataDefinitionInterpreter {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	public AutomataDefinitionInterpreter(IMessagePrinter printer, ILogger logger, IUltimateServiceProvider services) {
-		mAutomata = new HashMap<String, Object>();
+	/**
+	 * @param printer
+	 *            Message printer.
+	 * @param logger
+	 *            logger
+	 * @param services
+	 *            Ultimate services
+	 */
+	public AutomataDefinitionInterpreter(final IMessagePrinter printer, final ILogger logger,
+			final IUltimateServiceProvider services) {
+		mAutomata = new HashMap<>();
 		mMessagePrinter = printer;
 		mLogger = logger;
 		mServices = services;
 	}
 	
 	/**
-	 * 
-	 * @param automata the definitions of automata
+	 * @param automata
+	 *            The automata definitions.
 	 */
-	public void interpret(AutomataDefinitionsAST automata) {
+	public void interpret(final AutomataDefinitionsAST automata) {
 		final List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();
 		for (final AtsASTNode n : children) {
-			if (n instanceof NestedwordAutomatonAST) {
-				try {
+			try {
+				if (n instanceof NestedwordAutomatonAST) {
 					interpret((NestedwordAutomatonAST) n);
-				} catch (final Exception e) {
-					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(),
-							"Exception thrown", n);
-				}
-
-			} else if (n instanceof PetriNetAutomatonAST) {
-				try {
+				} else if (n instanceof PetriNetAutomatonAST) {
 					interpret((PetriNetAutomatonAST) n);
-				} catch (final Exception e) {
-					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n);
-				}
-			} else if (n instanceof AlternatingAutomatonAST){
-				try {
+				} else if (n instanceof AlternatingAutomatonAST) {
 					interpret((AlternatingAutomatonAST) n);
-				} catch (final Exception e) {
-					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n);
-				}
-			} else if (n instanceof TreeAutomatonAST){
-				try {
+				} else if (n instanceof TreeAutomatonAST) {
 					interpret((TreeAutomatonAST) n);
-				} catch (final Exception e) {
-					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n);
-				}
-			} else if (n instanceof TreeAutomatonRankedAST){
-				try {
+				} else if (n instanceof TreeAutomatonRankedAST) {
 					interpret((TreeAutomatonRankedAST) n);
-				} catch (final Exception e) {
-					mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown", n);
 				}
+			} catch (final Exception e) {
+				mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG,
+						e.getMessage() + LINE_SEPARATOR + e.getStackTrace(), EXCEPTION_THROWN, n);
 			}
-
 		}
-		
 	}
 	
-	public void interpret(AlternatingAutomatonAST astNode) throws IllegalArgumentException{
+	/**
+	 * @param astNode
+	 *            AST node.
+	 */
+	public void interpret(final AlternatingAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
-		final HashSet<String> alphabet = new HashSet<String>(astNode.getAlphabet());
-		final AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<String, String>(alphabet, new StringFactory());
+		final HashSet<String> alphabet = new HashSet<>(astNode.getAlphabet());
+		final AlternatingAutomaton<String, String> alternatingAutomaton =
+				new AlternatingAutomaton<>(alphabet, new StringFactory());
 		//States
 		final List<String> states = astNode.getStates();
 		final List<String> finalStates = astNode.getFinalStates();
-		for(final String state : states){
+		for (final String state : states) {
 			alternatingAutomaton.addState(state);
-			if(finalStates.contains(state)){
+			if (finalStates.contains(state)) {
 				alternatingAutomaton.setStateFinal(state);
 			}
 		}
 		//Transitions
-		for(final Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()){
+		for (final Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()) {
 			final String expression = entry.getValue().iterator().next();
-			final LinkedList<BooleanExpression> booleanExpressions = parseBooleanExpressions(alternatingAutomaton, expression);
-			for(final BooleanExpression booleanExpression : booleanExpressions){
+			final LinkedList<BooleanExpression> booleanExpressions =
+					parseBooleanExpressions(alternatingAutomaton, expression);
+			for (final BooleanExpression booleanExpression : booleanExpressions) {
 				alternatingAutomaton.addTransition(entry.getKey().right, entry.getKey().left, booleanExpression);
 			}
 		}
 		//Accepting Function
-		final LinkedList<BooleanExpression> acceptingBooleanExpressions = parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
-		for(final BooleanExpression booleanExpression : acceptingBooleanExpressions){
+		final LinkedList<BooleanExpression> acceptingBooleanExpressions =
+				parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
+		for (final BooleanExpression booleanExpression : acceptingBooleanExpressions) {
 			alternatingAutomaton.addAcceptingConjunction(booleanExpression);
 		}
 		alternatingAutomaton.setReversed(astNode.isReversed());
 		mAutomata.put(astNode.getName(), alternatingAutomaton);
 	}
-
-	public void interpret(TreeAutomatonAST astNode) throws IllegalArgumentException{
+	
+	/**
+	 * @param astNode
+	 *            AST node.
+	 */
+	public void interpret(final TreeAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		
 		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
-
+		
 		for (final String ltr : astNode.getAlphabet()) {
 			treeAutomaton.addLetter(ltr);
 		}
@@ -194,43 +188,47 @@ public class AutomataDefinitionInterpreter {
 		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
 		}
-
+		
 		for (final String is : astNode.getInitialStates()) {
 			treeAutomaton.addInitialState(is);
 		}
-
+		
 		for (final String fs : astNode.getFinalStates()) {
 			treeAutomaton.addFinalState(fs);
 		}
 		
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
-			if (trans.getSourceStates().size() == 0) {
+			if (trans.getSourceStates().isEmpty()) {
 				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
 						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
 						+ "rules where the source state list is empty");
-			} else {
-				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
 			}
+			treeAutomaton.addRule(
+					new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);
 	}
-
-	public void interpret(TreeAutomatonRankedAST astNode) throws IllegalArgumentException{
+	
+	/**
+	 * @param astNode
+	 *            AST node.
+	 */
+	public void interpret(final TreeAutomatonRankedAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		
 		final TreeAutomatonBU<String, String> treeAutomaton = new TreeAutomatonBU<>();
 		final String nullaryString = "elim0arySymbol_";
-
+		
 		final List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
 		for (final RankedAlphabetEntryAST rae : ra) {
 			for (final String ltr : rae.getAlphabet()) {
 				treeAutomaton.addLetter(ltr);
 				if (Integer.parseInt(rae.getRank()) == 0) {
-					// our tree automata don't have 0-ary symbols right now 
+					// our tree automata don't have 0-ary symbols right now
 					// (they use 1-ary, initial states, and adapted rules instead)
 					// this converts 0-ary symbols accordingly
 					final String inState = nullaryString + ltr;
-					treeAutomaton.addState(inState); 
+					treeAutomaton.addState(inState);
 					treeAutomaton.addInitialState(inState);
 				}
 			}
@@ -245,112 +243,67 @@ public class AutomataDefinitionInterpreter {
 		}
 		
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
-			if (trans.getSourceStates().size() == 0) {
-				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), 
-						Collections.singletonList(nullaryString + trans.getSymbol()), 
-						trans.getTargetState()));
+			if (trans.getSourceStates().isEmpty()) {
+				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(),
+						Collections.singletonList(nullaryString + trans.getSymbol()), trans.getTargetState()));
 			} else {
-				treeAutomaton.addRule(new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
+				treeAutomaton.addRule(
+						new TreeAutomatonRule<>(trans.getSymbol(), trans.getSourceStates(), trans.getTargetState()));
 			}
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);
 	}
-
-	private static LinkedList<BooleanExpression> parseBooleanExpressions(AlternatingAutomaton<String, String> alternatingAutomaton, String expression){
-		final LinkedList<BooleanExpression> booleanExpressions = new LinkedList<BooleanExpression>();
-		if(expression.equals("true")){
-			booleanExpressions.add(new BooleanExpression(new BitSet(), new BitSet()));
-		}
-		else if(expression.equals("false")){
-			//Not supported yet
-		}
-		else{
-			final String[] disjunctiveExpressions = expression.split("\\|");
-			for(final String disjunctiveExpression : disjunctiveExpressions){
-				final String[] stateExpressions = disjunctiveExpression.split("&");
-				final LinkedList<String> resultStates = new LinkedList<String>();
-				final LinkedList<String> negatedResultStates = new LinkedList<String>();
-				for(final String stateExpression : stateExpressions){
-					if(stateExpression.startsWith("~")){
-						negatedResultStates.add(stateExpression.substring(1));
-					}
-					else{
-						resultStates.add(stateExpression);
-					}
-				}
-				final BooleanExpression booleanExpression = alternatingAutomaton.generateCube(
-						resultStates.toArray(new String[resultStates.size()]), 
-						negatedResultStates.toArray(new String[negatedResultStates.size()]));
-				booleanExpressions.add(booleanExpression);
-			}
-		}
-		return booleanExpressions;
-	}
 	
-	public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentException {
+	/**
+	 * @param nwa
+	 *            AST node.
+	 */
+	public void interpret(final NestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
-		final Set<String> internalAlphabet = new HashSet<String>(nwa.getInternalAlphabet());
-		final Set<String> callAlphabet = new HashSet<String>(nwa.getCallAlphabet());
-		final Set<String> returnAlphabet = new HashSet<String>(nwa.getReturnAlphabet());
 		
-		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
-				new AutomataLibraryServices(mServices),
-				Collections.unmodifiableSet(internalAlphabet), 
-				Collections.unmodifiableSet(callAlphabet), 
-				Collections.unmodifiableSet(returnAlphabet), 
-				new StringFactory());
-		
-		/*
-		 * Now add the states to the NestedWordAutomaton 
-		 */
-		final List<String> initStates = nwa.getInitialStates();
-		final List<String> finalStates = nwa.getFinalStates();
-		
+		// check that the initial/final states exist
 		final Set<String> allStates = new HashSet<>(nwa.getStates());
+		final List<String> initStates = nwa.getInitialStates();
 		for (final String init : initStates) {
 			if (!allStates.contains(init)) {
 				throw new IllegalArgumentException("Initial state " + init + " not in set of states");
 			}
 		}
+		final List<String> finalStates = nwa.getFinalStates();
 		for (final String fin : finalStates) {
 			if (!allStates.contains(fin)) {
 				throw new IllegalArgumentException("Final state " + fin + " not in set of states");
 			}
 		}
-
 		
-		for (final String state : nwa.getStates()) {
-			if (initStates.contains(state)) {
-				if (finalStates.contains(state)) {
-					nw.addState(true, true, state);
-				} else {
-					nw.addState(true, false, state);
-				}
-			} else if (finalStates.contains(state)) {
-				nw.addState(false, true, state);
-			} else {
-				nw.addState(false, false, state);
-			}
+		// create automaton
+		final Set<String> internalAlphabet = new HashSet<>(nwa.getInternalAlphabet());
+		final Set<String> callAlphabet = new HashSet<>(nwa.getCallAlphabet());
+		final Set<String> returnAlphabet = new HashSet<>(nwa.getReturnAlphabet());
+		
+		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
+				Collections.unmodifiableSet(internalAlphabet), Collections.unmodifiableSet(callAlphabet),
+				Collections.unmodifiableSet(returnAlphabet), new StringFactory());
+		
+		// add the states
+		for (final String state : allStates) {
+			nw.addState(initStates.contains(state), finalStates.contains(state), state);
 		}
 		
-		
-		/*
-		 * Now add the transitions to the NestedWordAutomaton
-		 */
+		// add the transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getInternalTransitions().entrySet()) {
 			for (final String succ : entry.getValue()) {
 				nw.addInternalTransition(entry.getKey().left, entry.getKey().right, succ);
 			}
-			
 		}
 		
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getCallTransitions().entrySet()) {
-			for (final String succ : entry.getValue()) { 
+			for (final String succ : entry.getValue()) {
 				nw.addCallTransition(entry.getKey().left, entry.getKey().right, succ);
 			}
 		}
 		
-		for ( final String linPred  : nwa.getReturnTransitions().keySet()) {
+		for (final String linPred : nwa.getReturnTransitions().keySet()) {
 			for (final String hierPred : nwa.getReturnTransitions().get(linPred).keySet()) {
 				for (final String letter : nwa.getReturnTransitions().get(linPred).get(hierPred).keySet()) {
 					for (final String succ : nwa.getReturnTransitions().get(linPred).get(hierPred).get(letter)) {
@@ -359,54 +312,82 @@ public class AutomataDefinitionInterpreter {
 				}
 			}
 		}
-		mAutomata.put(nwa.getName(), nw);
 		
+		mAutomata.put(nwa.getName(), nw);
 	}
 	
-	public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException {
+	/**
+	 * @param pna
+	 *            AST node.
+	 */
+	public void interpret(final PetriNetAutomatonAST pna) {
 		mErrorLocation = pna.getLocation();
-		final PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
-				new AutomataLibraryServices(mServices),
-				new HashSet<String>(pna.getAlphabet()), 
-				new StringFactory(), false);
-		final Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();
-		// Add the places
+		final PetriNetJulian<String, String> net = new PetriNetJulian<>(new AutomataLibraryServices(mServices),
+				new HashSet<>(pna.getAlphabet()), new StringFactory(), false);
+		final Map<String, Place<String, String>> name2places = new HashMap<>();
+		
+		// add the places
 		for (final String p : pna.getPlaces()) {
-			final Place<String, String> place = net.addPlace(p, 
-					pna.getInitialMarkings().containsPlace(p), 
-					pna.getAcceptingPlaces().contains(p));
+			final Place<String, String> place =
+					net.addPlace(p, pna.getInitialMarkings().containsPlace(p), pna.getAcceptingPlaces().contains(p));
 			name2places.put(p, place);
 		}
-
-
-		// Add the transitions
+		
+		// add the transitions
 		for (final PetriNetTransitionAST ptrans : pna.getTransitions()) {
-			final Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
-			final Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
+			final Collection<Place<String, String>> preds = new ArrayList<>();
 			for (final String pred : ptrans.getPreds()) {
 				if (!name2places.containsKey(pred)) {
-					throw new IllegalArgumentException("undefined place:" + pred);
-				} else {
-					preds.add(name2places.get(pred));
+					throw new IllegalArgumentException(UNDEFINED_PLACE + pred);
 				}
+				preds.add(name2places.get(pred));
 			}
+			final Collection<Place<String, String>> succs = new ArrayList<>();
 			for (final String succ : ptrans.getSuccs()) {
 				if (!name2places.containsKey(succ)) {
-					throw new IllegalArgumentException("undefined place:" + succ);
-				} else {
-					succs.add(name2places.get(succ));
+					throw new IllegalArgumentException(UNDEFINED_PLACE + succ);
 				}
+				succs.add(name2places.get(succ));
 			}
 			net.addTransition(ptrans.getSymbol(), preds, succs);
 		}
-
+		
 		mAutomata.put(pna.getName(), net);
+	}
+	
+	private static LinkedList<BooleanExpression> parseBooleanExpressions(
+			final AlternatingAutomaton<String, String> alternatingAutomaton, final String expression) {
+		final LinkedList<BooleanExpression> booleanExpressions = new LinkedList<>();
+		if ("true".equals(expression)) {
+			booleanExpressions.add(new BooleanExpression(new BitSet(), new BitSet()));
+		} else if ("false".equals(expression)) {
+			//Not supported yet
+		} else {
+			final String[] disjunctiveExpressions = expression.split("\\|");
+			for (final String disjunctiveExpression : disjunctiveExpressions) {
+				final String[] stateExpressions = disjunctiveExpression.split("&");
+				final LinkedList<String> resultStates = new LinkedList<>();
+				final LinkedList<String> negatedResultStates = new LinkedList<>();
+				for (final String stateExpression : stateExpressions) {
+					if (stateExpression.startsWith("~")) {
+						negatedResultStates.add(stateExpression.substring(1));
+					} else {
+						resultStates.add(stateExpression);
+					}
+				}
+				final BooleanExpression booleanExpression = alternatingAutomaton.generateCube(
+						resultStates.toArray(new String[resultStates.size()]),
+						negatedResultStates.toArray(new String[negatedResultStates.size()]));
+				booleanExpressions.add(booleanExpression);
+			}
+		}
+		return booleanExpressions;
 	}
 	
 	public Map<String, Object> getAutomata() {
 		return mAutomata;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
@@ -418,10 +399,8 @@ public class AutomataDefinitionInterpreter {
 		builder.append("]");
 		return builder.toString();
 	}
-
 	
 	public ILocation getErrorLocation() {
 		return mErrorLocation;
 	}
-	
 }

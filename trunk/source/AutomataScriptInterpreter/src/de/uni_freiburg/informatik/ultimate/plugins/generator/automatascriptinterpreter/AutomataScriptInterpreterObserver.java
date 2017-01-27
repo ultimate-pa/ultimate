@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
@@ -43,69 +43,72 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
- * Auto-Generated Stub for the plug-in's Observer
+ * Auto-Generated Stub for the plug-in's Observer.
  */
 public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
-
 	private final ILogger mLogger;
-
-	IElement mGraphrootOfUltimateModelOfLastPrintedAutomaton;
-
+	
+	private IElement mGraphrootOfUltimateModelOfLastPrintedAutomaton;
+	
 	private final IUltimateServiceProvider mServices;
-
-	public AutomataScriptInterpreterObserver(IUltimateServiceProvider services) {
+	
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
+	public AutomataScriptInterpreterObserver(final IUltimateServiceProvider services) {
 		assert services != null;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-
+	
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		
 		AssignableTest.initPrimitiveTypes();
 		final TestFileInterpreter ti = new TestFileInterpreter(mServices);
 		ti.interpretTestFile((AtsASTNode) root);
-
+		
 		IAutomaton<?, ?> printAutomaton = ti.getLastPrintedAutomaton();
 		if (printAutomaton == null) {
 			printAutomaton = getDummyAutomatonWithMessage();
 		}
 		try {
-			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices), printAutomaton);
+			mGraphrootOfUltimateModelOfLastPrintedAutomaton =
+					Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices), printAutomaton);
 		} catch (final AutomataOperationCanceledException e) {
 			mLogger.warn("Nothing visualized because of timeout");
 		}
 		return false;
 	}
-
+	
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-
+		
 	}
-
+	
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// TODO Auto-generated method stub
-
+		
 	}
-
+	
 	@Override
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
 	IElement getUltimateModelOfLastPrintedAutomaton() {
 		return mGraphrootOfUltimateModelOfLastPrintedAutomaton;
 	}
-
+	
 	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
-		final NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
+		final NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), new HashSet<String>(0), null, null, new StringFactory());
 		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
 				+ " for visualization");
 		return dummyAutomaton;
 	}
-
 }

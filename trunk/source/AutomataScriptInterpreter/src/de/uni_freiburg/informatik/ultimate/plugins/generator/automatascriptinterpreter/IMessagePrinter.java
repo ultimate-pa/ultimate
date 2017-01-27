@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptInterpreter plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
@@ -30,6 +30,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
+/**
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ */
+@FunctionalInterface
 interface IMessagePrinter {
 	/**
 	 * Reports the given string to the logger and to Ultimate as a
@@ -41,7 +45,13 @@ interface IMessagePrinter {
 	 *            the string to be reported
 	 * @param node
 	 *            AtsASTNode for which this String is reported
+	 * @param severityForResult
+	 *            severity for result
+	 * @param severityForLogger
+	 *            severity for logger
+	 * @param shortDescr
+	 *            short description
 	 */
-	public void printMessage(Severity severityForResult, LoggerSeverity severityForLogger, String longDescr,
+	void printMessage(Severity severityForResult, LoggerSeverity severityForLogger, String longDescr,
 			String shortDescr, AtsASTNode node);
 }
