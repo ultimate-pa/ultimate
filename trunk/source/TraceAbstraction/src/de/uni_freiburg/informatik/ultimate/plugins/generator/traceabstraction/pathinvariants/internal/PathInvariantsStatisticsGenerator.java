@@ -12,21 +12,26 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvider {
 	private int mNumOfLocations = 0;
-	private int mNumOfLocsInUnsatCore = 0;
-	private int mSizeOfBiggestTemplate = 0;
-	private int mSumOfTemplateConjuncts = 0;
-//	private Set<List<IcfgLocation>> mTransitionsInUnsatCore = new HashSet<>();
-	private Set<IcfgLocation> mLocsInUnsatCore = new HashSet<>();
+	private int mMaxNumOfInequalitiesPerRound = 0;
+	private int mSumOfTemplateInequalities = 0;
+	private int mNumOfVars;
+	private int mDiffOfLocsInUnsatCore;
+	private int mDiffOfVarsInUnsatCore;
 
 	public void setNumOfLocations(final int numOfLocations) {
 		mNumOfLocations = numOfLocations;
 	}
+	
+	public void setNumOfVars(final int numOfVars) {
+		mNumOfVars = numOfVars;
+	}
 
-	public void addPathInvariantsData(final int sizeOfBiggestTemplate, final int sumOfTemplateConjuncts) {
-		if (sizeOfBiggestTemplate > mSizeOfBiggestTemplate) {
-			mSizeOfBiggestTemplate = sizeOfBiggestTemplate;
+	public void addPathInvariantsData(final int sizeOfBiggestTemplate, final int sumOfTemplateInequalities) {
+		if (sizeOfBiggestTemplate > mMaxNumOfInequalitiesPerRound) {
+			mMaxNumOfInequalitiesPerRound = sizeOfBiggestTemplate;
 		}
-		mSumOfTemplateConjuncts = mSumOfTemplateConjuncts + sumOfTemplateConjuncts;
+		mSumOfTemplateInequalities = mSumOfTemplateInequalities + sumOfTemplateInequalities;
+
 	}
 
 	@Override
@@ -39,10 +44,11 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		final PathInvariantsStatisticsDefinitions keyEnum = Enum.valueOf(PathInvariantsStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SumOfLocs: return mNumOfLocations;
-		case SumOfTemplateConjuncts: return mSumOfTemplateConjuncts;
-		case MaxSizeOfTemplate: return mSizeOfBiggestTemplate;
-		case LocsInUnsatCore: return mLocsInUnsatCore;
-		case SumOfLocsInUnsatCore: return mNumOfLocsInUnsatCore;
+		case NumOfVars: return mNumOfVars;
+		case SumOfTemplateInequalities: return mSumOfTemplateInequalities;
+		case DiffOfLocsInUnsatCore: return mDiffOfLocsInUnsatCore;
+		case DiffOfVarsInUnsatCore: return mDiffOfVarsInUnsatCore;
+		case MaxNumOfInequalitiesPerRound: return mMaxNumOfInequalitiesPerRound;
 		default:
 			throw new AssertionError("unknown key");
 		}
@@ -52,14 +58,9 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	public IStatisticsType getBenchmarkType() {
 		return PathInvariantsStatisticsType.getInstance();
 	}
-
-//	public void setTransitionsInUnsatCore(Set<List<IcfgLocation>> transitionsInUnsatCore) {
-//		mTransitionsInUnsatCore = transitionsInUnsatCore;
-//	}
-	public void setLocsInUnsatCore(Set<IcfgLocation> locsInUnsatCore) {
-		mLocsInUnsatCore = locsInUnsatCore;
-		mNumOfLocsInUnsatCore += locsInUnsatCore.size();
-	}
 	
-
+	public void setLocationAndVariablesData(int diffOfLocsInUnsatCore, int diffVarsInUnsatCore) {
+		mDiffOfLocsInUnsatCore += diffOfLocsInUnsatCore;
+		mDiffOfVarsInUnsatCore += diffVarsInUnsatCore;
+	}
 }

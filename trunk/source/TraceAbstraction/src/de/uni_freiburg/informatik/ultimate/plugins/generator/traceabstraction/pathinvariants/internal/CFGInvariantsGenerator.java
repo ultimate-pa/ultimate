@@ -98,6 +98,7 @@ public final class CFGInvariantsGenerator {
 			final List<IcfgInternalTransition> transitions,
 			final IPredicate precondition, final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation,
 			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
+			Set<IProgramVar> allProgramVars,
 			final boolean useLiveVariables, final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates, boolean usePredicates,
 			boolean addWPToEeachDisjunct) {
@@ -107,6 +108,8 @@ public final class CFGInvariantsGenerator {
 		mLogger.info("(Path)program has " + locationsAsList.size() + " locations");
 		// Set statistics data
 		mPathInvariantsStatistics.setNumOfLocations(locationsAsList.size());
+		mPathInvariantsStatistics.setNumOfVars(allProgramVars.size());
+		
 		final Map<IcfgLocation, IPT> locs2Patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
 		final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables = new HashMap<IcfgLocation, Set<IProgramVar>>(locationsAsList.size());
 		
@@ -131,7 +134,7 @@ public final class CFGInvariantsGenerator {
 		if (useVariablesFromUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			Map<IcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, locs2Patterns, locs2PatternVariables,
-					predicates, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList, transitions,
+					predicates, smtVars2ProgramVars, startLocation, errorLocation, locationsAsList, transitions, allProgramVars,
 					pathprogramLocs2Predicates, usePredicates, addWPToEeachDisjunct);
 			if (resultFromPreRound != null) {
 				return resultFromPreRound;
@@ -217,12 +220,10 @@ public final class CFGInvariantsGenerator {
 			} else {
 				// Set benchmarks
 				Set<IcfgLocation> locsInUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getLocationsInUnsatCore();
-				if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
-					mPathInvariantsStatistics.setLocsInUnsatCore(locsInUnsatCore);
-				}
+
 				
 				// If no configuration could have been found, the constraints may be unsatisfiable
-				if (useVariablesFromUnsatCore) {
+//				if (useVariablesFromUnsatCore) {
 					final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 					if (smtVarsFromUnsatCore != null) {
 						mLogger.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
@@ -233,12 +234,16 @@ public final class CFGInvariantsGenerator {
 								varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 							}
 						}
+						if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
+							mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
+									allProgramVars.size() - varsFromUnsatCore.size());
+						}
 						mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 					} else {
 						// The result in pattern processor was 'unknown', so reset varsFromUnsatCore to null
 						varsFromUnsatCore = null;
 					}
-				}
+//				}
 			}
 		}
 
@@ -286,7 +291,8 @@ public final class CFGInvariantsGenerator {
 			final Map<IcfgLocation, IPT> locs2Patterns, final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
 			final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final Map<TermVariable, IProgramVar> smtVars2ProgramVars, IcfgLocation startLocation, IcfgLocation errorLocation, 
-			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions,
+			final List<IcfgLocation> locationsAsList, final List<IcfgInternalTransition> transitions, 
+			final Set<IProgramVar> allProgramVars,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates, boolean usePredicates,
 			boolean addWPToEeachDisjunct) {
 		// Start round -1 (because it's the round with empty pattern for each location)
@@ -348,9 +354,6 @@ public final class CFGInvariantsGenerator {
 			final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 			// Set benchmarks
 			Set<IcfgLocation> locsInUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getLocationsInUnsatCore();
-			if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
-				mPathInvariantsStatistics.setLocsInUnsatCore(locsInUnsatCore);
-			}
 			
 			if (smtVarsFromUnsatCore != null) {
 				mLogger.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
@@ -360,6 +363,10 @@ public final class CFGInvariantsGenerator {
 					if (smtVars2ProgramVars.get(smtVar) != null) {
 						varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 					}
+				}
+				if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
+					mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
+							allProgramVars.size() - varsFromUnsatCore.size());
 				}
 				mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 			} else {

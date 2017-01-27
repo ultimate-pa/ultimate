@@ -568,7 +568,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false, null,
+				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, allProgramVars,
+				false, null,
 				pathprogramLocs2Predicates, (mUseWeakestPrecondition || mUseAbstractInterpretationPredicates),
 				ADD_WP_TO_EACH_CONJUNCT);
 
@@ -720,10 +721,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// Benchmarks Section
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		SumOfLocs(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		SumOfLocsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		SumOfTemplateConjuncts(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		MaxSizeOfTemplate(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
-		LocsInUnsatCore(Set.class, set -> locs -> {((Set<IcfgLocation>)set).addAll((Set<IcfgLocation>) locs); return set;}, AStatisticsType.s_KeyBeforeData),
+		NumOfVars(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		SumOfTemplateInequalities(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		MaxNumOfInequalitiesPerRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+//		LocsInUnsatCore(Set.class, set -> locs -> {((Set<IcfgLocation>)set).addAll((Set<IcfgLocation>) locs); return set;}, AStatisticsType.s_KeyBeforeData),
 //		TransInUnsatCore(Set.class, set -> loc -> ((Set<IcfgLocation>)set).add((IcfgLocation) loc), AStatisticsType.s_KeyBeforeData)
 		;
 		
