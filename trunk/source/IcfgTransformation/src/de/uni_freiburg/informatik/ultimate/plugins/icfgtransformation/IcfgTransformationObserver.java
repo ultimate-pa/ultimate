@@ -38,12 +38,16 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.DefaultEqualityAnalysisProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
@@ -60,6 +64,12 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private IIcfg<?> mResult;
+
+	private final TransformationTestType mDefaultTrasformationTestType = TransformationTestType.LOOP_ACCELERATION;
+
+	private enum TransformationTestType {
+		LOOP_ACCELERATION, MAP_ELIMINATION,
+	}
 
 	public IcfgTransformationObserver(final ILogger logger, final IUltimateServiceProvider services,
 			final IcfgTransformationBacktranslator backtranslator, final SimplificationTechnique simplTech,
@@ -110,8 +120,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			icfgTransformer = createTransformer((IIcfg<BoogieIcfgLocation>) icfg, createBoogieLocationFactory(),
 					BoogieIcfgLocation.class, backtranslationTracker);
 		} else {
-			icfgTransformer =
-					createTransformer(icfg, createIcfgLocationFactory(), IcfgLocation.class, backtranslationTracker);
+			icfgTransformer = createTransformer(icfg, createIcfgLocationFactory(), IcfgLocation.class,
+					backtranslationTracker);
 		}
 		mResult = icfgTransformer.getResult();
 	}
@@ -120,12 +130,30 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker) {
 
-		// TODO: Decide which transformer should be used via settings (and/or allow chaining of transformers in
+		// TODO: Decide which transformer should be used via settings (and/or
+		// allow chaining of transformers in
 		// icfgtransformer
 		final ReplacementVarFactory fac = new ReplacementVarFactory(icfg.getCfgSmtToolkit(), false);
-		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getSymboltable(), fac);
+		final ITransformulaTransformer transformer;
 
+		switch (mDefaultTrasformationTestType) {
+		case LOOP_ACCELERATION: {
+			transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getSymboltable(), fac);
+		}
+			break;
+		case MAP_ELIMINATION: {
+			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider = new DefaultEqualityAnalysisProvider<>();
+			final MapEliminationSettings settings = new MapEliminationSettings(false, true, true, true,
+					mSimplificationTechnique, mXnfConversionTechnique);
+			transformer = new MapEliminationTransformer(icfg, mServices, mLogger,
+					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings,
+					equalityProvider);
+		}
+			break;
+		default:
+			throw new AssertionError("unknown value " + mDefaultTrasformationTestType);
+		}
 		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass, "TransformedIcfg",
 				transformer);
 	}
