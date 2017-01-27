@@ -73,21 +73,27 @@ public interface IOperation<LETTER, STATE> {
 	 * @return Name of the operation.<br>
 	 *         This name should also be used in the test grammar.
 	 */
-	String operationName();
+	default String operationName() {
+		// use runtime class name by default
+		return getClass().getSimpleName();
+	}
 	
 	/**
 	 * @return Message that should be logged when the operation is started.<br>
-	 *         Use some information like: "Started operation intersection. First
-	 *         operand has 2394 states, second operand has 9374 states."
+	 *         Use some information like:
+	 *         "Started operation intersection. First operand has 2394 states, second operand has 9374 states."
 	 */
-	String startMessage();
+	default String startMessage() {
+		return "Started " + operationName() + '.';
+	}
 	
 	/**
 	 * @return Message that should be logged when the operation is finished.<br>
-	 *         Use some information like: "Finished operation intersection. Result has
-	 *         345 states."
+	 *         Use some information like: "Finished operation intersection. Result has 345 states."
 	 */
-	String exitMessage();
+	default String exitMessage() {
+		return "Finished " + operationName() + '.';
+	}
 	
 	/**
 	 * @return The result of the operation.

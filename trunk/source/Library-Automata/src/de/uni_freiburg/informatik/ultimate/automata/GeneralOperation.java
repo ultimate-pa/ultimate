@@ -74,22 +74,6 @@ public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETT
 		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
 	
-	@Override
-	public String operationName() {
-		// use runtime class name by default
-		return getClass().getSimpleName();
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Started " + operationName() + '.';
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + '.';
-	}
-	
 	protected final void printStartMessage() {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
