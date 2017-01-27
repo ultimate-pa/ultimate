@@ -47,7 +47,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.statefactory,
  de.uni_freiburg.informatik.ultimate.automata.tree,
  de.uni_freiburg.informatik.ultimate.automata.tree.operations,
- de.uni_freiburg.informatik.ultimate.automata.tree.visualization
+ de.uni_freiburg.informatik.ultimate.automata.tree.visualization,
+ de.uni_freiburg.informatik.ultimate.automata.util
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .
