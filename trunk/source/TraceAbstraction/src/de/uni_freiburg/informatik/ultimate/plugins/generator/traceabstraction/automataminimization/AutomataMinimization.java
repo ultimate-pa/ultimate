@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.a
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -64,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -109,7 +109,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final long startTime = System.nanoTime();
 
-		final Collection<Set<IPredicate>> partition =
+		final PartitionBackedSetOfPairs<IPredicate> partition =
 				TraceAbstractionUtils.computePartition(operand, mLogger, lcsProvider);
 
 		// output of minimization
@@ -189,7 +189,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final IStateFactory<IPredicate> predicateFactoryRefinement, final int minimizeEveryKthIteration,
 			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
-			final Collection<Set<IPredicate>> partition, final AutomataLibraryServices autServices,
+			final PartitionBackedSetOfPairs<IPredicate> partition, final AutomataLibraryServices autServices,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException, AssertionError {
 
@@ -252,7 +252,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case NWA_MAX_SAT2: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
 					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
@@ -280,11 +280,11 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DIRECT_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
 					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
-				localResult = new MinimizationResult(true, true, 
+				localResult = new MinimizationResult(true, true,
 						new ReduceNwaDirectFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
 								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			} catch (final AutomataOperationCanceledException aoce) {
@@ -344,11 +344,11 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case FULLMULTIPEBBLE_DELAYED_SIMULATION: {
-			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices, 
+			final AutomataLibraryServices autServicesWithTimeout = new AutomataLibraryServices(mServices,
 					DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS);
 			MinimizationResult localResult = null;
 			try {
-				localResult = new MinimizationResult(true, true, 
+				localResult = new MinimizationResult(true, true,
 						new ReduceNwaDelayedFullMultipebbleSimulation<LETTER, IPredicate>(autServicesWithTimeout,
 								predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand));
 			} catch (final AutomataOperationCanceledException aoce) {

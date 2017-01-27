@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -83,7 +84,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		printStartMessage();
 		
 		final Collection<Set<STATE>> possibleEquivalentClasses =
-				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition();
+				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation();
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
@@ -105,7 +106,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final boolean mergeFinalAndNonFinalStates = !false;
 			final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
 					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
-							equivalenceRelation.getAllEquivalenceClasses(),
+							new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
 							new MinimizeNwaMaxSat2.Settings<STATE>()
 									.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 			super.directResultConstruction(maxSatMinimizer.getResult());

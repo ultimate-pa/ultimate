@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -118,7 +118,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 */
 	public MinimizeDfaHopcroftLists(
 			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> initialPartition,
+			final IStateFactory<STATE> stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -352,9 +352,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * @param addMapping
 	 *            true iff mapping old state -> new state should be included
 	 */
-	private void minimizeIcdfa(
-			final Collection<Set<STATE>> initialPartition,
-			final boolean addMapping) {
+	private void minimizeIcdfa(final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapping) {
 		// Initial blocks
 		final LinkedList<Integer> finalStates = new LinkedList<>();
 		final LinkedList<Integer> otherStates = new LinkedList<>();
@@ -418,7 +416,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			}
 		} else {
 			// Christian: added this case
-			for (final Set<STATE> block : initialPartition) {
+			for (final Set<STATE> block : initialPartition.getRelation()) {
 				final LinkedList<Integer> newBlockStates = new LinkedList<>();
 				final int blockId = getUniqueBlocKId();
 				for (final STATE state : block) {

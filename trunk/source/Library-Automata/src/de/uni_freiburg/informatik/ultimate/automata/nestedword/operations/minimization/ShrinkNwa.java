@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
@@ -254,10 +255,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 *             if cancel signal is received
 	 */
 	public ShrinkNwa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapOldState2newState, final boolean isFiniteAutomaton, final boolean splitOutgoing,
-			final int splitRandomSize, final boolean firstReturnSplit, final int firstReturnSplitAlternative,
-			final boolean splitAllCallPreds, final boolean returnSplitNaive, final boolean nondeterministicTransitions,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
+			final boolean isFiniteAutomaton, final boolean splitOutgoing, final int splitRandomSize,
+			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
+			final boolean returnSplitNaive, final boolean nondeterministicTransitions,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -295,7 +297,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		mNegativeSet.add(mNegativeClass);
 		mSingletonMatrix = new Matrix();
 		mDownStateMap = new DummyMap();
-		mInitialPartitionSize = equivalenceClasses == null ? 0 : equivalenceClasses.size();
+		mInitialPartitionSize = equivalenceClasses == null ? 0 : equivalenceClasses.getRelation().size();
 		
 		/* options */
 		mSplitOutgoing = splitOutgoing;
@@ -418,7 +420,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	private void minimize(final boolean isFiniteAutomaton, final Iterable<Set<STATE>> modules,
+	private void minimize(final boolean isFiniteAutomaton, final PartitionBackedSetOfPairs<STATE> modules,
 			final boolean includeMapping) throws AutomataOperationCanceledException {
 		if (STATISTICS) {
 			mWholeTime -= new GregorianCalendar().getTimeInMillis();
@@ -930,12 +932,12 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * The partition object is initialized. Final states are separated from non-final states. For the passed modules
 	 * this is assumed.
 	 * 
-	 * @param modules
+	 * @param modulesWrapped
 	 *            modules that must be split
 	 */
-	private void initialize(final Iterable<Set<STATE>> modules) {
+	private void initialize(final PartitionBackedSetOfPairs<STATE> modulesWrapped) {
 		// split final from non-final states
-		if (modules == null) {
+		if (modulesWrapped == null) {
 			final HashSet<STATE> finals = new HashSet<>();
 			final HashSet<STATE> nonfinals = new HashSet<>();
 			
@@ -961,6 +963,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				}
 			}
 		} else {
+			final Collection<Set<STATE>> modules = modulesWrapped.getRelation();
 			if (mInitialPartitionSeparatesFinalsAndNonfinals) {
 				// predefined modules are already split with respect to final states
 				assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "

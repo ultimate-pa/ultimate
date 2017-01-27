@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * @author Björn Hagemeister
@@ -102,7 +103,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory,
-			final Collection<Set<STATE>> initialPartition, final boolean addMapping) {
+			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
 
@@ -140,7 +141,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Step by Step implementation of minimizing finite automaton by Hopcroft.
 	 */
-	private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition,
+	private void minimizeDfaHopcroft(final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapping) {
 		// First make preprocessing on given automata.
 		mLogger.info("Start preprocessing data ... ");
@@ -300,10 +301,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 * Make initial partition mblocks. Therefor allocate memory for arrays
 	 * and set number of final states as marked states.
 	 */
-	private void makeInitialPartition(final Collection<Set<STATE>> initialPartition) {
+	private void makeInitialPartition(final PartitionBackedSetOfPairs<STATE> initialPartition) {
 		mSetsWithMarkedElements = new int[mNumberOfTransitions + 1];
 		mNumberOfMarkedElemInSet = new int[mNumberOfTransitions + 1];
-		if (initialPartition == null || initialPartition.isEmpty()) {
+		if (initialPartition == null || initialPartition.getRelation().isEmpty()) {
 			// no initial partition, only separate final states
 			
 			// Is there any finalState?
@@ -317,7 +318,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			}
 		} else {
 			// consider an initial partition
-			for (final Set<STATE> states : initialPartition) {
+			for (final Set<STATE> states : initialPartition.getRelation()) {
 				for (final STATE state : states) {
 					mBlocks.mark(mState2int.get(state));
 				}
@@ -415,8 +416,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			final int lastOfBlockIndex = mBlocks.mPast[i];
 			// For intersecting all STATEs belonging to one block,
 			// build collection of all States.
-			final Collection<STATE> tmp = new ArrayList<>(
-					lastOfBlockIndex - firstOfBlockIndex);
+			final Collection<STATE> tmp = new ArrayList<>(lastOfBlockIndex - firstOfBlockIndex);
 			// Iterate in melements over all States belonging to one block
 			// and adding them to the collection created before.
 			for (int j = firstOfBlockIndex; j < lastOfBlockIndex; ++j) {

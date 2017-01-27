@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -112,8 +113,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 *             if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> equivalenceClasses,
-			final boolean addMapping, final boolean considerNeutralStates) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapping,
+			final boolean considerNeutralStates) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		
@@ -150,8 +152,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
-	private void minimize(final Iterable<Set<STATE>> modules,
-			final boolean addMapping) throws AutomataOperationCanceledException {
+	private void minimize(final PartitionBackedSetOfPairs<STATE> modules, final boolean addMapping)
+			throws AutomataOperationCanceledException {
 		// initialize the partition object
 		initialize(modules);
 		
@@ -202,12 +204,12 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * The partition object is initialized. Final states are separated from
 	 * non-final states. For the passed modules this is assumed.
 	 * 
-	 * @param modules
+	 * @param modulesWrapped
 	 *            modules that must be split
 	 */
-	private void initialize(final Iterable<Set<STATE>> modules) {
+	private void initialize(final PartitionBackedSetOfPairs<STATE> modulesWrapped) {
 		// split final from non-final states
-		if (modules == null) {
+		if (modulesWrapped == null) {
 			final HashSet<STATE> finals = new HashSet<>();
 			final HashSet<STATE> nonfinals = new HashSet<>();
 			
@@ -226,10 +228,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 				mPartition.addEcInitialization(nonfinals);
 			}
 		} else {
+			final Collection<Set<STATE>> modules = modulesWrapped.getRelation();
 			// predefined modules are already split with respect to final states
-			assert assertStatesSeparation(
-					modules) : "The states in the initial modules are not separated with "
-							+ "respect to their final status.";
+			assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "
+					+ "respect to their final status.";
 			for (final Set<STATE> module : modules) {
 				mPartition.addEcInitialization(module);
 			}

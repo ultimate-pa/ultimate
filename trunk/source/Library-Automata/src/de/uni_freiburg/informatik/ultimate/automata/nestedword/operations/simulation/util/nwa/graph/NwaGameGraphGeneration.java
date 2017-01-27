@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -747,7 +748,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer =
-					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mNwa, equivalenceClassesAsCollection,
+					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mNwa,
+					new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
 					new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(useFinalStateConstraints));
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			result = new RemoveUnreachable<>(mServices, minimizer.getResult()).getResult();

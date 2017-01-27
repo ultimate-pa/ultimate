@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -161,8 +162,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	/**
 	 * @return The partition.
 	 */
-	public Collection<Set<STATE>> getPartition() {
-		return mPartition;
+	public PartitionBackedSetOfPairs<STATE> getPartition() {
+		return new PartitionBackedSetOfPairs<>(mPartition);
 	}
 	
 	/**

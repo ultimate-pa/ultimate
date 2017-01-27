@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Minimizer for special type of nested word automata used in Ultimate.
@@ -140,7 +141,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *             iff cancel signal is received
 	 */
 	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> equivalenceClasses, final IStateFactory<STATE> stateFactory,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState, final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException {
 		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag(),
@@ -166,7 +167,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 *             iff cancel signal is received
 	 */
 	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> equivalenceClasses, final IStateFactory<STATE> stateFactory,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState, final IFlag timeout,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
@@ -213,7 +214,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	private void minimize(final Collection<Set<STATE>> equivalenceClasses, final boolean addMapping)
+	private void minimize(final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapping)
 			throws AutomataOperationCanceledException {
 		// cancel if signal is received
 		if (isCancellationRequested()) {
@@ -240,29 +241,28 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	private void mergeStates(StatesContainer states, final Collection<Set<STATE>> equivalenceClasses,
+	private void mergeStates(StatesContainer states, final PartitionBackedSetOfPairs<STATE> equivalenceClasses,
 			final boolean addMapping) throws AutomataOperationCanceledException {
 		assert (mPartition == null);
 		if (equivalenceClasses == null) {
 			// creation of the initial partition (if not passed in the constructor)
 			mPartition = createInitialPartition(states);
 		} else {
+			final Collection<Set<STATE>> modules = equivalenceClasses.getRelation();
 			mPartition = new Partition(mOperand, states.size());
 			if (mInitialPartitionSeparatesFinalsAndNonfinals) {
 				// predefined modules are already split with respect to final states
-				assert (assertStatesSeparation(
-						equivalenceClasses)) : "initial partition does not separate final/non-final states";
+				assert (assertStatesSeparation(modules)) : "initial partition does not separate final/non-final states";
 				
-				for (final Set<STATE> ecSet : equivalenceClasses) {
+				for (final Set<STATE> ecSet : modules) {
 					assert !ecSet.isEmpty();
 					mPartition.addEquivalenceClass(
-							new EquivalenceClass(ecSet,
-									mOperand.isFinal(ecSet.iterator().next())));
+							new EquivalenceClass(ecSet, mOperand.isFinal(ecSet.iterator().next())));
 				}
 			} else {
 				HashSet<STATE> finals = new HashSet<>();
 				HashSet<STATE> nonfinals = new HashSet<>();
-				for (final Set<STATE> module : equivalenceClasses) {
+				for (final Set<STATE> module : modules) {
 					for (final STATE state : module) {
 						if (mOperand.isFinal(state)) {
 							finals.add(state);

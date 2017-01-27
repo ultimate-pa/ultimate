@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -109,7 +110,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		printStartMessage();
 		
 		final Collection<Set<STATE>> possibleEquivalentClasses =
-				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition();
+				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation();
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
@@ -253,7 +254,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
 				new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
-						equivalenceRelation.getAllEquivalenceClasses(),
+						new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
 						new MinimizeNwaMaxSat2.Settings<STATE>()
 								.setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 		return maxSatMinimizer.getResult();

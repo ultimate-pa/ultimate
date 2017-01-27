@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.TimeoutFlag;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Calls another minimization procedure and interrupts it after a certain time.<br>
@@ -124,8 +124,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 */
 	public MinimizeNwaOverapproximation(final AutomataLibraryServices services,
 			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> initialPartition, final boolean addMapOldState2newState, final int time,
-			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
+			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapOldState2newState,
+			final int time, final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;

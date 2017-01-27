@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
@@ -204,24 +205,24 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<LETTER, STATE>(
+		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<>(
 				services, operand, true).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
-				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(
-						services, operand, true).getPartition();
+				final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClassesForDirect =
+						new LookaheadPartitionConstructor<>(services, operand, true).getPartition();
 
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
-						logger, operand, stateFactory, possibleEquivalenceClassesForDirect);
+						logger, operand, stateFactory, possibleEquivalenceClassesForDirect.getRelation());
 				graph.generateGameGraphFromAutomaton();
 				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<LETTER, STATE>(services,
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services,
 						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
@@ -229,7 +230,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<LETTER, STATE>(services,
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services,
 						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
@@ -246,7 +247,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeSevpa<LETTER, STATE>(getServices(), operand);
+				method = new MinimizeSevpa<>(getServices(), operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
@@ -255,7 +256,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaPmaxSat<>(services, stateFactory, operand,
-						possibleEquivalenceClasses, new MinimizeNwaMaxSat2.Settings<>());
+						new PartitionBackedSetOfPairs<>(possibleEquivalenceClasses),
+						new MinimizeNwaMaxSat2.Settings<>());
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

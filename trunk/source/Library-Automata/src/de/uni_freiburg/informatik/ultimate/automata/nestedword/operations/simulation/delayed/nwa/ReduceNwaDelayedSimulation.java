@@ -26,9 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa;
 
-import java.util.Collection;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -38,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEq
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Operation that reduces a given nwa automaton by using
@@ -128,13 +126,14 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
+			final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClasses)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<LETTER, STATE>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DelayedNwaGameGraph<LETTER, STATE>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalenceClasses)));
+								stateFactory, possibleEquivalenceClasses.getRelation())));
 	}
 
 	/*

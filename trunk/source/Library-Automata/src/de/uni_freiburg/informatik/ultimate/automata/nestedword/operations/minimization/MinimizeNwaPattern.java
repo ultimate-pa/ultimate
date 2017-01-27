@@ -28,13 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Minimization of nested word automata which can be used in a loop. It just calls the next minimization method
@@ -97,7 +96,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 *             if operation was canceled
 	 */
 	public MinimizeNwaPattern(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> partition,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
 			final boolean addMapOldState2newState, final int iteration) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
 	}
@@ -123,7 +122,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 *             if operation was canceled
 	 */
 	public MinimizeNwaPattern(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> partition,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
 			final boolean addMapOldState2newState, final int indexForMinimization, final int iteration)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState,
@@ -151,7 +150,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 *             if operation was canceled
 	 */
 	public MinimizeNwaPattern(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> partition,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
 			final boolean addMapOldState2newState, final MinimizationMethods[] pattern, final int iteration)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);

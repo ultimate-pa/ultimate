@@ -26,9 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.nwa;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -40,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Operation that reduces a given nwa by using {@link FairSimulation}. <br/>
@@ -72,7 +71,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, false, Collections.emptyList());
+		this(services, stateFactory, operand, false, new PartitionBackedSetOfPairs<>(Collections.emptyList()));
 	}
 
 	/**
@@ -125,14 +124,15 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
+			final PartitionBackedSetOfPairs<STATE> possibleEquivalentClasses)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						possibleEquivalentClasses,
+						possibleEquivalentClasses.getRelation(),
 						new FairNwaGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalentClasses)));
+								stateFactory, possibleEquivalentClasses.getRelation())));
 	}
 
 	/*

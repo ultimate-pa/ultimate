@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -37,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Operation that reduces a given nwa automaton by using
@@ -125,13 +124,14 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Iterable<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
+			final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClasses)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DirectNwaGameGraph<>(services, services.getProgressAwareTimer(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalenceClasses)));
+								stateFactory, possibleEquivalenceClasses.getRelation())));
 	}
 	
 	/*

@@ -27,9 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -38,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Minimization of nested word automata which wraps several minimization operations and uses one of them.
@@ -105,27 +105,29 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 	/**
 	 * This method must be called by all implementing subclasses at the end of the constructor.
 	 */
-	protected final void run(final Collection<Set<STATE>> partition,
+	@SuppressWarnings("unchecked")
+	protected final void run(final ISetOfPairs<STATE, ?> partition,
 			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
 		switch (mMode) {
 			case SEVPA:
 				mBackingMinimization = new MinimizeSevpa<>(mServices, mOperand,
-						partition, mStateFactory, addMapOldState2newState, false);
+						(PartitionBackedSetOfPairs<STATE>) partition, mStateFactory, addMapOldState2newState, false);
 				break;
 			case SHRINK_NWA:
 				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory,
-						mOperand, partition, addMapOldState2newState, false,
+						mOperand, (PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false,
 						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
 				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices, mStateFactory,
-						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, partition,
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, (PartitionBackedSetOfPairs<STATE>) partition,
 						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState));
 				break;
 			case NWA_RAQ_DIRECT:
 				checkForNoMapping(addMapOldState2newState);
 				mBackingMinimization = new ReduceNwaDirectSimulation<>(mServices, mStateFactory,
-						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, false, partition);
+						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, false,
+						(PartitionBackedSetOfPairs<STATE>) partition);
 				break;
 			case NONE:
 				if (mLogger.isInfoEnabled()) {

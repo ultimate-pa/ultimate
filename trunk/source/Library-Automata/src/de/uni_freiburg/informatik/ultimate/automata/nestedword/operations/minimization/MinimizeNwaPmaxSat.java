@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -82,7 +82,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, Collections.singleton(operand.getStates()), new Settings<>());
+		this(services, stateFactory, operand,
+				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>());
 	}
 	
 	/**
@@ -102,8 +103,9 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
-			final Settings<STATE> settings) throws AutomataOperationCanceledException {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> initialPartition, final Settings<STATE> settings)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, initialPartition, settings, true);
 	}
 	
@@ -126,17 +128,17 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
-			final Settings<STATE> settings, final boolean applyInitialPartitionPreprocessing)
-			throws AutomataOperationCanceledException {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> initialPartition, final Settings<STATE> settings,
+			final boolean applyInitialPartitionPreprocessing) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings, new NestedMap2<>());
 		
 		printStartMessage();
 		
 		mInitialPartition = applyInitialPartitionPreprocessing
-				? new LookaheadPartitionConstructor<>(services, operand, initialPartition,
-						mSettings.getFinalStateConstraints(), false).getPartition()
-				: initialPartition;
+				? new LookaheadPartitionConstructor<>(services, operand, initialPartition.getRelation(),
+						mSettings.getFinalStateConstraints(), false).getPartition().getRelation()
+				: initialPartition.getRelation();
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;

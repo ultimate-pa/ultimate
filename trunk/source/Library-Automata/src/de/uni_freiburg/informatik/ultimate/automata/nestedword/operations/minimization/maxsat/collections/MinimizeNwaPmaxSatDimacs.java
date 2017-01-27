@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
  * Nested word automaton minimization using a partial Max-SAT reduction.
@@ -31,7 +32,8 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<
 	 */
 	public MinimizeNwaPmaxSatDimacs(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, Collections.singleton(operand.getStates()),
+		super(services, stateFactory, operand,
+				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())),
 				new Settings<STATE>().setFinalStateConstraints(true).setSolverModeExternal());
 	}
 }

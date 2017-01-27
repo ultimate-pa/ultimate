@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -89,7 +90,7 @@ public class TraceAbstractionUtils {
 	 * @param <LCSP>
 	 *            local control state provider, e.g., {@link ISLPredicate}, or {@link IMLPredicate}
 	 */
-	public static <LCSP extends IPredicate, LCS> Collection<Set<IPredicate>> computePartition(
+	public static <LCSP extends IPredicate, LCS> PartitionBackedSetOfPairs<IPredicate> computePartition(
 			final INestedWordAutomaton<?, IPredicate> automaton, final ILogger logger,
 			final Function<LCSP, LCS> lcsProvider) {
 		logger.debug("Start computation of initial partition.");
@@ -105,7 +106,7 @@ public class TraceAbstractionUtils {
 			partition.add(statesWithSameLcs);
 		}
 		logger.debug("Finished computation of initial partition.");
-		return partition;
+		return new PartitionBackedSetOfPairs<>(partition);
 	}
 
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
