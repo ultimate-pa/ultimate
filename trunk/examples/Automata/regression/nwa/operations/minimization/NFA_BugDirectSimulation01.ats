@@ -1,0 +1,30 @@
+// Date: 2014-09-12
+// Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
+
+assert(!isEmpty(nwa));
+
+print(numberOfStates(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDfaTable(removeDeadEnds(nwa)));
+print(minimizeDFASize);
+int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
+print(minimizeDfaSimulationSize);
+//assert(minimizeDFASize == minimizeDfaSimulationSize);
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {},
+    internalAlphabet = {"a" "b" },
+    returnAlphabet = {},
+    states = {"q1" "q2" "q3" "q0" },
+    initialStates = {"q0" },
+    finalStates = {"q1" "q2" },
+    callTransitions = {
+    },
+    internalTransitions = {
+         ("q3" "a" "q1")
+         ("q0" "a" "q2")
+         ("q0" "b" "q3")
+    },
+    returnTransitions = {
+    }
+);
+

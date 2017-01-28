@@ -1,0 +1,38 @@
+// Example of DFA that can be minimized.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 7.11.2011
+
+
+assert(!isEmpty(nwa));
+print(numberOfStates(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDfaTable(removeDeadEnds(nwa)));
+print(minimizeDFASize);
+int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
+print(minimizeDfaSimulationSize);
+assert(minimizeDFASize == minimizeDfaSimulationSize);
+
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b c},
+  returnAlphabet = { },
+  states = {q0 q1 q2 q3},
+  initialStates = {q0},
+  finalStates = {q0 q1 q2 q3},
+  callTransitions = {},
+  internalTransitions = {
+      (q0 a q1)
+	  (q0 b q3)
+	  (q0 c q2)
+      (q1 a q0)
+      (q1 b q3)
+	  (q1 c q2)
+      (q2 c q0)
+      (q2 a q1)
+	  (q2 b q3)
+      (q3 b q0)
+	  (q3 a q1)
+	  (q3 c q2)
+  }, 
+  returnTransitions = {}
+);
+
