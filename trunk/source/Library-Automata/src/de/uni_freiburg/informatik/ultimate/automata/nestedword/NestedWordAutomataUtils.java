@@ -34,14 +34,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.InitialPartitionProcessor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Provides static methods that are helpful for working with nested word automata.
@@ -158,16 +162,16 @@ public final class NestedWordAutomataUtils {
 	 * Convert binary relation given as partition into binary relation given
 	 * as {@link HashRelation}
 	 */
-	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services, 
+	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services,
 			final Collection<Set<STATE>> partition) throws AutomataOperationCanceledException {
 		final HashRelation<STATE, STATE> result = new HashRelation<>();
 		final InitialPartitionProcessor<STATE> ipp = new InitialPartitionProcessor<STATE>(services) {
-
+			
 			@Override
 			public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
 				return true;
 			}
-
+			
 			@Override
 			public void doProcess(final STATE q0, final STATE q1) {
 				result.addPair(q0, q1);
@@ -260,11 +264,42 @@ public final class NestedWordAutomataUtils {
 		return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
 	}
 	
-	
 	/**
 	 * We can consider an NWA empty if call and return alphabet are empty.
 	 */
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
+	}
+	
+	/**
+	 * This implementation can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
+	 * getResult()} method.
+	 * It checks (finite word) language equivalence between the operand and the result.
+	 * 
+	 * @param services Ultimate services
+	 * @param stateFactory state factory for inclusion check
+	 * @param operand1 first operand
+	 * @param operand2 second operand
+	 * @return {@code true} iff the finite word language is the same
+	 */
+	public static <LETTER, STATE> Pair<Boolean, String> checkFiniteWordLanguageEquivalence(
+			final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {
+		// check language equivalence via two inclusion checks
+		final String message;
+		final Boolean correct;
+		if (!new IsIncluded<>(services, stateFactory, operand1, operand2).getResult()) {
+			message = "The result recognizes less words than before.";
+			correct = Boolean.FALSE;
+		} else if (!new IsIncluded<>(services, stateFactory, operand2, operand1).getResult()) {
+			message = "The result recognizes more words than before.";
+			correct = Boolean.FALSE;
+		} else {
+			message = null;
+			correct = Boolean.TRUE;
+		}
+		
+		return new Pair<>(correct, message);
 	}
 }

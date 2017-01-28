@@ -155,22 +155,6 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-
-		correct &= new IsIncluded<>(mServices, stateFactory, mOperand, mResult).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, mOperand).getResult();
-
-		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
-					"language is different", mOperand);
-		}
-		mLogger.info("Finished testing correctness of " + operationName());
-		return correct;
-	}
-
-	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}

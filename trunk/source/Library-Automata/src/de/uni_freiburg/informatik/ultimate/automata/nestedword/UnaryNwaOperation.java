@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Abstract operation taking one nested word automaton as input.
@@ -63,41 +59,4 @@ public abstract class UnaryNwaOperation<LETTER, STATE> extends GeneralOperation<
 	 * @return The operand nested word automaton.
 	 */
 	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getOperand();
-	
-	/**
-	 * This implementation can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 * getResult()} method.
-	 * It checks (finite word) language equivalence between the operand and the result.
-	 * <p>
-	 * NOTE: The operation relies on the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 * getResult()} method being a constant-time operation.
-	 */
-	protected Pair<Boolean, String> checkLanguageEquivalence(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		// type-check and cast result to nested word automaton
-		if (!(getResult() instanceof INestedWordAutomatonSimple)) {
-			throw new UnsupportedOperationException(
-					"The default checkResult() method assumes the result is a nested word automaton.");
-		}
-		@SuppressWarnings("unchecked")
-		final INestedWordAutomatonSimple<LETTER, STATE> result =
-				(INestedWordAutomatonSimple<LETTER, STATE>) getResult();
-		final INestedWordAutomatonSimple<LETTER, STATE> operand = getOperand();
-		
-		// check language equivalence via two inclusion checks
-		final String message;
-		final Boolean correct;
-		if (!new IsIncluded<>(mServices, stateFactory, operand, result).getResult()) {
-			message = "The result recognizes less words than before.";
-			correct = Boolean.FALSE;
-		} else if (!new IsIncluded<>(mServices, stateFactory, result, operand).getResult()) {
-			message = "The result recognizes more words than before.";
-			correct = Boolean.FALSE;
-		} else {
-			message = null;
-			correct = Boolean.TRUE;
-		}
-		
-		return new Pair<>(correct, message);
-	}
 }

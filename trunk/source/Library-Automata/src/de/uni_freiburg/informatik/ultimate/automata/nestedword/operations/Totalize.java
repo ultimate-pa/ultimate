@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -105,7 +107,8 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		final boolean correct;
 		
 		// check language equivalence
-		final Pair<Boolean, String> equivalenceResult = checkLanguageEquivalence(stateFactory);
+		final Pair<Boolean, String> equivalenceResult = NestedWordAutomataUtils
+				.checkFiniteWordLanguageEquivalence(mServices, stateFactory, getOperand(), getResult());
 		
 		if (!equivalenceResult.getFirst()) {
 			// language equivalence check failed

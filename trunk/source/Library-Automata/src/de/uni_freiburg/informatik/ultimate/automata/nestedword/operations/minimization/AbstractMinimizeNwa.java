@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -553,7 +554,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		// by default only check language equivalence
-		return checkLanguageEquivalence(stateFactory);
+		return NestedWordAutomataUtils.checkFiniteWordLanguageEquivalence(mServices, stateFactory, getOperand(),
+				getResult());
 	}
 	
 	/**

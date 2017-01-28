@@ -26,16 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -53,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE> {
+public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE> {
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -72,7 +68,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services,
 			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
 	
@@ -127,38 +123,17 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services,
 			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClasses)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DirectNwaGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand, possibleEquivalenceClasses.getRelation())));
+						new DirectNwaGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
+								possibleEquivalenceClasses.getRelation())));
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
-	 * simulation.direct.MinimizeDfaSimulation#checkResult(de.uni_freiburg.
-	 * informatik.ultimate.automata.statefactory.IStateFactory)
-	 */
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct = super.checkLanguageEquivalence(stateFactory).getFirst();
-		getLogger().info("Finished testing correctness of " + operationName());
-		return correct;
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.direct.MinimizeDfaSimulation#operationName()
-	 */
 	@Override
 	public String operationName() {
-		return "reduceNwaDirectSimulation";
+		return "ReduceNwaDirectSimulation";
 	}
 }

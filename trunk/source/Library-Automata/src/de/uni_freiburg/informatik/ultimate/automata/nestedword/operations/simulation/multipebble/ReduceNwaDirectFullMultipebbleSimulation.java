@@ -26,14 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -47,34 +44,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
-		extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>>
-		implements IMinimizeNwa<LETTER, STATE> {
+		extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> {
 	
-	public ReduceNwaDirectFullMultipebbleSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public ReduceNwaDirectFullMultipebbleSimulation(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
-		
+	
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>> constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
+	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>
+			constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
 		return new DirectFullMultipebbleStateFactory<>(initialPartition);
 	}
 	
 	@Override
-	protected Pair<IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>>,Integer> computeSimulation(
+	protected Pair<IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>>, Integer> computeSimulation(
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton)
 			throws AutomataOperationCanceledException {
-		final RemoveDeadEnds<LETTER, DirectFullMultipebbleGameState<STATE>> rde = new RemoveDeadEnds<>(mServices, gameAutomaton);
-		return new Pair<>(rde.getResult(),rde.getInputSize());
+		final RemoveDeadEnds<LETTER, DirectFullMultipebbleGameState<STATE>> rde =
+				new RemoveDeadEnds<>(mServices, gameAutomaton);
+		return new Pair<>(rde.getResult(), rde.getInputSize());
 	}
-	
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return super.checkLanguageEquivalence(stateFactory).getFirst();
-	}
-
 }
-
-

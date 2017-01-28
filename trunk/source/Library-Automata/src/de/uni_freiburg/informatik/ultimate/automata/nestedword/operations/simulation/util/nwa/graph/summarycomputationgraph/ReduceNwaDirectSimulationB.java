@@ -26,13 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -52,10 +50,5 @@ public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulati
 	@Override
 	protected ESimulationType getSimulationType() {
 		return ESimulationType.DELAYED;
-	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return super.checkLanguageEquivalence(stateFactory).getFirst();
 	}
 }
