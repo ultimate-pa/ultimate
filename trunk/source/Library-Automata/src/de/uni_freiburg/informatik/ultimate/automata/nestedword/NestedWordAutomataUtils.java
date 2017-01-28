@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Provides static methods that are helpful for working with nested word automata.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class NestedWordAutomataUtils {
 	private NestedWordAutomataUtils() {
@@ -272,28 +274,38 @@ public final class NestedWordAutomataUtils {
 	}
 	
 	/**
-	 * This implementation can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
+	 * This method checks (finite word) language equivalence between two operands via two inclusion checks.
+	 * <p>
+	 * It can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 * getResult()} method.
-	 * It checks (finite word) language equivalence between the operand and the result.
 	 * 
-	 * @param services Ultimate services
-	 * @param stateFactory state factory for inclusion check
-	 * @param operand1 first operand
-	 * @param operand2 second operand
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory for inclusion check
+	 * @param operand1
+	 *            first operand
+	 * @param operand2
+	 *            second operand
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
 	 * @return {@code true} iff the finite word language is the same
+	 * @throws AutomataLibraryException
+	 *             thrown by inclusion checks
 	 */
 	public static <LETTER, STATE> Pair<Boolean, String> checkFiniteWordLanguageEquivalence(
 			final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {
-		// check language equivalence via two inclusion checks
 		final String message;
 		final Boolean correct;
 		if (!new IsIncluded<>(services, stateFactory, operand1, operand2).getResult()) {
-			message = "The result recognizes less words than before.";
+			message = "The first operand recognizes less words than the second one.";
 			correct = Boolean.FALSE;
 		} else if (!new IsIncluded<>(services, stateFactory, operand2, operand1).getResult()) {
-			message = "The result recognizes more words than before.";
+			message = "The second operand recognizes less words than the first one.";
 			correct = Boolean.FALSE;
 		} else {
 			message = null;
