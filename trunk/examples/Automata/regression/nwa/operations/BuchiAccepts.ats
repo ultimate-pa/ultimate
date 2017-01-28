@@ -1,0 +1,20 @@
+// Examples for testing correctness of buchiAccepts operation
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 15.5.2011
+
+parseAutomata("../SimpleBuchiAutomata.ats");
+
+NestedLassoWord emptyOmega = [,];
+assert(!buchiAccepts(finitelyManyA, emptyOmega));
+
+assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
+assert(!buchiIsEmpty(finitelyManyA));
+
+assert(!buchiAccepts(finitelyManyB, [ a a a a a a , b ]));
+assert(!buchiIsEmpty(finitelyManyB));
+
+assert(buchiAccepts(infinitelyManyA, [ , a b b b ]));
+assert(!buchiAccepts(infinitelyManyA, [ , b ]));
+
+assert(buchiAccepts(AfollowedByB, [ b b b , a b b b a b ]));
+assert(!buchiAccepts(AfollowedByB, [ b b b , a a b b a b ]));

@@ -1,22 +1,5 @@
-// Examples for testing correctness of buchiIntersect operation
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 15.5.2011
-
-
-NestedLassoWord emptyOmega = [,];
-assert(!buchiAccepts(finitelyManyA, emptyOmega));
-
-assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
-assert(!buchiIsEmpty(finitelyManyA));
-
-assert(!buchiAccepts(finitelyManyB, [ a a a a a a , b ]));
-assert(!buchiIsEmpty(finitelyManyB));
-
-assert(buchiAccepts(infinitelyManyA, [ , a b b b ]));
-assert(!buchiAccepts(infinitelyManyA, [ , b ]));
-
-assert(buchiAccepts(AfollowedByB, [ b b b , a b b b a b ]));
-assert(!buchiAccepts(AfollowedByB, [ b b b , a a b b a b ]));
 
 NestedWordAutomaton finitelyManyA = (
 	callAlphabet = { },
@@ -54,9 +37,6 @@ NestedWordAutomaton finitelyManyAWithSinkState = (
     returnTransitions = { }
 );
 
-
-
-
 NestedWordAutomaton infinitelyManyA = (
 	callAlphabet = { },
 	internalAlphabet = {a b},
@@ -81,7 +61,6 @@ NestedWordAutomaton infinitelyManyB = (
 	returnTransitions = { }
 );
 
-
 NestedWordAutomaton AfollowedByB = (
 	callAlphabet = { },
 	internalAlphabet = {a b},
@@ -94,7 +73,6 @@ NestedWordAutomaton AfollowedByB = (
 	returnTransitions = { }
 );
 
-
 NestedWordAutomaton all = (
 	callAlphabet = { },
 	internalAlphabet = {a b},
@@ -106,7 +84,6 @@ NestedWordAutomaton all = (
 	internalTransitions = { (q0 a q0) (q0 b q0) }, 
 	returnTransitions = { }
 );
-
 
 NestedWordAutomaton allTwoState = (
 	callAlphabet = { },

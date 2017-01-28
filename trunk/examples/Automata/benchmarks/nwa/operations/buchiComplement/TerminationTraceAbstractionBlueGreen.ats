@@ -1,0 +1,236 @@
+// Trace Abstraction based termination proofs for our favorite program
+//
+// blue is: y>=0; y--;
+// green is: x>=0; x--; havoc(y)
+//
+// The automata manualIA1 manualIA2 are interpolantAutomata that we obtained
+// manually.
+//
+// The automata interpolantAutomata1... are interpolantAutomata obtained by
+// applying our CEGAR algorithm
+//
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 19.7.2011
+
+
+assert(buchiIsEmpty(buchiIntersect(controlAutomaton,
+                                buchiIntersect(buchiComplementFKV(manualIA1),
+                                               buchiComplementFKV(manualIA2)))));
+
+assert(!buchiIsEmpty(controlAutomaton));
+assert(buchiAccepts(controlAutomaton, [blue, blue]));
+assert(buchiAccepts(interpolantAutomaton1, [blue, blue]));
+
+NestedWordAutomaton complement1 = buchiComplementFKV(interpolantAutomaton1);
+assert(!buchiAccepts(complement1, [blue, blue]));
+NestedWordAutomaton diff1 = buchiIntersect(controlAutomaton, complement1);
+assert(!buchiIsEmpty(diff1));
+assert(buchiAccepts(diff1, [ green, blue blue]));
+assert(buchiAccepts(interpolantAutomaton2, [ green, blue blue]));
+
+NestedWordAutomaton complement2 = buchiComplementFKV(interpolantAutomaton2);
+assert(!buchiAccepts(complement2, [ green, blue blue]));
+NestedWordAutomaton diff2 = buchiIntersect(diff1, complement2);
+assert(!buchiIsEmpty(diff2));
+assert(buchiAccepts(diff2, [ green, green green]));
+assert(buchiAccepts(interpolantAutomaton3, [ green, green green]));
+
+NestedWordAutomaton complement3 = buchiComplementFKV(interpolantAutomaton3);
+assert(!buchiAccepts(complement3, [ green, green green]));
+NestedWordAutomaton diff3 = buchiIntersect(diff2, complement3);
+assert(!buchiIsEmpty(diff3));
+assert(buchiAccepts(diff3, [blue green, blue blue ]));
+assert(buchiAccepts(interpolantAutomaton4, [blue green, blue blue ]));
+
+NestedWordAutomaton complement4 = buchiComplementFKV(interpolantAutomaton4);
+assert(!buchiAccepts(complement4, [blue green, blue blue ]));
+NestedWordAutomaton diff4 = buchiIntersect(diff3, complement4);
+assert(!buchiIsEmpty(diff4));
+assert(buchiAccepts(diff4, [blue blue green, green blue green green ]));
+assert(buchiAccepts(interpolantAutomaton5, [blue blue green, green blue green green ]));
+
+NestedWordAutomaton complement5 = buchiComplementFKV(interpolantAutomaton5);
+assert(!buchiAccepts(complement5, [blue blue green, green blue green green ]));
+NestedWordAutomaton diff5 = buchiIntersect(diff4, complement5);
+assert(!buchiIsEmpty(diff5));
+assert(buchiAccepts(diff5, [blue blue green, blue blue blue green ]));
+assert(buchiAccepts(interpolantAutomaton6, [blue blue green, blue blue blue green ]));
+
+NestedWordAutomaton complement6 = buchiComplementFKV(interpolantAutomaton6);
+assert(!buchiAccepts(complement6, [blue blue green, blue blue blue green ]));
+NestedWordAutomaton diff6 = buchiIntersect(diff5, complement6);
+assert(buchiIsEmpty(diff6));
+              
+              
+              
+NestedWordAutomaton controlAutomaton = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"l"},
+  initialStates = {"l"},
+  finalStates = {"l"},
+  callTransitions = {},
+  internalTransitions = {("l" blue "l") ("l" green "l")}, 
+  returnTransitions = {}
+);
+
+NestedWordAutomaton manualIA1 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "y<rk A"},
+  initialStates = {"rk=inf"},
+  finalStates = {"y<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" blue "rk=inf") ("rk=inf" green "rk=inf")
+    ("rk=inf" blue "y<rk A") 
+    ("y<rk A" blue "y<rk A")
+  }, 
+  returnTransitions = {}
+);
+
+
+NestedWordAutomaton manualIA2 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "x<rk A" "x<=rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"x<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" green "rk=inf") ("rk=inf" blue "rk=inf") 
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<=rk") ("x<rk A" blue "x<=rk")
+    ("x<=rk" green "x<rk A") ("x<=rk" blue "x<=rk")
+  }, 
+  returnTransitions = {}
+);
+
+
+
+
+
+NestedWordAutomaton interpolantAutomaton1 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "x<rk A"},
+  initialStates = {"rk=inf"},
+  finalStates = {"x<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" blue "rk=inf") 
+    ("rk=inf" blue "x<rk A") 
+    ("x<rk A" blue "x<rk A")
+  }, 
+  returnTransitions = {}
+);
+
+
+NestedWordAutomaton interpolantAutomaton2 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "y<rk A" "y<rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"y<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" green "rk=inf") 
+    ("rk=inf" green "y<rk A") 
+    ("y<rk A" blue "y<rk")
+    ("y<rk" blue "y<rk A")
+  }, 
+  returnTransitions = {}
+);
+
+
+
+NestedWordAutomaton interpolantAutomaton3 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "x<rk A" "x<rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"x<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" green "rk=inf") 
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+  }, 
+  returnTransitions = {}
+);
+
+
+
+NestedWordAutomaton interpolantAutomaton4 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "y<rk A" "y<rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"y<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "y<rk A") 
+    ("y<rk A" blue "y<rk")
+    ("y<rk" blue "y<rk A")
+    ("y<rk A" blue "y<rk A")
+    ("y<rk" blue "y<rk")
+  }, 
+  returnTransitions = {}
+);
+
+
+NestedWordAutomaton interpolantAutomaton5 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "x<rk A" "x<rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"x<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+    ("x<rk" blue "x<rk")
+  }, 
+  returnTransitions = {}
+);
+
+NestedWordAutomaton interpolantAutomaton6 = (
+  callAlphabet = { },
+  internalAlphabet = {blue green},
+  returnAlphabet = { },
+  states = {"rk=inf" "x<rk A" "x<rk"},
+  initialStates = {"rk=inf"},
+  finalStates = {"x<rk A"},
+  callTransitions = {},
+  internalTransitions = {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk A" blue "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+    ("x<rk" blue "x<rk")
+  }, 
+  returnTransitions = {}
+);
