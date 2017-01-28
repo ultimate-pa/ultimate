@@ -49,6 +49,6 @@ public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulati
 	
 	@Override
 	protected ESimulationType getSimulationType() {
-		return ESimulationType.DELAYED;
+		return ESimulationType.DIRECT;
 	}
 }
