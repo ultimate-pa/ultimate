@@ -3,7 +3,7 @@
 // Date: 31.05.2013
 
 
-parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+parseAutomata("../../SimpleBuchiAutomata.ats");
 
 
 NestedWordAutomaton nwa1 = buchiIntersect(finitelyManyA, infinitelyManyA);
@@ -31,7 +31,7 @@ assert(numberOfStates(nwa6) == 3);
 assert(buchiIsEmpty(nwa6));
 
 
-parseAutomata("../BuchiNwa/simpleBuchiNwa.ats");
+parseAutomata("../../SimpleBuchiNwa.ats");
 
 NestedWordAutomaton nwa7 = buchiIntersect(finitelyManyAInEachContext, infinitelyManyAWithCallReturn);
 assert(buchiAccepts(nwa7, [  , a c< ]));

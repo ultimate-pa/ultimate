@@ -2,7 +2,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 15.5.2011
 
-parseAutomata("../SimpleBuchiAutomata.ats");
+parseAutomata("../../SimpleBuchiAutomata.ats");
 
 NestedLassoWord emptyOmega = [,];
 assert(!buchiAccepts(finitelyManyA, emptyOmega));

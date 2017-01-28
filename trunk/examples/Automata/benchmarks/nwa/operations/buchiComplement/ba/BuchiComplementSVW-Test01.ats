@@ -2,7 +2,7 @@
 // Date: 02.06.2013
 
 
-parseAutomata("../finiteAutomata/PathologicalExamples.ats");
+parseAutomata("../../../../../regression/nwa/PathologicalExamples.ats");
 
 NestedWordAutomaton nwa = buchiComplementSVW(emptyAutomaton);
 assert(numberOfStates(nwa) == 4);
@@ -10,7 +10,7 @@ assert(!buchiIsEmpty(nwa));
 print(numberOfStates(nwa));
 
 
-parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+parseAutomata("../../../../../regression/nwa/SimpleBuchiAutomata.ats");
 
 nwa = buchiComplementSVW(finitelyManyA);
 assert(numberOfStates(nwa) == 12);

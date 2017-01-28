@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 01.06.2013
 
-parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+parseAutomata("../../../SimpleBuchiAutomata.ats");
 
 NestedWordAutomaton nwa = buchiComplementFKV(finitelyManyA);
 print(numberOfStates(nwa));
@@ -33,7 +33,7 @@ assert(numberOfStates(nwa) == 3);
 assert(buchiIsEmpty(nwa));
 
 
-parseAutomata("../BuchiAutomata/SizeChangeTermination2001.ats");
+parseAutomata("../../../../../benchmarks/nwa/operations/buchiComplement/ba/SizeChangeTermination2001.ats");
 
 NestedWordAutomaton nwa = buchiComplementFKV(infeasible);
 print(numberOfStates(nwa));
@@ -48,7 +48,7 @@ assert(!buchiIsEmpty(nwa));
 
 
 
-parseAutomata("../BuchiAutomata/terminationTraceAbstractionBlueGreen.ats");
+parseAutomata("../../../../../benchmarks/nwa/operations/buchiComplement/ba/TerminationTraceAbstractionBlueGreen.ats");
 
 
 NestedWordAutomaton nwa = buchiComplementFKV(manualIA1);

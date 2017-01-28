@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 01.06.2013
 
-parseAutomata("../BuchiNwa/Xiaolin.ats");
+parseAutomata("../../../Xiaolin.ats");
 
 NestedWordAutomaton nwa = buchiComplementFKV(eNoether);
 assert(numberOfStates(nwa) == 10);

@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 09.01.2014
 
-parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+parseAutomata("../../../SimpleBuchiAutomata.ats");
 
 print(numberOfStates(finitelyManyAWithSinkState));
 NestedWordAutomaton complement = buchiComplementFKV(finitelyManyAWithSinkState);

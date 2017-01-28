@@ -2,7 +2,7 @@
 // Date: 02.06.2013
 
 
-parseAutomata("../finiteAutomata/PathologicalExamples.ats");
+// parseAutomata("../../../PathologicalExamples.ats");
 
 // NestedWordAutomaton nwa = buchiComplementDeterministic(emptyAutomaton);
 // assert(numberOfStates(nwa) == 4);
@@ -10,7 +10,7 @@ parseAutomata("../finiteAutomata/PathologicalExamples.ats");
 // print(numberOfStates(nwa));
 
 
-// parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+// parseAutomata("../../../simpleBuchiAutomata.ats");
 // 
 // NestedWordAutomaton nwa = buchiComplementDeterministic(infinitelyManyA);
 // assert(numberOfStates(nwa) == 3);
@@ -24,7 +24,7 @@ parseAutomata("../finiteAutomata/PathologicalExamples.ats");
 // assert(numberOfStates(nwa) == 1);
 // assert(buchiIsEmpty(nwa));
 
-parseAutomata("../BuchiNwa/Xiaolin.ats");
+parseAutomata("../../../Xiaolin.ats");
 
 NestedWordAutomaton nwa = buchiComplementDeterministic(eNoether);
 assert(numberOfStates(nwa) == 9);
