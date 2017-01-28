@@ -54,24 +54,6 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private final IStateFactory<STATE> mStateFactory;
 	
 	/**
-	 * Constructor which uses the state factory of the first operand.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param fstOperand
-	 *            first operand
-	 * @param sndOperand
-	 *            second operand
-	 * @throws AutomataLibraryException
-	 *             if construction fails
-	 */
-	public BuchiIntersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand);
-	}
-	
-	/**
 	 * Full constructor.
 	 * 
 	 * @param services
