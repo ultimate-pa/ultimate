@@ -1064,7 +1064,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			for (final Constructor<?> c : operationConstructors) {
 				// Convention: If the first parameter is a StateFactory, we
 				// prepend a StringFactory to the arguments.
-				assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes());
+				assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes()) : 
+					"constructor of " + c.getDeclaringClass().getSimpleName() + " violates \"services and state factory first\" convention"; 
 				final Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
 				final Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 				if (!allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
