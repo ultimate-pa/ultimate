@@ -68,7 +68,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, fstOperand, sndOperand, fstOperand.getStateFactory());
+		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand);
 	}
 	
 	/**
@@ -76,18 +76,18 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
 	 *            second operand
-	 * @param stateFactory
-	 *            state factory
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
 	public BuchiIntersect(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final IStateFactory<STATE> stateFactory)
+			final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand, final INestedWordAutomatonSimple<LETTER, STATE> sndOperand)
 			throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;

@@ -290,7 +290,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			assert !new BuchiAccepts<>(new AutomataLibraryServices(mServices), complement,
 					mCounterexample.getNestedLassoWord()).getResult();
 			final BuchiIntersect<LETTER, IPredicate> interNwa = new BuchiIntersect<>(
-					new AutomataLibraryServices(mServices), abstraction, complement, mStateFactoryForRefinement);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, abstraction, complement);
 			assert interNwa.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = interNwa.getResult();
 		}
