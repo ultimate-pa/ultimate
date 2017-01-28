@@ -1,11 +1,11 @@
 // Date: 6.5.2013
 // Author: heizmann@informatik.uni-freiburg.de and Christian Schilling
 //
-// The original version of Hopcropfts algorithm 
+// The original version of Hopcropft's algorithm 
 // http://en.wikipedia.org/wiki/DFA_minimization
-// requries that the automaton is total.
-// This example shows why this requirenment is necessary.
-// For non-total automaton we therefor use a modification where we put not
+// requires that the automaton is total.
+// This example shows why this requirement is necessary.
+// For non-total automaton we therefore use a modification where we put not
 // only the smaller of two sets into the worklist but both.
 
 print(minimizeSevpa(removeUnreachable(nwa)));

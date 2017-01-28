@@ -1,7 +1,7 @@
 // Author: Thomas Lang, heizmann@informatik.uni-freiburg.de
 // Date: 2015-06-03
 
-parseAutomata("../PathologicalExamples.ats");
+parseAutomata("../../PathologicalExamples.ats");
 
 assert(loopComplexity(noInitialStates) == 0);
 assert(loopComplexity(noFinalStates) == 0);
@@ -12,13 +12,13 @@ assert(loopComplexity(emptyAutomaton) == 0);
 assert(loopComplexity(noTransitionAutomaton) == 0);
 
 
-parseAutomata("../divisibility.ats");
+parseAutomata("../Misc_Divisibility.ats");
 
 assert(loopComplexity(Amod2) == 2);
 assert(loopComplexity(Amod3) == 2);
 
 
-parseAutomata("./loopComplexityTest.ats");
+parseAutomata("../../LoopComplexity_Examples.ats");
 
 assert(loopComplexity(LC0) == 0);
 assert(loopComplexity(LC1) == 1);

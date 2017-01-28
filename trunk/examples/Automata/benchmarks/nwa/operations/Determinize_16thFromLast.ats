@@ -1,0 +1,41 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 8.6.2011
+
+// Typical example for exponential blowup while determinizing
+// finite automata.
+// assert(!accepts(16thFromLast, [a a a b a a a a a a a a a a a a a a a]));
+// assert(accepts(16thFromLast, [b b b a b b b b b b b b b b b b b b b]));
+// assert(accepts(complement(16thFromLast), [a a a b a a a a a a a a a a a a a a a]));
+// 
+// print(16thFromLast);
+
+assert(numberOfStates(determinize(16thFromLast)) == 65536);
+
+NestedWordAutomaton 16thFromLast = (
+  callAlphabet = {},
+  internalAlphabet = {a b},
+  returnAlphabet = {},
+  states = {q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14 q15 q16 },
+  initialStates = {q0},
+  finalStates = {q16},
+  callTransitions = {},
+  internalTransitions = {
+	(q0 a q0) (q0 b q0) (q0 a q1)
+	(q1 a q2) (q1 b q2)
+	(q2 a q3) (q2 b q3)
+	(q3 a q4) (q3 b q4)
+	(q4 a q5) (q4 b q5)
+	(q5 a q6) (q5 b q6)
+	(q6 a q7) (q6 b q7)
+	(q7 a q8) (q7 b q8)
+	(q8 a q9) (q8 b q9)
+	(q9 a q10) (q9 b q10)
+	(q10 a q11) (q10 b q11)
+	(q11 a q12) (q11 b q12)
+	(q12 a q13) (q12 b q13)
+	(q13 a q14) (q13 b q14)
+	(q14 a q15) (q14 b q15)
+	(q15 a q16) (q15 b q16)
+  }, 
+  returnTransitions = {}
+);
