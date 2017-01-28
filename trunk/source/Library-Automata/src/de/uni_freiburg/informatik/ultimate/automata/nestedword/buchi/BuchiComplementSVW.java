@@ -60,12 +60,15 @@ public final class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<L
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param operand
 	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementSVW(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
+	public BuchiComplementSVW(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -73,7 +76,7 @@ public final class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<L
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		mResult = new BuchiComplementAutomatonSVW<>(mServices, operand);
+		mResult = new BuchiComplementAutomatonSVW<>(mServices, stateFactory, operand);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}

@@ -96,7 +96,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 * Constructor.
 	 */
 	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IMergeStateFactory<STATE> stateFactory,
+			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}

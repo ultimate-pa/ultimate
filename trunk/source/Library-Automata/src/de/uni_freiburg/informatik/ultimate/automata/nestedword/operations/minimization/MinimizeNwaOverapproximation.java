@@ -131,8 +131,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		super(services, stateFactory);
 		mOperand = operand;
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
-		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, operand,
-				initialPartition, stateFactory, addMapOldState2newState, timeout, false);
+		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, stateFactory,
+				operand, initialPartition, addMapOldState2newState, timeout, false);
 		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),
 				forbiddenLanguages, stateFactory);
 	}

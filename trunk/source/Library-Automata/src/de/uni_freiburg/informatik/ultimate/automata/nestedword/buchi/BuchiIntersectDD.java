@@ -46,6 +46,8 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -53,10 +55,10 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersectDD(final AutomataLibraryServices services,
+	public BuchiIntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, fstOperand, sndOperand, false);
+		this(services, stateFactory, fstOperand, sndOperand, false);
 	}
 	
 	/**
@@ -64,6 +66,8 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstNwa
 	 *            first operand
 	 * @param sndNwa
@@ -73,11 +77,11 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersectDD(final AutomataLibraryServices services,
+	public BuchiIntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
-		super(services, true, minimizeResult, fstNwa, sndNwa);
+		super(services, stateFactory, fstNwa, sndNwa, true, minimizeResult);
 	}
 	
 	@Override

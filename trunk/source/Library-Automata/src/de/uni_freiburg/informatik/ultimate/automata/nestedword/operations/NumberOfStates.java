@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Operation that returns the number of states of a nested word automaton.
@@ -69,5 +71,10 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	@Override
 	public Integer getResult() {
 		return mOperand.size();
+	}
+	
+	@Override
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		return true;
 	}
 }

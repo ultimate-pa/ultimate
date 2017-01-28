@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final IStateFactory<STATE> mStateFactory;
-	
 	/**
 	 * Constructor.
 	 * 
@@ -61,17 +59,15 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Totalize(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+	public Totalize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mStateFactory = operand.getStateFactory();
-		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		
-		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, mStateFactory);
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, totalized);
 		
 		if (mLogger.isInfoEnabled()) {
@@ -116,7 +112,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 			message = equivalenceResult.getSecond();
 			correct = false;
 			assert false;
-		} else if (!new IsTotal<LETTER, STATE>(mServices, mResult).getResult()) {
+		} else if (!new IsTotal<>(mServices, mResult).getResult()) {
 			// totality check failed
 			message = "The result is not total.";
 			correct = false;

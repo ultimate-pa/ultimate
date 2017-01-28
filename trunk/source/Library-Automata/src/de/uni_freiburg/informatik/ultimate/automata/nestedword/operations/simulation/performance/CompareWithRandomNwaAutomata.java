@@ -42,27 +42,24 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * The resulting automaton is the input automaton.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton, not used
  * @param <STATE>
  *            State class of nwa automaton, not used
  */
 public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-
+	private static final int HUNDRED = 100;
 	/**
 	 * The inputed nwa automaton.
 	 */
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-
+	
 	/**
 	 * Compares the different types of nwa simulation methods for nwa reduction
 	 * using random automata. Resulting automaton is the input automaton.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
 	 * @param operand
 	 *            A nwa, it is not used by the operation
 	 * @throws AutomataOperationCanceledException
@@ -70,15 +67,14 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 	 *             framework.
 	 */
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-
+		
 		// Use operation with random automata
 		final IMergeStateFactory<String> snf = new StringFactory();
-
+		
 		final int n = 10;
 		final int k = 3;
 		final int acceptanceInPerc = 100;
@@ -88,15 +84,15 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 		final int logEvery = 50;
 		final int amount = 1000;
 		INestedWordAutomatonSimple<String, String> nwa;
-
+		
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
 				mLogger.info("Worked " + i + " automata");
 			}
-
-			nwa = new GetRandomNwa(services, k, n, (totalityInternalInPerc + 0.0f) / 100,
-					(totalityCallInPerc + 0.0f) / 100, (totalityReturnInPerc + 0.0f) / 100,
-					(acceptanceInPerc + 0.0f) / 100).getResult();
+			
+			nwa = new GetRandomNwa(services, k, n, (totalityInternalInPerc + 0.0) / HUNDRED,
+					(totalityCallInPerc + 0.0) / HUNDRED, (totalityReturnInPerc + 0.0) / HUNDRED,
+					(acceptanceInPerc + 0.0) / HUNDRED).getResult();
 			try {
 				new CompareReduceNwaSimulation<>(services, snf, nwa);
 			} catch (final AutomataOperationCanceledException e) {
@@ -105,39 +101,22 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 		}
 		mLogger.info(exitMessage());
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
-	 */
+	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-
+	
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 */
+	
 	@Override
 	public String getResult() {
 		return "no result";
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#operationName()
-	 */
+	
 	@Override
 	public String operationName() {
 		return "compareWithRandomNwaAutomata";

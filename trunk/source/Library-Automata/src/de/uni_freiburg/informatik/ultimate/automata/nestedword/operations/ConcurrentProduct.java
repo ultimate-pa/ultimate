@@ -45,12 +45,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * for parallel transition systems.
  * For shared letters of both input automata move if the letter is read.
  * For the other letters only the corresponding automaton moves.
- * 
  * 2016-11-18 Matthias: It seems that for similar alphabets the result of this
- * operation is equivalent to the intersection if the parameter 
- * concurrentPrefixProduct is true and it is equivalent to the union if 
+ * operation is equivalent to the intersection if the parameter
+ * concurrentPrefixProduct is true and it is equivalent to the union if
  * the parameter concurrentPrefixProduct if false.
- * 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -91,6 +89,8 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	/**
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -100,14 +100,14 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 *            of the old places was final)
 	 */
 	@SuppressWarnings("squid:S1067")
-	public ConcurrentProduct(final AutomataLibraryServices services,
+	public ConcurrentProduct(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final boolean concurrentPrefixProduct) {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		mConcurrentPrefixProduct = concurrentPrefixProduct;
-		mContentFactory = fstOperand.getStateFactory();
+		mContentFactory = stateFactory;
 		/*FIXME
 		if (mContentFactory != nwa2.getContentFactory()) {
 			throw new IllegalArgumentException("Both NWAs have to use" +

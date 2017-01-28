@@ -67,9 +67,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 *             if operation was canceled
 	 */
 	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
-		this(services, operand, new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory), stateFactory);
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
 	
 	/**
@@ -79,16 +78,16 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 *            Ultimate services
 	 * @param stateFactory
 	 *            state factory
-	 * @param stateDeterminizer
-	 *            state determinizer
 	 * @param operand
 	 *            operand
+	 * @param stateDeterminizer
+	 *            state determinizer
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Complement(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory)
-			throws AutomataOperationCanceledException {
+	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
@@ -141,12 +140,11 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 				mLogger.info("Operand was deterministic. Have not used determinization.");
 			}
 			return result;
-		} else {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Operand was not deterministic. Recomputing result with determinization.");
-			}
-			return null;
 		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Operand was not deterministic. Recomputing result with determinization.");
+		}
+		return null;
 	}
 	
 	@Override
@@ -180,10 +178,10 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			
 			// intersection of operand and result should be empty
 			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-					(new IntersectDD<LETTER, STATE>(mServices, mOperand, mResult)).getResult();
-			correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+					(new IntersectDD<>(mServices, stateFactory, mOperand, mResult)).getResult();
+			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-					(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+					(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
 			
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
@@ -202,9 +200,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			}
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
-					operationName() + "Failed", "language is different",
-					mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand);
 		}
 		return correct;
 	}

@@ -161,13 +161,13 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            State factory used for state creation.
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
-	 * @param stateFactory
-	 *            State factory used for state creation.
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated. It must not have any dead ends.
@@ -175,8 +175,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public AGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final IMergeStateFactory<STATE> stateFactory,
+	public AGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final IProgressAwareTimer progressTimer, final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
 		// We assume the automaton has no dead ends, this is a requirement for
 		// the algorithm to work correctly.

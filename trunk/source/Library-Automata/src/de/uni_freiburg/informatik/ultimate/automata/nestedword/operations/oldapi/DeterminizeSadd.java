@@ -63,6 +63,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private final STATE mAuxiliaryEmptyStackState;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
+	private final IStateFactory<STATE> mStateFactory;
 	
 	private final List<StatePair> mQueue = new LinkedList<>();
 	
@@ -77,12 +78,13 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
-	 * @throws AutomataOperationCanceledException 
+	 * @throws AutomataOperationCanceledException
 	 */
-	public DeterminizeSadd(final AutomataLibraryServices services,
+	public DeterminizeSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
+		mStateFactory = stateFactory;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -455,7 +457,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		
 		STATE getContent() {
-			return mResult.getStateFactory().determinize(mPairList);
+			return mStateFactory.determinize(mPairList);
 		}
 		
 		private void addPair(final STATE state, final STATE callerState) {

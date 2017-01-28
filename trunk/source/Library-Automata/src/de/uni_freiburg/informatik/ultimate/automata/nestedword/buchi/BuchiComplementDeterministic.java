@@ -75,16 +75,18 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param operand
 	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementDeterministic(final AutomataLibraryServices services,
+	public BuchiComplementDeterministic(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mContentFactory = mOperand.getStateFactory();
+		mContentFactory = stateFactory;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());

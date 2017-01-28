@@ -72,20 +72,23 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param buchiIntersection
-	 *            {@code true} iff Buchi intersection is used
-	 * @param minimizeResult
-	 *            {@code true} iff result should be minimized
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstNwa
 	 *            first operand
 	 * @param sndNwa
 	 *            second operand
+	 * @param buchiIntersection
+	 *            {@code true} iff Buchi intersection is used
+	 * @param minimizeResult
+	 *            {@code true} iff result should be minimized
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public AbstractIntersect(final AutomataLibraryServices services, final boolean buchiIntersection,
-			final boolean minimizeResult, final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
+	public AbstractIntersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean buchiIntersection,
+			final boolean minimizeResult) throws AutomataLibraryException {
 		super(services);
 		
 		mBuchi = buchiIntersection;
@@ -97,7 +100,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 					"Unable to apply operation to automata with different alphabets.");
 		}
 		
-		mContentFactory = mFstNwa.getStateFactory();
+		mContentFactory = stateFactory;
 		mLogger.info(startMessage());
 		
 		final Set<LETTER> newInternals = new HashSet<>();
@@ -139,19 +142,9 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		}
 		STATE state = snd2result.get(snd);
 		if (state == null) {
-			boolean isFinal;
-			if (mBuchi) {
-				isFinal = mFstNwa.isFinal(fst);
-			} else {
-				isFinal = mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
-			}
+			final boolean isFinal = mBuchi ? mFstNwa.isFinal(fst) : mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
 			
-			if (mBuchi) {
-				state = mContentFactory.intersectBuchi(
-						fst, snd, 1);
-			} else {
-				state = mContentFactory.intersection(fst, snd);
-			}
+			state = mBuchi ? mContentFactory.intersectBuchi(fst, snd, 1) : mContentFactory.intersection(fst, snd);
 			
 			mResultNwa.addState(isInitial, isFinal, state);
 			snd2result.put(snd, state);

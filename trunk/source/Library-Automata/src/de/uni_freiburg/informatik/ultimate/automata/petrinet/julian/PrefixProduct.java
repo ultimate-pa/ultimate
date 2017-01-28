@@ -276,7 +276,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		final INestedWordAutomatonSimple<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
 		final INestedWordAutomatonSimple<S, C> nwaResult =
-				(new ConcurrentProduct<>(mServices, op1AsNwa, mNwa, true)).getResult();
+				(new ConcurrentProduct<>(mServices, stateFactory, op1AsNwa, mNwa, true)).getResult();
 		boolean correct;
 		correct = (new IsIncluded<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();
 		correct = correct && (new IsIncluded<>(mServices, stateFactory, nwaResult, resultAsNwa)).getResult();

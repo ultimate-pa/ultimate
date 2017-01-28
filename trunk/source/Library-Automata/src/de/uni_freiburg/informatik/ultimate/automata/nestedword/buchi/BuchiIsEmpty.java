@@ -119,12 +119,11 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 				mLogger.info("There is no accepting nested lasso run");
 			}
 			return null;
-		} else {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Starting construction of run");
-			}
-			return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Starting construction of run");
+		}
+		return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 	}
 	
 	@Override

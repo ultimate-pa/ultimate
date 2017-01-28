@@ -53,17 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	/**
-	 * TODO Allow definition of a maximal rank for cases where you know that
-	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
-	 * rank of 2 is suffient, see paper of Seth Forgaty.
-	 */
-	private final int mUserDefinedMaxRank;
-	
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final IStateFactory<STATE> mStateFactory;
-	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
 	
@@ -139,6 +130,10 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 *            optimization parameter
 	 * @param userDefinedMaxRank
 	 *            user-defined maximal rank
+	 *            <p>
+	 *            TODO Allow definition of a maximal rank for cases where you know that
+	 *            this is sound. E.g. if the automaton is reverse deterministic a maximal
+	 *            rank of 2 is sufficient, see paper of Seth Forgaty.
 	 * @param stateDeterminizer
 	 *            state determinizer
 	 * @throws AutomataOperationCanceledException
@@ -149,18 +144,15 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
 		super(services);
-		mStateFactory = stateFactory;
 		mOperand = operand;
-		mStateDeterminizer = stateDeterminizer;
-		mUserDefinedMaxRank = userDefinedMaxRank;
 		mOptimization = optimization;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		
-		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, mStateDeterminizer, mStateFactory,
-				mOptimization, mUserDefinedMaxRank);
+		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory,
+				mOptimization, userDefinedMaxRank);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mComplemented);
 		
 		if (mLogger.isInfoEnabled()) {

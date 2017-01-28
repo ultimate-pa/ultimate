@@ -215,8 +215,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClassesForDirect =
 						new LookaheadPartitionConstructor<>(services, operand, true).getPartition();
 
-				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
-						logger, operand, stateFactory, possibleEquivalenceClassesForDirect.getRelation());
+				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, stateFactory,
+						progressTimer, logger, operand, possibleEquivalenceClassesForDirect.getRelation());
 				graph.generateGameGraphFromAutomaton();
 				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);
@@ -224,7 +224,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
 				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services,
-						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
+						stateFactory, progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
 						useSCCs, stateFactory, graph);
@@ -232,7 +232,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
 				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services,
-						progressTimer, logger, operand, stateFactory, possibleEquivalenceClasses);
+						stateFactory, progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
 						stateFactory, graph);

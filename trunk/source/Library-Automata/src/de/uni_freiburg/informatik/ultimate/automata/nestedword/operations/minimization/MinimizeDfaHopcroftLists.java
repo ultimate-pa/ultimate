@@ -117,8 +117,8 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * size of the alphabet.
 	 */
 	public MinimizeDfaHopcroftLists(
-			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final IMergeStateFactory<STATE> stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
+			final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -171,7 +171,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 */
 	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
 			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand, stateFactory, null, false);
+		this(services, stateFactory, operand, null, false);
 	}
 	
 	@Override

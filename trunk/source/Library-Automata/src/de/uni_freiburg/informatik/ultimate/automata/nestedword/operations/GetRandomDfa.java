@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
@@ -740,9 +739,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 			num2Letter.add(PREFIX_TRANSITION + i);
 		}
 		
-		final IStateFactory<String> stateFactory = new StringFactory();
 		final NestedWordAutomaton<String, String> result =
-				new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), null, null, stateFactory);
+				new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), null, null, new StringFactory());
 		
 		// Create states
 		for (int i = 0; i < mSize; ++i) {

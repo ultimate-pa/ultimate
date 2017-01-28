@@ -46,6 +46,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param fstNwa
 	 *            first operand
 	 * @param sndNwa
@@ -53,9 +55,10 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectDD(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+	public IntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
-		this(services, false, fstNwa, sndNwa);
+		this(services, stateFactory, fstNwa, sndNwa, false);
 	}
 	
 	/**
@@ -63,6 +66,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param minimizeResult
 	 *            {@code true} iff result should be minimized
 	 * @param fstNwa
@@ -72,11 +77,11 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectDD(final AutomataLibraryServices services, final boolean minimizeResult,
+	public IntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
-		super(services, false, minimizeResult, fstNwa, sndNwa);
+		super(services, stateFactory, fstNwa, sndNwa, false, minimizeResult);
 	}
 	
 	@Override

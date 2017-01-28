@@ -107,7 +107,7 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		
 		boolean correct;
 		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-				(new IntersectDD<>(mServices, false, mOperand, mResult)).getResult();
+				(new IntersectDD<>(mServices, stateFactory, mOperand, mResult, false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {

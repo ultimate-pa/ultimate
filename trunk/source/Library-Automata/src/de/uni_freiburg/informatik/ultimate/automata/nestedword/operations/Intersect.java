@@ -48,9 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
-	private final IntersectNwa<LETTER, STATE> mIntersect;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final IStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Constructor.
@@ -72,14 +70,13 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mStateFactory = stateFactory;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		
-		mIntersect = new IntersectNwa<>(mFstOperand, mSndOperand, mStateFactory, false);
-		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
+		final IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<>(mFstOperand, mSndOperand, stateFactory, false);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -118,7 +115,7 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		}
 		
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-				(new IntersectDD<>(mServices, mFstOperand, mSndOperand)).getResult();
+				(new IntersectDD<>(mServices, stateFactory, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;

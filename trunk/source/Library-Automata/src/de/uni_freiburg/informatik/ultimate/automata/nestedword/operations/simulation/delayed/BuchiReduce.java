@@ -40,9 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -63,8 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE> {
+public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
 	 */
@@ -98,9 +96,9 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
-						new DelayedGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+						new DelayedGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand)));
 	}
 
 	/**
@@ -123,19 +121,20 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 	protected BuchiReduce(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		mOperand = operand;
 		mLogger.info(startMessage());
 
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
 		mResult = simulation.getResult();
+		super.directResultConstruction(mResult);
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
-					mServices.getProgressAwareTimer(), mLogger, mOperand, stateFactory);
+					stateFactory, mServices.getProgressAwareTimer(), mLogger, mOperand);
 			graph.generateGameGraphFromAutomaton();
 			final DelayedSimulation<LETTER, STATE> sccSim = new DelayedSimulation<>(
 					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
@@ -149,13 +148,6 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		mLogger.info(exitMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
-	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
-	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
@@ -165,44 +157,16 @@ public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		return correct;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
-	 */
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#
-	 * getAutomataOperationStatistics()
-	 */
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 */
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#operationName()
-	 */
 	@Override
 	public String operationName() {
 		return "BuchiReduce";

@@ -78,7 +78,7 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 		final INestedWordAutomatonSimple<LETTER, STATE> sndComplement =
 				(new BuchiComplementFKV<>(mServices, stateFactory, mSndOperand)).getResult();
 		final INestedWordAutomatonSimple<LETTER, STATE> difference =
-				(new BuchiIntersectDD<>(mServices, mFstOperand, sndComplement, true)).getResult();
+				(new BuchiIntersectDD<>(mServices, stateFactory, mFstOperand, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
 		
 		mResult = emptinessCheck.getResult();

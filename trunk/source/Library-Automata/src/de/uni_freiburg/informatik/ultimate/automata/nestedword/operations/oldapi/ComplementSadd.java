@@ -60,7 +60,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
 	 */
-	public ComplementSadd(final AutomataLibraryServices services,
+	public ComplementSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -70,7 +70,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		if (!new IsDeterministic<>(services, mOperand).getResult()) {
-			mDeterminizedOperand = (new DeterminizeSadd<>(mServices, mOperand)).getResult();
+			mDeterminizedOperand = (new DeterminizeSadd<>(mServices, stateFactory, mOperand)).getResult();
 		} else {
 			mDeterminizedOperand = mOperand;
 			if (mLogger.isDebugEnabled()) {
@@ -113,7 +113,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		
 		boolean correct;
 		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-				(new IntersectDD<>(mServices, false, mOperand, mResult)).getResult();
+				(new IntersectDD<>(mServices, stateFactory, mOperand, mResult, false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {

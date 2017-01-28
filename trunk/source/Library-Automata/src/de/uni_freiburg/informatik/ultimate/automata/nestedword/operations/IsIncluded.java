@@ -75,7 +75,7 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		}
 		
 		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(services,
-				(new Difference<LETTER, STATE>(mServices, stateFactory, fstOperand, sndOperand)).getResult());
+				(new Difference<>(mServices, stateFactory, fstOperand, sndOperand)).getResult());
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getNestedRun();
 		

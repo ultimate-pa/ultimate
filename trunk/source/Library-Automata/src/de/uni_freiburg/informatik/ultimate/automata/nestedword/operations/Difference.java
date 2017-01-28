@@ -141,7 +141,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 				mLogger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
-		// computation of Hoare annotation in Trace Abstration is incorrect if automaton is not total
+		// computation of Hoare annotation in Trace Abstraction is incorrect if automaton is not total
 		final boolean makeAutomatonTotal = true;
 		mSndDeterminized = new DeterminizeNwa<>(mServices, mSndOperand, mStateDeterminizer, mStateFactory, null,
 				makeAutomatonTotal);
@@ -174,8 +174,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new DifferenceDD<>(mServices,
-				mFstOperand, mSndOperand, new PowersetDeterminizer<>(mSndOperand, true, stateFactory),
-				stateFactory, false, false)).getResult();
+				stateFactory, mFstOperand, mSndOperand, new PowersetDeterminizer<>(mSndOperand, true, stateFactory),
+				false, false)).getResult();
 		boolean correct = true;
 		/*
 		correct &= (resultDd.size() == mResult.size());

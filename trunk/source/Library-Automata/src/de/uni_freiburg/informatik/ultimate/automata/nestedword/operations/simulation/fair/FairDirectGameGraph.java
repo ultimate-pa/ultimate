@@ -90,6 +90,8 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
@@ -98,8 +100,6 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
-	 * @param stateFactory
-	 *            State factory used for state creation
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -107,10 +107,10 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 *             If the inputed automaton is no Buechi-automaton. It must have
 	 *             an empty call and return alphabet.
 	 */
-	public FairDirectGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
-			final ILogger logger, final INestedWordAutomaton<LETTER, STATE> buechi,
-			final IMergeStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
-		super(services, progressTimer, logger, buechi, stateFactory);
+	public FairDirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final IProgressAwareTimer progressTimer, final ILogger logger,
+			final INestedWordAutomaton<LETTER, STATE> buechi) throws AutomataOperationCanceledException {
+		super(services, stateFactory, progressTimer, logger, buechi);
 		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
 		

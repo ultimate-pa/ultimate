@@ -51,11 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private final DeterminizeNwa<LETTER, STATE> mDeterminized;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	private final IStateFactory<STATE> mStateFactory;
-	
 	/**
 	 * Default constructor.
 	 * 
@@ -93,17 +90,15 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 		super(services);
 		mOperand = operand;
 		mStateDeterminizer = new PowersetDeterminizer<>(mOperand, true, stateFactory);
-		mStateFactory = stateFactory;
-		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		
-		mDeterminized = predefinedInitials == null
-				? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, mStateFactory)
-				: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, mStateFactory, predefinedInitials,
+		final DeterminizeNwa<LETTER, STATE> determinized = predefinedInitials == null
+				? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory)
+				: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory, predefinedInitials,
 						false);
-		mResult = new NestedWordAutomatonReachableStates<>(mServices, mDeterminized);
+		mResult = new NestedWordAutomatonReachableStates<>(mServices, determinized);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());

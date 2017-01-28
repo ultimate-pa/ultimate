@@ -60,7 +60,6 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 		implements IOperation<LETTER, STATE> {
 	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	protected IStateFactory<STATE> mContentFactory;
 	
 	/**
 	 * Maps a DeterminizedState to its representative in the resulting automaton.
@@ -106,13 +105,12 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
-		this.mContentFactory = operand.getStateFactory();
-		this.mOperand = operand;
+		mOperand = operand;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		
-		this.mStateDeterminizer = stateDeterminizer;
+		mStateDeterminizer = stateDeterminizer;
 		super.mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getInternalAlphabet(),
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
 		mRemoveDeadEnds = false;
@@ -233,7 +231,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-					(new DeterminizeSadd<>(mServices, operandOld)).getResult();
+					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
 			mLogger.info("Finished testing correctness of determinization");

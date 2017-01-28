@@ -2207,7 +2207,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	 * @return nested word automaton which represents the concurrent product
 	 */
 	public INestedWordAutomaton<LETTER, STATE> concurrentProduct(final INestedWordAutomaton<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<>(mServices, this, nwa, false)).getResult();
+		return (new ConcurrentProduct<>(mServices, mStateFactory, this, nwa, false)).getResult();
 	}
 	
 	/**
@@ -2216,10 +2216,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	 * @return nested word automaton which represents the concurrent product prefix
 	 */
 	public INestedWordAutomaton<LETTER, STATE> concurrentPrefixProduct(final INestedWordAutomaton<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<>(mServices, this, nwa, true)).getResult();
+		return (new ConcurrentProduct<>(mServices, mStateFactory, this, nwa, true)).getResult();
 	}
 	
-
 	/**
 	 * @param state
 	 *            A state.

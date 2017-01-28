@@ -131,9 +131,9 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 				new FairNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses.getRelation(),
-						new FairNwaGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalentClasses.getRelation())));
+						new FairNwaGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand, possibleEquivalentClasses.getRelation())));
 	}
 
 	/*

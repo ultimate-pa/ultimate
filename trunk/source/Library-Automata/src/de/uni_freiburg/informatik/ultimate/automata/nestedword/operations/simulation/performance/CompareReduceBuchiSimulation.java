@@ -676,7 +676,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
 				final DirectGameGraph<LETTER, STATE> graph =
-						new DirectGameGraph<>(services, progressTimer, mLogger, operand, stateFactory);
+						new DirectGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
 				final DirectSimulation<LETTER, STATE> sim =
 						new DirectSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
@@ -684,7 +684,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
 				final DelayedGameGraph<LETTER, STATE> graph =
-						new DelayedGameGraph<>(services, progressTimer, mLogger, operand, stateFactory);
+						new DelayedGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
 				final DelayedSimulation<LETTER, STATE> sim =
 						new DelayedSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
@@ -692,7 +692,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
 				final FairGameGraph<LETTER, STATE> graph =
-						new FairGameGraph<>(services, progressTimer, mLogger, operand, stateFactory);
+						new FairGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
 				final FairSimulation<LETTER, STATE> sim =
 						new FairSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
@@ -700,7 +700,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIRDIRECT)) {
 				final FairDirectGameGraph<LETTER, STATE> graph =
-						new FairDirectGameGraph<>(services, progressTimer, mLogger, operand, stateFactory);
+						new FairDirectGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
 				final FairDirectSimulation<LETTER, STATE> sim =
 						new FairDirectSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);

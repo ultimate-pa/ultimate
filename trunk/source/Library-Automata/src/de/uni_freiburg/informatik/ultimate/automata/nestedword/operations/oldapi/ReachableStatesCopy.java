@@ -287,7 +287,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<>(mServices, mOperand, mTraversedNwa)).getResult();
+						(new IntersectDD<>(mServices, stateFactory, mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 						(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();

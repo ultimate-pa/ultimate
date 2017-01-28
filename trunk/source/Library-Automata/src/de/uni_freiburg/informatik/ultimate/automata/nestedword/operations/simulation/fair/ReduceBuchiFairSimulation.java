@@ -37,11 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -64,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
-		implements IMinimizeNwa<LETTER, STATE> {
+public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
 	 * purpose.
@@ -216,6 +214,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 			final ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
 					new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
+			/*
+			 * TODO Christian 2017-01-28: There is a NullPointerException because the services object has no "progress
+			 *      aware timer".
+			 */
 			errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
 			// try {
 			// errorOccurred = !operation.checkResult(operation.mStateFactory);
@@ -425,10 +427,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 	 */
 	private final FairSimulation<LETTER, STATE> mSimulation;
 	/**
-	 * State factory used for state creation.
-	 */
-	private final IMergeStateFactory<STATE> mStateFactory;
-	/**
 	 * Performance statistics of this operation.
 	 */
 	private final AutomataOperationStatistics mStatistics;
@@ -547,9 +545,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 				new FairSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+						new FairGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand)));
 	}
 
 	/**
@@ -579,8 +577,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
-		super(services);
-		mStateFactory = stateFactory;
+		super(services, stateFactory);
 		mOperand = operand;
 		mUseSCCs = useSCCs;
 		mLogger.info(startMessage());
@@ -589,6 +586,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 		mSimulation = simulation;
 		simulation.doSimulation();
 		mResult = mSimulation.getResult();
+		super.directResultConstruction(mResult);
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
 
 		// Debugging flag
@@ -607,13 +605,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 		mLogger.info(exitMessage());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
-	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
-	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
@@ -623,44 +614,16 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<
 		return correct;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
-	 */
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#
-	 * getAutomataOperationStatistics()
-	 */
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 */
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#operationName()
-	 */
 	@Override
 	public String operationName() {
 		return "reduceBuchiFairSimulation";

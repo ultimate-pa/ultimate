@@ -114,28 +114,28 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	private final Map<DeterminizedState<LETTER, STATE>, DeterminizedState<LETTER, STATE>> mDetStateCache =
 			new HashMap<>();
 	
-	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
-			mInternalSuccessorCache = new HashMap<>();
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> mInternalSuccessorCache =
+			new HashMap<>();
 	
-	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
-			mCallSuccessorCache = new HashMap<>();
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> mCallSuccessorCache =
+			new HashMap<>();
 	
-	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>,
-			Map<LETTER, DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache = new HashMap<>();
+	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache =
+			new HashMap<>();
 	
 	/**
 	 * Constructor with {@link IStateDeterminizer}.
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactoryForIntersection
+	 *            state factory that is used for intersection only
 	 * @param minuend
 	 *            minuend
 	 * @param subtrahend
 	 *            subtrahend
 	 * @param stateDeterminizer
 	 *            state determinizer
-	 * @param stateFactoryForIntersection
-	 *            state factory that is used for intersection only
 	 * @param removeDeadEnds
 	 *            {@code true} iff dead ends should be removed
 	 * @param subtrahendSigmaStarClosed
@@ -143,12 +143,12 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public DifferenceDD(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+	public DifferenceDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactoryForIntersection,
+			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final IStateFactory<STATE> stateFactoryForIntersection, final boolean removeDeadEnds,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
-		this(services, minuend, subtrahend, stateDeterminizer, stateFactoryForIntersection, removeDeadEnds,
+		this(services, stateFactoryForIntersection, minuend, subtrahend, stateDeterminizer, removeDeadEnds,
 				subtrahendSigmaStarClosed, false);
 		
 		runConstruction();
@@ -180,11 +180,10 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public DifferenceDD(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+	public DifferenceDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
-		this(services, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory), stateFactory,
+		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
 				false, false, false);
 		
 		// TODO Christian 2016-10-05: These sets are never used - a bug?
@@ -206,10 +205,10 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	private DifferenceDD(final AutomataLibraryServices services,
+			final IStateFactory<STATE> stateFactoryForIntersection,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final IStateFactory<STATE> stateFactoryForIntersection, final boolean removeDeadEnds,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed, @SuppressWarnings({ "unused", "squid:S1172" }) final boolean dummy)
 			throws AutomataLibraryException {
 		super(services);

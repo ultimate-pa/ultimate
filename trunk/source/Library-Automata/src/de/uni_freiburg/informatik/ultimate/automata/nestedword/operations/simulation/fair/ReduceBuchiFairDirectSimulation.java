@@ -127,9 +127,9 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 				new FairDirectSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairDirectGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory)));
+						new FairDirectGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand)));
 	}
 
 	/*

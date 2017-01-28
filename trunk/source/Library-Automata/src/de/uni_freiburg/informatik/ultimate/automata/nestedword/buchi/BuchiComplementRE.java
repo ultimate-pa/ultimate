@@ -80,7 +80,7 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
 			}
-			mResult = (new BuchiComplementDeterministic<>(mServices, operandWithoutNonLiveStates))
+			mResult = (new BuchiComplementDeterministic<>(mServices, stateFactory, operandWithoutNonLiveStates))
 					.getResult();
 		} else {
 			final PowersetDeterminizer<LETTER, STATE> pd =
@@ -88,10 +88,10 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 			final INestedWordAutomaton<LETTER, STATE> determinized =
 					(new DeterminizeUnderappox<>(mServices, operandWithoutNonLiveStates, pd)).getResult();
 			final INestedWordAutomaton<LETTER, STATE> determinizedComplement =
-					(new BuchiComplementDeterministic<>(mServices, determinized)).getResult();
+					(new BuchiComplementDeterministic<>(mServices, stateFactory, determinized)).getResult();
 			final INestedWordAutomaton<LETTER, STATE> intersectionWithOperand =
-					(new BuchiIntersectDD<>(mServices, operandWithoutNonLiveStates, determinizedComplement,
-							true)).getResult();
+					(new BuchiIntersectDD<>(mServices, stateFactory, operandWithoutNonLiveStates,
+							determinizedComplement, true)).getResult();
 			final NestedLassoRun<LETTER, STATE> run =
 					(new BuchiIsEmpty<>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {

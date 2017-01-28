@@ -198,7 +198,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		switch (minimization) {
 		case MINIMIZE_SEVPA: {
 			minimizationResult = new MinimizationResult(true, true,
-					new MinimizeSevpa<>(autServices, operand, partition, predicateFactoryRefinement,
+					new MinimizeSevpa<>(autServices, predicateFactoryRefinement, operand, partition,
 							computeOldState2NewStateMapping, initialPartitionSeparatesFinalsAndNonfinals));
 			break;
 		}
@@ -243,8 +243,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			break;
 		}
 		case DFA_HOPCROFT_LISTS: {
-			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftLists<>(autServices, operand,
-					predicateFactoryRefinement, partition, computeOldState2NewStateMapping));
+			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftLists<>(autServices, predicateFactoryRefinement,
+					operand, partition, computeOldState2NewStateMapping));
 			break;
 		}
 		case NWA_MAX_SAT: {

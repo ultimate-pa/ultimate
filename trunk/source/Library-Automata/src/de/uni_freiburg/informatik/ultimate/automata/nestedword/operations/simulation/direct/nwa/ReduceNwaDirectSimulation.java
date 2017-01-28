@@ -131,9 +131,9 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DirectNwaGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalenceClasses.getRelation())));
+						new DirectNwaGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand, possibleEquivalenceClasses.getRelation())));
 	}
 	
 	/*

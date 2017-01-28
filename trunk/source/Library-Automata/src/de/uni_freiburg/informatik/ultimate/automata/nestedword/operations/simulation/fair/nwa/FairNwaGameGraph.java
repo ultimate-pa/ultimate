@@ -84,6 +84,8 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation
 	 *            cancellation.
@@ -92,8 +94,6 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @param nwa
 	 *            The underlying nwa from which the game graph gets
 	 *            generated.
-	 * @param stateFactory
-	 *            State factory used for state creation
 	 * @param possibleEquivalenceClasses
 	 *            A collection of sets which contains states of an
 	 *            automaton that may be merge-able. States which are not in the
@@ -104,13 +104,13 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 *             framework.
 	 */
 	public FairNwaGameGraph(final AutomataLibraryServices services,
+			final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer,
 			final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> nwa,
-			final IMergeStateFactory<STATE> stateFactory,
 			final Collection<Set<STATE>> possibleEquivalenceClasses)
 					throws AutomataOperationCanceledException {
-		super(services, progressTimer, logger, nwa, stateFactory);
+		super(services, stateFactory, progressTimer, logger, nwa);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
 		final INestedWordAutomaton<LETTER, STATE> preparedNwa = getAutomaton();

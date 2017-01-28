@@ -121,7 +121,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 */
 	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, operand, null, stateFactory, false, false);
+		this(services, stateFactory, operand, null, false, false);
 	}
 	
 	/**
@@ -140,11 +140,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final IMergeStateFactory<STATE> stateFactory,
-			final boolean addMapOldState2newState, final boolean initialPartitionSeparatesFinalsAndNonfinals)
-			throws AutomataOperationCanceledException {
-		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag(),
+	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, equivalenceClasses, addMapOldState2newState, new FalseFlag(),
 				initialPartitionSeparatesFinalsAndNonfinals);
 	}
 	
@@ -166,10 +166,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final IMergeStateFactory<STATE> stateFactory,
-			final boolean addMapOldState2newState, final IFlag timeout,
-			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
+	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
+			final IFlag timeout, final boolean initialPartitionSeparatesFinalsAndNonfinals)
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		

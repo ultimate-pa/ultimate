@@ -111,8 +111,8 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
 		switch (mMode) {
 			case SEVPA:
-				mBackingMinimization = new MinimizeSevpa<>(mServices, mOperand,
-						(PartitionBackedSetOfPairs<STATE>) partition, mStateFactory, addMapOldState2newState, false);
+				mBackingMinimization = new MinimizeSevpa<>(mServices, mStateFactory,
+						mOperand, (PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false);
 				break;
 			case SHRINK_NWA:
 				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory,

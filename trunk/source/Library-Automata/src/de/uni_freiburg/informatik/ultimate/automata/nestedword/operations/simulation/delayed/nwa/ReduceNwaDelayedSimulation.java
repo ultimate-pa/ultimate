@@ -133,9 +133,9 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DelayedNwaGameGraph<>(services, services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
-								stateFactory, possibleEquivalenceClasses.getRelation())));
+						new DelayedNwaGameGraph<>(services, stateFactory,
+								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								operand, possibleEquivalenceClasses.getRelation())));
 	}
 
 	/*

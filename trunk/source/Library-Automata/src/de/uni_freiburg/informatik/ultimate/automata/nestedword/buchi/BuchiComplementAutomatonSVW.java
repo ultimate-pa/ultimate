@@ -100,7 +100,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *             if operation was canceled
 	 */
 	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mTma = new TransitionMonoidAutomaton(operand);
@@ -108,7 +109,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (!operand.getCallAlphabet().isEmpty() || !operand.getReturnAlphabet().isEmpty()) {
 			throw new IllegalArgumentException("only applicable to Buchi automata (not BuchiNWA)");
 		}
-		mStateFactory = operand.getStateFactory();
+		mStateFactory = stateFactory;
 		mEmptyStackState = mStateFactory.createEmptyStackState();
 		final MetaState metaInitialState = getMetaState1(mTma.getInitialState(), mTma.getInitialTma());
 		mInitialState = metaInitialState.getOutputState();
@@ -849,8 +850,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
-		 * @param state state
-		 * @param letter letter
+		 * @param state
+		 *            state
+		 * @param letter
+		 *            letter
 		 * @return the (unique) successor of {@code state} under letter
 		 *         {@code letter}, i.e. δ(state, letter)
 		 */
@@ -859,8 +862,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
-		 * @param state state
-		 * @param letter letter
+		 * @param state
+		 *            state
+		 * @param letter
+		 *            letter
 		 * @return the set of predecessors of {@code state} under letter
 		 *         {@code letter}, i.e. δ⁻¹(state, letter)
 		 */
@@ -869,7 +874,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
-		 * @param state state
+		 * @param state
+		 *            state
 		 * @return The largest set of states such that for any included state qₜ
 		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
 		 *         <ul>
@@ -884,7 +890,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
-		 * @param state state
+		 * @param state
+		 *            state
 		 * @return The largest set of states such that for any included state qₛ
 		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
 		 *         <ul>
