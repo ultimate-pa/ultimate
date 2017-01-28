@@ -5,7 +5,7 @@ while(i<= 66) {
     NestedWordAutomaton nwa = getRandomNwaTv(200, 1, 1, 1, 50, 50, 50, 100, 50);
     print(numberOfStates(removeUnreachable(nwa)));
     print(numberOfStates(removeDeadEnds(nwa)));
-    print(numberOfStates(minimizeNwaMaxSat2(removeDeadEnds(nwa))));
+    print(numberOfStates(minimizeNwaPmaxSat(removeDeadEnds(nwa))));
     print(numberOfStates(shrinkNwa(removeDeadEnds(nwa))));
     i++;
 }
