@@ -737,8 +737,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
 		Difference<LETTER, IPredicate> diff = null;
 		try {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mAbstraction, determinized, psd,
-					mStateFactoryForRefinement, true);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+					mAbstraction, determinized, psd, true);
 		} catch (final AutomataOperationCanceledException e) {
 			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;

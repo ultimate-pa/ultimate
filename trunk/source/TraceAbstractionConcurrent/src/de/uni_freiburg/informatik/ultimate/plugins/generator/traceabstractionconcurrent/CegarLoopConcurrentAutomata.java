@@ -178,8 +178,8 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
-					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();

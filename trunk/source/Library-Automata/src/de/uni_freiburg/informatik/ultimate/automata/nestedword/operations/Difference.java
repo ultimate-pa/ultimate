@@ -64,7 +64,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private DeterminizeNwa<LETTER, STATE> mSndDeterminized;
 	private ComplementDeterministicNwa<LETTER, STATE> mSndComplemented;
 	
-	private Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean finalIsTrap)
@@ -106,32 +106,6 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand,
 				new PowersetDeterminizer<>(sndOperand, true, stateFactory), false);
-	}
-	
-	/**
-	 * Uses a user defined state determinizer.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param fstOperand
-	 *            first operand
-	 * @param sndOperand
-	 *            second operand
-	 * @param stateDeterminizer
-	 *            state determinizer
-	 * @param stateFactory
-	 *            state factory for construction
-	 * @param finalIsTrap
-	 *            TODO unused parameter
-	 * @throws AutomataLibraryException
-	 *             if construction fails
-	 */
-	public Difference(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory,
-			final boolean finalIsTrap) throws AutomataLibraryException {
-		this(services, stateFactory, fstOperand, sndOperand, stateDeterminizer, false);
 	}
 	
 	@Override

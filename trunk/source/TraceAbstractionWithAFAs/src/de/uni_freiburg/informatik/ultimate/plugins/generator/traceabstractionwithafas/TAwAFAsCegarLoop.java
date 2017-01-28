@@ -494,8 +494,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
-					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+					oldAbstraction, determinized, psd2,	explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,

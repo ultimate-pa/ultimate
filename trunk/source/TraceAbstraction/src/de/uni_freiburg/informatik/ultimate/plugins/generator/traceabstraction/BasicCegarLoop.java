@@ -383,8 +383,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
 							interpolantAutomaton, psd, false);
 				} else {
-					diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction,
-							interpolantAutomaton, psd, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
+					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+							oldAbstraction, interpolantAutomaton, psd, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
 				final String taskDescription = "constructing difference of abstraction (" + oldAbstraction.size()

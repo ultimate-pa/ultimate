@@ -174,8 +174,9 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 			// 4. Compute the difference between the path automaton and the determinized
 			// finite automaton (from step 3)
 			final Difference<LETTER, IPredicate> diff = new Difference<>(new AutomataLibraryServices(mServices),
+					pfconsol /* PredicateFactory for Refinement */,
 					pathprogramautomaton, interpolantAutomatonDeterminized, psd2,
-					pfconsol /* PredicateFactory for Refinement */, false /* explointSigmaStarConcatOfIA */ );
+					false /* explointSigmaStarConcatOfIA */ );
 			if (PRINT_DIFFERENCE_AUTOMATA) {
 				// Needed for debug
 				final AutomatonDefinitionPrinter<LETTER, IPredicate> pathAutomatonPrinter =
