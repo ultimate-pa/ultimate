@@ -188,7 +188,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 					// + "################### 2nd AFA: ###################\n"
 					// + alternatingAutomaton + "\n");
 					final AA_MergedUnion<LETTER, IPredicate> mergedUnion =
-							new AA_MergedUnion<>(alternatingAutomatonUnion, alternatingAutomaton);
+							new AA_MergedUnion<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion,
+									alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -200,7 +201,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
 		final RAFA_Determination<LETTER> determination =
-				new RAFA_Determination<>(mServices, alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier);
+				new RAFA_Determination<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit,
+						mPredicateUnifier);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<LETTER>) trace)
@@ -494,7 +496,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2,	explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();

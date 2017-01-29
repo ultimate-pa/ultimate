@@ -148,7 +148,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		mAbstraction = new DifferenceBlackAndWhite<>(new AutomataLibraryServices(mServices), abstraction,
+		mAbstraction = new DifferenceBlackAndWhite<>(new AutomataLibraryServices(mServices),
+				mPredicateFactoryInterpolantAutomata, abstraction,
 				(NestedWordAutomaton<LETTER, IPredicate>) dia).getResult();
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -219,6 +220,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
 		final INestedWordAutomatonSimple<LETTER, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
+						mPredicateFactoryInterpolantAutomata,
 						(IPetriNet<LETTER, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw);
 

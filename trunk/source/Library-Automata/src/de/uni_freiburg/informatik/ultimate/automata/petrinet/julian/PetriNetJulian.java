@@ -179,7 +179,8 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		}
 		
 		boolean correct;
-		final INestedWordAutomaton<S, C> resultAutomata = (new PetriNet2FiniteAutomaton<>(mServices, this)).getResult();
+		final INestedWordAutomaton<S, C> resultAutomata =
+				(new PetriNet2FiniteAutomaton<>(mServices, nwa.getStateFactory(), this)).getResult();
 		correct = new IsIncluded<>(mServices, getStateFactory(), resultAutomata, nwa).getResult();
 		correct = correct && new IsIncluded<>(mServices, getStateFactory(), nwa, resultAutomata).getResult();
 		

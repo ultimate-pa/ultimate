@@ -30,7 +30,7 @@ public class TestUnion {
 	public static void main(final String[] args) {
 		final TestAutomaton_1 automaton1 = new TestAutomaton_1();
 		final TestAutomaton_2 automaton2 = new TestAutomaton_2();
-		final AA_MergedUnion<String, String> union = new AA_MergedUnion<>(automaton1, automaton2);
+		final AA_MergedUnion<String, String> union = new AA_MergedUnion<>(null, automaton1, automaton2);
 		final AlternatingAutomaton<String, String> resultAutomaton = union.getResult();
 		final long startNanoTime = System.nanoTime();
 		TestCase.test(resultAutomaton, TestAutomaton_1.TEST_CASES);
