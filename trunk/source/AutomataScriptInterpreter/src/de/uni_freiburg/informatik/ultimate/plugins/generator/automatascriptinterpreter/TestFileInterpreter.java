@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
@@ -1064,8 +1065,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			for (final Constructor<?> c : operationConstructors) {
 				// Convention: If the first parameter is a StateFactory, we
 				// prepend a StringFactory to the arguments.
-				assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes()) : 
-					"constructor of " + c.getDeclaringClass().getSimpleName() + " violates \"services and state factory first\" convention"; 
+				assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes()) : "constructor of "
+						+ c.getDeclaringClass().getSimpleName()
+						+ " violates \"services and state factory first\" convention";
 				final Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
 				final Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 				if (!allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
@@ -1270,7 +1272,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				final String filename = file.getName();
 				if (filename.endsWith(".class")) {
 					final Class<?> clazz = getClassFromFile(packageName, file);
-					if (clazz != null && classImplementsIOperationInterface(clazz)) {
+					if (clazz != null && !classIsAbstract(clazz) && classImplementsIOperationInterface(clazz)) {
 						tryAdd(result, clazz);
 						continue;
 					}
@@ -1328,6 +1330,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return packageName.replace(".", File.separator);
 	}
 	
+	private static boolean classIsAbstract(final Class<?> clazz) {
+		return Modifier.isAbstract(clazz.getModifiers());
+	}
+	
 	/**
 	 * Checks if the given class object implements the IOperation interface.
 	 * <p>
@@ -1343,6 +1349,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final Class<?>[] implementedInterfaces = clazz.getInterfaces();
 			for (final Class<?> interFace : implementedInterfaces) {
 				if (interFace.equals(IOperation.class)) {
+					// class implements IOperation in a transitive chain
 					return true;
 				}
 			}
