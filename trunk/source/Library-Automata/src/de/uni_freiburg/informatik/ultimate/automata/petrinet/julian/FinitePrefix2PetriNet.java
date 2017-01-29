@@ -246,8 +246,10 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 			mLogger.info("Testing Petri net language equivalence");
 		}
 		
-		final INestedWordAutomaton<L, C> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices, oldNet)).getResult();
-		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices, newNet)).getResult();
+		final INestedWordAutomaton<L, C> finAuto1 =
+				(new PetriNet2FiniteAutomaton<>(mServices, oldNet.getStateFactory(), oldNet)).getResult();
+		final INestedWordAutomaton<L, C> finAuto2 =
+				(new PetriNet2FiniteAutomaton<>(mServices, oldNet.getStateFactory(), newNet)).getResult();
 		final NestedRun<L, C> subsetCounterex =
 				new IsIncluded<>(mServices, oldNet.getStateFactory(), finAuto1, finAuto2).getCounterexample();
 		final boolean subset = subsetCounterex == null;

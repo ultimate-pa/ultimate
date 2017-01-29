@@ -74,10 +74,13 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param factory
+	 *            content factory
 	 * @param operand
 	 *            operand Petri net
 	 */
-	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, final IPetriNet<S, C> operand) {
+	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, final IStateFactory<C> factory,
+			final IPetriNet<S, C> operand) {
 		super(services);
 		mOperand = operand;
 		
@@ -85,7 +88,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 			mLogger.info(startMessage());
 		}
 		
-		mContentFactory = operand.getStateFactory();
+		mContentFactory = factory;
 		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
 		mResult = new NestedWordAutomaton<>(mServices, alphabet, Collections.emptySet(), Collections.emptySet(),
 				operand.getStateFactory());

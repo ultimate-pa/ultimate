@@ -158,7 +158,8 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C> {
 		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
-						(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult(), nw)).getResult();
+						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))
+								.getResult();
 		final boolean correct = mResult == resultAutomata;
 		
 		if (mLogger.isInfoEnabled()) {

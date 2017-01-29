@@ -41,12 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet> {
-	
 	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
 	
-	public AA_DeterminizeReversed(final AutomataLibraryServices ultimateServiceProvider,
+	public AA_DeterminizeReversed(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
-		mResultAutomaton = new NestedWordAutomaton<>(ultimateServiceProvider, alternatingAutomaton.getAlphabet(),
+		mResultAutomaton = new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(),
 				Collections.<LETTER> emptySet(), Collections.<LETTER> emptySet(),
 				alternatingAutomaton.getStateFactory());
 		final LinkedList<BitSet> newStates = new LinkedList<>();
@@ -94,16 +93,6 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	@Override
 	public String operationName() {
 		return "AA_DeterminizeReversed";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start: " + operationName();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Exit: " + operationName();
 	}
 	
 	@Override

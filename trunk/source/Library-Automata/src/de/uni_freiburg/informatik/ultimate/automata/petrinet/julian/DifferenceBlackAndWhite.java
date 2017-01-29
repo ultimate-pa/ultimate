@@ -83,17 +83,19 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param factory
+	 *            content factory
 	 * @param net
 	 *            Petri net
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final PetriNetJulian<S, C> net,
-			final NestedWordAutomaton<S, C> nwa) {
+	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final IStateFactory<C> factory,
+			final PetriNetJulian<S, C> net, final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
-		mContentFactory = net.getStateFactory();
+		mContentFactory = factory;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -381,11 +383,11 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		}
 		
 		final INestedWordAutomatonSimple<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomatonSimple<S, C> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 		
 		boolean correct = true;
 		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();

@@ -358,9 +358,8 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 		
 		boolean correct;
 		if (mRun == null) {
-			final NestedRun<S, C> automataRun =
-					(new IsEmpty<>(mServices, (new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult()))
-							.getNestedRun();
+			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;

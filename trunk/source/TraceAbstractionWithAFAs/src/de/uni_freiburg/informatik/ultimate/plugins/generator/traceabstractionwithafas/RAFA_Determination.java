@@ -36,88 +36,81 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
-public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
-
-	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier){
+public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate> {
+	private final AlternatingAutomaton<LETTER, IPredicate> mAlternatingAutomaton;
+	private final CfgSmtToolkit mCsToolkit;
+	private final PredicateUnifier mPredicateUnifier;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResultAutomaton;
+	
+	public RAFA_Determination(final AutomataLibraryServices services,
+			final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit csToolkit,
+			final PredicateUnifier predicateUnifier) {
 		assert alternatingAutomaton.isReversed();
-		this.alternatingAutomaton = alternatingAutomaton;
-		this.csToolkit = csToolkit;
-		this.predicateUnifier = predicateUnifier;
-		resultAutomaton = new NestedWordAutomaton<LETTER, IPredicate>(
-				new AutomataLibraryServices(ultimateServiceProvider),
-			alternatingAutomaton.getAlphabet(),
-			Collections.<LETTER>emptySet(),
-			Collections.<LETTER>emptySet(),
-			alternatingAutomaton.getStateFactory()
-		);
-		final LinkedList<BitSet> newStates = new LinkedList<BitSet>();
+		mAlternatingAutomaton = alternatingAutomaton;
+		mCsToolkit = csToolkit;
+		mPredicateUnifier = predicateUnifier;
+		mResultAutomaton = new NestedWordAutomaton<>(services,
+				alternatingAutomaton.getAlphabet(),
+				Collections.<LETTER> emptySet(),
+				Collections.<LETTER> emptySet(),
+				alternatingAutomaton.getStateFactory());
+		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
-		resultAutomaton.addState(true, alternatingAutomaton.getAcceptingFunction().getResult(alternatingAutomaton.getFinalStatesBitVector()), getPredicate(alternatingAutomaton.getFinalStatesBitVector()));
-		while(!newStates.isEmpty()){
+		mResultAutomaton.addState(true,
+				alternatingAutomaton.getAcceptingFunction().getResult(alternatingAutomaton.getFinalStatesBitVector()),
+				getPredicate(alternatingAutomaton.getFinalStatesBitVector()));
+		while (!newStates.isEmpty()) {
 			final BitSet state = newStates.removeFirst();
 			final IPredicate predicate = getPredicate(state);
-			for(final LETTER letter : alternatingAutomaton.getAlphabet()){
+			for (final LETTER letter : alternatingAutomaton.getAlphabet()) {
 				final BitSet nextState = (BitSet) state.clone();
 				alternatingAutomaton.resolveLetter(letter, nextState);
-				if(!nextState.isEmpty()){
+				if (!nextState.isEmpty()) {
 					final IPredicate nextPredicate = getPredicate(nextState);
-					if(!resultAutomaton.getStates().contains(nextPredicate)){
-						resultAutomaton.addState(false, alternatingAutomaton.getAcceptingFunction().getResult(nextState), nextPredicate);
+					if (!mResultAutomaton.getStates().contains(nextPredicate)) {
+						mResultAutomaton.addState(false,
+								alternatingAutomaton.getAcceptingFunction().getResult(nextState), nextPredicate);
 						newStates.add(nextState);
 					}
-					resultAutomaton.addInternalTransition(predicate, letter, nextPredicate);
+					mResultAutomaton.addInternalTransition(predicate, letter, nextPredicate);
 				}
 			}
 		}
 	}
-	private final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private final CfgSmtToolkit csToolkit;
-	private final PredicateUnifier predicateUnifier;
-	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
-
-	private IPredicate getPredicate(final BitSet state){
-		IPredicate predicate = predicateUnifier.getTruePredicate();
+	
+	private IPredicate getPredicate(final BitSet state) {
+		IPredicate predicate = mPredicateUnifier.getTruePredicate();
 		int setBitIndex = getNextSetBit(state, 0);
-		while(setBitIndex != -1){
-			predicate = predicateUnifier.getOrConstructPredicate(predicateUnifier.getPredicateFactory().and(predicate, alternatingAutomaton.getStates().get(setBitIndex)));
+		while (setBitIndex != -1) {
+			predicate = mPredicateUnifier.getOrConstructPredicate(mPredicateUnifier.getPredicateFactory().and(predicate,
+					mAlternatingAutomaton.getStates().get(setBitIndex)));
 			setBitIndex = getNextSetBit(state, setBitIndex + 1);
 		}
 		return predicate;
 	}
 	
 	@Override
-	public String operationName(){
+	public String operationName() {
 		return "RAFA_Determination";
 	}
-
-	@Override
-	public String startMessage(){
-		return "Start: " + operationName();
-	}
-
-	@Override
-	public String exitMessage(){
-		return "Exit: " + operationName();
-	}
-
+	
 	@Override
 	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
-		return resultAutomaton;
+		return mResultAutomaton;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<IPredicate> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(final IStateFactory<IPredicate> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 	
-	private static int getNextSetBit(final BitSet bitSet, final int offset){
-		for(int i=offset;i<bitSet.size();i++){
-			if(bitSet.get(i)){
+	private static int getNextSetBit(final BitSet bitSet, final int offset) {
+		for (int i = offset; i < bitSet.size(); i++) {
+			if (bitSet.get(i)) {
 				return i;
 			}
 		}

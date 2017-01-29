@@ -272,9 +272,9 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		mLogger.info("Testing correctness of prefixProduct");
 		
 		final INestedWordAutomatonSimple<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 		final INestedWordAutomatonSimple<S, C> nwaResult =
 				(new ConcurrentProduct<>(mServices, stateFactory, op1AsNwa, mNwa, true)).getResult();
 		boolean correct;

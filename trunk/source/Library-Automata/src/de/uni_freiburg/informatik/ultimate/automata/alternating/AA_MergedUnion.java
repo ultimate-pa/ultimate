@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -38,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
 	
-	public AA_MergedUnion(final AlternatingAutomaton<LETTER, STATE> automaton1,
+	public AA_MergedUnion(final AutomataLibraryServices services, final AlternatingAutomaton<LETTER, STATE> automaton1,
 			final AlternatingAutomaton<LETTER, STATE> automaton2) {
 		assert IAutomaton.sameAlphabet(automaton1, automaton2);
 		assert automaton1.isReversed() == automaton2.isReversed();
@@ -84,16 +85,6 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	@Override
 	public String operationName() {
 		return "AA_MergedUnion";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start: " + operationName();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Exit: " + operationName();
 	}
 	
 	@Override

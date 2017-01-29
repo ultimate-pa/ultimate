@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -60,15 +61,15 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	private final NestedWord<LETTER> mResult;
 	
 	/**
-	 * Constructor.
-	 * 
+	 * @param services
+	 *            Ultimate services.
 	 * @param nwa
 	 *            nested word automaton
 	 * @param length
 	 *            length of the word
 	 */
-	public GetRandomNestedWord(final INestedWordAutomatonSimple<LETTER, STATE> nwa,
-			final int length) {
+	public GetRandomNestedWord(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final int length) {
 		mInternalAlphabet = new ArrayList<>(nwa.getInternalAlphabet());
 		mCallAlphabet = new ArrayList<>(nwa.getCallAlphabet());
 		mReturnAlphabet = new ArrayList<>(nwa.getReturnAlphabet());
@@ -111,8 +112,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	private NestedWord<LETTER> generateNestedWord(final int length,
 			final double probabilityCall, final double probabilityReturn) {
 		final String errorMessage =
-				"probability for call and return both have to between 0 and 1"
-						+ " also the sum has to be between 0 and 1";
+				"probability for call and return both have to between 0 and 1 also the sum has to be between 0 and 1";
 		checkInput(probabilityCall, probabilityReturn, errorMessage);
 		
 		final LETTER[] word = getLetterArray(length);
@@ -216,10 +216,8 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	public NestedLassoWord<LETTER> generateNestedLassoWord(final int lengthStem,
 			final int lengthLoop, final double probabilityCall, final double probabilityReturn) {
 		NestedLassoWord<LETTER> result;
-		final NestedWord<LETTER> stem = generateNestedWord(
-				lengthStem, probabilityCall, probabilityReturn);
-		final NestedWord<LETTER> loop = generateNestedWord(
-				lengthLoop, probabilityCall, probabilityReturn);
+		final NestedWord<LETTER> stem = generateNestedWord(lengthStem, probabilityCall, probabilityReturn);
+		final NestedWord<LETTER> loop = generateNestedWord(lengthLoop, probabilityCall, probabilityReturn);
 		result = new NestedLassoWord<>(stem, loop);
 		return result;
 	}
@@ -240,10 +238,8 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 		final int lengthStem = mRandom.nextInt(lengthStemAndLoop);
 		final int lengthLoop = lengthStemAndLoop - lengthStem + 1;
 		NestedLassoWord<LETTER> result;
-		final NestedWord<LETTER> stem = generateNestedWord(
-				lengthStem, probabilityCall, probabilityReturn);
-		final NestedWord<LETTER> loop = generateNestedWord(
-				lengthLoop, probabilityCall, probabilityReturn);
+		final NestedWord<LETTER> stem = generateNestedWord(lengthStem, probabilityCall, probabilityReturn);
+		final NestedWord<LETTER> loop = generateNestedWord(lengthLoop, probabilityCall, probabilityReturn);
 		result = new NestedLassoWord<>(stem, loop);
 		return result;
 	}

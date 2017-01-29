@@ -95,7 +95,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STAT
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton =
-				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final boolean automatonEmpty =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty<>(mServices,
 						finiteAutomaton)).getResult();

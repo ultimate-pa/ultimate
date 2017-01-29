@@ -189,7 +189,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		final boolean correct;
 		if (mAcceptedRun == null) {
 			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, mNetJulian)).getResult())).getNestedRun();
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mNetJulian)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
 			correct = mNetJulian.accepts(mAcceptedRun.getWord());

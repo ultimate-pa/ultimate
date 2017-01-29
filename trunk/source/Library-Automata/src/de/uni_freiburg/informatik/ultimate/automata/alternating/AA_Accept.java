@@ -27,16 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.alternating;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class AA_Accept<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
-	
+public class AA_Accept<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean mIsAccepted;
 	
-	public AA_Accept(final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton, final Word<LETTER> word) {
+	public AA_Accept(final AutomataLibraryServices services,
+			final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton, final Word<LETTER> word) {
 		mIsAccepted = alternatingAutomaton.accepts(word);
 	}
 	
@@ -46,23 +46,12 @@ public class AA_Accept<LETTER, STATE>
 	}
 	
 	@Override
-	public String startMessage() {
-		return "Start: " + operationName();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Exit: " + operationName();
-	}
-	
-	@Override
 	public Boolean getResult() {
 		return mIsAccepted;
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }
