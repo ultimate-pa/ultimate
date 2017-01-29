@@ -76,6 +76,8 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public class CommandLineController implements IController<RunDefinition> {
 
+	private static final boolean WRITE_CSV = false;
+
 	private ILogger mLogger;
 	private IToolchainData<RunDefinition> mToolchain;
 
@@ -288,9 +290,11 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 
 		// TODO: Add option to control the writing of .csv files
-		final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, BenchmarkResult.class)
-				.stream().map(a -> a.getBenchmark()).collect(Collectors.toList());
-		writeCsvLogs(csvProviders);
+		if (WRITE_CSV) {
+			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, BenchmarkResult.class)
+					.stream().map(a -> a.getBenchmark()).collect(Collectors.toList());
+			writeCsvLogs(csvProviders);
+		}
 	}
 
 	private void writeCsvLogs(final List<ICsvProviderProvider<?>> csvProviders) {
