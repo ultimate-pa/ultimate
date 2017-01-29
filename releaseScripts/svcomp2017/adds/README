@@ -13,8 +13,9 @@ nutz@informatik.uni-freiburg.de
 greitsch@informatik.uni-freiburg.de
 
 This archive also contains binaries for different theorem provers:
- * Z3 (https://github.com/Z3Prover, master f3ef59b095f3ea73af70c888436d9733432faa6b)
+ * Z3 (https://github.com/Z3Prover, master b70f1f0319a0d7f607f3f752e21a4957ee020645)
  * CVC4 (http://cvc4.cs.nyu.edu/, 04-Aug-2016 05:31)
+ * MathSAT5 (http://mathsat.fbk.eu, version 5.3.14 (0b98b661254c) (Nov 17 2016 10:59:45, gmp 5.1.3, gcc 4.8.5, 64-bit))
 
 --------------------------------------------------------------------------------
 
@@ -27,14 +28,12 @@ This Ultimate tool should be called by the Python wrapper script Ultimate.py.
 The script supports the input parameters that are used in the SV-COMP and
 whould be invoked as follows.
 
- $ ./Ultimate.py <propfile> <inputfile> <architecture> <memorymodel>
+ $ ./Ultimate.py <propfile> <inputfile> <architecture>
 
 where
  * <propfile> is a property file, usually with the ending *.prp,
  * <inputfile> is a C program,
  * <architecture> is either '32bit' or '64bit' (without quotes), and
- * <memorymodel> is the memory model to be used, either 'simple' or 'precise'
-   (without quotes).
 
 The output of the Ultimate tool is written to the file Ultimate.log and the
 result is written to stdout. 
@@ -45,21 +44,19 @@ error witness is written to witness.graphml.
 
 3. Choosing the right parameters
 3.1 Property files 
-This archive contains a set of property files located in the directory props/
- * Deref.prp
-   The result is 'TRUE' iff all pointer dereferences are valid, i.e., iff the
-   program does never access memory that is not allocated.
- * Memsafety.prp
+You can use property files as defined by SV-COMP'17 (https://sv-comp.sosy-lab.org/2017/rules.php and 
+https://github.com/sosy-lab/sv-benchmarks/releases/tag/svcomp17). 
+ * PropertyMemSafety.prp
    The result is 'TRUE' iff all pointer dereferences are valid,
    all deallocations are valid, and all allocated memory is eventually freed. 
- * Overflow.prp
+ * PropertyOverflow.prp
    The result is 'TRUE' iff no operations on signed integers results in an 
    overflow. (Operations on unsigned integers are not checked as their
    behaviour is always defined by the C standard.)
- * Reach.prp
+ * PropertyUnreachCall.prp
    The result is 'TRUE' iff the program does not contain an execution that
    calls the SV-COMP error function __VERIFIER_error().
- * Termination.prp
+ * PropertyTermination.prp
    The result is 'TRUE' iff every program execution reaches the end of the
    program, i.e., iff all program executions are finite.  
 For each of this property files (except Termination.prp) Ultimate also checks
@@ -68,9 +65,6 @@ if all ACSL specifications (e.g., "//@ assert x > 0") are valid.
 3.2 Architecture 
 The architecture parameter specifies whether the program is written for an
 ILP32 (32bit) or an LP64 (64bit) architecture.
-
-3.3 Memory model
-In the current version this option does not have any effect.
 
 4. Results
 The wrapper script provides output to stdout that indicates whether the checked
