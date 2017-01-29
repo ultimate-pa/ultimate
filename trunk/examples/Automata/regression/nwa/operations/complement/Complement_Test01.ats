@@ -2,7 +2,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-parseAutomata("../nwa/crafted.ats");
+parseAutomata("../Misc_Crafted.ats");
 
 assert(numberOfStates(complement(sameCalldifferentReturns)) == 4);
 assert(numberOfStates(complement(wBenjamin)) == 8);

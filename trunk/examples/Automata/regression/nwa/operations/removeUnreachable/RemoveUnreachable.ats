@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 12.05.2013
 
-parseAutomata("../nwa/crafted.ats");
+parseAutomata("../Misc_Crafted.ats");
 
 NestedWordAutomaton result = minimizeSmall;
 

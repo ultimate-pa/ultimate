@@ -1,6 +1,6 @@
 
 
-parseAutomata("../nwa/ProgramVerification-Ministerprasident.ats");
+parseAutomata("../../ProgramVerification-Ministerprasident.ats");
 
 print(numberOfStates(determinizeDD(McCarthyInterpolantAutomaton_Iteration12)));
 print(numberOfStates(determinizeDD(McCarthyInterpolantAutomaton_Iteration16)));

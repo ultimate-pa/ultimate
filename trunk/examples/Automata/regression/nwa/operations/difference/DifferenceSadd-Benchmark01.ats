@@ -2,7 +2,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-parseAutomata("../nwa/ProgramVerification-Ministerprasident.ats");
+parseAutomata("../../../../benchmarks/nwa/ProgramVerification-Ministerprasident.ats");
 
 assert(numberOfStates(differenceSadd(McCarthyInterpolantAutomaton_Iteration16, McCarthyInterpolantAutomaton_Iteration12)) == 126);
 assert(numberOfStates(differenceSadd(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration12)) == 377);

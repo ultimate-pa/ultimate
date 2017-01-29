@@ -2,7 +2,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-parseAutomata("../nwa/crafted.ats");
+parseAutomata("../Misc_Crafted.ats");
 
 assert(isDeterministic(sameCalldifferentReturns));
 assert(!isDeterministic(wBenjamin));
@@ -10,7 +10,7 @@ assert(isDeterministic(pendingReturnNwa));
 assert(!isDeterministic(bugBfsEmptinessLowPriorityCallQueue));
 
 
-parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+parseAutomata("../../SimpleBuchiAutomata.ats");
 
 assert(!isDeterministic(finitelyManyA));
 assert(!isDeterministic(finitelyManyB));
@@ -21,26 +21,20 @@ assert(isDeterministic(all));
 assert(!isDeterministic(allTwoState));
 
 
-parseAutomata("../BuchiNwa/simpleBuchiNwa.ats");
+parseAutomata("../../SimpleBuchiNwa.ats");
 
 assert(!isDeterministic(finitelyManyAInEachContext));
 assert(isDeterministic(infinitelyManyAWithCallReturn));
 
 
-parseAutomata("../nwa/severalCallReturnNeeded.ats");
+parseAutomata("../Misc_SeveralCallReturnNeeded.ats");
 
 assert(isDeterministic(all));
 assert(isDeterministic(a1));
 assert(!isDeterministic(callRet));
 
 
-parseAutomata("../nwa/ProgramVerification.ats");
-
-assert(isDeterministic(controlAutomaton));
-assert(isDeterministic(interpolantAutomaton1));
-
-
-parseAutomata("../nwa/ProgramVerification-Ministerprasident.ats");
+parseAutomata("../../../../benchmarks/nwa/ProgramVerification-Ministerprasident.ats");
 assert(isDeterministic(McCarthyAbstraction16));
 assert(isDeterministic(Ackermann_Abstraction19));
 assert(isDeterministic(Ackermann_Abstraction24));

@@ -1,0 +1,99 @@
+// nondeterministic NWA where smallest deterministic NWA for same langauge has
+// 2^n^2 states.
+// See JACM2009 paper, proof of Theorem 3.4
+//
+//
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 25.5.2010
+
+
+assert(accepts(worstCaseDeterminizationk2, [s c<  "0" "0" m "0" "0" e   "0" "0" >r "0" "0"]));
+assert(!accepts(worstCaseDeterminizationk2, [s c<  "1" "1" m "0" "0" e  "0" "1" m "0" "1" e  "1" "1" m "1" "1" e   "0" "0" >r "0" "1"]));
+assert(!accepts(worstCaseDeterminizationk2, [s c<  "0" "1" m "1" "0" e  "0" "0" m "0" "1" e  "1" "1" m "0" "1" e   "0" "0" >r "0" "1"]));
+assert(accepts(worstCaseDeterminizationk2, [s c<  "0" "1" m "0" "0" e  "0" "0" m "0" "1" e  "1" "1" m "0" "1" e   "0" "0" >r "0" "1"]));
+NestedWordAutomaton determinized = determinize(worstCaseDeterminizationk2);
+// We assume that sink state was added. 
+assert(numberOfStates(determinized) == 401680);
+// Operation says: "Before removal of dead ends 401680 states." so there are no dead ends.
+assert(accepts(determinized, [s c<  "0" "1" m "0" "0" e  "0" "0" m "0" "1" e  "1" "1" m "0" "1" e   "0" "0" >r "0" "1"]));
+ 
+
+
+
+
+
+NestedWordAutomaton worstCaseDeterminizationk2 = (
+  callAlphabet = {c},
+  internalAlphabet = {s "0" "1" m e},
+  returnAlphabet = {r},
+  states = {
+	  p
+	  p0 p1 
+	  p00 p01 p10 p11
+	  q00 q01 q10 q11    q00m q01m q10m q11m
+	  q0 q1
+	  q
+	  r
+	  r0 r1
+	  r00 r01 r10 r11
+	  s00 s01 s10 s11    s00m s01m s10m s11m
+	  s0 s1
+	  s
+	  t00 t01 t10 t11
+	  t0 t1
+	  t
+  },
+  initialStates = {p},
+  finalStates = {t},
+  callTransitions = {
+      // store u in hierarchical state
+      (p00 c q00) (p01 c q01) (p10 c q10) (p11 c q11)
+  },
+  internalTransitions = {
+//      (p "0" p0) (p "1" p1)
+//      (p0 "0" p00) (p0 "1" p01)
+//      (p1 "0" p10) (p1 "1" p11)
+  
+      //guess the word u which will be propagated via hierarchical state
+      (p s p00) (p s p01) (p s p10) (p s p11)
+      
+      //sigma star before reading u
+      (q00 "0" q00) (q00 "1" q00) (q01 "0" q01) (q01 "1" q01) (q10 "0" q10) (q10 "1" q10) (q11 "0" q11) (q11 "1" q11)
+      (q00 m q00m) (q01 m q01m) (q10 m q10m) (q11 m q11m)
+      (q00m "0" q00m) (q00m "1" q00m) (q01m "0" q01m) (q01m "1" q01m) (q10m "0" q10m) (q10m "1" q10m) (q11m "0" q11m) (q11m "1" q11m)
+      (q00m e q00) (q01m e q01) (q10m e q10m) (q11m e q11)
+      
+      //read u
+      (q00 "0" q0) (q01 "0" q1) (q10 "1" q0) (q11 "1" q1)
+      (q0 "0" q) (q1 "1" q)
+      (q m r) // m is separator between u and v in Alur/Madhusudan paper, c is used instead
+      
+      //read v
+      (r "0" r0) (r "1" r1)
+      (r0 "0" r00) (r0 "1" r01)
+      (r1 "0" r10) (r1 "1" r11)
+      (r00 e s00) (r01 e s01) (r10 e s10) (r11 e s11) // e indicates end of uv sequence in Alur/Madhusudan paper, cc is used instead
+      
+      //sigma star before reading v
+      (s00 "0" s00) (s00 "1" s00) (s01 "0" s01) (s01 "1" s01) (s10 "0" s10) (s10 "1" s10) (s11 "0" s11) (s11 "1" s11)
+      (s00 m s00m) (s01 m s01m) (s10 m s10m) (s11 m s11m)
+      (s00m "0" s00m) (s00m "1" s00m) (s01m "0" s01m) (s01m "1" s01m) (s10m "0" s10m) (s10m "1" s10m) (s11m "0" s11m) (s11m "1" s11m)
+      (s00m e s00) (s01m e s01) (s10m e s10m) (s11m e s11)
+      
+      //read v
+      (s00 "0" s0) (s01 "0" s1) (s10 "1" s0) (s11 "1" s1)
+      (s0 "0" s) (s1 "1" s)
+      
+      //read u
+      (t00 "0" t0) (t01 "0" t1) (t10 "1" t0) (t11 "1" t1)
+      (t0 "0" t) (t1 "1" t)
+
+      
+      
+  }, 
+  returnTransitions = {
+      (s p00 r t00) (s p01 r t01) (s p10 r t10) (s p11 r t11)
+  }
+);
+
