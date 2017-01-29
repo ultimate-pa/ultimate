@@ -742,11 +742,11 @@ public final class LinearInequalityInvariantPatternProcessor
 		mLogger.info("[LIIPP] Terms generated, checking SAT.");
 		final LBool result = mSolver.checkSat();
 		mLogger.info("Check-sat result: " + result);
-//		if (result == LBool.UNKNOWN) {
-//			 mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
-//			 // Prevent additional rounds
-//			 mMaxRounds = mCurrentRound + 1;
-//		}
+		if (result == LBool.UNKNOWN) {
+			 mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
+			 // Prevent additional rounds
+			 mMaxRounds = mCurrentRound + 1;
+		}
 		if (result != LBool.SAT) {
 			// No configuration found
 			if (result == LBool.UNSAT && mUseVarsFromUnsatCore) {

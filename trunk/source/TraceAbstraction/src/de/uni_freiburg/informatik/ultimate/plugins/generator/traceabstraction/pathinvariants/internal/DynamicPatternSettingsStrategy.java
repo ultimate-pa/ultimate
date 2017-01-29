@@ -148,9 +148,9 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 	
 	private class PatternSetting {
 		private int mNumOfConjuncts;
-		private static final int MAX_NUM_CONJUNCTS = 3;
+		private static final int MAX_NUM_CONJUNCTS = 2;
 		private int mNumOfDisjuncts;
-		private static final int MAX_NUM_DISJUNCTS = 4;
+		private static final int MAX_NUM_DISJUNCTS = 3;
 		private Set<IProgramVar> mPatternVariables;
 		
 		public PatternSetting(int disjuncts, int conjuncts, Set<IProgramVar> vars) {
@@ -172,7 +172,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			} else {
 				if (mNumOfDisjuncts < MAX_NUM_DISJUNCTS) {
 					mNumOfDisjuncts++;
-					mNumOfConjuncts = 1;
+//					mNumOfConjuncts = 1;
 				} else {
 					throw new UnsupportedOperationException("Both number of conjuncts and disjuncts reached the maximum limit.");
 				}

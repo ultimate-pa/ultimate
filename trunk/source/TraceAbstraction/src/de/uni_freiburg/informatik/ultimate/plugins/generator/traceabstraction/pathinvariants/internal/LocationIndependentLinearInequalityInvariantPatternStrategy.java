@@ -175,8 +175,16 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	 */
 	@Override
 	public int[] getDimensions(IcfgLocation location, int round) {
-		return new int[] { baseDisjuncts + round * disjunctsPerRound,
-				baseConjuncts + round * conjunctsPerRound };
+		if (round == 0) {
+			return new int[] {1, 1};
+		} else if (round == 1) {
+			return new int[] {1, 2};
+		} else if (round == 2) {
+			return new int[] {2, 2};
+		} else {
+			return new int[] { baseDisjuncts + round * disjunctsPerRound,
+					baseConjuncts + round * conjunctsPerRound };
+		}
 		// 2015-10-27: Use the following instead to obtain two disjuncts
 		// consisting of one strict-nonstrict conjunction pair each. 
 //		return new int[] { 2, 1};
