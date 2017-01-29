@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -26,13 +28,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
-	private final ITreeAutomatonBU<LETTER, STATE> treeA;
-	private final ITreeAutomatonBU<LETTER, STATE> treeB;
-	protected final ITreeAutomatonBU<LETTER, STATE> result;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeA;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeB;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	
-	private final IStateFactory<STATE> stateFactory;
-	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
-	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
+	private final IStateFactory<STATE> mStateFactory;
+	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> mPairsMap;
+	private final Map<Pair<STATE, STATE>, STATE> mReducedStates;
+	private final AutomataLibraryServices mServices;
 
 	/**
 	 * 
@@ -42,31 +45,33 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param t1
 	 * @param t2
 	 */
-	public Intersect(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2) {
-		reducedStates = new HashMap<>();
-		pairsMap = new HashMap<>();
+	public Intersect(final AutomataLibraryServices services, final IStateFactory<STATE> factory, 
+			final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2) {
+		mServices = services;
+		mReducedStates = new HashMap<>();
+		mPairsMap = new HashMap<>();
 		
-		stateFactory = factory;
-		treeA = t1;
-		treeB = t2;
-		result = computeResult();
+		mStateFactory = factory;
+		mTreeA = t1;
+		mTreeB = t2;
+		mResult = computeResult();
 	}
 	
 	private STATE reduceState(final Pair<STATE, STATE> key) {
-		if (!reducedStates.containsKey(key)) {
-			reducedStates.put(key, stateFactory.intersection(key.getFirst(), key.getSecond()));
+		if (!mReducedStates.containsKey(key)) {
+			mReducedStates.put(key, mStateFactory.intersection(key.getFirst(), key.getSecond()));
 		}
-		return reducedStates.get(key);
+		return mReducedStates.get(key);
 	}
 	
 	private Pair<STATE, STATE> getPair(final STATE q1, final STATE q2) {
-		if (!pairsMap.containsKey(q1)) {
-			pairsMap.put(q1, new HashMap<>());
+		if (!mPairsMap.containsKey(q1)) {
+			mPairsMap.put(q1, new HashMap<>());
 		}
-		if (!pairsMap.get(q1).containsKey(q2)) {
-			pairsMap.get(q1).put(q2, new Pair<STATE, STATE>(q1, q2));
+		if (!mPairsMap.get(q1).containsKey(q2)) {
+			mPairsMap.get(q1).put(q2, new Pair<STATE, STATE>(q1, q2));
 		}
-		return pairsMap.get(q1).get(q2);
+		return mPairsMap.get(q1).get(q2);
 	}
 	@Override
 	public String operationName() {
@@ -90,7 +95,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 		
-		for (final TreeAutomatonRule<LETTER, STATE> ruleA : treeA.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> ruleA : mTreeA.getRules()) {
 			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
 			if (symbolToRuleA.containsKey(ruleA.getLetter())) {
 				rules = symbolToRuleA.get(ruleA.getLetter());
@@ -100,7 +105,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			rules.add(ruleA);
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> ruleB : treeB.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> ruleB : mTreeB.getRules()) {
 			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
 			if (symbolToRuleB.containsKey(ruleB.getLetter())) {
 				rules = symbolToRuleB.get(ruleB.getLetter());
@@ -128,15 +133,15 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
-		for (final STATE q1 : pairsMap.keySet()) {
-			for (final STATE q2 : pairsMap.get(q1).keySet()) {
+		for (final STATE q1 : mPairsMap.keySet()) {
+			for (final STATE q2 : mPairsMap.get(q1).keySet()) {
 				final Pair<STATE, STATE> st = getPair(q1, q2);
 				
-				if (treeA.isInitialState(q1) && treeB.isInitialState(q2)) {
+				if (mTreeA.isInitialState(q1) && mTreeB.isInitialState(q2)) {
 					res.addInitialState(st);
 				}
 
-				if (treeA.isFinalState(q1) && treeB.isFinalState(q2)) {
+				if (mTreeA.isFinalState(q1) && mTreeB.isFinalState(q2)) {
 					res.addFinalState(st);
 				}
 			}
@@ -166,7 +171,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -193,9 +198,12 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule(new TreeAutomatonRule<>("1", new ArrayList<>(Arrays.asList(new String[]{initB})), Bool));
 		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initB})), BoolList));
 		treeB.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{Bool, BoolList})), BoolList));
+		
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final StringFactory fac = new StringFactory();
-		final Intersect<String, String> op = new Intersect<>(fac, treeA, treeB);
+		final Intersect<String, String> op = new Intersect<>(services, fac, treeA, treeB);
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
@@ -232,10 +240,12 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		tree2.addFinalState(T);
 		tree2.addFinalState(E);
 		
+		
+		
 		System.out.println(tree1);
 		System.out.println(tree2);
-		final Intersect<Character, String> oo = new Intersect<>(fac, tree1, tree2);
-		final Minimize<Character, String> oo2 = new Minimize<>(fac, oo.getResult());
+		final Intersect<Character, String> oo = new Intersect<>(services, fac, tree1, tree2);
+		final Minimize<Character, String> oo2 = new Minimize<>(services, fac, oo.getResult());
 		System.out.println(oo2.getResult());
 	}
 }

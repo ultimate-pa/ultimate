@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 /**
  * Check emptiness of a tree automaton. The output is TreeRun.
  * @author mostafa
@@ -24,12 +26,14 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  */
 public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	protected final TreeRun<LETTER, STATE> result;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	protected final TreeRun<LETTER, STATE> mResult;
+	private AutomataLibraryServices mServices;
 	
-	public TreeEmptinessCheck(final TreeAutomatonBU<LETTER, STATE> tree) {
-		treeAutomaton = tree;
-		result = computeResult();
+	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
+		mServices = services;
+		mTreeAutomaton = tree;
+		mResult = computeResult();
 	}
 	@Override
 	public String operationName() {
@@ -53,14 +57,14 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		
 		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
 		
-		for (final STATE init : treeAutomaton.getInitialStates()) {
+		for (final STATE init : mTreeAutomaton.getInitialStates()) {
 			soltree.put(init, new TreeRun<LETTER, STATE>(init));
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> rule: treeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule: mTreeAutomaton.getRules()) {
 			boolean initialRules = true;
 			
 			for (final STATE sourceState : rule.getSource()) {
-				initialRules &= treeAutomaton.isInitialState(sourceState);
+				initialRules &= mTreeAutomaton.isInitialState(sourceState);
 				
 				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
 				if (rulesBySource.containsKey(sourceState)) {
@@ -99,7 +103,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 				final TreeRun<LETTER, STATE> newTree = new TreeRun<LETTER, STATE>(dest, rule.getLetter(), subTrees);
 				soltree.put(dest, newTree);
 				
-				if (treeAutomaton.isFinalState(dest)) {
+				if (mTreeAutomaton.isFinalState(dest)) {
 					return newTree;
 				} else {
 					if (rulesBySource.containsKey(dest)) {
@@ -117,7 +121,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	
 	@Override
 	public TreeRun<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -138,7 +142,10 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, EmptyList})), NatList));
 		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 
-		final TreeEmptinessCheck<String, String> op = new TreeEmptinessCheck<>(treeA);
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+
+		final TreeEmptinessCheck<String, String> op = new TreeEmptinessCheck<>(services, treeA);
 		final TreeRun<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString());

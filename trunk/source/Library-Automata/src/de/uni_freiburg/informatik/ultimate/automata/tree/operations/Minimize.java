@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  * Minimize a given treeAutomaton.
@@ -27,27 +29,30 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  */
 public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final TreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IMergeStateFactory<STATE> stateFactory;
+	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	
 	protected final ITreeAutomatonBU<LETTER, STATE> result;
 
-	final Map<Set<STATE>, STATE> minimizedStates;
+	private final Map<Set<STATE>, STATE> mMinimizedStates;
+	private final AutomataLibraryServices mServices;
 	
-	public Minimize(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
-		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
-		stateFactory = factory;
-		minimizedStates = new HashMap<>();
+	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory, 
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
+		mServices = services;
+		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
+		mStateFactory = factory;
+		mMinimizedStates = new HashMap<>();
 		
 		result = computeResult();
 		}
 
 	private STATE minimize(final Set<STATE> st) {
 		// minimize set of state to a new minimized state.
-		if (!minimizedStates.containsKey(st)) {
-			minimizedStates.put(st, stateFactory.merge(st));
+		if (!mMinimizedStates.containsKey(st)) {
+			mMinimizedStates.put(st, mStateFactory.merge(st));
 		}
-		return minimizedStates.get(st);
+		return mMinimizedStates.get(st);
 	}
 	
 	@Override
@@ -80,7 +85,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
 			// Then we can replace s2 by s1 in this rule
 			// TODO(amin): Check if just one occurance or all of them is needed.
-			for (final STATE dest : treeAutomaton.getSuccessors(s, rule.getLetter())) {
+			for (final STATE dest : mTreeAutomaton.getSuccessors(s, rule.getLetter())) {
 				if (worklist.equiv(dest, rule.getDest())) {
 					return true;
 				}
@@ -91,14 +96,14 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private boolean replacable(final STATE s1, final STATE s2, final DisjointSet<STATE> partitions) {
 		// If I can replace s1 by s2 in all rules of s1
-		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRulesBySource(s1)) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRulesBySource(s1)) {
 			if (!replacable(s1, s2, rule, partitions)) {
 				return false;
 			}
 		}
 
 		// If I can replace s2 by s1 in all rules of s2
-		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRulesBySource(s2)) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRulesBySource(s2)) {
 			if (!replacable(s2, s1, rule, partitions)) {
 				return false;
 			}
@@ -109,19 +114,19 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 
-		DisjointSet<STATE> worklist = new DisjointSet<>(treeAutomaton.getStates());
+		DisjointSet<STATE> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
 		STATE finalState = null;
 		STATE initState = null;
 		STATE nonFinalState = null;
-		for (final STATE state : treeAutomaton.getStates()) {
-			if (treeAutomaton.isFinalState(state)) {
+		for (final STATE state : mTreeAutomaton.getStates()) {
+			if (mTreeAutomaton.isFinalState(state)) {
 				if (finalState == null) {
 					finalState = state;
 				} else {
 					// All final states are equivalent.
 					worklist.union(finalState, state);
 				}
-			} else if (treeAutomaton.isInitialState(state)) {
+			} else if (mTreeAutomaton.isInitialState(state)) {
 				if (initState == null) {
 					initState = state;
 				} else {
@@ -140,7 +145,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		do {
 			oldWorklist = worklist;
 
-			worklist = new DisjointSet<>(treeAutomaton.getStates());
+			worklist = new DisjointSet<>(mTreeAutomaton.getStates());
 			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt.hasNext();) {
 				final Set<STATE> partition = partitionsIt.next();
 				final ArrayList<STATE> states = new ArrayList<>();
@@ -164,17 +169,17 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		// minimize all states
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
-		for (final STATE st : treeAutomaton.getStates()) {
+		for (final STATE st : mTreeAutomaton.getStates()) {
 			res.addState(minimize(worklist.getPartition(st)));
-			if (treeAutomaton.isFinalState(st)) {
+			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(minimize(worklist.getPartition(st)));
 			}
-			if (treeAutomaton.isInitialState(st)) {
+			if (mTreeAutomaton.isInitialState(st)) {
 				res.addInitialState(minimize(worklist.getPartition(st)));
 			}
 		}
 		
-		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			final List<STATE> src = new ArrayList<>();
 			// minimize all set of states in all rules.
 			for (final STATE st : rule.getSource()) {
@@ -311,10 +316,14 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{X})), Y));
 		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{Y})), Y));
 		
+		
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+		
 		System.out.println(treeA.toString() + "\n");
-		final Determinize<String, String> det = new Determinize<>(new StringFactory(), treeA);
+		final Determinize<String, String> det = new Determinize<>(services, new StringFactory(), treeA);
 		System.out.println(det.getResult());
-		final Minimize<String, String> op = new Minimize<>(new StringFactory(), det.getResult());
+		final Minimize<String, String> op = new Minimize<>(services, new StringFactory(), det.getResult());
 		System.out.println(op.getResult());
 		
 	}

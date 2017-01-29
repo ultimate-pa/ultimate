@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  * Determinize a given tree automaton.
@@ -27,25 +29,28 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  */
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IMergeStateFactory<STATE> stateFactory;
-	private final Map<Set<STATE>, STATE> reducedStates;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final IMergeStateFactory<STATE> mStateFactory;
+	private final Map<Set<STATE>, STATE> mReducedStates;
 	
-	protected final ITreeAutomatonBU<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
+	private final AutomataLibraryServices mServices;
 
-	public Determinize(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
-		reducedStates = new HashMap<>();
-		stateFactory = factory;
-		treeAutomaton = tree;
+	public Determinize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory, 
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
+		mServices = services;
+		mReducedStates = new HashMap<>();
+		mStateFactory = factory;
+		mTreeAutomaton = tree;
 		
-		result = computeResult();
+		mResult = computeResult();
 	}
 	
 	private STATE reduceState(final Set<STATE> key) {
-		if (!reducedStates.containsKey(key)) {
-			reducedStates.put(key, stateFactory.merge(key));
+		if (!mReducedStates.containsKey(key)) {
+			mReducedStates.put(key, mStateFactory.merge(key));
 		}
-		return reducedStates.get(key);
+		return mReducedStates.get(key);
 	}
 	
 	@Override
@@ -96,7 +101,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		// Dummy Rules end.
 		*/
-		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
 				rules.put(rule.getLetter(), new HashMap<>());
 			}
@@ -181,7 +186,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
-		res.extendAlphabet(treeAutomaton.getAlphabet());
+		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 		
 		for (final LETTER letter : rules.keySet()) {
 			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
@@ -197,32 +202,32 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				for (final Set<STATE> sub : sSrc) {
 					final STATE state = reduceState(sub);
 					for (final STATE s : sub) {
-						if (treeAutomaton.isInitialState(s)) {
+						if (mTreeAutomaton.isInitialState(s)) {
 							res.addInitialState(state);
 						}
-						if (treeAutomaton.isFinalState(s)) {
+						if (mTreeAutomaton.isFinalState(s)) {
 							res.addFinalState(state);
 						}
 					}
 				}
 				for (final STATE s : sDest) {
-					if (treeAutomaton.isFinalState(s)) {
+					if (mTreeAutomaton.isFinalState(s)) {
 						res.addFinalState(dest);
 					}
-					if (treeAutomaton.isInitialState(s)) {
+					if (mTreeAutomaton.isInitialState(s)) {
 						res.addInitialState(dest);
 					}
 				}
 			}
 		}
 
-		final Totalize<LETTER, STATE> op = new Totalize<>(stateFactory, res);
+		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactory, res);
 		return op.getResult();
 	}
 	
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -244,8 +249,12 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q2})), Q1));
 		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[]{Q0, Q3})), Q1));
 		
+		
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+		
 		final StringFactory fac = new StringFactory();
-		final Determinize<String, String> op = new Determinize<>(fac, treeA);
+		final Determinize<String, String> op = new Determinize<>(services, fac, treeA);
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
@@ -261,7 +270,8 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList));
 		treeB.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 
-		final Determinize<String, String> opB = new Determinize<>(fac, treeB);
+
+		final Determinize<String, String> opB = new Determinize<>(services, fac, treeB);
 		final ITreeAutomatonBU<String, String> resB = opB.getResult();
 		
 

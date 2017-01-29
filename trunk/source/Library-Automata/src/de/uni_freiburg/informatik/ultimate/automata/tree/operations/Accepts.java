@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /** 
  * Operation of a treeAutomaton accepts a given Run.
@@ -22,20 +24,24 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE> state of the tree automaton.
  */
 public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final TreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final Tree<LETTER> example;
+	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final Tree<LETTER> mExample;
 	
-	private final Boolean result;
+	private final Boolean mResult;
+	private final AutomataLibraryServices mServices;
 	
-	public Accepts(final ITreeAutomatonBU<LETTER, STATE> automaton, final TreeRun<LETTER, STATE> run) {
-		this(automaton, run.getTree());
+	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton, 
+			final TreeRun<LETTER, STATE> run) {
+		this(services, automaton, run.getTree());
 	}
 	
-	public Accepts(final ITreeAutomatonBU<LETTER, STATE> automaton, final Tree<LETTER> run) {
-		example = run;
-		treeAutomaton = (TreeAutomatonBU<LETTER, STATE>) automaton;
+	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton, 
+			final Tree<LETTER> run) {
+		mServices = services;
+		mExample = run;
+		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) automaton;
 		
-		result = computeResult();
+		mResult = computeResult();
 	}
 	@Override
 	public String operationName() {
@@ -60,7 +66,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			next.add(checkTree(ch));
 		}
 		
-		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = treeAutomaton.getRulesByLetter(t.getSymbol());
+		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
 		
 		if (st != null) {
 			for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
@@ -69,7 +75,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				for (int i = 0; i < next.size(); ++i) {
 					final STATE sr = rule.getSource().get(i);
-					if (!next.get(i).contains(sr) && !treeAutomaton.isInitialState(sr)) {
+					if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
 						continue;
 					}
 				}
@@ -80,9 +86,9 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 
 	private Boolean computeResult() {
-		final Set<STATE> derivations = checkTree(example);
+		final Set<STATE> derivations = checkTree(mExample);
 		for (final STATE st : derivations) {
-			if (treeAutomaton.isFinalState(st)) {
+			if (mTreeAutomaton.isFinalState(st)) {
 				return true;
 			}
 		}
@@ -90,7 +96,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	@Override
 	public Boolean getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -128,7 +134,10 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		e1.add(elm2);
 		final Tree<String> run = new Tree<String>("f", e1);
 		
-		final Accepts<String, String> op = new Accepts<>(treeA, run);
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+		
+		final Accepts<String, String> op = new Accepts<>(services, treeA, run);
 		
 		System.out.println(run);
 		System.out.println();

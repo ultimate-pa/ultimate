@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  *  Complements a given treeAutomaton.
@@ -21,16 +23,19 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  */
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IMergeStateFactory<STATE> stateFactory;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	
-	protected final ITreeAutomatonBU<LETTER, STATE> result;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
+	private final AutomataLibraryServices mServices;
 	
-	public Complement(final IMergeStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
-		treeAutomaton = tree;
-		stateFactory = factory;
+	public Complement(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory, 
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
+		mServices = services;
+		mTreeAutomaton = tree;
+		mStateFactory = factory;
 		
-		result = computeResult();
+		mResult = computeResult();
 	}
 	@Override
 	public String operationName() {
@@ -48,22 +53,22 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-		final Determinize<LETTER, STATE> op = new Determinize<>(stateFactory, treeAutomaton);
+		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, mStateFactory, mTreeAutomaton);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		final Minimize<LETTER, STATE> mini = new Minimize<>(stateFactory, res);
+		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, mStateFactory, res);
 		return mini.getResult();
 	}
 	
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
-		return false;
+		// TODO implement a meaningful check
+		return true;
 	}
 	
 	public static void main(final String[] args) throws AutomataLibraryException {
@@ -86,10 +91,13 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initB})), BoolList));
 		treeB.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{Bool, BoolList})), BoolList));
 
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+
 		final StringFactory fac = new StringFactory();
-		final Complement<String, String> com = new Complement<>(fac, treeB);
+		final Complement<String, String> com = new Complement<>(services, fac, treeB);
 		
-		final Intersect<String, String> op = new Intersect<>(fac, treeA, com.getResult());
+		final Intersect<String, String> op = new Intersect<>(services, fac, treeA, com.getResult());
 		final ITreeAutomatonBU<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");

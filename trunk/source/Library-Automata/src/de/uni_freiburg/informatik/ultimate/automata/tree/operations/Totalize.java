@@ -10,51 +10,55 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 
-	private final ITreeAutomatonBU<LETTER, STATE> treeAutomaton;
-	private final IStateFactory<STATE> stateFactory;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final IStateFactory<STATE> mStateFactory;
 	
-	protected final ITreeAutomatonBU<LETTER, STATE> result;
-	private final Map<Integer, List<List<STATE>>> memCombinations;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
+	private final Map<Integer, List<List<STATE>>> mMemCombinations;
 	
-	private final STATE dummyState;
-	private final Set<STATE> states;
+	private final STATE mDummyState;
+	private final Set<STATE> mStates;
+	private final AutomataLibraryServices mServices;
 	
-	public Totalize(final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
-		treeAutomaton =  tree;
-		stateFactory = factory;
-		memCombinations = new HashMap<>();
-		dummyState = stateFactory.createEmptyStackState();
-		states = new HashSet<>();
-		states.add(dummyState);
-		states.addAll(tree.getStates());
+	public Totalize(final AutomataLibraryServices services, final IStateFactory<STATE> factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+		mServices = services;
+		mTreeAutomaton =  tree;
+		mStateFactory = factory;
+		mMemCombinations = new HashMap<>();
+		mDummyState = mStateFactory.createEmptyStackState();
+		mStates = new HashSet<>();
+		mStates.add(mDummyState);
+		mStates.addAll(tree.getStates());
 		
-		result = computeResult();
+		mResult = computeResult();
 	}
 	
 	
 	public List<List<STATE>> combinations(int siz) {
-		if (memCombinations.containsKey(siz)) {
-			return memCombinations.get(siz);
+		if (mMemCombinations.containsKey(siz)) {
+			return mMemCombinations.get(siz);
 		}
 		ArrayList<List<STATE>> res = new ArrayList<>();
 		if (siz == 0) {
 			ArrayList<STATE> st = new ArrayList<>();
 			res.add(st);
-			memCombinations.put(siz, res);
+			mMemCombinations.put(siz, res);
 			return res;
 		}
 		List<List<STATE>> subres = combinations(siz - 1);
-		for (final STATE st : states) {
+		for (final STATE st : mStates) {
 			for (final List<STATE> subst : subres) {
 				List<STATE> t = new ArrayList<>(subst.size());
 				t.addAll(subst);
@@ -62,33 +66,33 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				res.add(t);
 			}
 		}
-		memCombinations.put(siz, res);
+		mMemCombinations.put(siz, res);
 		return res;
 	}
 	
 	public TreeAutomatonBU<LETTER, STATE> computeResult() {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
-		for (final STATE st : states) {
+		for (final STATE st : mStates) {
 			res.addState(st);
-			if (treeAutomaton.isFinalState(st)) {
+			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(st);
 			}
-			if (treeAutomaton.isInitialState(st)) {
+			if (mTreeAutomaton.isInitialState(st)) {
 				res.addInitialState(st);
 			}
 		}
 		
-		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			res.addRule(rule);
 			for (final List<STATE> srcSt : combinations(rule.getArity())) {
-				Iterable<STATE> st = treeAutomaton.getSuccessors(srcSt, rule.getLetter());
+				Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, rule.getLetter());
 				if (st != null && !st.iterator().hasNext()) {
-					res.addRule(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), srcSt, dummyState));
+					res.addRule(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), srcSt, mDummyState));
 				}
 			}
 			
 		}
-		for (final LETTER sym : treeAutomaton.getAlphabet()) {
+		for (final LETTER sym : mTreeAutomaton.getAlphabet()) {
 			Method getAr = null;
 			int arity = -1;
 			try {
@@ -104,9 +108,9 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (arity >= 0) {
 				//System.err.println(sym);
 				for (final List<STATE> srcSt : combinations(arity)) {
-					Iterable<STATE> st = treeAutomaton.getSuccessors(srcSt, sym);
+					Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, sym);
 					if (st != null && !st.iterator().hasNext()) {
-						res.addRule(new TreeAutomatonRule<LETTER, STATE>(sym, srcSt, dummyState));
+						res.addRule(new TreeAutomatonRule<LETTER, STATE>(sym, srcSt, mDummyState));
 					}
 				}
 			}
@@ -130,7 +134,7 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -169,7 +173,10 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList));
 		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList));
 		
-		Totalize<String, String> op2 = new Totalize<>(new StringFactory(), treeA);
+		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
+		
+		Totalize<String, String> op2 = new Totalize<>(services, new StringFactory(), treeA);
 		System.out.println(treeA);
 		System.out.println(op2.getResult());
 		
