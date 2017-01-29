@@ -33,7 +33,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -118,9 +117,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  * @author musab@informatik.uni-freiburg.de
  */
 public class TestFileInterpreter implements IMessagePrinter {
+	private static final boolean PRINT_STACK_TRACE_FOR_EXCEPTIONS = true;
+	
 	public static final String WRITE = "write";
 	public static final String PRINT = "print";
 	public static final String ASSERT = "assert";
+	private static final int WRITE_ARGUMENTS = 3;
 	
 	private static final String ASSERTION_HOLDS_MESSAGE = "Assertion holds.";
 	private static final String ASSERTION_VIOLATED_MESSAGE = "Assertion violated!";
@@ -142,6 +144,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 		RETURN;
 	}
 	
+	/**
+	 * Logger severity.
+	 * 
+	 * @author musab@informatik.uni-freiburg.de
+	 */
 	public enum LoggerSeverity {
 		INFO,
 		WARNING,
@@ -149,6 +156,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 		DEBUG
 	}
 	
+	/**
+	 * Status how a test case interpretation may have terminated.
+	 * 
+	 * @author musab@informatik.uni-freiburg.de
+	 */
 	private enum Finished {
 		FINISHED,
 		TIMEOUT,
@@ -182,7 +194,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * The automaton, which was lastly printed by a print operation.
 	 */
-	private IAutomaton<?, ?> mLastPrintedAutomaton;
+	private IAutomaton<String, String> mLastPrintedAutomaton;
 	/**
 	 * Indicates whether the automaton, which is output by a print operation, should also be printed to a .ats-file.
 	 */
@@ -195,7 +207,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private boolean mIgnoreOperationsAndExecuteCommandInstead;
 	private String mCommandToExecute;
-	
 	/**
 	 * If an error occurred during the interpretation this is set to true and further interpretation is aborted.
 	 */
@@ -268,15 +279,15 @@ public class TestFileInterpreter implements IMessagePrinter {
 		try {
 			mAutomataInterpreter.interpret(ats.getAutomataDefinitions());
 		} catch (final Exception e) {
+			errorMessage = e.getMessage();
 			reportToLogger(LoggerSeverity.INFO, "Error during interpreting automata definitions.");
-			reportToLogger(LoggerSeverity.INFO, ERROR_STRING + e.getMessage());
+			reportToLogger(LoggerSeverity.INFO, ERROR_STRING + errorMessage);
 			if (e instanceof InterpreterException) {
 				reportToLogger(LoggerSeverity.INFO, ERROR_STRING + ((InterpreterException) e).getShortDescription());
 			}
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
-			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
+			reportToUltimate(Severity.ERROR, errorMessage + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
-			errorMessage = e.getMessage();
 		}
 		
 		final AtsASTNode statements;
@@ -284,8 +295,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			final String commandAdapted = substituteAutomataNames(mCommandToExecute, ats.getAutomataDefinitions());
 			final String fakeFilename = "mySettingsFileGivenStringDoesNotHaveFilename";
 			final String fakeFileAbsolutePath = "mySettingsFileGivenStringDoesNotHaveFileAbsolutePath";
-			final InputStream is = new ByteArrayInputStream(commandAdapted.getBytes());
-			final Reader reader = new InputStreamReader(is);
+			final Reader reader = new InputStreamReader(new ByteArrayInputStream(commandAdapted.getBytes()));
 			final AutomataTestFileAST astNode = new AutomataScriptParserRun(
 					mServices, mLogger, reader, fakeFilename, fakeFileAbsolutePath).getResult();
 			statements = astNode.getStatementList();
@@ -392,7 +402,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * @return The automaton that was printed last by a print-operation.
 	 */
-	public IAutomaton<?, ?> getLastPrintedAutomaton() {
+	public IAutomaton<String, String> getLastPrintedAutomaton() {
 		return mLastPrintedAutomaton;
 	}
 	
@@ -549,40 +559,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private Object interpret(final ForStatementAST fs) throws InterpreterException {
 		final List<AtsASTNode> children = fs.getOutgoingNodes();
 		
-		boolean loopCondition = false;
-		// If the loopcondition is missing, we just execute the loop forever
-		if (children.get(0) == null) {
-			loopCondition = true;
-		}
+		// If the loop condition is missing, we just execute the loop forever
+		final boolean loopForever = children.get(0) == null;
 		// execute the initialization statement, if one is existing
 		if (children.get(1) != null) {
 			interpret(children.get(1));
 		}
-		while (loopCondition) {
-			final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
-			for (int i = 0; i < statementList.size(); i++) {
-				interpret(statementList.get(i));
-				if (mFlow == Flow.NORMAL) {
-					continue;
-				}
-				switch (mFlow) {
-					case BREAK:
-					case RETURN:
-						mFlow = Flow.NORMAL;
-						return null;
-					case CONTINUE:
-						mFlow = Flow.NORMAL;
-						break;
-					default:
-						throw new UnsupportedOperationException();
-				}
-			}
-			// execute the updatestatement
-			if (children.get(2) != null) {
-				interpret(children.get(2));
-			}
-		}
-		while ((Boolean) interpret(children.get(0))) {
+		while (loopForever || (Boolean) interpret(children.get(0))) {
 			final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
 			for (int i = 0; i < statementList.size(); i++) {
 				interpret(statementList.get(i));
@@ -648,20 +631,19 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private Object interpret(final OperationInvocationExpressionAST oe) throws InterpreterException {
 		final List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
-			String message = "OperationExpression should have only 1 child (ArgumentList)";
-			message = message.concat("Num of children: " + children.size());
+			final String message =
+					"OperationExpression should have only 1 child (ArgumentList). Num of children: " + children.size();
 			throw new InterpreterException(oe.getLocation(), message);
 		}
-		
-		ArrayList<Object> arguments = null;
-		List<AtsASTNode> argsToInterpret = null;
-		if (children.get(0) != null) {
-			argsToInterpret = children.get(0).getOutgoingNodes();
-			arguments = new ArrayList<>(argsToInterpret.size());
-			// Interpret the arguments of this operation
-			for (int i = 0; i < argsToInterpret.size(); i++) {
-				arguments.add(interpret(argsToInterpret.get(i)));
-			}
+		if (children.get(0) == null) {
+			final String message = "OperationExpression's child should not be null.";
+			throw new InterpreterException(oe.getLocation(), message);
+		}
+		final List<AtsASTNode> argsToInterpret = children.get(0).getOutgoingNodes();
+		final ArrayList<Object> arguments = new ArrayList<>(argsToInterpret.size());
+		// Interpret the arguments of this operation
+		for (final AtsASTNode node : argsToInterpret) {
+			arguments.add(interpret(node));
 		}
 		
 		Object result = null;
@@ -678,7 +660,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 	
 	private Object executeLibraryMethod(final OperationInvocationExpressionAST oe, final ArrayList<Object> arguments,
-			Object result) throws InterpreterException {
+			final Object result) throws InterpreterException {
 		final SimpleTimer timer = new SimpleTimer();
 		IOperation<String, String> op = null;
 		try {
@@ -707,7 +689,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			try {
 				assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
 						+ " is wrong (according to its checkResult method)";
-				result = op.getResult();
+				return op.getResult();
 			} catch (final AutomataLibraryException | AssertionError | OutOfMemoryError e) {
 				throw new InterpreterException(oe.getLocation(), e);
 			}
@@ -717,7 +699,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	
 	private void executeWriteMethod(final OperationInvocationExpressionAST oe, final List<AtsASTNode> children,
 			final ArrayList<Object> arguments) throws InterpreterException {
-		if (arguments.size() != 3) {
+		if (arguments.size() != WRITE_ARGUMENTS) {
 			throw new InterpreterException(oe.getLocation(), "write needs three arguments");
 		}
 		final String filename = (String) arguments.get(1);
@@ -765,7 +747,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						"if first argument of print command is an "
 								+ "automaton only two arguments are allowed");
 			}
-			mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
+			mLastPrintedAutomaton = (IAutomaton<String, String>) arguments.get(0);
 			text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
 					"automaton", format, mLastPrintedAutomaton))
 							.getDefinitionAsString();
@@ -1044,7 +1026,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private IOperation<String, String> getAutomataOperation(final OperationInvocationExpressionAST oe,
 			final ArrayList<Object> arguments) throws InterpreterException {
 		final String operationName = oe.getOperationName().toLowerCase();
-		IOperation<String, String> result = null;
 		if (!mExistingOperations.containsKey(operationName)) {
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
 			final String longDescr =
@@ -1053,8 +1034,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 							+ allOperations;
 			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
-		final Set<Class<?>> operationClasses = mExistingOperations.get(operationName);
-		for (final Class<?> operationClass : operationClasses) {
+		for (final Class<?> operationClass : mExistingOperations.get(operationName)) {
 			final Constructor<?>[] operationConstructors = operationClass.getConstructors();
 			if (operationConstructors.length == 0) {
 				final String description = "Error in automata library: operation " + operationName
@@ -1074,15 +1054,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 					continue;
 				}
 				try {
-					result = (IOperation<String, String>) c.newInstance(argumentsWithServices);
-					return result;
+					return (IOperation<String, String>) c.newInstance(argumentsWithServices);
 				} catch (final InstantiationException | IllegalAccessException e) {
-					e.printStackTrace();
+					printStackTrace(e);
 					throw new AssertionError(e);
 				} catch (final InvocationTargetException e) {
 					final Throwable targetException = e.getTargetException();
 					if (!(targetException instanceof AutomataLibraryException)) {
-						e.printStackTrace();
+						printStackTrace(e);
 					}
 					if (targetException instanceof InterpreterException) {
 						throw (InterpreterException) targetException;
@@ -1093,18 +1072,31 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 			}
 		}
-		assert result == null;
 		final String shortDescr = "Operation error";
 		final StringBuilder longDescrBuilder = new StringBuilder();
-		longDescrBuilder.append("Operation \"").append(oe.getOperationName()).append("\" is not defined for ")
-				.append((arguments.size() == 1 ? "this type of argument." : "these types of arguments.")).append(" (");
+		// @formatter:off
+		longDescrBuilder.append("Operation \"")
+						.append(oe.getOperationName())
+						.append("\" is not defined for ")
+						.append(arguments.size() == 1 ? "this type of argument." : "these types of arguments.")
+						.append(" (");
+		// @formatter:on
 		for (final Object argument : arguments) {
-			longDescrBuilder.append(argument.getClass().getSimpleName()).append(" ");
+			// @formatter:off
+			longDescrBuilder.append(argument.getClass().getSimpleName())
+							.append(" ");
+			// @formatter:on
 		}
 		longDescrBuilder.append(")");
 		final String longDescr = longDescrBuilder.toString();
-		printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr.toString(), shortDescr, oe);
+		printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe);
 		throw new InterpreterException(oe.getLocation(), longDescr);
+	}
+
+	private static void printStackTrace(final Exception e) {
+		if (PRINT_STACK_TRACE_FOR_EXCEPTIONS) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -1112,7 +1104,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * By convention, if an operation has an argument of type AutomataLibraryServices, it must come first in the
 	 * argument
 	 * list.
-	 * If an operation has han argument of type IStateFactory, it must come second if there is an argument of type
+	 * If an operation has an argument of type IStateFactory, it must come second if there is an argument of type
 	 * AutomataLibraryServices, second otherwise.
 	 */
 	private static boolean servicesAndStateFactoryComeFirstIfPresent(final Class<?>[] classes) {
@@ -1270,19 +1262,39 @@ public class TestFileInterpreter implements IMessagePrinter {
 			
 			for (final File file : files) {
 				final String filename = file.getName();
-				if (filename.endsWith(".class")) {
-					final Class<?> clazz = getClassFromFile(packageName, file);
-					if (clazz != null && !classIsAbstract(clazz) && classImplementsIOperationInterface(clazz)) {
-						tryAdd(result, clazz);
-						continue;
-					}
-				}
-				if (mLogger.isDebugEnabled()) {
+				final boolean wasOperation = addClassIfOperation(result, packageName, file, filename);
+				if (!wasOperation && mLogger.isDebugEnabled()) {
 					mLogger.debug("Not considering " + file.getAbsolutePath());
 				}
 			}
 		}
 		return result;
+	}
+	
+	private boolean addClassIfOperation(final Map<String, Set<Class<?>>> result, final String packageName,
+			final File file, final String filename) {
+		if (!filename.endsWith(".class")) {
+			return false;
+		}
+		final Class<?> clazz = getClassFromFile(packageName, file);
+		if (clazz == null) {
+			return false;
+		}
+		if (classIsAbstract(clazz)) {
+			return false;
+		}
+		if (!classImplementsIOperationInterface(clazz)) {
+			return false;
+		}
+		
+		final String opName = clazz.getSimpleName().toLowerCase();
+		Set<Class<?>> set = result.get(opName);
+		if (set == null) {
+			set = new HashSet<>();
+			result.put(opName, set);
+		}
+		set.add(clazz);
+		return true;
 	}
 	
 	private Class<?> getClassFromFile(final String packageName, final File file) {
@@ -1295,17 +1307,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 			throw new RuntimeException(e);
 		}
 		return clazz;
-	}
-	
-	private static boolean tryAdd(final Map<String, Set<Class<?>>> result, final Class<?> clazz) {
-		final String opName = clazz.getSimpleName().toLowerCase();
-		Set<Class<?>> set = result.get(opName);
-		if (set == null) {
-			set = new HashSet<>();
-			result.put(opName, set);
-		}
-		set.add(clazz);
-		return true;
 	}
 	
 	/**
@@ -1406,13 +1407,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return rtr;
 	}
 	
-	public static class SimpleTimer {
+	private static class SimpleTimer {
 		private final long mStartTime;
 		
 		public SimpleTimer() {
 			mStartTime = System.nanoTime();
 		}
 		
+		/**
+		 * @return Time difference of the timer between start and now.
+		 */
 		public long checkTime() {
 			return System.nanoTime() - mStartTime;
 		}
