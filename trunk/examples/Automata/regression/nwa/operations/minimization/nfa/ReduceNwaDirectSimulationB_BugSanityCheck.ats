@@ -1,4 +1,5 @@
 // Testfile dumped by Ultimate at 2017/01/08 22:08:37
+// Source: 4BitCounterPointer_true-termination_true-valid-memsafety.c
 // Shrunk by Christian Schilling 2017/01/10
 //
 // Revealed a trivial bug that the simulation sanity check should be applied
