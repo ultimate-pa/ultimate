@@ -50,11 +50,11 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// exclude paths that match the following regex  
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation)[\\s\\S])*";
+		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata)[\\s\\S])*";
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
 	}
 }

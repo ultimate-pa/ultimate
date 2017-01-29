@@ -62,7 +62,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	public AbstractRegressionTestSuite() {
 		mTimeout = 1000;
 		mFilterRegex = ".*";
-		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i" };
+		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i",  ".ats" };
 	}
 
 	@Override
