@@ -14,10 +14,9 @@ procedure main()
   var a: [int]int;
 
   
-  assume (x > y);
-  if (0 <= t && t <= 9997999) {
+//   if (0 <= t && t <= 9997999) {
 //     some float
-  }
+//   }
   //need modulo
   a[x] := 0;
   a[y] := 1000;
@@ -27,7 +26,7 @@ procedure main()
     a[y] := a[y] - 1;
   }
   
-  if (a[x] == 1000) {
+  if (x > y && a[x] == 1000) {
     assert (a[y] <= 0);
   }
 
