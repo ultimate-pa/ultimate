@@ -55,7 +55,9 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
 	private static int mTimeout = 10 * 1000;
-	private static final String[] mDirectories = { "examples/Automata/AlternatingAutomata",
+	// @formatter:off
+	private static final String[] mDirectories = {
+			"examples/Automata/regression/",
 			"examples/Automata/atsTestFiles", 
 			"examples/Automata/AUTOMATA_SCRIPT", 
 			"examples/Automata/BuchiAutomata",
@@ -118,5 +120,6 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private Collection<File> getInputFiles(final String directory, final String[] fileEndings) {
 		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 	}
+	// @formatter:on
 
 }
