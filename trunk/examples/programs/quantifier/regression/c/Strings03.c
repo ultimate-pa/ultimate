@@ -7,7 +7,7 @@
  */
 
 int main(void) {
-    char *string = "Newspeak";
-    char not_a_letter = string[9];
+    char *string = "grimes";
+    char not_a_letter = string[6];
     return 0;
 }
