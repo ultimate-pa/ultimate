@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
@@ -113,6 +114,8 @@ public class TreeAutomizerCEGAR {// implements
 
 	private final HCPredicateFactory mPredicateFactory;
 
+	private final AutomataLibraryServices mAutomataLibraryServices;
+
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
 			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script, 
 			HCSymbolTable hcSymbolTable) {
@@ -121,6 +124,8 @@ public class TreeAutomizerCEGAR {// implements
 		mLogger = logger;
 		mRootNode = rootNode;
 		mIteration = 0;
+
+		mAutomataLibraryServices = new AutomataLibraryServices(services);
 
 		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, 
 				hcSymbolTable, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
@@ -184,7 +189,8 @@ public class TreeAutomizerCEGAR {// implements
 
 	// @Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
-		final TreeEmptinessCheck<HornClause, HCPredicate> emptiness = new TreeEmptinessCheck<>(mAbstraction);
+		final TreeEmptinessCheck<HornClause, HCPredicate> emptiness = 
+				new TreeEmptinessCheck<>(mAutomataLibraryServices, mAbstraction);
 
 		mCounterexample = emptiness.getResult();
 		if (mCounterexample == null) {
@@ -283,13 +289,13 @@ public class TreeAutomizerCEGAR {// implements
 
 		mInterpolAutomaton = mCounterexample.getAutomaton();
 		ITreeAutomatonBU<HornClause, HCPredicate> cExample = (new Complement<HornClause, HCPredicate>(
-				mStateFactory, mInterpolAutomaton)).getResult();
+				mAutomataLibraryServices, mStateFactory, mInterpolAutomaton)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
 //		generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
 
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Intersect<HornClause, HCPredicate>(
-				mStateFactory, mAbstraction, cExample)).getResult();
+				mAutomataLibraryServices, mStateFactory, mAbstraction, cExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
 
