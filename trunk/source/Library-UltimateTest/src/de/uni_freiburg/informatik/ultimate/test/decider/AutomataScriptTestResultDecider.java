@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
@@ -41,7 +41,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	private String mErrorMessage;
 
 	@Override
-	public TestResult getTestResult(final IUltimateServiceProvider  services) {
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
 		AutomataScriptInterpreterOverallResult asior = null;
 		final Map<String, List<IResult>> allResults = services.getResultService().getResults();
 		for (final Entry<String, List<IResult>> entry : allResults.entrySet()) {
@@ -53,13 +53,12 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 		}
 		if (asior == null) {
 			throw new AssertionError("no overall result - interpretation of ats file failed");
+		}
+		mCategory = asior.getOverallResult();
+		if (mCategory == OverallResult.EXCEPTION_OR_ERROR || mCategory == OverallResult.TIMEOUT) {
+			mErrorMessage = asior.getErrorMessage();
 		} else {
-			mCategory = asior.getOverallResult();
-			if (mCategory == OverallResult.EXCEPTION_OR_ERROR || mCategory == OverallResult.TIMEOUT) {
-				mErrorMessage = asior.getErrorMessage();
-			} else {
-				mErrorMessage = null;
-			}
+			mErrorMessage = null;
 		}
 		return getTestResultFromCategory(mCategory);
 	}
