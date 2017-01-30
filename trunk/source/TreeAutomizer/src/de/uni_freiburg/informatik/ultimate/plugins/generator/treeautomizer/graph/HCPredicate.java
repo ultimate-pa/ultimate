@@ -112,11 +112,6 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 		return false;
 	}
 	
-	@Override
-	public int hashCode() {
-		return super.mSerialNumber;
-	}
-
 	//@Override
 	protected String[] getFieldNames() {
 		return s_AttribFields;
