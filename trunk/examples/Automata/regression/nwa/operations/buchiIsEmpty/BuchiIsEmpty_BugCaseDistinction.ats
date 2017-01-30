@@ -1,35 +1,12 @@
-// Example where all accepting runs have accepting state only
-// between call and return
-// Author: heizmann@informatik.uni-freiburg.de
-// Date: 14.10.2010
-assert(buchiAccepts(XiaolinBugOctober, [ ,c< a >r]));
-assert(!buchiIsEmpty(XiaolinBugOctober));
-print(XiaolinBugOctober);
-
-
-NestedWordAutomaton XiaolinBugOctober = (
-  callAlphabet = {c},
-  internalAlphabet = {a},
-  returnAlphabet = {r},
-  states = {q p1 p2},
-  initialStates = {q},
-  finalStates = {p1},
-  callTransitions = {(q c p1)},
-  internalTransitions = {(p1 a p2)}, 
-  returnTransitions = {(p2 q r q)}
-);
-
-
-
-// Some example, can not see its purpose any more... (Matthias)
+// Some example, cannot see its purpose any more... (Matthias)
 //
 // (Xiaolin: 
 // 1. Relates to the choice of case distinction in Reconstruction-A,
 //    bridge_A(s7,s8) = (s7,q,q,s8) where q = q but q is not accepting, 
 //    i.e., in one case both ``q = q´´ and ``q is accepting´´ should hold
-//    (but not solely `` q = q´´)
+//    (but not solely ``q = q´´)
 // 2. Stem (of some accepted nested word) contains pending call
-// 3. Possibily originated from an endnote in draft-20101018-with-comments
+// 3. Possibly originated from an endnote in draft-20101018-with-comments
 // )
 //
 // Author: heizmann@informatik.uni-freiburg.de
@@ -37,8 +14,6 @@ NestedWordAutomaton XiaolinBugOctober = (
 
 assert(!buchiAccepts(XiaolinBugOctober2, [ ,a a c< a >r a a]));
 assert(!buchiIsEmpty(XiaolinBugOctober2));
-print(XiaolinBugOctober2);
-
 
 NestedWordAutomaton XiaolinBugOctober2 = (
   callAlphabet = {c},

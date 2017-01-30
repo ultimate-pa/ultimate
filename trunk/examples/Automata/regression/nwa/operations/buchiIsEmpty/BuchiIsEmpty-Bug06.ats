@@ -1,8 +1,8 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: November 2013
 
-print(nwa);
-print(removeNonLiveStates(nwa));
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 5);
 
 NestedWordAutomaton nwa = (
     callAlphabet = {"a0" "a1" },
@@ -52,4 +52,3 @@ NestedWordAutomaton nwa = (
          ("q0" "q4" "a1" "q4")
     }
 );
-

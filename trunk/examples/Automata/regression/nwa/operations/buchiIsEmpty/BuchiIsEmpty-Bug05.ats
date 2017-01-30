@@ -1,8 +1,8 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 08.11.2013
 
-print(nwa);
-print(removeNonLiveStates(nwa));
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 7);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call #t~ret1 := nondet();" "call ULTIMATE.init();" "call #t~ret0 := nondet();" "call #t~ret2 := main();" },
@@ -30,4 +30,3 @@ NestedWordAutomaton nwa = (
 		 ("t2" "q1" "return call #t~ret0 := nondet();" "77#L18'")
 	}
 );
-

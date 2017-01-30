@@ -1,8 +1,8 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 29.6.2013
 
-print(nwa);
-print(removeNonLiveStates(nwa));
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },
@@ -13,24 +13,24 @@ NestedWordAutomaton nwa = (
 	finalStates = {"q1" "q3" },
 	callTransitions = {
 		 ("q2" "a1" "q0")
-// 		 ("q4" "a0" "q3")
+		 ("q4" "a0" "q3")
 		 ("q3" "a0" "q1")
-// 		 ("q0" "a1" "q2")
-// 		 ("q0" "a1" "q3")
+		 ("q0" "a1" "q2")
+		 ("q0" "a1" "q3")
 	},
 	internalTransitions = {
 		 ("q4" "a0" "q3")
 		 ("q0" "a0" "q4")
-// 		 ("q0" "a1" "q2")
-// 		 ("q0" "a1" "q1")
+		 ("q0" "a1" "q2")
+		 ("q0" "a1" "q1")
 	},
 	returnTransitions = {
-// 		 ("q2" "q3" "a0" "q0")
-// 		 ("q1" "q1" "a0" "q1")
-// 		 ("q1" "q1" "a0" "q0")
+		 ("q2" "q3" "a0" "q0")
+		 ("q1" "q1" "a0" "q1")
+		 ("q1" "q1" "a0" "q0")
 		 ("q1" "q3" "a0" "q2")
-// 		 ("q3" "q2" "a0" "q1")
-// 		 ("q3" "q0" "a0" "q2")
-// 		 ("q0" "q1" "a1" "q2")
+		 ("q3" "q2" "a0" "q1")
+		 ("q3" "q0" "a0" "q2")
+		 ("q0" "q1" "a1" "q2")
 	}
 );

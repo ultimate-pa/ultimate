@@ -1,8 +1,9 @@
 // Testfile dumped by Ultimate at 2013/11/24 03:46:14
 
-buchiIsEmpty(automaton);
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 8);
 
-NestedWordAutomaton automaton = (
+NestedWordAutomaton nwa = (
     callAlphabet = {"c" },
     internalAlphabet = {"a" },
     returnAlphabet = {"r" },

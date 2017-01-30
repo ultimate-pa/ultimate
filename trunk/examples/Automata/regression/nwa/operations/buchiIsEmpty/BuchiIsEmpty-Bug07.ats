@@ -1,8 +1,9 @@
 // Testfile dumped by Ultimate at 2013/11/24 03:46:14
 
-buchiIsEmpty(automaton);
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 51);
 
-NestedWordAutomaton automaton = (
+NestedWordAutomaton nwa = (
     callAlphabet = {"c1" "c2" "c0" "c5" "c4" "c3" },
     internalAlphabet = {"a63" "a64" "a61" "a62" "a60" "a59" "a58" "a57" "a56" "a55" "a54" "a72" "a73" "a74" "a75" "a110" "a70" "a71" "a113" "a69" "a112" "a111" "a66" "a65" "a68" "a67" "a41" "a42" "a0" "a40" "a9" "a1" "a35" "a2" "a34" "a3" "a33" "a4" "a32" "a5" "a39" "a6" "a38" "a7" "a37" "a8" "a36" "a50" "a51" "a52" "a53" "a44" "a43" "a46" "a45" "a48" "a47" "a49" "a98" "a99" "a20" "a16" "a17" "a14" "a15" "a12" "a13" "a10" "a11" "a18" "a19" "a31" "a30" "a25" "a26" "a27" "a28" "a21" "a22" "a23" "a24" "a29" "a76" "a77" "a78" "a79" "a80" "a82" "a81" "a84" "a83" "a86" "a85" "a102" "a89" "a103" "a87" "a100" "a88" "a101" "a106" "a107" "a104" "a105" "a108" "a109" "a93" "a92" "a91" "a90" "a97" "a96" "a95" "a94" },
     returnAlphabet = {"r19" "r18" "r17" "r16" "r15" "r14" "r13" "r12" "r21" "r11" "r20" "r10" "r23" "r22" "r6" "r7" "r0" "r8" "r1" "r9" "r2" "r3" "r4" "r5" },

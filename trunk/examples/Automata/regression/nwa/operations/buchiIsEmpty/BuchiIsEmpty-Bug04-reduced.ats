@@ -2,11 +2,10 @@
 // Date: 08.11.2013
 // Reveals Bug in r10390 in SCC computation.
 // The accepting summary q1->q9 is considered as summary of the SCC {q0,q1}
-// Fix: summary belongs only to a SCC if call pred and return succ are in 
-// this SCC.
+// Fix: summary belongs only to a SCC if call pred and return succ are in this SCC.
 
-print(nwa);
-print(removeNonLiveStates(nwa));
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 6);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c" },
@@ -31,4 +30,3 @@ NestedWordAutomaton nwa = (
 		 ("s1" "q4" "r" "q4")
 	}
 );
-

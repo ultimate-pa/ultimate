@@ -1,0 +1,18 @@
+// Example where all accepting runs have accepting state only between call and return
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 14.10.2010
+
+assert(!buchiIsEmpty(XiaolinBugOctober));
+assert(buchiAccepts(XiaolinBugOctober, [ ,c< a >r]));
+
+NestedWordAutomaton XiaolinBugOctober = (
+  callAlphabet = {c},
+  internalAlphabet = {a},
+  returnAlphabet = {r},
+  states = {q p1 p2},
+  initialStates = {q},
+  finalStates = {p1},
+  callTransitions = {(q c p1)},
+  internalTransitions = {(p1 a p2)}, 
+  returnTransitions = {(p2 q r q)}
+);

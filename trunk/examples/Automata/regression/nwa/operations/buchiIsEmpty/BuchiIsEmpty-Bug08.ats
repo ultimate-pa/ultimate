@@ -1,5 +1,7 @@
 // Testfile dumped by Ultimate at 2013/11/28 13:18:49
 
+assert(!buchiIsEmpty(nwa));
+assert(numberOfStates(removeNonLiveStates(nwa)) == 7);
 getAcceptedLassoWord(nwa);
 
 NestedWordAutomaton nwa = (
