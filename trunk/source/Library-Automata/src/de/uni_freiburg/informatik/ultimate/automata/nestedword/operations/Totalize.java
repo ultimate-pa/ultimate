@@ -32,11 +32,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Totalizes a nested word automaton, i.e., makes every state have an outgoing transition for every letter.
@@ -56,6 +55,8 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory (used for automaton construction)
 	 * @param operand
 	 *            operand
 	 * @throws AutomataOperationCanceledException
@@ -107,12 +108,12 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		final boolean correct;
 		
 		// check language equivalence
-		final Pair<Boolean, String> equivalenceResult = NestedWordAutomataUtils
-				.checkFiniteWordLanguageEquivalence(mServices, stateFactory, getOperand(), getResult());
+		final IsEquivalent<LETTER, STATE> equivalenceCheck =
+				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
 		
-		if (!equivalenceResult.getFirst()) {
+		if (!equivalenceCheck.getResult()) {
 			// language equivalence check failed
-			message = equivalenceResult.getSecond();
+			message = equivalenceCheck.getViolationMessage();
 			correct = false;
 			assert false;
 		} else if (!new IsTotal<>(mServices, mResult).getResult()) {

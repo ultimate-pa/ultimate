@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -542,7 +542,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * Performs the real {@link #checkResult(IStateFactory) result check}.
 	 * <p>
 	 * Subclasses can override this method for more specific result checks.<br>
-	 * By default language equivalence between operand and result is checked.
+	 * By default finite-word language equivalence between operand and result is checked.
 	 * 
 	 * @param stateFactory
 	 *            state factory
@@ -553,9 +553,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		// by default only check language equivalence
-		return NestedWordAutomataUtils.checkFiniteWordLanguageEquivalence(mServices, stateFactory, getOperand(),
-				getResult());
+		// by default only check finite-word language equivalence
+		final IsEquivalent<LETTER, STATE> equivalenceCheck =
+				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
+		return new Pair<>(equivalenceCheck.getResult(), equivalenceCheck.getViolationMessage());
 	}
 	
 	/**

@@ -35,18 +35,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.InitialPartitionProcessor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Provides static methods that are helpful for working with nested word automata.
@@ -271,47 +267,5 @@ public final class NestedWordAutomataUtils {
 	 */
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
-	}
-	
-	/**
-	 * This method checks (finite word) language equivalence between two operands via two inclusion checks.
-	 * <p>
-	 * It can be used in the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
-	 * getResult()} method.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory for inclusion check
-	 * @param operand1
-	 *            first operand
-	 * @param operand2
-	 *            second operand
-	 * @param <LETTER>
-	 *            letter type
-	 * @param <STATE>
-	 *            state type
-	 * @return {@code true} iff the finite word language is the same
-	 * @throws AutomataLibraryException
-	 *             thrown by inclusion checks
-	 */
-	public static <LETTER, STATE> Pair<Boolean, String> checkFiniteWordLanguageEquivalence(
-			final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {
-		final String message;
-		final Boolean correct;
-		if (!new IsIncluded<>(services, stateFactory, operand1, operand2).getResult()) {
-			message = "The first operand recognizes less words than the second one.";
-			correct = Boolean.FALSE;
-		} else if (!new IsIncluded<>(services, stateFactory, operand2, operand1).getResult()) {
-			message = "The second operand recognizes less words than the first one.";
-			correct = Boolean.FALSE;
-		} else {
-			message = null;
-			correct = Boolean.TRUE;
-		}
-		
-		return new Pair<>(correct, message);
 	}
 }
