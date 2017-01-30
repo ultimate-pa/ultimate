@@ -71,7 +71,7 @@ public class HybridIcfgGenerator {
 	private final String mProcedure = "MAIN";
 	private final BoogieASTNode mBoogieASTNode;
 	private final HybridVariableManager mVariableManager;
-	private BoogieIcfgLocation mErrorLocation;
+	private final BoogieIcfgLocation mErrorLocation;
 
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
 			final CfgSmtToolkit smtToolkit, final HybridVariableManager variableManager) {
@@ -89,8 +89,8 @@ public class HybridIcfgGenerator {
 		mCfgComponents.put("root",
 				new HybridCfgComponent("root", root, root, Collections.emptyList(), Collections.emptyList()));
 		mErrorLocation = new BoogieIcfgLocation("error", mProcedure, true, mBoogieASTNode);
-		mCfgComponents.put("error",
-				new HybridCfgComponent("error", mErrorLocation, mErrorLocation, Collections.emptyList(), Collections.emptyList()));
+		mCfgComponents.put("error", new HybridCfgComponent("error", mErrorLocation, mErrorLocation,
+				Collections.emptyList(), Collections.emptyList()));
 	}
 
 	public BasicIcfg<BoogieIcfgLocation> createIfcgFromComponents(final HybridAutomaton automaton) {
@@ -107,7 +107,7 @@ public class HybridIcfgGenerator {
 		icfg.addLocation(mCfgComponents.get("root").getStart(), true, false, true, false, false);
 		mCfgComponents.remove("root");
 		// error, error state
-		icfg.addLocation(mCfgComponents.get("error").getStart(), false, true, false, true, false);
+		icfg.addLocation(mErrorLocation, false, true, false, true, false);
 		mCfgComponents.remove("error");
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
@@ -397,5 +397,52 @@ public class HybridIcfgGenerator {
 		String inv = invariant.replaceAll(":=", "==");
 		inv = inv.replaceAll("&&", "&");
 		return inv;
+	}
+	
+	public BasicIcfg<BoogieIcfgLocation> getSimpleIcfg() {
+		final BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
+		
+		final BoogieIcfgLocation startLoc = new BoogieIcfgLocation("start", "MAIN", false, mBoogieASTNode);
+		icfg.addLocation(startLoc, true, false, true, false, false);
+		
+		final BoogieIcfgLocation middleLoc = new BoogieIcfgLocation("middle", "MAIN", false, mBoogieASTNode);
+		icfg.addLocation(middleLoc, false, false, false, false, false);
+		
+		final BoogieIcfgLocation endLoc = new BoogieIcfgLocation("error", "MAIN", true, mBoogieASTNode);
+		icfg.addLocation(endLoc, false, true, false, true, false);
+		// QUESTION: Is procExit = true correct here?
+		
+		TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("false"));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		// QUESTION: Is not determined correct here?
+
+		// QUESTION: Does BoogieASTNode influence TraceAbstraction? Currently, we pass the same BoogieASTNode every time
+		// to the ICFG. Should we construct new BoogieASTNodes every time?
+
+		// QUESTION: Payload currently contains only a dummy location. Every payload consists of the SAME dummy
+		// location. Is this correct / feasible?
+		
+		// Transitions
+		final IcfgInternalTransition startToMiddle = new IcfgInternalTransition(startLoc, middleLoc, mPayload,
+				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
+
+		tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+
+		// If (true, false): Assertion error in SdHoareTripleChecker
+		// If (true, true): Cast error (to CodeBlock)
+		// If (false, false) or (false, true): No Error
+
+		final IcfgInternalTransition middleToEnd = new IcfgInternalTransition(middleLoc, endLoc, mPayload,
+				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
+
+		startLoc.addOutgoing(startToMiddle);
+		middleLoc.addIncoming(startToMiddle);
+		middleLoc.addOutgoing(middleToEnd);
+		endLoc.addIncoming(middleToEnd);
+		
+		return icfg;
 	}
 }
