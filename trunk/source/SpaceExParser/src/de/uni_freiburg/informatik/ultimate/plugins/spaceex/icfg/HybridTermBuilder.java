@@ -21,9 +21,24 @@ public class HybridTermBuilder {
 	private final HybridVariableManager mVariableManager;
 	private final Script mScript;
 	private final Map<String, Term> mStringTerm;
-	private final Map<String, Operator> mOperators;
 	private final Map<HybridProgramVar, TermVariable> mInVars;
 	private final Map<HybridProgramVar, TermVariable> mOutVars;
+	protected static final Map<String, Operator> mOperators = new HashMap<>();
+	static {
+		mOperators.put("+", Operator.ADD);
+		mOperators.put("-", Operator.SUBTRACT);
+		mOperators.put("*", Operator.MULTIPLY);
+		mOperators.put("/", Operator.DIVIDE);
+		mOperators.put("<=", Operator.LTEQ);
+		mOperators.put(">=", Operator.GTEQ);
+		mOperators.put("<", Operator.LT);
+		mOperators.put(">", Operator.GT);
+		mOperators.put("==", Operator.DOUBLEEQ);
+		mOperators.put("=", Operator.EQ);
+		mOperators.put("&&", Operator.DOUBLEAND);
+		mOperators.put("&", Operator.AND);
+		mOperators.put("|", Operator.OR);
+	}
 	
 	public enum BuildScenario {
 		INITIALLY, INVARIANT, UPDATE, GUARD;
@@ -42,20 +57,6 @@ public class HybridTermBuilder {
 	public HybridTermBuilder(final HybridVariableManager variableManger, final Script script) {
 		mVariableManager = variableManger;
 		mScript = script;
-		mOperators = new HashMap<>();
-		mOperators.put("+", Operator.ADD);
-		mOperators.put("-", Operator.SUBTRACT);
-		mOperators.put("*", Operator.MULTIPLY);
-		mOperators.put("/", Operator.DIVIDE);
-		mOperators.put("<=", Operator.LTEQ);
-		mOperators.put(">=", Operator.GTEQ);
-		mOperators.put("<", Operator.LT);
-		mOperators.put(">", Operator.GT);
-		mOperators.put("==", Operator.DOUBLEEQ);
-		mOperators.put("=", Operator.EQ);
-		mOperators.put("&&", Operator.DOUBLEAND);
-		mOperators.put("&", Operator.AND);
-		mOperators.put("|", Operator.OR);
 		mStringTerm = new HashMap<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
@@ -239,13 +240,13 @@ public class HybridTermBuilder {
 	 * @param expression
 	 * @return
 	 */
-	public String[] expressionToArray(final String expression) {
+	public static String[] expressionToArray(final String expression) {
 		final String regex = "(?<=\\G(\\w+(?!\\w+)|\\+|-|\\/|\\*|\\&|\\||<(?!=)|>(?!=)|<=|>=|==|\\(|\\)))\\s*";
 		return expression.split(regex);
 		
 	}
 	
-	private boolean isHigherPrec(final String op, final String sub) {
+	private static boolean isHigherPrec(final String op, final String sub) {
 		return mOperators.containsKey(sub) && mOperators.get(sub).precedence >= mOperators.get(op).precedence;
 	}
 	
@@ -255,7 +256,7 @@ public class HybridTermBuilder {
 	 * @param infix
 	 * @return
 	 */
-	public List<String> postfix(final String[] infix) {
+	public static List<String> postfix(final String[] infix) {
 		final List<String> output = new ArrayList<>();
 		final Deque<String> stack = new LinkedList<>();
 		
@@ -291,7 +292,7 @@ public class HybridTermBuilder {
 		return output;
 	}
 	
-	private boolean isOperator(final String sign) {
+	public static boolean isOperator(final String sign) {
 		return mOperators.containsKey(sign);
 	}
 	

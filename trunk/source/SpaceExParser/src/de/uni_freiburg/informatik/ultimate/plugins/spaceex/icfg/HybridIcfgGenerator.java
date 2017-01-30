@@ -95,9 +95,13 @@ public class HybridIcfgGenerator {
 	public BasicIcfg<BoogieIcfgLocation> createIfcgFromComponents(HybridAutomaton automaton) {
 		modelToIcfg(automaton);
 		final BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
-		mCfgComponents.forEach((key, value) -> {
-			mLogger.debug("ID:" + key + ", Component:" + value.toString());
-		});
+		// debug stuff
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("################# COMPONENTS ###################");
+			mCfgComponents.forEach((key, value) -> {
+				mLogger.debug("ID:" + key + ", Component:" + value.toString());
+			});
+		}
 		// root, initial state
 		icfg.addLocation(mCfgComponents.get("root").getStart(), true, false, true, false, false);
 		mCfgComponents.remove("root");
@@ -113,9 +117,12 @@ public class HybridIcfgGenerator {
 				icfg.addOrdinaryLocation(loc);
 			}
 		});
-		mLogger.debug("################# ICFG ###################");
-		mLogger.debug(icfg.getProgramPoints().toString());
-		mLogger.debug(icfg.getSymboltable().getLocals("MAIN").toString());
+		// debug stuff
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("################# ICFG ###################");
+			mLogger.debug(icfg.getProgramPoints().toString());
+			mLogger.debug(icfg.getSymboltable().getLocals("MAIN").toString());
+		}
 		return icfg;
 	}
 	
@@ -153,20 +160,11 @@ public class HybridIcfgGenerator {
 	 * variable methods
 	 */
 	private void variablesToIcfg(final Set<String> variables) {
+		
 		final Script script = mSmtToolkit.getManagedScript().getScript();
 		// get initial values of the variable
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		for (final String var : variables) {
-			// // Termvariables for the transformula.
-			// final TermVariable inVar =
-			// mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
-			// final TermVariable outVar =
-			// mSmtToolkit.getManagedScript().constructFreshTermVariable(var, script.sort("Real"));
-			// mVariableManager.addInVarTermVariable(var, inVar);
-			// mVariableManager.addOutVarTermVariable(var, outVar);
-			// // IProgramVar for the transformula.
-			// final HybridProgramVar progVar = mVariableManager.constructProgramVar(var, mProcedure);
-			// mVariableManager.addProgramVar(var, progVar);
 			final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
 			final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
 			final TermVariable outVar = mVariableManager.getVar2OutVarTermVariable().get(var);
@@ -355,7 +353,7 @@ public class HybridIcfgGenerator {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		mLogger.debug("Transformula for varAssignment: " + transformula);
+		mLogger.debug("Transformula: " + transformula);
 		return transformula;
 	}
 	
@@ -374,19 +372,16 @@ public class HybridIcfgGenerator {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		mLogger.debug("Transformula for varAssignment: " + transformula);
+		mLogger.debug("Transformula: " + transformula);
 		return transformula;
 	}
 	
 	private UnmodifiableTransFormula buildFalseTransformula() {
-		final HybridTermBuilder tb =
-				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("false"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
-		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		return transformula;
+		return tfb.finishConstruction(mSmtToolkit.getManagedScript());
 	}
 	
 	private String preprocessLocationStatement(String invariant) {

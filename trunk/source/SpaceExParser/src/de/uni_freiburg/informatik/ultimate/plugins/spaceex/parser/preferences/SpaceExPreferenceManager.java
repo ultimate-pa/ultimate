@@ -30,9 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
@@ -60,8 +61,8 @@ public class SpaceExPreferenceManager {
 	private String mSystem;
 	private final String mModelFilename;
 	private final Map<String, String> mInitialLocations;
-	private final Map<String, List<SignValuePair>> mInitialVariables;
 	private String mInitialVariableInfix = "";
+	private final Map<String, String> mReplacement;
 	
 	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger, File spaceExFile)
 			throws Exception {
@@ -73,8 +74,8 @@ public class SpaceExPreferenceManager {
 		final boolean loadconfig = preferenceProvider
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
-		mInitialVariables = new HashMap<>();
 		mInitialLocations = new HashMap<>();
+		mReplacement = new HashMap<>();
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -101,15 +102,32 @@ public class SpaceExPreferenceManager {
 		prop.load(fis);
 		// get properties
 		// system holds the hybridsystem which is regarded.
-		mSystem = prop.getProperty("system").replaceAll("\"", "");
+		mSystem = prop.getProperty("system", "").replaceAll("\"", "");
 		// initially holds the initial variable assignment, as well as initial locations.
-		final String initially = prop.getProperty("initially").replaceAll("\"", "");
+		final String initially = prop.getProperty("initially", "").replaceAll("\"", "");
+		final String forbidden = prop.getProperty("forbidden", "").replaceAll("\"", "");
 		/*
 		 * split "initially" into parts, split string at separator "&" initial location assignments are of the form:
 		 * loc(#AUTOMATON NAME#)==#INITIAL LOCATION NAME# variable assignments are of the form: #VAR NAME#==#VALUE# OR
 		 * #LOWER BOUND VALUE# <= #VARNAME# <= #UPPER BOUND VALUE#
 		 */
-		if (!"".equals(initially)) {
+		parseInitially(initially);
+		fis.close();
+	}
+	
+	private void parseInitially(String initially) {
+		if (!initially.isEmpty()) {
+			testPostFixToGroups();
+			final String initiallyWithLiterals = replaceAllWithLiterals(initially);
+			mLogger.info(initiallyWithLiterals);
+			final String[] toArray = HybridTermBuilder.expressionToArray(initiallyWithLiterals);
+			final List<String> postfix = HybridTermBuilder.postfix(toArray);
+			mLogger.info("postfix: " + postfix);
+			final List<String> groups = postfixToGroups(postfix);
+			mLogger.info(groups);
+			final List<String> formerGroups = replaceLiterals(groups);
+			mLogger.info(formerGroups);
+			// TODO: Group strings to preference groups (initial locations + variable term)
 			// split at &
 			final String[] splitted = initially.split("&");
 			// for each initial statement, find out if it is variable or initial location definition.
@@ -118,47 +136,250 @@ public class SpaceExPreferenceManager {
 			final String locRegex = "loc\\((.*)\\)==(.*)";
 			final Pattern locPattern = Pattern.compile(locRegex);
 			Matcher locMatcher;
-			// regex stuff for variables of the form v1<=var<=v2
-			final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)";
+			// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
+			final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 			final Pattern varPattern = Pattern.compile(varRegex);
 			Matcher varMatcher;
-			// regex stuff for variables of the form v1<=v2
-			final String varRegex2 = "(.*)(<=|>=|<|>|==)(.*)";
-			final Pattern varPattern2 = Pattern.compile(varRegex2);
-			Matcher varMatcher2;
 			for (int i = 0; i < splitted.length; i++) {
 				property = splitted[i].replaceAll("\\s+", "");
 				locMatcher = locPattern.matcher(property);
 				varMatcher = varPattern.matcher(property);
-				varMatcher2 = varPattern2.matcher(property);
 				if (locMatcher.matches()) {
 					final String aut = locMatcher.group(1);
 					final String loc = locMatcher.group(2);
 					mInitialLocations.put(aut, loc);
 				} else if (varMatcher.matches()) {
-					final String value1 = varMatcher.group(1);
-					final String sign1 = varMatcher.group(2);
-					final String var = varMatcher.group(3);
-					final String sign2 = varMatcher.group(4);
-					final String value2 = varMatcher.group(5);
-					final List<SignValuePair> svPairs = new ArrayList<>();
-					svPairs.add(new SignValuePair(sign1, value1));
-					svPairs.add(new SignValuePair(sign2, value2));
-					mInitialVariables.put(var, svPairs);
 					mInitialVariableInfix += varMatcher.group(0) + ((i == splitted.length - 1) ? "" : "&");
-				} else if (varMatcher2.matches()) {
-					final String var = varMatcher2.group(1);
-					final String sign = varMatcher2.group(2);
-					final String value = varMatcher2.group(3);
-					final List<SignValuePair> svPairs = new ArrayList<>();
-					svPairs.add(new SignValuePair(sign, value));
-					mInitialVariables.put(var, svPairs);
-					mInitialVariableInfix += varMatcher2.group(0) + ((i == splitted.length - 1) ? "" : "&");
 				}
 			}
 			mLogger.info(mInitialVariableInfix);
 		}
-		fis.close();
+	}
+	
+	// function to replace literals with their saved values
+	private List<String> replaceLiterals(List<String> groups) {
+		final List<String> res = new ArrayList<>();
+		for (final String group : groups) {
+			String replacement = group.replaceAll("\\s+", "");
+			for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
+				final String rep = entry.getKey();
+				final String loc = entry.getValue();
+				replacement = replacement.replaceAll(Pattern.quote(rep), loc);
+			}
+			res.add(replacement);
+		}
+		return res;
+	}
+	
+	// helper function to replace all elements in a string of the form x==2 & loc(x)==wuargh, with single literals.
+	// x==2 & loc(x)==wuargh & y<=4---> A0 & A1 & A2
+	private String replaceAllWithLiterals(String initially) {
+		// regex stuff for initial locations
+		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
+		final Pattern locPattern = Pattern.compile(locRegex);
+		Matcher locMatcher;
+		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
+		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
+		final Pattern varPattern = Pattern.compile(varRegex);
+		Matcher varMatcher;
+		final String literal = "A";
+		// replace all terms by a Literal
+		final String[] splitted = initially.replaceAll("\\s+", "").split("(\\&)|(\\|)|(?<!loc)(\\()|(?!\\)==)(\\))");
+		for (int i = 0; i < splitted.length; i++) {
+			final String el = splitted[i];
+			locMatcher = locPattern.matcher(el);
+			varMatcher = varPattern.matcher(el);
+			if (locMatcher.matches()) {
+				if (!mReplacement.containsValue(locMatcher.group(0))) {
+					mReplacement.put(literal + i, locMatcher.group(0));
+				}
+			} else if (varMatcher.matches()) {
+				if (!mReplacement.containsValue(varMatcher.group(0))) {
+					mReplacement.put(literal + i, varMatcher.group(0));
+				}
+			}
+		}
+		String replacement = initially.replaceAll("\\s+", "");
+		for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
+			final String rep = entry.getKey();
+			final String loc = entry.getValue();
+			replacement = replacement.replaceAll(Pattern.quote(loc), rep);
+		}
+		return replacement;
+	}
+	
+	/**
+	 * Function to convert a given formula postfix back notation to groups, the DNF.
+	 * 
+	 * @param postfix
+	 * @return
+	 */
+	public List<String> postfixToGroups(final List<String> postfix) {
+		/*
+		 * TODO: Explain how the hell this algorithm works
+		 */
+		
+		final Deque<String> stack = new LinkedList<>();
+		final List<String> openGroupstack = new ArrayList<>();
+		final List<String> finishedGroups = new ArrayList<>();
+		// If the postfix does not contain any "&", we can simply split on | and return.
+		if (!postfix.contains("&")) {
+			for (final String element : postfix) {
+				if (!HybridTermBuilder.isOperator(element)) {
+					finishedGroups.add(element);
+				}
+			}
+			return finishedGroups;
+		} else if (!postfix.contains("|")) {
+			final String infix = toInfix(postfix);
+			finishedGroups.add(infix);
+			return finishedGroups;
+		}
+		// Else we iterate over the postfix.
+		for (final String element : postfix) {
+			if (HybridTermBuilder.isOperator(element)) {
+				final String operand1 = (!stack.isEmpty()) ? stack.pop() : "";
+				final String operand2 = (!stack.isEmpty()) ? stack.pop() : "";
+				/*
+				 * Cases: - two single operands - & is operator and no groups exists yet --> initialize groups - & is
+				 * operator and groups exist -> update groups - | is operator and groups exists -> add to finished
+				 * groups - | is operator and no groups exists --> add to finished groups
+				 */
+				if (mReplacement.containsKey(operand1) && mReplacement.containsKey(operand2)) {
+					stack.push("(" + operand2 + element + operand1 + ")");
+				} else if ("&".equals(element) && openGroupstack.isEmpty()) {
+					final List<String> eval = evaluateOperands(operand1, operand2);
+					openGroupstack.addAll(eval);
+				} else if ("&".equals(element) && !openGroupstack.isEmpty()) {
+					// after the first time, operand 2 will never contain a & again.
+					final List<String> removeList = new ArrayList<>();
+					final List<String> newGroups = new ArrayList<>();
+					// update groups
+					for (final String group : openGroupstack) {
+						if (operand1.contains("|")) {
+							final List<String> eval = evaluateOrAndAnd(operand1, group);
+							newGroups.addAll(eval);
+						} else {
+							final String newTerm = group + "&" + operand1;
+							newGroups.add(newTerm);
+						}
+						removeList.add(group);
+					}
+					// remove old stuff
+					for (final String group : removeList) {
+						openGroupstack.remove(group);
+					}
+					openGroupstack.addAll(newGroups);
+				} else if ("|".equals(element)) {
+					if (openGroupstack.isEmpty()) {
+						stack.push("(" + operand2 + element + operand1 + ")");
+					} else {
+						if (!operand1.isEmpty()) {
+							finishedGroups.add(operand1);
+						}
+						if (!operand2.isEmpty()) {
+							finishedGroups.add(operand2);
+						}
+					}
+				}
+			} else {
+				stack.push(element);
+			}
+		}
+		if (!stack.isEmpty() && !stack.peek().contains("&")) {
+			final String[] groups = stack.pop().replaceAll("(\\()|(\\))", "").split("\\|");
+			for (final String group : groups) {
+				openGroupstack.add(group);
+			}
+		}
+		finishedGroups.addAll(openGroupstack);
+		return finishedGroups;
+		
+	}
+	
+	private String toInfix(List<String> postfix) {
+		final Deque<String> stack = new LinkedList<>();
+		// Else we iterate over the postfix.
+		for (final String element : postfix) {
+			if (HybridTermBuilder.isOperator(element)) {
+				final String operand1 = stack.pop();
+				final String operand2 = stack.pop();
+				stack.push("(" + operand2 + element + operand1 + ")");
+			} else {
+				stack.push(element);
+			}
+		}
+		return stack.pop();
+	}
+	
+	// function that evaluates operands and sets up the different groups
+	private List<String> evaluateOperands(String operand1, String operand2) {
+		final List<String> openGroupstack = new ArrayList<>();
+		if (operand1.contains("|") && operand2.contains("|")) {
+			final List<String> eval = evaluateOrAndOr(operand1, operand2);
+			openGroupstack.addAll(eval);
+		} else if (operand1.contains("|") && operand2.contains("&")) {
+			final List<String> eval = evaluateOrAndAnd(operand1, operand2);
+			openGroupstack.addAll(eval);
+			
+		} else if (operand1.contains("&") && operand2.contains("|")) {
+			final List<String> eval = evaluateOrAndAnd(operand2, operand1);
+			openGroupstack.addAll(eval);
+			
+		} else if (operand1.contains("&") && operand2.contains("&")) {
+			openGroupstack.add(operand2 + "&" + operand1);
+		}
+		return openGroupstack;
+	}
+	
+	private List<String> evaluateOrAndOr(String operand1, String operand2) {
+		final List<String> res = new ArrayList<>();
+		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
+		final String[] splitOP2 = operand2.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
+		for (int i = 0; i < splitOP2.length; i++) {
+			for (int j = 0; j < splitOP1.length; j++) {
+				res.add("(" + splitOP1[j] + "&" + splitOP2[i] + ")");
+			}
+		}
+		return res;
+		
+	}
+	
+	private List<String> evaluateOrAndAnd(String operand1, String operand2) {
+		final List<String> res = new ArrayList<>();
+		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
+		for (int i = 0; i < splitOP1.length; i++) {
+			final String el = splitOP1[i];
+			res.add("(" + operand2 + "&" + el + ")");
+		}
+		return res;
+	}
+	
+	private void testPostFixToGroups() {
+		final List<String> testStrings = new ArrayList<>();
+		testStrings.add("A==1");
+		testStrings.add("A==1 | B==1");
+		testStrings.add("A==1 & B==1");
+		testStrings.add("A==1 & B==1 | C==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1)");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1 | E==1)");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1 & G==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 | F==1) & G==1");
+		
+		for (final String testString : testStrings) {
+			mLogger.info("########### START ###########");
+			final String test = replaceAllWithLiterals(testString);
+			mLogger.info(test);
+			final String[] testarr = HybridTermBuilder.expressionToArray(test);
+			final List<String> postfix = HybridTermBuilder.postfix(testarr);
+			mLogger.info("postfix: " + postfix);
+			final List<String> groups = postfixToGroups(postfix);
+			mLogger.info("groups: " + groups);
+			mLogger.info("########### END ###########");
+		}
+		
 	}
 	
 	public HybridAutomaton getRegardedAutomaton(HybridModel model) {
@@ -197,20 +418,19 @@ public class SpaceExPreferenceManager {
 									+ systems.get(configSystem).getAutomata().size());
 				} else {
 					// should be a single automaton, thus just get it with an iterator.
-					final Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
-					final Iterator<HybridAutomaton> it = autcol.iterator();
-					aut = it.hasNext() ? it.next() : null;
+					final HybridSystem firstsys = systems.values().iterator().next();
+					if (mergedAutomata.containsKey(firstsys.getName())) {
+						aut = mergedAutomata.get(firstsys.getName());
+					} else {
+						aut = firstsys.getAutomata().values().iterator().next();
+					}
 				}
 			}
 		} else {
 			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
 					+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
 		}
-		if (aut == null) {
-			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
-		} else {
-			return aut;
-		}
+		return aut;
 	}
 	
 	public String getSystem() {
@@ -219,10 +439,6 @@ public class SpaceExPreferenceManager {
 	
 	public Map<String, String> getInitialLocations() {
 		return mInitialLocations;
-	}
-	
-	public Map<String, List<SignValuePair>> getInitialVariables() {
-		return mInitialVariables;
 	}
 	
 	public String getFileName() {

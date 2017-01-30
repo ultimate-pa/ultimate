@@ -32,12 +32,9 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -64,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
@@ -231,6 +227,7 @@ public class SpaceExParser implements ISource {
 		final HybridIcfgSymbolTable symbolTable =
 				new HybridIcfgSymbolTable(managedScript, automaton, "MAIN", mVariableManager);
 		final DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
+		defaultTable.finishConstruction();
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		axioms = new IPredicate() {
@@ -256,58 +253,6 @@ public class SpaceExParser implements ISource {
 			}
 		};
 		return new CfgSmtToolkit(modifiableGlobalsTable, managedScript, defaultTable, axioms, procedures);
-	}
-	
-	private HybridAutomaton getRegardedAutomaton(HybridModel model) {
-		/*
-		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
-		 * system.
-		 */
-		final String configSystem = mPreferenceManager.getSystem() != null ? mPreferenceManager.getSystem() : "";
-		final Map<String, HybridSystem> systems = model.getSystems();
-		final Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
-		HybridAutomaton aut;
-		if (configSystem.isEmpty()) {
-			if (!systems.isEmpty()) {
-				final HybridSystem firstsys = systems.values().iterator().next();
-				if (mergedAutomata.containsKey(firstsys.getName())) {
-					aut = mergedAutomata.get(firstsys.getName());
-				} else {
-					aut = firstsys.getAutomata().values().iterator().next();
-				}
-			} else {
-				throw new IllegalStateException("Hybridmodel" + model.toString() + " is empty");
-			}
-			return aut;
-		}
-		// if the system specified in the config file is present in the models systems
-		if (systems.containsKey(configSystem)) {
-			// if the system exists, we check if the system has a mergedAutomaton
-			// if not it has to be a single automaton (at least it should be)
-			if (mergedAutomata.containsKey(configSystem)) {
-				aut = mergedAutomata.get(configSystem);
-			} else {
-				if (systems.get(configSystem).getAutomata().size() != 1) {
-					throw new UnsupportedOperationException(
-							"The automata of system" + systems.get(configSystem).getName()
-									+ " have not been merged or are empty, the size of automata is:"
-									+ systems.get(configSystem).getAutomata().size());
-				} else {
-					// should be a single automaton, thus just get it with an iterator.
-					final Collection<HybridAutomaton> autcol = systems.get(configSystem).getAutomata().values();
-					final Iterator<HybridAutomaton> it = autcol.iterator();
-					aut = it.hasNext() ? it.next() : null;
-				}
-			}
-		} else {
-			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
-					+ "\" is not part of the hybrid model parsed from file: " + mPreferenceManager.getFileName());
-		}
-		if (aut == null) {
-			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
-		} else {
-			return aut;
-		}
 	}
 	
 	@Override

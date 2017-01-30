@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
  */
 public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	
-	private final Set<ILocalProgramVar> mLocals = new HashSet<>();
+	private final Map<String, Set<ILocalProgramVar>> mLocals;
 	private final Map<TermVariable, ILocalProgramVar> mTVtoProgVar;
 	private final ManagedScript mScript;
 	
@@ -40,11 +40,13 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	public HybridIcfgSymbolTable(ManagedScript script, HybridAutomaton automaton, String procedure,
 			HybridVariableManager variableManager) {
 		mScript = script;
+		mLocals = new HashMap<>();
 		mTVtoProgVar = new HashMap<>();
 		final Set<String> variables = automaton.getGlobalParameters();
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
+		final Set<ILocalProgramVar> progVars = new HashSet<>();
 		for (final String var : variables) {
 			// Termvariables for the transformula.
 			final TermVariable inVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
@@ -56,14 +58,15 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 			variableManager.addProgramVar(var, progVar);
 			mTVtoProgVar.put(inVar, progVar);
 			mTVtoProgVar.put(outVar, progVar);
-			mLocals.add(progVar);
+			progVars.add(progVar);
 		}
+		mLocals.put(procedure, progVars);
 		
 	}
 	
 	@Override
 	public Set<ILocalProgramVar> getLocals(final String procedurename) {
-		return mLocals;
+		return mLocals.get(procedurename);
 	}
 	
 	@Override
