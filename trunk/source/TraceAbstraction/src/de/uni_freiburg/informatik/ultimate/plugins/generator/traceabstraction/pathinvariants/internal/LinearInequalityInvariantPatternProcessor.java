@@ -111,15 +111,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * TODO:
 	 */
-	private Map<Set<LinearInequality>, Set<IcfgLocation>> mLinearInequalities2Locations;
+	private Map<Set<LinearInequality>, List<IcfgLocation>> mLinearInequalities2Locations;
 	
-	// A map that associates a set of lineqs with their transition (i.e. a 2-tuple (loc1, loc2))
-//	private Map<Set<LinearInequality>, List<IcfgLocation>> mLinearInequalities2Transitions;
-//	private Set<List<IcfgLocation>> mTransitionsInUnsatCore;
 	private Set<IcfgLocation> mLocsInUnsatCore;
-	private static final boolean COMPUTE_LOCS_IN_UNSAT_CORE = !false;
 	
-	private final boolean mUseVarsFromUnsatCore;
+	private final boolean mUseUnsatCoreForLocsAndVars;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -144,6 +140,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final boolean PRINT_CONSTRAINTS = !false;
 	private static final boolean DEBUG_OUTPUT = !false;
 	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
+	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = true;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -211,7 +208,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mCurrentRound = -1;
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
-		mUseVarsFromUnsatCore = useUnsatCoreVarsForPatterns;
+		mUseUnsatCoreForLocsAndVars = useUnsatCoreVarsForPatterns;
 		mUseUnsatCoreForDynamicPatternSettingChanges = useUnsatCoreForDynamicPatternSettingChanges;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
@@ -529,12 +526,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		final Collection<Collection<LinearInequality>> startInvariantDNF =
 				mapPattern(predicate.getInvStart(), unprimedMapping);
-		if (mUseUnsatCoreForDynamicPatternSettingChanges || COMPUTE_LOCS_IN_UNSAT_CORE) {
+		if (mUseUnsatCoreForLocsAndVars) {
 			final Set<LinearInequality> lineqsFromStartPattern = new HashSet<>(startInvariantDNF.size());
 			for (final Collection<LinearInequality> conjunct : startInvariantDNF) {
 				lineqsFromStartPattern.addAll(conjunct);
 			}
-			final Set<IcfgLocation> loc = new HashSet<>();
+			final List<IcfgLocation> loc = new ArrayList<>();
 			loc.add(predicate.getSourceLocation());
 			mLinearInequalities2Locations.put(lineqsFromStartPattern, loc);
 		}
@@ -551,12 +548,12 @@ public final class LinearInequalityInvariantPatternProcessor
 			mLogger.info("Size of end-pattern after mapping to lin-inequalities and negating: "
 					+ getSizeOfPattern(endInvariantDNF));
 		}
-		if (mUseUnsatCoreForDynamicPatternSettingChanges || COMPUTE_LOCS_IN_UNSAT_CORE) {
+		if (mUseUnsatCoreForLocsAndVars) {
 			final Set<LinearInequality> lineqsFromEndPattern = new HashSet<>(endInvariantDNF.size());
 			for (final Collection<LinearInequality> conjunct : endInvariantDNF) {
 				lineqsFromEndPattern.addAll(conjunct);
 			}
-			final Set<IcfgLocation> loc = new HashSet<>();
+			final List<IcfgLocation> loc = new ArrayList<>();
 			loc.add(predicate.getTargetLocation());
 			mLinearInequalities2Locations.put(lineqsFromEndPattern, loc);
 		}
@@ -567,20 +564,15 @@ public final class LinearInequalityInvariantPatternProcessor
 			newList.addAll(list);
 			transitionDNF.add(newList);
 		}
-		if (mUseUnsatCoreForDynamicPatternSettingChanges || COMPUTE_LOCS_IN_UNSAT_CORE) {
+		if (mUseUnsatCoreForLocsAndVars) {
 			final Set<LinearInequality> lineqsFromTransition = new HashSet<>(transitionDNF.size());
 			for (final Collection<LinearInequality> conjunct : transitionDNF) {
 				lineqsFromTransition.addAll(conjunct);
 			}
-			final Set<IcfgLocation> loc = new HashSet<>();
+			final List<IcfgLocation> loc = new ArrayList<>();
 			loc.add(predicate.getSourceLocation());
 			loc.add(predicate.getTargetLocation());
-//			final ArrayList<IcfgLocation> trans =  new ArrayList<>(2);
-//			trans.add(predicate.getSourceLocation());
-//			trans.add(predicate.getTargetLocation());
 			mLinearInequalities2Locations.put(lineqsFromTransition, loc);
-//			mLinearInequalities2Transitions.put(lineqsFromTransition, trans);
-			
 		}
 		if (PRINT_CONSTRAINTS) {
 			final StringBuilder sb = new StringBuilder();
@@ -603,7 +595,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
 		}
-
+		mSolver.echo(new QuotedObject("Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF, transitionDNF);
 	}
 
@@ -733,7 +725,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final int round) {
 		mLogger.info("[LIIPP] Start generating terms.");
 
-		if (!mUseVarsFromUnsatCore) {
+		if (!mUseUnsatCoreForLocsAndVars) {
 			generateAndAssertTerms(predicates);
 		} else {
 			generateAndAnnotateAndAssertTerms(predicates);
@@ -749,7 +741,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
-			if (result == LBool.UNSAT && mUseVarsFromUnsatCore) {
+			if (result == LBool.UNSAT && mUseUnsatCoreForLocsAndVars) {
 				// Extract the variables from the unsatisfiable core by
 				// first extracting the motzkin variables and then using them
 				// to get the corresponding program variables
@@ -790,38 +782,57 @@ public final class LinearInequalityInvariantPatternProcessor
 //						}
 //					}
 
-					if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
+					if (round >= 0) {
 						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
 								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
 						for (final Set<LinearInequality> s : setsContainingLinq) {
-							final Set<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
-							locsInUnsatCore.addAll(locs);
-							for (final IcfgLocation loc : locs) {
-								if (locs2Frequency.containsKey(loc)) {
-									Integer i = locs2Frequency.get(loc);
-									locs2Frequency.put(loc, ++i);
-								} else {
-									locs2Frequency.put(loc, new Integer(0));
+							final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
+							if (ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE) {
+								// add only locations from transitions to unsat core
+								if (locs.size() == 2) {
+									locsInUnsatCore.add(locs.get(1));
+									// Compute how often a location occurs in the unsat core
+									if (locs2Frequency.containsKey(locs.get(1))) {
+										Integer i = locs2Frequency.get(locs.get(1));
+										locs2Frequency.put(locs.get(1), ++i);
+									} else {
+										locs2Frequency.put(locs.get(1), new Integer(1));
+									}
+								} 
+//								else {
+//									locsInUnsatCore.addAll(locs);
+//								}
+							} else {
+								locsInUnsatCore.addAll(locs);
+								for (final IcfgLocation loc : locs) {
+									if (locs2Frequency.containsKey(loc)) {
+										Integer i = locs2Frequency.get(loc);
+										locs2Frequency.put(loc, ++i);
+									} else {
+										locs2Frequency.put(loc, new Integer(1));
+									}
 								}
 							}
+
 						}
 					}
-					if (COMPUTE_LOCS_IN_UNSAT_CORE) {
-						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-						for (final Set<LinearInequality> s : setsContainingLinq) {
-							final Set<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
-							locsInUnsatCore.addAll(locs);
-						}
-					}
+//					if (COMPUTE_LOCS_IN_UNSAT_CORE) {
+//						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
+//								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
+//						for (final Set<LinearInequality> s : setsContainingLinq) {
+//							final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
+//							locsInUnsatCore.addAll(locs);
+//						}
+//					}
 				}
-				if (COMPUTE_LOCS_IN_UNSAT_CORE) {
-					mLocsInUnsatCore = locsInUnsatCore;
+				// We may safely remove the initial and the error location
+				locsInUnsatCore.remove(mStartLocation);
+				locsInUnsatCore.remove(mErrorLocation);
+				mLocsInUnsatCore = locsInUnsatCore;
+				if (DEBUG_OUTPUT) {
 					mLogger.info("LocsInUnsatCore: " + locsInUnsatCore);
 				}
-				if (mUseUnsatCoreForDynamicPatternSettingChanges && round >= 0) {
-					locsInUnsatCore.remove(mStartLocation);
-					locsInUnsatCore.remove(mErrorLocation);
+				if (round >= 0) {
 					mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
 					if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
 						final IcfgLocation freqLoc =
@@ -844,17 +855,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			mLogger.info("[LIIPP] No solution found.");
 			return false;
 		}
-
 		mLogger.info("[LIIPP] Solution found!");
-
 		return true;
 	}
 	
-//	public Set<List<IcfgLocation>> getTransitionsInUnsatCore() {
-//		assert mTransitionsInUnsatCore != null : "transitions in unsat not existing";
-//		return mTransitionsInUnsatCore;
-//	}
-//	
 	public Set<IcfgLocation> getLocationsInUnsatCore() {
 		assert mLocsInUnsatCore != null : "locations in unsat not existing";
 		return mLocsInUnsatCore;
@@ -956,7 +960,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private void reinitializeSolver() {
 		mSolver.reset();
 		mSolver.setOption(":produce-models", true);
-		if (mUseVarsFromUnsatCore) {
+		if (mUseUnsatCoreForLocsAndVars) {
 			mSolver.setOption(":produce-unsat-cores", true);
 		}
 
