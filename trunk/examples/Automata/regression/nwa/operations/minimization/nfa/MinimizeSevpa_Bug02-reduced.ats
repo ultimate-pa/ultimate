@@ -1,27 +1,54 @@
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+// Testfile dumped by Ultimate at 2012/09/04 13:34:19
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 6);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 6);
+assert(minimizeNwaPmaxSatSize == 6);
+assert(minimizeNwaPmaxSatAsymmetricSize == 6);
+assert(minimizeDfaSimulationSize == 6);
+assert(reduceNwaDirectSimulationSize == 6);
+assert(reduceNwaDirectSimulationBSize == 6);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
+assert(buchiReduceSize == 6);
+assert(reduceNwaDelayedSimulationSize == 6);
+assert(reduceNwaDelayedSimulationBSize == 6);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 6);
+assert(reduceBuchiFairDirectSimulationSize == 6);
+assert(reduceBuchiFairSimulationSize == 6);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
-	internalAlphabet = {a__2 a__0 a__1 },
+	internalAlphabet = {a2 a0 a1 },
 	returnAlphabet = {},
-	states = {q__2 q__1 q__5 q__4 q__3 q__f},
-	initialStates = {q__1 },
-	finalStates = {q__f },
+	states = {q2 q1 q5 q4 q3 qf},
+	initialStates = {q1 },
+	finalStates = {qf },
 	callTransitions = {
 	},
 	internalTransitions = {
-		 (q__2 a__1 q__f)
-		 (q__1 a__0 q__4)
-		 (q__1 a__1 q__f)
-		 (q__5 a__1 q__3)
-		 (q__4 a__2 q__4)
-		 (q__4 a__1 q__5)
-		 (q__3 a__1 q__2)
+		 (q2 a1 qf)
+		 (q1 a0 q4)
+		 (q1 a1 qf)
+		 (q5 a1 q3)
+		 (q4 a2 q4)
+		 (q4 a1 q5)
+		 (q3 a1 q2)
 	},
 	returnTransitions = {
 	}

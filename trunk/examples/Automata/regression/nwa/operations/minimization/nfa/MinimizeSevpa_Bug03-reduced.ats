@@ -1,6 +1,6 @@
 // Testfile dumped by Ultimate at 2012/09/11 12:23:10
 
-// minimized example BugMinimizeSevpa03.fat
+// reduced example
 
 // Problem: Hopcroft's Algorithm works for DFAs, we consider NFAs (even NWAs).
 // Hopcroft states that when splitting an existing partition into two,
@@ -8,27 +8,52 @@
 // into the worklist.
 // This is disproved for NFAs by this example.
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 4);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatSize == 4);
+assert(minimizeNwaPmaxSatAsymmetricSize == 4);
+assert(minimizeDfaSimulationSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+assert(buchiReduceSize == 4);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+assert(reduceBuchiFairDirectSimulationSize == 4);
+assert(reduceBuchiFairSimulationSize == 4);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
 	internalAlphabet = {a},
 	returnAlphabet = {},
-	states = {q__0 q__1 q__2 q__f},
-	initialStates = {q__0},
-	finalStates = {q__f},
+	states = {q0 q1 q2 qf},
+	initialStates = {q0},
+	finalStates = {qf},
 	callTransitions = {
 	},
 	internalTransitions = {
-		 (q__0 a q__1)
-		 (q__1 a q__2)
-		 (q__1 a q__f)
-		 (q__2 a q__f)
+		 (q0 a q1)
+		 (q1 a q2)
+		 (q1 a qf)
+		 (q2 a qf)
 	},
 	returnTransitions = {
 	}

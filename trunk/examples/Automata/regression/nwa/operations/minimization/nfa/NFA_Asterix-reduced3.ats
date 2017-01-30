@@ -1,4 +1,7 @@
-// Testfile dumped by Ultimate at 2012/09/04 13:34:19
+// author: Christian Schilling
+// Date: 2016-08-20
+// Simplified version of Asterix.
+// BuchiReduce fails here as well, but there are dead ends.
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
@@ -17,61 +20,33 @@ int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDela
 int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
 int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
 
-assert(minimizeSevpaSize == 10);
-assert(shrinkNwaSize == 10);
-assert(minimizeNwaPmaxSatSize == 10);
-assert(minimizeNwaPmaxSatAsymmetricSize == 10);
-assert(minimizeDfaSimulationSize == 10);
-assert(reduceNwaDirectSimulationSize == 10);
-assert(reduceNwaDirectSimulationBSize == 10);
-assert(reduceNwaDirectFullMultipebbleSimulationSize == 10);
-assert(buchiReduceSize == 10);
-assert(reduceNwaDelayedSimulationSize == 10);
-assert(reduceNwaDelayedSimulationBSize == 10);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 10);
-assert(reduceBuchiFairDirectSimulationSize == 10);
-assert(reduceBuchiFairSimulationSize == 10);
+assert(minimizeSevpaSize == 2);
+assert(shrinkNwaSize == 2);
+assert(minimizeNwaPmaxSatSize == 2);
+assert(minimizeNwaPmaxSatAsymmetricSize == 2);
+assert(minimizeDfaSimulationSize == 2);
+assert(reduceNwaDirectSimulationSize == 2);
+assert(reduceNwaDirectSimulationBSize == 2);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 2);
+assert(buchiReduceSize == 2);
+assert(reduceNwaDelayedSimulationSize == 2);
+assert(reduceNwaDelayedSimulationBSize == 2);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);
+assert(reduceBuchiFairDirectSimulationSize == 2);
+assert(reduceBuchiFairSimulationSize == 2);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
-	internalAlphabet = {a20 a0 a10 },
+	internalAlphabet = {"a" },
 	returnAlphabet = {},
-	states = {q11 q01 q51 q41 q31 q21 q91 q81 q71 q61 },
-	initialStates = {q01 },
-	finalStates = {q81 q71 },
+	states = {"q_1" "q_0" },
+	initialStates = {"q_0" },
+	finalStates = {"q_0" },
 	callTransitions = {
 	},
 	internalTransitions = {
-		 (q11 a10 q91)
-		 (q11 a10 q71)
-		 (q01 a0 q41)
-		 (q01 a10 q81)
-		 (q01 a10 q71)
-		 (q51 a20 q61)
-		 (q51 a10 q31)
-		 (q51 a10 q61)
-		 (q41 a20 q41)
-		 (q41 a10 q51)
-		 (q41 a10 q21)
-		 (q31 a10 q11)
-		 (q31 a10 q51)
-		 (q31 a10 q71)
-		 (q31 a10 q61)
-		 (q21 a10 q41)
-		 (q21 a10 q71)
-		 (q91 a20 q21)
-		 (q91 a20 q61)
-		 (q91 a10 q51)
-		 (q81 a20 q31)
-		 (q81 a20 q91)
-		 (q81 a10 q81)
-		 (q71 a0 q91)
-		 (q71 a10 q11)
-		 (q71 a10 q31)
-		 (q61 a20 q11)
-		 (q61 a20 q61)
-		 (q61 a10 q51)
-		 (q61 a10 q31)
+		 ("q_1" "a" "q_1")
+		 ("q_0" "a" "q_1")
 	},
 	returnTransitions = {
 	}
