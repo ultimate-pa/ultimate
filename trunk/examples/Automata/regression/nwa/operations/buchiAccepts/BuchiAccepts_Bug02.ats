@@ -4,11 +4,7 @@
 // Reveals Bug of acceptance check in revision 3719
 
 assert(buchiAccepts(3StateAll, [, a]));
-
 assert(!buchiAccepts(buchiComplementFKV(3StateAll), [, a]));
-
-print(buchiComplementFKV(3StateAll));
-
 
 NestedWordAutomaton 3StateAll = (
   callAlphabet = { },
@@ -22,7 +18,6 @@ NestedWordAutomaton 3StateAll = (
   returnTransitions = { }
 );
 
-
 // 2015-08-03 heizmann@informatik.uni-freiburg.de added similar example
 
 assert(buchiAccepts(nwa, [a , b]));
@@ -34,14 +29,12 @@ NestedWordAutomaton nwa = (
 	states = {q0 q1 q2},
 	initialStates = {q0},
 	finalStates = {q1},
-	callTransitions = {
-	},
+	callTransitions = { },
 	internalTransitions = {
 		(q0 a q1)
 		(q0 a q2)
 		(q1 b q2)
 		(q2 b q1)
 	}, 
-	returnTransitions = {
-	}
+	returnTransitions = { }
 );

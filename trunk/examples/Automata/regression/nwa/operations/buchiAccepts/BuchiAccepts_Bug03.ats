@@ -2,12 +2,11 @@
 // after corresponding return
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 14.10.2010
+
 assert(buchiAccepts(MatthiasBugOctober, [c< a > r ,c< a >r]));
 assert(buchiAccepts(MatthiasBugOctober, [ , c< a >r]));
 assert(!buchiAccepts(MatthiasBugOctober, [c< a ,  >r c< a]));
 assert(!buchiIsEmpty(MatthiasBugOctober));
-print(MatthiasBugOctober);
-
 
 NestedWordAutomaton MatthiasBugOctober = (
   callAlphabet = {c},
@@ -20,4 +19,3 @@ NestedWordAutomaton MatthiasBugOctober = (
   internalTransitions = {(p1 a p2)}, 
   returnTransitions = {(p2 q r q)}
 );
-
