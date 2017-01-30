@@ -267,7 +267,6 @@ public class HybridTermBuilder {
 					output.add(stack.pop());
 				}
 				stack.push(element);
-				
 				// left bracket
 			} else if ("(".equals(element)) {
 				stack.push(element);
@@ -277,9 +276,8 @@ public class HybridTermBuilder {
 				while (!"(".equals(stack.peek())) {
 					output.add(stack.pop());
 				}
-				stack.pop();
-				
 				// digit
+				stack.pop();
 			} else {
 				output.add(element);
 			}

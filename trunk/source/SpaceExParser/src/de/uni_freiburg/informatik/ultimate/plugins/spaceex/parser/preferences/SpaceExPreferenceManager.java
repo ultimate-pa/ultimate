@@ -271,7 +271,7 @@ public class SpaceExPreferenceManager {
 					}
 					openGroupstack.addAll(newGroups);
 				} else if ("|".equals(element)) {
-					if (openGroupstack.isEmpty()) {
+					if (openGroupstack.isEmpty() && !operand2.contains("&") && !operand1.contains("&")) {
 						stack.push("(" + operand2 + element + operand1 + ")");
 					} else {
 						if (!operand1.isEmpty()) {
@@ -357,10 +357,10 @@ public class SpaceExPreferenceManager {
 	
 	private void testPostFixToGroups() {
 		final List<String> testStrings = new ArrayList<>();
+		testStrings.add("A==1 & B==1 | C==1");
 		testStrings.add("A==1");
 		testStrings.add("A==1 | B==1");
 		testStrings.add("A==1 & B==1");
-		testStrings.add("A==1 & B==1 | C==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1)");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1 | E==1)");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
