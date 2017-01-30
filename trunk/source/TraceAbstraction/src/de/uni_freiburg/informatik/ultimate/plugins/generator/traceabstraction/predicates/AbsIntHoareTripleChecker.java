@@ -68,14 +68,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final IPredicate mFalsePred;
 
 	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp, final IPredicateUnifier predicateUnifer) {
+			final IAbstractDomain<STATE, ACTION, VARDECL> domain, final IPredicateUnifier predicateUnifer) {
 		mDomain = Objects.requireNonNull(domain);
-		mPostOp = Objects.requireNonNull(postOp);
+		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mMergeOp = Objects.requireNonNull(mDomain.getMergeOperator());
-
-		// TODO: Implement AbsIntPredicate unifier and use it as parameter instead of the normal
-		// PredicateUnifier
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
@@ -83,18 +79,47 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 	}
 
-	private Validity checkNonReturnTransition(final STATE preState, final ACTION act, final STATE postState) {
-		if (preState == null) {
-			// this is a dirty hack to signify a top state -- creation of top states wont work until we got rid of
-			// variables
-			return Validity.UNKNOWN;
-		}
-		if (postState == null) {
-			// see above
-			return Validity.VALID;
-		}
+	@Override
+	public void releaseLock() {
+		// no lock needed
+	}
+
+	@Override
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
+		return checkNonReturn(pre, act, succ);
+	}
+
+	@Override
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
+		return checkNonReturn(pre, act, succ);
+	}
+
+	@Override
+	public Validity checkReturn(final IPredicate preLinPred, final IPredicate preHierPred, final IReturnAction act,
+			final IPredicate succPred) {
+		mBenchmark.continueEdgeCheckerTime();
+
+		final STATE preLin = getState(preLinPred);
+		final STATE preHier = getState(preHierPred);
+		final STATE succ = getState(succPred);
+		final ACTION action = getAction(act);
+
+		final Validity rtr = checkReturnTransition(preLin, preHier, action, succ);
+		mBenchmark.stopEdgeCheckerTime();
+		return rtr;
+	}
+
+	@Override
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
+		return mBenchmark;
+	}
+
+	private Validity checkNonReturnTransition(final STATE origPreState, final ACTION act, final STATE origPostState) {
+		final STATE preState = getValidPrestate(origPreState, act);
+		final STATE postState = getValidPoststate(origPostState, act);
 
 		if (preState.isBottom()) {
+			mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
 			return Validity.VALID;
 		}
 
@@ -102,6 +127,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
 			if (postState.isBottom()) {
 				if (calculatedPost == null || calculatedPost.isBottom()) {
+					mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
 					return trackPost(Validity.VALID, act);
 				}
 				return Validity.UNKNOWN;
@@ -109,11 +135,59 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
 			if (subs != SubsetResult.NONE) {
+				mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
 				return trackPost(Validity.VALID, act);
 			}
 			return Validity.UNKNOWN;
-		} catch (final Throwable t) {
+		} catch (final Throwable e) {
 			// dirty hack
+			mLogger.error("Suppressing exception: " + e.getMessage());
+			return Validity.UNKNOWN;
+		}
+	}
+
+	private Validity checkReturnTransition(final STATE origPreLinState, final STATE origPreHierState, final ACTION act,
+			final STATE origPostState) {
+
+		final STATE preLinState = getValidPrestate(origPreLinState, act);
+		final STATE preHierState = getValidPreHierstate(origPreHierState, act);
+		final STATE postState = getValidPoststate(origPostState, act);
+
+		if (preLinState.isBottom()) {
+			mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
+					+ postState.toLogString());
+			return Validity.VALID;
+		}
+
+		if (preHierState.isBottom()) {
+			return Validity.VALID;
+		}
+
+		try {
+			final STATE calculatedPost =
+					mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
+
+			if (postState.isBottom()) {
+				if (calculatedPost == null || calculatedPost.isBottom()) {
+					mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
+							+ postState.toLogString());
+					return trackPost(Validity.VALID, act);
+				}
+				mLogger.info("NOT " + preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
+						+ postState.toLogString());
+				return Validity.UNKNOWN;
+			}
+
+			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
+			if (subs != SubsetResult.NONE) {
+				mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
+						+ postState.toLogString());
+				return trackPost(Validity.VALID, act);
+			}
+			return Validity.UNKNOWN;
+		} catch (final Throwable e) {
+			// dirty hack
+			mLogger.error("Suppressing exception: " + e.getMessage());
 			return Validity.UNKNOWN;
 		}
 	}
@@ -155,49 +229,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return valid;
 	}
 
-	private Validity checkReturnTransition(final STATE preLinState, final STATE preHierState, final ACTION act,
-			final STATE postState) {
-		if (preLinState.isBottom()) {
-			return Validity.VALID;
-		}
-
-		if (preHierState.isBottom()) {
-			return Validity.VALID;
-		}
-
-		try {
-			final STATE calculatedPost =
-					mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
-
-			if (postState.isBottom()) {
-				if (calculatedPost == null || calculatedPost.isBottom()) {
-					return trackPost(Validity.VALID, act);
-				}
-				return Validity.INVALID;
-			}
-
-			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
-			if (subs != SubsetResult.NONE) {
-				return trackPost(Validity.VALID, act);
-			}
-			return Validity.UNKNOWN;
-		} catch (final Throwable e) {
-			// dirty hack
-			return Validity.UNKNOWN;
-		}
-	}
-
-	@Override
-	public void releaseLock() {
-		// no lock needed
-	}
-
 	@SuppressWarnings("unchecked")
 	private STATE getState(final IPredicate pred) {
 		if (pred instanceof AbsIntPredicate<?, ?>) {
 			return ((AbsIntPredicate<STATE, ?>) pred).getAbstractState();
 		} else if (pred == mTruePred) {
-			return null;
+			return mDomain.createTopState();
 		} else if (pred == mFalsePred) {
 			return mDomain.createBottomState();
 		} else {
@@ -220,33 +257,19 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	@Override
-	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		return checkNonReturn(pre, act, succ);
+	private STATE getValidPoststate(final STATE origPostState, final ACTION act) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	@Override
-	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		return checkNonReturn(pre, act, succ);
+	private STATE getValidPrestate(final STATE origPreState, final ACTION act) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	@Override
-	public Validity checkReturn(final IPredicate preLinPred, final IPredicate preHierPred, final IReturnAction act,
-			final IPredicate succPred) {
-		mBenchmark.continueEdgeCheckerTime();
-
-		final STATE preLin = getState(preLinPred);
-		final STATE preHier = getState(preHierPred);
-		final STATE succ = getState(succPred);
-		final ACTION action = getAction(act);
-
-		final Validity rtr = checkReturnTransition(preLin, preHier, action, succ);
-		mBenchmark.stopEdgeCheckerTime();
-		return rtr;
+	private STATE getValidPreHierstate(final STATE origPreHierState, final ACTION act) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	@Override
-	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
-		return mBenchmark;
-	}
 }

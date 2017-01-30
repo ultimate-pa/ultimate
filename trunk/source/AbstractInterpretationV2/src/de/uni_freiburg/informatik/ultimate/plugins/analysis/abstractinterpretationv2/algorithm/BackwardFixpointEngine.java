@@ -95,7 +95,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVariablesType, null);
+		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVariablesType);
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);

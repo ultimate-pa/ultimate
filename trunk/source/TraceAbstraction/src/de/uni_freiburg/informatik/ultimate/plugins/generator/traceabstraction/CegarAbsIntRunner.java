@@ -326,7 +326,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
 				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mServices, mResult.getUsedDomain(),
-						mResult.getHtcPostOperator(), mPredicateUnifier);
+						mPredicateUnifier);
 				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
 			}
 			return mHtc;

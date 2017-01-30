@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
@@ -64,7 +63,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final Class<VARDECL> mVariablesType;
 	private final Script mScript;
-	private final IAbstractPostOperator<STATE, ACTION, VARDECL> mPostWithVarOp;
 
 	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
 	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
@@ -76,13 +74,11 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	protected AbstractInterpretationResult(final Script script,
 			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
-			final ITransitionProvider<ACTION, LOCATION> transProvider, final Class<VARDECL> variablesType,
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postWithVarOp) {
+			final ITransitionProvider<ACTION, LOCATION> transProvider, final Class<VARDECL> variablesType) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
 		mScript = Objects.requireNonNull(script);
 		mTransProvider = Objects.requireNonNull(transProvider);
 		mVariablesType = Objects.requireNonNull(variablesType);
-		mPostWithVarOp = postWithVarOp;
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 	}
@@ -222,11 +218,5 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 			sb.append(String.join(", ", getTerms().stream().map(funSimplify::apply).collect(Collectors.toList())));
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public IAbstractPostOperator<STATE, ACTION, VARDECL> getHtcPostOperator() {
-		// A post operator that already includes variable definitions with a suitable varprovider
-		return mPostWithVarOp;
 	}
 }
