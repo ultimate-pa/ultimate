@@ -77,7 +77,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 	/**
 	 * @see #getModeForWindowsUsers().
 	 */
-	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
+	private static final boolean I_AM_A_POOR_WINDOWS_USER = true;
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
