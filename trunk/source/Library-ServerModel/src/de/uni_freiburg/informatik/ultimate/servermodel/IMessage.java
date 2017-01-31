@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.graphvr.server;
+package de.uni_freiburg.informatik.ultimate.servermodel;
 
 /**
  * {@link IMessage} is a message that can be sent or received by an

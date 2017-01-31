@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.graphvr.server;
+package de.uni_freiburg.informatik.ultimate.server;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,12 +24,15 @@ import java.util.function.Consumer;
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header;
-import de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Header.Action;
-import de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message;
-import de.uni_freiburg.informatik.ultimate.graphvr.protobuf.Meta.Message.Level;
+import de.uni_freiburg.informatik.ultimate.server.exceptions.ClientSorryException;
+import de.uni_freiburg.informatik.ultimate.server.exceptions.ConnectionInterruptedException;
+import de.uni_freiburg.informatik.ultimate.server.protobuf.WrappedProtoMessage;
+import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header;
+import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header.Action;
+import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Message;
+import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Message.Level;
 
-public class TCPServer implements IProtoServer {
+public class TCPServer implements IServer {
 
 	private static final String REQUEST_ID_PATTERN = "Request%s";
 	private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
@@ -40,24 +43,22 @@ public class TCPServer implements IProtoServer {
 	protected boolean mRunning = false;
 	protected ServerSocket mSocket;
 
-	protected Socket mClient = null;
+	protected Client mClient = null;
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
-	protected CompletableFuture<Socket> mClientFuture;
-	protected CompletableFuture<Void> mHelloFuture;
-	protected int mCurrentRequestId = 0;
 
-	protected TypeRegistry mTypeRegistry = new TypeRegistry();
+	protected ProtoTypeRegistry mTypeRegistry = new ProtoTypeRegistry();
 	protected Map<String, WrappedFuture<? extends GeneratedMessageV3>> mExpectedData = new HashMap<>();
 
 	protected BlockingQueue<GeneratedMessageV3> mOutputBuffer;
-
+	
 	public TCPServer(ILogger logger, int port) {
 		mLogger = logger;
 		mPort = port;
 
 		mOutputBuffer = new ArrayBlockingQueue<>(QUEUE_SIZE);
 		mExecutor = Executors.newWorkStealingPool();
+		mClient = new Client(logger);
 	}
 
 	@Override
@@ -75,7 +76,7 @@ public class TCPServer implements IProtoServer {
 		mLogger.info("stopping Server..");
 		mRunning = false;
 		try {
-			closeClientConnection();
+			mClient.closeConnection();
 			mServerFuture.get(10, TimeUnit.SECONDS);
 			mLogger.info("Server stopped.");
 		} catch (InterruptedException | ExecutionException e) {
@@ -83,8 +84,6 @@ public class TCPServer implements IProtoServer {
 		} catch (TimeoutException e) {
 			final boolean canceled = mServerFuture.cancel(true);
 			mLogger.error(String.format("Server Thread Timed out. Canceled execution: %s", canceled), e);
-			// mSocket.close();
-			// mSocket = null;
 		}
 	}
 
@@ -148,75 +147,6 @@ public class TCPServer implements IProtoServer {
 				return;
 			}
 		}
-	}
-
-	private void handleWrapped(final WrappedProtoMessage wrapped) {
-		mLogger.debug("handleWrappged: " + wrapped.header.toString());
-		final String queryId = wrapped.header.getQueryId();
-		final String typeName = wrapped.header.getDataType();
-		final Action action = wrapped.header.getAction();
-		switch (action) {
-		case LOGGING:
-			if (!wrapped.header.getDataType().isEmpty())
-				log(wrapped.data.toString(), wrapped.header.getMessage().getLevel());
-			break;
-		case SORRY:
-			mLogger.info("Client says sorry.");
-		case SEND:
-			if (!mTypeRegistry.registered(typeName)) {
-				mLogger.warn(String.format("received message with data of unregistered type %s", typeName));
-				break;
-			}
-			final RegisteredProtoType<?> wt = mTypeRegistry.get(typeName);
-			if (mExpectedData.containsKey(queryId)) {
-				final String wTypeName = wrapped.get().getDescriptorForType().getFullName();
-				WrappedFuture<? extends GeneratedMessageV3> wf = mExpectedData.get(queryId);
-				if (action == Action.SORRY) {
-					final ClientSorryException e = new ClientSorryException(wrapped);
-					wf.future.completeExceptionally(e);
-				} else if (!Objects.equals(typeName, wTypeName)) {
-					final String message = String.format("Expected %s, but client responded with type %s.", wTypeName,
-							typeName);
-					final IllegalStateException e = new IllegalStateException(message);
-					wf.future.completeExceptionally(e);
-				} else {
-					wf.future.complete(wrapped.get());
-				}
-			} else {
-				wt.consumer.accept(wrapped.get());
-			}
-			break;
-		case REQUEST:
-			if (queryId != null) {
-				mLogger.error("handling client queries is not implemented yet.");
-			} else {
-				mLogger.warn("ignoring request message that has no Query attached");
-				mLogger.warn(wrapped.header.toString());
-			}
-			break;
-		case QUIT:
-			break;
-		case HELLO:
-			mLogger.info("callign complete on completablefuture for hello: " + mHelloFuture.toString());
-			mHelloFuture.complete(null);
-			break;
-		default:
-			break;
-		}
-	}
-
-	private void closeClientConnection() {
-		try {
-			mClient.close();
-			mClient = null;
-		} catch (IOException e) {
-			mLogger.error("failed to shut down connection gracefully.", e);
-			mClient = null;
-		}
-	}
-
-	private boolean isConnected() {
-		return mClient != null && mClient.isConnected();
 	}
 
 	private boolean failedAnyFuture(Throwable e) {
@@ -299,7 +229,7 @@ public class TCPServer implements IProtoServer {
 	private Header.Builder getHeaderFor(GeneratedMessageV3 data) {
 		final Header.Builder builder = Header.newBuilder();
 		if (data != null) {
-			builder.setDataType(RegisteredProtoType.registeredName(data));
+			builder.setDataType(RegisteredType.registeredName(data));
 		}
 		return builder;
 	}
@@ -345,18 +275,12 @@ public class TCPServer implements IProtoServer {
 			return new WrappedProtoMessage(header, null);
 		}
 		if (mTypeRegistry.registered(type)) {
-			final GeneratedMessageV3 datamsg = mTypeRegistry.get(type).defaultMsg.getParserForType()
+			final GeneratedMessageV3 datamsg = mTypeRegistry.get(type).getDefaultInstance().getParserForType()
 					.parseDelimitedFrom(input);
 			return new WrappedProtoMessage(header, datamsg);
 		} else {
 			throw new IllegalAccessError(String.format("received unregistered message type: %s", type));
 		}
-	}
-
-	@Override
-	public <T extends GeneratedMessageV3> void register(Class<T> type) {
-		register(type, m -> {
-		});
 	}
 
 	@Override
@@ -366,7 +290,7 @@ public class TCPServer implements IProtoServer {
 			if (mTypeRegistry.registered(type)) {
 				mLogger.warn(String.format("already registered type %s - will be overwritten.", typeName));
 			}
-			mTypeRegistry.register(RegisteredProtoType.newInstance(type, consumer));
+			mTypeRegistry.register(RegisteredType.newInstance(type, consumer));
 			mLogger.info(mTypeRegistry);
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | ClassCastException e) {
@@ -374,15 +298,15 @@ public class TCPServer implements IProtoServer {
 		}
 	}
 
-	private void print(final Message msg) {
+	public void print(final Message msg) {
 		log(msg.getText(), msg.getLevel());
 	}
 
-	private void log(final Message message) {
+	public void log(final Message message) {
 		log(message.getText(), message.getLevel());
 	}
 
-	private void log(final String msg, final Level level) {
+	public void log(final String msg, final Level level) {
 		final Consumer<String> logmethod;
 		switch (level) {
 		case DEBUG:

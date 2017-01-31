@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ServerModel
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.servermodel
+Bundle-Version: 0.0.1
+Export-Package: de.uni_freiburg.informatik.ultimate.servermodel
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: .
