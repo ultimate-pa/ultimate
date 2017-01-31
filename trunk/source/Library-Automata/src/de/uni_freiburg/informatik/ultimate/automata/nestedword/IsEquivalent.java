@@ -34,20 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Test for language equivalence of two nested word automata.
  * <p>
- * There are two options available:
- * <ol>
- * <li>a cheap and sufficient semi-test (default),</li>
- * <li>an expensive and complete test.</li>
- * </ol>
- * <p>
- * The semi-test is characterized as follows. If the test finds a counterexample, the languages differ. If the test does
- * not find a counterexample, the result is uncertain, in which case we assume the languages are equivalent.<br>
- * The semi-test works as follows. First the finite language is compared. If this test fails, we extract words from one
- * automaton and test them on the other automaton. If this test succeeds, we generate random words and compare the
- * behavior of the two automata. If this test succeeds, we give up and assume that the languages are equivalent.
- * <p>
- * The complete test checks language inclusion in both directions, which is a very expensive operation for Buchi
- * automata.
+ * The test checks language inclusion in both directions.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
