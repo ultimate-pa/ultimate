@@ -107,7 +107,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = !false;
+	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
 
 	/**
 	 * If set to true, we always construct two copies of each invariant pattern, one strict inequality and one
@@ -227,6 +227,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
 		
+		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
 		final IIcfg<IcfgLocation> pathProgram =

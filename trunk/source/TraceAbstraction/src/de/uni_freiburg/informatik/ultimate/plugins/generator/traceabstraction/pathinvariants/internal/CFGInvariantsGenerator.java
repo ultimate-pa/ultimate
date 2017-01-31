@@ -156,7 +156,7 @@ public final class CFGInvariantsGenerator {
 			// Init the entry pattern with 'true' and the exit pattern with 'false'
 			processor.initializeEntryAndExitPattern();
 			for (final IcfgLocation location : locationsAsList) {
-				if(useUnsatCore && USE_VARS_FROM_UNSAT_CORE_FOR_EACH_LOC) {
+				if(useUnsatCore && USE_VARS_FROM_UNSAT_CORE_FOR_EACH_LOC && round > 0) {
 					locs2Patterns.put(location, processor.getInvariantPatternForLocation(location, round, varsFromUnsatCore));
 				} else {
 					locs2Patterns.put(location, processor.getInvariantPatternForLocation(location, round));
@@ -240,6 +240,7 @@ public final class CFGInvariantsGenerator {
 							mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
 									allProgramVars.size() - varsFromUnsatCore.size());
 						}
+						mLogger.info("Vars in unsat core: " + varsFromUnsatCore);
 						mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 						mLogger.info(locsInUnsatCore.size() + " out of " + locationsAsList.size() + " locations in unsat core");
 					}
@@ -369,8 +370,8 @@ public final class CFGInvariantsGenerator {
 					}
 				}
 				if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
-					mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
-							allProgramVars.size() - varsFromUnsatCore.size());
+//					mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
+//							allProgramVars.size() - varsFromUnsatCore.size());
 				}
 				mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 				mLogger.info(locsInUnsatCore.size() + " out of " + locationsAsList.size() + " locations in unsat core");

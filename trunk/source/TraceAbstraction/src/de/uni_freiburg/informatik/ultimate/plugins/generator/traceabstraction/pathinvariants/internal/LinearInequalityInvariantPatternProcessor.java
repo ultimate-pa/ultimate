@@ -140,7 +140,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final boolean PRINT_CONSTRAINTS = !false;
 	private static final boolean DEBUG_OUTPUT = !false;
 	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
-	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = true;
+	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = !true;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -150,7 +150,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * If the current constraints are satisfiable, then this map contains the values of the pattern coefficients.
 	 */
 	private Map<Term, Rational> mPatternCoefficients2Values;
-	private final boolean mUseUnsatCoreForDynamicPatternSettingChanges;
 	
 
 	/**
@@ -209,7 +208,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCoreForLocsAndVars = useUnsatCoreVarsForPatterns;
-		mUseUnsatCoreForDynamicPatternSettingChanges = useUnsatCoreForDynamicPatternSettingChanges;
+//		mUseUnsatCoreForDynamicPatternSettingChanges = useUnsatCoreForDynamicPatternSettingChanges;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
@@ -774,13 +773,6 @@ public final class LinearInequalityInvariantPatternProcessor
 
 					}
 					
-//					if (COMPUTE_TRANS_IN_UNSAT_CORE) {
-//						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-//								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-//						for (final Set<LinearInequality> s : setsContainingLinq) {
-//							mTransitionsInUnsatCore.add(mLinearInequalities2Transitions.get(s));
-//						}
-//					}
 
 					if (round >= 0) {
 						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
@@ -826,8 +818,8 @@ public final class LinearInequalityInvariantPatternProcessor
 //					}
 				}
 				// We may safely remove the initial and the error location
-				locsInUnsatCore.remove(mStartLocation);
-				locsInUnsatCore.remove(mErrorLocation);
+//				locsInUnsatCore.remove(mStartLocation);
+//				locsInUnsatCore.remove(mErrorLocation);
 				mLocsInUnsatCore = locsInUnsatCore;
 				if (DEBUG_OUTPUT) {
 					mLogger.info("LocsInUnsatCore: " + locsInUnsatCore);
@@ -837,20 +829,20 @@ public final class LinearInequalityInvariantPatternProcessor
 					if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
 						final IcfgLocation freqLoc =
 								Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-						mStrategy.changePatternSettingForLocation(freqLoc);
-						mLogger.info("changed setting for most freq. loc: " + freqLoc);
-
+						if ((freqLoc != mStartLocation) && (freqLoc != mErrorLocation)) {
+							mStrategy.changePatternSettingForLocation(freqLoc);
+							mLogger.info("changed setting for most freq. loc: " + freqLoc);
+						}
 					} else {
 						for (final IcfgLocation loc : locsInUnsatCore) {
-							mStrategy.changePatternSettingForLocation(loc);
-							mLogger.info("changed setting for loc: " + loc);
+							if ((loc != mStartLocation) && (loc != mErrorLocation)) {
+								mStrategy.changePatternSettingForLocation(loc);
+								mLogger.info("changed setting for loc: " + loc);
+							}
 						}
 					}
 
 				}
-//				if (COMPUTE_TRANS_IN_UNSAT_CORE) {
-//					mLogger.info("Trans. in unsat core: " + mTransitionsInUnsatCore);
-//				}
 			}
 			mLogger.info("[LIIPP] No solution found.");
 			return false;
