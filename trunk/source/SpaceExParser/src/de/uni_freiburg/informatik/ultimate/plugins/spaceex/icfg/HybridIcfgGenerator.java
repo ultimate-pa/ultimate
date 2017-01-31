@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -399,21 +400,26 @@ public class HybridIcfgGenerator {
 		return inv;
 	}
 	
-	public BasicIcfg<BoogieIcfgLocation> getSimpleIcfg() {
-		final BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
+	public BasicIcfg<IcfgLocation> getSimpleIcfg() {
+		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
 		
-		final BoogieIcfgLocation startLoc = new BoogieIcfgLocation("start", "MAIN", false, mBoogieASTNode);
+		final IcfgLocation startLoc = new IcfgLocation("start", "MAIN");
 		icfg.addLocation(startLoc, true, false, true, false, false);
 		
-		final BoogieIcfgLocation middleLoc = new BoogieIcfgLocation("middle", "MAIN", false, mBoogieASTNode);
+		final IcfgLocation middleLoc = new IcfgLocation("middle", "MAIN");
 		icfg.addLocation(middleLoc, false, false, false, false, false);
 		
-		final BoogieIcfgLocation endLoc = new BoogieIcfgLocation("error", "MAIN", true, mBoogieASTNode);
+		final IcfgLocation endLoc = new IcfgLocation("error", "MAIN");
 		icfg.addLocation(endLoc, false, true, false, true, false);
+
+		// Every procedure must have a unique entry and a unique exit. It is not allowed to have more than one exit (or
+		// entry).
+
 		// QUESTION: Is procExit = true correct here?
 		
-		TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("false"));
+		TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
+				Collections.emptySet(), true, Collections.emptyList(), true);
+		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// QUESTION: Is not determined correct here?
 
@@ -424,10 +430,11 @@ public class HybridIcfgGenerator {
 		// location. Is this correct / feasible?
 		
 		// Transitions
-		final IcfgInternalTransition startToMiddle = new IcfgInternalTransition(startLoc, middleLoc, mPayload,
+		final IcfgInternalTransition startToMiddle = new IcfgInternalTransition(startLoc, middleLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
 
-		tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true, Collections.emptySet(),
+				true, Collections.emptyList(), true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
@@ -435,7 +442,7 @@ public class HybridIcfgGenerator {
 		// If (true, true): Cast error (to CodeBlock)
 		// If (false, false) or (false, true): No Error
 
-		final IcfgInternalTransition middleToEnd = new IcfgInternalTransition(middleLoc, endLoc, mPayload,
+		final IcfgInternalTransition middleToEnd = new IcfgInternalTransition(middleLoc, endLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
 
 		startLoc.addOutgoing(startToMiddle);
