@@ -17,6 +17,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mNumOfVars;
 	private int mDiffOfLocsInUnsatCore;
 	private int mDiffOfVarsInUnsatCore;
+	private int mMaxRound = 0;;
 
 	public void setNumOfLocations(final int numOfLocations) {
 		mNumOfLocations = numOfLocations;
@@ -26,9 +27,9 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mNumOfVars = numOfVars;
 	}
 
-	public void addPathInvariantsData(final int sizeOfBiggestTemplate, final int sumOfTemplateInequalities) {
-		if (sizeOfBiggestTemplate > mMaxNumOfInequalitiesPerRound) {
-			mMaxNumOfInequalitiesPerRound = sizeOfBiggestTemplate;
+	public void addPathInvariantsData(final int numOfInequalities, final int sumOfTemplateInequalities) {
+		if (numOfInequalities > mMaxNumOfInequalitiesPerRound) {
+			mMaxNumOfInequalitiesPerRound = numOfInequalities;
 		}
 		mSumOfTemplateInequalities = mSumOfTemplateInequalities + sumOfTemplateInequalities;
 
@@ -49,6 +50,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		case DiffOfLocsInUnsatCore: return mDiffOfLocsInUnsatCore;
 		case DiffOfVarsInUnsatCore: return mDiffOfVarsInUnsatCore;
 		case MaxNumOfInequalitiesPerRound: return mMaxNumOfInequalitiesPerRound;
+		case MaxRound : return mMaxRound;
 		default:
 			throw new AssertionError("unknown key");
 		}
@@ -62,5 +64,11 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	public void setLocationAndVariablesData(int diffOfLocsInUnsatCore, int diffVarsInUnsatCore) {
 		mDiffOfLocsInUnsatCore += diffOfLocsInUnsatCore;
 		mDiffOfVarsInUnsatCore += diffVarsInUnsatCore;
+	}
+
+	public void setRound(int round) {
+		if (round > mMaxRound) {
+			mMaxRound  = round;
+		}
 	}
 }

@@ -172,7 +172,6 @@ public final class CFGInvariantsGenerator {
 
 			// Build transition predicates
 			predicates.clear();
-			int maxSizeOfTemplate = 0;
 			int sumOfTemplateConjuncts = 0;
 			for (final IcfgInternalTransition transition : transitions) {
 				final IPT invStart = locs2Patterns.get(transition.getSource());
@@ -182,27 +181,15 @@ public final class CFGInvariantsGenerator {
 						locs2PatternVariables.get(transition.getTarget()), transition.getTransformula()));
 				// Compute the benchmarks
 				@SuppressWarnings("unchecked")
-				int sizeOfTemplate1 = ((LinearInequalityInvariantPatternProcessor)processor).getTotalNumberOfConjunctsInPattern(
-						(Collection<Collection<AbstractLinearInvariantPattern>>) invStart);
-				@SuppressWarnings("unchecked")
 				int sizeOfTemplate2 = ((LinearInequalityInvariantPatternProcessor)processor).getTotalNumberOfConjunctsInPattern(
 						(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
-				if (sizeOfTemplate1 > sizeOfTemplate2) {
-					if (sizeOfTemplate1 > maxSizeOfTemplate) {
-						maxSizeOfTemplate = sizeOfTemplate1;
-					}
-				} else {
-					if (sizeOfTemplate2 > maxSizeOfTemplate) {
-						maxSizeOfTemplate = sizeOfTemplate2;
-					}
-				}
 				// Compute the total size of all non-trivial templates
 				sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
 
 			// Set the benchmarks
-			mPathInvariantsStatistics.addPathInvariantsData(maxSizeOfTemplate, sumOfTemplateConjuncts);
+			mPathInvariantsStatistics.addPathInvariantsData(sumOfTemplateConjuncts, sumOfTemplateConjuncts);
 
 			// Attempt to find a valid configuration
 			if (processor.hasValidConfiguration(predicates, round)) {
@@ -216,6 +203,8 @@ public final class CFGInvariantsGenerator {
 				for (final IcfgLocation location : locationsAsList) {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
+				// Set the benchmarks
+				mPathInvariantsStatistics.setRound(round);
 				return result;
 			} else {
 
