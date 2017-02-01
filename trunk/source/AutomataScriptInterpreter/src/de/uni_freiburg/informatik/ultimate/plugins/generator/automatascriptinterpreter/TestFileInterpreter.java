@@ -1024,7 +1024,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	
 	@SuppressWarnings("unchecked")
 	private IOperation<String, String> getAutomataOperation(final OperationInvocationExpressionAST oe,
-			final ArrayList<Object> arguments) throws InterpreterException {
+			final List<Object> arguments) throws InterpreterException {
 		final String operationName = oe.getOperationName().toLowerCase();
 		if (!mExistingOperations.containsKey(operationName)) {
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
@@ -1045,11 +1045,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 			for (final Constructor<?> c : operationConstructors) {
 				// Convention: If the first parameter is a StateFactory, we
 				// prepend a StringFactory to the arguments.
-				assert servicesAndStateFactoryComeFirstIfPresent(c.getParameterTypes()) : "constructor of "
+				assert isNoStateFactoryAfterSecondArgument(c.getParameterTypes()) : "constructor of "
 						+ c.getDeclaringClass().getSimpleName()
 						+ " violates \"services and state factory first\" convention";
-				final Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
-				final Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
+				final Object[] argumentsWithServices =
+						prependAutomataLibraryServicesAndStateFactoryIfNeeded(c, arguments);
 				if (!allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
 					continue;
 				}
@@ -1092,7 +1092,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe);
 		throw new InterpreterException(oe.getLocation(), longDescr);
 	}
-
+	
 	private static void printStackTrace(final Exception e) {
 		if (PRINT_STACK_TRACE_FOR_EXCEPTIONS) {
 			e.printStackTrace();
@@ -1100,116 +1100,51 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 	
 	/**
-	 * Helper method for an assertion.
-	 * By convention, if an operation has an argument of type AutomataLibraryServices, it must come first in the
-	 * argument
-	 * list.
-	 * If an operation has an argument of type IStateFactory, it must come second if there is an argument of type
-	 * AutomataLibraryServices, second otherwise.
+	 * Prepend {@link AutomataLibraryServices} and possibly {@link IStateFactory} to args.
+	 * <p>
+	 * By convention, every operation has a first argument of type {@link AutomataLibraryServices}. If an operation has
+	 * an argument of type {@link IStateFactory}, it must come second.
+	 * 
+	 * @return fresh list of arguments with additional arguments prepended
 	 */
-	private static boolean servicesAndStateFactoryComeFirstIfPresent(final Class<?>[] classes) {
-		boolean servicesOccur = false;
-		for (int i = 0; i < classes.length; i++) {
-			final Class<?> cl = classes[i];
-			
-			if (AutomataLibraryServices.class.isAssignableFrom(cl)) {
-				if (i == 0) {
-					servicesOccur = true;
-				} else {
-					return false;
-				}
-			}
-			if (IStateFactory.class.isAssignableFrom(cl) && i != 0) {
-				if (i == 1 && !servicesOccur) {
-					return false;
-				}
-				if (i > 1) {
-					return false;
-				}
+	private Object[] prependAutomataLibraryServicesAndStateFactoryIfNeeded(final Constructor<?> c,
+			final List<Object> arguments) {
+		assert isServicesFirstArgument(c.getParameterTypes());
+		final boolean isStateFactorySecondArgument = isStateFactorySecondArgument(c.getParameterTypes());
+		final int totalNumberOfArgs = arguments.size() + (isStateFactorySecondArgument ? 2 : 1);
+		
+		final List<Object> list = new ArrayList<>(totalNumberOfArgs);
+		list.add(new AutomataLibraryServices(mServices));
+		if (isStateFactorySecondArgument) {
+			list.add(new StringFactory());
+		}
+		list.addAll(arguments);
+		return list.toArray();
+	}
+	
+	private static boolean isServicesFirstArgument(final Class<?>[] argsClasses) {
+		if (argsClasses.length < 1) {
+			// no argument at all, i.e., no services
+			return false;
+		}
+		return AutomataLibraryServices.class.isAssignableFrom(argsClasses[0]);
+	}
+	
+	private static boolean isStateFactorySecondArgument(final Class<?>[] argsClasses) {
+		if (argsClasses.length < 1) {
+			// no argument at all, i.e., no state factory
+			return false;
+		}
+		return IStateFactory.class.isAssignableFrom(argsClasses[1]);
+	}
+	
+	private static boolean isNoStateFactoryAfterSecondArgument(final Class<?>[] argsClasses) {
+		for (int i = 2; i < argsClasses.length; i++) {
+			if (IStateFactory.class.isAssignableFrom(argsClasses[i])) {
+				return false;
 			}
 		}
 		return true;
-	}
-	
-	/**
-	 * Prepend mServices to args if AutomataLibraryServices is the first parameter of the constructor.
-	 * <p>
-	 * FIXME: This is only a workaround! In the future AutomataLibraryServices will be the first argument of each
-	 * IOperation and we will always prepend mServices
-	 */
-	private Object[] prependAutomataLibraryServicesIfNecessary(final Constructor<?> c, final Object[] args) {
-		boolean firstParameterIsAutomataLibraryServices;
-		final Class<?> fstParam = c.getParameterTypes()[0];
-		if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
-			firstParameterIsAutomataLibraryServices = true;
-		} else {
-			firstParameterIsAutomataLibraryServices = false;
-		}
-		Object[] result;
-		if (firstParameterIsAutomataLibraryServices) {
-			final List<Object> list = new ArrayList<>();
-			list.add(new AutomataLibraryServices(mServices));
-			list.addAll(Arrays.asList(args));
-			result = list.toArray();
-		} else {
-			result = args;
-		}
-		return result;
-	}
-	
-	/**
-	 * Return args.toArray(), but prepend a new StringFactory if the first parameter of the Constructor c is a
-	 * StateFacotry.
-	 */
-	private static Object[] prependStateFactoryIfNecessary(final Constructor<?> c, final List<Object> args) {
-		boolean firstParameterIsStateFactory;
-		final Class<?> fstParam = c.getParameterTypes()[0];
-		if (IStateFactory.class.isAssignableFrom(fstParam)) {
-			firstParameterIsStateFactory = true;
-		} else {
-			firstParameterIsStateFactory = false;
-		}
-		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
-		firstParameterIsServicesAndSecondParameterIsStateFactory =
-				firstParameterIsServicesAndSecondParameterIsStateFactory(
-						c, fstParam);
-		Object[] result;
-		if (firstParameterIsStateFactory || firstParameterIsServicesAndSecondParameterIsStateFactory) {
-			result = new Object[args.size() + 1];
-			result[0] = new StringFactory();
-			int offset = 1;
-			for (final Object arg : args) {
-				result[offset] = arg;
-				offset++;
-			}
-		} else {
-			result = args.toArray();
-		}
-		return result;
-	}
-	
-	/**
-	 * TODO: get rid of this workaround that is necessary as long as not all operations use Services as their first
-	 * parameter.
-	 */
-	private static boolean firstParameterIsServicesAndSecondParameterIsStateFactory(final Constructor<?> c,
-			final Class<?> fstParam) {
-		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
-		if (c.getParameterTypes().length < 2) {
-			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
-		} else {
-			final Class<?> sndParam = c.getParameterTypes()[1];
-			if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
-				if (IStateFactory.class.isAssignableFrom(sndParam)) {
-					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
-				} else {
-					firstParameterIsServicesAndSecondParameterIsStateFactory = false;
-				}
-			} else {
-				firstParameterIsServicesAndSecondParameterIsStateFactory = false;
-			}
-		}
-		return firstParameterIsServicesAndSecondParameterIsStateFactory;
 	}
 	
 	/**
