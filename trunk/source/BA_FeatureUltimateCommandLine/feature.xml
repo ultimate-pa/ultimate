@@ -96,13 +96,6 @@
          unpack="false"/>
 
    <plugin
-         id="Library-ModelCheckerUtils"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"
          download-size="0"
          install-size="0"
@@ -321,6 +314,34 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.heapseparator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.icfgtransformer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="Library-ModelCheckerUtils"
          download-size="0"
          install-size="0"
          version="0.0.0"

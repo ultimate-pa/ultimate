@@ -12,5 +12,5 @@ Require-Bundle: Library-UltimateModel,
  Library-UltimateUtil,
  Library-BoogieAST,
  UltimateCore,
- Library-ModelCheckerUtils;bundle-version="0.0.1",
+ Library-ModelCheckerUtils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder

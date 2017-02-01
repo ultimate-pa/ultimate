@@ -7,7 +7,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Act
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-UltimateUtil,
- Library-ModelCheckerUtils;bundle-version="0.0.1",
+ Library-ModelCheckerUtils,
  Library-SMTLIB,
  SMTSolverBridge,
  de.uni_freiburg.informatik.ultimate.automata,
