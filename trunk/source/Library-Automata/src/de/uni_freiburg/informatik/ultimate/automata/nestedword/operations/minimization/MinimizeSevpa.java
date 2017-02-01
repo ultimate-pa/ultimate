@@ -1896,16 +1896,10 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				}
 				
 				// successors via hierarchical edge
-				for (final LETTER letter : mParentOperand.lettersSummary(state)) {
-					final Iterable<SummaryReturnTransition<LETTER, STATE>> succs =
-							mParentOperand.summarySuccessors(
-									state, letter);
-					for (final SummaryReturnTransition<LETTER, STATE> t : succs) {
-						final EquivalenceClass ec = getEquivalenceClass(
-								t.getSucc());
-						if (!ec.isInWorkList()) {
-							addToWorkList(ec);
-						}
+				for (final SummaryReturnTransition<LETTER, STATE> trans : mParentOperand.summarySuccessors(state)) {
+					final EquivalenceClass ec = getEquivalenceClass(trans.getSucc());
+					if (!ec.isInWorkList()) {
+						addToWorkList(ec);
 					}
 				}
 			}
