@@ -18,9 +18,4 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.icfgtransformer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Import-Package: junit.framework,
- org.apache.commons.io,
- org.junit,
- org.junit.runner,
- org.junit.runners
 Export-Package: de.uni_freiburg.informatik.ultimate.heapseparator
