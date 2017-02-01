@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,38 +13,36 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
 
 /**
  * Minimize a given treeAutomaton.
+ * 
  * @author mostafa (mostafa.amin93@gmail.com)
  *
- * @param <LETTER> letter of the tree automaton.
- * @param <STATE> state of the tree automaton.
+ * @param <LETTER>
+ *            letter of the tree automaton.
+ * @param <STATE>
+ *            state of the tree automaton.
  */
 public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactory;
-	
-	protected final ITreeAutomatonBU<LETTER, STATE> result;
+
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 
 	private final Map<Set<STATE>, STATE> mMinimizedStates;
-	private final AutomataLibraryServices mServices;
-	
-	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory, 
+
+	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
-		mServices = services;
 		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
 		mStateFactory = factory;
 		mMinimizedStates = new HashMap<>();
-		
-		result = computeResult();
-		}
+		mResult = computeResult();
+	}
 
 	private STATE minimize(final Set<STATE> st) {
 		// minimize set of state to a new minimized state.
@@ -54,7 +51,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		return mMinimizedStates.get(st);
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Minimize";
@@ -70,8 +67,8 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting " + operationName();
 	}
 
-	private boolean replacable(final STATE s1, final STATE s2,
-			final TreeAutomatonRule<LETTER, STATE> rule, final DisjointSet<STATE> worklist) {
+	private boolean replacable(final STATE s1, final STATE s2, final TreeAutomatonRule<LETTER, STATE> rule,
+			final DisjointSet<STATE> worklist) {
 		final ArrayList<STATE> src = new ArrayList<>();
 		for (final STATE st : rule.getSource()) {
 			src.add(st);
@@ -80,6 +77,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (src.get(idx) != s1) {
 				continue;
 			}
+			@SuppressWarnings("unchecked")
 			final ArrayList<STATE> s = (ArrayList<STATE>) src.clone();
 			s.set(idx, s2);
 			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
@@ -93,7 +91,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		return false;
 	}
-	
+
 	private boolean replacable(final STATE s1, final STATE s2, final DisjointSet<STATE> partitions) {
 		// If I can replace s1 by s2 in all rules of s1
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRulesBySource(s1)) {
@@ -111,7 +109,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// Then both states are equivalent hence replacable.
 		return true;
 	}
-	
+
 	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 
 		DisjointSet<STATE> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
@@ -146,7 +144,8 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			oldWorklist = worklist;
 
 			worklist = new DisjointSet<>(mTreeAutomaton.getStates());
-			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt.hasNext();) {
+			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt
+					.hasNext();) {
 				final Set<STATE> partition = partitionsIt.next();
 				final ArrayList<STATE> states = new ArrayList<>();
 				for (final Iterator<STATE> it = partition.iterator(); it.hasNext();) {
@@ -165,8 +164,8 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 				}
 			}
-		} while (!worklist.equals(oldWorklist));
-		
+		} while (!worklist.equalsTo(oldWorklist));
+
 		// minimize all states
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		for (final STATE st : mTreeAutomaton.getStates()) {
@@ -178,31 +177,32 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				res.addInitialState(minimize(worklist.getPartition(st)));
 			}
 		}
-		
+
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			final List<STATE> src = new ArrayList<>();
 			// minimize all set of states in all rules.
 			for (final STATE st : rule.getSource()) {
 				src.add(minimize(worklist.getPartition(st)));
 			}
-			res.addRule(new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
+			res.addRule(
+					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
 		return removeUnreachables(res);
 	}
-	
+
 	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
-		
+
 		final Set<STATE> worklist = new HashSet<>();
-		
+
 		for (final STATE st : treeAutomaton.getInitialStates()) {
 			worklist.add(st);
 		}
 		final Set<STATE> oldWorklist = new HashSet<>();
-		
+
 		do {
 			oldWorklist.addAll(worklist);
-			
+
 			for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 				// If the sources of this rule are reachable, then is the destination.
 				boolean allFound = true;
@@ -218,10 +218,10 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			// no new reachable states
 		} while (!worklist.equals(oldWorklist));
-		
+
 		final Set<STATE> visited = new HashSet<>();
 		visited.addAll(worklist); // All reachable nodes from initial states.
-		
+
 		worklist.clear();
 		oldWorklist.clear();
 		for (final STATE st : visited) {
@@ -230,10 +230,10 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				worklist.add(st);
 			}
 		}
-		
+
 		do {
 			oldWorklist.addAll(worklist);
-			
+
 			for (final STATE dest : oldWorklist) {
 				// for each needed state mark all it's predecessors as needed.
 				final Map<LETTER, Iterable<List<STATE>>> prev = treeAutomaton.getPredecessors(dest);
@@ -257,7 +257,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		} while (!worklist.equals(oldWorklist));
-		
+
 		for (final STATE st : worklist) {
 			if (visited.contains(st)) {
 				res.addState(st);
@@ -272,10 +272,10 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 		return res;
 	}
-	
+
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -283,170 +283,133 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
-	public static void main(final String[] args) throws AutomataLibraryException {
-	
-		final HashSet<Integer> x = new HashSet<>();
-		for (int i = 0; i < 15; ++i) {
-			x.add(i + 1);
-		}
-		final DisjointSet<Integer> st = new DisjointSet<>(x);
 
-		for (int i = 1; i < 15; i += 2) {
-			st.union(i, i + 2);
-		}
-		st.union(3, 1);
-		for (final Iterator<Set<Integer>> it = st.getParitionsIterator(); it.hasNext();) {
-			System.out.println(it.next());
-		}
-		for (int i = 1; i <= 15; ++i) {
-			System.out.println(i + " " + st.find(i));
-		}
-		for (int i = 1; i <= 15; ++i) {
-			System.out.println(i + " " + st.getPartition(i));
-		}
-		
-		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
-		final String init = "_", X = "X", Y = "Y";
-		treeA.addInitialState(init);
-		treeA.addFinalState(Y);
-		treeA.addRule(new TreeAutomatonRule<>("I", new ArrayList<>(Arrays.asList(new String[]{init})), X));
-		treeA.addRule(new TreeAutomatonRule<>("I", new ArrayList<>(Arrays.asList(new String[]{init})), Y));
-		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{X})), X));
-		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{X})), Y));
-		treeA.addRule(new TreeAutomatonRule<>("F", new ArrayList<>(Arrays.asList(new String[]{Y})), Y));
-		
-		
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
-		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
-		
-		System.out.println(treeA.toString() + "\n");
-		final Determinize<String, String> det = new Determinize<>(services, new StringFactory(), treeA);
-		System.out.println(det.getResult());
-		final Minimize<String, String> op = new Minimize<>(services, new StringFactory(), det.getResult());
-		System.out.println(op.getResult());
-		
-	}
-	
 	protected static class DisjointSet<T> {
-		private final Map<T, T> repr;
-		private final Map<T, Set<T>> subsets;
-		
+		private final Map<T, T> mRepr;
+		private final Map<T, Set<T>> mSubsets;
+
+		public DisjointSet(final Set<T> elements) {
+			mRepr = new HashMap<>();
+			mSubsets = new HashMap<>();
+			for (final T x : elements) {
+				mRepr.put(x, x);
+				final Set<T> sub = new HashSet<>();
+				sub.add(x);
+				mSubsets.put(x, sub);
+			}
+		}
+
 		@Override
 		public String toString() {
 			String res = "Rep:";
-			for (final T s : repr.keySet()) {
-				res += " " + s + "in" + repr.get(s);
+			for (final T s : mRepr.keySet()) {
+				res += " " + s + "in" + mRepr.get(s);
 			}
 			res += "\nPart:";
-			for (final T s : subsets.keySet()) {
-				res += " " + s + "in" + subsets.get(s);
+			for (final T s : mSubsets.keySet()) {
+				res += " " + s + "in" + mSubsets.get(s);
 			}
 			return res;
 		}
-		
+
 		public int size() {
 			int siz = 0;
-			for (final T x : subsets.keySet()) {
-				if (!subsets.get(x).isEmpty()) {
+			for (final T x : mSubsets.keySet()) {
+				if (!mSubsets.get(x).isEmpty()) {
 					++siz;
 				}
 			}
 			return siz;
 		}
-		
-		public DisjointSet(final Set<T> elements) {
-			repr = new HashMap<>();
-			subsets = new HashMap<>();
-			for (final T x : elements) {
-				repr.put(x, x);
-				final Set<T> sub = new HashSet<>();
-				sub.add(x);
-				subsets.put(x, sub);
-			}
-		}
-		
+
 		private T changeRep(final T x, final T rNew) {
-			final T rOld = repr.get(x);
+			final T rOld = mRepr.get(x);
 			if (rOld == rNew) {
 				// System.err.println(toString() + "\n");
 				return rNew;
 			}
-			repr.put(x, rNew);
-			if (subsets.containsKey(rOld)) {
-				subsets.get(rOld).remove(x);
+			mRepr.put(x, rNew);
+			if (mSubsets.containsKey(rOld)) {
+				mSubsets.get(rOld).remove(x);
 			}
-			subsets.get(rNew).add(x);
+			mSubsets.get(rNew).add(x);
 			// System.err.println(toString() + "\n");
 			return rNew;
 		}
-		
+
 		public void union(final T x, final T y) {
 			changeRep(y, find(x));
 		}
-		
+
 		public T find(final T x) {
-			final T res = repr.get(x);
+			final T res = mRepr.get(x);
 			if (res == x) {
 				return res;
 			}
 			return changeRep(x, find(res));
 		}
-		
+
 		public boolean equiv(final T x, final T y) {
 			return find(x) == find(y);
 		}
-		
-		private Set<T> getPartition(final T x) {
-			return subsets.get(find(x));
+
+		Set<T> getPartition(final T x) {
+			return mSubsets.get(find(x));
 		}
-		
+
 		private void findAll(final T x) {
-			for (final T y : subsets.get(x)) {
+			for (final T y : mSubsets.get(x)) {
 				if (y != x) {
 					findAll(y);
 				}
 			}
 			find(x);
 		}
-		
-		public boolean equals(final DisjointSet<T> S) {
-			if (!S.repr.keySet().equals(repr.keySet())) {
+
+		public boolean equalsTo(final DisjointSet<T> other) {
+			// TODO: Did you possibly want to override equals here? You did not, and I made that explicit by renaming
+			// this method to equalsTo
+			if (other == null) {
+				return false;
+			}
+			if (!other.mRepr.keySet().equals(mRepr.keySet())) {
 				// Not same elements
 				return false;
 			}
-			for (final T x : S.repr.keySet()) {
+			for (final T x : other.mRepr.keySet()) {
 				// the partition of every element, is not the same partition in the other disjointset
-				if (!S.subsets.get(S.repr.get(x)).equals(subsets.get(repr.get(x)))) {
+				if (!other.mSubsets.get(other.mRepr.get(x)).equals(mSubsets.get(mRepr.get(x)))) {
 					return false;
 				}
 			}
 			return true;
 		}
+
 		public Iterator<Set<T>> getParitionsIterator() {
-			final Iterator<T> it = subsets.keySet().iterator();
-			
+			final Iterator<T> it = mSubsets.keySet().iterator();
+
 			return new Iterator<Set<T>>() {
-				T cur = null;
-				
+				T mCur = null;
+
 				public boolean keepMoving() {
 					if (!it.hasNext()) {
-						cur = null;
+						mCur = null;
 						return false;
 					}
 					do {
-						cur = it.next();
-						findAll(cur);
-					} while (it.hasNext() && subsets.get(cur).isEmpty());
-					if (subsets.get(cur).isEmpty()) {
-						cur = null;
+						mCur = it.next();
+						findAll(mCur);
+					} while (it.hasNext() && mSubsets.get(mCur).isEmpty());
+					if (mSubsets.get(mCur).isEmpty()) {
+						mCur = null;
 						return false;
 					}
 					return true;
 				}
+
 				@Override
 				public boolean hasNext() {
-					if (cur == null) {
+					if (mCur == null) {
 						return keepMoving();
 					}
 					return true;
@@ -455,7 +418,7 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				@Override
 				public Set<T> next() {
 					if (hasNext()) {
-						final Set<T> res = subsets.get(cur);
+						final Set<T> res = mSubsets.get(mCur);
 						keepMoving();
 						return res;
 					}
