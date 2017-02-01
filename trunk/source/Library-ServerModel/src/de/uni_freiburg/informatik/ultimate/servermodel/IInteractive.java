@@ -1,9 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.servermodel;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Interface that provides a way for Ultimate Plugins to communicate with
@@ -20,6 +17,15 @@ public interface IInteractive<M> extends IHandlerRegistry<M> {
 	 * @param data
 	 */
 	void send(M data);
+
+	/**
+	 * waits for a data Object
+	 * 
+	 * @param type
+	 *            the type of the data Object must be supplied
+	 * @return a Future containing the Clients answer.
+	 */
+	<T extends M> CompletableFuture<T> request(Class<T> type);
 
 	/**
 	 * waits for a data Object

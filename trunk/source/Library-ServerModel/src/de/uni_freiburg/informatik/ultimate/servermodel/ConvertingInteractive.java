@@ -38,8 +38,15 @@ public class ConvertingInteractive<M, O> implements IInteractive<M> {
 
 	@Override
 	public <D extends M, T extends M> void register(Class<T> type, Class<D> dataType, Function<D, T> supplier) {
-		// TODO Auto-generated method stub
+		IConverter<T, ? extends O> converter = mConverter.getBA(type);
+		IConverter<? extends O, D> dConverter = mConverter.getAB2(dataType);
+		wrapRegister(type, dataType, converter, dConverter, supplier);
+	}
 
+	private <D extends M, T extends M, O1 extends O, O2 extends O> void wrapRegister(Class<T> type, Class<D> dataType,
+			IConverter<T, O1> converter, IConverter<O2, D> dConverter, Function<D, T> supplier) {
+		Function<O2, O1> f = d -> converter.apply(supplier.apply(dConverter.apply(d)));
+		mOriginal.register(converter.getTypeB(), dConverter.getTypeA(), f);
 	}
 
 	@Override
@@ -47,17 +54,28 @@ public class ConvertingInteractive<M, O> implements IInteractive<M> {
 		@SuppressWarnings("unchecked")
 		Class<? extends M> type = (Class<? extends M>) data.getClass();
 		IConverter<? extends M, ? extends O> converter = mConverter.getBA(type);
-		wrapSend(converter, mOriginal, type.cast(data));
-		// mOriginal.send(converter.apply(type.cast(data)));
+		wrapSend(converter, data);
 	}
 
-	private static <M, T> void wrapSend(IConverter<M, T> src, IInteractive<? super T> old, Object data) {
-		old.send(src.apply(src.getTypeA().cast(data)));
+	@SuppressWarnings("unchecked")
+	private <M1 extends M, T extends O> void wrapSend(IConverter<M1, T> src, M data) {
+		mOriginal.send(src.apply((M1) data));
+	}
+
+	@Override
+	public <T extends M> CompletableFuture<T> request(Class<T> type) {
+		IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		// TODO: implement Conversion for Future Types
+		// TODO: implement
+		return null;
 	}
 
 	@Override
 	public <T extends M> CompletableFuture<T> request(Class<T> type, M data) {
-		// TODO Auto-generated method stub
+		IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		Class<? extends M> dType = (Class<? extends M>) data.getClass();
+		IConverter<? extends M, ? extends O> dConverter = mConverter.getBA(dType);
+		// TODO: implement
 		return null;
 	}
 
