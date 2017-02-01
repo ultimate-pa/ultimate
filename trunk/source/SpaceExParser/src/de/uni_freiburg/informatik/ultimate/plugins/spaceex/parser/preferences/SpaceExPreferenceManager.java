@@ -61,8 +61,14 @@ public class SpaceExPreferenceManager {
 	private final ILogger mLogger;
 	private String mSystem;
 	private final String mModelFilename;
+	// replacement map for groups
 	private final Map<String, String> mReplacement;
-	private final List<SpaceExPreferenceGroup> mPreferenceGroups;
+	// map that holds preferencegroups
+	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
+	private final Map<Integer, SpaceExPreferenceGroup> mForbiddenGroup;
+	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
+	private boolean mHasPreferenceGroups;
+	private boolean mHasForbiddenGroup;
 	
 	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger, File spaceExFile)
 			throws Exception {
@@ -75,7 +81,9 @@ public class SpaceExPreferenceManager {
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mReplacement = new HashMap<>();
-		mPreferenceGroups = new ArrayList<>();
+		mPreferenceGroups = new HashMap<>();
+		mForbiddenGroup = new HashMap<>();
+		setGroupIdToParallelComposition(new HashMap<>());
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -112,7 +120,13 @@ public class SpaceExPreferenceManager {
 		 * #LOWER BOUND VALUE# <= #VARNAME# <= #UPPER BOUND VALUE#
 		 */
 		parseInitially(initially);
+		parseForbidden(forbidden);
 		fis.close();
+	}
+	
+	private void parseForbidden(String forbidden) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	private void parseInitially(String initially) {
@@ -152,12 +166,18 @@ public class SpaceExPreferenceManager {
 						initialVariableInfix += varMatcher.group(0) + ((i == splitted.length - 1) ? "" : "&");
 					}
 				}
-				mPreferenceGroups
-						.add(new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, id.incrementAndGet()));
+				final int groupid = id.incrementAndGet();
+				mPreferenceGroups.put(groupid,
+						new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Added new preference group: \n" + "Initial Locations:" + initialLocations + "\n"
 							+ "Initial variables: " + initialVariableInfix);
 				}
+			}
+			if (mPreferenceGroups.isEmpty()) {
+				mHasPreferenceGroups = false;
+			} else {
+				mHasPreferenceGroups = true;
 			}
 		}
 	}
@@ -170,7 +190,7 @@ public class SpaceExPreferenceManager {
 			for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
 				final String rep = entry.getKey();
 				final String loc = entry.getValue();
-				replacement = replacement.replaceAll(Pattern.quote(rep), loc);
+				replacement = replacement.replaceAll(rep, loc);
 			}
 			res.add(replacement);
 		}
@@ -188,7 +208,7 @@ public class SpaceExPreferenceManager {
 		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 		final Pattern varPattern = Pattern.compile(varRegex);
 		Matcher varMatcher;
-		final String literal = "A";
+		String literal = "A";
 		// replace all terms by a Literal
 		final String[] splitted = initially.replaceAll("\\s+", "").split("(\\&)|(\\|)|(?<!loc)(\\()|(?!\\)==)(\\))");
 		for (int i = 0; i < splitted.length; i++) {
@@ -203,6 +223,11 @@ public class SpaceExPreferenceManager {
 				if (!mReplacement.containsValue(varMatcher.group(0))) {
 					mReplacement.put(literal + i, varMatcher.group(0));
 				}
+			}
+			if (i % 5 == 0) {
+				final char[] charArr = literal.toCharArray();
+				charArr[0]++;
+				literal = Character.toString(charArr[0]);
 			}
 		}
 		String replacement = initially.replaceAll("\\s+", "");
@@ -441,6 +466,27 @@ public class SpaceExPreferenceManager {
 		return aut;
 	}
 	
+	public HybridSystem getRegardedSystem(HybridModel model) {
+		final String configSystem = mSystem != null ? mSystem : "";
+		final Map<String, HybridSystem> systems = model.getSystems();
+		// if the config file does not specify a system, get the first system of the model.
+		if (configSystem.isEmpty()) {
+			if (!systems.isEmpty()) {
+				return systems.values().iterator().next();
+			} else {
+				throw new IllegalStateException("Hybridmodel" + model.toString() + " has no systems");
+			}
+		} else {
+			// if the system specified in the config file is present in the models systems, get it
+			if (systems.containsKey(configSystem)) {
+				return systems.get(configSystem);
+			} else {
+				throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
+						+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
+			}
+		}
+	}
+	
 	public String getSystem() {
 		return mSystem;
 	}
@@ -449,8 +495,20 @@ public class SpaceExPreferenceManager {
 		return mModelFilename;
 	}
 	
-	public List<SpaceExPreferenceGroup> getmPreferenceGroups() {
+	public Map<Integer, SpaceExPreferenceGroup> getPreferenceGroups() {
 		return mPreferenceGroups;
+	}
+	
+	public boolean hasPreferenceGroups() {
+		return mHasPreferenceGroups;
+	}
+	
+	public Map<Integer, HybridAutomaton> getGroupIdToParallelComposition() {
+		return mGroupIdToParallelComposition;
+	}
+	
+	public void setGroupIdToParallelComposition(Map<Integer, HybridAutomaton> mGroupIdToParallelComposition) {
+		this.mGroupIdToParallelComposition = mGroupIdToParallelComposition;
 	}
 	
 }

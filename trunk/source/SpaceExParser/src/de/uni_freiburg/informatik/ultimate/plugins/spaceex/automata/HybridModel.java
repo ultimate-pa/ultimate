@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
@@ -64,6 +67,7 @@ public class HybridModel {
 	private Map<String, HybridSystem> mSystems;
 	private Map<String, HybridAutomaton> mMergedAutomata;
 	private Map<Location, LocationPair> mMergedLocationToPair;
+	private Map<Integer, HybridAutomaton> mGroupIdtoMergedAutomaton;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
 	/*
@@ -107,8 +111,6 @@ public class HybridModel {
 						systems, mPreferenceManager);
 				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
-				final HybridAutomaton hybAut = mergeAutomata(hybsys);
-				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
 	}
@@ -131,6 +133,7 @@ public class HybridModel {
 		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
 		mMergedLocationToPair = new HashMap<>();
+		mGroupIdtoMergedAutomaton = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
@@ -157,14 +160,11 @@ public class HybridModel {
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
-				mLogger.debug("creating hybridsystem for system: " + id);
+				mLogger.info("creating hybridsystem for system: " + id);
 				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata,
 						systems, mPreferenceManager);
-				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
+				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
-				// create the parallel compositions
-				final HybridAutomaton hybAut = mergeAutomata(hybsys);
-				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
 		}
 	}
@@ -197,33 +197,63 @@ public class HybridModel {
 				new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
 	}
 	
-	/**
-	 * Function that merges all Automata of a {@link HybridSystem} into one {@link HybridAutomata}
-	 * 
-	 * @param system
-	 * @return
-	 */
-	public HybridAutomaton mergeAutomata(HybridSystem system) {
-		HybridAutomaton merged;
-		final Collection<HybridAutomaton> automata = system.getAutomata().values();
-		HybridAutomaton aut1 = automata.iterator().next();
-		merged = aut1;
-		automata.remove(aut1);
-		
-		while (automata.iterator().hasNext()) {
-			mMergedLocationToPair.clear();
-			final HybridAutomaton aut2 = automata.iterator().next();
-			automata.remove(aut2);
-			mLogger.debug("merging: " + aut1.getName() + " and " + aut2.getName());
-			merged = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2, mMergedLocationToPair);
-			aut1 = merged;
+	// function that creates possible parallel compositions for preference groups for the system specified.
+	public Map<Integer, HybridAutomaton> calculateParallelCompositionsForGroups(HybridSystem configSystem) {
+		final Map<Integer, HybridAutomaton> groupIdtoMergedAutomaton = new HashMap<>();
+		// get preference groups
+		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
+		// for each group create the parallel composition starting in the groups initial locations.
+		for (final SpaceExPreferenceGroup group : groups) {
+			final HybridAutomaton merge = mergeAutomata(configSystem, group);
+			groupIdtoMergedAutomaton.put(group.getId(), merge);
 		}
-		mLogger.debug(merged.toString());
-		mMergedLocationToPair.forEach((k, v) -> {
-			mLogger.info("Merged: " + k.getName() + " Locpair:" + v);
-		});
-		mLogger.info(merged.toString());
-		return merged;
+		return groupIdtoMergedAutomaton;
+	}
+	
+	public HybridAutomaton mergeAutomata(HybridSystem configSystem, SpaceExPreferenceGroup group) {
+		final Deque<HybridAutomaton> mergeStack = new LinkedList<>();
+		final Map<String, String> initLocs = (group == null) ? null : group.getInitialLocations();
+		final Map<String, HybridAutomaton> automata = configSystem.getAutomata();
+		mergeStack.addAll(automata.values());
+		HybridAutomaton merge = null;
+		while (!mergeStack.isEmpty()) {
+			HybridAutomaton aut1;
+			HybridAutomaton aut2;
+			Location init1;
+			Location init2;
+			
+			if (merge == null) {
+				aut1 = mergeStack.pop();
+				aut2 = mergeStack.pop();
+				init1 = getInitLocation(aut1, initLocs);
+				init2 = getInitLocation(aut2, initLocs);
+			} else {
+				aut1 = merge;
+				aut2 = mergeStack.pop();
+				init1 = aut1.getInitialLocation();
+				init2 = getInitLocation(aut2, initLocs);
+				mLogger.info("#####START######");
+				mLogger.info(initLocs.get(aut2.getName() + "_1"));
+				mLogger.info(aut2.getNametoId().get(initLocs.get(aut2.getName() + "_1")));
+				mLogger.info("#####End######");
+			}
+			merge = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2, mMergedLocationToPair, init1,
+					init2);
+		}
+		return merge;
+	}
+	
+	private Location getInitLocation(HybridAutomaton aut, Map<String, String> initLocs) {
+		if (initLocs == null) {
+			return aut.getInitialLocation();
+		}
+		final String initLocName = initLocs.get(aut.getName() + "_1");
+		if (aut.getNametoId().containsKey(initLocName)) {
+			final int nameToId = aut.getNametoId().get(initLocName);
+			return aut.getLocations().get(nameToId);
+		} else {
+			return aut.getInitialLocation();
+		}
 	}
 	
 	public Map<String, HybridSystem> getSystems() {

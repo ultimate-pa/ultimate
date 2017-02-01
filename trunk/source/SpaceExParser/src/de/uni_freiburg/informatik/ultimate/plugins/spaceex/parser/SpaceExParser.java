@@ -33,8 +33,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
@@ -188,16 +191,39 @@ public class SpaceExParser implements ISource {
 	
 	@Override
 	public IElement parseAST(final File file) throws Exception {
+		// Parse the SpaceEx model
 		mFileNames.add(file.getName());
 		final FileInputStream fis = new FileInputStream(file);
 		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
 		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
+		// Initialize the preference manager + parse the config file right away.
 		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		// Create the model
 		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
-		final HybridAutomaton automaton = mPreferenceManager.getRegardedAutomaton(model);
-		// toolkit
+		// get the System specified in the config.
+		final HybridSystem system = mPreferenceManager.getRegardedSystem(model);
+		// calculate the parallel Compositions of the different preferencegroups.
+		final Map<Integer, HybridAutomaton> parallelCompositions;
+		// if the preferencemanager has preferencegroups, calculate the parallel compositions for those groups.
+		if (mPreferenceManager.hasPreferenceGroups()) {
+			parallelCompositions = model.calculateParallelCompositionsForGroups(system);
+			mPreferenceManager.setGroupIdToParallelComposition(parallelCompositions);
+		} else {
+			parallelCompositions = new HashMap<>();
+		}
+		// set some automaton for the toolkit generation, anyone will do.
+		HybridAutomaton automaton;
+		if (!parallelCompositions.isEmpty()) {
+			automaton = parallelCompositions.get(1);
+		} else {
+			if (!system.getAutomata().isEmpty()) {
+				automaton = model.mergeAutomata(system, null);
+			} else {
+				throw new IllegalStateException("system does not have any automata");
+			}
+		}
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
 		final HybridIcfgGenerator gen =
 				new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit, mVariableManager);

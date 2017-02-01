@@ -52,6 +52,7 @@ public class HybridAutomaton {
 	private final Set<String> mLocalConstants;
 	private final Set<String> mLabels;
 	private final Map<Integer, Location> mLocations;
+	private final Map<String, Integer> mNametoId;
 	private final Location mInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
@@ -72,6 +73,7 @@ public class HybridAutomaton {
 		mLabels = new HashSet<>();
 		mLogger = logger;
 		mPreferenceManager = preferenceManager;
+		mNametoId = new HashMap<>();
 		
 		for (final ParamType param : automaton.getParam()) {
 			HybridSystemHelper.addParameter(param, mLocalParameters, mGlobalParameters, mLocalConstants,
@@ -80,6 +82,7 @@ public class HybridAutomaton {
 		
 		for (final LocationType loc : automaton.getLocation()) {
 			addLocation(loc);
+			
 		}
 		
 		for (final TransitionType trans : automaton.getTransition()) {
@@ -102,6 +105,10 @@ public class HybridAutomaton {
 		mLocalConstants = localConstants;
 		mLabels = labels;
 		mLogger = logger;
+		mNametoId = new HashMap<>();
+		for (final Location location : mLocations.values()) {
+			mNametoId.put(location.getName(), location.getId());
+		}
 	}
 	
 	private void addLocation(LocationType location) {
@@ -114,6 +121,7 @@ public class HybridAutomaton {
 		newLoc.setInvariant(location.getInvariant());
 		newLoc.setFlow(location.getFlow());
 		mLocations.put(newLoc.getId(), newLoc);
+		mNametoId.put(newLoc.getName(), newLoc.getId());
 		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("[" + mName + "]: Added location: " + newLoc);
@@ -276,5 +284,9 @@ public class HybridAutomaton {
 	
 	public Location getInitialLocation() {
 		return mInitialLocation;
+	}
+	
+	public Map<String, Integer> getNametoId() {
+		return mNametoId;
 	}
 }

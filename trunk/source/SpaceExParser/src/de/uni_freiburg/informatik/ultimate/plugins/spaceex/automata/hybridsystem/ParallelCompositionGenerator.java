@@ -85,11 +85,12 @@ public class ParallelCompositionGenerator {
 	 * @param automaton1
 	 * @param automaton2
 	 * @param mergedLocationToPair
-	 * @param binds
+	 * @param init2
+	 * @param init1
 	 * @return
 	 */
 	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2,
-			Map<Location, LocationPair> mergedLocationToPair) {
+			Map<Location, LocationPair> mergedLocationToPair, Location init1, Location init2) {
 		// name
 		final String nameMerge = automaton1.getName() + "||" + automaton2.getName();
 		// labels are merged with union
@@ -105,14 +106,15 @@ public class ParallelCompositionGenerator {
 		// 2. get the outgoing transitions from the initials
 		// 3. compare and merge the outgoing transitions
 		// 4. Repeat
-		final Location initial1 = automaton1.getInitialLocation();
-		final Location initial2 = automaton2.getInitialLocation();
+		final Location initial1 = init1;
+		final Location initial2 = init2;
 		final LocationPair locpair = new LocationPair(initial1, initial2);
 		mInitialLocationMerge = getLocation(locpair.toString(), initial1, initial2);
 		// add to map of the form merged loc -> locpair
 		mergedLocationToPair.put(mInitialLocationMerge, locpair);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		mComputationStack.push(new LocationPair(initial1, initial2));
+		// compute the parallel composition starting from the initial location
 		createLocationsAndTransitions(locations1, locations2, mergedLocationToPair);
 		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
