@@ -51,23 +51,21 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
-
 	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
 	private static int mTimeout = 10 * 1000;
 	// @formatter:off
 	private static final String[] mDirectories = {
-			"examples/Automata/regression/",
-			"examples/Automata/atsTestFiles", 
-			"examples/Automata/AUTOMATA_SCRIPT", 
-			"examples/Automata/BuchiAutomata",
-			"examples/Automata/BuchiNwa", 
-			"examples/Automata/finiteAutomata", 
-			"examples/Automata/nwa",
-			"examples/Automata/nwaOperations",
-			// "examples/Automata/BuchiNwa/reduceBuchiNwa/",
-			// "examples/Automata/nwaOperations/minimizeMaxSAT/",
-			// the following two have still bugs
+			"examples/Automata/regression",
+			"examples/Automata/atsTestFiles",
+			"examples/Automata/AUTOMATA_SCRIPT",
+			// the following are to be removed and only contain expensive/random/unimportant examples
+			// "examples/Automata/BuchiAutomata",
+			// "examples/Automata/BuchiNwa",
+			// "examples/Automata/finiteAutomata",
+			// "examples/Automata/nwa",
+			// "examples/Automata/nwaOperations",
+			// the following two have bugs still
 			// "examples/Automata/PetriNet",
 			// "examples/Automata/senwa",
 			// the following is not yet tested
@@ -77,8 +75,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks =
-				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 
 		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
@@ -96,9 +93,9 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		final List<UltimateTestCase> testCases = new ArrayList<UltimateTestCase>();
+		final List<UltimateTestCase> testCases = new ArrayList<>();
 
-		final Collection<File> inputFiles = new ArrayList<File>();
+		final Collection<File> inputFiles = new ArrayList<>();
 		for (final String directory : mDirectories) {
 			inputFiles.addAll(getInputFiles(directory, mFileEndings));
 		}
@@ -117,9 +114,8 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 		return testCases;
 	}
 
-	private Collection<File> getInputFiles(final String directory, final String[] fileEndings) {
+	private static Collection<File> getInputFiles(final String directory, final String[] fileEndings) {
 		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 	}
 	// @formatter:on
-
 }
