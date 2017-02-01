@@ -1,0 +1,62 @@
+// Testfile dumped by Ultimate at 2012/01/09 13:33:53
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed)); // TODO error
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 3);
+assert(shrinkNwaSize == 3);
+assert(minimizeNwaPmaxSatSize == 3);
+assert(minimizeNwaPmaxSatAsymmetricSize == 3);
+assert(minimizeDfaSimulationSize == 3);
+assert(reduceNwaDirectSimulationSize == 3);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+assert(buchiReduceSize == 3);
+assert(reduceNwaDelayedSimulationSize == 3);
+assert(reduceNwaDelayedSimulationBSize == 3);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 3);
+// assert(reduceBuchiFairDirectSimulationSize == 3); // TODO add correct number after error is fixed
+assert(reduceBuchiFairSimulationSize == 3);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"blue30" "green986" },
+	returnAlphabet = {},
+	states = {"{(€,y<rk A,0)(€,rk=inf,1)}_30" "{(€,rk=inf,1)}_40" "{(€, rk=inf)}_10" "{(€, y<rk A), (€, rk=inf)}_20" "{(€,y<rk A,0X)(€,rk=inf,1)}_50" },
+	initialStates = {"{(€, rk=inf)}_10" },
+	finalStates = {"{(€,y<rk A,0)(€,rk=inf,1)}_30" "{(€,rk=inf,1)}_40" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("{(€, rk=inf)}_10" "blue30" "{(€, y<rk A), (€, rk=inf)}_20")
+		 ("{(€, rk=inf)}_10" "blue30" "{(€,y<rk A,0)(€,rk=inf,1)}_30")
+		 ("{(€, rk=inf)}_10" "green986" "{(€, rk=inf)}_10")
+		 ("{(€, rk=inf)}_10" "green986" "{(€,rk=inf,1)}_40")
+		 ("{(€, y<rk A), (€, rk=inf)}_20" "blue30" "{(€, y<rk A), (€, rk=inf)}_20")
+		 ("{(€, y<rk A), (€, rk=inf)}_20" "blue30" "{(€,y<rk A,0)(€,rk=inf,1)}_30")
+		 ("{(€, y<rk A), (€, rk=inf)}_20" "green986" "{(€, rk=inf)}_10")
+		 ("{(€, y<rk A), (€, rk=inf)}_20" "green986" "{(€,rk=inf,1)}_40")
+		 ("{(€,y<rk A,0)(€,rk=inf,1)}_30" "blue30" "{(€,y<rk A,0X)(€,rk=inf,1)}_50")
+		 ("{(€,y<rk A,0)(€,rk=inf,1)}_30" "green986" "{(€,rk=inf,1)}_40")
+		 ("{(€,rk=inf,1)}_40" "blue30" "{(€,y<rk A,0X)(€,rk=inf,1)}_50")
+		 ("{(€,rk=inf,1)}_40" "green986" "{(€,rk=inf,1)}_40")
+		 ("{(€,y<rk A,0X)(€,rk=inf,1)}_50" "blue30" "{(€,y<rk A,0X)(€,rk=inf,1)}_50")
+		 ("{(€,y<rk A,0X)(€,rk=inf,1)}_50" "green986" "{(€,rk=inf,1)}_40")
+	},
+	returnTransitions = {
+	}
+);

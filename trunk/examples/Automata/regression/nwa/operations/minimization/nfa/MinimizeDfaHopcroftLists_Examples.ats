@@ -1,20 +1,45 @@
 // Author: Daniel Tischner
 // Date: 2015-04-07
 //
-// Example usage of a minimization program for incomplete DFAs.
+// Example usage of a list-based implementation of Hopcroft's algorithm.
 
-assert(!isEmpty(a));
-//Before
-//print(a);
-//After
-print(minimizeDfaHopcroftLists(a));
+print(numberOfStates(removeUnreachable(nwa)));
+print(numberOfStates(removeDeadEnds(nwa)));
+print(numberOfStates(removeNonLiveStates(nwa)));
 
-//Use a random automaton
-//print(minimizeIncompleteDFA(removeDeadEnds(getRandomDfa(10, 2, 5))));
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-//Some example automaton
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
 
-NestedWordAutomaton a = (
+assert(minimizeSevpaSize == 4);
+assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatSize == 4);
+assert(minimizeNwaPmaxSatAsymmetricSize == 4);
+assert(minimizeDfaSimulationSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+assert(buchiReduceSize == 4);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+assert(reduceBuchiFairDirectSimulationSize == 4);
+assert(reduceBuchiFairSimulationSize == 4);
+
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b c d},
   returnAlphabet = { },
@@ -64,7 +89,7 @@ NestedWordAutomaton a = (
 );
 
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b c},
   returnAlphabet = { },
@@ -89,8 +114,9 @@ NestedWordAutomaton a = (
   returnTransitions = {}
 );
 */
+
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b c},
   returnAlphabet = { },
@@ -115,8 +141,9 @@ NestedWordAutomaton a = (
   returnTransitions = {}
 );
 */
+
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b},
   returnAlphabet = { },
@@ -131,8 +158,9 @@ NestedWordAutomaton a = (
   returnTransitions = {}
 );
 */
+
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b},
   returnAlphabet = { },
@@ -149,8 +177,9 @@ NestedWordAutomaton a = (
   returnTransitions = {}
 );
 */
+
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
     callAlphabet = {},
     internalAlphabet = {"a" "b" },
     returnAlphabet = {},
@@ -168,8 +197,9 @@ NestedWordAutomaton a = (
     }
 );
 */
+
 /*
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
     callAlphabet = {},
     internalAlphabet = {a },
     returnAlphabet = {},

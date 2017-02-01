@@ -1,0 +1,145 @@
+// Author: Daniel Tischner
+// Date: 2016-08-24
+//
+// Revealed bug in revisions < r9888 for ReduceBuchiFairDirectSimulation.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 39);
+assert(shrinkNwaSize == 39);
+assert(minimizeNwaPmaxSatSize == 39);
+assert(minimizeNwaPmaxSatAsymmetricSize == 39);
+assert(minimizeDfaSimulationSize == 79);
+assert(reduceNwaDirectSimulationSize == 39);
+assert(reduceNwaDirectSimulationBSize == 39);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 39);
+assert(buchiReduceSize == 39);
+assert(reduceNwaDelayedSimulationSize == 39);
+assert(reduceNwaDelayedSimulationBSize == 39);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 39);
+assert(reduceBuchiFairDirectSimulationSize == 39);
+assert(reduceBuchiFairSimulationSize == 39);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"a11" "assume true;" "assume !(main_~i~6 < main_~nodecount~6);" "main_~i~6 := 0;" "assume true;assume !(main_~i~6 < main_~nodecount~6);" "main_~i~6 := 0;" "a2" "a5" "#t~ret8 := main_#res;assume true;" "a6" "a1" "a3" "a4" "assume true;assume !!(main_~i~6 < main_~edgecount~6);assume !(0 <= main_~i~6 && main_~i~6 < 20);" "assume true;assume !(main_~i~6 < main_~edgecount~6);" "main_~i~6 := 0;" "assume true;" "assume !(main_~i~6 < main_~nodecount~6);" "main_#res := 0;" "assume !!(main_~i~6 < main_~nodecount~6);" "assume !(0 <= main_~i~6 && main_~i~6 < 5);" "a8" "assume __VERIFIER_assert_~cond == 0;assume !false;" "assume __VERIFIER_assert_~cond == 0;assume true;" "main_#t~post7 := main_~i~6;main_~i~6 := main_#t~post7 + 1;havoc main_#t~post7;" "assume !true;" "assume !(__VERIFIER_assert_~cond == 0);" "assume !true;" "assume true;assume !!(main_~i~6 < main_~nodecount~6);main_~j~6 := 0;" "assume true;" "assume !(main_~j~6 < main_~edgecount~6);" "main_#t~post4 := main_~i~6;main_~i~6 := main_#t~post4 + 1;havoc main_#t~post4;" "assume !true;" "assume !!(main_~j~6 < main_~edgecount~6);" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "assume true;main_~x~6 := main_~Dest~6[main_~j~6];" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "assume true;main_~y~6 := main_~Source~6[main_~j~6];" "assume !(0 <= main_~x~6 && main_~x~6 < 5);" "assume true;" "assume !(0 <= main_~y~6 && main_~y~6 < 5);" "assume true;" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "assume true;" "a7" "a10" "main_#t~post5 := main_~j~6;main_~j~6 := main_#t~post5 + 1;havoc main_#t~post5;" "assume !true;" "assume !(main_~distance~6[main_~x~6] > main_~distance~6[main_~y~6] + main_~Weight~6[main_~j~6]);" "assume !!(main_~i~6 < main_~nodecount~6);" "assume !(main_~i~6 == main_~source~6);assume !(0 <= main_~i~6 && main_~i~6 < 5);" "assume !(main_~i~6 == main_~source~6);assume true;main_~distance~6 := main_~distance~6[main_~i~6 := ~INFINITY];" "main_#t~post3 := main_~i~6;main_~i~6 := main_#t~post3 + 1;havoc main_#t~post3;" "assume !true;" "assume main_~i~6 == main_~source~6;assume !(0 <= main_~i~6 && main_~i~6 < 5);" "assume main_~i~6 == main_~source~6;assume true;main_~distance~6 := main_~distance~6[main_~i~6 := 0];" },
+	returnAlphabet = {},
+	states = {"128#L56'''" "129#L58" "130#L56" "131#L34''" "132#L38" "133#ULTIMATE.startErr5AssertViolation" "134#L40''" "135#L6" "136#L56'''" "137#L58" "138#ULTIMATE.startErr2AssertViolation" "139#L39" "140#ULTIMATE.startErr6AssertViolation" "141#L40'''" "142#L6''" "143#ULTIMATE.startErr14AssertViolation" "144#ULTIMATE.startErr13AssertViolation" "145#L6" "146#L40" "147#ULTIMATE.startErr3AssertViolation" "148#ULTIMATE.startErr7AssertViolation" "149#L36''" "150#L6''" "151#ULTIMATE.startErr14AssertViolation" "152#ULTIMATE.startErr4AssertViolation" "153#L40'" "154#ULTIMATE.startErr5AssertViolation" "155#L40''" "156#ULTIMATE.startErr6AssertViolation" "157#L40'''" "158#ULTIMATE.startErr7AssertViolation" "159#L36''" "81#ULTIMATE.startENTRY" "82#L25'''" "83#L25" "84#L26" "85#L25''''" "86#L25''" "87#L34'''" "88#L25'''" "89#L36'''" "90#L34''''" "91#L25" "92#L36" "93#L46'''" "94#L26" "95#L25''''" "96#L34''" "97#L38" "98#ULTIMATE.startErr11AssertViolation" "99#L46''''" "100#L46'''" "101#ULTIMATE.startErr10AssertViolation" "102#L61" "103#ULTIMATE.startErr1AssertViolation" "104#L25''" "105#ULTIMATE.startErr0AssertViolation" "106#L34'''" "107#ULTIMATE.startErr2AssertViolation" "108#L39" "109#L56''" "110#ULTIMATE.startErr8AssertViolation" "111#ULTIMATE.startErr11AssertViolation" "112#L46''''" "113#ULTIMATE.startErr10AssertViolation" "114#ULTIMATE.startErr12AssertViolation" "115#ULTIMATE.startErr9AssertViolation" "116#L61" "117#ULTIMATE.startEXIT" "118#L36'''" "119#L34''''" "120#L40" "121#ULTIMATE.startErr3AssertViolation" "122#L56" "123#L56''" "124#ULTIMATE.startEXIT" "125#L36" "126#ULTIMATE.startErr4AssertViolation" "127#L40'" },
+	initialStates = {"81#ULTIMATE.startENTRY" },
+	finalStates = {"128#L56'''" "129#L58" "130#L56" "131#L34''" "132#L38" "133#ULTIMATE.startErr5AssertViolation" "134#L40''" "135#L6" "136#L56'''" "137#L58" "138#ULTIMATE.startErr2AssertViolation" "139#L39" "140#ULTIMATE.startErr6AssertViolation" "141#L40'''" "142#L6''" "143#ULTIMATE.startErr14AssertViolation" "144#ULTIMATE.startErr13AssertViolation" "145#L6" "146#L40" "147#ULTIMATE.startErr3AssertViolation" "148#ULTIMATE.startErr7AssertViolation" "149#L36''" "150#L6''" "151#ULTIMATE.startErr14AssertViolation" "152#ULTIMATE.startErr4AssertViolation" "153#L40'" "154#ULTIMATE.startErr5AssertViolation" "155#L40''" "156#ULTIMATE.startErr6AssertViolation" "157#L40'''" "158#ULTIMATE.startErr7AssertViolation" "159#L36''" "81#ULTIMATE.startENTRY" "82#L25'''" "83#L25" "84#L26" "85#L25''''" "86#L25''" "87#L34'''" "88#L25'''" "89#L36'''" "90#L34''''" "91#L25" "92#L36" "93#L46'''" "94#L26" "95#L25''''" "96#L34''" "97#L38" "98#ULTIMATE.startErr11AssertViolation" "99#L46''''" "100#L46'''" "101#ULTIMATE.startErr10AssertViolation" "102#L61" "103#ULTIMATE.startErr1AssertViolation" "104#L25''" "105#ULTIMATE.startErr0AssertViolation" "106#L34'''" "107#ULTIMATE.startErr2AssertViolation" "108#L39" "109#L56''" "110#ULTIMATE.startErr8AssertViolation" "111#ULTIMATE.startErr11AssertViolation" "112#L46''''" "113#ULTIMATE.startErr10AssertViolation" "114#ULTIMATE.startErr12AssertViolation" "115#ULTIMATE.startErr9AssertViolation" "116#L61" "117#ULTIMATE.startEXIT" "118#L36'''" "119#L34''''" "120#L40" "121#ULTIMATE.startErr3AssertViolation" "122#L56" "123#L56''" "124#ULTIMATE.startEXIT" "125#L36" "126#ULTIMATE.startErr4AssertViolation" "127#L40'" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("128#L56'''" "main_#res := 0;" "102#L61")
+		 ("129#L58" "a8" "135#L6")
+		 ("130#L56" "assume !(main_~i~6 < main_~nodecount~6);" "136#L56'''")
+		 ("130#L56" "assume !!(main_~i~6 < main_~nodecount~6);" "137#L58")
+		 ("131#L34''" "main_#t~post4 := main_~i~6;main_~i~6 := main_#t~post4 + 1;havoc main_#t~post4;" "106#L34'''")
+		 ("132#L38" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "138#ULTIMATE.startErr2AssertViolation")
+		 ("132#L38" "assume true;main_~x~6 := main_~Dest~6[main_~j~6];" "139#L39")
+		 ("134#L40''" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "140#ULTIMATE.startErr6AssertViolation")
+		 ("134#L40''" "assume true;" "141#L40'''")
+		 ("135#L6" "assume __VERIFIER_assert_~cond == 0;assume true;" "142#L6''")
+		 ("135#L6" "assume !(__VERIFIER_assert_~cond == 0);" "142#L6''")
+		 ("135#L6" "assume __VERIFIER_assert_~cond == 0;assume !false;" "143#ULTIMATE.startErr14AssertViolation")
+		 ("136#L56'''" "main_#res := 0;" "116#L61")
+		 ("137#L58" "assume !(0 <= main_~i~6 && main_~i~6 < 5);" "144#ULTIMATE.startErr13AssertViolation")
+		 ("137#L58" "a8" "145#L6")
+		 ("139#L39" "assume true;main_~y~6 := main_~Source~6[main_~j~6];" "146#L40")
+		 ("139#L39" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "147#ULTIMATE.startErr3AssertViolation")
+		 ("141#L40'''" "a7" "148#ULTIMATE.startErr7AssertViolation")
+		 ("141#L40'''" "a10" "149#L36''")
+		 ("141#L40'''" "assume !(main_~distance~6[main_~x~6] > main_~distance~6[main_~y~6] + main_~Weight~6[main_~j~6]);" "149#L36''")
+		 ("142#L6''" "main_#t~post7 := main_~i~6;main_~i~6 := main_#t~post7 + 1;havoc main_#t~post7;" "123#L56''")
+		 ("145#L6" "assume __VERIFIER_assert_~cond == 0;assume true;" "150#L6''")
+		 ("145#L6" "assume !(__VERIFIER_assert_~cond == 0);" "150#L6''")
+		 ("145#L6" "assume __VERIFIER_assert_~cond == 0;assume !false;" "151#ULTIMATE.startErr14AssertViolation")
+		 ("146#L40" "assume !(0 <= main_~x~6 && main_~x~6 < 5);" "152#ULTIMATE.startErr4AssertViolation")
+		 ("146#L40" "assume true;" "153#L40'")
+		 ("149#L36''" "main_#t~post5 := main_~j~6;main_~j~6 := main_#t~post5 + 1;havoc main_#t~post5;" "89#L36'''")
+		 ("150#L6''" "main_#t~post7 := main_~i~6;main_~i~6 := main_#t~post7 + 1;havoc main_#t~post7;" "123#L56''")
+		 ("153#L40'" "assume !(0 <= main_~y~6 && main_~y~6 < 5);" "154#ULTIMATE.startErr5AssertViolation")
+		 ("153#L40'" "assume true;" "155#L40''")
+		 ("155#L40''" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "156#ULTIMATE.startErr6AssertViolation")
+		 ("155#L40''" "assume true;" "157#L40'''")
+		 ("157#L40'''" "a7" "158#ULTIMATE.startErr7AssertViolation")
+		 ("157#L40'''" "a10" "159#L36''")
+		 ("157#L40'''" "assume !(main_~distance~6[main_~x~6] > main_~distance~6[main_~y~6] + main_~Weight~6[main_~j~6]);" "159#L36''")
+		 ("159#L36''" "main_#t~post5 := main_~j~6;main_~j~6 := main_#t~post5 + 1;havoc main_#t~post5;" "118#L36'''")
+		 ("81#ULTIMATE.startENTRY" "a11" "82#L25'''")
+		 ("82#L25'''" "assume true;" "83#L25")
+		 ("83#L25" "assume !!(main_~i~6 < main_~nodecount~6);" "84#L26")
+		 ("83#L25" "assume !(main_~i~6 < main_~nodecount~6);" "85#L25''''")
+		 ("84#L26" "assume main_~i~6 == main_~source~6;assume true;main_~distance~6 := main_~distance~6[main_~i~6 := 0];" "86#L25''")
+		 ("85#L25''''" "main_~i~6 := 0;" "87#L34'''")
+		 ("86#L25''" "main_#t~post3 := main_~i~6;main_~i~6 := main_#t~post3 + 1;havoc main_#t~post3;" "88#L25'''")
+		 ("87#L34'''" "assume true;assume !!(main_~i~6 < main_~nodecount~6);main_~j~6 := 0;" "89#L36'''")
+		 ("87#L34'''" "assume true;assume !(main_~i~6 < main_~nodecount~6);" "90#L34''''")
+		 ("88#L25'''" "assume true;" "91#L25")
+		 ("89#L36'''" "assume true;" "92#L36")
+		 ("90#L34''''" "main_~i~6 := 0;" "93#L46'''")
+		 ("91#L25" "assume !!(main_~i~6 < main_~nodecount~6);" "94#L26")
+		 ("91#L25" "assume !(main_~i~6 < main_~nodecount~6);" "95#L25''''")
+		 ("92#L36" "assume !(main_~j~6 < main_~edgecount~6);" "96#L34''")
+		 ("92#L36" "assume !!(main_~j~6 < main_~edgecount~6);" "97#L38")
+		 ("93#L46'''" "a1" "98#ULTIMATE.startErr11AssertViolation")
+		 ("93#L46'''" "assume true;assume !(main_~i~6 < main_~edgecount~6);" "99#L46''''")
+		 ("93#L46'''" "a2" "100#L46'''")
+		 ("93#L46'''" "a3" "101#ULTIMATE.startErr10AssertViolation")
+		 ("93#L46'''" "a5" "102#L61")
+		 ("94#L26" "assume !(main_~i~6 == main_~source~6);assume !(0 <= main_~i~6 && main_~i~6 < 5);" "103#ULTIMATE.startErr1AssertViolation")
+		 ("94#L26" "assume !(main_~i~6 == main_~source~6);assume true;main_~distance~6 := main_~distance~6[main_~i~6 := ~INFINITY];" "104#L25''")
+		 ("94#L26" "assume main_~i~6 == main_~source~6;assume !(0 <= main_~i~6 && main_~i~6 < 5);" "105#ULTIMATE.startErr0AssertViolation")
+		 ("94#L26" "assume main_~i~6 == main_~source~6;assume true;main_~distance~6 := main_~distance~6[main_~i~6 := 0];" "104#L25''")
+		 ("95#L25''''" "main_~i~6 := 0;" "106#L34'''")
+		 ("96#L34''" "main_#t~post4 := main_~i~6;main_~i~6 := main_#t~post4 + 1;havoc main_#t~post4;" "106#L34'''")
+		 ("97#L38" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "107#ULTIMATE.startErr2AssertViolation")
+		 ("97#L38" "assume true;main_~x~6 := main_~Dest~6[main_~j~6];" "108#L39")
+		 ("99#L46''''" "main_~i~6 := 0;" "109#L56''")
+		 ("100#L46'''" "assume true;assume !!(main_~i~6 < main_~edgecount~6);assume !(0 <= main_~i~6 && main_~i~6 < 20);" "110#ULTIMATE.startErr8AssertViolation")
+		 ("100#L46'''" "a1" "111#ULTIMATE.startErr11AssertViolation")
+		 ("100#L46'''" "assume true;assume !(main_~i~6 < main_~edgecount~6);" "112#L46''''")
+		 ("100#L46'''" "a2" "100#L46'''")
+		 ("100#L46'''" "a3" "113#ULTIMATE.startErr10AssertViolation")
+		 ("100#L46'''" "a6" "114#ULTIMATE.startErr12AssertViolation")
+		 ("100#L46'''" "a4" "115#ULTIMATE.startErr9AssertViolation")
+		 ("100#L46'''" "a5" "116#L61")
+		 ("102#L61" "#t~ret8 := main_#res;assume true;" "117#ULTIMATE.startEXIT")
+		 ("104#L25''" "main_#t~post3 := main_~i~6;main_~i~6 := main_#t~post3 + 1;havoc main_#t~post3;" "88#L25'''")
+		 ("106#L34'''" "assume true;assume !!(main_~i~6 < main_~nodecount~6);main_~j~6 := 0;" "118#L36'''")
+		 ("106#L34'''" "assume true;assume !(main_~i~6 < main_~nodecount~6);" "119#L34''''")
+		 ("108#L39" "assume true;main_~y~6 := main_~Source~6[main_~j~6];" "120#L40")
+		 ("108#L39" "assume !(0 <= main_~j~6 && main_~j~6 < 20);" "121#ULTIMATE.startErr3AssertViolation")
+		 ("109#L56''" "assume true;" "122#L56")
+		 ("112#L46''''" "main_~i~6 := 0;" "123#L56''")
+		 ("116#L61" "#t~ret8 := main_#res;assume true;" "124#ULTIMATE.startEXIT")
+		 ("118#L36'''" "assume true;" "125#L36")
+		 ("119#L34''''" "main_~i~6 := 0;" "100#L46'''")
+		 ("120#L40" "assume !(0 <= main_~x~6 && main_~x~6 < 5);" "126#ULTIMATE.startErr4AssertViolation")
+		 ("120#L40" "assume true;" "127#L40'")
+		 ("122#L56" "assume !(main_~i~6 < main_~nodecount~6);" "128#L56'''")
+		 ("122#L56" "assume !!(main_~i~6 < main_~nodecount~6);" "129#L58")
+		 ("123#L56''" "assume true;" "130#L56")
+		 ("125#L36" "assume !(main_~j~6 < main_~edgecount~6);" "131#L34''")
+		 ("125#L36" "assume !!(main_~j~6 < main_~edgecount~6);" "132#L38")
+		 ("127#L40'" "assume !(0 <= main_~y~6 && main_~y~6 < 5);" "133#ULTIMATE.startErr5AssertViolation")
+		 ("127#L40'" "assume true;" "134#L40''")
+	},
+	returnTransitions = {
+	}
+);

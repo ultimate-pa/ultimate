@@ -1,0 +1,61 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 7.11.2011
+//
+// Example of DFA that can be minized.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 5);
+assert(shrinkNwaSize == 5);
+assert(minimizeNwaPmaxSatSize == 5);
+assert(minimizeNwaPmaxSatAsymmetricSize == 5);
+assert(minimizeDfaSimulationSize == 5);
+assert(reduceNwaDirectSimulationSize == 5);
+assert(reduceNwaDirectSimulationBSize == 5);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
+assert(buchiReduceSize == 5);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+assert(reduceBuchiFairDirectSimulationSize == 5);
+assert(reduceBuchiFairSimulationSize == 5);
+
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b c},
+  returnAlphabet = { },
+  states = {q0 q1 q2 q3 q4},
+  initialStates = {q0},
+  finalStates = {q0 q1},
+  callTransitions = {},
+  internalTransitions = {
+      (q0 b q0)
+      (q0 a q1)
+      (q0 c q4)
+      (q1 c q1)
+      (q1 b q0)
+      (q1 a q3)
+      (q2 c q2)
+      (q2 b q0)
+      (q2 a q3)
+      (q3 a q2)
+      (q3 c q2)
+      (q4 c q2)
+  }, 
+  returnTransitions = {}
+);

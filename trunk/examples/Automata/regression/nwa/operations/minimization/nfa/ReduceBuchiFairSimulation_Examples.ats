@@ -1,0 +1,188 @@
+// Author: Daniel Tischner
+// Date: 2015-11-30
+//
+// Example usage of a reduction program for Büchi automata that uses fair
+// simulation.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 4);
+assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatSize == 4);
+assert(minimizeNwaPmaxSatAsymmetricSize == 4);
+assert(minimizeDfaSimulationSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+assert(buchiReduceSize == 2);
+assert(reduceNwaDelayedSimulationSize == 2);
+assert(reduceNwaDelayedSimulationBSize == 2);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);
+assert(reduceBuchiFairDirectSimulationSize == 2);
+assert(reduceBuchiFairSimulationSize == 2);
+
+// Big example from tutors cardboard
+/*
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = {},
+	states = {"q1" "q2" "q3" "q4" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q2" "q4" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q1" "a" "q1")
+		 ("q1" "a" "q2")
+		 ("q2" "a" "q1")
+		 ("q2" "a" "q2")
+		 ("q3" "a" "q4")
+		 ("q3" "b" "q3")
+		 ("q4" "a" "q4")
+		 ("q4" "b" "q3")
+		 ("q0" "a" "q1")
+		 ("q0" "a" "q3")
+	},
+	returnTransitions = {
+	}
+);
+*/
+
+// Small example from cav02 paper
+/*
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q1 q2},
+  initialStates = {q1},
+  finalStates = {q1},
+  callTransitions = {},
+  internalTransitions = {
+      (q1 a q1)
+	  (q1 b q2)
+	  (q2 b q2)
+	  (q2 a q1)
+  }, 
+  returnTransitions = {}
+);
+*/
+
+// Small circle example from mind
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q1 q2 q3 q4},
+  initialStates = {q1},
+  finalStates = {q1},
+  callTransitions = {},
+  internalTransitions = {
+      (q1 a q2)
+	  (q2 b q3)
+	  (q3 a q4)
+	  (q4 b q1)
+  }, 
+  returnTransitions = {}
+);
+
+// Non merge-able example with a one-directed fair simulation
+/*
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q0},
+  callTransitions = {},
+  internalTransitions = {
+      (q0 b q0)
+	  (q0 a q1)
+	  (q1 a q1)
+	  (q1 b q1)
+  }, 
+  returnTransitions = {}
+);
+*/
+
+// Big example from cav02
+/*
+NestedWordAutomaton nwa = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q1 q2 q3 q4 q5 q6 q7 q8 q9 q10},
+  initialStates = {q1},
+  finalStates = {q3 q4 q6 q10},
+  callTransitions = {},
+  internalTransitions = {
+	(q1 a q2)
+	(q1 a q3)
+	(q2 a q6)
+	(q2 b q4)
+	(q2 b q7)
+	(q4 a q2)
+	(q6 a q6)
+	(q3 b q5)
+	(q3 b q7)
+	(q5 a q3)
+	(q7 b q8)
+	(q8 a q9)
+	(q8 b q10)
+	(q9 a q9)
+	(q9 b q10)
+	(q10 b q10)
+  }, 
+  returnTransitions = {}
+);
+*/
+
+// Debug bug alpha
+/*
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"a1" "a2" "a0" },
+	returnAlphabet = {},
+	states = {"q1" "q2" "q3" "q4" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q2" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q1" "a2" "q4")
+		 ("q2" "a2" "q2")
+		 ("q2" "a0" "q1")
+		 ("q3" "a1" "q2")
+		 ("q3" "a2" "q2")
+		 ("q3" "a2" "q4")
+		 ("q4" "a1" "q4")
+		 ("q4" "a1" "q0")
+		 ("q4" "a2" "q2")
+		 ("q4" "a2" "q4")
+		 ("q4" "a0" "q1")
+		 ("q0" "a1" "q3")
+		 ("q0" "a1" "q4")
+		 ("q0" "a2" "q2")
+		 ("q0" "a2" "q3")
+	},
+	returnTransitions = {
+	}
+);
+*/
