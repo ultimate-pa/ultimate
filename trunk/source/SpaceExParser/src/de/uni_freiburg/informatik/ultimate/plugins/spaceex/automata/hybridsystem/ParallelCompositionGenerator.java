@@ -84,10 +84,12 @@ public class ParallelCompositionGenerator {
 	 * 
 	 * @param automaton1
 	 * @param automaton2
+	 * @param mergedLocationToPair
 	 * @param binds
 	 * @return
 	 */
-	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2) {
+	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2,
+			Map<Location, LocationPair> mergedLocationToPair) {
 		// name
 		final String nameMerge = automaton1.getName() + "||" + automaton2.getName();
 		// labels are merged with union
@@ -103,14 +105,16 @@ public class ParallelCompositionGenerator {
 		// 2. get the outgoing transitions from the initials
 		// 3. compare and merge the outgoing transitions
 		// 4. Repeat
-		Location initial1 = automaton1.getInitialLocation();
-		Location initial2 = automaton2.getInitialLocation();
-		LocationPair locpair = new LocationPair(initial1, initial2);
+		final Location initial1 = automaton1.getInitialLocation();
+		final Location initial2 = automaton2.getInitialLocation();
+		final LocationPair locpair = new LocationPair(initial1, initial2);
 		mInitialLocationMerge = getLocation(locpair.toString(), initial1, initial2);
+		// add to map of the form merged loc -> locpair
+		mergedLocationToPair.put(mInitialLocationMerge, locpair);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		mComputationStack.push(new LocationPair(initial1, initial2));
-		createLocationsAndTransitions(locations1, locations2);
-		HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
+		createLocationsAndTransitions(locations1, locations2, mergedLocationToPair);
+		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
 		// clean up
@@ -143,26 +147,29 @@ public class ParallelCompositionGenerator {
 	 * 
 	 * @param locations1
 	 * @param locations2
+	 * @param mergedLocationToPair
 	 * @param automatonName1
 	 * @param automatonName2
 	 */
-	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2) {
+	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2,
+			Map<Location, LocationPair> mergedLocationToPair) {
 		// TODO: reduce cyclomatic Complexity + make the whole function more understandable + add more seperate
 		// functions
 		while (!mComputationStack.isEmpty()) {
-			LocationPair locpair = mComputationStack.pop();
+			final LocationPair locpair = mComputationStack.pop();
 			if (mVisitedLocations.contains(locpair.toString())) {
 				continue;
 			}
-			Location currentLoc1 = locpair.getLocation1();
-			Location currentLoc2 = locpair.getLocation2();
+			final Location currentLoc1 = locpair.getLocation1();
+			final Location currentLoc2 = locpair.getLocation2();
 			// get all outgoing transitions and set labels,guards,updates
-			List<Transition> outgoing1 = currentLoc1.getOutgoingTransitions();
-			List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
+			final List<Transition> outgoing1 = currentLoc1.getOutgoingTransitions();
+			final List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
 			// if there are no outgoing transitions in either location, we can simply merge them and continue.
 			if (outgoing1.isEmpty() && outgoing2.isEmpty()) {
-				Location source = getLocation(locpair.toString(), currentLoc1, currentLoc2);
+				final Location source = getLocation(locpair.toString(), currentLoc1, currentLoc2);
 				mLocationsMerge.put(source.getId(), source);
+				mergedLocationToPair.put(source, locpair);
 				continue;
 			}
 			// local vars for the loop
@@ -208,15 +215,14 @@ public class ParallelCompositionGenerator {
 				}
 				srcLocPair = srcLoc1 + "," + srcLoc2;
 				tarLocPair = tarLoc1 + "," + tarLoc2;
-				boolean synchronization = isSynchronization(currentLabel1, currentLabel2);
+				final boolean synchronization = isSynchronization(currentLabel1, currentLabel2);
 				// if the labels are equal merge the transition and location right away
 				if (synchronization) {
 					// if the location exists, get it, else create a new one from the source locations
-					Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
-					// if the location exists, get it, else create a new one from the target locations
-					Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);
+					final Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
+					final Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);
 					// transition
-					Transition trans = createTransition(source, target, currentLabel1,
+					final Transition trans = createTransition(source, target, currentLabel1,
 							intersectStrings(currentGuard1, currentGuard2),
 							intersectStrings(currentUpdate1, currentUpdate2));
 					mTransitionMerge.add(trans);
@@ -228,7 +234,9 @@ public class ParallelCompositionGenerator {
 					mLocationsMerge.put(target.getId(), target);
 					outgoing1.remove(currentTransition1);
 					outgoing2.remove(currentTransition2);
-					mComputationStack.push(new LocationPair(tarLoc1, tarLoc2));
+					final LocationPair locationPair = new LocationPair(tarLoc1, tarLoc2);
+					mComputationStack.push(locationPair);
+					mergedLocationToPair.put(target, locationPair);
 				} else {
 					// if one or both labels are local OR either one of them is empty, we can merge locations.
 					// in order to do that, it is necessary to compute all possible combinations.
@@ -237,33 +245,37 @@ public class ParallelCompositionGenerator {
 					srcTarLocPair1 = srcLoc1 + "," + tarLoc2;
 					srcTarLocPair2 = tarLoc1 + "," + srcLoc2;
 					// if the location exists, get it, else create a new one from the source location pairs
-					Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
+					final Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
 					// Create 2 target locations
 					// if the locations exists, get it, else create a new one from the location pairs
 					// s1,t2
-					Location target1 = getLocation(srcTarLocPair1, srcLoc1, tarLoc2);
+					final Location target1 = getLocation(srcTarLocPair1, srcLoc1, tarLoc2);
 					// t1,s2
-					Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
+					final Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
 					// Create 2 transitions
 					// s1,s2 ---> s1,t2
-					Transition srcTar1 =
+					final Transition srcTar1 =
 							createTransition(source, target1, currentLabel2, currentGuard2, currentUpdate2);
 					// s1,s2 ---> t1,s2
-					Transition srcTar2 =
+					final Transition srcTar2 =
 							createTransition(source, target2, currentLabel1, currentGuard1, currentUpdate1);
 					// incoming /outgoing transitions
 					if (source.getId() != target1.getId() && !mGlobalLabels.contains(srcTar1.getLabel())) {
 						source.addOutgoingTransition(srcTar1);
 						target1.addIncomingTransition(srcTar1);
 						mTransitionMerge.add(srcTar1);
-						mComputationStack.push(new LocationPair(srcLoc1, tarLoc2));
+						final LocationPair srcTarPair = new LocationPair(srcLoc1, tarLoc2);
+						mComputationStack.push(srcTarPair);
+						mergedLocationToPair.put(target1, srcTarPair);
 						
 					}
 					if (source.getId() != target2.getId() && !mGlobalLabels.contains(srcTar2.getLabel())) {
 						source.addOutgoingTransition(srcTar2);
 						target2.addIncomingTransition(srcTar2);
 						mTransitionMerge.add(srcTar2);
-						mComputationStack.push(new LocationPair(tarLoc1, srcLoc2));
+						final LocationPair tarSrcPair = new LocationPair(tarLoc1, srcLoc2);
+						mComputationStack.push(tarSrcPair);
+						mergedLocationToPair.put(target2, tarSrcPair);
 					}
 					break;
 				}
@@ -282,7 +294,7 @@ public class ParallelCompositionGenerator {
 	 * @return
 	 */
 	private Transition createTransition(Location source, Location target, String label, String guard, String update) {
-		Transition trans = new Transition(source, target);
+		final Transition trans = new Transition(source, target);
 		trans.setLabel(label);
 		trans.setGuard(guard);
 		trans.setUpdate(update);
@@ -300,7 +312,7 @@ public class ParallelCompositionGenerator {
 	private Location getLocation(String locPair, Location loc1, Location loc2) {
 		Location loc;
 		if (mCreatedLocations.containsKey(locPair)) {
-			int locId = mCreatedLocations.get(locPair);
+			final int locId = mCreatedLocations.get(locPair);
 			loc = mLocationsMerge.get(locId);
 		} else {
 			loc = mergeLocations(mIdCounter.incrementAndGet(), loc1, loc2);
@@ -317,8 +329,8 @@ public class ParallelCompositionGenerator {
 	}
 	
 	private void splitLabels(String automatonName1, String automatonName2, Set<String> labels1, Set<String> labels2) {
-		Set<String> locLabs1 = new HashSet<>();
-		Set<String> locLabs2 = new HashSet<>();
+		final Set<String> locLabs1 = new HashSet<>();
+		final Set<String> locLabs2 = new HashSet<>();
 		labels1.forEach(lab1 -> {
 			if (labels2.contains(lab1)) {
 				mGlobalLabels.add(lab1);
@@ -341,33 +353,32 @@ public class ParallelCompositionGenerator {
 	 * helper function to determine if 2 labels synchronize
 	 */
 	private boolean isSynchronization(String currentLabel1, String currentLabel2) {
-		boolean bothEmpty = ("".equals(currentLabel1) && "".equals(currentLabel2)) ? true : false;
-		boolean equalLabels = currentLabel1.equals(currentLabel2) ? true : false;
-		boolean bothGlobal = mGlobalLabels.contains(currentLabel1) && mGlobalLabels.contains(currentLabel2);
+		final boolean bothEmpty = ("".equals(currentLabel1) && "".equals(currentLabel2)) ? true : false;
+		final boolean equalLabels = currentLabel1.equals(currentLabel2) ? true : false;
+		final boolean bothGlobal = mGlobalLabels.contains(currentLabel1) && mGlobalLabels.contains(currentLabel2);
 		return !bothEmpty && equalLabels && bothGlobal;
 	}
 	
 	private void mergeVariables(HybridAutomaton automaton1, HybridAutomaton automaton2) {
-		// global consts
-		mGlobalConstsMerge.addAll(automaton1.getGlobalConstants());
-		mGlobalConstsMerge.addAll(automaton2.getGlobalConstants());
-		// global params
-		mGlobalParamsMerge.addAll(automaton1.getGlobalParameters());
-		mGlobalParamsMerge.addAll(automaton2.getGlobalParameters());
-		// local consts
-		mLocalConstsMerge.addAll(automaton1.getLocalConstants());
-		mLocalConstsMerge.addAll(automaton2.getLocalConstants());
+		// All variables in a merged automata are LOCAL.
 		// local params
 		mLocalParamsMerge.addAll(automaton1.getLocalParameters());
 		mLocalParamsMerge.addAll(automaton2.getLocalParameters());
+		mLocalParamsMerge.addAll(automaton1.getGlobalParameters());
+		mLocalParamsMerge.addAll(automaton2.getGlobalParameters());
+		// local consts
+		mLocalConstsMerge.addAll(automaton1.getLocalConstants());
+		mLocalConstsMerge.addAll(automaton2.getLocalConstants());
+		mLocalConstsMerge.addAll(automaton1.getGlobalConstants());
+		mLocalConstsMerge.addAll(automaton2.getGlobalConstants());
 	}
 	
 	/*
 	 * helper function to merge locations
 	 */
 	private Location mergeLocations(int id, Location loc1, Location loc2) {
-		String locname = "loc_" + loc1.getId() + "_" + loc2.getId();
-		Location loc = new Location(id, locname);
+		final String locname = "loc_" + loc1.getId() + "_" + loc2.getId();
+		final Location loc = new Location(id, locname);
 		loc.setFlow(intersectStrings(loc1.getFlow(), loc2.getFlow()));
 		loc.setInvariant(intersectStrings(loc1.getInvariant(), loc2.getInvariant()));
 		return loc;
@@ -379,8 +390,8 @@ public class ParallelCompositionGenerator {
 	 */
 	private String intersectStrings(String str1, String str2) {
 		String intersection;
-		String string1 = (str1 == null) ? "" : str1;
-		String string2 = (str2 == null) ? "" : str2;
+		final String string1 = (str1 == null) ? "" : str1;
+		final String string2 = (str2 == null) ? "" : str2;
 		if (string1.equals(string2) || (!"".equals(string1) && "".equals(string2))) {
 			intersection = string1;
 		} else if (!"".equals(string1) && !"".equals(string2)) {

@@ -33,11 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
@@ -70,33 +66,28 @@ public class HybridIcfgGenerator {
 	private final Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
 	private final String mProcedure = "MAIN";
-	private final BoogieASTNode mBoogieASTNode;
 	private final HybridVariableManager mVariableManager;
-	private final BoogieIcfgLocation mErrorLocation;
-
+	private final IcfgLocation mErrorLocation;
+	private final IcfgLocation mRootLocation;
+	private final Map<IcfgLocation, Map<String, String>> mConnectionMap;
+	
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
 			final CfgSmtToolkit smtToolkit, final HybridVariableManager variableManager) {
 		mLogger = logger;
 		mSpaceExPreferenceManager = preferenceManager;
 		mSmtToolkit = smtToolkit;
 		mVariableManager = variableManager;
-		final ILocation dummyLoc = new DummyLocation(preferenceManager.getFileName());
-		mPayload = new Payload(dummyLoc);
+		mPayload = null;
 		mCfgComponents = new HashMap<>();
-		mBoogieASTNode = new Procedure(dummyLoc, null, mProcedure, null, null, null, null, null);
-		// mBoogieASTNode = new BoogieASTNode(dummyLoc);
-		// create a root + error location;
-		final BoogieIcfgLocation root = new BoogieIcfgLocation("root", mProcedure, false, mBoogieASTNode);
-		mCfgComponents.put("root",
-				new HybridCfgComponent("root", root, root, Collections.emptyList(), Collections.emptyList()));
-		mErrorLocation = new BoogieIcfgLocation("error", mProcedure, true, mBoogieASTNode);
-		mCfgComponents.put("error", new HybridCfgComponent("error", mErrorLocation, mErrorLocation,
-				Collections.emptyList(), Collections.emptyList()));
+		mConnectionMap = new HashMap<>();
+		// create a root and error location
+		mErrorLocation = new IcfgLocation("error", mProcedure);
+		mRootLocation = new IcfgLocation("root", mProcedure);
 	}
-
-	public BasicIcfg<BoogieIcfgLocation> createIfcgFromComponents(final HybridAutomaton automaton) {
+	
+	public BasicIcfg<IcfgLocation> createIfcgFromComponents(final HybridAutomaton automaton) {
 		modelToIcfg(automaton);
-		final BasicIcfg<BoogieIcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, BoogieIcfgLocation.class);
+		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
 		// debug stuff
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("################# COMPONENTS ###################");
@@ -105,17 +96,15 @@ public class HybridIcfgGenerator {
 			});
 		}
 		// root, initial state
-		icfg.addLocation(mCfgComponents.get("root").getStart(), true, false, true, false, false);
-		mCfgComponents.remove("root");
+		icfg.addLocation(mRootLocation, true, false, true, false, false);
 		// error, error state
 		icfg.addLocation(mErrorLocation, false, true, false, true, false);
-		mCfgComponents.remove("error");
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
 			// start is proc_entry + end is proc_exit
 			icfg.addOrdinaryLocation(comp.getStart());
 			icfg.addOrdinaryLocation(comp.getEnd());
-			for (final BoogieIcfgLocation loc : comp.getLocations()) {
+			for (final IcfgLocation loc : comp.getLocations()) {
 				icfg.addOrdinaryLocation(loc);
 			}
 		});
@@ -127,7 +116,7 @@ public class HybridIcfgGenerator {
 		}
 		return icfg;
 	}
-
+	
 	public void modelToIcfg(final HybridAutomaton aut) {
 		/*
 		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
@@ -140,7 +129,7 @@ public class HybridIcfgGenerator {
 			automatonToIcfg(aut);
 		}
 	}
-
+	
 	private void automatonToIcfg(final HybridAutomaton automaton) {
 		final Location initialLocation = automaton.getInitialLocation();
 		final Map<Integer, Location> locations = automaton.getLocations();
@@ -150,7 +139,6 @@ public class HybridIcfgGenerator {
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
-
 		// ICFG locations + edges for variables
 		variablesToIcfg(variables);
 		// for locations
@@ -158,62 +146,68 @@ public class HybridIcfgGenerator {
 		// for transitions
 		transitionsToIcfg(transitions, initialLocation);
 	}
-
+	
 	/*
 	 * variable methods
 	 */
 	private void variablesToIcfg(final Set<String> variables) {
 		
 		final Script script = mSmtToolkit.getManagedScript().getScript();
-		// get initial values of the variable
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
-		for (final String var : variables) {
-			final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
-			final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
-			final TermVariable outVar = mVariableManager.getVar2OutVarTermVariable().get(var);
-			tfb.addInVar(progVar, inVar);
-			tfb.addOutVar(progVar, outVar);
+		final List<SpaceExPreferenceGroup> groups = mSpaceExPreferenceManager.getmPreferenceGroups();
+		for (final SpaceExPreferenceGroup group : groups) {
+			// get initial values of the variable
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(),
+					true, Collections.emptySet(), true, Collections.emptyList(), true);
+			for (final String var : variables) {
+				final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
+				final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
+				final TermVariable outVar = mVariableManager.getVar2OutVarTermVariable().get(var);
+				tfb.addInVar(progVar, inVar);
+				tfb.addOutVar(progVar, outVar);
+			}
+			UnmodifiableTransFormula transformula;
+			
+			final String infix = group.getInitialVariableInfix();
+			if (infix.isEmpty()) {
+				transformula = TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+			} else {
+				final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
+				final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
+				mLogger.info(term);
+				tfb.setFormula(term);
+				tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+				// finish construction of the transformula.
+				transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
+			}
+			mLogger.debug("Transformula for varAssignment: " + transformula);
+			// create variable component of the form start ----variable assignment----> end
+			final List<IcfgLocation> locations = new ArrayList<>();
+			final List<IcfgInternalTransition> transitions = new ArrayList<>();
+			final String id = "varAssignment_" + group.getId();
+			final IcfgLocation start = new IcfgLocation(id + "_start", mProcedure);
+			final IcfgLocation end = new IcfgLocation(id + "_end", mProcedure);
+			final IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, transformula);
+			start.addOutgoing(startEnd);
+			end.addIncoming(startEnd);
+			transitions.add(startEnd);
+			// new cfgComponent, has to be connected to the root node.
+			mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions));
+			/*
+			 * Transition from Root to varAssignment
+			 */
+			// the target of the transition is the the start of the target CFG component
+			final IcfgLocation target = mCfgComponents.get(id).getStart();
+			final UnmodifiableTransFormula transFormula =
+					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+			final IcfgInternalTransition transition =
+					new IcfgInternalTransition(mRootLocation, target, mPayload, transFormula);
+			mRootLocation.addOutgoing(transition);
+			target.addIncoming(transition);
+			// add connection that has to be made from Variable assignment to initial location.
+			mConnectionMap.put(end, group.getInitialLocations());
 		}
-		UnmodifiableTransFormula transformula;
-		final String infix = mSpaceExPreferenceManager.getInitialInfix();
-		if (infix.isEmpty()) {
-			transformula = TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-		} else {
-			final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, script);
-			final Term term = tb.infixToTerm(infix, BuildScenario.INITIALLY);
-			mLogger.info(term);
-			tfb.setFormula(term);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-			// finish construction of the transformula.
-			transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		}
-		mLogger.debug("Transformula for varAssignment: " + transformula);
-		// create variable component of the form start ----variable assignment----> end
-		final List<BoogieIcfgLocation> locations = new ArrayList<>();
-		final List<IcfgInternalTransition> transitions = new ArrayList<>();
-		final String id = "varAssignment";
-		final BoogieIcfgLocation start = new BoogieIcfgLocation(id + "_start", mProcedure, false, mBoogieASTNode);
-		final BoogieIcfgLocation end = new BoogieIcfgLocation(id + "_end", mProcedure, false, mBoogieASTNode);
-		final IcfgInternalTransition startEnd = new IcfgInternalTransition(start, end, mPayload, transformula);
-		start.addOutgoing(startEnd);
-		end.addIncoming(startEnd);
-		transitions.add(startEnd);
-		// new cfgComponent, has to be connected to the root node.
-		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions));
-		/*
-		 * Transition from Root to varAssignment
-		 */
-		// the source of the transition is the the end of the source CFG component
-		final BoogieIcfgLocation source = mCfgComponents.get("root").getEnd();
-		// the target of the transition is the the start of the target CFG component
-		final BoogieIcfgLocation target = mCfgComponents.get("varAssignment").getStart();
-		final UnmodifiableTransFormula transFormula =
-				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-		final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
-		source.addOutgoing(transition);
-		target.addIncoming(transition);
 	}
-
+	
 	/*
 	 * Location methods
 	 */
@@ -226,17 +220,15 @@ public class HybridIcfgGenerator {
 			final Integer autid = entry.getKey();
 			final Location loc = entry.getValue();
 			final List<IcfgInternalTransition> transitions = new ArrayList<>();
-			final List<BoogieIcfgLocation> locations = new ArrayList<>();
+			final List<IcfgLocation> locations = new ArrayList<>();
 			/*
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
-			final BoogieIcfgLocation start =
-					new BoogieIcfgLocation(autid + "_start", mProcedure, false, mBoogieASTNode);
-			final BoogieIcfgLocation end = new BoogieIcfgLocation(autid + "_end", mProcedure, false, mBoogieASTNode);
-			final BoogieIcfgLocation flow = new BoogieIcfgLocation(autid + "_flow", mProcedure, false, mBoogieASTNode);
+			final IcfgLocation start = new IcfgLocation(autid + "_start", mProcedure);
+			final IcfgLocation end = new IcfgLocation(autid + "_end", mProcedure);
+			final IcfgLocation flow = new IcfgLocation(autid + "_flow", mProcedure);
 			locations.add(flow);
-			final BoogieIcfgLocation invCheck =
-					new BoogieIcfgLocation(autid + "_invCheck", mProcedure, false, mBoogieASTNode);
+			final IcfgLocation invCheck = new IcfgLocation(autid + "_invCheck", mProcedure);
 			locations.add(invCheck);
 			/*
 			 * Transitions from start to Flow if invariant true
@@ -244,14 +236,16 @@ public class HybridIcfgGenerator {
 			// invariant to term:
 			final String infix = preprocessLocationStatement(loc.getInvariant());
 			final UnmodifiableTransFormula invariantTransformula = buildTransformula(infix, BuildScenario.INVARIANT);
-			final String msg = createTransformulaLoggerMessage(invariantTransformula, infix);
-			mLogger.info(msg);
+			if (mLogger.isDebugEnabled()) {
+				final String msg = createTransformulaLoggerMessage(invariantTransformula, infix);
+				mLogger.debug(msg);
+			}
 			final UnmodifiableTransFormula tfStartFlow = invariantTransformula;
 			final IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, mPayload, tfStartFlow);
 			start.addOutgoing(startFlow);
 			flow.addIncoming(startFlow);
 			transitions.add(startFlow);
-
+			
 			/*
 			 * Transition from start to Error
 			 */
@@ -283,7 +277,7 @@ public class HybridIcfgGenerator {
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
 		}
 	}
-
+	
 	/*
 	 * Transition methods
 	 */
@@ -292,9 +286,9 @@ public class HybridIcfgGenerator {
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
 			// the source of the transition is the the end of the source CFG component
-			final BoogieIcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
+			final IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
 			// the target of the transition is the the start of the target CFG component
-			final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
+			final IcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
 			// invariant to term:
 			final UnmodifiableTransFormula transFormula =
 					buildTransitionTransformula(trans.getUpdate(), trans.getGuard());
@@ -306,35 +300,39 @@ public class HybridIcfgGenerator {
 			source.addOutgoing(transition);
 			target.addIncoming(transition);
 		});
-
-		// the source of the transition is the the end of the source CFG component
-		BoogieIcfgLocation source = mCfgComponents.get("varAssignment").getEnd();
-		// the target of the transition is the the start of the target CFG component
-		final BoogieIcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
-		final UnmodifiableTransFormula transFormula =
-				TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-		IcfgInternalTransition transition = new IcfgInternalTransition(source, target, mPayload, transFormula);
-		source.addOutgoing(transition);
-		target.addIncoming(transition);
-
+		
+		mConnectionMap.forEach((loc, init) -> {
+			mLogger.info(loc);
+			mLogger.info(init);
+			// TODO INIT.
+			// the source of the transition is the the end of the source CFG component
+			final IcfgLocation source = loc;
+			// the target of the transition is the the start of the target CFG component
+			final IcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
+			final UnmodifiableTransFormula transFormula =
+					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+			final IcfgInternalTransition transition =
+					new IcfgInternalTransition(source, target, mPayload, transFormula);
+			source.addOutgoing(transition);
+			target.addIncoming(transition);
+		});
+		
 		/*
-		 * Transition from Root to varAssignment
+		 * Transition from Root to Error
 		 */
-		// the source of the transition is the the end of the source CFG component
-		source = mCfgComponents.get("root").getEnd();
-		// the target of the transition is the the start of the target CFG component
-		transition = new IcfgInternalTransition(source, mErrorLocation, mPayload, buildFalseTransformula());
-		source.addOutgoing(transition);
+		final IcfgInternalTransition transition =
+				new IcfgInternalTransition(mRootLocation, mErrorLocation, mPayload, buildFalseTransformula());
+		mRootLocation.addOutgoing(transition);
 		mErrorLocation.addIncoming(transition);
 	}
-
+	
 	private String createTransformulaLoggerMessage(final UnmodifiableTransFormula transFormula, final String infix) {
 		String msg = "######## CREATED TRANSFORMULA ######## \n";
 		msg += "created " + transFormula.toString() + "\n";
 		msg += "infix: " + infix;
 		return msg;
 	}
-
+	
 	private UnmodifiableTransFormula buildTransitionTransformula(final String update, final String guard) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
@@ -352,7 +350,8 @@ public class HybridIcfgGenerator {
 			formula = tb.infixToTerm(preprocessLocationStatement(update), BuildScenario.UPDATE);
 		}
 		// TFB
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
+				Collections.emptySet(), true, Collections.emptyList(), true);
 		tb.getmInVars().forEach((progvar, invar) -> {
 			tfb.addInVar(progvar, invar);
 		});
@@ -366,12 +365,13 @@ public class HybridIcfgGenerator {
 		mLogger.debug("Transformula: " + transformula);
 		return transformula;
 	}
-
+	
 	private UnmodifiableTransFormula buildTransformula(final String infix, final BuildScenario scenario) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
 		final Term term = tb.infixToTerm(infix, scenario);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
+				Collections.emptySet(), true, Collections.emptyList(), true);
 		tb.getmInVars().forEach((progvar, invar) -> {
 			tfb.addInVar(progvar, invar);
 		});
@@ -385,15 +385,16 @@ public class HybridIcfgGenerator {
 		mLogger.debug("Transformula: " + transformula);
 		return transformula;
 	}
-
+	
 	private UnmodifiableTransFormula buildFalseTransformula() {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
+				Collections.emptySet(), true, Collections.emptyList(), true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("false"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		return tfb.finishConstruction(mSmtToolkit.getManagedScript());
 	}
-
+	
 	private String preprocessLocationStatement(final String invariant) {
 		String inv = invariant.replaceAll(":=", "==");
 		inv = inv.replaceAll("&&", "&");
@@ -411,10 +412,10 @@ public class HybridIcfgGenerator {
 		
 		final IcfgLocation endLoc = new IcfgLocation("error", "MAIN");
 		icfg.addLocation(endLoc, false, true, false, true, false);
-
+		
 		// Every procedure must have a unique entry and a unique exit. It is not allowed to have more than one exit (or
 		// entry).
-
+		
 		// QUESTION: Is procExit = true correct here?
 		
 		TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
@@ -422,29 +423,29 @@ public class HybridIcfgGenerator {
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// QUESTION: Is not determined correct here?
-
+		
 		// QUESTION: Does BoogieASTNode influence TraceAbstraction? Currently, we pass the same BoogieASTNode every time
 		// to the ICFG. Should we construct new BoogieASTNodes every time?
-
+		
 		// QUESTION: Payload currently contains only a dummy location. Every payload consists of the SAME dummy
 		// location. Is this correct / feasible?
 		
 		// Transitions
 		final IcfgInternalTransition startToMiddle = new IcfgInternalTransition(startLoc, middleLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
-
+		
 		tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true, Collections.emptySet(),
 				true, Collections.emptyList(), true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-
+		
 		// If (true, false): Assertion error in SdHoareTripleChecker
 		// If (true, true): Cast error (to CodeBlock)
 		// If (false, false) or (false, true): No Error
-
+		
 		final IcfgInternalTransition middleToEnd = new IcfgInternalTransition(middleLoc, endLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
-
+		
 		startLoc.addOutgoing(startToMiddle);
 		middleLoc.addIncoming(startToMiddle);
 		middleLoc.addOutgoing(middleToEnd);

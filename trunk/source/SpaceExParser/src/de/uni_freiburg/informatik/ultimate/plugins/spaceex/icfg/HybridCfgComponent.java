@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Class that represents a ICFG component of a HybridAutomata component. It is used for the translation from
@@ -16,13 +16,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 public class HybridCfgComponent {
 	
 	private final String mId;
-	private final BoogieIcfgLocation mStartLocation;
-	private final BoogieIcfgLocation mEndLocation;
-	private final List<BoogieIcfgLocation> mLocations;
+	private final IcfgLocation mStartLocation;
+	private final IcfgLocation mEndLocation;
+	private final List<IcfgLocation> mLocations;
 	private final List<IcfgInternalTransition> mTransitions;
 	
-	public HybridCfgComponent(String string, BoogieIcfgLocation start, BoogieIcfgLocation end,
-			List<BoogieIcfgLocation> locations, List<IcfgInternalTransition> transitions) {
+	public HybridCfgComponent(String string, IcfgLocation start, IcfgLocation end, List<IcfgLocation> locations,
+			List<IcfgInternalTransition> transitions) {
 		mId = string;
 		mStartLocation = start;
 		mEndLocation = end;
@@ -34,15 +34,15 @@ public class HybridCfgComponent {
 		return mId;
 	}
 	
-	public BoogieIcfgLocation getStart() {
+	public IcfgLocation getStart() {
 		return mStartLocation;
 	}
 	
-	public BoogieIcfgLocation getEnd() {
+	public IcfgLocation getEnd() {
 		return mEndLocation;
 	}
 	
-	public List<BoogieIcfgLocation> getLocations() {
+	public List<IcfgLocation> getLocations() {
 		return mLocations;
 	}
 	
@@ -53,40 +53,40 @@ public class HybridCfgComponent {
 	@Override
 	public String toString() {
 		String comp = "\n";
-		String indent = "   ";
+		final String indent = "   ";
 		comp += "ID: " + mId + "\n";
 		comp += "Start: " + mStartLocation.getDebugIdentifier() + "\n";
-		for (IcfgEdge trans : mStartLocation.getOutgoingEdges()) {
+		for (final IcfgEdge trans : mStartLocation.getOutgoingEdges()) {
 			comp += indent + "** outgoing:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 					+ trans.getTarget().getDebugIdentifier() + ")\n";
 		}
-		for (IcfgEdge trans : mStartLocation.getIncomingEdges()) {
+		for (final IcfgEdge trans : mStartLocation.getIncomingEdges()) {
 			comp += indent + "** incoming:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 					+ trans.getTarget().getDebugIdentifier() + ")\n";
 		}
 		comp += "End: " + mEndLocation.getDebugIdentifier() + "\n";
-		for (IcfgEdge trans : mEndLocation.getOutgoingEdges()) {
+		for (final IcfgEdge trans : mEndLocation.getOutgoingEdges()) {
 			comp += indent + "** outgoing:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 					+ trans.getTarget().getDebugIdentifier() + ")\n";
 		}
-		for (IcfgEdge trans : mEndLocation.getIncomingEdges()) {
+		for (final IcfgEdge trans : mEndLocation.getIncomingEdges()) {
 			comp += indent + "** incoming:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 					+ trans.getTarget().getDebugIdentifier() + ")\n";
 		}
 		comp += "locations: \n";
-		for (BoogieIcfgLocation icfgLocation : mLocations) {
+		for (final IcfgLocation icfgLocation : mLocations) {
 			comp += indent + "* Loc:" + icfgLocation.getDebugIdentifier() + "\n";
-			for (IcfgEdge trans : icfgLocation.getOutgoingEdges()) {
+			for (final IcfgEdge trans : icfgLocation.getOutgoingEdges()) {
 				comp += indent + "** outgoing:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 						+ trans.getTarget().getDebugIdentifier() + ")\n";
 			}
-			for (IcfgEdge trans : icfgLocation.getIncomingEdges()) {
+			for (final IcfgEdge trans : icfgLocation.getIncomingEdges()) {
 				comp += indent + "** incoming:" + "(" + trans.getSource().getDebugIdentifier() + "-->"
 						+ trans.getTarget().getDebugIdentifier() + ")\n";
 			}
 		}
 		comp += "transitions: \n";
-		for (IcfgInternalTransition trans : mTransitions) {
+		for (final IcfgInternalTransition trans : mTransitions) {
 			comp += indent + "* (" + trans.getSource().getDebugIdentifier() + "-->"
 					+ trans.getTarget().getDebugIdentifier() + ")\n";
 		}

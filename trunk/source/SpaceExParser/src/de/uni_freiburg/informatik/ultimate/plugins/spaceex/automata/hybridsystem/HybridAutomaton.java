@@ -52,7 +52,7 @@ public class HybridAutomaton {
 	private final Set<String> mLocalConstants;
 	private final Set<String> mLabels;
 	private final Map<Integer, Location> mLocations;
-	private Location mInitialLocation;
+	private final Location mInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
 	private SpaceExPreferenceManager mPreferenceManager;
@@ -85,10 +85,8 @@ public class HybridAutomaton {
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
-		// if no initial location has been specified, it's simply the first location.
-		if (mPreferenceManager == null || !mPreferenceManager.getInitialLocations().containsKey(mName + "_1")) {
-			mInitialLocation = mLocations.get(1);
-		}
+		// if initial location is simply the first location.
+		mInitialLocation = mLocations.get(1);
 	}
 	
 	protected HybridAutomaton(String name, Map<Integer, Location> locations, Location initialLocation,
@@ -115,14 +113,6 @@ public class HybridAutomaton {
 		final Location newLoc = new Location(location);
 		newLoc.setInvariant(location.getInvariant());
 		newLoc.setFlow(location.getFlow());
-		String initlocname = "";
-		if (mPreferenceManager != null && mPreferenceManager.getInitialLocations().containsKey(mName + "_1")) {
-			initlocname = mPreferenceManager.getInitialLocations().get(mName + "_1");
-		}
-		
-		if (initlocname.equals(newLoc.getName())) {
-			mInitialLocation = newLoc;
-		}
 		mLocations.put(newLoc.getId(), newLoc);
 		
 		if (mLogger.isDebugEnabled()) {
@@ -158,7 +148,7 @@ public class HybridAutomaton {
 	 * @return
 	 */
 	public Map<String, String> renameAccordingToBinds(Map<String, String> autBinds) {
-		Map<String, String> newBinds = new HashMap<>();
+		final Map<String, String> newBinds = new HashMap<>();
 		autBinds.forEach((glob, loc) -> {
 			if (mLabels.contains(loc)) {
 				// first of all remove the local name from labels and add the global name
@@ -273,7 +263,7 @@ public class HybridAutomaton {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		String indent = "    ";
+		final String indent = "    ";
 		sb.append(mName).append(":\n ").append(indent).append("parameters: ")
 				.append(mGlobalParameters.toString() + mLocalParameters.toString() + "\n").append(indent)
 				.append("constants: ").append(mGlobalConstants.toString() + mLocalConstants.toString() + "\n")

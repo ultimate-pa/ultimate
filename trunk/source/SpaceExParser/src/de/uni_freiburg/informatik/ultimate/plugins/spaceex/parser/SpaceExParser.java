@@ -201,8 +201,8 @@ public class SpaceExParser implements ISource {
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
 		final HybridIcfgGenerator gen =
 				new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit, mVariableManager);
-		return gen.getSimpleIcfg();
-//		return gen.createIfcgFromComponents(automaton);
+		// return gen.getSimpleIcfg();
+		return gen.createIfcgFromComponents(automaton);
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new

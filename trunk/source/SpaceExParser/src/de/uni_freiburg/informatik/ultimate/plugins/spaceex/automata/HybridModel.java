@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystemFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.LocationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
@@ -61,8 +63,12 @@ public class HybridModel {
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private Map<String, HybridSystem> mSystems;
 	private Map<String, HybridAutomaton> mMergedAutomata;
+	private Map<Location, LocationPair> mMergedLocationToPair;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
+	/*
+	 * This constructor is just for tests.
+	 */
 	public HybridModel(final Sspaceex root, final ILogger logger) throws Exception {
 		mLogger = logger;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
@@ -124,6 +130,7 @@ public class HybridModel {
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
+		mMergedLocationToPair = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
@@ -155,6 +162,7 @@ public class HybridModel {
 						systems, mPreferenceManager);
 				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
+				// create the parallel compositions
 				final HybridAutomaton hybAut = mergeAutomata(hybsys);
 				mMergedAutomata.put(hybsys.getName(), hybAut);
 			});
@@ -201,14 +209,20 @@ public class HybridModel {
 		HybridAutomaton aut1 = automata.iterator().next();
 		merged = aut1;
 		automata.remove(aut1);
+		
 		while (automata.iterator().hasNext()) {
+			mMergedLocationToPair.clear();
 			final HybridAutomaton aut2 = automata.iterator().next();
 			automata.remove(aut2);
 			mLogger.debug("merging: " + aut1.getName() + " and " + aut2.getName());
-			merged = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2);
+			merged = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2, mMergedLocationToPair);
 			aut1 = merged;
 		}
 		mLogger.debug(merged.toString());
+		mMergedLocationToPair.forEach((k, v) -> {
+			mLogger.info("Merged: " + k.getName() + " Locpair:" + v);
+		});
+		mLogger.info(merged.toString());
 		return merged;
 	}
 	
