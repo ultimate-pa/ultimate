@@ -59,6 +59,8 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 			"examples/Automata/regression",
 			"examples/Automata/atsTestFiles",
 			"examples/Automata/AUTOMATA_SCRIPT",
+			// common folders
+			// "examples/Automata/regression/nwa/operations/minimization"
 			// the following are to be removed and only contain expensive/random/unimportant examples
 			// "examples/Automata/BuchiAutomata",
 			// "examples/Automata/BuchiNwa",
