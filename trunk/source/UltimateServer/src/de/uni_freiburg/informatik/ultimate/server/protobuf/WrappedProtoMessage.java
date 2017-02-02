@@ -6,10 +6,10 @@ import java.io.OutputStream;
 
 import com.google.protobuf.GeneratedMessageV3;
 
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage;
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage.Message.Level;
+import de.uni_freiburg.informatik.ultimate.server.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header;
-import de.uni_freiburg.informatik.ultimate.servermodel.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.servercontroller.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.servercontroller.IWrappedMessage.Message.Level;
 
 public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> {
 	private Header header;

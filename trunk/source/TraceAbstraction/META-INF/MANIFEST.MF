@@ -4,7 +4,6 @@ Bundle-Name: TraceAbstraction
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
- Library-GraphVR,
  Library-ModelCheckerUtils,
  Library-SMTLIB,
  Library-UltimateUtil,

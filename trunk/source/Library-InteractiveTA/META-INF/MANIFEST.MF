@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-InteractiveTA
+Bundle-SymbolicName: Library-InteractiveTA
+Bundle-Version: 0.0.1
+Require-Bundle: Library-UltimateCore,
+ Library-Protobuf,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;bundle-version="0.0.1"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
+Bundle-ClassPath: .

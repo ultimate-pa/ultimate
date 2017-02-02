@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.server.exceptions;
 
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.servercontroller.IWrappedMessage;
 
 public class ClientSorryException extends Exception {
 	private static final long serialVersionUID = 4066976798408917275L;

@@ -4,7 +4,7 @@
      <extension
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
-            class="de.uni_freiburg.informatik.ultimate.server.ServerController"
+            class="de.uni_freiburg.informatik.ultimate.servercontroller.ServerController"
             isGraphical="false" preference="100"/>
    </extension>  
 </plugin>

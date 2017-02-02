@@ -8,6 +8,6 @@ Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-Protobuf,
  Library-UltimateUtil
-Export-Package: de.uni_freiburg.informatik.ultimate.server,
- de.uni_freiburg.informatik.ultimate.server.exceptions
-Import-Package: de.uni_freiburg.informatik.ultimate.servermodel
+Export-Package: de.uni_freiburg.informatik.ultimate.server.exceptions,
+ de.uni_freiburg.informatik.ultimate.servercontroller
+Import-Package: de.uni_freiburg.informatik.ultimate.server
