@@ -20,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.google.protobuf.GeneratedMessageV3;
 
@@ -27,49 +28,49 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.server.FutureClient;
 import de.uni_freiburg.informatik.ultimate.server.IServer;
 import de.uni_freiburg.informatik.ultimate.server.ITypeRegistry;
-import de.uni_freiburg.informatik.ultimate.server.exceptions.ClientSorryException;
-import de.uni_freiburg.informatik.ultimate.server.exceptions.ConnectionInterruptedException;
-import de.uni_freiburg.informatik.ultimate.server.protobuf.WrappedProtoMessage;
-import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header;
-import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header.Action;
-import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Message;
-import de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Message.Level;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.WrappedProtoMessage;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level;
 
 public abstract class TCPServer<T> implements IServer {
 
 	private static final String REQUEST_ID_PATTERN = "Request%s";
 	private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
-	private static final int QUEUE_SIZE = 1000;
 
 	protected final ILogger mLogger;
 	protected int mPort;
 	protected boolean mRunning = false;
 	protected ServerSocket mSocket;
 
-	protected FutureClient<T> mClient = null;
+	protected final FutureClient<T> mClient;
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
+	protected Supplier<ExecutorService> mGetExecutorService;
 
-	protected final ITypeRegistry<T> mTypeRegistry;
+	// protected final ITypeRegistry<T> mTypeRegistry;
 	protected Map<String, WrappedFuture<? extends GeneratedMessageV3>> mExpectedData = new HashMap<>();
-
-	protected BlockingQueue<GeneratedMessageV3> mOutputBuffer;
 
 	public TCPServer(ILogger logger, int port) {
 		mLogger = logger;
 		mPort = port;
+		mGetExecutorService = Executors::newWorkStealingPool;
+		mClient = new FutureClient<T>(mLogger);
+	}
 
-		mOutputBuffer = new ArrayBlockingQueue<>(QUEUE_SIZE);
-		mExecutor = Executors.newWorkStealingPool();
-		mClient = new Client(logger, mTypeRegistry);
+	public abstract void initClient();
+
+	private void setupExecutorService() {
+		if (mExecutor == null || mExecutor.isTerminated()) {
+			mExecutor = mGetExecutorService.get();
+		}
 	}
 
 	@Override
 	public synchronized void start() {
 		mLogger.info("starting Server.");
-		if (mExecutor.isTerminated()) {
-			mExecutor = Executors.newWorkStealingPool();
-		}
+		setupExecutorService();
 		mServerFuture = mExecutor.submit(this::run);
 		mRunning = true;
 	}
@@ -79,7 +80,8 @@ public abstract class TCPServer<T> implements IServer {
 		mLogger.info("stopping Server..");
 		mRunning = false;
 		try {
-			mClient.closeConnection();
+			// mClient.closeConnection();
+			mClient.cancel(true);
 			mServerFuture.get(10, TimeUnit.SECONDS);
 			mLogger.info("Server stopped.");
 		} catch (InterruptedException | ExecutionException e) {
@@ -90,73 +92,36 @@ public abstract class TCPServer<T> implements IServer {
 		}
 	}
 
-	private void sendOutput() {
-		OutputStream output;
-		try {
-			output = mClient.getOutputStream();
-		} catch (IOException e) {
-			mLogger.error("could not get Output stream", e);
-			closeClientConnection();
-			return;
-		}
-		while (mRunning) {
-			if (mClient.isClosed()) {
-				mLogger.error("connection was unexpectedly closed");
-				break;
-			}
-
-			GeneratedMessageV3 msg;
-			try {
-				// mLogger.info("trying to pull ... ");
-				msg = mOutputBuffer.poll(5, TimeUnit.SECONDS);
-				if (msg == null)
-					continue;
-
-				try {
-					msg.writeDelimitedTo(output);
-				} catch (IOException e) {
-					mLogger.error(e);
-					continue;
-				}
-			} catch (InterruptedException e) {
-				mLogger.error("output thread interrupted.", e);
-				continue;
-			}
-		}
-	}
-
-	private void handleInput() {
-		InputStream input;
-		try {
-			input = mClient.getInputStream();
-		} catch (IOException e) {
-			mLogger.error("could not get Input stream", e);
-			closeClientConnection();
-			return;
-		}
-		while (mRunning) {
-			if (mClient.isClosed()) {
-				mLogger.error("connection was unexpectedly closed");
-				break;
-			}
-
-			try {
-				final WrappedProtoMessage wrapped = read(input);
-				if (wrapped == null)
-					break;
-				handleWrapped(wrapped);
-			} catch (IOException e) {
-				mLogger.error("failed to read input", e);
-				return;
-			}
-		}
-	}
-
-	private boolean failedAnyFuture(Throwable e) {
-		return mExpectedData.values().stream().anyMatch(f -> f.future.completeExceptionally(e))
-				|| (mHelloFuture != null && mHelloFuture.completeExceptionally(e));
-	}
-
+	/*
+	 * private void sendOutput() { OutputStream output; try { output =
+	 * mClient.getOutputStream(); } catch (IOException e) {
+	 * mLogger.error("could not get Output stream", e); closeClientConnection();
+	 * return; } while (mRunning) { if (mClient.isClosed()) {
+	 * mLogger.error("connection was unexpectedly closed"); break; }
+	 * 
+	 * GeneratedMessageV3 msg; try { // mLogger.info("trying to pull ... "); msg
+	 * = mOutputBuffer.poll(5, TimeUnit.SECONDS); if (msg == null) continue;
+	 * 
+	 * try { msg.writeDelimitedTo(output); } catch (IOException e) {
+	 * mLogger.error(e); continue; } } catch (InterruptedException e) {
+	 * mLogger.error("output thread interrupted.", e); continue; } } }
+	 * 
+	 * private void handleInput() { InputStream input; try { input =
+	 * mClient.getInputStream(); } catch (IOException e) {
+	 * mLogger.error("could not get Input stream", e); closeClientConnection();
+	 * return; } while (mRunning) { if (mClient.isClosed()) {
+	 * mLogger.error("connection was unexpectedly closed"); break; }
+	 * 
+	 * try { final WrappedProtoMessage wrapped = read(input); if (wrapped ==
+	 * null) break; handleWrapped(wrapped); } catch (IOException e) {
+	 * mLogger.error("failed to read input", e); return; } } }
+	 * 
+	 * private boolean failedAnyFuture(Throwable e) { return
+	 * mExpectedData.values().stream().anyMatch(f ->
+	 * f.future.completeExceptionally(e)) || (mHelloFuture != null &&
+	 * mHelloFuture.completeExceptionally(e)); }
+	 */
+	/*
 	private void run() {
 		try {
 			mSocket = new ServerSocket(mPort);
@@ -330,21 +295,15 @@ public abstract class TCPServer<T> implements IServer {
 		}
 		logmethod.accept(CLIENT_MESSAGE_PREFIX + msg);
 	}
-
+	 */
 	@Override
 	public void waitForConnection() throws InterruptedException {
 		if (!mRunning || mServerFuture.isDone()) {
 			throw new IllegalStateException("Server not running.");
 		}
-		if (mHelloFuture == null) {
-			synchronized (this) {
-				mLogger.info("waiting for connection ...");
-				wait();
-			}
-		}
-		mLogger.info("completablefuture for hello: " + mHelloFuture.toString());
+
 		try {
-			mHelloFuture.get(10, TimeUnit.SECONDS);
+			mClient.get(60, TimeUnit.SECONDS);
 		} catch (ExecutionException e) {
 			mLogger.error(e);
 		} catch (TimeoutException e) {

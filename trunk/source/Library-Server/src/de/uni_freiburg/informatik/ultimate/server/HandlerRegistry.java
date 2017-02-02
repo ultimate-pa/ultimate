@@ -6,6 +6,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.interactive.IHandlerRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
+
 public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 	private final ITypeRegistry<M> mTypeRegistry;
 	final protected Map<String, TypeHandler<?>> mByName = new HashMap<>();

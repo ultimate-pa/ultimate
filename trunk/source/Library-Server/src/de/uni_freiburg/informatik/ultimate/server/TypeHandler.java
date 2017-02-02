@@ -8,6 +8,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeHandler;
+
 public class TypeHandler<T> implements ITypeHandler<T> {
 	private final IRegisteredType<T> mRegisteredType;
 	private final List<Consumer<T>> mConsumers = new ArrayList<>();

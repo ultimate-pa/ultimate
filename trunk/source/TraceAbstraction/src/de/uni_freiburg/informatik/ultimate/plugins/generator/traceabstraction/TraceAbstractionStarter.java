@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.server.IProtoServer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
@@ -71,10 +70,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.Server;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.Converter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.TraceAbstractionProtos;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.protobuf.TraceAbstractionProtos.CegarResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -105,7 +100,7 @@ public class TraceAbstractionStarter {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		Server.init(services);
+		//Server.init(services);
 		
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
@@ -280,6 +275,7 @@ public class TraceAbstractionStarter {
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
+		/*
 		final IProtoServer server = Server.get();
 		if (taPrefs.interactive()) {
 			mLogger.info("Interactive Verification enabled. Serializing initial abstraction"
@@ -300,6 +296,7 @@ public class TraceAbstractionStarter {
 			// info.setIteration(0).setRun(Converter.fromNestedRun(mCounterexample));
 			// mServer.send(info.build());
 		}
+		*/
 
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
@@ -328,7 +325,7 @@ public class TraceAbstractionStarter {
 
 		mArtifact = basicCegarLoop.getArtifact();
 		
-		server.stop();
+		//server.stop();
 	}
 
 	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<BoogieIcfgLocation> root,

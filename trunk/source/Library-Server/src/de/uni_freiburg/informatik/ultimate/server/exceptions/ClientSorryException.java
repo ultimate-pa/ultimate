@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.server.exceptions;
 
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 /**
  * This Exception is thrown, when a Client is sending a SORRY-Message,

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.server.exceptions;
+package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 

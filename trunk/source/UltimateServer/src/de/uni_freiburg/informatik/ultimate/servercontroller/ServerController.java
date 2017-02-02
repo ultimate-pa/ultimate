@@ -56,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.server.exceptions.InvalidFileArgumentException;
-import de.uni_freiburg.informatik.ultimate.server.util.RcpUtils;
+import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**

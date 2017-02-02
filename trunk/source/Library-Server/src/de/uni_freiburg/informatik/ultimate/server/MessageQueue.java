@@ -5,6 +5,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 public class MessageQueue<T> {
 	private static final int QUEUE_SIZE = 1000;

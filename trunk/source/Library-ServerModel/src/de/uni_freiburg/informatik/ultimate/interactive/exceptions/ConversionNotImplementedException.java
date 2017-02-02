@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.server.exceptions;
+package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
 
 /**
  * This Exception is thrown, when a Converter between two types is registered,

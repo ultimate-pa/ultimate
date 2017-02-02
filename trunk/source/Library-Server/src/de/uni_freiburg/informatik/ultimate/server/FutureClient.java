@@ -12,7 +12,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.server.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 /**
  * represents possible Future-Client. <br>
@@ -38,7 +39,7 @@ public class FutureClient<T> implements Future<Client<T>> {
 	private final CompletableFuture<Client<T>> mClientFuture;
 	private final Future<Client<T>> mClientWithHelloFuture;
 
-	FutureClient(ILogger logger) {
+	public FutureClient(ILogger logger) {
 		mLogger = logger;
 		mClientFuture = CompletableFuture.allOf(mSocket, mMessageFactory, mTypeRegistry).thenApply(n -> {
 			final Supplier<IWrappedMessage<T>> factory = mMessageFactory.join();

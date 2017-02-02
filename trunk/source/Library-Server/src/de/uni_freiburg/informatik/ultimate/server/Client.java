@@ -10,9 +10,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage.Action;
-import de.uni_freiburg.informatik.ultimate.server.IWrappedMessage.Message;
-import de.uni_freiburg.informatik.ultimate.server.exceptions.ClientSorryException;
+import de.uni_freiburg.informatik.ultimate.interactive.IHandlerRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Action;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 
 /**
  * represents a Client or possibly Future-Client. (separate class?) a Client
