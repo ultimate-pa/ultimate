@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
@@ -159,11 +160,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate axioms,
-			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy) {
+			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES,
-				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms);
+				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms,
+				loc2underApprox, loc2overApprox);
 	}
 
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
@@ -317,12 +321,18 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			edges2visit = newEdges;
 
 		}
-
-		final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2WP.keySet().stream().collect(Collectors.toMap(
-				loc -> loc,
-				loc -> TransFormulaBuilder.constructTransFormulaFromPredicate(locs2WP.get(loc), managedScript)));
 		// remove the mapping (error-location -> false) from result
-		result.remove(errorloc);
+		locs2WP.remove(errorloc);
+		
+		return convertMapToPreds_to_MapToUnmodTrans(locs2WP, managedScript);
+	}
+
+	private Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPreds_to_MapToUnmodTrans(
+			Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
+
+		final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2Preds.keySet().stream().collect(Collectors.toMap(
+				loc -> loc,
+				loc -> TransFormulaBuilder.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
 		return result;
 	}
 
@@ -547,10 +557,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			pathprogramLocs2Predicates
 			.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
 		}
-		final NonInductiveAnnotationGenerator underpprox = new NonInductiveAnnotationGenerator(mServices, 
-				mPredicateUnifier.getPredicateFactory(), icfg, Approximation.UNDERAPPROXIMATION);
+		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices, 
+				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
 		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices, 
-				mPredicateUnifier.getPredicateFactory(), icfg, Approximation.OVERAPPROXIMATION);
+				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
+		
+		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = convertHashRelation(underApprox.getResult(),
+				icfg.getCfgSmtToolkit().getManagedScript());
+		// TODO: It should not be null
+		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
 
 		if (mUseAbstractInterpretationPredicates) {
 			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
@@ -562,7 +577,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
 				createDefaultFactory(mServices, mStorage, mPredicateUnifier, icfg.getCfgSmtToolkit(),
 						useNonlinearConstraints, useVarsFromUnsatCore, solverSettings, simplificationTechnique,
-						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy);
+						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy, loc2underApprox, loc2overApprox);
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
@@ -576,6 +591,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
 		return invariants;
+	}
+
+	private Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
+			HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
+		
+		Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
+		for (IcfgLocation loc : loc2SetOfPreds.getDomain()) {
+			List<IPredicate> preds = new ArrayList<IPredicate>(loc2SetOfPreds.getImage(loc).size());
+			preds.addAll(loc2SetOfPreds.getImage(loc));
+			// Currently, we use only one predicate
+			loc2Predicate.put(loc, preds.get(0));
+		}
+		return convertMapToPreds_to_MapToUnmodTrans(loc2Predicate, managedScript);
 	}
 
 	private static void extractLocationsTransitionsAndVariablesFromPathProgram(final IIcfg<IcfgLocation> pathProgram,
