@@ -52,7 +52,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 	 * @return element in Ultimate model
 	 */
 	@SuppressWarnings("unchecked")
-	public IElement getUltimateModelOfBranchingProcess(final BranchingProcess<S, C> branchingProcess) {
+	public IElement transformToUltimateModel(final BranchingProcess<S, C> branchingProcess) {
 		final BranchingProcessInitialNode<S, C> graphroot = new BranchingProcessInitialNode<>(branchingProcess);
 		
 		final Collection<Condition<S, C>> initialStates = branchingProcess.initialConditions();

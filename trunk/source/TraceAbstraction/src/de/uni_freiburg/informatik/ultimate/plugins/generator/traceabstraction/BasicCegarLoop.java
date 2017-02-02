@@ -37,7 +37,6 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -383,7 +382,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
 							interpolantAutomaton, psd, false);
 				} else {
-					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
+					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 							oldAbstraction, interpolantAutomaton, psd, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
@@ -604,8 +603,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				return mIcfgContainer;
 			}
 			try {
-				return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
-						mArtifactAutomaton);
+				return mArtifactAutomaton.transformToUltimateModel(new AutomataLibraryServices(mServices));
 			} catch (final AutomataOperationCanceledException e) {
 				return null;
 			}

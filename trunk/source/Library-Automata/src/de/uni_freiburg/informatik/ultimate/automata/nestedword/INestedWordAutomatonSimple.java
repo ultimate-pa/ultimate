@@ -28,10 +28,14 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Interface for the most basic data structure that represents a nested word
@@ -227,5 +231,11 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
 		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
 		return result;
+	}
+	
+	@Override
+	default IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
 	}
 }
