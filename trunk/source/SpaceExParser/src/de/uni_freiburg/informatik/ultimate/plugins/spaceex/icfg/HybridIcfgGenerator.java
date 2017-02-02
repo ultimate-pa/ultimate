@@ -63,16 +63,20 @@ public class HybridIcfgGenerator {
 	private final ILogger mLogger;
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
 	private final CfgSmtToolkit mSmtToolkit;
+	// Map of CFG Components which will be connected to an ICFG
 	private final Map<String, HybridCfgComponent> mCfgComponents;
 	private final IPayload mPayload;
 	private final String mProcedure = "MAIN";
 	private final HybridVariableManager mVariableManager;
 	private final IcfgLocation mErrorLocation;
 	private final IcfgLocation mRootLocation;
+	// The connection list holds ICFGLocations which have to be connected to the initial location of a group
 	private final List<IcfgLocation> mConnectionList;
+	// Created transitions holds a List of ICFGLocations connected to the Map Key
 	private final Map<IcfgLocation, List<IcfgLocation>> mCreatedTransitions;
 	private final Scenario mScenario;
 	
+	// Scenario that determines if Preferencegroups are used or not.
 	private enum Scenario {
 		PREF_GROUPS, NO_GROUPS
 	}
@@ -93,8 +97,15 @@ public class HybridIcfgGenerator {
 		mRootLocation = new IcfgLocation("root", mProcedure);
 	}
 	
+	/**
+	 * Fucntion that converts a HybridAutomaton into an ICFG
+	 * 
+	 * @param automaton
+	 * @return
+	 */
 	public BasicIcfg<IcfgLocation> createIfcgFromComponents(HybridAutomaton automaton) {
 		// If scenario is that we have preferencegroups, get the parallel compositions of the groups.
+		// else just build the ICFG for one automaton without initial assignments.
 		if (mScenario == Scenario.PREF_GROUPS) {
 			final Map<Integer, HybridAutomaton> parallelCompositions =
 					mSpaceExPreferenceManager.getGroupIdToParallelComposition();
@@ -150,6 +161,12 @@ public class HybridIcfgGenerator {
 		}
 	}
 	
+	/**
+	 * Function that converts a given hybrid automaton into ICFG components.
+	 * 
+	 * @param automaton
+	 * @param groupid
+	 */
 	private void automatonToIcfg(final HybridAutomaton automaton, int groupid) {
 		final Location initialLocation = automaton.getInitialLocation();
 		final Map<Integer, Location> locations = automaton.getLocations();
@@ -167,12 +184,16 @@ public class HybridIcfgGenerator {
 		transitionsToIcfg(transitions, initialLocation);
 	}
 	
-	/*
-	 * variable methods
+	/**
+	 * Function that Creates the Variable assignment ICFG component.
+	 * 
+	 * @param variables
+	 * @param groupid
 	 */
 	private void variablesToIcfg(final Set<String> variables, int groupid) {
-		
 		final Script script = mSmtToolkit.getManagedScript().getScript();
+		// if the group id exists, get the group,
+		// else just set it null. Groups start from ID 1
 		SpaceExPreferenceGroup group;
 		if (mSpaceExPreferenceManager.getPreferenceGroups().containsKey(groupid)) {
 			group = mSpaceExPreferenceManager.getPreferenceGroups().get(groupid);
@@ -180,9 +201,10 @@ public class HybridIcfgGenerator {
 			group = null;
 		}
 		
-		// get initial values of the variable
+		// create a transformula consisting of the initial variable assingments of the group
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
+		// first add all variables.
 		for (final String var : variables) {
 			final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
 			final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
@@ -190,6 +212,7 @@ public class HybridIcfgGenerator {
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
 		}
+		// then evaluate the infix string of the variable assigment specified in the config.
 		UnmodifiableTransFormula transformula;
 		final String infix = (group == null) ? "" : group.getInitialVariableInfix();
 		if (infix.isEmpty()) {
@@ -250,8 +273,11 @@ public class HybridIcfgGenerator {
 		return trans;
 	}
 	
-	/*
-	 * Location methods
+	/**
+	 * Function that converts locations to ICFG components.
+	 * 
+	 * @param autLocations
+	 * @param groupid
 	 */
 	private void locationsToIcfg(final Map<Integer, Location> autLocations, int groupid) {
 		/*
@@ -320,8 +346,11 @@ public class HybridIcfgGenerator {
 		}
 	}
 	
-	/*
-	 * Transition methods
+	/**
+	 * Function that creates the necessary transitions between ICFG components.
+	 * 
+	 * @param transitions
+	 * @param initialLocation
 	 */
 	private void transitionsToIcfg(final List<Transition> transitions, final Location initialLocation) {
 		// a transition in a hybrid automaton is simply an edge from one location to another.
@@ -343,6 +372,7 @@ public class HybridIcfgGenerator {
 			target.addIncoming(transition);
 		});
 		
+		// Transitions from Group var assignment to Initial Location
 		final List<IcfgLocation> removeList = new ArrayList<>();
 		mConnectionList.forEach((loc) -> {
 			// the source of the transition is the the end of the source CFG component
@@ -372,6 +402,7 @@ public class HybridIcfgGenerator {
 		
 	}
 	
+	// logger + debug stuff.
 	private String createTransformulaLoggerMessage(final UnmodifiableTransFormula transFormula, final String infix) {
 		String msg = "######## CREATED TRANSFORMULA ######## \n";
 		msg += "created " + transFormula.toString() + "\n";
@@ -379,6 +410,13 @@ public class HybridIcfgGenerator {
 		return msg;
 	}
 	
+	/**
+	 * Fucntion to build a transformula for a transition between Locations of automata.
+	 * 
+	 * @param update
+	 * @param guard
+	 * @return
+	 */
 	private UnmodifiableTransFormula buildTransitionTransformula(final String update, final String guard) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
@@ -412,6 +450,13 @@ public class HybridIcfgGenerator {
 		return transformula;
 	}
 	
+	/**
+	 * Function to Build a transformula according to a BuildScenario.
+	 * 
+	 * @param infix
+	 * @param scenario
+	 * @return
+	 */
 	private UnmodifiableTransFormula buildTransformula(final String infix, final BuildScenario scenario) {
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
@@ -432,6 +477,11 @@ public class HybridIcfgGenerator {
 		return transformula;
 	}
 	
+	/**
+	 * Function to build a transformula with an term "false"
+	 * 
+	 * @return
+	 */
 	private UnmodifiableTransFormula buildFalseTransformula() {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
@@ -441,6 +491,7 @@ public class HybridIcfgGenerator {
 		return tfb.finishConstruction(mSmtToolkit.getManagedScript());
 	}
 	
+	// TODO: do this while parsing the .xml
 	private String preprocessLocationStatement(final String invariant) {
 		String inv = invariant.replaceAll(":=", "==");
 		inv = inv.replaceAll("&&", "&");
