@@ -27,9 +27,29 @@
 // In both cases, spoiler can pick a run that visits an accepting state such
 // that Duplicator cannot visit an accepting state.
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-print(reduceNwaDelayedSimulationB(removeDeadEnds(nwa)));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
+assert(minimizeSevpaSize == 11);
+assert(shrinkNwaSize == 10);
+assert(minimizeNwaPmaxSatSize == 10);
+assert(minimizeNwaPmaxSatAsymmetricSize == 10);
+assert(reduceNwaDirectSimulationSize == 10);
+assert(reduceNwaDirectSimulationBSize == 10);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 10);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
 
 NestedWordAutomaton nwa = (
     callAlphabet = {"c" },

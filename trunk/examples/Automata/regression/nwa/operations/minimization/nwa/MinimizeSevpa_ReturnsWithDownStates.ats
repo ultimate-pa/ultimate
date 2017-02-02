@@ -1,10 +1,28 @@
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
-assert(minimizeSevpaSize == 6);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
-assert(shrinkNwaSize == 5);
+//
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 5);
+assert(minimizeNwaPmaxSatSize == 5);
+assert(minimizeNwaPmaxSatAsymmetricSize == 5);
+assert(reduceNwaDirectSimulationSize == 5);
+assert(reduceNwaDirectSimulationBSize == 5);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2"},

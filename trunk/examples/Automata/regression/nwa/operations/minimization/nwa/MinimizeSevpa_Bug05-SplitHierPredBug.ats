@@ -1,15 +1,33 @@
+// Author: Matthias
+// Date: 22.09.2012
+// changed: Christian
+//
 // Example that shows that we may not only split partitions along linear
 // predecessors but also along hierarchical predecessors.
-// changed: Christian
-// Date: 22.09.2012
-// Author: Matthias
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 4);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatSize == 4);
+assert(minimizeNwaPmaxSatAsymmetricSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call" },

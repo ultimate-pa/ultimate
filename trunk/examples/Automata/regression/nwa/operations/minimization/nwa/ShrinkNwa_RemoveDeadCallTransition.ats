@@ -1,19 +1,37 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-20
+//
 // Example where there is a difference between removeDeadEnds() and the old
 // dead end removal operation reachableStatesCopy(nwa, false, false, true, false)
 // The new removeDeadEnds() also removes the call transition ("q1" "c1" "t").
 // Therefor (t,q1) is no longer a DoubleDecker and we may merge the states
 // "s" and "t".
 //
-// Author: heizmann@informatik.uni-freiburg.de
-// Date: 2014-08-20
+// Contains a dead end state.
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-int lessDoubleDeckers = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(lessDoubleDeckers);
-assert(lessDoubleDeckers == 4);
-int moreDoubleDeckers = numberOfStates(shrinkNwa(reachableStatesCopy(nwa, false, false, true, false)));
-print(moreDoubleDeckers);
-assert(moreDoubleDeckers == 5);
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 6);
+assert(shrinkNwaSize == 5);
+assert(minimizeNwaPmaxSatSize == 5);
+assert(minimizeNwaPmaxSatAsymmetricSize == 5);
+assert(reduceNwaDirectSimulationSize == 5);
+assert(reduceNwaDirectSimulationBSize == 5);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c" "c1" "c2"},

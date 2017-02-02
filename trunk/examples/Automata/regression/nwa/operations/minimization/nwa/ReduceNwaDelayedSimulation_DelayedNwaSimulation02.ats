@@ -1,3 +1,6 @@
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2016-09-26
+//
 // Automaton consists of two circles (s-circle and p-circle)
 // that each use one call and one return.
 // In the s-circle the accepting state occurs after the return (in state sf).
@@ -6,16 +9,30 @@
 // I would presume that each s state can be merged with the corresponding 
 // p state. However, the current implementation merges only {s2,p2} 
 // and {sx,px}.
-//
-// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
-// Date: 2016-09-26
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
-// print(nwa);
-print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
-
-
+assert(minimizeSevpaSize == 10);
+assert(shrinkNwaSize == 8);
+assert(minimizeNwaPmaxSatSize == 8);
+assert(minimizeNwaPmaxSatAsymmetricSize == 8);
+assert(reduceNwaDirectSimulationSize == 8);
+assert(reduceNwaDirectSimulationBSize == 8);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 8);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

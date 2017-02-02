@@ -1,15 +1,33 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 28.10.2012
+//
 // Reveals Bug in r7441 in DoubleDeckerAutomaton.
 // Return true for each reachable DoubleDecker not only for DoubleDeckers
 // which can reach a final state.
-// Date: 28.10.2012
-// Author: heizmann@informatik.uni-freiburg.de
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 17);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 16);
+assert(minimizeNwaPmaxSatSize == 15);
+assert(minimizeNwaPmaxSatAsymmetricSize == 15);
+assert(reduceNwaDirectSimulationSize == 15);
+assert(reduceNwaDirectSimulationBSize == 15);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 15);
+assert(reduceNwaDelayedSimulationSize == 15);
+assert(reduceNwaDelayedSimulationBSize == 15);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 15);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call102" "call100" "call98" "call96" "call104" },

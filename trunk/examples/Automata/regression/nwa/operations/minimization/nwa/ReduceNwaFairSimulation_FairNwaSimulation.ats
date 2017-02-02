@@ -3,113 +3,30 @@
 //
 // Example usage of a reduction program for Nwa automata that uses fair nwa simulation.
 
-assert(!isEmpty(nwa));
-// Before operation
-//print(nwa);
-// After operation
-print(reduceNwaFairSimulation(removeDeadEnds(nwa), false));
+parseAutomata("ReduceNwaDirectSimulation_Example.ats");
 
-// Some example automaton
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-// Small circle example from mind
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceNwaFairSimulationSize = numberOfStates(reduceNwaFairSimulation(preprocessed));
 
-NestedWordAutomaton nwa = (
-  callAlphabet = { },
-  internalAlphabet = {a b},
-  returnAlphabet = { },
-  states = {q1 q2 q3 q4},
-  initialStates = {q1},
-  finalStates = {q1},
-  callTransitions = {},
-  internalTransitions = {
-      (q1 a q2)
-	  (q2 b q3)
-	  (q3 a q4)
-	  (q4 b q1)
-  }, 
-  returnTransitions = {}
-);
-
-// Non merge-able example with a one-directed fair simulation
-/*
-NestedWordAutomaton nwa = (
-  callAlphabet = { },
-  internalAlphabet = {a b},
-  returnAlphabet = { },
-  states = {q0 q1},
-  initialStates = {q0},
-  finalStates = {q0},
-  callTransitions = {},
-  internalTransitions = {
-      (q0 b q0)
-	  (q0 a q1)
-	  (q1 a q1)
-	  (q1 b q1)
-  }, 
-  returnTransitions = {}
-);
-*/
-// Small nwa example from whiteboard
-/*
-NestedWordAutomaton nwa = (
-  callAlphabet = {c},
-  internalAlphabet = {a},
-  returnAlphabet = {r},
-  states = {q0 q1},
-  initialStates = {q0},
-  finalStates = {q1},
-  callTransitions = {
-	  (q0 c q0)
-  },
-  internalTransitions = {
-      (q0 a q1)
-  }, 
-  returnTransitions = {
-	  (q1 q0 r q1)
-  }
-);
-*/
-// Another small nwa example from whiteboard
-/*
-NestedWordAutomaton nwa = (
-  callAlphabet = {c},
-  internalAlphabet = {},
-  returnAlphabet = {r},
-  states = {q0 q1},
-  initialStates = {q0},
-  finalStates = {q1},
-  callTransitions = {
-	  (q0 c q1)
-  },
-  internalTransitions = {}, 
-  returnTransitions = {
-	  (q1 q0 r q0)
-  }
-);
-*/
-
-// Example with cyclic dependent summarize edges
-/*
-NestedWordAutomaton nwa = (
-  callAlphabet = {c},
-  internalAlphabet = {a},
-  returnAlphabet = {r},
-  states = {q1 q2 q3 q4},
-  initialStates = {q1},
-  finalStates = {q2 q4},
-  callTransitions = {
-	  (q1 c q3)
-	  (q2 c q3)
-  },
-  internalTransitions = {
-      (q1 a q2)
-	  (q2 a q1)
-	  (q4 a q1)
-	  (q4 a q2)
-  },
-  returnTransitions = {
-	  (q3 q1 r q4)
-	  (q3 q2 r q4)
-  }
-);
-*/
+assert(minimizeSevpaSize == 2);
+assert(shrinkNwaSize == 2);
+assert(minimizeNwaPmaxSatSize == 2);
+assert(minimizeNwaPmaxSatAsymmetricSize == 2);
+assert(reduceNwaDirectSimulationSize == 2);
+assert(reduceNwaDirectSimulationBSize == 2);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 2);
+assert(reduceNwaFairSimulationSize == 4);
+assert(reduceNwaDelayedSimulationSize == 2);
+assert(reduceNwaDelayedSimulationBSize == 2);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);

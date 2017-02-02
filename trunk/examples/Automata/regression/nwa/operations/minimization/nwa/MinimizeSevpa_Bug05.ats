@@ -1,18 +1,34 @@
+// Author: Matthias
+// Date: 22.09.2012
+//
 // Example that shows that we may not only split partitions along linear
 // predecessors but also along hierarchical predecessors.
-// Date: 22.09.2012
-// Author: Matthias
-
-// Testfile dumped by Ultimate at 2012/09/22 16:06:54
-
+//
 // Problem with run fibonacciENTRY assume !(n < 1); L20 assume !(n == 1); L24 call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL24' call< fibonacciENTRY assume n < 1;res = ... L20'' assume res >= 0; fibonacciEXIT > returnL25 res = tmpFst + tmpS... L20'' assume !(res >= 0); fibonacciErr0EnsuresViolation 
 
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 13);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 13);
+assert(minimizeNwaPmaxSatSize == 13);
+assert(minimizeNwaPmaxSatAsymmetricSize == 13);
+assert(reduceNwaDirectSimulationSize == 13);
+assert(reduceNwaDirectSimulationBSize == 13);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 13);
+assert(reduceNwaDelayedSimulationSize == 13);
+assert(reduceNwaDelayedSimulationBSize == 13);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 13);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call34" "call32" },
@@ -43,17 +59,8 @@ NestedWordAutomaton nwa = (
 		 ("L25486" "res = tmpFst + tmpS...28" "L20''488")
 	},
 	returnTransitions = {
-//		 ("fibonacciEXIT478" "L24'484" "return35" "L25490")
-//		 ("fibonacciEXIT478" "L24'483" "return35" "L25486")
 		 ("fibonacciEXIT478" "L24480" "return33" "L24'483")
-// 		 ("fibonacciEXIT497" "L24'484" "return35" "L25490")
-// 		 ("fibonacciEXIT497" "L24'483" "return35" "L25489")
 		 ("fibonacciEXIT497" "L24480" "return33" "L24'484")
-// 		 ("fibonacciEXIT493" "L24'484" "return35" "L25490")
-// 		 ("fibonacciEXIT493" "L24'483" "return35" "L25486")
-//		 ("fibonacciEXIT493" "L24480" "return33" "L24'483")
-//		 ("fibonacciEXIT481" "L24'484" "return35" "L25490")
 		 ("fibonacciEXIT481" "L24'483" "return35" "L25489")
-//		 ("fibonacciEXIT481" "L24480" "return33" "L24'484")
 	}
 );

@@ -1,31 +1,39 @@
-NestedWordAutomaton nwa = removeDeadEnds(nwaUnprocessed);
+//
 
-int removeDeadEnds = numberOfStates(nwa);
-int shrinkNwa = numberOfStates(shrinkNwa(nwa));
-int minimizeSevpa = numberOfStates(minimizeSevpa(nwa));
-int minimizeNwaMaxSat = numberOfStates(minimizeNwaMaxSat(nwa));
-int minimizeNwaPmaxSat = numberOfStates(minimizeNwaPmaxSat(nwa));
-int minimizeNwaPmaxSatAsymmetric = numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa));
-int reduceNwaDirectSimulationB = numberOfStates(ReduceNwaDirectSimulationB(nwa));
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-print(removeDeadEnds);
-print(shrinkNwa);
-print(minimizeSevpa);
-print(minimizeNwaMaxSat);
-print(minimizeNwaPmaxSat);
-print(minimizeNwaPmaxSatAsymmetric);
-print(reduceNwaDirectSimulationB);
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
-NestedWordAutomaton nwaUnprocessed = (
+assert(minimizeSevpaSize == 14);
+assert(shrinkNwaSize == 11);
+assert(minimizeNwaPmaxSatSize == 11);
+assert(minimizeNwaPmaxSatAsymmetricSize == 11);
+assert(reduceNwaDirectSimulationSize == 11);
+assert(reduceNwaDirectSimulationBSize == 11);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 11);
+assert(reduceNwaDelayedSimulationSize == 11);
+assert(reduceNwaDelayedSimulationBSize == 11);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 11);
+
+NestedWordAutomaton nwa = (
 	callAlphabet = {"call3572" "call3570" },
 	internalAlphabet = {"assume !(y == z);3559" "assume y == z;assume...3574" "assume z >= 0;y = z...3575" "assume true;3568" "res = res - 1;3569" "res = res - 1;3567" "res = x + 1;3562" },
 	returnAlphabet = {"return3573" "return3571" },
-	states = {"#50015#L2950015" "#49976#MainENTRY49976" "#49979#L1849979" "#49983#UpAndDownLocalENTRY49983" "#50039#MainErr0AssertViolation50039" "#50003#UpAndDownLocalEXIT50003" "#50033#L2950033" "#50035#L2950035" "#49998#UpAndDownLocalFINAL49998" "#50029#L18'50029" "#50025#UpAndDownLocalEXIT50025" "#49993#L2849993" "#50027#UpAndDownLocalEXIT50027" "#50021#UpAndDownLocalFINAL50021" "#49989#L2849989" "#50023#UpAndDownLocalFINAL50023" "#49987#UpAndDownLocalENTRY49987" "#50019#L2950019" },
+	states = {"#50015#L2950015" "#49976#MainENTRY49976" "#49979#L1849979" "#49983#UpAndDownLocalENTRY49983" "#50039#MainErr0AssertViolation50039" "#50003#UpAndDownLocalEXIT50003" "#50033#L2950033" "#50035#L2950035" "#4118#UpAndDownLocalFINAL4118" "#50029#L18'50029" "#50025#UpAndDownLocalEXIT50025" "#4113#L284113" "#50027#UpAndDownLocalEXIT50027" "#50021#UpAndDownLocalFINAL50021" "#49989#L2849989" "#50023#UpAndDownLocalFINAL50023" "#49987#UpAndDownLocalENTRY49987" "#50019#L2950019" },
 	initialStates = {"#49976#MainENTRY49976" },
 	finalStates = {"#50039#MainErr0AssertViolation50039" },
 	callTransitions = {
 		 ("#49979#L1849979" "call3570" "#49983#UpAndDownLocalENTRY49983")
-		 ("#49993#L2849993" "call3572" "#49987#UpAndDownLocalENTRY49987")
+		 ("#4113#L284113" "call3572" "#49987#UpAndDownLocalENTRY49987")
 		 ("#49989#L2849989" "call3572" "#49987#UpAndDownLocalENTRY49987")
 	},
 	internalTransitions = {
@@ -38,15 +46,15 @@ NestedWordAutomaton nwaUnprocessed = (
 		 ("#50023#UpAndDownLocalFINAL50023" "assume true;3568" "#50027#UpAndDownLocalEXIT50027")
 		 ("#50019#L2950019" "res = res - 1;3567" "#50023#UpAndDownLocalFINAL50023")
 		 ("#50015#L2950015" "res = res - 1;3567" "#50021#UpAndDownLocalFINAL50021")
-		 ("#49998#UpAndDownLocalFINAL49998" "assume true;3568" "#50003#UpAndDownLocalEXIT50003")
-		 ("#49993#L2849993" "res = res - 1;3569" "#49998#UpAndDownLocalFINAL49998")
-		 ("#49987#UpAndDownLocalENTRY49987" "res = x + 1;3562" "#49993#L2849993")
+		 ("#4118#UpAndDownLocalFINAL4118" "assume true;3568" "#50003#UpAndDownLocalEXIT50003")
+		 ("#4113#L284113" "res = res - 1;3569" "#4118#UpAndDownLocalFINAL4118")
+		 ("#49987#UpAndDownLocalENTRY49987" "res = x + 1;3562" "#4113#L284113")
 	},
 	returnTransitions = {
 		 ("#50025#UpAndDownLocalEXIT50025" "#49979#L1849979" "return3571" "#50029#L18'50029")
-		 ("#50027#UpAndDownLocalEXIT50027" "#49993#L2849993" "return3573" "#50033#L2950033")
+		 ("#50027#UpAndDownLocalEXIT50027" "#4113#L284113" "return3573" "#50033#L2950033")
 		 ("#50027#UpAndDownLocalEXIT50027" "#49989#L2849989" "return3573" "#50035#L2950035")
-		 ("#50003#UpAndDownLocalEXIT50003" "#49993#L2849993" "return3573" "#50019#L2950019")
+		 ("#50003#UpAndDownLocalEXIT50003" "#4113#L284113" "return3573" "#50019#L2950019")
 		 ("#50003#UpAndDownLocalEXIT50003" "#49989#L2849989" "return3573" "#50015#L2950015")
 	}
 );

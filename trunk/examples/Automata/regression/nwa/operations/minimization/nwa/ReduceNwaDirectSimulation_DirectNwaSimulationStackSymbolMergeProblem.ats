@@ -13,12 +13,29 @@
 //
 // Bug fixed at Jun 10, 2016 by Daniel Tischner.
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-print(nwa);
-//print(removeDeadEnds(nwa));
-// print(shrinkNwa(removeDeadEnds(nwa)));
-// print(minimizeSevpa(removeDeadEnds(nwa)));
-// print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 7);
+assert(shrinkNwaSize == 7);
+assert(minimizeNwaPmaxSatSize == 7);
+assert(minimizeNwaPmaxSatAsymmetricSize == 7);
+assert(reduceNwaDirectSimulationSize == 7);
+assert(reduceNwaDirectSimulationBSize == 7);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 7);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c1 c2},

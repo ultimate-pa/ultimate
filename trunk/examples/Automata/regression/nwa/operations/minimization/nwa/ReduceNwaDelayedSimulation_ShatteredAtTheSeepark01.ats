@@ -6,10 +6,29 @@
 // However, I am starting to realize that there is some hope that it is not
 // a bug, but a feature.
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-//print(nwa);
-print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
+assert(minimizeSevpaSize == 13);
+assert(shrinkNwaSize == 12);
+assert(minimizeNwaPmaxSatSize == 12);
+assert(minimizeNwaPmaxSatAsymmetricSize == 12);
+assert(reduceNwaDirectSimulationSize == 12);
+assert(reduceNwaDirectSimulationBSize == 12);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 12);
+assert(reduceNwaDelayedSimulationSize == 5);
+assert(reduceNwaDelayedSimulationBSize == 5);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 7);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

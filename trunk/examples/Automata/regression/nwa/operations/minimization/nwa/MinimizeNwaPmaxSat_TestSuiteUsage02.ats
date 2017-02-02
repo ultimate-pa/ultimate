@@ -1,7 +1,8 @@
-// Author: schillic@informatik.uni-freiburg.de
-// Date: 2016-06-07
+//
 
-NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+parseAutomata("MinimizeNwaPmaxSat_TestSuite.ats");
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwaUnprocessed2);
 
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
@@ -15,34 +16,12 @@ int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB
 int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
 assert(minimizeSevpaSize == 5);
-assert(shrinkNwaSize == 5);
-assert(minimizeNwaPmaxSatSize == 5);
-assert(minimizeNwaPmaxSatAsymmetricSize == 5);
-assert(reduceNwaDirectSimulationSize == 5);
-assert(reduceNwaDirectSimulationBSize == 5);
-assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
-assert(reduceNwaDelayedSimulationSize == 5);
-assert(reduceNwaDelayedSimulationBSize == 5);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
-
-NestedWordAutomaton nwa = (
-	callAlphabet = {c},
-	internalAlphabet = {a b},
-	returnAlphabet = {r1 r2},
-	states = {q0 q1 q2 q3 qf},
-	initialStates = {q0},
-	finalStates = {qf},
-	callTransitions = {
-		(q1 c q3)
-		(q2 c q3)
-	},
-	internalTransitions = {
-		(q0 a q1)
-		(q0 b q2)
-		(qf a qf)
-	},
-	returnTransitions = {
-		(q3 q1 r1 qf)
-		(q3 q2 r2 qf)
-	}
-);
+assert(shrinkNwaSize == 4);
+assert(minimizeNwaPmaxSatSize == 4);
+assert(minimizeNwaPmaxSatAsymmetricSize == 4);
+assert(reduceNwaDirectSimulationSize == 4);
+assert(reduceNwaDirectSimulationBSize == 4);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
+assert(reduceNwaDelayedSimulationSize == 4);
+assert(reduceNwaDelayedSimulationBSize == 4);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);

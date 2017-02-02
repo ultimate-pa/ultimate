@@ -1,13 +1,28 @@
 // Example that reveals probably a bug in shrinkNwa in revision 12302.
 
-// Testfile dumped by Ultimate at 2014/09/03 03:10:51
-print(numberOfStates(nwa));
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 52);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 49);
+assert(minimizeNwaPmaxSatSize == 49);
+assert(minimizeNwaPmaxSatAsymmetricSize == 47);
+assert(reduceNwaDirectSimulationSize == 49);
+assert(reduceNwaDirectSimulationBSize == 49);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 49);
+assert(reduceNwaDelayedSimulationSize == 49);
+assert(reduceNwaDelayedSimulationBSize == 49);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 49);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c0 c1 c2 c3 c4 c5 },

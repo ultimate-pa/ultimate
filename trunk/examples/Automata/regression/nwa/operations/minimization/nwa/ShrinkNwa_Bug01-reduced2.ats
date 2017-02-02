@@ -1,9 +1,4 @@
-// Testfile dumped by Ultimate at 2017/01/08 23:04:06
-// Shrunk by Christian Schilling 2017/01/12
-//
-// Revealed a problem in the delayed simulation-based minimization for NWA.
-//
-// {q0,q3} and {q1,q4}, but the further is not correct.
+// Another reduced version of ShrinkNwa_Bug01.ats
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
@@ -18,35 +13,38 @@ int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(p
 int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
 int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
-assert(minimizeSevpaSize == 6);
-assert(shrinkNwaSize == 5);
-assert(minimizeNwaPmaxSatSize == 5);
-assert(minimizeNwaPmaxSatAsymmetricSize == 5);
-assert(reduceNwaDirectSimulationSize == 5);
-assert(reduceNwaDirectSimulationBSize == 5);
-assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
-assert(reduceNwaDelayedSimulationSize == 5);
-assert(reduceNwaDelayedSimulationBSize == 5);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
+assert(minimizeSevpaSize == 9);
+assert(shrinkNwaSize == 9);
+assert(minimizeNwaPmaxSatSize == 9);
+assert(minimizeNwaPmaxSatAsymmetricSize == 9);
+assert(reduceNwaDirectSimulationSize == 9);
+assert(reduceNwaDirectSimulationBSize == 9);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 9);
+assert(reduceNwaDelayedSimulationSize == 9);
+assert(reduceNwaDelayedSimulationBSize == 9);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 9);
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {"c"},
-	internalAlphabet = {"a" "b"},
-	returnAlphabet = {"r"},
-	states = {"q1" "qF" "q3" "q2" "q4" "q0"},
-	initialStates = {"q0"},
-	finalStates = {"qF" "q0"},
+	callAlphabet = {c},
+	internalAlphabet = {a1 a2 a3},
+	returnAlphabet = {r},
+	states = {q0 q1 q2 q3 q4 q5 q6 q7 q8},
+	initialStates = {q0},
+	finalStates = {q8},
 	callTransitions = {
-		("q0" "c" "q1")
-		("q3" "c" "q4")
+		 (q0 c q1)
+		 (q1 c q2)
+		 (q3 c q1)
 	},
 	internalTransitions = {
-		("q2" "a" "qF")
-		("q2" "b" "q3")
-		("qF" "a" "qF")
+		 (q2 a1 q1)
+		 (q2 a2 q3)
+		 (q2 a3 q4)
 	},
 	returnTransitions = {
-		("q1" "q0" "r" "q2")
-		("q4" "q3" "r" "q2")
+		 (q4 q1 r q5)
+		 (q5 q3 r q6)
+		 (q6 q1 r q7)
+		 (q7 q0 r q8)
 	}
 );

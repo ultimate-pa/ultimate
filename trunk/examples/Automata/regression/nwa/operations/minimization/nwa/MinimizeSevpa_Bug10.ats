@@ -1,14 +1,32 @@
 // Testfile dumped by Ultimate at 2012/10/13 16:45:45
-
+//
+// Reveals bug in revision 7230.
+//
 // Problem with run #25280#TestENTRY x = 1;havoc n; #25283#L22 call< #25287#encTENTRY x_local = x;n_local... #25291#L39loopEntry' assume star; #25295#L42 call< #25293#encLTENTRY x_local = x;n_local... #25297#L109 call< #25299#encLLTENTRY assume x == 0;ret :=... #25303#L123' assume x == 0 <==> r... #25307#encLLTEXIT > return#25311#L109' assume CallRet;ret :... #25315#L115' assume x == 0 || x =... #25319#encLTEXIT > return#25326#L42' assume !!blockCall;h... #25336#L45 assume !star;x_local... #25346#L50 call< #25355#encLTENTRY x_local = x;n_local... #25363#L109 call< #25299#encLLTENTRY assume !(x == 0);ret... #25301#L123' assume x == 0 <==> r... #25305#encLLTEXIT > return#25383#L109' assume !CallRet; #25387#L115 call< #25317#encRLTENTRY assume !(x == 1);ret... #25323#L133' assume x == 1 <==> r... #25333#encRLTEXIT > return#25419#L115' assume x == 0 || x =... #25437#encLTEXIT > return#25450#L50' assume !blockCall;re... #25466#encTFINAL assume !(x == 1 ==> ... #25485#encRLTErr0EnsuresViolation 
 
-//reveals bug in revision 7230
-int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
-print(minimizeSevpaSize);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
 assert(minimizeSevpaSize == 85);
-int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(nwa)));
-print(shrinkNwaSize);
 assert(shrinkNwaSize == 81);
+assert(minimizeNwaPmaxSatSize == 80);
+assert(minimizeNwaPmaxSatAsymmetricSize == 80);
+assert(reduceNwaDirectSimulationSize == 84);
+assert(reduceNwaDirectSimulationBSize == 80);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 80);
+assert(reduceNwaDelayedSimulationSize == 84);
+assert(reduceNwaDelayedSimulationBSize == 80);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 80);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call775" "call773" "call767" "call771" "call765" "call769" "call781" "call779" "call777" },

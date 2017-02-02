@@ -1,9 +1,31 @@
+// Author: Daniel Tischner
+//
 // Random nwa automaton dumped by RandomNwaBenchmarkCreator at 2016/07/02 22:45:50
 // Bug minimization with DeltaDebugger
-// Author: Daniel Tischner
 
-//print(nwa);
-reduceNwaDelayedSimulation(removeDeadEnds(nwa), false);
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 3);
+assert(shrinkNwaSize == 3);
+assert(minimizeNwaPmaxSatSize == 3);
+assert(minimizeNwaPmaxSatAsymmetricSize == 3);
+assert(reduceNwaDirectSimulationSize == 3);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+assert(reduceNwaDelayedSimulationSize == 3);
+assert(reduceNwaDelayedSimulationBSize == 3);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 3);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

@@ -1,11 +1,8 @@
-// Testfile dumped by Ultimate at 2017/01/08 23:04:06
-// Shrunk by Christian Schilling 2017/01/12
 //
-// Revealed a problem in the delayed simulation-based minimization for NWA.
-//
-// {q0,q3} and {q1,q4}, but the further is not correct.
 
-NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+parseAutomata("MinimizeNwaPmaxSat_TestSuite.ats");
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwaUnprocessed13);
 
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
 int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
@@ -18,7 +15,7 @@ int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(p
 int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
 int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
-assert(minimizeSevpaSize == 6);
+assert(minimizeSevpaSize == 5);
 assert(shrinkNwaSize == 5);
 assert(minimizeNwaPmaxSatSize == 5);
 assert(minimizeNwaPmaxSatAsymmetricSize == 5);
@@ -28,25 +25,3 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 5);
 assert(reduceNwaDelayedSimulationSize == 5);
 assert(reduceNwaDelayedSimulationBSize == 5);
 assert(reduceNwaDelayedFullMultipebbleSimulationSize == 5);
-
-NestedWordAutomaton nwa = (
-	callAlphabet = {"c"},
-	internalAlphabet = {"a" "b"},
-	returnAlphabet = {"r"},
-	states = {"q1" "qF" "q3" "q2" "q4" "q0"},
-	initialStates = {"q0"},
-	finalStates = {"qF" "q0"},
-	callTransitions = {
-		("q0" "c" "q1")
-		("q3" "c" "q4")
-	},
-	internalTransitions = {
-		("q2" "a" "qF")
-		("q2" "b" "q3")
-		("qF" "a" "qF")
-	},
-	returnTransitions = {
-		("q1" "q0" "r" "q2")
-		("q4" "q3" "r" "q2")
-	}
-);

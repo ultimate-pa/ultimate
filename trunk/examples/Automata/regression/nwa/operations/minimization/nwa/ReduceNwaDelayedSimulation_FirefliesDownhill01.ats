@@ -9,10 +9,29 @@
 // In one of these summaries (spoiler moves to rosskopf) duplicator has to
 // move to dB in order to visit an accepting state.
 
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
-// print(nwa);
-print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
+assert(minimizeSevpaSize == 18);
+assert(shrinkNwaSize == 16);
+assert(minimizeNwaPmaxSatSize == 16);
+assert(minimizeNwaPmaxSatAsymmetricSize == 16);
+assert(reduceNwaDirectSimulationSize == 16);
+assert(reduceNwaDirectSimulationBSize == 16);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 16);
+assert(reduceNwaDelayedSimulationSize == 14);
+assert(reduceNwaDelayedSimulationBSize == 14);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 14);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

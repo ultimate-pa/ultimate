@@ -3,60 +3,6 @@
 // 
 // Automata which revealed bugs for minimizeNwaPmaxSat.
 
-NestedWordAutomaton nwa1 = removeUnreachable(nwaUnprocessed1);
-NestedWordAutomaton nwa2 = removeUnreachable(nwaUnprocessed2);
-NestedWordAutomaton nwa3 = removeUnreachable(nwaUnprocessed3);
-NestedWordAutomaton nwa4 = removeUnreachable(nwaUnprocessed4);
-NestedWordAutomaton nwa5 = removeUnreachable(nwaUnprocessed5);
-NestedWordAutomaton nwa6 = removeUnreachable(nwaUnprocessed6);
-NestedWordAutomaton nwa7 = removeUnreachable(nwaUnprocessed7);
-NestedWordAutomaton nwa8 = removeUnreachable(nwaUnprocessed8);
-NestedWordAutomaton nwa9 = removeUnreachable(nwaUnprocessed9);
-NestedWordAutomaton nwa10 = removeUnreachable(nwaUnprocessed10);
-NestedWordAutomaton nwa11 = removeUnreachable(nwaUnprocessed11);
-NestedWordAutomaton nwa12 = removeUnreachable(nwaUnprocessed12);
-NestedWordAutomaton nwa13 = removeUnreachable(nwaUnprocessed13);
-
-print(numberOfStates(minimizeNwaPmaxSat(nwa1)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa1)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa1)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa2)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa2)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa2)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa3)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa3)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa3)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa4)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa4)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa4)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa5)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa5)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa5)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa6)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa6)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa6)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa7)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa7)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa7)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa8)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa8)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa8)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa9)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa9)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa9)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa10)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa10)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa10)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa11)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa11)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa11)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa12)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa12)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa12)));
-print(numberOfStates(minimizeNwaPmaxSat(nwa13)));
-print(numberOfStates(minimizeNwaPmaxSatAsymmetric(nwa13)));
-print(numberOfStates(ReduceNwaDirectSimulationB(nwa13)));
-
 NestedWordAutomaton nwaUnprocessed1 = (
 	callAlphabet = {"c" },
 	internalAlphabet = {"a2" "a1" "a3" },
@@ -80,7 +26,6 @@ NestedWordAutomaton nwaUnprocessed1 = (
 	}
 );
 
-
 NestedWordAutomaton nwaUnprocessed2 = (
 	callAlphabet = {"c" },
 	internalAlphabet = {"a" "a3" },
@@ -100,7 +45,6 @@ NestedWordAutomaton nwaUnprocessed2 = (
 		 ("q_7" "q_3" "r" "q_5")
 	}
 );
-
 
 NestedWordAutomaton nwaUnprocessed3 = (
 	callAlphabet = {"c" },
@@ -128,7 +72,6 @@ NestedWordAutomaton nwaUnprocessed3 = (
 	}
 );
 
-
 NestedWordAutomaton nwaUnprocessed4 = (
 	callAlphabet = {"c" },
 	internalAlphabet = {"a" },
@@ -149,7 +92,6 @@ NestedWordAutomaton nwaUnprocessed4 = (
 		 ("q_6" "q_5" "r" "qF_1")
 	}
 );
-
 
 NestedWordAutomaton nwaUnprocessed5 = (
 	callAlphabet = {"call rec(y);" },
@@ -175,7 +117,6 @@ NestedWordAutomaton nwaUnprocessed5 = (
 		 ("q_6" "q_7" "return;" "q_4")
 	}
 );
-
 
 NestedWordAutomaton nwaUnprocessed6 = (
 	callAlphabet = {"c3" "c4" "c5" "c0" "c1" "c2" },
@@ -213,7 +154,6 @@ NestedWordAutomaton nwaUnprocessed6 = (
 	}
 );
 
-
 NestedWordAutomaton nwaUnprocessed7 = (
 	callAlphabet = {"c" },
 	internalAlphabet = {"a"},
@@ -234,7 +174,6 @@ NestedWordAutomaton nwaUnprocessed7 = (
 		 ("q_5" "q_2" "r" "qF_1")
 	}
 );
-
 
 NestedWordAutomaton nwaUnprocessed8 = (
 	callAlphabet = {"c" },
@@ -259,7 +198,6 @@ NestedWordAutomaton nwaUnprocessed8 = (
 	}
 );
 
-
 NestedWordAutomaton nwaUnprocessed9 = (
 	callAlphabet = {"c"},
 	internalAlphabet = {"a"},
@@ -283,7 +221,6 @@ NestedWordAutomaton nwaUnprocessed9 = (
 		 ("q_6" "q_7" "r" "q_4")
 	}
 );
-
 
 NestedWordAutomaton nwaUnprocessed10 = (
 	callAlphabet = {"c" },
