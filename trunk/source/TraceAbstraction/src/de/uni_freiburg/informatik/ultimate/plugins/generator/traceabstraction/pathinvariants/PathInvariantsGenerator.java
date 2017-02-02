@@ -37,8 +37,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -74,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator.Approximation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractLinearInvariantPattern;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AllProgramVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
@@ -384,13 +386,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {
-		final Map<String, Set<IcfgLocation>> proc2ErrorLocations = pathProgram.getProcedureErrorNodes();
-		assert proc2ErrorLocations.keySet().size() == 1 : "Currently only one procedure with assertions is supported";
-		final Set<IcfgLocation> errorLocs =
-				proc2ErrorLocations.get(proc2ErrorLocations.keySet().toArray(new String[0])[0]);
-		final IcfgLocation[] errorLocsAsArray = errorLocs.toArray(new IcfgLocation[errorLocs.size()]);
-		assert errorLocsAsArray.length == 1 : "There should be only one error location";
-		return errorLocsAsArray[0];
+		final Set<IcfgLocation> errorLocs = IcfgUtils.getErrorLocations(pathProgram);
+		assert errorLocs.size() == 1 : "There should be only one error location";
+		return errorLocs.iterator().next();
 	}
 
 	//
@@ -549,6 +547,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			pathprogramLocs2Predicates
 			.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
 		}
+		final NonInductiveAnnotationGenerator underpprox = new NonInductiveAnnotationGenerator(mServices, 
+				mPredicateUnifier.getPredicateFactory(), icfg, Approximation.UNDERAPPROXIMATION);
+		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices, 
+				mPredicateUnifier.getPredicateFactory(), icfg, Approximation.OVERAPPROXIMATION);
+
 		if (mUseAbstractInterpretationPredicates) {
 			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 					icfg.getCfgSmtToolkit().getManagedScript()));
@@ -653,7 +656,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		return transitions;
 	}
-
+	
+	
 	@Override
 	public Word<? extends IAction> getTrace() {
 		return mRun.getWord();
@@ -746,12 +750,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		@Override
-		public Object aggregate(Object o1, Object o2) {
+		public Object aggregate(final Object o1, final Object o2) {
 			return mAggr.apply(o1).apply(o2);
 		}
 
 		@Override
-		public String prettyprint(Object o) {
+		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(name()).apply(o);
 		}
 		
