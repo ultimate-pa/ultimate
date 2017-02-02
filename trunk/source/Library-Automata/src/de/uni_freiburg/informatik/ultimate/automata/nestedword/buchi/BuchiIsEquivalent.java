@@ -155,11 +155,11 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	
 	private boolean checkEquivalencePrecisely() throws AutomataLibraryException {
 		// check inclusion of first operand language in second operand language
-		if (checkInclusionPrecisely(mFstOperand, mSndOperand)) {
+		if (!checkInclusionPrecisely(mFstOperand, mSndOperand)) {
 			return false;
 		}
 		// check inclusion of second operand language in first operand language
-		if (checkInclusionPrecisely(mSndOperand, mFstOperand)) {
+		if (!checkInclusionPrecisely(mSndOperand, mFstOperand)) {
 			return false;
 		}
 		return true;
