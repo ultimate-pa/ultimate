@@ -39,27 +39,42 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataOperationCanceledException extends AutomataLibraryException implements IRunningTaskStackProvider {
-
 	private static final long serialVersionUID = -1713238821191695165L;
-
+	
 	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
-
-	private final List<RunningTaskInfo> mRunningTaskInfos = new ArrayList<>();
-
+	
+	private final List<RunningTaskInfo> mRunningTaskInfos;
+	
+	/**
+	 * @param thrower
+	 *            Thrower class.
+	 */
 	public AutomataOperationCanceledException(final Class<?> thrower) {
-		super(thrower, MESSAGE_CANCELED);
-		mRunningTaskInfos.add(new RunningTaskInfo(thrower, null));
+		this(thrower, new RunningTaskInfo(thrower, null));
 	}
-
+	
+	/**
+	 * @param runningTaskInfo
+	 *            Running task info.
+	 */
 	public AutomataOperationCanceledException(final RunningTaskInfo runningTaskInfo) {
-		super(runningTaskInfo.getClassOfTaskExecutor(), MESSAGE_CANCELED);
+		this(runningTaskInfo.getClassOfTaskExecutor(), runningTaskInfo);
+	}
+	
+	private AutomataOperationCanceledException(final Class<?> thrower, final RunningTaskInfo runningTaskInfo) {
+		super(thrower, MESSAGE_CANCELED);
+		mRunningTaskInfos = new ArrayList<>();
 		mRunningTaskInfos.add(runningTaskInfo);
 	}
-
+	
+	/**
+	 * @param runningTaskInfo
+	 *            Running task info.
+	 */
 	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
 		mRunningTaskInfos.add(runningTaskInfo);
 	}
-
+	
 	@Override
 	public List<RunningTaskInfo> getRunningTaskStack() {
 		return mRunningTaskInfos;
