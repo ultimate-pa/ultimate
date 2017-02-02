@@ -17,7 +17,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mNumOfVars;
 	private int mDiffOfLocsInUnsatCore;
 	private int mDiffOfVarsInUnsatCore;
-	private int mMaxRound = -1; // -1 represents the pre-round
+	private int mMaxRound = 0; // 0 represents the pre-round
 
 	public void setNumOfLocations(final int numOfLocations) {
 		mNumOfLocations = numOfLocations;

@@ -204,7 +204,7 @@ public final class CFGInvariantsGenerator {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
 				// Set the benchmarks
-				mPathInvariantsStatistics.setRound(round);
+				mPathInvariantsStatistics.setRound(round + 1);
 				return result;
 			} else {
 
