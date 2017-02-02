@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class Body {
 	private final Cobody mCobody;
 	private ApplicationTerm mHead;

@@ -27,6 +27,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
 /**
  * The activator class controls the plug-in life cycle
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  */
 public class Activator {
 

@@ -52,9 +52,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * SSABuilder
- * 
- * @author mostafa (mostafa.amin93@gmail.com) A class the is used for building
+ * A class the is used for building
  *         an SSA from a given TreeRun.
+ *         
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * 
  */
 public class HCSSABuilder {
 

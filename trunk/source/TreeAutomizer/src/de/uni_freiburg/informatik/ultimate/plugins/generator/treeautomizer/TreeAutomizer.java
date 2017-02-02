@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.prefe
 /**
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  */
 public class TreeAutomizer implements IGenerator {

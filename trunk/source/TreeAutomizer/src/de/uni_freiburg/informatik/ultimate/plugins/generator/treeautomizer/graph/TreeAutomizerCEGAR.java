@@ -72,6 +72,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class TreeAutomizerCEGAR {// implements
 									// IRefinementEngine<Tree<HornClause>> {
 

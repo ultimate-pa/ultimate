@@ -36,8 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-/**HCSsa HornClause-SSA
- * */
+/**
+ * HCSsa HornClause-SSA
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * 
+ */
 public class HCSsa {
 	private final TreeRun<Term, HCPredicate> mNestedFormulas;
 	private final Term mPostCondition;

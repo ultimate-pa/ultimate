@@ -38,6 +38,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class HornAnnot implements IAnnotations {
 
 	private static final long serialVersionUID = -3542578811318106167L;

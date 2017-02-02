@@ -39,6 +39,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class TreeChecker {
 	
 	private final ITreeRun<HornClause, HCPredicate> mTree;

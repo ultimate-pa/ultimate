@@ -45,6 +45,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsi
 /**
  * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**
  * Auto-Generated Stub for the plug-in's Observer
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com) 
+ * 
  */
 public class TreeAutomizerObserver implements IUnmanagedObserver {
 

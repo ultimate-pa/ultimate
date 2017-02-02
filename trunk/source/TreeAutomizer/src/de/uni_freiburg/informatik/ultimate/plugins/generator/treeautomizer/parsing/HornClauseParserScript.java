@@ -55,6 +55,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornUtilCo
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class HornClauseParserScript extends NoopScript {
 
 	/**

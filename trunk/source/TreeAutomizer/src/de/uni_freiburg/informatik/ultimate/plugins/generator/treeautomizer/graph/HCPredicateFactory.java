@@ -45,6 +45,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
+/**
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ *
+ */
 public class HCPredicateFactory extends PredicateFactory {
 
 	private ManagedScript mBackendSmtSolverScript;

@@ -51,6 +51,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * 
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class HCStateFactory implements IMergeStateFactory<HCPredicate> {
 
 	// final protected boolean mComputeHoareAnnotation;
