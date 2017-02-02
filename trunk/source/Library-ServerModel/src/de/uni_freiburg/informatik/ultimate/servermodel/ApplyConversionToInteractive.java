@@ -7,11 +7,11 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.servermodel.IConverterRegistry.IConverter;
 
-public class ConvertingInteractive<M, O> implements IInteractive<M> {
+public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	private IInteractive<O> mOriginal;
 	private IConverterRegistry<O, M> mConverter;
 
-	public ConvertingInteractive(IInteractive<O> original, IConverterRegistry<O, M> converter) {
+	public ApplyConversionToInteractive(IInteractive<O> original, IConverterRegistry<O, M> converter) {
 		mOriginal = original;
 		mConverter = converter;
 	}
@@ -65,18 +65,25 @@ public class ConvertingInteractive<M, O> implements IInteractive<M> {
 	@Override
 	public <T extends M> CompletableFuture<T> request(Class<T> type) {
 		IConverter<? extends O, T> converter = mConverter.getAB2(type);
-		// TODO: implement Conversion for Future Types
-		// TODO: implement
-		return null;
+		return wrapRequest(converter);
+	}
+
+	private <O1 extends O, T extends M> CompletableFuture<T> wrapRequest(IConverter<O1, T> converter) {
+		return mOriginal.request(converter.getTypeA()).thenApply(converter);
 	}
 
 	@Override
 	public <T extends M> CompletableFuture<T> request(Class<T> type, M data) {
 		IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		@SuppressWarnings("unchecked")
 		Class<? extends M> dType = (Class<? extends M>) data.getClass();
 		IConverter<? extends M, ? extends O> dConverter = mConverter.getBA(dType);
-		// TODO: implement
-		return null;
+		return wrapRequest(converter, dConverter, data);
 	}
 
+	@SuppressWarnings("unchecked")
+	private <O1 extends O, T extends M, D extends M, OD extends O> CompletableFuture<T> wrapRequest(
+			IConverter<O1, T> converter, IConverter<D, OD> dConverter, M data) {
+		return mOriginal.request(converter.getTypeA(), dConverter.apply((D) data)).thenApply(converter);
+	}
 }
