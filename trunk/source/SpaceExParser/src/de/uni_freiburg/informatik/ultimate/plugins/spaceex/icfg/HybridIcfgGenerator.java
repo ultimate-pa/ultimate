@@ -343,8 +343,8 @@ public class HybridIcfgGenerator {
 			target.addIncoming(transition);
 		});
 		
+		final List<IcfgLocation> removeList = new ArrayList<>();
 		mConnectionList.forEach((loc) -> {
-			mLogger.info(loc);
 			// the source of the transition is the the end of the source CFG component
 			final IcfgLocation source = loc;
 			// the target of the transition is the the start of the target CFG component
@@ -363,7 +363,12 @@ public class HybridIcfgGenerator {
 					mCreatedTransitions.get(source).add(target);
 				}
 			}
+			removeList.add(loc);
 		});
+		// remove from connectionlist
+		for (final IcfgLocation loc : removeList) {
+			mConnectionList.remove(loc);
+		}
 		
 	}
 	
