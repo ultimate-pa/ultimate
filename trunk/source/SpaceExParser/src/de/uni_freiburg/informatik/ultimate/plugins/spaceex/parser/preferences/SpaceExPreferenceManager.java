@@ -163,8 +163,11 @@ public class SpaceExPreferenceManager {
 						final String loc = locMatcher.group(2);
 						initialLocations.put(aut, loc);
 					} else if (varMatcher.matches()) {
-						initialVariableInfix += varMatcher.group(0) + ((i == splitted.length - 1) ? "" : "&");
+						initialVariableInfix += varMatcher.group(0) + "&";
 					}
+				}
+				if (!initialVariableInfix.isEmpty()) {
+					initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
 				}
 				final int groupid = id.incrementAndGet();
 				mPreferenceGroups.put(groupid,

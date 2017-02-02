@@ -61,6 +61,7 @@ public class ParallelCompositionGenerator {
 	private Map<String, Integer> mCreatedLocations;
 	private Stack<LocationPair> mComputationStack;
 	private Set<String> mVisitedLocations;
+	private Set<String> mForbiddenLocations;
 	
 	public ParallelCompositionGenerator(ILogger logger) {
 		mLogger = logger;
@@ -77,6 +78,7 @@ public class ParallelCompositionGenerator {
 		mIdCounter = new AtomicInteger(0);
 		mComputationStack = new Stack<>();
 		mVisitedLocations = new HashSet<>();
+		mForbiddenLocations = new HashSet<>();
 	}
 	
 	/**
@@ -140,6 +142,7 @@ public class ParallelCompositionGenerator {
 		mIdCounter = new AtomicInteger(0);
 		mComputationStack = new Stack<>();
 		mVisitedLocations = new HashSet<>();
+		mForbiddenLocations = new HashSet<>();
 	}
 	
 	/**
@@ -246,6 +249,12 @@ public class ParallelCompositionGenerator {
 					// pairs s1,t2 and t1,s2
 					srcTarLocPair1 = srcLoc1 + "," + tarLoc2;
 					srcTarLocPair2 = tarLoc1 + "," + srcLoc2;
+					if (mGlobalLabels.contains(currentLabel2)) {
+						mForbiddenLocations.add(srcTarLocPair1);
+					}
+					if (mGlobalLabels.contains(currentLabel1)) {
+						mForbiddenLocations.add(srcTarLocPair2);
+					}
 					// if the location exists, get it, else create a new one from the source location pairs
 					final Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
 					// Create 2 target locations
@@ -256,24 +265,18 @@ public class ParallelCompositionGenerator {
 					final Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
 					// Create 2 transitions
 					// s1,s2 ---> s1,t2
-					final Transition srcTar1 =
-							createTransition(source, target1, currentLabel2, currentGuard2, currentUpdate2);
-					// s1,s2 ---> t1,s2
-					final Transition srcTar2 =
-							createTransition(source, target2, currentLabel1, currentGuard1, currentUpdate1);
-					// incoming /outgoing transitions
-					if (source.getId() != target1.getId() && !mGlobalLabels.contains(srcTar1.getLabel())) {
-						source.addOutgoingTransition(srcTar1);
-						target1.addIncomingTransition(srcTar1);
+					if (target1 != null && source.getId() != target1.getId()) {
+						final Transition srcTar1 =
+								createTransition(source, target1, currentLabel2, currentGuard2, currentUpdate2);
 						mTransitionMerge.add(srcTar1);
 						final LocationPair srcTarPair = new LocationPair(srcLoc1, tarLoc2);
 						mComputationStack.push(srcTarPair);
 						mergedLocationToPair.put(target1, srcTarPair);
-						
 					}
-					if (source.getId() != target2.getId() && !mGlobalLabels.contains(srcTar2.getLabel())) {
-						source.addOutgoingTransition(srcTar2);
-						target2.addIncomingTransition(srcTar2);
+					// s1,s2 ---> t1,s2
+					if (target2 != null && source.getId() != target2.getId()) {
+						final Transition srcTar2 =
+								createTransition(source, target2, currentLabel1, currentGuard1, currentUpdate1);
 						mTransitionMerge.add(srcTar2);
 						final LocationPair tarSrcPair = new LocationPair(tarLoc1, srcLoc2);
 						mComputationStack.push(tarSrcPair);
@@ -312,6 +315,9 @@ public class ParallelCompositionGenerator {
 	 * @return
 	 */
 	private Location getLocation(String locPair, Location loc1, Location loc2) {
+		if (mForbiddenLocations.contains(locPair)) {
+			return null;
+		}
 		Location loc;
 		if (mCreatedLocations.containsKey(locPair)) {
 			final int locId = mCreatedLocations.get(locPair);

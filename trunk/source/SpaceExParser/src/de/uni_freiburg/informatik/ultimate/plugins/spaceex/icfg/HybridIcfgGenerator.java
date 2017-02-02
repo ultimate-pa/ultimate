@@ -99,6 +99,7 @@ public class HybridIcfgGenerator {
 			final Map<Integer, HybridAutomaton> parallelCompositions =
 					mSpaceExPreferenceManager.getGroupIdToParallelComposition();
 			parallelCompositions.forEach((groupid, aut) -> {
+				mLogger.info(aut);
 				modelToIcfg(aut, groupid);
 			});
 		} else {
@@ -161,7 +162,7 @@ public class HybridIcfgGenerator {
 		// ICFG locations + edges for variables
 		variablesToIcfg(variables, groupid);
 		// for locations
-		locationsToIcfg(locations);
+		locationsToIcfg(locations, groupid);
 		// for transitions
 		transitionsToIcfg(transitions, initialLocation);
 	}
@@ -252,7 +253,7 @@ public class HybridIcfgGenerator {
 	/*
 	 * Location methods
 	 */
-	private void locationsToIcfg(final Map<Integer, Location> autLocations) {
+	private void locationsToIcfg(final Map<Integer, Location> autLocations, int groupid) {
 		/*
 		 * locations consist of Flow and the invariant. -> Startnode (1) -> if/else invariant (2) -> apply flow (3) ->
 		 * if/else invariant (4)
@@ -265,11 +266,11 @@ public class HybridIcfgGenerator {
 			/*
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
-			final IcfgLocation start = new IcfgLocation(autid + "_start", mProcedure);
-			final IcfgLocation end = new IcfgLocation(autid + "_end", mProcedure);
-			final IcfgLocation flow = new IcfgLocation(autid + "_flow", mProcedure);
+			final IcfgLocation start = new IcfgLocation(autid + "_" + groupid + "_start", mProcedure);
+			final IcfgLocation end = new IcfgLocation(autid + "_" + groupid + "_end", mProcedure);
+			final IcfgLocation flow = new IcfgLocation(autid + "_" + groupid + "_flow", mProcedure);
 			locations.add(flow);
-			final IcfgLocation invCheck = new IcfgLocation(autid + "_invCheck", mProcedure);
+			final IcfgLocation invCheck = new IcfgLocation(autid + "_" + groupid + "_invCheck", mProcedure);
 			locations.add(invCheck);
 			/*
 			 * Transitions from start to Flow if invariant true

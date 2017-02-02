@@ -232,10 +232,6 @@ public class HybridModel {
 				aut2 = mergeStack.pop();
 				init1 = aut1.getInitialLocation();
 				init2 = getInitLocation(aut2, initLocs);
-				mLogger.info("#####START######");
-				mLogger.info(initLocs.get(aut2.getName() + "_1"));
-				mLogger.info(aut2.getNametoId().get(initLocs.get(aut2.getName() + "_1")));
-				mLogger.info("#####End######");
 			}
 			merge = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2, mMergedLocationToPair, init1,
 					init2);
@@ -247,7 +243,7 @@ public class HybridModel {
 		if (initLocs == null) {
 			return aut.getInitialLocation();
 		}
-		final String initLocName = initLocs.get(aut.getName() + "_1");
+		final String initLocName = initLocs.get(aut.getName());
 		if (aut.getNametoId().containsKey(initLocName)) {
 			final int nameToId = aut.getNametoId().get(initLocName);
 			return aut.getLocations().get(nameToId);
