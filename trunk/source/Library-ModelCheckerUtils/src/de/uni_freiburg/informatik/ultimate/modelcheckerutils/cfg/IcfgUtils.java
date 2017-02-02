@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,5 +87,14 @@ public class IcfgUtils {
 			throw new UnsupportedOperationException(
 					"Dont know how to extract transformula from transition " + transition);
 		}
+	}
+	
+	public static <LOC extends IcfgLocation> Set<LOC> getErrorLocations(final IIcfg<LOC> icfg) {
+		final Map<String, Set<LOC>> proc2ErrorLocations = icfg.getProcedureErrorNodes();
+		final Set<LOC> errorLocs = new HashSet<>();
+		for (final Entry<String, Set<LOC>> entry : proc2ErrorLocations.entrySet()) {
+			errorLocs.addAll(entry.getValue());
+		}
+		return errorLocs;
 	}
 }
