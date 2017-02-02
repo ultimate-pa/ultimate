@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 /**
  * copy of SMTInterpol's symmetric pair
  * 
+ * @author Yu-Wen Chen
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class VPDomainSymmetricPair<T> {
 	T mFst, mSnd;

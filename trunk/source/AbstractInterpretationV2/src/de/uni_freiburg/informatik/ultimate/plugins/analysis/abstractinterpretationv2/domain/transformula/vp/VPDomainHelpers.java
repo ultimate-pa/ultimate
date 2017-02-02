@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfStateBuilder;
@@ -58,25 +57,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * 
- * @author Alexander Nutz
- * @author Yu-Wen Chen
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
 public class VPDomainHelpers {
-	// public static IProgramVar getIProgramVarFromTermVariable(TermVariable tv, TransFormula tf) {
-	// for (Entry<IProgramVar, TermVariable> en : tf.getInVars().entrySet()) {
-	// if (en.getValue() == tv) {
-	// return en.getKey();
-	// }
-	// }
-	// for (Entry<IProgramVar, TermVariable> en : tf.getOutVars().entrySet()) {
-	// if (en.getValue() == tv) {
-	// return en.getKey();
-	// }
-	// }
-	// assert false : "should not happen";
-	// return null;
-	// }
 
 	public static Map<TermVariable, IProgramVar> computeProgramVarMappingFromTransFormula(final TransFormula tf) {
 		return computeProgramVarMappingFromInVarOutVarMappings(tf.getInVars(), tf.getOutVars());

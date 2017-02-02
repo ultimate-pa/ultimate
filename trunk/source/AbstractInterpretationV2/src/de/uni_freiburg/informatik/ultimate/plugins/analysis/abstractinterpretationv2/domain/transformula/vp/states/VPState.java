@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 /**
  *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPStateOrTfState<EqNode, IProgramVarOrConst>
@@ -68,23 +69,21 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
 	private final VPDomain<ACTION> mDomain;
-	final private ManagedScript mScript;
-	private Term mTerm;
-	final private VPDomainPreanalysis mPreAnalysis;
-	final private VPStateFactory<ACTION> mFactory;
+	private final ManagedScript mScript;
+	private final Term mTerm;
+	private final VPDomainPreanalysis mPreAnalysis;
+	private final VPStateFactory<ACTION> mFactory;
 
 	/**
 	 * Constructor for bottom state only.
 	 *
 	 * @param domain
 	 */
-	// VPState(final ManagedScript script, final VPDomainPreanalysis preAnalysis, final VPStateFactory<ACTION> factory,
-	// final Set<IProgramVar> vars) {
 	VPState(final VPDomain<ACTION> domain, final Set<IProgramVar> vars) {
 		this(Collections.emptyMap(), Collections.emptySet(), vars, domain, false);
 	}
 
-	/*
+	/**
 	 * Constructor to be used by VPStateFactory.createTopState() only.
 	 */
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
@@ -92,16 +91,13 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			final VPDomain<ACTION> domain,
 			final boolean isTop) {
 		super(disEqualitySet, isTop, vars);
-		// mVars = Collections.unmodifiableSet(vars);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
-		// mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
 		mPreAnalysis = mDomain.getPreAnalysis();
 		mFactory = mDomain.getVpStateFactory();
-		// mIsTop = isTop;
 
-		constructTerm();
+		mTerm = constructTerm();
 
 		assert sanityCheck();
 		assert isTopConsistent();
@@ -150,8 +146,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVars(Collections.singleton(variable));
-		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable),
-		// copy.build());
 		final VPState<ACTION> result = copy.build();
 		return result;
 	}
@@ -163,7 +157,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVars(variables);
-		// VPState<ACTION> result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
 		final VPState<ACTION> result = copy.build();
 		return result;
 	}
@@ -225,10 +218,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			final Set<EqNode> unEqualEqNodes = this.getUnequalNodes(nodeFromVar);
 			for (final EqNode unequalRepresentative : unEqualEqNodes) {
 				for (final EqNode unEqualNode : this.getEquivalentEqNodes(unequalRepresentative)) {
-					// Set<VPState<ACTION>> newStates = mDomain.getVpStateFactory().addDisEquality(nodeFromVar,
-					// unEqualNode,
-					// resultStates);
-					// resultStates.addAll(newStates);
 					final Set<VPState<ACTION>> states =
 							VPFactoryHelpers.addDisEquality(nodeFromVar, unEqualNode, resultState, mFactory);
 					resultState = VPFactoryHelpers.disjoinAll(states, mFactory);
@@ -318,7 +307,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		return mTerm;
 	}
 
-	private void constructTerm() {
+	private Term constructTerm() {
 
 		mScript.lock(this);
 		final Term trueTerm = mScript.term(this, TERM_TRUE);
@@ -365,10 +354,10 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 					mScript.term(this, TERM_FUNC_NAME_AND, equalityTermSet.toArray(new Term[equalityTermSet.size()]));
 		}
 
-		mTerm = mScript.term(this, TERM_FUNC_NAME_AND, disEquality, equality);
+		Term result = mScript.term(this, TERM_FUNC_NAME_AND, disEquality, equality);
 		mScript.unlock(this);
 
-		// return mTerm;
+		return result;
 	}
 
 	public Set<EqNode> getEquivalenceRepresentatives() {

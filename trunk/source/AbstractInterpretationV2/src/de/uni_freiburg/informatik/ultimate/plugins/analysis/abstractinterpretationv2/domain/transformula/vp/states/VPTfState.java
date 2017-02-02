@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayIdentifier> {
 	
-//	private final Map<Term, VPTfNodeIdentifier> mTermToNodeId;
 	private final VPTfStateBuilder mBuilder;
 	private final TransFormula mTransFormula;
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
@@ -59,7 +58,6 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	public VPTfState(TransFormula tf,
 			VPTfStateBuilder builder,
 			Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
-//			Map<Term, VPTfNodeIdentifier> termToNodeId,
 			Set<VPTfNodeIdentifier> allNodeIds,
 			HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
 			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, 
@@ -68,17 +66,12 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
 		mBuilder = builder;
-//		mTermToNodeId = Collections.unmodifiableMap(termToNodeId);
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy(); // TODO is copy needed here?
 		
 		assert isTopConsistent();
 	}
-
-//	public boolean tracksTerm(Term term) {
-//		return mTermToNodeId.containsKey(term);
-//	}
 
 	public boolean isBottom() {
 		return false;
@@ -106,10 +99,6 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	public TransFormula getTransFormula() {
 		return mTransFormula;
 	}
-	
-//	public VPTfNodeIdentifier getNodeId(Term t) {
-//		return mTermToNodeId.get(t);
-//	}
 	
 	@Override
 	public String toString() {

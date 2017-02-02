@@ -37,9 +37,5 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IElementWrapper {
 	
-//	public Set<IElementWrapper> getElements();
-
-//	public WrapperSideCondition getSideCondition();
-	
 	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfPreState);
 }

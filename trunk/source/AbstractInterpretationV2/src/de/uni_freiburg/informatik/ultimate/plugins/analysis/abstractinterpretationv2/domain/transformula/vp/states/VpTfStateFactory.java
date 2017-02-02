@@ -28,22 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -71,16 +66,6 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		mPreAnalysis = preAnalysis;
 	}
 
-//	public Set<VPTfState> addEquality(final Term t1, final Term t2, final VPTfState state) {
-//		final Set<VPTfState> result =
-//				VPFactoryHelpers.addEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
-//		return result;
-//	}
-//
-//	public Set<VPTfState> addDisequality(final Term t1, final Term t2, final VPTfState state) {
-//		return VPFactoryHelpers.addDisEquality(state.getNodeId(t1), state.getNodeId(t2), state, this);
-//	}
-
 	public Set<VPTfState> conjoin(final VPTfState state1, final VPTfState state2) {
 		return VPFactoryHelpers.conjoin(state1, state2, this);
 	}
@@ -93,36 +78,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		return VPFactoryHelpers.conjoinAll(andList, this);
 	}
 
-//	public Set<VPTfState> handleArrayEqualityWithException(final TermVariable newArray, final Term oldArray,
-//			final ApplicationTerm storeTerm, final Term value, final VPTfState tfPreState) {
-//		return VPFactoryHelpers.arrayEqualityWithException(
-////				new VPArrayIdentifier(newArray),
-////				tfPreState.getArrayIdentifier(newArray, tfPreState.getTransFormula()),
-//				tfPreState.getArrayIdentifier(newArray),
-////				new VPArrayIdentifier(oldArray), 
-////				tfPreState.getArrayIdentifier(oldArray, tfPreState.getTransFormula()),
-//				tfPreState.getArrayIdentifier(oldArray),
-//				tfPreState.getNodeId(storeTerm),
-//				tfPreState.getNodeId(value),
-//				tfPreState, this);
-//	}
-
 	public Set<VPTfState> handleArrayEquality(final Term lhs, final Term rhs, final VPTfState tfPreState) {
 		return VPFactoryHelpers.arrayEquality(
-//				tfPreState.getArrayIdentifier(lhs, tfPreState.getTransFormula()),
 				tfPreState.getArrayIdentifier(lhs),
-//				new VPArrayIdentifier(lhs), 
-//				tfPreState.getArrayIdentifier(rhs, tfPreState.getTransFormula()),
 				tfPreState.getArrayIdentifier(rhs),
-//				new VPArrayIdentifier(rhs), 
 				tfPreState, this);
 	}
 
 	@Override
 	public VPTfStateBuilder copy(final VPTfState state) {
-		// if (originalState.isBottom()) {
-		// return new VPStateBottomBuilder(mDomain).setVars(originalState.getVariables());
-		// }
 		assert !state.isBottom();
 
 		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());

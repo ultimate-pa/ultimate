@@ -27,6 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+/**
+ * 
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class VPSFO {
 	
 	public static final String vpStateEqualsClock = "vpStateEqualsClock";

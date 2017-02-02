@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
