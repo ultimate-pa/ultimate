@@ -5,12 +5,12 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: 
  org.eclipse.ui;visibility:=reexport,
- Library-UltimateModel,
- Library-UltimateCore,
- UltimateCore,
- Library-SMTLIB,
- GUIGeneratedPreferencePages,
- GUILoggingWindow
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.gui.preferencepages,
+ de.uni_freiburg.informatik.ultimate.gui.logging
 Export-Package: 
  de.uni_freiburg.informatik.ultimate.gui;uses:="org.eclipse.ui,de.uni_freiburg.informatik.ultimate.ep.interfaces",
  de.uni_freiburg.informatik.ultimate.gui.actions;

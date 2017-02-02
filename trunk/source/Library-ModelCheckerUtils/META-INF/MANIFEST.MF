@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ModelCheckerUtils
-Bundle-SymbolicName: Library-ModelCheckerUtils
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint,
@@ -22,12 +22,12 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-SMTLIB,
- Library-UltimateUtil,
- Library-BoogieAST,
- BoogiePreprocessor,
- SMTInterpol,
- SMTSolverBridge,
- Library-JavaBDD
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ net.sf.javabdd

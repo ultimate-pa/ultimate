@@ -34,8 +34,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-UltimateUtil</groupId>
-  <artifactId>Library-UltimateUtil</artifactId>
+  <groupId>de.uni_freiburg.informatik.ultimate</groupId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.lib.util</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>

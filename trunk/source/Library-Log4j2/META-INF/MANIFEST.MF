@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Log4j2
-Bundle-SymbolicName: Library-Log4j2
+Bundle-SymbolicName: org.apache.logging.log4j
 Bundle-Version: 2.6.2
 Bundle-ClassPath: .
 Bundle-Vendor: http://logging.apache.org/log4j/2.x/
@@ -60,4 +60,4 @@ Export-Package: org.apache.logging.log4j,
  org.apache.logging.log4j.status,
  org.apache.logging.log4j.util
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: Library-Disruptor
+Require-Bundle: com.lmax.disruptor

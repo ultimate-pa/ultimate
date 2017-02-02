@@ -28,9 +28,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>AbstractInterpretationV2Test</groupId>
-	<artifactId>AbstractInterpretationV2Test</artifactId>
-	<version>0.0.1</version>
+
+	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test</artifactId>
 	<packaging>eclipse-plugin</packaging>
 
 	<parent>

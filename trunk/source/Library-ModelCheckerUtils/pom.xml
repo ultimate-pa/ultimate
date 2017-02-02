@@ -35,8 +35,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>Library-ModelCheckerUtils</groupId>
-	<artifactId>Library-ModelCheckerUtils</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

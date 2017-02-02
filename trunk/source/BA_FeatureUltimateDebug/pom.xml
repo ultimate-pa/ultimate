@@ -10,7 +10,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>BA_FeatureUltimateDebug</groupId>
 	<artifactId>BA_FeatureUltimateDebug</artifactId>
 	<packaging>eclipse-feature</packaging>
 

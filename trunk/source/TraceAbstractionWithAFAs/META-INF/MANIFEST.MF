@@ -4,16 +4,16 @@ Bundle-Name: TraceAbstractionWithAFAs
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas.Activator
-Require-Bundle: UltimateCore,
- Library-UltimateUtil,
- Library-UltimateCore,
- Library-ModelCheckerUtils,
- BoogiePreprocessor,
- Library-SMTLIB,
- Library-BoogieAST,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- SMTInterpol,
- de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions

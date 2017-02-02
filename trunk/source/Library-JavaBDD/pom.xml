@@ -8,8 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-JavaBDD</groupId>
-  <artifactId>Library-JavaBDD</artifactId>
+  <groupId>net.sf.javabdd</groupId>
+  <artifactId>net.sf.javabdd</artifactId>
   <version>0.6.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

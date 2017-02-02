@@ -3,20 +3,20 @@ Bundle-ManifestVersion: 2
 Bundle-Name: TraceAbstraction
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- Library-ModelCheckerUtils,
- Library-SMTLIB,
- Library-UltimateUtil,
- Library-BoogieAST,
- UltimateCore,
- de.uni_freiburg.informatik.ultimate.automata,
- SMTInterpol,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- SMTSolverBridge,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
  de.uni_freiburg.informatik.ultimate.witnessparser,
- Library-LassoRanker,
+ de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
- Library-UltimateModel
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,

@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-UltimateUtilTest
-Bundle-SymbolicName: Library-UltimateUtilTest
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.utilTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util.test
 Bundle-Version: 0.0.1
-Fragment-Host: Library-UltimateUtil
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit
 Import-Package: de.uni_freiburg.informatik.ultimate.util.csv,

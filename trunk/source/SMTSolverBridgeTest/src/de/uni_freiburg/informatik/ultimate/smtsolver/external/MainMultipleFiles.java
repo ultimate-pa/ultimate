@@ -42,20 +42,20 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 public class MainMultipleFiles {
-	
+
 	private static void usage() {
 		System.err.println("USAGE smtinterpol [-q] [-v] [-t <num>] [-r <num>] [file.smt2]");
 	}
-	
+
 	public static void main(final String[] param) throws IOException {
-		
+
 		/** Specify the solver command here. **/
 		final String command = "z3 -smt2 -in";
-		
+
 		final ILogger logger = new ConsoleLogger();
 		final SmtInterpolLogProxyWrapper logProxy = new SmtInterpolLogProxyWrapper(logger);
 		int paramctr = 0;
-		
+
 		String filename;
 		if (paramctr < param.length) {
 			filename = param[paramctr++];
@@ -66,11 +66,11 @@ public class MainMultipleFiles {
 			usage();
 			return;
 		}
-		
+
 		// Oday: Read multiple files
 		final File path = new File(filename);
 		final List<String> files = getFiles(path);
-		
+
 		if (files.isEmpty()) {
 			return;
 		}
@@ -79,7 +79,7 @@ public class MainMultipleFiles {
 			if (files.get(i).contains(".svn")) {
 				continue;
 			}
-			
+
 			count++;
 			Script benchmark;
 			if (!command.equals("SMTInterpol")) {
@@ -87,7 +87,7 @@ public class MainMultipleFiles {
 			} else {
 				benchmark = new SMTInterpol(logProxy);
 			}
-			
+
 			while (paramctr < param.length && param[paramctr].startsWith("-")) {
 				if (param[paramctr].equals("--")) {
 					paramctr++;
@@ -139,9 +139,9 @@ public class MainMultipleFiles {
 					return;
 				}
 			}
-			
+
 			System.out.println("\n--- Checking " + files.get(i) + "\n");
-			
+
 			final OptionMap optionMap = new OptionMap(logProxy);
 			final ParseEnvironment parseEnv = new ParseEnvironment(benchmark, optionMap);
 			try {
@@ -152,9 +152,9 @@ public class MainMultipleFiles {
 		}
 		System.out.print("\n\nChecked " + count + " files.");
 	}
-	
+
 	public static List<String> getFiles(final File path) {
-		final List<String> files = new ArrayList<String>();
+		final List<String> files = new ArrayList<>();
 		if (path.isFile()) {
 			files.add(path.toString());
 			return files;

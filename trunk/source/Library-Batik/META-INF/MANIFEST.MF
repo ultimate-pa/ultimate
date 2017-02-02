@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Batik
-Bundle-SymbolicName: Library-Batik
+Bundle-SymbolicName: org.apache.batik
 Bundle-Version: 1.7.0
 Bundle-Vendor: http://xmlgraphics.apache.org
 Export-Package: javax.xml,

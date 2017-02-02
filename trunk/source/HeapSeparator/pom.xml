@@ -37,7 +37,6 @@
 	</parent>
 
 
-	<groupId>HeapSeparator</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.heapseparator</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

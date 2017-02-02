@@ -35,8 +35,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>CDTPlugin</groupId>
-	<artifactId>CDTPlugin</artifactId>
-	<version>0.0.1</version>
+	<artifactId>de.uni_freiburg.informatik.ultimate.cdt</artifactId>
 	<packaging>eclipse-plugin</packaging>
 </project>

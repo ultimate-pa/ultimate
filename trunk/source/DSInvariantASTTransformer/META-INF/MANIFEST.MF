@@ -1,13 +1,12 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DSI AST Transformer
-Bundle-SymbolicName: DSITransformer;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.dsitransformer;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: UltimateCore,
- Library-UltimateCore,
- Library-BoogieAST,
- BoogieParser
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.boogie.parser
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.boogie.DSITransformer
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.dsitransformer
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-

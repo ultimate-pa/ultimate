@@ -36,8 +36,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>ACSLParser</groupId>
-	<artifactId>ACSLParser</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.acsl.parser</artifactId>
 	<packaging>eclipse-plugin</packaging>
 
 	<build>

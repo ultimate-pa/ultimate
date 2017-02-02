@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CoreRCPTest
-Bundle-SymbolicName: CoreRCPTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.core.test
 Bundle-Version: 0.0.1
 Bundle-ActivationPolicy: lazy
-Fragment-Host: UltimateCore
+Fragment-Host: de.uni_freiburg.informatik.ultimate.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit
 Import-Package: org.junit,

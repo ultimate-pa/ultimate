@@ -8,9 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  
-  <groupId>Library-ojAlgo</groupId>
-  <artifactId>Library-ojAlgo</artifactId>
+  <groupId>org.ojalgo</groupId>
+  <artifactId>org.ojalgo</artifactId>
   <version>38.18.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

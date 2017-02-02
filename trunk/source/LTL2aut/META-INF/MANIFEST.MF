@@ -4,18 +4,18 @@ Bundle-Name: LTL2aut
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ltl2aut;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.ltl2aut.Activator
-Require-Bundle: Library-UltimateCore,
- Library-UltimateUtil,
- Library-BoogieAST,
- UltimateCore,
- Library-ModelCheckerUtils,
- BoogieParser,
- BoogiePreprocessor,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.boogie.parser,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.automata,
- JavaCup,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
+ com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,
- ACSLParser
+ de.uni_freiburg.informatik.ultimate.acsl.parser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast,

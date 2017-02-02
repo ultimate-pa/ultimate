@@ -1,25 +1,25 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: UltimateTest
-Bundle-SymbolicName: UltimateTest;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ultimatetest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Require-Bundle: Library-UltimateCore,
- Library-UltimateTest,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
- Library-UltimateUtil,
- UltimateCore,
- Library-BoogieAST,
- CDTParser,
- Library-LassoRanker,
- BoogiePreprocessor,
- Library-ModelCheckerUtils,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.cdt.parser,
+ de.uni_freiburg.informatik.ultimate.lib.lassoranker,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding,
- de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,

@@ -2,17 +2,17 @@ Manifest-Version: 1.0
 Eclipse-BuddyPolicy: dependent
 Bundle-ManifestVersion: 2
 Bundle-Name: CoreRCP Plug-in
-Bundle-SymbolicName: UltimateCore;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.core;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator
 Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
- Library-UltimateCore;visibility:=reexport,
- Library-UltimateModel;visibility:=reexport,
- Library-SMTLIB,
- Library-UltimateUtil,
- Library-log4j,
- Library-Log4j2,
- Library-ApacheCommonsLang
+ de.uni_freiburg.informatik.ultimate.lib.core;visibility:=reexport,
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ org.apache.log4j,
+ org.apache.logging.log4j,
+ org.apache.commons.lang
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions,

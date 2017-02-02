@@ -4,14 +4,14 @@ Bundle-Name: SpaceExParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-UltimateUtil,
- Library-ModelCheckerUtils,
- Library-SMTLIB,
- SMTSolverBridge,
- de.uni_freiburg.informatik.ultimate.automata,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- Library-BoogieAST
+ de.uni_freiburg.informatik.ultimate.lib.boogieast
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

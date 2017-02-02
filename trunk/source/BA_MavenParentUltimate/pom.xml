@@ -43,7 +43,7 @@
 		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
-		<srparseparserDir>${workspaceDir}/Library-srParse/src/srParse</srparseparserDir>
+		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
 
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -398,13 +398,16 @@
 
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-AutomataTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../Library-UltimateUtilTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../SMTSolverBridgeTest</module>
+				<module>../SpaceExParserTest</module>
 
 				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>
@@ -487,13 +490,18 @@
 
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-AutomataTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../Library-UltimateUtilTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../SMTSolverBridgeTest</module>
+				<module>../SpaceExParserTest</module>
+				
+				
 			</modules>
 		</profile>
 
@@ -555,13 +563,16 @@
 
 				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../Library-SMTLIBTest</module>
-				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-AutomataTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../Library-UltimateUtilTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../SMTSolverBridgeTest</module>
+				<module>../SpaceExParserTest</module>
 
 				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>

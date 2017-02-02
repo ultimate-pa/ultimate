@@ -8,8 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-CZT</groupId>
-  <artifactId>Library-CZT</artifactId>
+  <groupId>net.sourceforge.czt</groupId>
+  <artifactId>net.sourceforge.czt</artifactId>
   <version>1.5.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

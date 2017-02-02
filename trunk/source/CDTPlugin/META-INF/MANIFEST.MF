@@ -1,14 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CDTPlugin
-Bundle-SymbolicName: CDTPlugin;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.cdt;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.cdt.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: BoogiePreprocessor,
- UltimateCore,
- GUIGeneratedPreferencePages,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.gui.preferencepages,
  org.eclipse.cdt.core,
  org.eclipse.cdt.codan.core,
  org.eclipse.cdt.codan.core.cxx,

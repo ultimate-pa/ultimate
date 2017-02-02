@@ -38,7 +38,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>SpaceExParserTest</groupId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.test</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

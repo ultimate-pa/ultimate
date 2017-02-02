@@ -37,7 +37,7 @@
 	</parent>
 
 
-	<groupId>LTL2aut</groupId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.ltl2aut</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

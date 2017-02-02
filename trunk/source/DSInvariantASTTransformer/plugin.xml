@@ -2,6 +2,6 @@
 <?eclipse version="3.2"?>
 <plugin>
    <extension point="de.uni_freiburg.informatik.ultimate.ep.generator">
-      <impl class="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.DSITransformer"/>
+      <impl class="de.uni_freiburg.informatik.ultimate.boogie.dsitransformer.DSITransformer"/>
    </extension>
 </plugin>

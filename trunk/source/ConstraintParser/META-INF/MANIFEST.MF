@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ConstraintParser
-Bundle-SymbolicName: ConstraintParser
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.constraintparser
 Bundle-Version: 0.0.1
 Export-Package: de.uni_freiburg.informatik.ultimate.constraintparser
-Require-Bundle: Library-UltimateCore
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core

@@ -9,7 +9,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>UltimateRepository</groupId>
 	<artifactId>UltimateRepository</artifactId>
 	<packaging>eclipse-repository</packaging>
 	<profiles>

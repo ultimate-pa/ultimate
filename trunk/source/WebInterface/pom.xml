@@ -10,8 +10,8 @@
 	</parent>
 
 
-	<groupId>WebInterface</groupId>
-	<artifactId>WebInterface</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.webinterface</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 	

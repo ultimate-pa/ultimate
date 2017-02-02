@@ -10,8 +10,8 @@
 	</parent>
 
 
-	<groupId>SMTInterpol</groupId>
-	<artifactId>SMTInterpol</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.smtinterpol</artifactId>
 	<version>2.0.0</version>
 	<packaging>eclipse-plugin</packaging>
 

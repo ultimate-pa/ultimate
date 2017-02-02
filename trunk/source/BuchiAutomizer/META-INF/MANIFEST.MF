@@ -3,16 +3,16 @@ Bundle-ManifestVersion: 2
 Bundle-Name: BuchiAutomizer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- Library-UltimateUtil,
- Library-SMTLIB,
- Library-ModelCheckerUtils,
- Library-BoogieAST,
- UltimateCore,
- de.uni_freiburg.informatik.ultimate.automata,
- BoogiePreprocessor,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- Library-LassoRanker,
+ de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

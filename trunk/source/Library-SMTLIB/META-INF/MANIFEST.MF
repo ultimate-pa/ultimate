@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-SMTLIB
-Bundle-SymbolicName: Library-SMTLIB
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.smtlib
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlib
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: Library-UltimateUtil
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.logic,
  de.uni_freiburg.informatik.ultimate.logic.simplification,
  de.uni_freiburg.informatik.ultimate.util

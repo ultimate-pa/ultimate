@@ -8,7 +8,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>BA_FeatureUltimateDeltaDebugger</groupId>
   <artifactId>BA_FeatureUltimateDeltaDebugger</artifactId>
   <packaging>eclipse-feature</packaging>
 </project>

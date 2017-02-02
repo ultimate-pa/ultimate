@@ -3,14 +3,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: RCFGBuilder
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-SMTLIB,
- Library-UltimateUtil,
- Library-BoogieAST,
- SMTSolverBridge,
- SMTInterpol,
- Library-ModelCheckerUtils,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.boogie.printer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-UltimateCore
-Bundle-SymbolicName: Library-UltimateCore
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.core
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
@@ -13,6 +13,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.toolchain,
  de.uni_freiburg.informatik.ultimate.core.lib.translation,
  de.uni_freiburg.informatik.ultimate.core.lib.util
-Require-Bundle: Library-UltimateModel;visibility:=reexport,
- Library-UltimateUtil,
- Library-SMTLIB
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib

@@ -1,13 +1,13 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Automata
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- SMTInterpol,
- Library-SMTLIB,
- Library-UltimateUtil
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.alternating,
  de.uni_freiburg.informatik.ultimate.automata.alternating.visualization,

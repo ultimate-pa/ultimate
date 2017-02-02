@@ -36,8 +36,7 @@
 	</parent>
 
 
-	<groupId>BoogieModSetAnnotator</groupId>
-	<artifactId>BoogieModSetAnnotator</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

@@ -8,9 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  
-  <groupId>Library-Disruptor</groupId>
-  <artifactId>Library-Disruptor</artifactId>
+  <groupId>com.lmax.disruptor</groupId>
+  <artifactId>com.lmax.disruptor</artifactId>
   <version>3.3.5</version>
   <packaging>eclipse-plugin</packaging>
 </project>

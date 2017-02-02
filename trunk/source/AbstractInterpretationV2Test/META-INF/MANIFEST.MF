@@ -1,15 +1,15 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AbstractInterpretationV2Test
-Bundle-SymbolicName: AbstractInterpretationV2Test
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test
 Bundle-Version: 0.0.1
 Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: UltimateCore,
- Library-UltimateUtil,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- Library-UltimateTest
+ de.uni_freiburg.informatik.ultimate.lib.test
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

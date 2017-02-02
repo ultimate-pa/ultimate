@@ -8,8 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-xerces</groupId>
-  <artifactId>Library-xerces</artifactId>
+  <groupId>org.apache.xerces</groupId>
+  <artifactId>org.apache.xerces</artifactId>
   <version>1.0.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>
