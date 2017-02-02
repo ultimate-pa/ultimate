@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 import com.google.protobuf.GeneratedMessageV3;
 
-import de.uni_freiburg.informatik.ultimate.server.IRegisteredType;
+import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
 
 public class RegisteredProtoType<T extends GeneratedMessageV3> implements IRegisteredType<T> {
 	private final Class<T> mType;

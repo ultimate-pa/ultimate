@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
- * The {@link ServerController} class provides a user interface for Clients that can connect via
- * TCP.
+ * The {@link ServerController} class provides a user interface for Clients that
+ * can connect via TCP.
  *
  * @author Julian Jarecki
  */
@@ -90,116 +90,101 @@ public class ServerController implements IController<RunDefinition> {
 
 		// first, parse to see if toolchain is specified.
 		// the preparser has to accept all options, but may not require any
-		final CommandLineParser onlyCliHelpParser = CommandLineParser.createCliOnlyParser(core);
-		final CommandLineParser toolchainStageParser = CommandLineParser.createCompleteNoReqsParser(core);
-		ParsedParameter toolchainStageParams;
-		try {
-			toolchainStageParams = toolchainStageParser.parse(args);
-
-		} catch (final ParseException pex) {
-			printParseException(args, pex);
-			onlyCliHelpParser.printHelp();
-			return -1;
-		}
-
-		if (toolchainStageParams.isVersionRequested()) {
-			mLogger.info("Version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
-			mLogger.info(
-					"Maximal heap size is " + Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true));
-			return IApplication.EXIT_OK;
-		}
-
-		if (!toolchainStageParams.hasToolchain()) {
-			if (toolchainStageParams.isHelpRequested()) {
-				printHelp(onlyCliHelpParser, toolchainStageParams);
-				return IApplication.EXIT_OK;
-			}
-			mLogger.info("Missing required option: " + CommandLineOptions.OPTION_NAME_TOOLCHAIN);
-			printHelp(onlyCliHelpParser, toolchainStageParams);
-			printAvailableToolchains(core);
-			return IApplication.EXIT_OK;
-		}
-
-		final Predicate<String> pluginNameFilter;
-		try {
-			pluginNameFilter = getPluginFilter(core, toolchainStageParams.getToolchainFile());
-		} catch (final ParseException pex) {
-			mLogger.error("Could not find the provided toolchain file: " + pex.getMessage());
-			return -1;
-		} catch (final InvalidFileArgumentException e) {
-			mLogger.error(e.getMessage());
-			printArgs(args);
-			return -1;
-		}
-
-		// second, perform real parsing
-		final CommandLineParser fullParser = CommandLineParser.createCompleteParser(core, pluginNameFilter);
-		final ParsedParameter fullParams;
-
-		try {
-			fullParams = fullParser.parse(args);
-			if (fullParams.isHelpRequested()) {
-				printHelp(fullParser, fullParams);
-				return IApplication.EXIT_OK;
-			}
-
-			if (!fullParams.hasInputFiles()) {
-				printParseException(args,
-						new ParseException("Missing required option: " + CommandLineOptions.OPTION_NAME_INPUTFILES));
-				printHelp(fullParser, fullParams);
-				return -1;
-			}
-
-			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
-			assert currentToolchain == mToolchain;
-			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
-			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
-			startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
-
-		} catch (final ParseException pex) {
-			printParseException(args, pex);
-			fullParser.printHelp();
-			return -1;
-		} catch (final InvalidFileArgumentException e) {
-			mLogger.error(e.getMessage());
-			printArgs(args);
-			return -1;
-		} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
-			mLogger.fatal("Exception during execution of toolchain", e);
-			return -1;
-		}
+		/*
+		 * final CommandLineParser onlyCliHelpParser =
+		 * CommandLineParser.createCliOnlyParser(core); final CommandLineParser
+		 * toolchainStageParser =
+		 * CommandLineParser.createCompleteNoReqsParser(core); ParsedParameter
+		 * toolchainStageParams; try { toolchainStageParams =
+		 * toolchainStageParser.parse(args);
+		 * 
+		 * } catch (final ParseException pex) { printParseException(args, pex);
+		 * onlyCliHelpParser.printHelp(); return -1; }
+		 * 
+		 * if (toolchainStageParams.isVersionRequested()) {
+		 * mLogger.info("Version is " +
+		 * RcpUtils.getVersion(Activator.PLUGIN_ID)); mLogger.info(
+		 * "Maximal heap size is " +
+		 * Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(),
+		 * true)); return IApplication.EXIT_OK; }
+		 * 
+		 * if (!toolchainStageParams.hasToolchain()) { if
+		 * (toolchainStageParams.isHelpRequested()) {
+		 * printHelp(onlyCliHelpParser, toolchainStageParams); return
+		 * IApplication.EXIT_OK; } mLogger.info("Missing required option: " +
+		 * CommandLineOptions.OPTION_NAME_TOOLCHAIN);
+		 * printHelp(onlyCliHelpParser, toolchainStageParams);
+		 * printAvailableToolchains(core); return IApplication.EXIT_OK; }
+		 * 
+		 * final Predicate<String> pluginNameFilter; try { pluginNameFilter =
+		 * getPluginFilter(core, toolchainStageParams.getToolchainFile()); }
+		 * catch (final ParseException pex) {
+		 * mLogger.error("Could not find the provided toolchain file: " +
+		 * pex.getMessage()); return -1; } catch (final
+		 * InvalidFileArgumentException e) { mLogger.error(e.getMessage());
+		 * printArgs(args); return -1; }
+		 * 
+		 * // second, perform real parsing final CommandLineParser fullParser =
+		 * CommandLineParser.createCompleteParser(core, pluginNameFilter); final
+		 * ParsedParameter fullParams;
+		 * 
+		 * try { fullParams = fullParser.parse(args); if
+		 * (fullParams.isHelpRequested()) { printHelp(fullParser, fullParams);
+		 * return IApplication.EXIT_OK; }
+		 * 
+		 * if (!fullParams.hasInputFiles()) { printParseException(args, new
+		 * ParseException("Missing required option: " +
+		 * CommandLineOptions.OPTION_NAME_INPUTFILES)); printHelp(fullParser,
+		 * fullParams); return -1; }
+		 * 
+		 * final IToolchainData<RunDefinition> currentToolchain =
+		 * prepareToolchain(core, fullParams); assert currentToolchain ==
+		 * mToolchain; // from now on, use the shutdown hook that disables the
+		 * toolchain if the user presses CTRL+C (hopefully)
+		 * Runtime.getRuntime().addShutdownHook(new Thread(new
+		 * SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
+		 * startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
+		 * 
+		 * } catch (final ParseException pex) { printParseException(args, pex);
+		 * fullParser.printHelp(); return -1; } catch (final
+		 * InvalidFileArgumentException e) { mLogger.error(e.getMessage());
+		 * printArgs(args); return -1; } catch (@SuppressWarnings("squid:S2142")
+		 * final InterruptedException e) {
+		 * mLogger.fatal("Exception during execution of toolchain", e); return
+		 * -1; }
+		 */
 		return IApplication.EXIT_OK;
 	}
 
 	/**
-	 * Creates one or many {@link BasicToolchainJob}s, schedules them and waits for their termination. Upon normal
-	 * termination of this method, the controller will terminate with success return code. During the execution of a
-	 * toolchain, {@link ICore} may perform asynchronous callbacks to
+	 * Creates one or many {@link BasicToolchainJob}s, schedules them and waits
+	 * for their termination. Upon normal termination of this method, the
+	 * controller will terminate with success return code. During the execution
+	 * of a toolchain, {@link ICore} may perform asynchronous callbacks to
 	 * {@link #displayToolchainResults(IToolchainData, Map)} and/or
-	 * {@link #displayException(IToolchainData, String, Throwable)} to signal results right before ending.
+	 * {@link #displayException(IToolchainData, String, Throwable)} to signal
+	 * results right before ending.
 	 *
 	 * @param core
 	 *            The {@link ICore} instance managing all toolchains.
 	 * @param cliParams
 	 *            The settings picked up from the command line
 	 * @param logger
-	 *            The {@link ILogger} instance that should be used to communicate with the user.
+	 *            The {@link ILogger} instance that should be used to
+	 *            communicate with the user.
 	 * @param toolchain
 	 *            The user-selected toolchain.
 	 * @throws ParseException
-	 *             If lazy parsing of command line options fails (i.e., when accessing the input files stored in
-	 *             <code>cliParams</code>, this exception might be thrown.
+	 *             If lazy parsing of command line options fails (i.e., when
+	 *             accessing the input files stored in <code>cliParams</code>,
+	 *             this exception might be thrown.
 	 * @throws InvalidFileArgumentException
-	 *             If a file is not valid or does not exist, this exception might be thrown.
+	 *             If a file is not valid or does not exist, this exception
+	 *             might be thrown.
 	 * @throws InterruptedException
-	 *             If during toolchain execution the thread is interrupted, this exception might be thrown.
+	 *             If during toolchain execution the thread is interrupted, this
+	 *             exception might be thrown.
 	 */
-	protected void startExecutingToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
-			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
-			throws ParseException, InvalidFileArgumentException, InterruptedException {
-		final File[] inputFiles = cliParams.getInputFiles();
-		executeToolchain(core, inputFiles, logger, toolchain);
-	}
 
 	protected void executeToolchain(final ICore<RunDefinition> core, final File[] inputFiles, final ILogger logger,
 			final IToolchainData<RunDefinition> toolchain) throws InterruptedException {
@@ -208,6 +193,8 @@ public class ServerController implements IController<RunDefinition> {
 		tcj.join();
 	}
 
+	/*
+	// TODO: load settings
 	private IToolchainData<RunDefinition> prepareToolchain(final ICore<RunDefinition> core,
 			final ParsedParameter fullParams) throws ParseException, InvalidFileArgumentException {
 		core.resetPreferences();
@@ -218,24 +205,7 @@ public class ServerController implements IController<RunDefinition> {
 		fullParams.applyCliSettings(mToolchain.getServices());
 		return mToolchain;
 	}
-
-	private static void printHelp(final CommandLineParser parser, final ParsedParameter params) {
-		if (params.showExperimentals()) {
-			parser.printHelpWithExperimentals();
-		} else {
-			parser.printHelp();
-		}
-	}
-
-	private void printParseException(final String[] args, final ParseException pex) {
-		mLogger.error(pex.getMessage());
-		printArgs(args);
-		mLogger.error("--");
-	}
-
-	private void printArgs(final String[] args) {
-		mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
-	}
+	*/
 
 	@Override
 	public ISource selectParser(final Collection<ISource> parser) {
