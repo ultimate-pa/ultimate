@@ -62,11 +62,12 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final IIcfg<?> mIcfg;
-	private final InterpolantComputationStatus mInterpolantComputationStatus;
 	private final boolean mUseLiveVariables;
 	private final boolean mUseWPForPathInvariants;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
+	
+	private InterpolantComputationStatus mInterpolantComputationStatus;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -111,24 +112,23 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 				mUseNonlinerConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mUseAbstractInterpretationPredicates, 
 				mUseWPForPathInvariants,
 				mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
-		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
+		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
+		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
-			interpolants = fallbackInterpolantComputation();
+			assert !pathInvariantsGenerator.getInterpolantComputationStatus().wasComputationSuccesful() : 
+				"null only allowed if computation was not successful";
+		} else {
+			if (interpolants.length != mTrace.length() - 1) {
+				throw new AssertionError("inkorrekt number of interpolants. "
+						+ "There should be one interpolant between each " + "two successive CodeBlocks");
+			}
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace, mPrecondition,
+					mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
+					mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		}
-		if (interpolants.length != mTrace.length() - 1) {
-			throw new AssertionError("inkorrekt number of interpolants. "
-					+ "There should be one interpolant between each " + "two successive CodeBlocks");
-		}
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
-				mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		mInterpolants = interpolants;
 		// Store path invariants benchmarks
 		mPathInvariantsStats = pathInvariantsGenerator.getPathInvariantsBenchmarks();
-	}
-
-	private static IPredicate[] fallbackInterpolantComputation() {
-		throw new UnsupportedOperationException("fallback computation not yet implemented");
 	}
 
 	@Override
