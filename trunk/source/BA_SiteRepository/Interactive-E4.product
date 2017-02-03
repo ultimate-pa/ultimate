@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Ultimate-Interactive" uid="Interactive-E4" id="UltimateCore.Interactive" application="UltimateCore.CoreRCP" version="0.0.1" useFeatures="false" includeLaunchers="true">
+
+   <aboutInfo>
+      <image path="/CoreRCP/icons/about.gif"/>
+      <text>
+         Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
+      </programArgs>
+      <programArgsLin>-data @user.home/.ultimate
+      </programArgsLin>
+      <programArgsWin>-data @user.home\ultimate-data
+      </programArgsWin>
+      <vmArgs>-Xmx8g -Xms512M
+      </vmArgs>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <splash
+      location="UltimateCore" />
+   <launcher name="Ultimate">
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <plugins>
+      <plugin id="AbstractInterpretationV2Test" fragment="true"/>
+      <plugin id="BoogieParser"/>
+      <plugin id="BoogiePreprocessor"/>
+      <plugin id="BoogiePreprocessorTest" fragment="true"/>
+      <plugin id="CoreRCPTest" fragment="true"/>
+      <plugin id="JavaCup"/>
+      <plugin id="Library-ApacheCommonsLang"/>
+      <plugin id="Library-BoogieAST"/>
+      <plugin id="Library-Disruptor"/>
+      <plugin id="Library-JavaBDD"/>
+      <plugin id="Library-Jung"/>
+      <plugin id="Library-LassoRanker"/>
+      <plugin id="Library-Log4j2"/>
+      <plugin id="Library-ModelCheckerUtils"/>
+      <plugin id="Library-ModelCheckerUtilsTest" fragment="true"/>
+      <plugin id="Library-Protobuf"/>
+      <plugin id="Library-SMTLIB"/>
+      <plugin id="Library-SMTLIBTest" fragment="true"/>
+      <plugin id="Library-UltimateCore"/>
+      <plugin id="Library-UltimateModel"/>
+      <plugin id="Library-UltimateTest"/>
+      <plugin id="Library-UltimateTestTest" fragment="true"/>
+      <plugin id="Library-UltimateUtil"/>
+      <plugin id="Library-UltimateUtilTest" fragment="true"/>
+      <plugin id="Library-log4j"/>
+      <plugin id="Library-ojAlgo"/>
+      <plugin id="SMTInterpol"/>
+      <plugin id="SMTInterpolTest" fragment="true"/>
+      <plugin id="SMTSolverBridge"/>
+      <plugin id="SMTSolverBridgeTest" fragment="true"/>
+      <plugin id="UltimateCore"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.automata"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.server"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.servercontroller"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
+      <plugin id="javax.xml"/>
+      <plugin id="org.eclipse.core.contenttype"/>
+      <plugin id="org.eclipse.core.jobs"/>
+      <plugin id="org.eclipse.core.runtime"/>
+      <plugin id="org.eclipse.equinox.app"/>
+      <plugin id="org.eclipse.equinox.common"/>
+      <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.registry"/>
+      <plugin id="org.eclipse.osgi"/>
+      <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
+      <plugin id="org.hamcrest.core"/>
+      <plugin id="org.junit"/>
+   </plugins>
+
+   <features>
+      <feature id="BA_FeatureUltimateCommandLine" version="0.0.1"/>
+      <feature id="BA_FeatureDependenciesCommandlineE4" version="0.0.1"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+   </configurations>
+
+</product>
