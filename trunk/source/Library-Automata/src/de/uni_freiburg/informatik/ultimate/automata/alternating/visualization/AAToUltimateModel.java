@@ -52,8 +52,7 @@ public class AAToUltimateModel<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public IElement getUltimateModelOfAA(final AlternatingAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+	public IElement transformToUltimateModel(final AlternatingAutomaton<LETTER, STATE> operand) {
 		/*
 		final AlternatingAutomaton<LETTER, STATE> aa;
 		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;

@@ -4,13 +4,13 @@ Bundle-Name: BuchiProgramProduct
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessprinter;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessprinter.Activator
-Require-Bundle: Library-UltimateCore,
- Library-SMTLIB,
- Library-UltimateUtil,
- Library-ModelCheckerUtils,
- Library-ApacheCommonsLang,
- UltimateCore,
- Library-Jung;visibility:=reexport,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ org.apache.commons.lang,
+ de.uni_freiburg.informatik.ultimate.core,
+ edu.uci.ics.jung;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

@@ -3,14 +3,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: CodeCheck
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-ModelCheckerUtils,
- Library-UltimateUtil,
- Library-BoogieAST,
- Library-SMTLIB,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
- de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.heapseparator

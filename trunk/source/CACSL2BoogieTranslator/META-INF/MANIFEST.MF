@@ -4,12 +4,12 @@ Bundle-Name: CACSL2BoogieTranslator
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator
-Require-Bundle: Library-UltimateCore,
- Library-BoogieAST,
- UltimateCore,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
  org.eclipse.cdt.core,
- ACSLParser,
- Library-UltimateUtil,
+ de.uni_freiburg.informatik.ultimate.acsl.parser,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.witnessparser,
  de.uni_freiburg.informatik.ultimate.witnessprinter
 Bundle-ActivationPolicy: lazy

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ApacheCommonsLang
-Bundle-SymbolicName: Library-ApacheCommonsLang
+Bundle-SymbolicName: org.apache.commons.lang
 Bundle-Version: 3.3.2
 Bundle-Vendor: http://commons.apache.org/proper/commons-lang/
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

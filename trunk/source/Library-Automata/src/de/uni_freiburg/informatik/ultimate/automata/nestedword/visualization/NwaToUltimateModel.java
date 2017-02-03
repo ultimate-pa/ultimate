@@ -74,7 +74,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public IElement getUltimateModelOfNwa(final INestedWordAutomatonSimple<LETTER, STATE> nwaSimple)
+	public IElement transformToUltimateModel(final INestedWordAutomatonSimple<LETTER, STATE> nwaSimple)
 			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<LETTER, STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {

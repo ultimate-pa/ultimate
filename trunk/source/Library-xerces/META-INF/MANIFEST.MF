@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-xerces
-Bundle-SymbolicName: Library-xerces
+Bundle-SymbolicName: org.apache.xerces
 Bundle-Version: 1.0.0
 Export-Package: javax.xml.parsers,
  org.apache.html.dom,

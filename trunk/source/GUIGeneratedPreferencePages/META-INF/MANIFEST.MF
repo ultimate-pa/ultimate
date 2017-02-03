@@ -1,11 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GUIGeneratedPreferencePages
-Bundle-SymbolicName: GUIGeneratedPreferencePages;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.gui.preferencepages;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.gui.preferencepages
 Require-Bundle: org.eclipse.ui;visibility:=reexport,
- Library-UltimateCore,
- Library-SMTLIB,
- UltimateCore
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.core

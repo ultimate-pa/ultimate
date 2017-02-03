@@ -1,14 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-ModelCheckerUtilsTest
-Bundle-SymbolicName: Library-ModelCheckerUtilsTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.test
 Bundle-Version: 0.0.1
-Fragment-Host: Library-ModelCheckerUtils;bundle-version="0.0.1"
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: Library-UltimateCore,
- Library-UltimateTest,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
- Library-SMTLIB
+ de.uni_freiburg.informatik.ultimate.lib.smtlib
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,

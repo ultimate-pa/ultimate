@@ -35,8 +35,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>GUILoggingWindow</groupId>
-	<artifactId>GUILoggingWindow</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.gui.logging</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

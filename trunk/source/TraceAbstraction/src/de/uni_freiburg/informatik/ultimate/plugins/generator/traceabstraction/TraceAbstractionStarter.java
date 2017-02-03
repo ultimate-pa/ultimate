@@ -95,7 +95,7 @@ public class TraceAbstractionStarter {
 	private IElement mArtifact;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final IIcfg<BoogieIcfgLocation> rcfgRootNode,
+			final IIcfg<IcfgLocation> rcfgRootNode,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mToolchainStorage = storage;
@@ -105,7 +105,7 @@ public class TraceAbstractionStarter {
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 
-	private void runCegarLoops(final IIcfg<BoogieIcfgLocation> icfg,
+	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
@@ -121,9 +121,9 @@ public class TraceAbstractionStarter {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 
-		final Map<String, Set<BoogieIcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
-		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
+		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
+		for (final Collection<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
@@ -135,9 +135,9 @@ public class TraceAbstractionStarter {
 			iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton);
 		} else {
-			for (final BoogieIcfgLocation errorLoc : errNodesOfAllProc) {
+			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final String name = errorLoc.getDebugIdentifier();
-				final List<BoogieIcfgLocation> errorLocs = new ArrayList<>(1);
+				final List<IcfgLocation> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
@@ -185,19 +185,19 @@ public class TraceAbstractionStarter {
 		mRootOfNewModel = mArtifact;
 	}
 
-	private void createInvariantResults(final IIcfg<BoogieIcfgLocation> icfg, final CfgSmtToolkit csToolkit,
+	private void createInvariantResults(final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
 			final IBacktranslationService backTranslatorService) {
 		assert new HoareAnnotationChecker(mServices, icfg, csToolkit).isInductive() : "incorrect Hoare annotation";
 
 		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 
-		final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
 
 		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
-		for (final BoogieIcfgLocation locNode : locsForLoopLocations) {
+		for (final IcfgLocation locNode : locsForLoopLocations) {
 			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
@@ -215,15 +215,15 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void createProcedureContractResults(final IIcfg<BoogieIcfgLocation> icfg,
+	private void createProcedureContractResults(final IIcfg<IcfgLocation> icfg,
 			final IBacktranslationService backTranslatorService) {
-		final Map<String, BoogieIcfgLocation> finalNodes = icfg.getProcedureExitNodes();
-		for (final Entry<String, BoogieIcfgLocation> proc : finalNodes.entrySet()) {
+		final Map<String, IcfgLocation> finalNodes = icfg.getProcedureExitNodes();
+		for (final Entry<String, IcfgLocation> proc : finalNodes.entrySet()) {
 			final String procName = proc.getKey();
 			if (isAuxilliaryProcedure(procName)) {
 				continue;
 			}
-			final BoogieIcfgLocation finalNode = proc.getValue();
+			final IcfgLocation finalNode = proc.getValue();
 			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(finalNode);
 			if (hoare != null) {
 				final Term formula = hoare.getFormula();
@@ -249,10 +249,14 @@ public class TraceAbstractionStarter {
 	// hoareAnnotationStatisticsGenerator.toString();
 	// }
 
-	private void logNumberOfWitnessInvariants(final Collection<BoogieIcfgLocation> errNodesOfAllProc) {
+	private void logNumberOfWitnessInvariants(final Collection<IcfgLocation> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
-		for (final BoogieIcfgLocation err : errNodesOfAllProc) {
-			final BoogieASTNode boogieASTNode = err.getBoogieASTNode();
+		for (final IcfgLocation err : errNodesOfAllProc) {
+			if (!(err instanceof BoogieIcfgLocation)) {
+				mLogger.info("Did not count any witness invariants because Icfg is not BoogieIcfg");
+				return;
+			}
+			final BoogieASTNode boogieASTNode = ((BoogieIcfgLocation) err).getBoogieASTNode();
 			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
 				final Check check = (Check) annot;
@@ -267,9 +271,9 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void iterate(final String name, final IIcfg<BoogieIcfgLocation> root, final TAPreferences taPrefs,
+	private void iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<BoogieIcfgLocation> errorLocs,
+			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final BasicCegarLoop<?> basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
@@ -328,9 +332,9 @@ public class TraceAbstractionStarter {
 		//server.stop();
 	}
 
-	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<BoogieIcfgLocation> root,
+	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<BoogieIcfgLocation> errorLocs) {
+			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
@@ -347,7 +351,7 @@ public class TraceAbstractionStarter {
 				languageOperation);
 	}
 
-	private Result computeOverallResult(final Collection<BoogieIcfgLocation> errorLocs,
+	private Result computeOverallResult(final Collection<IcfgLocation> errorLocs,
 			final BasicCegarLoop<?> basicCegarLoop, final Result result) {
 		switch (result) {
 		case SAFE:
@@ -371,9 +375,9 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void writeHoareAnnotationToLogger(final IIcfg<BoogieIcfgLocation> root) {
-		for (final Entry<String, Map<String, BoogieIcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
-			for (final BoogieIcfgLocation pp : proc2label2pp.getValue().values()) {
+	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
+		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
+			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
 				if (hoare == null) {
 					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
@@ -386,7 +390,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private static String prettyPrintProgramPoint(final BoogieIcfgLocation pp) {
+	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
 		final int startLine = pp.getPayload().getLocation().getStartLine();
 		final int endLine = pp.getPayload().getLocation().getStartLine();
 		final StringBuilder sb = new StringBuilder();
@@ -399,8 +403,8 @@ public class TraceAbstractionStarter {
 		return sb.toString();
 	}
 
-	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
-		for (final BoogieIcfgLocation errorLoc : errorLocs) {
+	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {
+		for (final IcfgLocation errorLoc : errorLocs) {
 			final PositiveResult<IIcfgElement> pResult =
 					new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 			reportResult(pResult);
@@ -416,14 +420,15 @@ public class TraceAbstractionStarter {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs,
-			final IRunningTaskStackProvider rtsp) {
-		for (final BoogieIcfgLocation errorIpp : errorLocs) {
-			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {
+		for (final IcfgLocation errorIpp : errorLocs) {
+			final IcfgLocation errorLoc = errorIpp;
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + ").";
+			if (errorLoc instanceof BoogieIcfgLocation) {
+				final ILocation origin = ((BoogieIcfgLocation) errorLoc).getBoogieASTNode().getLocation().getOrigin();
+				timeOutMessage += " (line " + origin.getStartLine() + ").";
+			}
 			if (rtsp != null) {
 				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
 			}

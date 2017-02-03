@@ -8,8 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-ApacheCommonsLang</groupId>
-  <artifactId>Library-ApacheCommonsLang</artifactId>
+  <groupId>org.apache.commons</groupId>
+  <artifactId>org.apache.commons.lang</artifactId>
   <version>3.3.2</version>
   <packaging>eclipse-plugin</packaging>
 </project>

@@ -103,13 +103,9 @@ public final class ResultUtil {
 	 * Return the checked specification that is checked at the error location.
 	 */
 	public static <ELEM extends IElement> Check getCheckedSpecification(final ELEM element) {
-		final IAnnotations check;
-		if (element.hasPayload() && element.getPayload().hasAnnotation()) {
-			check = element.getPayload().getAnnotations().get(Check.getIdentifier());
-			if (check instanceof Check) {
-				return (Check) check;
-			}
-			return null;
+		final Check check = Check.getAnnotation(element);
+		if (check != null) {
+			return check;
 		}
 		final ILocation loc = element.getPayload().getLocation();
 		if (loc == null) {
@@ -119,9 +115,9 @@ public final class ResultUtil {
 		if (origin == null) {
 			return null;
 		}
-		check = origin.getCheck();
-		if (check instanceof Check) {
-			return (Check) check;
+		final IAnnotations checkCand = origin.getCheck();
+		if (checkCand instanceof Check) {
+			return (Check) checkCand;
 		}
 		return null;
 	}

@@ -27,7 +27,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker</groupId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

@@ -33,9 +33,13 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AAToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, STATE> {
 	private final Set<LETTER> mAlphabet;
@@ -244,5 +248,11 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 		text += "\t}\n]";
 		return text;
+	}
+	
+	@Override
+	public IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		return new AAToUltimateModel<LETTER, STATE>().transformToUltimateModel(this);
 	}
 }

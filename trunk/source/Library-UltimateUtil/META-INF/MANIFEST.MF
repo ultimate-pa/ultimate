@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-UltimateUtil
-Bundle-SymbolicName: Library-UltimateUtil
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.util
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: Library-UltimateModel
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
  de.uni_freiburg.informatik.ultimate.util.datastructures,

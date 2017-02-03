@@ -3,10 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Jung Visualization Plug-in
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- Library-Jung,
- Library-Batik,
- UltimateCore,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ edu.uci.ics.jung,
+ org.apache.batik,
+ de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.gui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

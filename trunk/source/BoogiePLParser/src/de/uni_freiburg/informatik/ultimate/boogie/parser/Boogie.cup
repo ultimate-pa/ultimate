@@ -339,9 +339,9 @@ specStar ::=
 	; 
 spec ::=
 	  freeOpt:free REQUIRES expr:e SEMI:semi
-	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.PRE_CONDITION); check.addToNodeAnnot(RESULT); :}
+	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.PRE_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free ENSURES expr:e SEMI:semi
-	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.POST_CONDITION); check.addToNodeAnnot(RESULT); :}
+	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.POST_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free MODIFIES varCommaStar:l SEMI:semi
 	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$,false), free, l.toArray(new VariableLHS[l.size()])); :}
 	;
@@ -696,7 +696,7 @@ stmt ::=
 	  ID:i COLON
 	  {: RESULT = new Label(getLocation(i$,i$,false), i); :}
 	| ASSERT:x attributes:attr expr:e SEMI
-	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), attr, e); Check check = new Check(Spec.ASSERT); check.addToNodeAnnot(RESULT); :}
+	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), attr, e); Check check = new Check(Spec.ASSERT); check.annotate(RESULT); :}
 	| ASSUME:x attributes:attr expr:e SEMI
 	  {: RESULT = new AssumeStatement(getLocation(x$,e$,false), attr, e); :}
 	| HAVOC:x varCommaPlus:i SEMI
@@ -746,7 +746,7 @@ loopInvStar ::=
 	;
 loopInv ::=
 	  freeOpt:free INVARIANT:x expr:e SEMI
-	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$,false), free, e); Check check = new Check(Spec.INVARIANT); check.addToNodeAnnot(RESULT); :}
+	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$,false), free, e); Check check = new Check(Spec.INVARIANT); check.annotate(RESULT); :}
 	;
 	
 lhsCommaPlus ::=

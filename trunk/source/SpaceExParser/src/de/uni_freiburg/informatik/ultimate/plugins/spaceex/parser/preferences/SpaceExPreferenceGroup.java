@@ -26,4 +26,9 @@ public class SpaceExPreferenceGroup {
 		return mId;
 	}
 	
+	@Override
+	public String toString() {
+		return "{Locations: " + mInitialLocations + "\n Variables: " + mInitialVariableInfix + "\n Id: " + mId + "}";
+	}
+	
 }

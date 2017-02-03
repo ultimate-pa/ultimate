@@ -217,7 +217,17 @@ public class SdHoareTripleCheckerHelper {
 			}
 		}
 		mHoareTripleCheckerStatistics.getSDsCounter().incIn();
-		return Validity.INVALID;
+		switch (act.getTransformula().isInfeasible()) {
+		case INFEASIBLE:
+			throw new IllegalArgumentException("case should have been handled before");
+		case NOT_DETERMINED:
+			return null;
+		case UNPROVEABLE:
+			// FIXME: only invalid if feasibility of transformula proven
+			return Validity.INVALID;
+		default:
+			throw new AssertionError("illegal value");
+		}
 	}
 	
 	

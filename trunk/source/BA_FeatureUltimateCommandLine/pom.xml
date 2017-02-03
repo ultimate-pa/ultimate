@@ -8,7 +8,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>BA_FeatureUltimateCommandLine</groupId>
   <artifactId>BA_FeatureUltimateCommandLine</artifactId>
   <packaging>eclipse-feature</packaging>
 </project>

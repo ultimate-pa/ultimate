@@ -1,27 +1,27 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: UltimateRegressionTest
-Bundle-SymbolicName: UltimateRegressionTest;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.regressiontest;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
- Library-UltimateCore,
- Library-UltimateTest,
- UltimateCore,
- Library-LassoRanker,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.test,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
- AutomataScriptParser,
- CDTParser,
- BoogiePreprocessor,
+ de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
+ de.uni_freiburg.informatik.ultimate.cdt.parser,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent 
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

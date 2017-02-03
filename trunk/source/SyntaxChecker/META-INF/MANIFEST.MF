@@ -3,10 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SyntaxChecker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;singleton:=true
 Bundle-Version: 0.0.1
-Require-Bundle: UltimateCore,
- Library-BoogieAST,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
  org.eclipse.cdt.core,
- Library-UltimateCore
+ de.uni_freiburg.informatik.ultimate.lib.core
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 

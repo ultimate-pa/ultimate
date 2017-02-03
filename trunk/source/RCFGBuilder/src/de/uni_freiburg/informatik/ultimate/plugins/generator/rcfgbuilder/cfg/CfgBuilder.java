@@ -582,10 +582,9 @@ public class CfgBuilder {
 			}
 			final BoogieIcfgLocation errorLocNode =
 					new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
-			final Object checkCand = boogieASTNode.getPayload().getAnnotations().get(Check.getIdentifier());
-			if (checkCand != null) {
-				final Check check = (Check) checkCand;
-				errorLocNode.getPayload().getAnnotations().put(Check.getIdentifier(), check);
+			final Check check = Check.getAnnotation(boogieASTNode);
+			if (check != null) {
+				check.annotate(errorLocNode);
 			}
 			mProcLocNodes.put(errorLocLabel, errorLocNode);
 			errorNodes.add(errorLocNode);

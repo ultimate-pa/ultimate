@@ -65,7 +65,7 @@ public class SpaceExPreferenceManager {
 	private final Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
-	private final Map<Integer, SpaceExPreferenceGroup> mForbiddenGroup;
+	private SpaceExPreferenceGroup mForbiddenGroup;
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
@@ -82,7 +82,6 @@ public class SpaceExPreferenceManager {
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mReplacement = new HashMap<>();
 		mPreferenceGroups = new HashMap<>();
-		mForbiddenGroup = new HashMap<>();
 		setGroupIdToParallelComposition(new HashMap<>());
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
@@ -125,7 +124,19 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseForbidden(String forbidden) {
-		// TODO Auto-generated method stub
+		if (!forbidden.isEmpty()) {
+			final SpaceExPreferenceGroup forbiddengroup = createPreferenceGroup(forbidden, 1);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(
+						"Added new Forbidden group: \n" + "Initial Locations:" + forbiddengroup.getInitialLocations()
+								+ "\n" + "Initial variables: " + forbiddengroup.getInitialVariableInfix());
+			}
+			mForbiddenGroup = forbiddengroup;
+			mHasForbiddenGroup = true;
+		} else {
+			mLogger.info("-Config file has no forbidden property-");
+			mHasForbiddenGroup = false;
+		}
 		
 	}
 	
@@ -140,41 +151,12 @@ public class SpaceExPreferenceManager {
 			final List<String> formerGroups = replaceLiterals(groups);
 			// Parse the found groups and create Preference Groups.
 			for (final String group : formerGroups) {
-				String initialVariableInfix = "";
-				final Map<String, String> initialLocations = new HashMap<>();
-				// split at &
-				final String[] splitted = group.split("&");
-				// for each initial statement, find out if it is variable or initial location definition.
-				String property;
-				// regex stuff for initial locations
-				final String locRegex = "loc\\((.*)\\)==(.*)";
-				final Pattern locPattern = Pattern.compile(locRegex);
-				Matcher locMatcher;
-				// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
-				final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
-				final Pattern varPattern = Pattern.compile(varRegex);
-				Matcher varMatcher;
-				for (int i = 0; i < splitted.length; i++) {
-					property = splitted[i].replaceAll("\\s+", "");
-					locMatcher = locPattern.matcher(property);
-					varMatcher = varPattern.matcher(property);
-					if (locMatcher.matches()) {
-						final String aut = locMatcher.group(1);
-						final String loc = locMatcher.group(2);
-						initialLocations.put(aut, loc);
-					} else if (varMatcher.matches()) {
-						initialVariableInfix += varMatcher.group(0) + "&";
-					}
-				}
-				if (!initialVariableInfix.isEmpty()) {
-					initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
-				}
-				final int groupid = id.incrementAndGet();
-				mPreferenceGroups.put(groupid,
-						new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid));
+				final SpaceExPreferenceGroup preferenceGroup = createPreferenceGroup(group, id.incrementAndGet());
+				mPreferenceGroups.put(preferenceGroup.getId(), preferenceGroup);
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Added new preference group: \n" + "Initial Locations:" + initialLocations + "\n"
-							+ "Initial variables: " + initialVariableInfix);
+					mLogger.debug("Added new preference group: \n" + "Initial Locations:"
+							+ preferenceGroup.getInitialLocations() + "\n" + "Initial variables: "
+							+ preferenceGroup.getInitialVariableInfix());
 				}
 			}
 			if (mPreferenceGroups.isEmpty()) {
@@ -183,6 +165,40 @@ public class SpaceExPreferenceManager {
 				mHasPreferenceGroups = true;
 			}
 		}
+	}
+	
+	private SpaceExPreferenceGroup createPreferenceGroup(String infix, int id) {
+		String initialVariableInfix = "";
+		final Map<String, String> initialLocations = new HashMap<>();
+		// split at &
+		final String[] splitted = infix.split("&");
+		// for each initial statement, find out if it is variable or initial location definition.
+		String property;
+		// regex stuff for initial locations
+		final String locRegex = "loc\\((.*)\\)==(.*)";
+		final Pattern locPattern = Pattern.compile(locRegex);
+		Matcher locMatcher;
+		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
+		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
+		final Pattern varPattern = Pattern.compile(varRegex);
+		Matcher varMatcher;
+		for (int i = 0; i < splitted.length; i++) {
+			property = splitted[i].replaceAll("\\s+", "");
+			locMatcher = locPattern.matcher(property);
+			varMatcher = varPattern.matcher(property);
+			if (locMatcher.matches()) {
+				final String aut = locMatcher.group(1);
+				final String loc = locMatcher.group(2);
+				initialLocations.put(aut, loc);
+			} else if (varMatcher.matches()) {
+				initialVariableInfix += varMatcher.group(0) + "&";
+			}
+		}
+		if (!initialVariableInfix.isEmpty()) {
+			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
+		}
+		final int groupid = id;
+		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
 	}
 	
 	// function to replace literals with their saved values
@@ -514,4 +530,11 @@ public class SpaceExPreferenceManager {
 		this.mGroupIdToParallelComposition = mGroupIdToParallelComposition;
 	}
 	
+	public SpaceExPreferenceGroup getForbiddenGroup() {
+		return mForbiddenGroup;
+	}
+	
+	public boolean hasForbiddenGroup() {
+		return mHasForbiddenGroup;
+	}
 }

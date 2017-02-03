@@ -35,8 +35,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>GUIGeneratedPreferencePages</groupId>
-	<artifactId>GUIGeneratedPreferencePages</artifactId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.gui.preferencepages</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

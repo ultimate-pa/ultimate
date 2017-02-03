@@ -9,8 +9,7 @@
 	</parent> 
   
   
-  <groupId>JavaCup</groupId>
-  <artifactId>JavaCup</artifactId>
+  <artifactId>com.github.jhoenicke.javacup</artifactId>
   <version>1.0.0</version>
   <packaging>eclipse-plugin</packaging>
   

@@ -76,6 +76,12 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 
 	CfgSmtToolkit getCfgSmtToolkit();
 
+	/**
+	 * 
+	 * @deprecated 2017-02-02 Matthias: Symbol table is part of CFG toolkit,
+	 * we do not want to have a separate getter here.
+	 */
+	@Deprecated
 	IIcfgSymbolTable getSymboltable();
 
 	/**

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * All automata have to implement this interface.
@@ -50,11 +51,12 @@ public interface IAutomaton<LETTER, STATE> {
 	 * Can the alphabet still change after the automaton was constructed?
 	 * Note that the correctness of this property is not checked and the user
 	 * of the library has to use this with caution. (There is no simple check
-	 * for this property since the automata usually take user provided Set 
+	 * for this property since the automata usually take user provided Set
 	 * objects as alphabet and for performance reasons we do not want to change
-	 * this.)  
+	 * this.)
+	 * 
 	 * @return true iff the automaton's alphabet may be modified after the
-	 * automaton was constructed
+	 *         automaton was constructed
 	 */
 	default boolean hasModifiableAlphabet() {
 		return false;
@@ -84,10 +86,23 @@ public interface IAutomaton<LETTER, STATE> {
 	 *            first operand
 	 * @param sndOperand
 	 *            second operand
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
 	 * @return {@code true} iff the automata have the same alphabet
 	 */
 	static <LETTER, STATE> boolean sameAlphabet(final IAutomaton<LETTER, STATE> fstOperand,
 			final IAutomaton<LETTER, STATE> sndOperand) {
 		return fstOperand.getAlphabet().equals(sndOperand.getAlphabet());
 	}
+	
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @return Ultimate model of the automaton
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	IElement transformToUltimateModel(AutomataLibraryServices services) throws AutomataOperationCanceledException;
 }

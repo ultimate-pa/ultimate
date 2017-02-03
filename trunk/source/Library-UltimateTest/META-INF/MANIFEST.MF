@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Library-UltimateTest
-Bundle-SymbolicName: Library-UltimateTest
+Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.test
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.test
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.test,
@@ -12,9 +12,9 @@ Export-Package: de.uni_freiburg.informatik.ultimate.test,
  de.uni_freiburg.informatik.ultimate.test.mocks,
  de.uni_freiburg.informatik.ultimate.test.reporting,
  de.uni_freiburg.informatik.ultimate.test.util
-Require-Bundle: Library-UltimateCore,
- UltimateCore,
- Library-UltimateUtil,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  org.junit
 Import-Package: org.junit,
  org.junit.experimental.categories,

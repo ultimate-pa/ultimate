@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -45,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator;
 
 /**
  * Factory producing {@link LinearInequalityInvariantPatternProcessor}s.
@@ -64,6 +67,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final Settings mSolverSettings;
 	private final IPredicate mAxioms;
 	private final boolean mUseUnsatCoresForDynamicPatternChanges;
+	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
+	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
 
 	/**
 	 * Constructs a new factory for {@link LinearInequalityInvariantPatternProcessor}s.
@@ -81,6 +86,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
 	 * @param axioms
+	 * @param overapprox 
+	 * @param underapprox 
 	 */
 	public LinearInequalityInvariantPatternProcessorFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
@@ -88,7 +95,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore,
 			final boolean useUnsatCoresForDynamicPatternChanges, final Settings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IPredicate axioms) {
+			final IPredicate axioms, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox, 
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -101,6 +109,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
 		mUseUnsatCoresForDynamicPatternChanges = useUnsatCoresForDynamicPatternChanges;
+		mLoc2underApprox = loc2underApprox;
+		mLoc2overApprox = loc2overApprox;
 	}
 
 	/**
@@ -163,7 +173,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
 				strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mUseUnsatCoresForDynamicPatternChanges,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique, mXnfConversionTechnique, mLoc2underApprox, mLoc2overApprox);
 	}
 
 }

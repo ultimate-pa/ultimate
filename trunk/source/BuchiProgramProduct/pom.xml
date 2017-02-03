@@ -37,7 +37,6 @@
 	</parent>
 
 
-	<groupId>BuchiProgramProduct</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.buchiprogramproduct</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

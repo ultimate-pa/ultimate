@@ -56,7 +56,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	private final Map<String, LOC> mExitNodes;
 	private final Map<String, Set<LOC>> mErrorNodes;
 	private final Set<LOC> mLoopLocations;
-	private final CfgSmtToolkit mCfgSmtToolkit;
+	private CfgSmtToolkit mCfgSmtToolkit;
 	private final Set<LOC> mInitialNodes;
 	private final String mIdentifier;
 	private final Class<LOC> mLocationClass;
@@ -237,6 +237,10 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	@Override
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
+	}
+	
+	public void setCfgSmtToolkit(final CfgSmtToolkit cfgSmtToolkit) {
+		mCfgSmtToolkit = cfgSmtToolkit;
 	}
 
 	@Override

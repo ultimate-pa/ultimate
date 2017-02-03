@@ -8,9 +8,9 @@ Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker
-Require-Bundle: Library-UltimateModel,
- Library-UltimateUtil,
- Library-BoogieAST,
- UltimateCore,
- Library-ModelCheckerUtils,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder

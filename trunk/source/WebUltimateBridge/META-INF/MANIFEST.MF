@@ -1,12 +1,12 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: WebUltimateBridge
-Bundle-SymbolicName: WebUltimateBridge;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.webbridge;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: webultimatebridge.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.webbridge.Activator
 Require-Bundle: org.eclipse.core.runtime
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: de.uni_freiburg.informatik.ultimate.website,
- de.uni_freiburg.informatik.ultimate.website.toolchains,
- resources.examples
+Export-Package: de.uni_freiburg.informatik.ultimate.webbridge.toolchains,
+ de.uni_freiburg.informatik.ultimate.webbridge.website,
+ de.uni_freiburg.informatik.ultimate.webbridge.resources.examples

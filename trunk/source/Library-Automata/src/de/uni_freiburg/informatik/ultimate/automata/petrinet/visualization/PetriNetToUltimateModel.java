@@ -53,7 +53,7 @@ public class PetriNetToUltimateModel<S, C> {
 	 * @return the initial node of the Petri net
 	 */
 	@SuppressWarnings("unchecked")
-	public PetriNetInitialNode getUltimateModelOfPetriNet(final IPetriNet<S, C> net) {
+	public PetriNetInitialNode transformToUltimateModel(final IPetriNet<S, C> net) {
 		final Collection<Collection<Place<S, C>>> acceptingMarkings = net.getAcceptingMarkings();
 		final PetriNetInitialNode graphroot = new PetriNetInitialNode(printAcceptingMarkings(acceptingMarkings));
 		

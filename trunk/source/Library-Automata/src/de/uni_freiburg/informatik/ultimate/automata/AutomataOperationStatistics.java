@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
  * Object that stores statistics of an automata library operation.
+ * <p>
  * Stores a single row of a CSV as a key-value map.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -50,9 +51,16 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	private static final int INVALID_PERCENTAGE = -1;
 	
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
-	private static final String MUST_BE_OF_NUMBER_TYPE = "must be of number type.";
+	private static final String MUST_BE_OF_INTEGER_TYPE = " has a value stored that is not of integer type.";
 	
-	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
+	private final TreeMap<StatisticsType, Object> mKeyValueMap;
+	
+	/**
+	 * Constructor.
+	 */
+	public AutomataOperationStatistics() {
+		mKeyValueMap = new TreeMap<>();
+	}
 	
 	@Override
 	public ICsvProvider<Object> createCsvProvider() {
@@ -69,7 +77,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	
 	/**
 	 * @param key
-	 *            key with which the specified value is to be associated
+	 *            Key with which the specified value is to be associated.
 	 * @param value
 	 *            value to be associated with the specified key
 	 * @return the previous value associated with key, or null if there was no
@@ -80,8 +88,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	/**
-	 * Adds another key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the
-	 * second key <tt>fstBaseKey</tt>.
+	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
+	 * key <tt>fstBaseKey</tt>.
 	 * 
 	 * @param fstBaseKey
 	 *            first key
@@ -96,8 +104,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	/**
-	 * Adds another key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the
-	 * second key <tt>fstBaseKey</tt>.
+	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
+	 * key <tt>fstBaseKey</tt>.
 	 * <p>
 	 * The percentage is inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>.
 	 * 
@@ -114,8 +122,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	/**
-	 * Adds another key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the
-	 * second key <tt>fstBaseKey</tt>.
+	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
+	 * key <tt>fstBaseKey</tt>.
 	 * 
 	 * @param fstBaseKey
 	 *            first key
@@ -140,8 +148,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	/**
-	 * Adds another key-value pair with the content being the difference between the first key <tt>sndBaseKey</tt> wrt.
-	 * the second key <tt>fstBaseKey</tt>.
+	 * Adds a key-value pair with the content being the difference between the first key <tt>sndBaseKey</tt> wrt. the
+	 * second key <tt>fstBaseKey</tt>.
 	 * 
 	 * @param fstBaseKey
 	 *            first key
@@ -168,7 +176,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 			throw new IllegalArgumentException(FIRST_INSERT_THE_VALUE_FOR_KEY + key);
 		}
 		if (!(raw instanceof Integer)) {
-			throw new IllegalArgumentException(key + MUST_BE_OF_NUMBER_TYPE);
+			throw new IllegalArgumentException(key + MUST_BE_OF_INTEGER_TYPE);
 		}
 		return (Integer) raw;
 	}

@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Interface to create a tree automaton
@@ -58,4 +62,10 @@ public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STAT
 	 * @return Get the rules of the automaton.
 	 */
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
+	
+	@Override
+	default IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		return new TreeAutomatonToUltimateModel<LETTER, STATE>().transformToUltimateModel(this);
+	}
 }

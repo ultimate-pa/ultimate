@@ -8,8 +8,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-PEA</groupId>
-  <artifactId>Library-PEA</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.lib.pea</artifactId>
   <version>0.89.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

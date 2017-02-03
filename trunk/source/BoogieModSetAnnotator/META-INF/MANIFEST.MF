@@ -1,15 +1,15 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Boogie Modifies Set Annotator
-Bundle-SymbolicName: BoogieModSetAnnotator;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator.Activator
-Require-Bundle: Library-UltimateCore,
- Library-UltimateUtil,
- Library-BoogieAST,
- UltimateCore,
- BoogieParser,
- BoogiePreprocessor
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.boogie.parser,
+ de.uni_freiburg.informatik.ultimate.boogie.preprocessor
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

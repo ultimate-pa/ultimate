@@ -35,8 +35,7 @@
 	</parent> 
   
   
-  <groupId>AutomataScriptParser</groupId>
-  <artifactId>AutomataScriptParser</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
   

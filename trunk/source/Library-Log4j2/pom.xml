@@ -8,9 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  
-  <groupId>Library-Log4j2</groupId>
-  <artifactId>Library-Log4j2</artifactId>
+  <groupId>org.apache.logging.log4j</groupId>
+  <artifactId>org.apache.logging.log4j</artifactId>
   <version>2.6.2</version>
   <packaging>eclipse-plugin</packaging>
 </project>

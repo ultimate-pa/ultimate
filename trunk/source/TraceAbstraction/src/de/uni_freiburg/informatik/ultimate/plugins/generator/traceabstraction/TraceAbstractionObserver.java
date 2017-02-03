@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -85,8 +85,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mLastModel) {
 			@SuppressWarnings("unchecked")
-			final IIcfg<BoogieIcfgLocation> rcfgRootNode = (IIcfg<BoogieIcfgLocation>) mIcfgs.stream()
-					.filter(a -> a.getLocationClass().equals(BoogieIcfgLocation.class)).reduce((a, b) -> b)
+			final IIcfg<IcfgLocation> rcfgRootNode = (IIcfg<IcfgLocation>) mIcfgs.stream()
+					.filter(a -> IcfgLocation.class.isAssignableFrom(a.getLocationClass())).reduce((a, b) -> b)
 					.orElseThrow(UnsupportedOperationException::new);
 
 			if (rcfgRootNode == null) {

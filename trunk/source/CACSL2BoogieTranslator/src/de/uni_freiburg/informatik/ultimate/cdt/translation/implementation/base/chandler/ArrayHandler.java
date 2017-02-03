@@ -230,7 +230,7 @@ public class ArrayHandler {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, inRange);
 			final Check chk = new Check(Spec.ARRAY_INDEX);
-			chk.addToNodeAnnot(assertStm);
+			chk.annotate(assertStm);
 			exprResult.stmt.add(assertStm);
 			break;
 		case ASSUME:

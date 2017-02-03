@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Jung
-Bundle-SymbolicName: Library-Jung
+Bundle-SymbolicName: edu.uci.ics.jung
 Bundle-Version: 2.0.1
 Bundle-ClassPath: .
 Bundle-Vendor: http://jung.sourceforge.net/

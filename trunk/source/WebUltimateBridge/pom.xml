@@ -10,8 +10,8 @@
 	</parent>
 
 
-	<groupId>WebUltimateBridge</groupId>
-	<artifactId>WebUltimateBridge</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.webbridge</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

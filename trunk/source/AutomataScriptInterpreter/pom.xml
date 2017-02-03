@@ -34,7 +34,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>AutomataScriptInterpreter</groupId>
   <artifactId>de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>

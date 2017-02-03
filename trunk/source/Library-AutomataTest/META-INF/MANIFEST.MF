@@ -1,11 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-AutomataTest
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata.test
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.automata.test
 Bundle-Version: 0.0.1
-Fragment-Host: de.uni_freiburg.informatik.ultimate.automata
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: Library-UltimateTest,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit
 Import-Package: junit.framework,
  org.junit,

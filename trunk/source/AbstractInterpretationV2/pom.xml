@@ -35,7 +35,6 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>AbstractInterpretationV2</groupId>
 	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2</artifactId>
 	<version>0.0.1</version>
 	<packaging>eclipse-plugin</packaging>

@@ -1,17 +1,17 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-LassoRanker
-Bundle-SymbolicName: Library-LassoRanker
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.lassoranker
 Bundle-Version: 0.9.5
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
-Require-Bundle: Library-UltimateCore,
- Library-UltimateUtil,
- Library-BoogieAST,
- UltimateCore,
- Library-SMTLIB,
- Library-ModelCheckerUtils,
- SMTInterpol;resolution:=optional,
- SMTSolverBridge
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.smtinterpol;resolution:=optional,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.exceptions,

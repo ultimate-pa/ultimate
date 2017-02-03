@@ -9,8 +9,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>Library-Batik</groupId>
-	<artifactId>Library-Batik</artifactId>
+	<groupId>org.apache.batik</groupId>
+	<artifactId>org.apache.batik</artifactId>
 	<version>1.7.0</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

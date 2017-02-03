@@ -1,16 +1,16 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-srParse
-Bundle-SymbolicName: Library-srParse
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.srparse
 Bundle-Version: 1.0.0
-Export-Package: srParse;
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.srparse;
   uses:="com.github.jhoenicke.javacup.runtime,
    org.antlr.runtime.debug,
    pea,
    pea.reqCheck,
    org.antlr.runtime,
    PatternLanguage"
-Require-Bundle: Library-PEA,
- JavaCup,
- ASTBuilder
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.pea,
+ com.github.jhoenicke.javacup,
+ de.uni_freiburg.informatik.ultimate.astbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

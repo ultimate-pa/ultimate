@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-Name: Library-ojAlgo
-Bundle-SymbolicName: Library-ojAlgo
+Bundle-SymbolicName: org.ojalgo
 Bundle-Version: 38.18
 Bundle-ManifestVersion: 2
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

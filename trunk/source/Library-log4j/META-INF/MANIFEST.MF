@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-log4j
-Bundle-SymbolicName: Library-log4j
+Bundle-SymbolicName: org.apache.log4j
 Bundle-Version: 1.2.15
 Export-Package: org.apache.log4j;uses:="org.apache.log4j.helpers,org.apache.log4j.or,org.apache.log4j.spi",
  org.apache.log4j.chainsaw;

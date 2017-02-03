@@ -28,8 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * General Petri net interface.
@@ -74,4 +78,10 @@ public interface IPetriNet<S, C> extends IAutomaton<S, C> {
 	 * @return {@code true} iff the word is accepted.
 	 */
 	boolean accepts(Word<S> word);
+	
+	@Override
+	default IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		return new PetriNetToUltimateModel<S, C>().transformToUltimateModel(this);
+	}
 }

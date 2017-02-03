@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-jdom
-Bundle-SymbolicName: Library-jdom
+Bundle-SymbolicName: org.jdom
 Bundle-Version: 1.1.1
 Bundle-ClassPath: .
 Export-Package: org.jdom,

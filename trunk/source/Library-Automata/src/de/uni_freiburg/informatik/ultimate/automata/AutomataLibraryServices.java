@@ -32,30 +32,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
- * Wrapper for {@link ILoggingService} and {@link IProgressMonitorService} that are used in the
- * automata library.
+ * Wrapper for {@link ILoggingService} and {@link IProgressMonitorService} that are used in the automata library.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AutomataLibraryServices {
-	
 	private final ILoggingService mLoggingService;
 	private final IProgressAwareTimer mProgressAwareTimer;
 	
 	/**
-	 * Constructor.
-	 * 
-	 * @param ultimateServices
-	 *            Ultimate services
+	 * @param services
+	 *            Ultimate services.
 	 */
-	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices) {
-		mLoggingService = ultimateServices.getLoggingService();
-		mProgressAwareTimer = ultimateServices.getProgressMonitorService();
+	public AutomataLibraryServices(final IUltimateServiceProvider services) {
+		mLoggingService = services.getLoggingService();
+		mProgressAwareTimer = services.getProgressMonitorService();
 	}
 	
-	public AutomataLibraryServices(final IUltimateServiceProvider ultimateServices, final long timeoutInMilliseconds) {
-		mLoggingService = ultimateServices.getLoggingService();
-		mProgressAwareTimer = ultimateServices.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param timeoutInMilliseconds
+	 *            timeout in milliseconds
+	 */
+	public AutomataLibraryServices(final IUltimateServiceProvider services, final long timeoutInMilliseconds) {
+		mLoggingService = services.getLoggingService();
+		mProgressAwareTimer = services.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
 	}
 	
 	public ILoggingService getLoggingService() {

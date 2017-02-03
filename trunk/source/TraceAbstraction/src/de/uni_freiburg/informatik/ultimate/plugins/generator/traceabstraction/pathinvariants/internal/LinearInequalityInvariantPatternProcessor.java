@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator;
 
 /**
  * A {@link IInvariantPatternProcessor} using patterns composed of linear inequalities on a linear approximation of the
@@ -141,6 +142,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final boolean DEBUG_OUTPUT = !false;
 	private static final boolean CHANGE_ONLY_MOST_FREQUENT_LOC = false;
 	private static final boolean ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE = !true;
+	private static final boolean USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+	private static final boolean USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = !true;
 
 	/**
 	 * Contains all coefficients of all patterns from the current round.
@@ -150,6 +153,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * If the current constraints are satisfiable, then this map contains the values of the pattern coefficients.
 	 */
 	private Map<Term, Rational> mPatternCoefficients2Values;
+	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2UnderApproximation;
+	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2OverApproximation;
 	
 
 	/**
@@ -179,6 +184,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param axioms
 	 * @param errorLocation
 	 * @param startLocation
+	 * @param overApprox 
+	 * @param underApprox 
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
@@ -188,7 +195,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCoreVarsForPatterns,
 			final boolean useUnsatCoreForDynamicPatternSettingChanges,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox, final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -216,6 +224,8 @@ public final class LinearInequalityInvariantPatternProcessor
 //		mLinearInequalities2Transitions =  new HashMap<>();
 		mAllPatternCoefficients = null;
 		mPatternCoefficients2Values = null;
+		mLoc2UnderApproximation = loc2underApprox;
+		mLoc2OverApproximation = loc2overApprox;
 
 	}
 
@@ -594,8 +604,30 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
 		}
+		if (USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
+			IcfgLocation loc = predicate.getTargetLocation();
+			
+			if (loc != mErrorLocation && mLoc2UnderApproximation.containsKey(loc)) {
+				Collection<Collection<AbstractLinearInvariantPattern>> spTemplate = convertTransFormulaToPatternsForLinearInequalities(mLoc2UnderApproximation.get(loc));
+				Set<IProgramVar> varsForPattern = extractVarsFromPattern(spTemplate);
+				completePatternVariablesMapping(primedMapping, varsForPattern, programVarsRecentlyOccurred);
+				Collection<Collection<LinearInequality>> spTemplateDNF = mapPattern(spTemplate, primedMapping);
+				mSolver.echo(new QuotedObject("Assertion for SP: " +  mLoc2UnderApproximation.get(loc).toString()));
+				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(spTemplateDNF, endInvariantDNF));
+			}
+		}
 		mSolver.echo(new QuotedObject("Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF, transitionDNF);
+	}
+
+	private Set<IProgramVar> extractVarsFromPattern(Collection<Collection<AbstractLinearInvariantPattern>> spTemplate) {
+		Set<IProgramVar> result = new HashSet<>();
+		for (Collection<AbstractLinearInvariantPattern> conjuncts : spTemplate) {
+			for (AbstractLinearInvariantPattern conjunct : conjuncts) {
+				result.addAll(conjunct.getVariables());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -673,6 +705,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		// Generate and assert terms for intermediate transitions
 		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
+
 		}
 	}
 

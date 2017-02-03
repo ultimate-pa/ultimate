@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
@@ -33,26 +33,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 
 /**
- * Result that reports that a counter example for an LTL property was found and
- * that it is finite.
+ * Result that reports that a counter example for an LTL property was found and that it is finite.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class LTLFiniteCounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends
-		CounterExampleResult<ELEM, TE, E> {
+public class LTLFiniteCounterExampleResult<ELEM extends IElement, TE extends IElement, E>
+		extends CounterExampleResult<ELEM, TE, E> {
 
-	public LTLFiniteCounterExampleResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> pe, Check  check) {
+	public LTLFiniteCounterExampleResult(final ELEM position, final String plugin,
+			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> pe, final Check check) {
 		super(annotatePositionWithCheck(position, check), plugin, translatorSequence, pe);
 	}
 
-	private static <ELEM extends IElement> ELEM annotatePositionWithCheck(ELEM position, Check check) {
+	private static <ELEM extends IElement> ELEM annotatePositionWithCheck(final ELEM position, final Check check) {
 		if (check == null || !check.getSpec().equals(Spec.LTL)) {
 			throw new IllegalArgumentException("You cannot use " + LTLFiniteCounterExampleResult.class.getSimpleName()
 					+ " for specs different from LTL");
 		}
-		position.getPayload().getAnnotations().put(Check.getIdentifier(), check);
+		check.annotate(position);
 		return position;
 	}
 }

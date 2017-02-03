@@ -36,8 +36,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
-	<groupId>SMTSolverBridge</groupId>
-	<artifactId>SMTSolverBridge</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.smtsolver.external</artifactId>
 	<packaging>eclipse-plugin</packaging>
 
 	<build>
