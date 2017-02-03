@@ -5,6 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.interactive
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
-Require-Bundle: Library-UltimateCore;bundle-version="0.0.1"
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.interactive.exceptions

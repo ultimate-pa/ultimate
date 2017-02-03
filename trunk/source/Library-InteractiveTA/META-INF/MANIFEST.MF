@@ -3,13 +3,13 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-InteractiveTA
 Bundle-SymbolicName: Library-InteractiveTA
 Bundle-Version: 0.0.1
-Require-Bundle: Library-UltimateCore,
- Library-ModelCheckerUtils,
- Library-Protobuf,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ com.google.protobuf,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- Library-UltimateModel,
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.interactive
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction,

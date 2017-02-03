@@ -8,7 +8,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-Protobuf</groupId>
-  <artifactId>Library-Protobuf</artifactId>
+  <groupId>com.google.protobuf</groupId>
+  <artifactId>com.google.protobuf</artifactId>
   <version>1.0.0</version>
 </project>
