@@ -35,6 +35,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	private final Map<TransFormula, IcfgLocation> mTargetLocations;
 	private final MapEliminator mMapEliminator;
 	private final ManagedScript mManagedScript;
+	private final ReplacementVarFactory mReplacementVarFactory;
 
 	public MapEliminationTransformer(final IIcfg<?> icfg, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable,
@@ -45,6 +46,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		mSourceLocations = new HashMap<>();
 		mTargetLocations = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
+		mReplacementVarFactory = Objects.requireNonNull(replacementVarFactory);
 		preprocessIcfg(icfg, replacementVarFactory, managedScript);
 		mMapEliminator = new MapEliminator(services, logger, managedScript, symbolTable, replacementVarFactory,
 				mTransFormulas.values(), settings);
@@ -82,5 +84,10 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	@Override
 	public String getName() {
 		return MapEliminationTransformer.class.getSimpleName();
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mReplacementVarFactory.constructIIcfgSymbolTable();
 	}
 }

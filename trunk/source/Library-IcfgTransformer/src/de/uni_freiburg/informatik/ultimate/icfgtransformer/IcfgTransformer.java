@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -128,6 +129,10 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 				mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
 			}
 		}
+		final CfgSmtToolkit oldToolkit = originalIcfg.getCfgSmtToolkit();
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), 
+				oldToolkit.getManagedScript(), mTransformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(), oldToolkit.getProcedures());
+		resultIcfg.setCfgSmtToolkit(csToolkit);
 		return resultIcfg;
 	}
 

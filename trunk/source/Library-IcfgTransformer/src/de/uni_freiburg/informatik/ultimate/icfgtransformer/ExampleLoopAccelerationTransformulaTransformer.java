@@ -49,6 +49,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
+	private final IIcfgSymbolTable mOldSymbolTable;
 
 	/**
 	 * Create an {@link ExampleLoopAccelerationTransformulaTransformer} instance.
@@ -70,6 +71,7 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 			final IIcfgSymbolTable oldSymbolTable, final ReplacementVarFactory replacementVarFac) {
 		mLogger = logger;
 		mManagedScript = Objects.requireNonNull(managedScript);
+		mOldSymbolTable = oldSymbolTable;
 	}
 
 	@Override
@@ -84,6 +86,11 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 		}
 		return TransFormulaBuilder.constructCopy(mManagedScript, tf, Collections.emptySet(), Collections.emptySet(),
 				Collections.emptyMap());
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mOldSymbolTable;
 	}
 
 }

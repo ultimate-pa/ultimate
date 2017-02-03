@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -45,4 +46,11 @@ public interface ITransformulaTransformer {
 	 * @return A human-friendly name that can be used during debugging, e.g., if many transformers run after another.
 	 */
 	String getName();
+	
+	/**
+	 * 
+	 * @return Symbol table of the result CFG. Can be obtained only after the
+	 * translation.
+	 */
+	IIcfgSymbolTable getNewIcfgSymbolTable();
 }
