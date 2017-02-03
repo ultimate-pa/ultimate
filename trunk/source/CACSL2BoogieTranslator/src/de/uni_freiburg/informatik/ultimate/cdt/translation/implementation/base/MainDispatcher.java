@@ -1049,7 +1049,7 @@ public class MainDispatcher extends Dispatcher {
 			final ILocation loc = LocationFactory.createCLocation(node);
 			result = new LoopInvariantSpecification(loc, false, as.getFormula());
 			final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
-			check.addToNodeAnnot(result);
+			check.annotate(result);
 		}
 		return result;
 	}

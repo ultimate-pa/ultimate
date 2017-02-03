@@ -243,7 +243,7 @@ public class ACSLHandler implements IACSLHandler {
             final List<HavocStatement> havocs = CHandler.createHavocsForAuxVars(formula.auxVars);
             stmt.addAll(havocs);
 
-            check.addToNodeAnnot(assertStmt);
+            check.annotate(assertStmt);
             return new ExpressionResult(stmt, null, decl, auxVars, overappr);
         }
         // TODO : other cases
@@ -692,7 +692,7 @@ public class ACSLHandler implements IACSLHandler {
         final ILocation reqLoc = LocationFactory.createACSLLocation(node, check);
         final RequiresSpecification req = new RequiresSpecification(reqLoc, false,
                 formula);
-        check.addToNodeAnnot(req);
+        check.annotate(req);
         return new ContractResult(new Specification[] { req });
     }
 
@@ -714,7 +714,7 @@ public class ACSLHandler implements IACSLHandler {
         final ILocation ensLoc = LocationFactory.createACSLLocation(node, check);
         final EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false,
                 formula);
-        check.addToNodeAnnot(ens);
+        check.annotate(ens);
         return new ContractResult(new Specification[] { ens });
     }
 
@@ -782,7 +782,7 @@ public class ACSLHandler implements IACSLHandler {
         final ILocation invLoc = LocationFactory.createACSLLocation(node, check);
         final LoopInvariantSpecification lis = new LoopInvariantSpecification(invLoc,
                 false, (Expression) res.node);
-        check.addToNodeAnnot(lis);
+        check.annotate(lis);
 
         decl.addAll(res.decl);
         stmt.addAll(res.stmt);

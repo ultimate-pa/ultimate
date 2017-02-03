@@ -636,7 +636,7 @@ public class FunctionHandler {
 					spec[nrSpec] = new EnsuresSpecification(ensLoc, false,
 							ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,
 									ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
-					check.addToNodeAnnot(spec[nrSpec]);
+					check.annotate(spec[nrSpec]);
 					if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
 						final Map<String, IAnnotations> annots = spec[nrSpec].getPayload().getAnnotations();
 						annots.put(Overapprox.getIdentifier(), new Overapprox(Collections.singletonMap("memtrack", ensLoc)));
@@ -1234,7 +1234,7 @@ public class FunctionHandler {
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-				chk.addToNodeAnnot(assertion);
+				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
 				assert memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSUME : "missed a case?";
@@ -1270,7 +1270,7 @@ public class FunctionHandler {
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-				chk.addToNodeAnnot(assertion);
+				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
 				assert memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSUME : "missed a case?";

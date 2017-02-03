@@ -1747,7 +1747,7 @@ public class CHandler implements ICHandler {
 			case ASSERTandASSUME:
 				final Statement assertStm = new AssertStatement(loc, baseEquality);
 				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-				chk.addToNodeAnnot(assertStm);
+				chk.annotate(assertStm);
 				result.stmt.add(assertStm);
 				expr = offsetRelation;
 				break;
@@ -1909,7 +1909,7 @@ public class CHandler implements ICHandler {
 			} else if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSERTandASSUME) {
 				additionalStatement = new AssertStatement(loc, divisorNotZero);
 				final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
-				check.addToNodeAnnot(additionalStatement);
+				check.annotate(additionalStatement);
 			} else {
 				throw new AssertionError("illegal");
 			}
@@ -2042,7 +2042,7 @@ public class CHandler implements ICHandler {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
 			final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-			chk.addToNodeAnnot(assertStm);
+			chk.annotate(assertStm);
 			result.stmt.add(assertStm);
 			break;
 		case ASSUME:
@@ -2277,7 +2277,7 @@ public class CHandler implements ICHandler {
 						new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType(resultType).toString()));
 				if (!ExpressionFactory.isTrueLiteral(smallerMaxInt)) {
 					final AssertStatement smallerMaxIntStmt = new AssertStatement(loc, smallerMaxInt);
-					check.addToNodeAnnot(smallerMaxIntStmt);
+					check.annotate(smallerMaxIntStmt);
 					rex.stmt.add(smallerMaxIntStmt);
 				}
 			}
@@ -2287,7 +2287,7 @@ public class CHandler implements ICHandler {
 						new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType(resultType).toString()));
 				if (!ExpressionFactory.isTrueLiteral(biggerMinInt)) {
 					final AssertStatement biggerMinIntStmt = new AssertStatement(loc, biggerMinInt);
-					check.addToNodeAnnot(biggerMinIntStmt);
+					check.annotate(biggerMinIntStmt);
 					rex.stmt.add(biggerMinIntStmt);
 				}
 			}

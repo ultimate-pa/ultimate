@@ -467,14 +467,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
 					final Check chk1 = new Check(Spec.UINT_OVERFLOW);
-					chk1.addToNodeAnnot(assertGeq0);
+					chk1.annotate(assertGeq0);
 					operand.stmt.add(assertGeq0);
 
 					final AssertStatement assertLtMax = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
 					final Check chk2 = new Check(Spec.UINT_OVERFLOW);
-					chk2.addToNodeAnnot(assertLtMax);
+					chk2.annotate(assertLtMax);
 					operand.stmt.add(assertLtMax);
 				} else {
 					// do nothing

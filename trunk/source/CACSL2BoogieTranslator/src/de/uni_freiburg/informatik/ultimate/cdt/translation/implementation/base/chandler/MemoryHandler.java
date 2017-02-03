@@ -1112,7 +1112,7 @@ public class MemoryHandler {
 			}
 			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
 			final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-			check.addToNodeAnnot(spec);
+			check.annotate(spec);
 			specList.add(spec);
 		}
 	}
@@ -1148,7 +1148,7 @@ public class MemoryHandler {
 			}
 			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
 			final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-			check.addToNodeAnnot(spec);
+			check.annotate(spec);
 			specList.add(spec);
 		}
 	}
@@ -1239,7 +1239,7 @@ public class MemoryHandler {
 		final boolean free = !mCheckFreeValid;
 		final RequiresSpecification offsetZero = new RequiresSpecification(tuLoc, free,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
-		check.addToNodeAnnot(offsetZero);
+		check.annotate(offsetZero);
 		specFree.add(offsetZero);
 
 		// ~addr!base == 0
@@ -1253,7 +1253,7 @@ public class MemoryHandler {
 		final RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR, isNullPtr, addrIsValid));
 
-		check.addToNodeAnnot(baseValid);
+		check.annotate(baseValid);
 		specFree.add(baseValid);
 
 		// ensures (if ~addr!base == 0 then #valid == old(#valid) else #valid == old(#valid)[~addr!base := false])

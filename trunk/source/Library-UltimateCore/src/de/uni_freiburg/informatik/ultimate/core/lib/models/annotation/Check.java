@@ -24,15 +24,16 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Specification that should be checked at position
@@ -42,12 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @author Oleksii Saukh
  * @author Matthias Heizmann
  */
-public class Check extends AbstractAnnotations {
-	private static final long serialVersionUID = -3753413284642976683L;
-
-	public static String getIdentifier() {
-		return Check.class.getName();
-	}
+public class Check extends ModernAnnotations {
 
 	public enum Spec {
 		/**
@@ -95,19 +91,18 @@ public class Check extends AbstractAnnotations {
 		 */
 		MALLOC_NONNEGATIVE,
 		/**
-		 * Pointer arithmetic that is not allowed by C. E.g. - computing the
-		 * difference of two pointers that point to completely different arrays
-		 * - comparing pointers that point to completely different arrays
+		 * Pointer arithmetic that is not allowed by C. E.g. - computing the difference of two pointers that point to
+		 * completely different arrays - comparing pointers that point to completely different arrays
 		 */
 		ILLEGAL_POINTER_ARITHMETIC,
 		/**
 		 * Error function reachable.
 		 */
-		ERROR_Function,
+		ERROR_FUNCTION,
 		/**
 		 * Not further specified or unknown.
 		 */
-		UNKNOWN, 
+		UNKNOWN,
 		/**
 		 * An LTL property
 		 */
@@ -124,20 +119,19 @@ public class Check extends AbstractAnnotations {
 
 	}
 
+	private static final long serialVersionUID = -3753413284642976683L;
+
+	private static final String KEY = Check.class.getName();
+
+	@Visualizable
 	private final Spec mSpec;
 
-	/**
-	 * The published attributes. Update this and getFieldValue() if you add new
-	 * attributes.
-	 */
-	private final static String[] s_AttribFields = { "Check" };
+	public Check(final Check.Spec spec) {
+		mSpec = spec;
+	}
 
 	public Spec getSpec() {
 		return mSpec;
-	}
-
-	public Check(Check.Spec spec) {
-		mSpec = spec;
 	}
 
 	public String getPositiveMessage() {
@@ -166,7 +160,7 @@ public class Check extends AbstractAnnotations {
 			return "input of malloc is always non-negative";
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "pointer arithmetic is always legal";
-		case ERROR_Function:
+		case ERROR_FUNCTION:
 			return "call of __VERIFIER_error() unreachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness holds";
@@ -205,7 +199,7 @@ public class Check extends AbstractAnnotations {
 			return "input of malloc can be negative";
 		case ILLEGAL_POINTER_ARITHMETIC:
 			return "comparison of incompatible pointers";
-		case ERROR_Function:
+		case ERROR_FUNCTION:
 			return "a call of __VERIFIER_error() is reachable";
 		case WITNESS_INVARIANT:
 			return "invariant of correctness witness can be violated";
@@ -218,27 +212,17 @@ public class Check extends AbstractAnnotations {
 		}
 	}
 
-	@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
-	}
-
-	@Override
-	protected Object getFieldValue(String field) {
-		if (field.equals("Check")) {
-			return mSpec.toString();
-		} else {
-			throw new UnsupportedOperationException("Unknown field " + field);
-		}
-	}
-
 	/**
 	 * Adds this Check object to the annotations of a IElement.
 	 * 
 	 * @param node
 	 *            the element
 	 */
-	public final void addToNodeAnnot(IElement node) {
-		node.getPayload().getAnnotations().put(getIdentifier(), this);
+	public void annotate(final IElement node) {
+		node.getPayload().getAnnotations().put(KEY, this);
+	}
+
+	public static Check getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, KEY, a -> (Check) a);
 	}
 }

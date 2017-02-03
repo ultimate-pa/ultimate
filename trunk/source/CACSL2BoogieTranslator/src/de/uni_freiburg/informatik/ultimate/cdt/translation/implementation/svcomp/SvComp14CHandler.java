@@ -174,9 +174,9 @@ public class SvComp14CHandler extends CHandler {
 			final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
 			Statement st;
 			if (checkSvcompErrorfunction) {
-				final Check check = new Check(Spec.ERROR_Function);
+				final Check check = new Check(Spec.ERROR_FUNCTION);
 				st = new AssertStatement(loc, falseLiteral);
-				check.addToNodeAnnot(st);
+				check.annotate(st);
 			} else {
 				st = new AssumeStatement(loc, falseLiteral);
 			}

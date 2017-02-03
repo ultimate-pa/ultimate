@@ -34,12 +34,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * When the RCFG is used as a Büchi program, use this Annotation to mark the
- * root node so various tools knows that they should run in LTL mode and which
- * property should be checked.
+ * When the RCFG is used as a Büchi program, use this Annotation to mark the root node so various tools knows that they
+ * should run in LTL mode and which property should be checked.
  * 
  * TODO: Using a check for translation is ugly. This should change.
  * 
@@ -49,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 public class LTLPropertyCheck extends Check {
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = LTLPropertyCheck.class.getSimpleName();
-	private static final String[] sFieldNames = new String[] { "Check", "UseLTLMode", "LTL Property" };
+	private static final String KEY = LTLPropertyCheck.class.getSimpleName();
 
+	@Visualizable
 	private final String mLTLProptery;
 	private final Map<String, CheckableExpression> mCheckableAtomicPropositions;
 	private List<VariableDeclaration> mGlobalDeclarations;
@@ -94,35 +95,12 @@ public class LTLPropertyCheck extends Check {
 	}
 
 	@Override
-	protected String[] getFieldNames() {
-		return sFieldNames;
-	}
-
-	@Override
-	protected Object getFieldValue(final String field) {
-		if (field.equals(sFieldNames[0])) {
-			return getSpec().toString();
-		} else if (field.equals(sFieldNames[1])) {
-			return true;
-		} else if (field.equals(sFieldNames[2])) {
-			return getLTLProperty();
-		} else {
-			return null;
-		}
-	}
-
 	public void annotate(final IElement elem) {
-		elem.getPayload().getAnnotations().put(sKey, this);
+		elem.getPayload().getAnnotations().put(KEY, this);
 	}
 
 	public static LTLPropertyCheck getAnnotation(final IElement elem) {
-		if (!elem.hasPayload()) {
-			return null;
-		}
-		if (!elem.getPayload().hasAnnotation()) {
-			return null;
-		}
-		return (LTLPropertyCheck) elem.getPayload().getAnnotations().get(sKey);
+		return ModernAnnotations.getAnnotation(elem, KEY, a -> (LTLPropertyCheck) a);
 	}
 
 	/**
