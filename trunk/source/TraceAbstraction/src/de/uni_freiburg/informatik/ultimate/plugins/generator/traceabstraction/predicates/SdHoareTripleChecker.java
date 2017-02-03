@@ -175,7 +175,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 				final Validity toFalse = sdecToFalse(preLin, preHier, act);
 				if (toFalse == null) {
 					// we are unable to determine validity with SD checks
-					assert (sdec(preLin, preHier, act, succ) == null);
+					assert (sdec(preLin, preHier, act, succ) == null) : "inconsistent check results";
 					return Validity.UNKNOWN;
 				}
 				switch (toFalse) {
