@@ -93,6 +93,8 @@ public class HybridTermBuilder {
 					element = "and";
 				} else if ("==".equals(el)) {
 					element = "=";
+				} else if ("|".equals(el)) {
+					element = "or";
 				}
 				final String operand1 = stack.pop();
 				final String operand2 = stack.pop();
