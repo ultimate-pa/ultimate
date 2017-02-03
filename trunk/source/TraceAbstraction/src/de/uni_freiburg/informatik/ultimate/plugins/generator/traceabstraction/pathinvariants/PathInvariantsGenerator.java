@@ -553,19 +553,24 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
 		}
 		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
-		if (mUseWeakestPrecondition) {
-			pathprogramLocs2Predicates
-			.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
-		}
+//		if (mUseWeakestPrecondition) {
+//			pathprogramLocs2Predicates
+//			.putAll(computeWPForPathProgram(pathProgram, icfg.getCfgSmtToolkit().getManagedScript()));
+//		}
 		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices, 
 				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
 		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices, 
 				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
+
 		
 		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = convertHashRelation(underApprox.getResult(),
 				icfg.getCfgSmtToolkit().getManagedScript());
-		// TODO: It should not be null
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
+		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = convertHashRelation(overApprox.getResult(),
+				icfg.getCfgSmtToolkit().getManagedScript());
+		
+		if (mUseWeakestPrecondition) {
+			pathprogramLocs2Predicates.putAll(loc2overApprox);
+		}
 
 		if (mUseAbstractInterpretationPredicates) {
 			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
