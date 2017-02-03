@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-DeltaDebugger" uid="DeltaDebugger" id="UltimateCore.CLI" application="UltimateCore.CoreRCP" version="0.0.1" useFeatures="true" includeLaunchers="true">
+<product name="Ultimate-DeltaDebugger" uid="DeltaDebugger" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.0.1" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
-      <image path="/CoreRCP/icons/about.gif"/>
       <text>
          Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
       </text>
@@ -20,7 +19,7 @@
       </programArgsLin>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx8g -Xms512M
+      <vmArgs>-Xmx8g
       </vmArgs>
    </launcherArgs>
 
@@ -44,6 +43,7 @@
    <features>
       <feature id="BA_FeatureDependenciesCommandlineE4" version="0.0.1"/>
       <feature id="BA_FeatureUltimateDeltaDebugger" version="0.0.1"/>
+      <feature id="BA_FeatureUltimateCommon" version="0.0.1"/>
    </features>
 
    <configurations>
