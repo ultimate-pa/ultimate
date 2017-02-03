@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -65,10 +64,10 @@ public class HoareAnnotationChecker {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IHoareTripleChecker mHoareTripleChecker;
-	private final IIcfg<BoogieIcfgLocation> mRootNode;
+	private final IIcfg<?> mRootNode;
 	private final boolean mIsInductive;
 
-	public HoareAnnotationChecker(final IUltimateServiceProvider services, final IIcfg<BoogieIcfgLocation> rootNode,
+	public HoareAnnotationChecker(final IUltimateServiceProvider services, final IIcfg<?> rootNode,
 			final CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
@@ -78,7 +77,7 @@ public class HoareAnnotationChecker {
 		mIsInductive = cfgInductive(mRootNode);
 	}
 
-	private boolean cfgInductive(final IIcfg<BoogieIcfgLocation> rootNode) {
+	private boolean cfgInductive(final IIcfg<?> rootNode) {
 		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
