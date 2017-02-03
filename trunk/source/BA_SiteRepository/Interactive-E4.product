@@ -71,6 +71,7 @@
       <plugin id="SMTSolverBridgeTest" fragment="true"/>
       <plugin id="UltimateCore"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.automata"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.automata.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
@@ -84,10 +85,14 @@
       <plugin id="org.eclipse.core.contenttype"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.runtime"/>
+      <plugin id="org.eclipse.core.runtime.compatibility.registry" fragment="true"/>
       <plugin id="org.eclipse.equinox.app"/>
       <plugin id="org.eclipse.equinox.common"/>
       <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.region" fragment="true"/>
       <plugin id="org.eclipse.equinox.registry"/>
+      <plugin id="org.eclipse.equinox.transforms.hook" fragment="true"/>
+      <plugin id="org.eclipse.equinox.weaving.hook" fragment="true"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.hamcrest.core"/>
