@@ -38,6 +38,7 @@ import java.util.Set;
 /**
  * TODO: comment
  * @author Matthias Heizmann
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <K1>
  * @param <K2>
@@ -45,7 +46,7 @@ import java.util.Set;
  */
 public class NestedMap2<K1, K2, V> {
 	
-	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<K1, Map<K2, V>>();
+	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<>();
 	
 	public V put(final K1 key1, final K2 key2, final V value) {
 		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
@@ -200,10 +201,15 @@ public class NestedMap2<K1, K2, V> {
 		return true;
 	}
 
+	/**
+	 * Makes a deep copy of this NestedMap2.
+	 * (but not the objects it holds)
+	 * (added by Alexander Nutz)
+	 */
 	public NestedMap2<K1, K2, V> copy() {
 		final NestedMap2<K1, K2, V> result = new NestedMap2<>();
 		for (final K1 k1 : this.keySet()) {
-			mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
+			result.mK1ToK2ToV.put(k1, new HashMap<>(this.get(k1)));
 		}
 		return result;
 	}
@@ -211,7 +217,4 @@ public class NestedMap2<K1, K2, V> {
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
 	}
-	
-	
-	
 }
