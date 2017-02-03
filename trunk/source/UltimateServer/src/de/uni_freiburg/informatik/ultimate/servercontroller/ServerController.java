@@ -34,13 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
+
+import com.google.protobuf.TextFormat.ParseException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -54,10 +54,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.server.IServer;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
  * The {@link ServerController} class provides a user interface for Clients that
@@ -67,7 +66,10 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  */
 public class ServerController implements IController<RunDefinition> {
 
+	final static int PORT = 6789;
+
 	private ILogger mLogger;
+	private IServer mServer;
 	private IToolchainData<RunDefinition> mToolchain;
 
 	@Override
@@ -77,6 +79,7 @@ public class ServerController implements IController<RunDefinition> {
 		}
 
 		mLogger = core.getCoreLoggingService().getControllerLogger();
+		mServer = new ProtoServer(mLogger, PORT);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Initializing ServerController...");
@@ -86,73 +89,24 @@ public class ServerController implements IController<RunDefinition> {
 			mLogger.debug("ServerController version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		}
 
-		final String[] args = Platform.getCommandLineArgs();
+		mLogger.debug("Starting Server on Port " + PORT);
+		mServer.start();
+		mLogger.debug("Waiting for connection...");
+		try {
+			mServer.waitForConnection();
+		} catch (InterruptedException e) {
+			mLogger.fatal("No connection established", e);
+			return -1;
+		}
 
-		// first, parse to see if toolchain is specified.
-		// the preparser has to accept all options, but may not require any
-		/*
-		 * final CommandLineParser onlyCliHelpParser =
-		 * CommandLineParser.createCliOnlyParser(core); final CommandLineParser
-		 * toolchainStageParser =
-		 * CommandLineParser.createCompleteNoReqsParser(core); ParsedParameter
-		 * toolchainStageParams; try { toolchainStageParams =
-		 * toolchainStageParser.parse(args);
-		 * 
-		 * } catch (final ParseException pex) { printParseException(args, pex);
-		 * onlyCliHelpParser.printHelp(); return -1; }
-		 * 
-		 * if (toolchainStageParams.isVersionRequested()) {
-		 * mLogger.info("Version is " +
-		 * RcpUtils.getVersion(Activator.PLUGIN_ID)); mLogger.info(
-		 * "Maximal heap size is " +
-		 * Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(),
-		 * true)); return IApplication.EXIT_OK; }
-		 * 
-		 * if (!toolchainStageParams.hasToolchain()) { if
-		 * (toolchainStageParams.isHelpRequested()) {
-		 * printHelp(onlyCliHelpParser, toolchainStageParams); return
-		 * IApplication.EXIT_OK; } mLogger.info("Missing required option: " +
-		 * CommandLineOptions.OPTION_NAME_TOOLCHAIN);
-		 * printHelp(onlyCliHelpParser, toolchainStageParams);
-		 * printAvailableToolchains(core); return IApplication.EXIT_OK; }
-		 * 
-		 * final Predicate<String> pluginNameFilter; try { pluginNameFilter =
-		 * getPluginFilter(core, toolchainStageParams.getToolchainFile()); }
-		 * catch (final ParseException pex) {
-		 * mLogger.error("Could not find the provided toolchain file: " +
-		 * pex.getMessage()); return -1; } catch (final
-		 * InvalidFileArgumentException e) { mLogger.error(e.getMessage());
-		 * printArgs(args); return -1; }
-		 * 
-		 * // second, perform real parsing final CommandLineParser fullParser =
-		 * CommandLineParser.createCompleteParser(core, pluginNameFilter); final
-		 * ParsedParameter fullParams;
-		 * 
-		 * try { fullParams = fullParser.parse(args); if
-		 * (fullParams.isHelpRequested()) { printHelp(fullParser, fullParams);
-		 * return IApplication.EXIT_OK; }
-		 * 
-		 * if (!fullParams.hasInputFiles()) { printParseException(args, new
-		 * ParseException("Missing required option: " +
-		 * CommandLineOptions.OPTION_NAME_INPUTFILES)); printHelp(fullParser,
-		 * fullParams); return -1; }
-		 * 
-		 * final IToolchainData<RunDefinition> currentToolchain =
-		 * prepareToolchain(core, fullParams); assert currentToolchain ==
-		 * mToolchain; // from now on, use the shutdown hook that disables the
-		 * toolchain if the user presses CTRL+C (hopefully)
-		 * Runtime.getRuntime().addShutdownHook(new Thread(new
-		 * SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
-		 * startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
-		 * 
-		 * } catch (final ParseException pex) { printParseException(args, pex);
-		 * fullParser.printHelp(); return -1; } catch (final
-		 * InvalidFileArgumentException e) { mLogger.error(e.getMessage());
-		 * printArgs(args); return -1; } catch (@SuppressWarnings("squid:S2142")
-		 * final InterruptedException e) {
-		 * mLogger.fatal("Exception during execution of toolchain", e); return
-		 * -1; }
-		 */
+		// should cl args be used for settings (port)?
+		// final String[] args = Platform.getCommandLineArgs();
+
+		// TODO: get toolchain, settings, model
+
+		// stop the server before exiting.
+		mServer.stop();
+
 		return IApplication.EXIT_OK;
 	}
 
@@ -192,20 +146,6 @@ public class ServerController implements IController<RunDefinition> {
 		tcj.schedule();
 		tcj.join();
 	}
-
-	/*
-	// TODO: load settings
-	private IToolchainData<RunDefinition> prepareToolchain(final ICore<RunDefinition> core,
-			final ParsedParameter fullParams) throws ParseException, InvalidFileArgumentException {
-		core.resetPreferences();
-		if (fullParams.hasSettings()) {
-			core.loadPreferences(fullParams.getSettingsFile());
-		}
-		mToolchain = fullParams.createToolchainData();
-		fullParams.applyCliSettings(mToolchain.getServices());
-		return mToolchain;
-	}
-	*/
 
 	@Override
 	public ISource selectParser(final Collection<ISource> parser) {
@@ -294,43 +234,6 @@ public class ServerController implements IController<RunDefinition> {
 		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
 			mLogger.info(entry.getKey());
 			mLogger.info(indent + entry.getValue().getRootElement().getName());
-		}
-	}
-
-	private static final class SigIntTrap implements Runnable {
-
-		private static final int SHUTDOWN_GRACE_PERIOD_SECONDS = 5;
-		private final IToolchainData<RunDefinition> mCurrentToolchain;
-		private final ILogger mLogger;
-
-		public SigIntTrap(final IToolchainData<RunDefinition> currentToolchain, final ILogger logger) {
-			mCurrentToolchain = currentToolchain;
-			mLogger = logger;
-		}
-
-		@Override
-		public void run() {
-			mLogger.warn("Received shutdown request...");
-			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
-			if (services == null) {
-				return;
-			}
-			final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
-			if (progressMonitor == null) {
-				return;
-			}
-
-			final CountDownLatch cdl = progressMonitor.cancelToolchain();
-			try {
-				if (cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
-					mLogger.info("Completed graceful shutdown");
-				} else {
-					mLogger.fatal("Cannot interrupt operation gracefully because timeout expired. Forcing shutdown");
-				}
-			} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
-				mLogger.fatal("Received interrupt while waiting for graceful shutdown: " + e.getMessage());
-				return;
-			}
 		}
 	}
 }

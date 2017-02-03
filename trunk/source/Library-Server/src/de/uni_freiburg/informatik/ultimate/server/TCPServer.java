@@ -1,10 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.servercontroller;
+package de.uni_freiburg.informatik.ultimate.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,11 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import com.google.protobuf.GeneratedMessageV3;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.server.FutureClient;
-import de.uni_freiburg.informatik.ultimate.server.IServer;
 
 public abstract class TCPServer<T> implements IServer {
 
@@ -29,18 +23,17 @@ public abstract class TCPServer<T> implements IServer {
 	protected boolean mRunning = false;
 	protected ServerSocket mSocket;
 
+	// multiple Clients?
 	protected FutureClient<T> mClient;
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
 	protected Supplier<ExecutorService> mGetExecutorService;
 
-	// protected final ITypeRegistry<T> mTypeRegistry;
-	protected Map<String, WrappedFuture<? extends GeneratedMessageV3>> mExpectedData = new HashMap<>();
-
 	public TCPServer(ILogger logger, int port) {
 		mLogger = logger;
 		mPort = port;
 		mGetExecutorService = Executors::newWorkStealingPool;
+		mClient = new FutureClient<T>(mLogger);
 	}
 
 	public abstract void initClient();
@@ -83,31 +76,36 @@ public abstract class TCPServer<T> implements IServer {
 			mLogger.error("Server could not be started.", e1);
 			return;
 		}
-		mClient = new FutureClient<T>(mLogger);
-		while (mRunning) {
-			try {
-				mLogger.info("listening on port " + mPort);
-				Socket clientSocket = mSocket.accept();
+		// mClient = new FutureClient<T>(mLogger);
 
-				mLogger.info("accepted connection: " + clientSocket);
-				mClient.setSocket(clientSocket);
+		initClient();
 
-				mClient.setExecutor(mExecutor);
+		// while (mRunning) {
+		try {
+			mLogger.info("listening on port " + mPort);
+			Socket clientSocket = mSocket.accept();
 
-				// send(Action.HELLO, null);
-			} catch (IOException e) {
-				mLogger.error("Could not listen on port:" + mPort);
-				return;
-			}
+			mLogger.info("accepted connection: " + clientSocket);
+			mClient.setSocket(clientSocket);
 
-			/*
-			 * try { InputMonitor.get(); OutputMonitor.get(); } catch
-			 * (InterruptedException | ExecutionException e) {
-			 * mLogger.error("Input or outputstream halted.", e);
-			 * failedAnyFuture(new ConnectionInterruptedException(e));
-			 * closeClientConnection(); }
-			 */
+			mClient.setExecutor(mExecutor);
 
+			// send(Action.HELLO, null);
+		} catch (IOException e) {
+			mLogger.error("Could not listen on port:" + mPort);
+			return;
+		}
+
+		try {
+			Client<T> client = mClient.get(1, TimeUnit.MINUTES);
+
+			client.finished().get();
+		} catch (InterruptedException | ExecutionException e) {
+			mLogger.error("Client", e);
+			return;
+		} catch (TimeoutException e) {
+			mLogger.error("Timed out waiting for Client");
+			return;
 		}
 	}
 
@@ -248,7 +246,7 @@ public abstract class TCPServer<T> implements IServer {
 		} catch (ExecutionException e) {
 			mLogger.error(e);
 		} catch (TimeoutException e) {
-			mLogger.error("timed out waiting for HELLO message from client.", e);
+			mLogger.error("timed out waiting for client.", e);
 		}
 	}
 

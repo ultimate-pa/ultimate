@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.servercontroller;
+package de.uni_freiburg.informatik.ultimate.servercontroller.protoserver;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;

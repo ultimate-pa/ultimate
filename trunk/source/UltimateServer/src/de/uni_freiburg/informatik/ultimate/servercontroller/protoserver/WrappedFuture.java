@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.servercontroller;
+package de.uni_freiburg.informatik.ultimate.servercontroller.protoserver;
 
 import java.util.concurrent.CompletableFuture;
 

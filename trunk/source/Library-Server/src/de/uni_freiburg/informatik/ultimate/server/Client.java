@@ -6,8 +6,11 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.IHandlerRegistry;
@@ -37,6 +40,9 @@ public abstract class Client<T> {
 
 	private ITypeRegistry<T> mTypeRegistry;
 	private IHandlerRegistry<T> mHandlerRegistry;
+
+	private Future<?> mInputFuture;
+	private Future<?> mOutputFuture;
 
 	Client(Socket connectionSocket, ILogger logger, ITypeRegistry<T> typeRegistry) {
 		mLogger = logger;
@@ -128,8 +134,24 @@ public abstract class Client<T> {
 		InputStream input = mSocket.getInputStream();
 		OutputStream output = mSocket.getOutputStream();
 
-		executor.submit(() -> runOutput(output));
-		executor.submit(() -> runInput(input, mTypeRegistry));
+		mInputFuture = executor.submit(() -> runOutput(output));
+		mOutputFuture = executor.submit(() -> runInput(input, mTypeRegistry));
+	}
+
+	public Future<?> finished() {
+		if (mInputFuture == null || mOutputFuture == null) {
+			throw new RuntimeException("Clients Streams have not started");
+		}
+
+		return new CompletableFuture<Void>().thenApply((Function<? super Void, ?>) n -> {
+			try {
+				mInputFuture.get();
+				mOutputFuture.get();
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
+			return null;
+		});
 	}
 
 	private void runOutput(OutputStream output) {
