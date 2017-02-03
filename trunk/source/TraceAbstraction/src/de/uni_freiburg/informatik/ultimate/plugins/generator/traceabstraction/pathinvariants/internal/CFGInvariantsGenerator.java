@@ -190,6 +190,8 @@ public final class CFGInvariantsGenerator {
 
 			// Set the benchmarks
 			mPathInvariantsStatistics.addPathInvariantsData(sumOfTemplateConjuncts, sumOfTemplateConjuncts);
+			// Set the current round
+			mPathInvariantsStatistics.setRound(round + 1);
 
 			// Attempt to find a valid configuration
 			if (processor.hasValidConfiguration(predicates, round)) {
@@ -203,8 +205,7 @@ public final class CFGInvariantsGenerator {
 				for (final IcfgLocation location : locationsAsList) {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
-				// Set the benchmarks
-				mPathInvariantsStatistics.setRound(round + 1);
+
 				return result;
 			} else {
 
