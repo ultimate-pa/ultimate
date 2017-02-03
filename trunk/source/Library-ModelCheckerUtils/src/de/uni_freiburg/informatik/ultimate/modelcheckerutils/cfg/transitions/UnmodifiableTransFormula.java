@@ -71,7 +71,10 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * infeasible but the solver is not able to prove the infeasibility.
 	 */
 	public enum Infeasibility {
-		INFEASIBLE, UNPROVEABLE, NOT_DETERMINED
+		INFEASIBLE, 
+		UNPROVEABLE, 
+		NOT_DETERMINED,
+		//FIXME: Introduce value for FEASIBLE
 	}
 
 	/**
