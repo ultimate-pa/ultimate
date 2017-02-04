@@ -122,6 +122,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * I.e. the even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
 	 */
 	private final static boolean mUseStrictInequalitiesAlternatingly = false;
+	/**
+	 * Transform the path program by applying large block encoding.
+	 * Synthesize invariants only for the large block encoded program and use
+	 * less expensive techniques to obtain the remaining invariants. 
+	 */
+	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
 
 	private final static int MAX_ROUNDS = Integer.MAX_VALUE;
 
@@ -238,8 +244,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
-		final IIcfg<IcfgLocation> pathProgram =
+		IIcfg<IcfgLocation> pathProgram =
 				new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
+		/**
+		 * Map that assigns to each large block encoded icfg location the
+		 * corresponding location in the orginal icfg
+		 */
+		Map<IcfgLocation, IcfgLocation> lbeBacktranslation = null;
+		if(APPLY_LARGE_BLOCK_ENCODING) {
+			// TODO: add here some code that transforms the pathProgram icfg 
+			// into a large block encoded icfg
+			pathProgram = null;
+			lbeBacktranslation = null;
+		}
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
 			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(pathProgram);
 		} else {
@@ -253,13 +270,20 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		if (invariants != null) {
 			// Populate resulting array
 			mInterpolants = new IPredicate[mRun.getLength()];
-			for (int i = 0; i < mRun.getLength(); i++) {
-				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
-				final IcfgLocation locFromPathProgram =
-						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-						.collect(Collectors.toList()).get(0);
-				mInterpolants[i] = invariants.get(locFromPathProgram);
-				mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
+			if (APPLY_LARGE_BLOCK_ENCODING) {
+				// TODO: take invariants from the large block encoded path program
+				// and compute remaining invariants using SP, WP or 
+				// (better) interpolation.
+				throw new UnsupportedOperationException("no LBE support yet");
+			} else {
+				for (int i = 0; i < mRun.getLength(); i++) {
+					final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
+					final IcfgLocation locFromPathProgram =
+							invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
+							.collect(Collectors.toList()).get(0);
+					mInterpolants[i] = invariants.get(locFromPathProgram);
+					mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
+				}
 			}
 			mLogger.info("[PathInvariants] Invariants found and " + "processed.");
 			mLogger.info("Got a Invariant map of length " + mInterpolants.length);
@@ -330,7 +354,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPreds_to_MapToUnmodTrans(
-			Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
+			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
 
 		final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2Preds.keySet().stream().collect(Collectors.toMap(
 				loc -> loc,
@@ -565,9 +589,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
 
 		
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = convertHashRelation(underApprox.getResult(),
+		final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = convertHashRelation(underApprox.getResult(),
 				icfg.getCfgSmtToolkit().getManagedScript());
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = convertHashRelation(overApprox.getResult(),
+		final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = convertHashRelation(overApprox.getResult(),
 				icfg.getCfgSmtToolkit().getManagedScript());
 		
 		if (mUseWeakestPrecondition) {
@@ -601,11 +625,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
-			HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
+			final HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
 		
-		Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
-		for (IcfgLocation loc : loc2SetOfPreds.getDomain()) {
-			List<IPredicate> preds = new ArrayList<IPredicate>(loc2SetOfPreds.getImage(loc).size());
+		final Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
+		for (final IcfgLocation loc : loc2SetOfPreds.getDomain()) {
+			final List<IPredicate> preds = new ArrayList<IPredicate>(loc2SetOfPreds.getImage(loc).size());
 			preds.addAll(loc2SetOfPreds.getImage(loc));
 			// Currently, we use only one predicate
 			loc2Predicate.put(loc, preds.get(0));
