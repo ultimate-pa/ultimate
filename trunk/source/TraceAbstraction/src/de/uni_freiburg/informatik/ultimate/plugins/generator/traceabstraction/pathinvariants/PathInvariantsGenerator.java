@@ -123,6 +123,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	private final static boolean mUseStrictInequalitiesAlternatingly = false;
 
+	private final static int MAX_ROUNDS = Integer.MAX_VALUE;
+
 	private final boolean mUseLiveVariables;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -176,16 +178,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
-				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 						mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, locations2LiveVariables,
+			return new LiveVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, 5, allProgramVariables, allProgramVariables,
+		return new AllProgramVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, allProgramVariables,
 				mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 	}
 
