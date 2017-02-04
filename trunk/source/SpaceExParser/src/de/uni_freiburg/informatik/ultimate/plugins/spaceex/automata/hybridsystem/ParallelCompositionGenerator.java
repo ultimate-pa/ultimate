@@ -92,7 +92,7 @@ public class ParallelCompositionGenerator {
 	 * @return
 	 */
 	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2,
-			Map<Location, LocationPair> mergedLocationToPair, Location init1, Location init2) {
+			Location init1, Location init2) {
 		// name
 		final String nameMerge = automaton1.getName() + "||" + automaton2.getName();
 		// labels are merged with union
@@ -115,7 +115,7 @@ public class ParallelCompositionGenerator {
 		// Add the initial locations to a Stack which holds LocationPair objects
 		mComputationStack.push(new LocationPair(initial1, initial2));
 		// compute the parallel composition starting from the initial location
-		createLocationsAndTransitions(locations1, locations2, mergedLocationToPair);
+		createLocationsAndTransitions(locations1, locations2);
 		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
@@ -154,8 +154,7 @@ public class ParallelCompositionGenerator {
 	 * @param automatonName1
 	 * @param automatonName2
 	 */
-	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2,
-			Map<Location, LocationPair> mergedLocationToPair) {
+	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2) {
 		// TODO: reduce cyclomatic Complexity + make the whole function more understandable + add more seperate
 		// functions
 		while (!mComputationStack.isEmpty()) {
