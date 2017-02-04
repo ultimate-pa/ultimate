@@ -96,6 +96,7 @@ public class ServerController implements IController<RunDefinition> {
 			mServer.waitForConnection();
 		} catch (InterruptedException e) {
 			mLogger.fatal("No connection established", e);
+			mServer.stop();
 			return -1;
 		}
 
