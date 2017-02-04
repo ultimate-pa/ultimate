@@ -201,15 +201,24 @@ public class SpaceExParser implements ISource {
 		// Initialize the preference manager + parse the config file right away.
 		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
 		// Create the model
+		mLogger.info("Starting creation of hybrid model...");
+		long startTime = System.nanoTime();
 		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
+		long estimatedTime = System.nanoTime() - startTime;
+		mLogger.info("Creation of hybrid model done in " + estimatedTime / (float) 1000000 + " milliseconds");
 		// get the System specified in the config.
 		final HybridSystem system = mPreferenceManager.getRegardedSystem(model);
 		// calculate the parallel Compositions of the different preferencegroups.
 		final Map<Integer, HybridAutomaton> parallelCompositions;
 		// if the preferencemanager has preferencegroups, calculate the parallel compositions for those groups.
 		if (mPreferenceManager.hasPreferenceGroups()) {
+			mLogger.info("Starting Computation of parallel compositions...");
+			startTime = System.nanoTime();
 			parallelCompositions = model.calculateParallelCompositionsForGroups(system);
 			mPreferenceManager.setGroupIdToParallelComposition(parallelCompositions);
+			estimatedTime = System.nanoTime() - startTime;
+			mLogger.info("Computation of parallel compositions done in " + estimatedTime / (float) 1000000
+					+ " milliseconds");
 		} else {
 			parallelCompositions = new HashMap<>();
 		}

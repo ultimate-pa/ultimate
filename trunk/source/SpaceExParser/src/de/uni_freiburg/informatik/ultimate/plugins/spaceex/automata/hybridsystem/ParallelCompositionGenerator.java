@@ -112,8 +112,6 @@ public class ParallelCompositionGenerator {
 		final Location initial2 = init2;
 		final LocationPair locpair = new LocationPair(initial1, initial2);
 		mInitialLocationMerge = getLocation(locpair.toString(), initial1, initial2);
-		// add to map of the form merged loc -> locpair
-		mergedLocationToPair.put(mInitialLocationMerge, locpair);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		mComputationStack.push(new LocationPair(initial1, initial2));
 		// compute the parallel composition starting from the initial location
@@ -174,7 +172,6 @@ public class ParallelCompositionGenerator {
 			if (outgoing1.isEmpty() && outgoing2.isEmpty()) {
 				final Location source = getLocation(locpair.toString(), currentLoc1, currentLoc2);
 				mLocationsMerge.put(source.getId(), source);
-				mergedLocationToPair.put(source, locpair);
 				continue;
 			}
 			// local vars for the loop
@@ -241,7 +238,6 @@ public class ParallelCompositionGenerator {
 					outgoing2.remove(currentTransition2);
 					final LocationPair locationPair = new LocationPair(tarLoc1, tarLoc2);
 					mComputationStack.push(locationPair);
-					mergedLocationToPair.put(target, locationPair);
 				} else {
 					// if one or both labels are local OR either one of them is empty, we can merge locations.
 					// in order to do that, it is necessary to compute all possible combinations.
@@ -271,7 +267,6 @@ public class ParallelCompositionGenerator {
 						mTransitionMerge.add(srcTar1);
 						final LocationPair srcTarPair = new LocationPair(srcLoc1, tarLoc2);
 						mComputationStack.push(srcTarPair);
-						mergedLocationToPair.put(target1, srcTarPair);
 					}
 					// s1,s2 ---> t1,s2
 					if (target2 != null && source.getId() != target2.getId()) {
@@ -280,7 +275,6 @@ public class ParallelCompositionGenerator {
 						mTransitionMerge.add(srcTar2);
 						final LocationPair tarSrcPair = new LocationPair(tarLoc1, srcLoc2);
 						mComputationStack.push(tarSrcPair);
-						mergedLocationToPair.put(target2, tarSrcPair);
 					}
 					break;
 				}

@@ -343,6 +343,7 @@ public class HybridIcfgGenerator {
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
+			
 		}
 	}
 	

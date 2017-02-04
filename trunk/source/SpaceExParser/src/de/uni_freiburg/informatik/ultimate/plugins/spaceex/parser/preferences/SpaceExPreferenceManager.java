@@ -103,6 +103,7 @@ public class SpaceExPreferenceManager {
 	
 	private void parseConfigFile(File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
+		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
 		final FileInputStream fis = new FileInputStream(configfile);
 		// load properties file
@@ -121,6 +122,8 @@ public class SpaceExPreferenceManager {
 		parseInitially(initially);
 		parseForbidden(forbidden);
 		fis.close();
+		final long estimatedTime = System.nanoTime() - startTime;
+		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
 	
 	private void parseForbidden(String forbidden) {
