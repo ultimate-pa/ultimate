@@ -94,8 +94,7 @@ then
 	exit 1
 fi
 
-if TO_SOTEC 
-then
+if [ "$TO_SOTEC" = true ] ;then
 	echo "Enter password for user ${CURRENTUSER} on ${DEPLOY_SERVER}:" 
 	read -s -p "Password: " SSHPASS
 	echo 
@@ -128,8 +127,7 @@ exitOnFailPop git tag "${NEW_TAG}"
 exitOnFailPop git push
 exitOnFailPop git push origin --tags
 
-if TO_GITHUB
-then
+if [ "$TO_GITHUB" = true ]; then
 	DESC=`git shortlog ${LAST_RELEASE}.. --no-merges --numbered -w0,6,9 --format="%s (https://github.com/ultimate-pa/ultimate/commit/%h)"`
 	github-release release ${RELEASE_REPO} -t "${NEW_TAG}" -d "${DESC}" --draft --pre-release
 
@@ -139,16 +137,14 @@ then
 	done
 fi
 
-if TO_SOTEC 
-then
-	if POST_FINAL
-	then
+if [ "$TO_SOTEC" = true ] ;then
+	if [ "$POST_FINAL" = true ]; then
 		for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
 	fi
 	rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
 fi
 
-if DEL_ZIP; then 
+if [ "$DEL_ZIP" = true ]; then 
 	rm *.zip 
 fi
 
