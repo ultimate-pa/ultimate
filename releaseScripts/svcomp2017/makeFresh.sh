@@ -1,5 +1,16 @@
 #!/bin/bash
 
+function exitOnFail {
+    "$@"
+    local status=$?
+    if [ $status -ne 0 ]; then
+		echo "$@ failed with $1"
+		exit $status
+    fi
+    return $status
+}
+
+
 DEPLOY_SERVER=sotec.informatik.uni-freiburg.de
 DEPLOY_DIR=/export/server/httpd/ultimate/downloads/svcomp2017
 TESTFILE=caniwrite
@@ -23,11 +34,7 @@ if [ ! $? -eq 0 ]; then
 fi
 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-mvn clean install -Pmaterialize
-if [ ! $? -eq 0 ]; then
-	echo "The maven build failed!"
-        exit 1
-fi
+exitOnFail mvn clean install -Pmaterialize
 popd > /dev/null
 
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc>
