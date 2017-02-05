@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  *   <li>
  *     {@link #getInvariantPatternForLocation(Location, int)} for all locations
  *   </li>
- *   <li>{@link #hasValidConfiguration(Collection, int)}</li>
+ *   <li>{@link #checkForValidConfiguration(Collection, int)}</li>
  * </ol>
  * 
  * @param <IPT>
@@ -107,18 +108,18 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * @return true if a valid configuration pattern has been found, false
 	 *         otherwise.
 	 */
-	public boolean hasValidConfiguration(
+	public LBool checkForValidConfiguration(
 			final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final int round);
 	
 	/**
 	 * Applies the configuration found with
-	 * {@link #hasValidConfiguration(Collection, int)} to a given invariant
+	 * {@link #checkForValidConfiguration(Collection, int)} to a given invariant
 	 * pattern.
 	 * 
 	 * The behaviour of this method is undefined, when the last call to
-	 * {@link #hasValidConfiguration(Collection, int)} returned false or if
-	 * {@link #hasValidConfiguration(Collection, int)} has not yet been called
+	 * {@link #checkForValidConfiguration(Collection, int)} returned false or if
+	 * {@link #checkForValidConfiguration(Collection, int)} has not yet been called
 	 * at all.
 	 * 
 	 * @param pattern the pattern to apply the configuration to

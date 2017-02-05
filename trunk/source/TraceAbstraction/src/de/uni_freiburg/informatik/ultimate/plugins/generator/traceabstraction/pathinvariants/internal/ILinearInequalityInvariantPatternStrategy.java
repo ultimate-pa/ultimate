@@ -78,6 +78,11 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix, Set<IProgramVar> vars);
 	
+	
+	public void setNumOfConjunctsForLocation(final IcfgLocation location, int numOfConjuncts);
+	
+	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int numOfDisjuncts);
+	
 
 
 	/**

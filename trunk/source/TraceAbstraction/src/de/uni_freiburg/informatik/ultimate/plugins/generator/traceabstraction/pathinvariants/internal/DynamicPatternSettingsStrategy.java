@@ -16,7 +16,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 
 	
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
-	private Map<IcfgLocation, PatternSetting> mLoc2PatternSetting;
+	protected Map<IcfgLocation, PatternSetting> mLoc2PatternSetting;
 	
 	public DynamicPatternSettingsStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
 			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables,
@@ -39,7 +39,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		mLoc2PatternSetting = new HashMap<>();
 	}
 	
-	private Set<IProgramVar> getPatternVariablesInitially (IcfgLocation loc) {
+	protected Set<IProgramVar> getPatternVariablesInitially (IcfgLocation loc) {
 		if (mLocations2LiveVariables.containsKey(loc)) {
 			return new HashSet<>(mLocations2LiveVariables.get(loc));
 		} else {
@@ -47,7 +47,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		}
 	}
 	
-	private Collection<Collection<AbstractLinearInvariantPattern>> constructInvariantPatternForSetting(IcfgLocation location, PatternSetting ps, Script solver, String prefix) {
+	protected Collection<Collection<AbstractLinearInvariantPattern>> constructInvariantPatternForSetting(IcfgLocation location, PatternSetting ps, Script solver, String prefix) {
 		assert super.mLoc2PatternCoefficents != null : "Map mLoc2PatternCoefficents must not be null!";
 		Set<Term> patternCoefficients = new HashSet<>();
 		// Build invariant pattern
@@ -143,10 +143,11 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			mLoc2PatternSetting.get(location).changeSetting();
 		} else {
 			throw new UnsupportedOperationException("There is no pattern setting for the given location: " + location);
+			
 		}
 	}
 	
-	private class PatternSetting {
+	class PatternSetting {
 		private int mNumOfConjuncts;
 		private static final int MAX_NUM_CONJUNCTS = 3;
 		private int mNumOfDisjuncts;
@@ -167,16 +168,28 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		 * TODO: Heuristic ?
 		 */
 		public void changeSetting() {
-			if (mNumOfConjuncts < MAX_NUM_CONJUNCTS) {
-//				mNumOfDisjuncts = mNumOfConjuncts;
+			if (mNumOfConjuncts < 2) {
 				mNumOfConjuncts++;
+			} else if (mNumOfDisjuncts < 2) {
+				mNumOfDisjuncts++;
 			} else {
-				if (mNumOfDisjuncts < MAX_NUM_DISJUNCTS) {
-					mNumOfDisjuncts++;
+				if (mNumOfConjuncts < 3) {
+					mNumOfConjuncts++;
 				} else {
-					throw new UnsupportedOperationException("Both number of conjuncts and disjuncts reached the maximum limit.");
+					mNumOfDisjuncts++;
+					mNumOfConjuncts++;
 				}
 			}
+//			if (mNumOfConjuncts < MAX_NUM_CONJUNCTS) {
+////				mNumOfDisjuncts = mNumOfConjuncts;
+//				mNumOfConjuncts++;
+//			} else {
+//				if (mNumOfDisjuncts < MAX_NUM_DISJUNCTS) {
+//					mNumOfDisjuncts++;
+//				} else {
+//					throw new UnsupportedOperationException("Both number of conjuncts and disjuncts reached the maximum limit.");
+//				}
+//			}
 		}
 	}
 

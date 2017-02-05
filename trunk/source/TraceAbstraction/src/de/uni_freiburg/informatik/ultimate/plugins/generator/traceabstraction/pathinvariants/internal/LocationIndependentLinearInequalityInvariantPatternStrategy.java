@@ -123,6 +123,15 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
 		Set<Term> patternCoefficients = new HashSet<>();
 		final int[] dimensions = getDimensions(location, round);
+//		// Hack (Remove asap)
+//		int[] dimensions = getDimensions(location, round);
+//		String locString = location.toString();
+//		int hcode = location.hashCode();
+//		if (location.hashCode() == 583607119) {
+//			dimensions = new int[] {1, 1};
+//		} else if (location.hashCode() == 495027291) {
+//			dimensions = new int[] {1, 2};
+//		}
 		// Build invariant pattern
 		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
@@ -163,6 +172,15 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location,
 			int round, Script solver, String prefix, Set<IProgramVar> vars) {
 		throw new UnsupportedOperationException("Location independent strategies do not support this kind of pattern construction.");
+	}
+	
+	@Override
+	public void setNumOfConjunctsForLocation(final IcfgLocation location, int maxNumOfConjuncts) {
+		throw new UnsupportedOperationException("Location independent strategies do not support location-dependent pattern settings.");
+	}
+	@Override
+	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int maxNumOfDisjuncts) {
+		throw new UnsupportedOperationException("Location independent strategies do not support location-dependent pattern settings.");
 	}
 	
 	@Override

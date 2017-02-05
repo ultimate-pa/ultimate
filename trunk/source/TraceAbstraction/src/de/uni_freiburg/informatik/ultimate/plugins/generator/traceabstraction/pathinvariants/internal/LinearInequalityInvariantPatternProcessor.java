@@ -786,7 +786,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean hasValidConfiguration(
+	public LBool checkForValidConfiguration(
 			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
 			final int round) {
 		mLogger.info("[LIIPP] Start generating terms.");
@@ -798,124 +798,114 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 
 		mLogger.info("[LIIPP] Terms generated, checking SAT.");
-		final LBool result = mSolver.checkSat();
-		mLogger.info("Check-sat result: " + result);
-		if (result == LBool.UNKNOWN) {
-			mLogger.info("Got \"UNKNOWN\" for last check-sat, give up the invariant search.");
-			// Prevent additional rounds
-			mMaxRounds = mCurrentRound + 1;
-		}
-		if (result != LBool.SAT) {
+		final LBool smtResult = mSolver.checkSat();
+		mLogger.info("Check-sat result: " + smtResult);
+
+		if (smtResult == LBool.UNSAT && mUseUnsatCoreForLocsAndVars) {
 			// No configuration found
-			if (result == LBool.UNSAT && mUseUnsatCoreForLocsAndVars) {
-				// Extract the variables from the unsatisfiable core by
-				// first extracting the motzkin variables and then using them
-				// to get the corresponding program variables
-				final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
-				final Set<String> motzkinVariables = new HashSet<>();
-				for (final Term t : unsatCoreAnnots) {
-					final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
-					motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
-				}
-				if (DEBUG_OUTPUT) {
-					mLogger.info("UnsatCoreAnnots: " + Arrays.toString(unsatCoreAnnots));
-					mLogger.info("MotzkinVars in unsat core: " + motzkinVariables);
-				}
-				mVarsFromUnsatCore = new HashSet<>();
-				final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
-				//				mTransitionsInUnsatCore = new HashSet<>();
-				final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
-				for (final String motzkinVar : motzkinVariables) {
-					final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);
-					for (final Term varInLinq : linq.getVariables()) {
-						if (varInLinq instanceof TermVariable) {
-							mVarsFromUnsatCore.add((TermVariable) varInLinq);
-						}
-						// else if (varInLinq instanceof ApplicationTerm) {
-						//
-						// } else {
-						// throw new UnsupportedOperationException("Var in linear inequality is neither a TermVariable
-						// nor a Replacement-Variable.");
-						// }
-
+			// Extract the variables from the unsatisfiable core by
+			// first extracting the motzkin variables and then using them
+			// to get the corresponding program variables
+			final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
+			final Set<String> motzkinVariables = new HashSet<>();
+			for (final Term t : unsatCoreAnnots) {
+				final Term origMotzkinTerm = mAnnotTerm2MotzkinTerm.get(t.toStringDirect());
+				motzkinVariables.addAll(getTermVariablesFromTerm(origMotzkinTerm));
+			}
+			if (DEBUG_OUTPUT) {
+				mLogger.info("UnsatCoreAnnots: " + Arrays.toString(unsatCoreAnnots));
+				mLogger.info("MotzkinVars in unsat core: " + motzkinVariables);
+			}
+			mVarsFromUnsatCore = new HashSet<>();
+			final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
+			//				mTransitionsInUnsatCore = new HashSet<>();
+			final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
+			for (final String motzkinVar : motzkinVariables) {
+				final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);
+				for (final Term varInLinq : linq.getVariables()) {
+					if (varInLinq instanceof TermVariable) {
+						mVarsFromUnsatCore.add((TermVariable) varInLinq);
 					}
+					// else if (varInLinq instanceof ApplicationTerm) {
+					//
+					// } else {
+					// throw new UnsupportedOperationException("Var in linear inequality is neither a TermVariable
+					// nor a Replacement-Variable.");
+					// }
+
+				}
 
 
-					if (round >= 0) {
-						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-						for (final Set<LinearInequality> s : setsContainingLinq) {
-							final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
-							if (ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE) {
-								// add only locations from transitions to unsat core
-								if (locs.size() == 2) {
-									locsInUnsatCore.add(locs.get(1));
-									// Compute how often a location occurs in the unsat core
-									if (locs2Frequency.containsKey(locs.get(1))) {
-										Integer i = locs2Frequency.get(locs.get(1));
-										locs2Frequency.put(locs.get(1), ++i);
-									} else {
-										locs2Frequency.put(locs.get(1), new Integer(1));
-									}
-								} 
-								//								else {
-								//									locsInUnsatCore.addAll(locs);
-								//								}
-							} else {
-								locsInUnsatCore.addAll(locs);
-								for (final IcfgLocation loc : locs) {
-									if (locs2Frequency.containsKey(loc)) {
-										Integer i = locs2Frequency.get(loc);
-										locs2Frequency.put(loc, ++i);
-									} else {
-										locs2Frequency.put(loc, new Integer(1));
-									}
+				if (round >= 0) {
+					final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
+							.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
+					for (final Set<LinearInequality> s : setsContainingLinq) {
+						final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
+						if (ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE) {
+							// add only locations from transitions to unsat core
+							if (locs.size() == 2) {
+								locsInUnsatCore.add(locs.get(1));
+								// Compute how often a location occurs in the unsat core
+								if (locs2Frequency.containsKey(locs.get(1))) {
+									Integer i = locs2Frequency.get(locs.get(1));
+									locs2Frequency.put(locs.get(1), ++i);
+								} else {
+									locs2Frequency.put(locs.get(1), new Integer(1));
+								}
+							} 
+							//								else {
+							//									locsInUnsatCore.addAll(locs);
+							//								}
+						} else {
+							locsInUnsatCore.addAll(locs);
+							for (final IcfgLocation loc : locs) {
+								if (locs2Frequency.containsKey(loc)) {
+									Integer i = locs2Frequency.get(loc);
+									locs2Frequency.put(loc, ++i);
+								} else {
+									locs2Frequency.put(loc, new Integer(1));
 								}
 							}
+						}
 
+					}
+				}
+				//					if (COMPUTE_LOCS_IN_UNSAT_CORE) {
+				//						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
+				//								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
+				//						for (final Set<LinearInequality> s : setsContainingLinq) {
+				//							final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
+				//							locsInUnsatCore.addAll(locs);
+				//						}
+				//					}
+			}
+			// We may safely remove the initial and the error location
+			//				locsInUnsatCore.remove(mStartLocation);
+			//				locsInUnsatCore.remove(mErrorLocation);
+			mLocsInUnsatCore = locsInUnsatCore;
+			if (DEBUG_OUTPUT) {
+				mLogger.info("LocsInUnsatCore: " + locsInUnsatCore);
+			}
+			if (round >= 0) {
+				mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
+				if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
+					final IcfgLocation freqLoc =
+							Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
+					if ((freqLoc != mStartLocation) && (freqLoc != mErrorLocation)) {
+						mStrategy.changePatternSettingForLocation(freqLoc);
+						mLogger.info("changed setting for most freq. loc: " + freqLoc);
+					}
+				} else {
+					for (final IcfgLocation loc : locsInUnsatCore) {
+						if ((loc != mStartLocation) && (loc != mErrorLocation)) {
+							mStrategy.changePatternSettingForLocation(loc);
+							mLogger.info("changed setting for loc: " + loc);
 						}
 					}
-					//					if (COMPUTE_LOCS_IN_UNSAT_CORE) {
-					//						final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-					//								.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-					//						for (final Set<LinearInequality> s : setsContainingLinq) {
-					//							final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
-					//							locsInUnsatCore.addAll(locs);
-					//						}
-					//					}
-				}
-				// We may safely remove the initial and the error location
-				//				locsInUnsatCore.remove(mStartLocation);
-				//				locsInUnsatCore.remove(mErrorLocation);
-				mLocsInUnsatCore = locsInUnsatCore;
-				if (DEBUG_OUTPUT) {
-					mLogger.info("LocsInUnsatCore: " + locsInUnsatCore);
-				}
-				if (round >= 0) {
-					mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
-					if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
-						final IcfgLocation freqLoc =
-								Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
-						if ((freqLoc != mStartLocation) && (freqLoc != mErrorLocation)) {
-							mStrategy.changePatternSettingForLocation(freqLoc);
-							mLogger.info("changed setting for most freq. loc: " + freqLoc);
-						}
-					} else {
-						for (final IcfgLocation loc : locsInUnsatCore) {
-							if ((loc != mStartLocation) && (loc != mErrorLocation)) {
-								mStrategy.changePatternSettingForLocation(loc);
-								mLogger.info("changed setting for loc: " + loc);
-							}
-						}
-					}
-
 				}
 			}
-			mLogger.info("[LIIPP] No solution found.");
-			return false;
 		}
-		mLogger.info("[LIIPP] Solution found!");
-		return true;
+		return smtResult;
 	}
 
 	public Set<IcfgLocation> getLocationsInUnsatCore() {

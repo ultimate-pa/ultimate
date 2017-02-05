@@ -32,6 +32,7 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	protected boolean mAlwaysStrictAndNonStrictCopies;
 	protected boolean mUseStrictInequalitiesAlternatingly;
+//	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfConjuncts;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -68,6 +69,7 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 		mLoc2PatternCoefficents = new HashMap<>();
 		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
 		mUseStrictInequalitiesAlternatingly = useStrictInequalitiesAlternatingly;
+//		mLoc2MaxNumOfConjuncts = new HashMap<>();
 	}
 
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
@@ -102,6 +104,17 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 		mLoc2PatternCoefficents.put(location, patternCoefficients);
 		return disjunction;
 	}
+	
+	@Override
+	public void setNumOfConjunctsForLocation(final IcfgLocation location, int numOfConjuncts) {
+//		mLoc2MaxNumOfConjuncts.put(location, maxNumOfConjuncts);
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+	
+	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int numOfDisjuncts) {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+	
 
 
 	/**
