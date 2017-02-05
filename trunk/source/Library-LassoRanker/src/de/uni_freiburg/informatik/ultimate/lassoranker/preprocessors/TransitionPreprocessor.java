@@ -33,7 +33,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 
 
 /**
- * A preprocessor takes a TransformulaLR and returns a TransformulaLR.
+ * A preprocessor takes a {@link ModifiableTransFormula} and returns a 
+ * {@link ModifiableTransFormula}.
  * 
  * @author Jan Leike 
  * @author Matthias Heizmann
@@ -63,8 +64,8 @@ public abstract class TransitionPreprocessor {
 	 * @param newTF the new TransFormulaLR (after processing
 	 * @return whether the result is ok
 	 */
-	protected boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
-			ModifiableTransFormula newTF) {
+	protected boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		return true; // check nothing
 	}
 	

@@ -6,7 +6,6 @@ Bundle-Version: 0.9.5
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.analysis.lassoranker.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
