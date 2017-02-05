@@ -2,35 +2,34 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE LassoRanker Library.
+ * This file is part of the ULTIMATE IcfgTransformer library.
  * 
- * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
+ * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
+ * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
  * 
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
  * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -50,7 +49,7 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	
 	public static final String s_Description = "Simplify formula using CommuhashNormalForm";
 	
-	public CommuHashPreprocessor(IUltimateServiceProvider services) {
+	public CommuHashPreprocessor(final IUltimateServiceProvider services) {
 		super();
 		mServices = services;
 	}
@@ -61,13 +60,13 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
-			ModifiableTransFormula newTF) {
+	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		return true;
 	}
 	
 	@Override
-	public ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
 		final Term normalized2 = (new CommuhashNormalForm(mServices, script)).transform(normalized1);
 		tf.setFormula(normalized2);
@@ -84,7 +83,7 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	public static class ConstantTermNormalizer2 extends TermTransformer {
 
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (term instanceof ConstantTerm) {
 				final ConstantTerm ct = (ConstantTerm) term;
 				if (ct.getValue() instanceof BigInteger) {

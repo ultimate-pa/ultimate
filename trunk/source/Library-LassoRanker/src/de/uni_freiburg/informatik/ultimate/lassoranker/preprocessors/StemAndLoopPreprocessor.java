@@ -30,7 +30,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Collection;
 import java.util.Collections;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;

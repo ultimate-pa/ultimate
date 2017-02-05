@@ -24,11 +24,9 @@
  * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
+package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 
 
 /**

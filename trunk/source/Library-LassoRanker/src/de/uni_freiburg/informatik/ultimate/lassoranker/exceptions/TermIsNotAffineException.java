@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.exceptions;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 

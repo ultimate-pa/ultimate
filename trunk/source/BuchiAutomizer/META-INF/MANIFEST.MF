@@ -12,6 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer;bundle-version="0.0.1",
  de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
