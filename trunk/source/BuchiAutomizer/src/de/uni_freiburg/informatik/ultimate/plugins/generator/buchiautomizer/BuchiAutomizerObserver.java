@@ -89,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  */
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
-	private IElement mGraphRoot;
 	private CfgSmtToolkit mCsToolkit;
 	private TAPreferences mPref;
 
@@ -109,7 +108,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		mIcfg = (IIcfg<?>) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		mGraphRoot = root;
 
 		mCsToolkit = new CfgSmtToolkit(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(),
 				mIcfg.getCfgSmtToolkit().getManagedScript(), mIcfg.getSymboltable(),
@@ -179,7 +177,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
-			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mGraphRoot);
+			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mIcfg);
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
@@ -348,7 +346,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	public IElement getModel() {
-		return mGraphRoot;
+		return mIcfg;
 	}
 
 	// public static TransFormula sequentialComposition(int serialNumber,
