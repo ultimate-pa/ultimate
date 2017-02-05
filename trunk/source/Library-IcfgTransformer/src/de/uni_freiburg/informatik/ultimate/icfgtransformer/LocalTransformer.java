@@ -26,9 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.util.Collections;
+
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * {@link ITransformulaTransformer} that can transform each {@link TransFormula}
@@ -39,24 +48,40 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  */
 public class LocalTransformer implements ITransformulaTransformer {
 	
-//	private final TransitionPreprocessor mTransitionPreprocessor;
+	private final TransitionPreprocessor mTransitionPreprocessor;
+	private final ManagedScript mManagedScript;
+	private final ReplacementVarFactory mReplacementVarFactory;
+	
+	public LocalTransformer(final TransitionPreprocessor transitionPreprocessor, final ManagedScript managedScript,
+			final ReplacementVarFactory replacementVarFactory) {
+		super();
+		mTransitionPreprocessor = transitionPreprocessor;
+		mManagedScript = managedScript;
+		mReplacementVarFactory = replacementVarFactory;
+	}
 
 	@Override
 	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
-		// TODO Auto-generated method stub
-		return null;
+		final ModifiableTransFormula mod = ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
+		try {
+			final ModifiableTransFormula resultMod = mTransitionPreprocessor.process(mManagedScript.getScript(), mod);
+			final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(mManagedScript, resultMod, 
+					Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
+			return result;
+		} catch (final TermException e) {
+			throw new AssertionError(e);
+		}
+		
 	}
 
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
+		return mTransitionPreprocessor.getDescription();
 	}
 
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
-		// TODO Auto-generated method stub
-		return null;
+		return mReplacementVarFactory.constructIIcfgSymbolTable();
 	}
 
 }
