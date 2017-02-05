@@ -112,6 +112,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 		return mNestedWord;
 	}
 	
+	@Override
 	public ArrayList<STATE> getStateSequence() {
 		return mStateSequence;
 	}
@@ -187,9 +188,8 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 			}
 			return new NestedRun<>(concatNestedWord, concatStateSeq);
 		}
-		throw new IllegalArgumentException("Can only concatenate two runs"
-				+ " where the last element of the first runs statement"
-				+ " sequence is the same state as the last element of the" + " second runs statement sequence.");
+		throw new IllegalArgumentException("Can only concatenate two runs where the last element of the first run's "
+				+ "statement sequence is the same state as the last element of the second run's statement sequence.");
 	}
 	
 	/**

@@ -38,6 +38,8 @@ import java.util.List;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CC>
+ *            state type TODO Christian 2017-02-05 Why do we need two types? The first one is not used!
  */
 public interface IRun<LETTER, STATE, CC> {
 	/**
@@ -65,5 +67,8 @@ public interface IRun<LETTER, STATE, CC> {
 	 */
 	int getLength();
 	
+	/**
+	 * @return The state sequence.
+	 */
 	List<CC> getStateSequence();
 }
