@@ -38,7 +38,6 @@ DEPLOY_SERVER=sotec.informatik.uni-freiburg.de
 DEPLOY_DIR=/export/server/httpd/ultimate/downloads/svcomp2017
 TESTFILE=caniwrite
 FILE="$DEPLOY_DIR"/"$TESTFILE"
-RELEASE_REPO="-u ultimate-pa -r ultimate -s bb0c45d084550a91739ff490e1ea4240dd579fc6"
 
 exitOnFail git fetch
 exitOnFail git stash 
@@ -74,6 +73,8 @@ do
 		;;
 		--deploy-github)
 		TO_GITHUB=true
+		RELEASE_REPO="-u ultimate-pa -r ultimate -s ""$2"
+		shift # shift past the argument
 		;;
 		--keep-zip)
 		DEL_ZIP=false
