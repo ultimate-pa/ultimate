@@ -379,20 +379,22 @@ public class TraceChecker implements ITraceChecker {
 		final RelevantVariables relVars =
 				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final IcfgProgramExecutionBuilder rpeb = new IcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
-				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
+				(NestedWord<IIcfgTransition<?>>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
-			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
-			final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
-			if (!tf.getBranchEncoders().isEmpty()) {
-				final Map<TermVariable, Boolean> beMapping = new HashMap<>();
-				for (final TermVariable tv : tf.getBranchEncoders()) {
-					final String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-					final Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
-					final Term value = getValue(indexedBe);
-					final Boolean booleanValue = getBooleanValue(value);
-					beMapping.put(tv, booleanValue);
+			if (mTrace.getSymbolAt(i) instanceof CodeBlock) {
+				final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
+				final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
+				if (!tf.getBranchEncoders().isEmpty()) {
+					final Map<TermVariable, Boolean> beMapping = new HashMap<>();
+					for (final TermVariable tv : tf.getBranchEncoders()) {
+						final String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
+						final Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
+						final Term value = getValue(indexedBe);
+						final Boolean booleanValue = getBooleanValue(value);
+						beMapping.put(tv, booleanValue);
+					}
+					rpeb.setBranchEncoders(i, beMapping);
 				}
-				rpeb.setBranchEncoders(i, beMapping);
 			}
 		}
 		for (final IProgramVar bv : nsb.getIndexedVarRepresentative().keySet()) {
