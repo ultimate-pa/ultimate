@@ -124,27 +124,34 @@ NEW_TAG="v${NEW_VERSION}"
 
 exitOnFailPop git commit -a -m "update versions to ${NEW_VERSION} for new release"
 exitOnFailPop git tag "${NEW_TAG}"
+exitOnFailPop git fetch
+exitOnFailPop git rebase
 exitOnFailPop git push
 exitOnFailPop git push origin --tags
 
 if [ "$TO_GITHUB" = true ]; then
 	DESC=`git shortlog ${LAST_RELEASE}.. --no-merges --numbered -w0,6,9 --format="%s (https://github.com/ultimate-pa/ultimate/commit/%h)"`
+	echo "Creating release ${NEW_TAG}"
 	github-release release ${RELEASE_REPO} -t "${NEW_TAG}" -d "${DESC}" --draft --pre-release
 
 	for z in *.zip
 	do 
+		echo "Uploading file $z"
 		github-release upload ${RELEASE_REPO} -t "${NEW_TAG}" --name "$z" --file "$z"
 	done
 fi
 
 if [ "$TO_SOTEC" = true ] ;then
 	if [ "$POST_FINAL" = true ]; then
+		echo "Adding suffix to .zip files"
 		for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
 	fi
+	echo "Deploying to ${DEPLOY_SERVER}:${DEPLOY_DIR}"
 	rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
 fi
 
 if [ "$DEL_ZIP" = true ]; then 
+	echo "Removing .zip files"
 	rm *.zip 
 fi
 
