@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -681,12 +682,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		// check if we run in LTL mode and set accepting states accordingly
 		if (LTLPropertyCheck.getAnnotation(mIcfg) != null) {
 			mLTLMode = true;
-			acceptingNodes = new HashSet<>();
-			for (final IcfgLocation pp : allNodes) {
-				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
-					acceptingNodes.add(pp);
-				}
-			}
+			acceptingNodes =
+					allNodes.stream().filter(a -> BuchiProgramAcceptingStateAnnotation.getAnnotation(a) != null)
+							.collect(Collectors.toSet());
 		} else {
 			mLTLMode = false;
 			acceptingNodes = allNodes;
@@ -737,8 +735,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				new PowersetDeterminizer<>(determinized, true, mDefaultStateFactory);
 		Difference<LETTER, IPredicate> diff = null;
 		try {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, 
-					mAbstraction, determinized, psd, true);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction,
+					determinized, psd, true);
 		} catch (final AutomataOperationCanceledException e) {
 			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 			throw e;
