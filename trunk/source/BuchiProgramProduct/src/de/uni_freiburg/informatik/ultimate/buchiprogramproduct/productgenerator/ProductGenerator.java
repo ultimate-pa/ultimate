@@ -836,6 +836,10 @@ public final class ProductGenerator {
 			mProductRoot.getLoopLocations().add(rtr);
 		}
 
+		if (mProductRoot.getInitialNodes().remove(originalState)) {
+			mProductRoot.getInitialNodes().add(rtr);
+		}
+
 		// TODO: It may happen that we have multiple entry points because of the
 		// products; but we can currently only represent one. Do we need to do
 		// something about that?
