@@ -40,8 +40,9 @@ import petruchio.pn.PetriNet;
 
 /**
  * Wraps the Petri net representation used in Tim Strazny's Petruchio.
- * Use a PetriNetJulian to construct a Petruchio Petri net.
- * Stores mapping for transitions and places of both representations.
+ * <p>
+ * Use a {@link PetriNetJulian} to construct a Petruchio Petri net. Stores mapping for transitions and places of both
+ * representations.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -51,7 +52,6 @@ import petruchio.pn.PetriNet;
  */
 
 public class PetruchioWrapper<S, C> {
-	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	
 	private final PetriNetJulian<S, C> mNetJulian;
@@ -65,16 +65,13 @@ public class PetruchioWrapper<S, C> {
 	private final Map<Transition, ITransition<S, C>> mTPetruchio2tJulian = new IdentityHashMap<>();
 	
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 * @param net
 	 *            Petri net
 	 */
 	public PetruchioWrapper(final AutomataLibraryServices services, final PetriNetJulian<S, C> net) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNetJulian = net;
 		constructNetPetruchio();
 	}
@@ -88,22 +85,19 @@ public class PetruchioWrapper<S, C> {
 	 * </ul>
 	 */
 	private void constructNetPetruchio() {
-		//construct a Petruchio place for each NetJulian place
+		// construct a Petruchio place for each NetJulian place
 		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pJulian : mNetJulian.getPlaces()) {
 			Place pPetruchio;
 			String pLabel = "";
-			pLabel += pJulian.getContent();
-			pLabel += String.valueOf(pJulian.getContent().hashCode());
-			if (mNetJulian.getInitialMarking().contains(pJulian)) {
-				pPetruchio = mNetPetruchio.addPlace(pLabel, 1);
-			} else {
-				pPetruchio = mNetPetruchio.addPlace(pLabel, 0);
-			}
+			final C content = pJulian.getContent();
+			pLabel += content;
+			pLabel += String.valueOf(content.hashCode());
+			pPetruchio = mNetPetruchio.addPlace(pLabel, mNetJulian.getInitialMarking().contains(pJulian) ? 1 : 0);
 			// 1-sicheres Netz, Info hilft Petruchio/BW
 			pPetruchio.setBound(1);
 			mPJulian2pPetruchio.put(pJulian, pPetruchio);
 		}
-		//construct a Petruchio transition for each NetJulian transition
+		// construct a Petruchio transition for each NetJulian transition
 		for (final ITransition<S, C> tJulian : mNetJulian.getTransitions()) {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tJulian.toString());
 			mTPetruchio2tJulian.put(transitionPetruchio, tJulian);

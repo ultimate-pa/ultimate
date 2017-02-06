@@ -104,12 +104,15 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 			mLogger.debug("Net has " + mNetJulian.getTransitions().size() + " Transitions");
 		}
 		
+		final Integer one = Integer.valueOf(1);
+		
 		// construct single invariant p_1 + ... + p_n where p_i \in places
+		// TODO Christian 2017-02-06: Sonar rightly complains that this variable is never actually used -> a bug?
 		final Collection<Map<Place, Integer>> invariants = new ArrayList<>(1);
-		final Map<Place, Integer> theInvariant =
-				new IdentityHashMap<>(mPetruchio.getNet().getPlaces().size());
-		for (final Place pPetruchio : mPetruchio.getNet().getPlaces()) {
-			theInvariant.put(pPetruchio, Integer.valueOf(1));
+		final Collection<Place> places = mPetruchio.getNet().getPlaces();
+		final Map<Place, Integer> theInvariant = new IdentityHashMap<>(places.size());
+		for (final Place pPetruchio : places) {
+			theInvariant.put(pPetruchio, one);
 		}
 		invariants.add(theInvariant);
 		
@@ -121,12 +124,12 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 			// construct single target pAccepting >= 1
 			final Place pAcceptingPetruchio = mPetruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
 			final Map<Place, Integer> placeWithOneToken = new IdentityHashMap<>();
-			placeWithOneToken.put(pAcceptingPetruchio, Integer.valueOf(1));
+			placeWithOneToken.put(pAcceptingPetruchio, one);
 			targets.add(placeWithOneToken);
 		}
 		
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Check coverability of " + mNetJulian.getAcceptingPlaces().toString());
+			mLogger.debug("Check coverability of " + mNetJulian.getAcceptingPlaces());
 		}
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn(targets);
