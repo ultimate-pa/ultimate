@@ -62,7 +62,7 @@ public class SpaceExPreferenceManager {
 	private String mSystem;
 	private final String mModelFilename;
 	// replacement map for groups
-	private final Map<String, String> mReplacement;
+	private Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
 	// the forbiddengroup holds the specified locations + variables of the "forbidden" property.
@@ -173,6 +173,7 @@ public class SpaceExPreferenceManager {
 			} else {
 				mHasPreferenceGroups = true;
 			}
+			mReplacement = new HashMap<>();
 		}
 	}
 	
