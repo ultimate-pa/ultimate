@@ -51,7 +51,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory implements IMergeStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
-	public static final String INFINITY = "∞";
+	/*
+	 * 2017-06-02 Christian: I made this a char because Sonar complained, but feel free to make it a String again if it
+	 *            causes problems with the encoding (for me it worked, though).
+	 */
+	public static final char INFINITY = '∞';
 	private static final char X_STRING = 'X';
 	private static final String COMMA_SPACE = ", ";
 	private static final char COMMA = ',';
@@ -61,13 +65,13 @@ public class StringFactory implements IMergeStateFactory<String> {
 	private static final char CLOSE_BRACE = '}';
 	private static final char OPEN_BRACKET = '[';
 	private static final char CLOSE_BRACKET = ']';
-
+	
 	private static final int RANK_ONE = 1;
 	private static final int RANK_TWO = 2;
 	private static final int RANK_THREE = 3;
 	private static final int MINIMUM_LIST_SIZE = 2;
 	private static final int MINIMUM_PAIR_LIST_SIZE = 7;
-
+	
 	@Override
 	public String intersection(final String state1, final String state2) {
 		final StringBuilder builder = new StringBuilder();
@@ -80,7 +84,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 		// @formatter:on
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String intersectBuchi(final String state1, final String state2, final int track) {
 		final StringBuilder builder = new StringBuilder();
@@ -95,7 +99,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 		// @formatter:on
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String determinize(final Map<String, Set<String>> down2up) {
 		final StringBuilder builder = new StringBuilder(down2up.size() * MINIMUM_PAIR_LIST_SIZE);
@@ -120,24 +124,24 @@ public class StringFactory implements IMergeStateFactory<String> {
 		builder.append(CLOSE_BRACE);
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String createSinkStateContent() {
 		return "∅SinkState";
 	}
-
+	
 	@Override
 	public String createEmptyStackState() {
 		return "€";
 	}
-
+	
 	/*
 	 * @Override public String getContentOnPetriNet2FiniteAutomaton(Collection<String> cList) { StringBuilder sb = new
 	 * StringBuilder(); sb.append(OPEN_BRACE); boolean firstElement = true; for (String content :cList) { if
 	 * (firstElement) { firstElement = false; } else { sb.append(","); } sb.append(content); } sb.append(CLOSE_BRACE);
 	 * return sb.toString(); }
 	 */
-
+	
 	@Override
 	public String getContentOnPetriNet2FiniteAutomaton(final Marking<?, String> marking) {
 		final StringBuilder builder = new StringBuilder(marking.size() * MINIMUM_LIST_SIZE);
@@ -154,23 +158,23 @@ public class StringFactory implements IMergeStateFactory<String> {
 		builder.append(CLOSE_BRACE);
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String getBlackContent(final String content) {
 		return "Black:" + content;
 	}
-
+	
 	@Override
 	public String getWhiteContent(final String content) {
 		return "White:" + content;
 	}
-
+	
 	@Override
 	public String buchiComplementFKV(final LevelRankingState<?, String> complementState) {
 		if (complementState.isNonAcceptingSink()) {
 			return complementState.toString();
 		}
-
+		
 		final boolean isNestedWordAutomaton = !complementState.getOperand().getCallAlphabet().isEmpty();
 		final StringBuilder builder = new StringBuilder();
 		builder.append(OPEN_BRACE);
@@ -188,35 +192,35 @@ public class StringFactory implements IMergeStateFactory<String> {
 		builder.append(CLOSE_BRACE);
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String buchiComplementNCSB(final LevelRankingState<?, String> complementState) {
 		if (complementState.isNonAcceptingSink()) {
 			return complementState.toString();
 		}
-
+		
 		final List<Pair<StateWithRankInfo<String>, String>> listN = new ArrayList<>();
 		final List<Pair<StateWithRankInfo<String>, String>> listC = new ArrayList<>();
 		final List<Pair<StateWithRankInfo<String>, String>> listS = new ArrayList<>();
 		final List<Pair<StateWithRankInfo<String>, String>> listB = new ArrayList<>();
-
+		
 		for (final StateWithRankInfo<String> downState : complementState.getDownStates()) {
 			for (final StateWithRankInfo<String> upState : complementState.getUpStates(downState)) {
 				if (!upState.hasRank()) {
 					throw new IllegalArgumentException("must have rank");
 				}
 				switch (upState.getRank()) {
-				case RANK_THREE:
-					listN.add(new Pair<>(downState, upState.getState()));
-					break;
-				case RANK_TWO:
-					buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
-					break;
-				case RANK_ONE:
-					listS.add(new Pair<>(downState, upState.getState()));
-					break;
-				default:
-					throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
+					case RANK_THREE:
+						listN.add(new Pair<>(downState, upState.getState()));
+						break;
+					case RANK_TWO:
+						buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
+						break;
+					case RANK_ONE:
+						listS.add(new Pair<>(downState, upState.getState()));
+						break;
+					default:
+						throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
 				}
 			}
 		}
@@ -233,46 +237,47 @@ public class StringFactory implements IMergeStateFactory<String> {
 		builder.append(CLOSE_PARENTHESIS);
 		return builder.toString();
 	}
-
+	
 	private static void prettyprintCollectionOfStates(final StringBuilder builder,
 			final List<Pair<StateWithRankInfo<String>, String>> collection, final boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
 			builder.append(EMPTY_SET);
-		} else {
-			builder.append(OPEN_BRACE);
-			boolean isFirst = true;
-			for (final Pair<StateWithRankInfo<String>, String> pair : collection) {
-				if (isFirst) {
-					isFirst = false;
-				} else {
-					builder.append(COMMA);
-				}
-				if (isNestedWordAutomaton) {
-					// @formatter:off
-					builder.append(OPEN_PARENTHESIS)
-							.append(pair.getFirst())
-							.append(COMMA)
-							.append(pair.getSecond())
-							.append(CLOSE_PARENTHESIS);
-					// @formatter:on
-				} else {
-					builder.append(pair.getSecond());
-				}
-			}
-			builder.append(CLOSE_BRACE);
+			return;
 		}
+		
+		builder.append(OPEN_BRACE);
+		boolean isFirst = true;
+		for (final Pair<StateWithRankInfo<String>, String> pair : collection) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				builder.append(COMMA);
+			}
+			if (isNestedWordAutomaton) {
+				// @formatter:off
+				builder.append(OPEN_PARENTHESIS)
+						.append(pair.getFirst())
+						.append(COMMA)
+						.append(pair.getSecond())
+						.append(CLOSE_PARENTHESIS);
+				// @formatter:on
+			} else {
+				builder.append(pair.getSecond());
+			}
+		}
+		builder.append(CLOSE_BRACE);
 	}
-
+	
 	@Override
 	public String complementBuchiDeterministicNonFinal(final String state) {
 		return "NonFinal:" + state;
 	}
-
+	
 	@Override
 	public String complementBuchiDeterministicFinal(final String state) {
 		return "Final:" + state;
 	}
-
+	
 	@Override
 	public String merge(final Collection<String> states) {
 		if (states == null) {
@@ -290,12 +295,12 @@ public class StringFactory implements IMergeStateFactory<String> {
 		}
 		return builder.append(CLOSE_BRACE).toString();
 	}
-
+	
 	@Override
 	public String createDoubleDeckerContent(final String downState, final String upState) {
 		return '<' + downState + COMMA + upState + '>';
 	}
-
+	
 	@Override
 	public String constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
 		final StringBuilder builder = new StringBuilder();
@@ -308,17 +313,17 @@ public class StringFactory implements IMergeStateFactory<String> {
 		// @formatter:on
 		return builder.toString();
 	}
-
+	
 	@Override
 	public String finitePrefix2net(final Condition<?, String> condition) {
 		return condition.toString();
 	}
-
+	
 	@Override
 	public String senwa(final String entry, final String state) {
 		return state + " (entry " + entry + CLOSE_PARENTHESIS;
 	}
-
+	
 	private static void buchiComplementFkvHelper(final StringBuilder builder,
 			final StateWithRankInfo<String> stateWithInfo) {
 		// @formatter:off
@@ -334,7 +339,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 			builder.append(INFINITY);
 		}
 	}
-
+	
 	private static void buchiComplementNcsbHelperRankTwo(final List<Pair<StateWithRankInfo<String>, String>> listC,
 			final List<Pair<StateWithRankInfo<String>, String>> listB, final StateWithRankInfo<String> downState,
 			final StateWithRankInfo<String> upState) {
