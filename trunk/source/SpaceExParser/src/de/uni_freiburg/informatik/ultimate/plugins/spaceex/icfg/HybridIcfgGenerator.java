@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExForbiddenGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
@@ -317,10 +319,11 @@ public class HybridIcfgGenerator {
 			/*
 			 * Transition from start to Error
 			 */
-			final IcfgInternalTransition errorTransition =
-					new IcfgInternalTransition(start, mErrorLocation, null, buildFalseTransformula());
-			start.addOutgoing(errorTransition);
-			mErrorLocation.addIncoming(errorTransition);
+			
+			// final IcfgInternalTransition errorTransition =
+			// new IcfgInternalTransition(start, mErrorLocation, null, buildFalseTransformula());
+			// start.addOutgoing(errorTransition);
+			// mErrorLocation.addIncoming(errorTransition);
 			
 			/*
 			 * Transition flow to invCheck
@@ -331,19 +334,59 @@ public class HybridIcfgGenerator {
 			flow.addOutgoing(flowInv);
 			invCheck.addIncoming(flowInv);
 			transitions.add(flowInv);
+			
 			/*
-			 * Transition invCheck to end/exit if invariant true, go to end, else to error loc
+			 * Transition invCheck to end
 			 */
-			// invcheck -> end
 			final UnmodifiableTransFormula tfInvEnd = invariantTransformula;
 			final IcfgInternalTransition invEnd = new IcfgInternalTransition(invCheck, end, null, tfInvEnd);
 			invCheck.addOutgoing(invEnd);
 			end.addIncoming(invEnd);
 			transitions.add(invEnd);
+			
+			/*
+			 * Forbidden check
+			 */
+			if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
+				final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
+				String finalInfix = "";
+				for (final SpaceExForbiddenGroup group : forbiddengroup) {
+					boolean locBelongsToGroup = false;
+					final String forbInfix = group.getVariableInfix();
+					final Collection<List<String>> forbToLocs =
+							mSpaceExPreferenceManager.getForbiddenToForbiddenlocs().values();
+					for (final List<String> loclist : forbToLocs) {
+						if (loclist.contains(loc.getName()) && !locBelongsToGroup) {
+							if (!finalInfix.isEmpty()) {
+								finalInfix += "&";
+							}
+							finalInfix += forbInfix;
+							locBelongsToGroup = true;
+						}
+					}
+				}
+				final String forbiddenInfix = finalInfix;
+				if (loc.isForbidden()) {
+					// if the current location is forbidden, it shall get a transition from start --> error.
+					// the transformula depends on whether
+					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(forbiddenInfix);
+					final IcfgInternalTransition startError =
+							new IcfgInternalTransition(start, mErrorLocation, null, forbiddenTransformula);
+					start.addOutgoing(startError);
+					mErrorLocation.addIncoming(startError);
+				}
+			}
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
-			
+		}
+	}
+	
+	private UnmodifiableTransFormula createForbiddenTransformula(final String forbiddenInfix) {
+		if (forbiddenInfix.isEmpty()) {
+			return TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+		} else {
+			return buildTransformula(forbiddenInfix, BuildScenario.INVARIANT);
 		}
 	}
 	

@@ -74,7 +74,7 @@ public class HybridModel {
 		mLogger = logger;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
-		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
 		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
@@ -126,7 +126,7 @@ public class HybridModel {
 		mPreferenceManager = preferenceManager;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
-		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
 		mSystems = new HashMap<>();
 		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
@@ -216,7 +216,6 @@ public class HybridModel {
 			HybridAutomaton aut2;
 			Location init1;
 			Location init2;
-			
 			if (merge == null) {
 				aut1 = mergeStack.pop();
 				aut2 = mergeStack.pop();
