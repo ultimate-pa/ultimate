@@ -116,7 +116,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		List<TTE> result = null;
 		try {
 			result = (List<TTE>) trace;
-			assert (consistsOfTargetTraceElements(trace));
+			assert consistsOfTargetTraceElements(trace);
 		} catch (final ClassCastException e) {
 			final String message = "Type of source trace element and type of target"
 					+ " trace element are different. DefaultTranslator can"
@@ -163,7 +163,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	public IProgramExecution<TTE, TE> translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		try {
 			final IProgramExecution<TTE, TE> result = (IProgramExecution<TTE, TE>) programExecution;
-			assert (consistsOfTargetTraceElements(programExecution));
+			assert consistsOfTargetTraceElements(programExecution);
 			return result;
 		} catch (final ClassCastException e) {
 			final String message = "Type of source trace element and type of target"
@@ -190,7 +190,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(final IProgramExecution<STE, SE> programExecution) {
-		final List<TTE> auxilliaryList = new ArrayList<TTE>(programExecution.getLength());
+		final List<TTE> auxilliaryList = new ArrayList<>(programExecution.getLength());
 		for (int i = 0; i < programExecution.getLength(); i++) {
 			auxilliaryList.add((TTE) programExecution.getTraceElement(i));
 		}
@@ -202,7 +202,7 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(final List<STE> trace) {
-		final List<TTE> auxilliaryList = new ArrayList<TTE>(trace.size());
+		final List<TTE> auxilliaryList = new ArrayList<>(trace.size());
 		for (final STE ste : trace) {
 			try {
 				auxilliaryList.add((TTE) ste);
@@ -344,13 +344,13 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	protected <VL> Multigraph<VL, TTE> createLabeledWitnessNode(final IExplicitEdgesMultigraph<?, ?, VL, STE, ?> old) {
-		final Multigraph<VL, TTE> rtr = new Multigraph<VL, TTE>(old.getLabel());
+		final Multigraph<VL, TTE> rtr = new Multigraph<>(old.getLabel());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
 
 	protected <VL> Multigraph<VL, TTE> createUnlabeledWitnessNode(final IElement old) {
-		final Multigraph<VL, TTE> rtr = new Multigraph<VL, TTE>(null);
+		final Multigraph<VL, TTE> rtr = new Multigraph<>(null);
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}
