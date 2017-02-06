@@ -134,8 +134,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
 
-//	private final static int MAX_ROUNDS = Integer.MAX_VALUE;
-	private final static int MAX_ROUNDS = 5;
+	private final static int MAX_ROUNDS = Integer.MAX_VALUE;
 
 	private final boolean mUseLiveVariables;
 
