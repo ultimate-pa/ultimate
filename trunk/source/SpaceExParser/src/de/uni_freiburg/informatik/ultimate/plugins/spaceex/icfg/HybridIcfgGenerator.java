@@ -356,10 +356,15 @@ public class HybridIcfgGenerator {
 					for (final SpaceExForbiddenGroup group : forbiddengroup) {
 						// list of the forbidden LocationNames BEFORE any merging.
 						final Collection<List<String>> forbLoc = group.getLocations().values();
+						// infix
 						final String forbInfix = group.getVariableInfix();
+						// forbidden -> forbiddenLocs map
 						final Map<String, List<String>> forbToLocs =
 								mSpaceExPreferenceManager.getForbiddenToForbiddenlocs();
+						// for each forbidden loc of the group, go through the list of each automaton
 						for (final List<String> list : forbLoc) {
+							// for each listelement check if the HA location is part of the forbidden->forbiddenlocs
+							// map, if yes add the infix to the final infix.
 							for (final String f : list) {
 								if (forbToLocs.get(f).contains(loc.getName())) {
 									if (!finalInfix.isEmpty()) {
