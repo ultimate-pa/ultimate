@@ -202,7 +202,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 *            sequence of automata to be printed
 	 */
 	@SafeVarargs
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "findbugs:UC_USELESS_VOID_METHOD" })
 	public static void writeToFileIfPreferred(final AutomataLibraryServices services,
 			final String fileNamePrefix, final String message, final IAutomaton<?, ?>... automata) {
 		if (!DUMP_AUTOMATON) {
