@@ -48,33 +48,33 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
  *
  */
 public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
-	
+
 	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
 	private final ILogger mLogger;
-	
+
 	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
 			final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 		mLogger = logger;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public IProgramExecution<IcfgEdge, Term>
 			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
-		
+
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof IcfgProgramExecution) {
 			oldBranchEncoders = ((IcfgProgramExecution) programExecution).getBranchEncoders();
 		}
-		
+
 		final List<IcfgEdge> newTrace = new ArrayList<>();
 		final Map<Integer, ProgramState<Term>> newValues = new HashMap<>();
 		final List<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
-		
+
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
-		
+
 		for (int i = 0; i < programExecution.getLength(); ++i) {
 			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
 			final IcfgEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
@@ -90,16 +90,16 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
-		
+
 		return new IcfgProgramExecution(newTrace, newValues,
 				newBranchEncoders.toArray(new Map[newBranchEncoders.size()]));
 	}
-	
+
 	private static void addProgramState(final Integer i, final Map<Integer, ProgramState<Term>> newValues,
 			final ProgramState<Term> programState) {
 		newValues.put(i, programState);
 	}
-	
+
 	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
 		final IcfgEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
@@ -109,7 +109,7 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		} else {
 			mEdgeMapping.put(newEdge, originalEdge);
 		}
-		mLogger.info("Mapped [" + newEdge.hashCode() + "] " + newEdge);
-		mLogger.info("To     [" + mEdgeMapping.get(newEdge).hashCode() + "] " + mEdgeMapping.get(newEdge));
+		// mLogger.info("Mapped [" + newEdge.hashCode() + "] " + newEdge);
+		// mLogger.info("To [" + mEdgeMapping.get(newEdge).hashCode() + "] " + mEdgeMapping.get(newEdge));
 	}
 }
