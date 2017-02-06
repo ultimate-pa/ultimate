@@ -347,26 +347,26 @@ public class HybridIcfgGenerator {
 			/*
 			 * Forbidden check
 			 */
-			if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
-				final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
-				String finalInfix = "";
-				for (final SpaceExForbiddenGroup group : forbiddengroup) {
+			if (loc.isForbidden()) {
+				if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
+					final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
+					String finalInfix = "";
 					boolean locBelongsToGroup = false;
-					final String forbInfix = group.getVariableInfix();
-					final Collection<List<String>> forbToLocs =
-							mSpaceExPreferenceManager.getForbiddenToForbiddenlocs().values();
-					for (final List<String> loclist : forbToLocs) {
-						if (loclist.contains(loc.getName()) && !locBelongsToGroup) {
-							if (!finalInfix.isEmpty()) {
-								finalInfix += "&";
+					for (final SpaceExForbiddenGroup group : forbiddengroup) {
+						final String forbInfix = group.getVariableInfix();
+						final Collection<List<String>> forbToLocs =
+								mSpaceExPreferenceManager.getForbiddenToForbiddenlocs().values();
+						for (final List<String> loclist : forbToLocs) {
+							if (loclist.contains(loc.getName()) && !locBelongsToGroup) {
+								if (!finalInfix.isEmpty()) {
+									finalInfix += "&";
+								}
+								finalInfix += forbInfix;
+								locBelongsToGroup = true;
 							}
-							finalInfix += forbInfix;
-							locBelongsToGroup = true;
 						}
 					}
-				}
-				final String forbiddenInfix = finalInfix;
-				if (loc.isForbidden()) {
+					final String forbiddenInfix = finalInfix;
 					// if the current location is forbidden, it shall get a transition from start --> error.
 					// the transformula depends on whether
 					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(forbiddenInfix);
