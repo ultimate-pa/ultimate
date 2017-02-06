@@ -42,6 +42,7 @@ import java.util.Set;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -49,11 +50,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -87,6 +90,7 @@ public class SpaceExParser implements ISource {
 	private IToolchainStorage mToolchainStorage;
 	private SpaceExPreferenceManager mPreferenceManager;
 	private HybridVariableManager mVariableManager;
+	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
 	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
@@ -106,6 +110,9 @@ public class SpaceExParser implements ISource {
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mBacktranslator = new DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String>(IcfgEdge.class,
+				IcfgEdge.class, Term.class, Term.class);
+		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
 	
 	@Override
@@ -249,7 +256,7 @@ public class SpaceExParser implements ISource {
 		// return new SpaceExModelBuilder(system, mLogger).getModel();
 	}
 	
-	private CfgSmtToolkit generateToolkit(HybridAutomaton automaton) {
+	private CfgSmtToolkit generateToolkit(final HybridAutomaton automaton) {
 		IPredicate axioms = null;
 		final Set<String> procedures = new HashSet<>();
 		procedures.add("MAIN");
