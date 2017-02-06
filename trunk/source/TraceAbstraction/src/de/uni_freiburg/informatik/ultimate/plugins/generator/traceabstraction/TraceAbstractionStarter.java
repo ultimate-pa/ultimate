@@ -398,17 +398,16 @@ public class TraceAbstractionStarter {
 
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {
 		for (final IcfgLocation errorIpp : errorLocs) {
-			final IcfgLocation errorLoc = errorIpp;
 			String timeOutMessage = "Unable to prove that ";
-			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
-			if (errorLoc instanceof BoogieIcfgLocation) {
-				final ILocation origin = ((BoogieIcfgLocation) errorLoc).getBoogieASTNode().getLocation().getOrigin();
+			timeOutMessage += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+			if (errorIpp instanceof BoogieIcfgLocation) {
+				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation().getOrigin();
 				timeOutMessage += " (line " + origin.getStartLine() + ").";
 			}
 			if (rtsp != null) {
 				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
 			}
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}
