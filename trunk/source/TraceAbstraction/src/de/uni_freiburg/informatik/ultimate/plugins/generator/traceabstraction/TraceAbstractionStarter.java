@@ -364,6 +364,11 @@ public class TraceAbstractionStarter {
 	}
 
 	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
+		// Prevent nullpointer exception if payload is null or if payload does not contain a location object.
+		// TODO: Remove this piece of code as soon as refactoring of getLocation() has been completed.
+		if (pp.getPayload() == null || pp.getPayload().getLocation() == null) {
+			return "";
+		}
 		final int startLine = pp.getPayload().getLocation().getStartLine();
 		final int endLine = pp.getPayload().getLocation().getStartLine();
 		final StringBuilder sb = new StringBuilder();
