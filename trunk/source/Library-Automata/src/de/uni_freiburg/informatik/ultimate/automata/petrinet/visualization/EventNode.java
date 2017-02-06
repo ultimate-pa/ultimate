@@ -30,11 +30,14 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
- * Ultimate model of a OcurrenceNet event.
+ * Ultimate model of an OcurrenceNet event.
+ * <p>
+ * TODO Christian 2017-02-06 What is an "OcurrenceNet"?
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -49,11 +52,14 @@ public final class EventNode<S, C> extends PetriNetVisualizationNode {
 	 * @param event
 	 *            Event.
 	 */
+	// false-positive warning (resp. impossible to solve due to "super constructor comes first" rule in Java)
+	@SuppressWarnings("fb-contrib:PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
 	public EventNode(final Event<S, C> event) {
 		super(event.getTransition().getSymbol().toString());
 		
+		final Transition<S, C> transition = event.getTransition();
 		final DefaultAnnotations annot = new DefaultAnnotations();
-		annot.put("Transition", event.getTransition());
+		annot.put("Transition", transition);
 		annot.put("Companion", event.getCompanion());
 		annot.put("Ancestors", event.getAncestors());
 		annot.put("ByLocalConfigurationRepresentedMarking", event.getMark());
@@ -61,7 +67,7 @@ public final class EventNode<S, C> extends PetriNetVisualizationNode {
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
-		final S symbol = event.getTransition().getSymbol();
+		final S symbol = transition.getSymbol();
 		if (symbol instanceof IAnnotations) {
 			annot.put("Symbol", symbol);
 		}

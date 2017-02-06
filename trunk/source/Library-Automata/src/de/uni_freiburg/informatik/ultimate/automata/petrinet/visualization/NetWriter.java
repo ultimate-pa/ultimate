@@ -33,7 +33,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 
@@ -59,7 +58,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 * @param net
 	 *            Petri net
 	 */
-	@SuppressWarnings("squid:S1699")
+	@SuppressWarnings({ "squid:S1699", "fb-contrib:PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS" })
 	public NetWriter(final PrintWriter writer, final String name, final PetriNetJulian<LETTER, STATE> net) {
 		super(writer);
 		mAlphabet = getAlphabetMapping(net.getAlphabet());
@@ -123,13 +122,13 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		print('}');
 	}
 	
-	private void printInitialMarking(final Marking<LETTER, STATE> initialMarking) {
+	private void printInitialMarking(final Iterable<Place<LETTER, STATE>> initialMarking) {
 		printElementPrefix("initialMarking");
 		printMarking(initialMarking);
 		println(',');
 	}
 	
-	private void printAcceptingPlaces(final Collection<Place<LETTER, STATE>> acceptingPlaces) {
+	private void printAcceptingPlaces(final Iterable<Place<LETTER, STATE>> acceptingPlaces) {
 		printElementPrefix("acceptingPlaces");
 		printMarking(acceptingPlaces);
 		print(NEW_LINE);
