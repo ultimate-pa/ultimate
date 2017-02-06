@@ -1,9 +1,7 @@
 // Author: Christian Schilling
-// Date: 2017-02-02
+// Date: 2017-02-06
 // 
-// Example that shows a conceptual problem for delayed simulation-based
-// minimization of NWA. All three implementations suggested to merge {p1, q1}
-// and {p2, q2} which is not language-preserving.
+// Deterministic version of DelayedSimulation_MixedAcceptingStates2.ats
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
@@ -30,15 +28,15 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4); // TODO correct after fixing the method
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {c},
+	callAlphabet = {c1 c2},
 	internalAlphabet = {a b},
 	returnAlphabet = {r},
 	states = {q0 q1 q2 p1 p2 qf},
 	initialStates = {q0},
 	finalStates = {p2 qf},
 	callTransitions = {
-		(q0 c q1)
- 		(q0 c p1)
+		(q0 c1 q1)
+ 		(q0 c2 p1)
 	},
 	internalTransitions = {
 		(q1 a q2)
