@@ -37,6 +37,7 @@ import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 
 /**
  * Generator that creates a parallel composition from {@link HybridAutomaton} instances.
@@ -62,8 +63,9 @@ public class ParallelCompositionGenerator {
 	private Stack<LocationPair> mComputationStack;
 	private Set<String> mVisitedLocations;
 	private Set<String> mForbiddenLocations;
+	private final SpaceExPreferenceManager mPreferencemanager;
 	
-	public ParallelCompositionGenerator(ILogger logger) {
+	public ParallelCompositionGenerator(ILogger logger, SpaceExPreferenceManager preferenceManager) {
 		mLogger = logger;
 		mGlobalConstsMerge = new HashSet<>();
 		mGlobalParamsMerge = new HashSet<>();
@@ -79,6 +81,7 @@ public class ParallelCompositionGenerator {
 		mComputationStack = new Stack<>();
 		mVisitedLocations = new HashSet<>();
 		mForbiddenLocations = new HashSet<>();
+		mPreferencemanager = preferenceManager;
 	}
 	
 	/**
@@ -89,10 +92,11 @@ public class ParallelCompositionGenerator {
 	 * @param mergedLocationToPair
 	 * @param init2
 	 * @param init1
+	 * @param mPreferenceManager
 	 * @return
 	 */
 	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2,
-			Map<Location, LocationPair> mergedLocationToPair, Location init1, Location init2) {
+			Location init1, Location init2) {
 		// name
 		final String nameMerge = automaton1.getName() + "||" + automaton2.getName();
 		// labels are merged with union
@@ -112,12 +116,10 @@ public class ParallelCompositionGenerator {
 		final Location initial2 = init2;
 		final LocationPair locpair = new LocationPair(initial1, initial2);
 		mInitialLocationMerge = getLocation(locpair.toString(), initial1, initial2);
-		// add to map of the form merged loc -> locpair
-		mergedLocationToPair.put(mInitialLocationMerge, locpair);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		mComputationStack.push(new LocationPair(initial1, initial2));
 		// compute the parallel composition starting from the initial location
-		createLocationsAndTransitions(locations1, locations2, mergedLocationToPair);
+		createLocationsAndTransitions(locations1, locations2);
 		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
@@ -152,12 +154,13 @@ public class ParallelCompositionGenerator {
 	 * 
 	 * @param locations1
 	 * @param locations2
+	 * @param groupId
+	 * @param preferenceManager
 	 * @param mergedLocationToPair
 	 * @param automatonName1
 	 * @param automatonName2
 	 */
-	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2,
-			Map<Location, LocationPair> mergedLocationToPair) {
+	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2) {
 		// TODO: reduce cyclomatic Complexity + make the whole function more understandable + add more seperate
 		// functions
 		while (!mComputationStack.isEmpty()) {
@@ -168,13 +171,15 @@ public class ParallelCompositionGenerator {
 			final Location currentLoc1 = locpair.getLocation1();
 			final Location currentLoc2 = locpair.getLocation2();
 			// get all outgoing transitions and set labels,guards,updates
-			final List<Transition> outgoing1 = currentLoc1.getOutgoingTransitions();
-			final List<Transition> outgoing2 = currentLoc2.getOutgoingTransitions();
+			
+			final List<Transition> outgoing1 = new ArrayList<>();
+			outgoing1.addAll(currentLoc1.getOutgoingTransitions());
+			final List<Transition> outgoing2 = new ArrayList<>();
+			outgoing2.addAll(currentLoc2.getOutgoingTransitions());
 			// if there are no outgoing transitions in either location, we can simply merge them and continue.
 			if (outgoing1.isEmpty() && outgoing2.isEmpty()) {
 				final Location source = getLocation(locpair.toString(), currentLoc1, currentLoc2);
 				mLocationsMerge.put(source.getId(), source);
-				mergedLocationToPair.put(source, locpair);
 				continue;
 			}
 			// local vars for the loop
@@ -241,7 +246,6 @@ public class ParallelCompositionGenerator {
 					outgoing2.remove(currentTransition2);
 					final LocationPair locationPair = new LocationPair(tarLoc1, tarLoc2);
 					mComputationStack.push(locationPair);
-					mergedLocationToPair.put(target, locationPair);
 				} else {
 					// if one or both labels are local OR either one of them is empty, we can merge locations.
 					// in order to do that, it is necessary to compute all possible combinations.
@@ -271,7 +275,6 @@ public class ParallelCompositionGenerator {
 						mTransitionMerge.add(srcTar1);
 						final LocationPair srcTarPair = new LocationPair(srcLoc1, tarLoc2);
 						mComputationStack.push(srcTarPair);
-						mergedLocationToPair.put(target1, srcTarPair);
 					}
 					// s1,s2 ---> t1,s2
 					if (target2 != null && source.getId() != target2.getId()) {
@@ -280,7 +283,6 @@ public class ParallelCompositionGenerator {
 						mTransitionMerge.add(srcTar2);
 						final LocationPair tarSrcPair = new LocationPair(tarLoc1, srcLoc2);
 						mComputationStack.push(tarSrcPair);
-						mergedLocationToPair.put(target2, tarSrcPair);
 					}
 					break;
 				}
@@ -385,10 +387,24 @@ public class ParallelCompositionGenerator {
 	 * helper function to merge locations
 	 */
 	private Location mergeLocations(int id, Location loc1, Location loc2) {
-		final String locname = "loc_" + loc1.getId() + "_" + loc2.getId();
+		final String locname = "loc_" + loc1.getName() + "_" + loc2.getName();
 		final Location loc = new Location(id, locname);
 		loc.setFlow(intersectStrings(loc1.getFlow(), loc2.getFlow()));
 		loc.setInvariant(intersectStrings(loc1.getInvariant(), loc2.getInvariant()));
+		if (loc1.isForbidden() || loc2.isForbidden()) {
+			loc.setForbidden(true);
+			if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(loc1.getName())) {
+				mPreferencemanager.getForbiddenToForbiddenlocs().get(loc1.getName()).add(loc.getName());
+				final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(loc1.getName());
+				mPreferencemanager.getForbiddenToForbiddenlocs().put(loc.getName(), oldloclist);
+				
+			}
+			if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(loc2.getName())) {
+				mPreferencemanager.getForbiddenToForbiddenlocs().get(loc2.getName()).add(loc.getName());
+				final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(loc2.getName());
+				mPreferencemanager.getForbiddenToForbiddenlocs().put(loc.getName(), oldloclist);
+			}
+		}
 		return loc;
 	}
 	

@@ -83,7 +83,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 
 	/**
 	 * Provides access to a {@link TermTransformer} replacing pattern variables within a term according to the current
-	 * valid configuration ( {@link #hasValidConfiguration(java.util.Collection, int)}).
+	 * valid configuration ( {@link #checkForValidConfiguration(java.util.Collection, int)}).
 	 *
 	 * If there is no current valid configuration, the behavior of this method is undefined.
 	 *

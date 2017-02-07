@@ -90,6 +90,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 
 		mLogger.debug("Step: put all LocationNodes into mNodes");
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();

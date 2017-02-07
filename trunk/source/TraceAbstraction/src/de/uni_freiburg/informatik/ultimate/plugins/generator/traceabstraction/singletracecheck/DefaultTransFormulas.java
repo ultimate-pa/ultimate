@@ -68,11 +68,15 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
 		}
-		final IInternalAction cb = (IInternalAction) super.getTrace().getSymbolAt(i);
+		final IInternalAction act = (IInternalAction) super.getTrace().getSymbolAt(i);
 		if (mWithBranchEncoders) {
-			return ((CodeBlock) cb).getTransitionFormulaWithBranchEncoders();
+			if (act instanceof CodeBlock) {
+				return ((CodeBlock) act).getTransitionFormulaWithBranchEncoders();
+			} else {
+				return act.getTransformula();
+			}
 		}
-		return cb.getTransformula();
+		return act.getTransformula();
 	}
 
 	@Override

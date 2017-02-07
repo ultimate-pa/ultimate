@@ -8,10 +8,9 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" />
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization" /> 
 	<plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" /> 
-	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" /> 
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization" /> 
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" /> 
 
 	</toolchain>
 </rundefinition>

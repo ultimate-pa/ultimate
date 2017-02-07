@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.UnknownFunctionException;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;

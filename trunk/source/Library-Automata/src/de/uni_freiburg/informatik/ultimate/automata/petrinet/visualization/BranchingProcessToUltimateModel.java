@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -49,7 +50,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 	/**
 	 * @param branchingProcess
 	 *            Branching process.
-	 * @return element in Ultimate model
+	 * @return the initial node of the Branching process Ultimate model
 	 */
 	@SuppressWarnings("unchecked")
 	public IElement transformToUltimateModel(final BranchingProcess<S, C> branchingProcess) {
@@ -61,7 +62,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 		final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode = new HashMap<>();
 		final Map<Event<S, C>, EventNode<S, C>> transition2EventNode = new HashMap<>();
 		
-		final LinkedList<Object> queue = new LinkedList<>(initialStates);
+		final Queue<Object> queue = new LinkedList<>(initialStates);
 		
 		// add all initial states to model - all are successors of the graphroot
 		for (final Condition<S, C> place : initialStates) {
@@ -71,7 +72,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 		}
 		
 		while (!queue.isEmpty()) {
-			final Object node = queue.removeFirst();
+			final Object node = queue.remove();
 			
 			if (node instanceof Condition) {
 				conditionHandling(place2ConditionNode, transition2EventNode, queue, (Condition<S, C>) node);
@@ -83,7 +84,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 	}
 	
 	private void conditionHandling(final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
-			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final LinkedList<Object> queue,
+			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,
 			final Condition<S, C> place) {
 		final ConditionNode<S, C> conditionNode = place2ConditionNode.get(place);
 		for (final Event<S, C> transition : place.getSuccessorEvents()) {
@@ -99,7 +100,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 	
 	private void eventHandling(final BranchingProcess<S, C> branchingProcess,
 			final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
-			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final LinkedList<Object> queue,
+			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,
 			final Event<S, C> transition) {
 		final EventNode<S, C> eventNode = transition2EventNode.get(transition);
 		for (final Condition<S, C> place : transition.getSuccessorConditions()) {

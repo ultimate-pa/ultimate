@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -98,8 +99,12 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 			// Add benchmarks from PathInvariants
 			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsStats);
+			if (!mInterpolantComputationStatus.wasComputationSuccesful()) {
+				final String message = "invariant synthesis failed";
+				final String taskDescription = "trying to synthesize invariant for path program";
+				throw new ToolchainCanceledException(message, getClass(), taskDescription);
+			}
 		}
-		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		
 	}
 

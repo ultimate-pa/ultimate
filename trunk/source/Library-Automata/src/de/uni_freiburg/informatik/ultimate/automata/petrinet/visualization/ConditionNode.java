@@ -57,7 +57,7 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 		super(condition.toString());
 		
 		final DefaultAnnotations annot = new DefaultAnnotations();
-		annot.put("Condition", condition.toString());
+		annot.put("Condition", mName);
 		annot.put("CorrespondingPlace", condition.getPlace());
 		annot.put("NumberSuccesorEvents", condition.getSuccessorEvents().size());
 		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition, branchingProcess));

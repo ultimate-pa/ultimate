@@ -54,11 +54,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;

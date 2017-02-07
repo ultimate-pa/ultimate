@@ -62,16 +62,18 @@ public class SpaceExPreferenceManager {
 	private String mSystem;
 	private final String mModelFilename;
 	// replacement map for groups
-	private final Map<String, String> mReplacement;
+	private Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
-	private SpaceExPreferenceGroup mForbiddenGroup;
+	// the forbiddengroup holds the specified locations + variables of the "forbidden" property.
+	private final List<SpaceExForbiddenGroup> mForbiddenGroups;
+	private final Map<String, List<String>> mForbiddenToForbiddenlocs;
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
 	
-	public SpaceExPreferenceManager(IUltimateServiceProvider services, ILogger logger, File spaceExFile)
-			throws Exception {
+	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
+			final File spaceExFile) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -82,7 +84,9 @@ public class SpaceExPreferenceManager {
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mReplacement = new HashMap<>();
 		mPreferenceGroups = new HashMap<>();
-		setGroupIdToParallelComposition(new HashMap<>());
+		mGroupIdToParallelComposition = new HashMap<>();
+		mForbiddenGroups = new ArrayList<>();
+		mForbiddenToForbiddenlocs = new HashMap<>();
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -101,8 +105,9 @@ public class SpaceExPreferenceManager {
 		}
 	}
 	
-	private void parseConfigFile(File configfile) throws Exception {
+	private void parseConfigFile(final File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
+		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
 		final FileInputStream fis = new FileInputStream(configfile);
 		// load properties file
@@ -121,17 +126,17 @@ public class SpaceExPreferenceManager {
 		parseInitially(initially);
 		parseForbidden(forbidden);
 		fis.close();
+		final long estimatedTime = System.nanoTime() - startTime;
+		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
 	
-	private void parseForbidden(String forbidden) {
+	private void parseForbidden(final String forbidden) {
 		if (!forbidden.isEmpty()) {
-			final SpaceExPreferenceGroup forbiddengroup = createPreferenceGroup(forbidden, 1);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(
-						"Added new Forbidden group: \n" + "Initial Locations:" + forbiddengroup.getInitialLocations()
-								+ "\n" + "Initial variables: " + forbiddengroup.getInitialVariableInfix());
+			final AtomicInteger id = new AtomicInteger(0);
+			final List<String> formerGroups = infixToGroups(forbidden);
+			for (final String group : formerGroups) {
+				mForbiddenGroups.add(createForbiddenGroup(group, id.incrementAndGet()));
 			}
-			mForbiddenGroup = forbiddengroup;
 			mHasForbiddenGroup = true;
 		} else {
 			mLogger.info("-Config file has no forbidden property-");
@@ -140,15 +145,19 @@ public class SpaceExPreferenceManager {
 		
 	}
 	
-	private void parseInitially(String initially) {
+	private List<String> infixToGroups(final String infix) {
+		final String infixWithLiterals = replaceAllWithLiterals(infix);
+		final String[] infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
+		final List<String> postfix = HybridTermBuilder.postfix(infixToArray);
+		final List<String> groups = postfixToGroups(postfix);
+		return replaceLiterals(groups);
+	}
+	
+	private void parseInitially(final String initially) {
+		testPostFixToGroups();
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
-			// testPostFixToGroups();
-			final String initiallyWithLiterals = replaceAllWithLiterals(initially);
-			final String[] toArray = HybridTermBuilder.expressionToArray(initiallyWithLiterals);
-			final List<String> postfix = HybridTermBuilder.postfix(toArray);
-			final List<String> groups = postfixToGroups(postfix);
-			final List<String> formerGroups = replaceLiterals(groups);
+			final List<String> formerGroups = infixToGroups(initially);
 			// Parse the found groups and create Preference Groups.
 			for (final String group : formerGroups) {
 				final SpaceExPreferenceGroup preferenceGroup = createPreferenceGroup(group, id.incrementAndGet());
@@ -164,10 +173,51 @@ public class SpaceExPreferenceManager {
 			} else {
 				mHasPreferenceGroups = true;
 			}
+			mReplacement = new HashMap<>();
 		}
 	}
 	
-	private SpaceExPreferenceGroup createPreferenceGroup(String infix, int id) {
+	private SpaceExForbiddenGroup createForbiddenGroup(final String infix, final int id) {
+		String initialVariableInfix = "";
+		final Map<String, List<String>> initialLocations = new HashMap<>();
+		// split at &
+		final String[] splitted = infix.split("&");
+		// for each initial statement, find out if it is variable or initial location definition.
+		String property;
+		// regex stuff for initial locations
+		final String locRegex = "loc\\((.*)\\)==(.*)";
+		final Pattern locPattern = Pattern.compile(locRegex);
+		Matcher locMatcher;
+		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
+		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
+		final Pattern varPattern = Pattern.compile(varRegex);
+		Matcher varMatcher;
+		for (final String element : splitted) {
+			property = element.replaceAll("\\s+", "");
+			locMatcher = locPattern.matcher(property);
+			varMatcher = varPattern.matcher(property);
+			if (locMatcher.matches()) {
+				final String aut = locMatcher.group(1).replaceAll("(_.*)", "");
+				final String loc = locMatcher.group(2);
+				if (!initialLocations.containsKey(aut)) {
+					final List<String> locList = new ArrayList<>();
+					locList.add(loc);
+					initialLocations.put(aut, locList);
+				} else {
+					initialLocations.get(aut).add(loc);
+				}
+			} else if (varMatcher.matches()) {
+				initialVariableInfix += varMatcher.group(0) + "&";
+			}
+		}
+		if (!initialVariableInfix.isEmpty()) {
+			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
+		}
+		final int groupid = id;
+		return new SpaceExForbiddenGroup(initialLocations, initialVariableInfix, groupid);
+	}
+	
+	private SpaceExPreferenceGroup createPreferenceGroup(final String infix, final int id) {
 		String initialVariableInfix = "";
 		final Map<String, String> initialLocations = new HashMap<>();
 		// split at &
@@ -182,8 +232,8 @@ public class SpaceExPreferenceManager {
 		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 		final Pattern varPattern = Pattern.compile(varRegex);
 		Matcher varMatcher;
-		for (int i = 0; i < splitted.length; i++) {
-			property = splitted[i].replaceAll("\\s+", "");
+		for (final String element : splitted) {
+			property = element.replaceAll("\\s+", "");
 			locMatcher = locPattern.matcher(property);
 			varMatcher = varPattern.matcher(property);
 			if (locMatcher.matches()) {
@@ -202,7 +252,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	// function to replace literals with their saved values
-	private List<String> replaceLiterals(List<String> groups) {
+	private List<String> replaceLiterals(final List<String> groups) {
 		final List<String> res = new ArrayList<>();
 		for (final String group : groups) {
 			String replacement = group.replaceAll("\\s+", "");
@@ -218,7 +268,7 @@ public class SpaceExPreferenceManager {
 	
 	// helper function to replace all elements in a string of the form x==2 & loc(x)==wuargh, with single literals.
 	// x==2 & loc(x)==wuargh & y<=4---> A0 & A1 & A2
-	private String replaceAllWithLiterals(String initially) {
+	private String replaceAllWithLiterals(final String initially) {
 		// regex stuff for initial locations
 		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
 		final Pattern locPattern = Pattern.compile(locRegex);
@@ -295,7 +345,7 @@ public class SpaceExPreferenceManager {
 				 * groups - | is operator and no groups exists --> add to finished groups
 				 */
 				if (mReplacement.containsKey(operand1)
-						&& (mReplacement.containsKey(operand2) || operand2.contains("&"))) {
+						&& (mReplacement.containsKey(operand2) || !operand2.contains("&")) && !operand2.isEmpty()) {
 					// push Two single operands to stack
 					stack.push(operand2 + element + operand1);
 				} else if ("&".equals(element) && openGroupstack.isEmpty()) {
@@ -349,7 +399,7 @@ public class SpaceExPreferenceManager {
 		
 	}
 	
-	private String toInfix(List<String> postfix) {
+	private String toInfix(final List<String> postfix) {
 		final Deque<String> stack = new LinkedList<>();
 		// Else we iterate over the postfix.
 		for (final String element : postfix) {
@@ -365,16 +415,16 @@ public class SpaceExPreferenceManager {
 	}
 	
 	// function that evaluates operands and sets up the different groups
-	private List<String> evaluateOperands(String operand1, String operand2) {
+	private List<String> evaluateOperands(final String operand1, final String operand2) {
 		final List<String> openGroupstack = new ArrayList<>();
 		if (operand1.contains("|") && operand2.contains("|")) {
 			final List<String> eval = evaluateOrAndOr(operand1, operand2);
 			openGroupstack.addAll(eval);
-		} else if (operand1.contains("|") && operand2.contains("&")) {
+		} else if (operand1.contains("|")) {
 			final List<String> eval = evaluateOrAndAnd(operand1, operand2);
 			openGroupstack.addAll(eval);
 			
-		} else if (operand1.contains("&") && operand2.contains("|")) {
+		} else if (operand2.contains("|")) {
 			final List<String> eval = evaluateOrAndAnd(operand2, operand1);
 			openGroupstack.addAll(eval);
 			
@@ -384,24 +434,23 @@ public class SpaceExPreferenceManager {
 		return openGroupstack;
 	}
 	
-	private List<String> evaluateOrAndOr(String operand1, String operand2) {
+	private List<String> evaluateOrAndOr(final String operand1, final String operand2) {
 		final List<String> res = new ArrayList<>();
 		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
 		final String[] splitOP2 = operand2.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
-		for (int i = 0; i < splitOP2.length; i++) {
-			for (int j = 0; j < splitOP1.length; j++) {
-				res.add(splitOP1[j] + "&" + splitOP2[i]);
+		for (final String element : splitOP2) {
+			for (final String element2 : splitOP1) {
+				res.add(element2 + "&" + element);
 			}
 		}
 		return res;
 		
 	}
 	
-	private List<String> evaluateOrAndAnd(String operand1, String operand2) {
+	private List<String> evaluateOrAndAnd(final String operand1, final String operand2) {
 		final List<String> res = new ArrayList<>();
 		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
-		for (int i = 0; i < splitOP1.length; i++) {
-			final String el = splitOP1[i];
+		for (final String el : splitOP1) {
 			res.add(operand2 + "&" + el);
 		}
 		return res;
@@ -409,13 +458,13 @@ public class SpaceExPreferenceManager {
 	
 	private void testPostFixToGroups() {
 		final List<String> testStrings = new ArrayList<>();
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
 		testStrings.add("A==1 & B==1 | C==1");
 		testStrings.add("A==1");
 		testStrings.add("A==1 | B==1");
 		testStrings.add("A==1 & B==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1)");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1 | E==1)");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1 & G==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 | F==1) & G==1");
@@ -434,7 +483,7 @@ public class SpaceExPreferenceManager {
 		
 	}
 	
-	public HybridAutomaton getRegardedAutomaton(HybridModel model) {
+	public HybridAutomaton getRegardedAutomaton(final HybridModel model) {
 		/*
 		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
 		 * system.
@@ -485,7 +534,7 @@ public class SpaceExPreferenceManager {
 		return aut;
 	}
 	
-	public HybridSystem getRegardedSystem(HybridModel model) {
+	public HybridSystem getRegardedSystem(final HybridModel model) {
 		final String configSystem = mSystem != null ? mSystem : "";
 		final Map<String, HybridSystem> systems = model.getSystems();
 		// if the config file does not specify a system, get the first system of the model.
@@ -526,15 +575,35 @@ public class SpaceExPreferenceManager {
 		return mGroupIdToParallelComposition;
 	}
 	
-	public void setGroupIdToParallelComposition(Map<Integer, HybridAutomaton> mGroupIdToParallelComposition) {
+	public void setGroupIdToParallelComposition(final Map<Integer, HybridAutomaton> mGroupIdToParallelComposition) {
 		this.mGroupIdToParallelComposition = mGroupIdToParallelComposition;
 	}
 	
-	public SpaceExPreferenceGroup getForbiddenGroup() {
-		return mForbiddenGroup;
+	public List<SpaceExForbiddenGroup> getForbiddenGroups() {
+		return mForbiddenGroups;
 	}
 	
 	public boolean hasForbiddenGroup() {
 		return mHasForbiddenGroup;
 	}
+	
+	public boolean isLocationForbidden(final String autName, final String locName) {
+		if (mHasForbiddenGroup) {
+			for (final SpaceExForbiddenGroup group : mForbiddenGroups) {
+				if (group.getLocations().containsKey(autName) && group.getLocations().get(autName).contains(locName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public Map<String, List<String>> getForbiddenToForbiddenlocs() {
+		return mForbiddenToForbiddenlocs;
+	}
+	
+	public void addToForbiddenlocs() {
+		
+	}
+	
 }

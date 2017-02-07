@@ -42,19 +42,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 public class IcfgProgramExecutionBuilder {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
-	private final NestedWord<CodeBlock> mTrace;
+	private final NestedWord<IIcfgTransition<?>> mTrace;
 	private final Map<IProgramVar, Map<Integer, Term>> mvar2pos2value;
 	private final RelevantVariables mRelevantVariables;
 	private IcfgProgramExecution mIcfgProgramExecution;
@@ -62,7 +62,7 @@ public class IcfgProgramExecutionBuilder {
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
-			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables,
+			final NestedWord<IIcfgTransition<?>> trace, final RelevantVariables relevantVariables,
 			final IIcfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;

@@ -33,22 +33,23 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 
 public class Location {
-
+	
 	private final int mId;
 	private final String mName;
 	private String mInvariant;
 	private String mFlow;
-
+	private boolean mIsForbidden;
+	
 	private final List<Transition> mOutgoingTransitions;
 	private final List<Transition> mIncomingTransitions;
-
+	
 	private final double mXPos;
 	private final double mYPos;
-
+	
 	protected Location(final int id) {
 		this(id, new StringBuilder().append("loc_").append(id).toString());
 	}
-
+	
 	protected Location(final LocationType location) {
 		this(location.getId(), location.getName());
 	}
@@ -56,9 +57,9 @@ public class Location {
 	protected Location(final int id, final String name) {
 		mName = name;
 		mId = id;
-
-		mOutgoingTransitions = new ArrayList<Transition>();
-		mIncomingTransitions = new ArrayList<Transition>();
+		
+		mOutgoingTransitions = new ArrayList<>();
+		mIncomingTransitions = new ArrayList<>();
 		
 		mXPos = ((mId * 180) + 320);
 		mYPos = ((mId * 140) + 60);
@@ -67,42 +68,50 @@ public class Location {
 	public int getId() {
 		return mId;
 	}
-
+	
 	public String getName() {
 		return mName;
 	}
-
+	
 	protected void setInvariant(final String invariant) {
 		mInvariant = invariant;
 	}
-
+	
 	protected void setFlow(final String flow) {
 		mFlow = flow;
 	}
-
+	
 	public String getInvariant() {
 		return mInvariant;
 	}
-
+	
 	public String getFlow() {
 		return mFlow;
 	}
-
+	
+	public boolean isForbidden() {
+		return mIsForbidden;
+	}
+	
+	public void setForbidden(boolean isForbidden) {
+		mIsForbidden = isForbidden;
+	}
+	
 	protected void addOutgoingTransition(final Transition t) {
 		mOutgoingTransitions.add(t);
 	}
-
+	
 	protected void addIncomingTransition(final Transition t) {
 		mIncomingTransitions.add(t);
 	}
 	
-	protected List<Transition> getOutgoingTransitions(){
+	protected List<Transition> getOutgoingTransitions() {
 		return mOutgoingTransitions;
 	}
-	protected List<Transition> getIncomingTransitions(){
+	
+	protected List<Transition> getIncomingTransitions() {
 		return mIncomingTransitions;
 	}
-	
 	
 	protected double getXPos() {
 		return mXPos;
@@ -117,7 +126,7 @@ public class Location {
 		final StringBuilder sb = new StringBuilder();
 		
 		sb.append(mName).append("(").append(mId).append(")").append(", Invariant: ").append(mInvariant);
-		sb.append(", Flow: ").append(mFlow);
+		sb.append(", Flow: ").append(mFlow).append(", IsForbidden?: ").append(mIsForbidden);
 		
 		return sb.toString();
 	}

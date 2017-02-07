@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.LTLCheckerTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 
 public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 
@@ -45,13 +45,13 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 	// @formatter:off
 	private static final String[] TOOLCHAINS = new String[] {
 			"LTLAutomizerC.xml",
-			"LTLAutomizerCInline.xml",
+//			"LTLAutomizerCInline.xml",
 	};
 
 
 	private static final String[] SETTINGS = new String[] {
 //		//no optimizations
-		"None.epf",
+//		"None.epf",
 //
 //		//only small and large block encoding
 //		"None+SBE.epf",
@@ -59,7 +59,7 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 //		"None+LBE-Multi.epf",
 //
 //		// only local optimizations (sink states, final states, locally infeasible edges)
-//		"Default.epf",
+		"Default.epf",
 //
 //		//small block encoding + local optimizations
 //		"Default+SBE.epf",
@@ -110,9 +110,9 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 //			getPair("examples/LTL/rers2012correctencoding/P14/"),
 //
 			getPair("examples/LTL/coolant/"),
-//			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
-//			getPair("examples/LTL/bugs/"),
-//			getPair("examples/LTL/simple/"),
+			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
+			getPair("examples/LTL/bugs/"),
+			getPair("examples/LTL/simple/"),
 //		getPair("examples/LTL/rers2012correctencoding/P14/Problem14_prop_017.c")
 
 	// Possible soundness bug

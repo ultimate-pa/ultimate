@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -141,6 +142,7 @@ public final class CFGInvariantsGenerator {
 			}
 		}
 		for (int round = 0; round < processor.getMaxRounds(); round++) {
+
 			// Die if we run into timeouts or are otherwise requested to cancel.
 			if (!pmService.continueProcessing()) {
 				throw new ToolchainCanceledException(CFGInvariantsGenerator.class);
@@ -190,9 +192,12 @@ public final class CFGInvariantsGenerator {
 
 			// Set the benchmarks
 			mPathInvariantsStatistics.addPathInvariantsData(sumOfTemplateConjuncts, sumOfTemplateConjuncts);
+			// Set the current round
+			mPathInvariantsStatistics.setRound(round + 1);
 
 			// Attempt to find a valid configuration
-			if (processor.hasValidConfiguration(predicates, round)) {
+			LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
+			if (constraintsResult == LBool.SAT) {
 				mLogger.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
 
 				final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
@@ -203,16 +208,11 @@ public final class CFGInvariantsGenerator {
 				for (final IcfgLocation location : locationsAsList) {
 					result.put(location, processor.applyConfiguration(locs2Patterns.get(location)));
 				}
-				// Set the benchmarks
-				mPathInvariantsStatistics.setRound(round + 1);
 				return result;
-			} else {
-
+			} else if (constraintsResult == LBool.UNSAT) {
 				if (useUnsatCore) {
 					// Set benchmarks
 					Set<IcfgLocation> locsInUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getLocationsInUnsatCore();
-
-
 					// If no configuration could have been found, the constraints may be unsatisfiable
 					//				if (useVariablesFromUnsatCore) {
 					final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
@@ -238,11 +238,11 @@ public final class CFGInvariantsGenerator {
 					varsFromUnsatCore = null;
 				}
 				//				}
+			} else {
+				mLogger.info("Got \"UNKNOWN\" in round " + round + ", give up the invariant search.");
+				break;
 			}
 		}
-
-		mLogger.info(
-				"[CFGInvariants] No valid configuration " + "within round bound (" + processor.getMaxRounds() + ").");
 		return null;
 	}
 
@@ -331,8 +331,9 @@ public final class CFGInvariantsGenerator {
 		mLogger.info("Built " + predicates.size() + " transition predicates.");
 
 		// Attempt to find a valid configuration
-		if (processor.hasValidConfiguration(predicates, round)) {
-			mLogger.info("Found valid " + "configuration in pre-round.");
+		LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
+		if (constraintsResult == LBool.SAT) {
+			mLogger.info("Found valid configuration in pre-round.");
 			final Map<IcfgLocation, IPredicate> result = new HashMap<IcfgLocation, IPredicate>(
 					locationsAsList.size());
 			// Extract the values for all pattern coefficients
@@ -359,8 +360,8 @@ public final class CFGInvariantsGenerator {
 					}
 				}
 				if (locsInUnsatCore != null && !locsInUnsatCore.isEmpty()) {
-//					mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
-//							allProgramVars.size() - varsFromUnsatCore.size());
+					//					mPathInvariantsStatistics.setLocationAndVariablesData(locationsAsList.size() - locsInUnsatCore.size(), 
+					//							allProgramVars.size() - varsFromUnsatCore.size());
 				}
 				mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
 				mLogger.info(locsInUnsatCore.size() + " out of " + locationsAsList.size() + " locations in unsat core");

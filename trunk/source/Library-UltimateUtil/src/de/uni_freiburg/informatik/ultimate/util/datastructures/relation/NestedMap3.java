@@ -33,6 +33,7 @@ import java.util.Set;
 /**
  * TODO: comment
  * @author Matthias Heizmann
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  * @param <K1>
  * @param <K2>
@@ -42,7 +43,7 @@ import java.util.Set;
 public class NestedMap3<K1, K2, K3, V> {
 	
 	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V = 
-			new HashMap<K1, NestedMap2<K2, K3, V>>();
+			new HashMap<>();
 	
 	public V put(K1 key1, K2 key2, K3 key3, V value) {
 		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
@@ -83,10 +84,15 @@ public class NestedMap3<K1, K2, K3, V> {
 		mK1ToK2ToK3V.clear();
 	}
 	
+	/**
+	 * Makes a deep copy of this NestedMap3.
+	 * (but not the objects it holds)
+	 * (added by Alexander Nutz)
+	 */
 	public NestedMap3<K1, K2, K3, V> copy() {
 		NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
 		for (K1 k1 : this.keySet()) {
-			mK1ToK2ToK3V.put(k1, this.get(k1).copy());
+			result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
 		}
 		return result;
 	}

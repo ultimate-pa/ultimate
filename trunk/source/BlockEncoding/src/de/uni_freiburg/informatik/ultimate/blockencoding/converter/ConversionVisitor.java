@@ -372,7 +372,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			return null;
 		}
 		if (mCheckForMultipleFormula.containsKey(edge)) {
-			mCheckForMultipleFormula.put(edge, (mCheckForMultipleFormula.get(edge)) + 1);
+			mCheckForMultipleFormula.put(edge, mCheckForMultipleFormula.get(edge) + 1);
 		} else {
 			mCheckForMultipleFormula.put(edge, 1);
 		}
@@ -537,8 +537,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		} else if (cb instanceof GotoEdge) {
 			copyOfCodeBlock = cb;
 		} else {
-			throw new IllegalArgumentException(
-					"Failure while converting a" + "CodeBlock, maybe there is a new type," + "which should be added");
+			throw new IllegalArgumentException("Failure while converting a CodeBlock of type " + cb.getClass());
 		}
 		copyOfCodeBlock.setTransitionFormula(cb.getTransformula());
 		ModelUtils.copyAnnotations(cb, copyOfCodeBlock);

@@ -1,5 +1,16 @@
 #!/bin/bash
 
+function exitOnFail {
+    "$@"
+    local status=$?
+    if [ $status -ne 0 ]; then
+		echo "$@ failed with $1"
+		exit $status
+    fi
+    return $status
+}
+
+
 DEPLOY_SERVER=sotec.informatik.uni-freiburg.de
 DEPLOY_DIR=/export/server/httpd/ultimate/downloads/svcomp2017
 TESTFILE=caniwrite
@@ -23,7 +34,7 @@ if [ ! $? -eq 0 ]; then
 fi
 
 pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
-mvn clean install -Pmaterialize
+exitOnFail mvn clean install -Pmaterialize
 popd > /dev/null
 
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc>
@@ -32,8 +43,8 @@ popd > /dev/null
 ./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml
 
 # uncomment this after the final release 
-for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
+#for z in *.zip; do mv "$z" "${z%.zip}-post-final.zip"; done
 
-rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
-rm *.zip 
+#rsync -P --rsh="sshpass -e ssh -l me8 -oHostKeyAlgorithms=+ssh-dss" *.zip $CURRENTUSER@${DEPLOY_SERVER}:${DEPLOY_DIR}/. 
+#rm *.zip 
 

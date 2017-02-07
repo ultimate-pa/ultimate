@@ -62,7 +62,7 @@ public class HybridTermBuilder {
 		mOutVars = new HashMap<>();
 	}
 	
-	public Term infixToTerm(String infix, final BuildScenario scenario) {
+	public Term infixToTerm(final String infix, final BuildScenario scenario) {
 		final String[] infixArray = expressionToArray(infix);
 		final List<String> postfix = postfix(infixArray);
 		return postfixToTerm(postfix, scenario);
@@ -192,7 +192,7 @@ public class HybridTermBuilder {
 	
 	// helper function to get the correct termvariable for each scenario
 	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario,
-			boolean isAssignedValue) {
+			final boolean isAssignedValue) {
 		if (scenario == BuildScenario.INITIALLY) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);

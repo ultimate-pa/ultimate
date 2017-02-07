@@ -33,12 +33,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -190,17 +188,6 @@ public class AffineFunction implements Serializable {
 		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
 				summands.toArray(new Term[summands.size()]));
-	}
-	
-	/**
-	 * Return the affine-linear function as a Boogie AST expression
-	 * @param script the current script
-	 * @param smt2boogie the variable translation
-	 * @return the generated expression
-	 */
-	public Expression asExpression(final Script script, final Term2Expression smt2boogie) {
-		final Term formula = asTerm(script);
-		return smt2boogie.translate(formula);
 	}
 	
 	/**

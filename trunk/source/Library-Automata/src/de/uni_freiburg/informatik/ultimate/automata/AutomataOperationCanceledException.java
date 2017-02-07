@@ -43,12 +43,15 @@ public class AutomataOperationCanceledException extends AutomataLibraryException
 	
 	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
 	
+	@SuppressWarnings("squid:S1948")
 	private final List<RunningTaskInfo> mRunningTaskInfos;
 	
 	/**
 	 * @param thrower
 	 *            Thrower class.
 	 */
+	// false-positive
+	@SuppressWarnings("fb-contrib:SCII_SPOILED_CHILD_INTERFACE_IMPLEMENTOR")
 	public AutomataOperationCanceledException(final Class<?> thrower) {
 		this(thrower, new RunningTaskInfo(thrower, null));
 	}

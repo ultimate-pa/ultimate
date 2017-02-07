@@ -2,7 +2,8 @@
 // Date: 2017-02-02
 // 
 // Example that shows a conceptual problem for delayed simulation-based
-// minimization of NWA. All three implementations 
+// minimization of NWA. All three implementations suggested to merge {p1, q1}
+// and {p2, q2} which is not language-preserving.
 
 NestedWordAutomaton preprocessed = removeUnreachable(nwa);
 
@@ -13,9 +14,9 @@ int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetr
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
-int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed)); // TODO the result is wrong
-int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed)); // TODO the result is wrong
-int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed)); // TODO the result is wrong
 
 assert(minimizeSevpaSize == 6);
 assert(shrinkNwaSize == 6);

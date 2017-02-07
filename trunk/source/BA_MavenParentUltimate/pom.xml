@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.0.1</version>
+	<version>0.1.8</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -15,6 +15,8 @@
 	</scm>
 
 	<properties>
+		<ultimate-version>0.1.8</ultimate-version>
+	
 		<!-- maven plugin versions -->
 		<tycho-version>0.26.0</tycho-version>
 		<sonar-version>3.2</sonar-version>

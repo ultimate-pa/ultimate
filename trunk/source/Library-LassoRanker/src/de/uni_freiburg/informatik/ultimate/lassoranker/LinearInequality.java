@@ -34,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.UnknownFunctionException;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;

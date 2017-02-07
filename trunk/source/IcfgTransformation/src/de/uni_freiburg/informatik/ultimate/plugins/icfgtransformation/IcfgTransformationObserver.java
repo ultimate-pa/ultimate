@@ -38,7 +38,9 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -68,7 +70,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private final TransformationTestType mDefaultTrasformationTestType = TransformationTestType.LOOP_ACCELERATION;
 
 	private enum TransformationTestType {
-		LOOP_ACCELERATION, MAP_ELIMINATION,
+		LOOP_ACCELERATION, MAP_ELIMINATION, REMOVE_DIV_MOD,
 	}
 
 	public IcfgTransformationObserver(final ILogger logger, final IUltimateServiceProvider services,
@@ -149,6 +151,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			transformer = new MapEliminationTransformer(icfg, mServices, mLogger,
 					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings,
 					equalityProvider);
+		}
+			break;
+		case REMOVE_DIV_MOD: {
+			transformer = new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		}
 			break;
 		default:

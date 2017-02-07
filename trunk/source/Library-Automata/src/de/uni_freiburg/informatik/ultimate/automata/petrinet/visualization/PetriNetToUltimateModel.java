@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -38,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 
 /**
- * Converter from Petri net to Ultimate model.
+ * Converter from {@link IPetriNet} to Ultimate model.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -49,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 public class PetriNetToUltimateModel<S, C> {
 	/**
 	 * @param net
-	 *            A Petri net.
-	 * @return the initial node of the Petri net
+	 *            Petri net.
+	 * @return the initial node of the Petri net Ultimate model
 	 */
 	@SuppressWarnings("unchecked")
 	public PetriNetInitialNode transformToUltimateModel(final IPetriNet<S, C> net) {
@@ -62,7 +63,7 @@ public class PetriNetToUltimateModel<S, C> {
 		final Map<Place<S, C>, PlaceNode> place2placeNode = new HashMap<>();
 		final Map<ITransition<S, C>, TransitionNode> transition2transitionNode = new HashMap<>();
 		
-		final LinkedList<Object> queue = new LinkedList<>();
+		final Queue<Object> queue = new LinkedList<>();
 		
 		// add all initial states to model - all are successors of the graphroot
 		for (final Place<S, C> place : initialStates) {
@@ -73,7 +74,7 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 		
 		while (!queue.isEmpty()) {
-			final Object node = queue.removeFirst();
+			final Object node = queue.remove();
 			
 			if (node instanceof Place) {
 				placeHandling(place2placeNode, transition2transitionNode, queue, (Place<S, C>) node);
@@ -86,7 +87,7 @@ public class PetriNetToUltimateModel<S, C> {
 	}
 	
 	private void placeHandling(final Map<Place<S, C>, PlaceNode> place2placeNode,
-			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final LinkedList<Object> queue,
+			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final Place<S, C> place) {
 		final PlaceNode placeNode = place2placeNode.get(place);
 		for (final ITransition<S, C> transition : place.getSuccessors()) {
@@ -113,7 +114,7 @@ public class PetriNetToUltimateModel<S, C> {
 	
 	private void transitionHandling(final Collection<Collection<Place<S, C>>> acceptingMarkings,
 			final Map<Place<S, C>, PlaceNode> place2placeNode,
-			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final LinkedList<Object> queue,
+			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final ITransition<S, C> transition) {
 		final TransitionNode transitionNode = transition2transitionNode.get(transition);
 		for (final Place<S, C> place : transition.getSuccessors()) {
@@ -139,16 +140,16 @@ public class PetriNetToUltimateModel<S, C> {
 		return acceptingMarkingsList;
 	}
 	
-	private void addAcceptingMarkingString(final LinkedList<String> participatedAcceptingMarkings,
+	private void addAcceptingMarkingString(final Collection<String> participatedAcceptingMarkings,
 			final Collection<Place<S, C>> acceptingMarking) {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("{ ");
 		String comma = "";
 		for (final Place<S, C> placeInMarking : acceptingMarking) {
-			builder.append(placeInMarking.getContent().toString()).append(comma);
+			builder.append(placeInMarking.getContent()).append(comma);
 			comma = " , ";
 		}
-		builder.append("}");
+		builder.append('}');
 		participatedAcceptingMarkings.add(builder.toString());
 	}
 }

@@ -205,19 +205,6 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		return sb.toString();
 	}
 
-	/**
-	 * Workaround to satisfy the parameters of results.
-	 *
-	 * @return
-	 */
-	@Deprecated
-	public List<ILocation> getLocationList() {
-		final List<ILocation> result = new ArrayList<>();
-		for (final AtomicTraceElement<IcfgEdge> cb : mTrace) {
-			result.add(cb.getTraceElement().getPayload().getLocation());
-		}
-		return result;
-	}
 
 	@Override
 	public Class<Term> getExpressionClass() {

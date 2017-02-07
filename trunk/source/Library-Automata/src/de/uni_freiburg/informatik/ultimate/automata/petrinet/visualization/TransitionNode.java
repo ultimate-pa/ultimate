@@ -29,13 +29,14 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
- * Ultimate model of a PetriNet transition.
+ * Ultimate model of an {@link IPetriNet} transition.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -55,8 +56,9 @@ public final class TransitionNode extends PetriNetVisualizationNode {
 		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 		
-		if (transition.getSymbol() instanceof IAnnotations) {
-			thisPluginsAnnotations.put("Symbol", transition.getSymbol());
+		final Object symbol = transition.getSymbol();
+		if (symbol instanceof IAnnotations) {
+			thisPluginsAnnotations.put("Symbol", symbol);
 		}
 	}
 }
