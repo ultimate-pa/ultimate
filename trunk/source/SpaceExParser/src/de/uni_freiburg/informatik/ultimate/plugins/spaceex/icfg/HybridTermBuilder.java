@@ -206,7 +206,9 @@ public class HybridTermBuilder {
 			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
 				mInVars.put(progvar, invar);
+				mOutVars.put(progvar, outvar);
 				return invar;
 			} else {
 				return null;
