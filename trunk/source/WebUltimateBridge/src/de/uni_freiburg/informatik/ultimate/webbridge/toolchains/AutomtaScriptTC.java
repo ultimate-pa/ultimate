@@ -48,24 +48,24 @@ public class AutomtaScriptTC extends WebToolchain {
 	
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
 	protected List<Tool> defineTools() {
 		final List<Tool> tools = new ArrayList<Tool>();
 		
-		tools.add(new Tool(PrefStrings.s_automatascriptinterpreter));
+		tools.add(new Tool(PrefStrings.AUTOMATASCRIPTINTERPRETER));
 		
 		return tools;
 	}
@@ -74,7 +74,7 @@ public class AutomtaScriptTC extends WebToolchain {
 	protected List<Setting> defineAdditionalSettings() {
 		final List<Setting> rtr = new ArrayList<>();
 
-		rtr.add(new Setting("/" + PrefStrings.s_automatascriptinterpreter, Setting.SettingType.INTEGER, "Timeout",
+		rtr.add(new Setting("/" + PrefStrings.AUTOMATASCRIPTINTERPRETER, Setting.SettingType.INTEGER, "Timeout",
 				"10", true));
 
 		return rtr;

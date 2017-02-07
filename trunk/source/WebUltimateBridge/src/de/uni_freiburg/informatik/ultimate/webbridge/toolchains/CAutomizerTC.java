@@ -48,25 +48,25 @@ public class CAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
 	protected List<Tool> defineTools() {
 		final List<Tool> tools = new ArrayList<>();
 
-		tools.add(new Tool(PrefStrings.s_syntaxchecker));
-		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
+		tools.add(new Tool(PrefStrings.SYNTAXCHECKER));
+		tools.add(new Tool(PrefStrings.CACSL2BOOGIETRANSLATOR));
 		tools.addAll(BoogieAutomizerTC.boogieAutomizerTools());
 
 		return tools;
@@ -75,9 +75,9 @@ public class CAutomizerTC extends WebToolchain {
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
 		final List<Setting> rtr = BoogieAutomizerTC.boogieAutomizerAdditionalSettings();
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_MemoryLeak, SettingType.BOOLEAN,
+		rtr.add(new Setting(PrefStrings.CACSL_LABEL_MEMORY_LEAK, SettingType.BOOLEAN,
 				"Check for memory leak in main procedure", "false", true));
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_SignedIntegerOverflow, SettingType.BOOLEAN,
+		rtr.add(new Setting(PrefStrings.CACSL_LABEL_SIGNED_INTEGER_OVERFLOW, SettingType.BOOLEAN,
 				"Check for overflows of signed integers", "false", true));
 		return rtr;
 	}

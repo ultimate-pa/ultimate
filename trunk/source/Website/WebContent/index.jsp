@@ -10,14 +10,14 @@ Params:
 <%@ page trimDirectiveWhitespaces="true"%>
 <%@ page import="java.util.*"%>
 <%@ page
-	import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Tool"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Setting"%>
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Worker"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Example"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tool"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Setting"%>
 <%@ page
-	import="de.uni_freiburg.informatik.ultimate.website.toolchains.*"%>
+	import="de.uni_freiburg.informatik.ultimate.webbridge.toolchains.*"%>
 <%@ page import="java.text.DateFormat"%>
 <%@ page import="java.text.SimpleDateFormat"%>
 <%@ page import="java.io.BufferedReader"%>

@@ -42,17 +42,17 @@ public class BoogieLassoRankerTC extends WebToolchain {
 	
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
@@ -71,10 +71,10 @@ public class BoogieLassoRankerTC extends WebToolchain {
 	static List<Tool> boogieLassoRankerToolchain() {
 		final List<Tool> tools = new ArrayList<Tool>();
 
-		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
-		tools.add(new Tool(PrefStrings.s_blockencoding));
-		tools.add(new Tool(PrefStrings.s_lassoRanker));
+		tools.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		tools.add(new Tool(PrefStrings.RCFGBUILDER));
+		tools.add(new Tool(PrefStrings.BLOCKENCODING));
+		tools.add(new Tool(PrefStrings.LASSO_RANKER));
 		
 		return tools;
 	}

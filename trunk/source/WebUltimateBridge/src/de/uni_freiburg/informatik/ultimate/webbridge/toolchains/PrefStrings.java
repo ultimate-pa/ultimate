@@ -13,52 +13,52 @@ public class PrefStrings {
 
 	/** Names of tools **/
 
-	public static final String s_syntaxchecker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker";
-	public static final String s_cacsl2boogietranslator =
+	public static final String SYNTAXCHECKER = "de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker";
+	public static final String CACSL2BOOGIETRANSLATOR =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator";
-	public static final String s_boogiePreprocessor = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
-	public static final String s_rcfgBuilder = "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder";
-	public static final String s_buchiautomizer =
+	public static final String BOOGIE_PREPROCESSOR = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
+	public static final String RCFGBUILDER = "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder";
+	public static final String BUCHIAUTOMIZER =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer";
-	public static final String s_automatascriptinterpreter =
+	public static final String AUTOMATASCRIPTINTERPRETER =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter";
-	public static final String s_blockencoding = "de.uni_freiburg.informatik.ultimate.plugins.blockencoding";
-	public static final String s_traceAbstractionConcurrent =
+	public static final String BLOCKENCODING = "de.uni_freiburg.informatik.ultimate.plugins.blockencoding";
+	public static final String TRACE_ABSTRACTION_CONCURRENT =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent";
-	public static final String s_lassoRanker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker";
-	public static final String s_traceAbstraction =
+	public static final String LASSO_RANKER = "de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker";
+	public static final String TRACE_ABSTRACTION =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction";
-	public static final String s_ltl2aut = "de.uni_freiburg.informatik.ultimate.ltl2aut";
-	public static final String s_buchiProgramProduct = "de.uni_freiburg.informatik.ultimate.buchiprogramproduct";
-	public static final String s_codecheck = "de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck";
+	public static final String LTL2AUT = "de.uni_freiburg.informatik.ultimate.ltl2aut";
+	public static final String BUCHIPROGRAMPRODUCT = "de.uni_freiburg.informatik.ultimate.buchiprogramproduct";
+	public static final String CODECHECK = "de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck";
 
 	/** Settings strings **/
 
-	public static final String s_CACSL_LABEL_StartFunction =
-			s_cacsl2boogietranslator + "/Checked\\ method.\\ Library\\ mode\\ if\\ empty.";
-	public static final String s_CACSL_LABEL_TranslationMode = s_cacsl2boogietranslator + "/Translation\\ Mode\\:";
-	public static final String s_CACSL_VALUE_Base = "BASE";
-	public static final String s_CACSL_VALUE_Svcomp = "SV_COMP14";
-	public static final String s_CACSL_LABEL_MemoryLeak = s_cacsl2boogietranslator
+	public static final String CACSL_LABEL_StartFunction =
+			CACSL2BOOGIETRANSLATOR + "/Checked\\ method.\\ Library\\ mode\\ if\\ empty.";
+	public static final String CACSL_LABEL_TRANSLATIONMODE = CACSL2BOOGIETRANSLATOR + "/Translation\\ Mode\\:";
+	public static final String CACSL_VALUE_BASE = "BASE";
+	public static final String CACSL_VALUE_SVCOMP = "SV_COMP14";
+	public static final String CACSL_LABEL_MEMORY_LEAK = CACSL2BOOGIETRANSLATOR
 			+ "/Check\\ for\\ the\\ main\\ procedure\\ if\\ all\\ allocated\\ memory\\ was\\ freed";
-	public static final String s_CACSL_LABEL_SignedIntegerOverflow =
-			s_cacsl2boogietranslator + "/Check\\ absence\\ of\\ signed\\ integer\\ overflows";
+	public static final String CACSL_LABEL_SIGNED_INTEGER_OVERFLOW =
+			CACSL2BOOGIETRANSLATOR + "/Check\\ absence\\ of\\ signed\\ integer\\ overflows";
 
-	public static final String s_RCFG_LABEL_BlockSize = s_rcfgBuilder + "/Size\\ of\\ a\\ code\\ block";
-	public static final String s_RCFG_VALUE_Single = "SingleStatement";
-	public static final String s_RCFG_VALUE_Seq = "SequenceOfStatements";
-	public static final String s_RCFG_VALUE_Block = "LoopFreeBlock";
+	public static final String RCFG_LABEL_BLOCKSIZE = RCFGBUILDER + "/Size\\ of\\ a\\ code\\ block";
+	public static final String RCFG_VALUE_SINGLE = "SingleStatement";
+	public static final String RCFG_VALUE_SEQ = "SequenceOfStatements";
+	public static final String RCFG_VALUE_BLOCK = "LoopFreeBlock";
 
-	public static final String s_TA_LABEL_Hoare = s_traceAbstraction
+	public static final String TA_LABEL_HOARE = TRACE_ABSTRACTION
 			+ "/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG";
 
-	public static final String s_BE_LABEL_STRATEGY = s_blockencoding + "/Strategy\\ for\\ the\\ edge\\ rating";
-	public static final String s_BE_VALUE_LargeBlock = "LARGE_BLOCK";
-	public static final String s_BE_VALUE_DisjunctiveRating = "DISJUNCTIVE_RATING";
+	public static final String BE_LABEL_STRATEGY = BLOCKENCODING + "/Strategy\\ for\\ the\\ edge\\ rating";
+	public static final String BE_VALUE_LARGE_BLOCK = "LARGE_BLOCK";
+	public static final String BE_VALUE_DISJUNCTIVE_RATING = "DISJUNCTIVE_RATING";
 
 	/** Webinterface settings **/
-	public static final String s_InterfaceLayoutFontsizeDefault = "100";
-	public static final String s_InterfaceLayoutOrientationDefault = "horizontal";
-	public static final String s_InterfaceLayoutTransitionDefault = "true";
+	public static final String INTERFACE_LAYOUT_FONTSIZE_DEFAULT = "100";
+	public static final String INTERFACE_LAYOUT_ORIENTATION_DEFAULT = "horizontal";
+	public static final String INTERFACE_LAYOUT_TRANSITION_DEFAULT = "true";
 
 }

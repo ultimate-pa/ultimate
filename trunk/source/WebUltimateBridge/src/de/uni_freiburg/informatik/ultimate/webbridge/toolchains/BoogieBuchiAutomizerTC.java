@@ -43,17 +43,17 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 	
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
@@ -69,12 +69,12 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 	static List<Tool> boogieBuchiAutomizerToolchain() {
 		final List<Tool> tools = new ArrayList<Tool>();
 		
-		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
+		tools.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		tools.add(new Tool(PrefStrings.RCFGBUILDER));
 //		TODO 2016-12-21 Matthias: Enable Blockencoding again after the 
 //		backtranslation works.
 //		tools.add(new Tool(PrefStrings.s_blockencoding));
-		tools.add(new Tool(PrefStrings.s_buchiautomizer));
+		tools.add(new Tool(PrefStrings.BUCHIAUTOMIZER));
 		
 		return tools;
 	}

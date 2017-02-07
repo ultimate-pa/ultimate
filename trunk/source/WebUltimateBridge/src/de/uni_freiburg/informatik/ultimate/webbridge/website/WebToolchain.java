@@ -26,6 +26,8 @@ import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting.SettingType
  */
 public abstract class WebToolchain {
 
+	private static final String SETTINGS_PATH_PREFIX =
+			"/de/uni_freiburg/informatik/ultimate/webbridge/resources/settings/";
 	private static final int MAX_LENGTH_NAME = 30;
 	private static final int MAX_LENGTH_ID = 30;
 	private static final int TIMEOUT_MS = 5 * 60 * 1000;
@@ -423,7 +425,7 @@ public abstract class WebToolchain {
 			return;
 		}
 
-		final String name = "/resources/settings/" + defineToolchainSettingsFile;
+		final String name = SETTINGS_PATH_PREFIX + defineToolchainSettingsFile;
 		try {
 			mSettings.addAll(readSettingsFromResource(name));
 		} catch (final IOException e) {
@@ -434,7 +436,8 @@ public abstract class WebToolchain {
 	}
 
 	private List<Setting> readSettingsFromResource(final String resourceName) throws IOException {
-		SimpleLogger.log("Loading settings file from " + getClass().getResource(resourceName));
+		SimpleLogger.log("Loading settings file from " + getClass().getResource(resourceName) + " (ressourceName is "
+				+ resourceName + ")");
 		final InputStream stream = getClass().getResourceAsStream(resourceName);
 		final BufferedReader buff = new BufferedReader(new InputStreamReader(stream));
 

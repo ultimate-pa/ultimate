@@ -38,17 +38,17 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 	
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
@@ -65,9 +65,9 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 	protected List<Tool> defineTools() {
 		final List<Tool> tools = new ArrayList<Tool>();
 
-		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
-		tools.add(new Tool(PrefStrings.s_traceAbstractionConcurrent));
+		tools.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		tools.add(new Tool(PrefStrings.RCFGBUILDER));
+		tools.add(new Tool(PrefStrings.TRACE_ABSTRACTION_CONCURRENT));
 		
 		return tools;
 	}
