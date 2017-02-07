@@ -203,11 +203,11 @@ public class HybridTermBuilder {
 				return null;
 			}
 		} else if (scenario == BuildScenario.GUARD || scenario == BuildScenario.INVARIANT) {
-			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
+			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
-				mInVars.put(progvar, outvar);
-				return outvar;
+				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+				mInVars.put(progvar, invar);
+				return invar;
 			} else {
 				return null;
 			}
