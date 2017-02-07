@@ -6,8 +6,37 @@
 //  after the simulation has been computed because it reads the results from the
 //  game graph.
 
-NestedWordAutomaton nwa2 = removeDeadEnds(nwa);
-print(ReduceNwaDirectSimulationB(nwa2));
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 3);
+assert(shrinkNwaSize == 3);
+assert(minimizeNwaPmaxSatSize == 3);
+assert(minimizeNwaPmaxSatAsymmetricSize == 3);
+assert(minimizeDfaSimulationSize == 3);
+assert(reduceNwaDirectSimulationSize == 3);
+assert(reduceNwaDirectSimulationBSize == 3);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
+assert(buchiReduceSize == 3);
+assert(reduceNwaDelayedSimulationSize == 3);
+assert(reduceNwaDelayedSimulationBSize == 3);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 3);
+assert(reduceBuchiFairDirectSimulationSize == 2);
+assert(reduceBuchiFairSimulationSize == 2);
 
 NestedWordAutomaton nwa = (
 	alphabet = {"a"},
@@ -20,41 +49,3 @@ NestedWordAutomaton nwa = (
 		("q1" "a" "q2")
 	}
 );
-
-
-// GameGraph gg = (
-// 	SpoilerVertices = {
-// 		<(false, q1, q2), p:2>
-// 		<(false, null, null), p:1>
-// 		<(false, q1, q1), p:2>
-// 		<(false, q2, q2), p:2>
-// 		<(false, q1, q0), p:2>
-// 	},
-// 	DuplicatorVertices = {
-// 		<(false, q2, q1, a), p:2>
-// 		<(false, q2, q2, a), p:2>
-// 		<(false, q2, q0, a), p:2>
-// 		<(false, q1, q0, a), p:2>
-// 		<(false, q1, q1, a), p:2>
-// 		<(false, q1, q2, a), p:2>
-// 	},
-// 	edges = {
-// 		(false, q2, q1, a)	--> (false, null, null)
-// 		(false, q2, q1, a)	--> (false, q2, q2)
-// 		(false, q2, q2, a)	--> (false, null, null)
-// 		(false, q2, q0, a)	--> (false, null, null)
-// 		(false, q1, q2)	--> (false, q2, q2, a)
-// 		(false, q1, q2)	--> (false, q1, q2, a)
-// 		(false, null, null)	--> (false, null, null, null)
-// 		(false, null, null)	--> (false, null, null)
-// 		(false, q1, q1)	--> (false, q2, q1, a)
-// 		(false, q1, q1)	--> (false, q1, q1, a)
-// 		(false, q2, q2)	--> (false, null, null, null)
-// 		(false, q1, q0)	--> (false, q2, q0, a)
-// 		(false, q1, q0)	--> (false, q1, q0, a)
-// 		(false, q1, q0, a)	--> (false, q1, q1)
-// 		(false, q1, q1, a)	--> (false, q1, q2)
-// 		(false, q1, q1, a)	--> (false, q1, q1)
-// 		(false, q1, q2, a)	--> (false, null, null)
-// 	}
-// );

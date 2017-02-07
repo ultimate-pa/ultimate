@@ -5,11 +5,49 @@
 // gamegraph has 20850 states, infinity is 4126
 // gamegraph consists of 20278 SCCs
 // reduced automaton has 75 states and 292 internal transitions
+//
+// Contains 5 dead end states.
 
+// TODO This is the old number of states; somehow it has changed.
+// -> Investigate why, then remove, use the other assertions, find out the
+// correct number for then remaining two operations, and move to the benchmarks
+// folder because it is way too costly for some operations together with
+// checkResult() (> 4 min).
 NestedWordAutomaton reduced = buchiReduce(nwa);
 print(numberOfStates(reduced));
 assert(numberOfStates(reduced) == 9);
 
+// NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+// 
+// int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+// int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+// int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+// int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+// int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+// int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+// int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+// int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+// int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// // int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed)); // TODO this runs like forever
+// // int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed)); // TODO this runs like forever
+// 
+// assert(minimizeSevpaSize == 14);
+// assert(shrinkNwaSize == 14);
+// assert(minimizeNwaPmaxSatSize == 14);
+// assert(minimizeNwaPmaxSatAsymmetricSize == 14);
+// assert(minimizeDfaSimulationSize == 13);
+// assert(reduceNwaDirectSimulationSize == 14);
+// assert(reduceNwaDirectSimulationBSize == 13);
+// assert(reduceNwaDirectFullMultipebbleSimulationSize == 14);
+// assert(buchiReduceSize == 13);
+// assert(reduceNwaDelayedSimulationSize == 14);
+// assert(reduceNwaDelayedSimulationBSize == 13);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 20);
+// // assert(reduceBuchiFairDirectSimulationSize == 999);
+// // assert(reduceBuchiFairSimulationSize == 999);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
