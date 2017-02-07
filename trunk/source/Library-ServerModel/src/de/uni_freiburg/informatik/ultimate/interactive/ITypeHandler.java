@@ -5,5 +5,5 @@ public interface ITypeHandler<T> {
 
 	public T supply();
 
-	public <D> T supply(Class<D> argType, D data);
+	public <D> T supply(D data);
 }

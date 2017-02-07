@@ -13,10 +13,9 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
-public abstract class TCPServer<T> implements IServer {
+public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
-	private static final String REQUEST_ID_PATTERN = "Request%s";
-	private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
+	//private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
 
 	protected final ILogger mLogger;
 	protected int mPort;
@@ -57,7 +56,7 @@ public abstract class TCPServer<T> implements IServer {
 		mLogger.info("stopping Server..");
 		mRunning = false;
 		try {
-			// mClient.closeConnection();
+			//mClient.closeConnection();
 			mClient.cancel(true);
 			mServerFuture.get(10, TimeUnit.SECONDS);
 			mLogger.info("Server stopped.");
@@ -65,7 +64,7 @@ public abstract class TCPServer<T> implements IServer {
 			mLogger.error("Server Thread was interrupted.", e);
 		} catch (TimeoutException e) {
 			final boolean canceled = mServerFuture.cancel(true);
-			mLogger.error(String.format("Server Thread Timed out. Canceled execution: %s", canceled), e);
+			mLogger.error(String.format("Server Thread Timed out. Canceled execution: %s", canceled));
 		}
 	}
 
@@ -73,6 +72,7 @@ public abstract class TCPServer<T> implements IServer {
 		try {
 			mSocket = new ServerSocket(mPort);
 		} catch (IOException e1) {
+			mClient.cancel(true);
 			mLogger.error("Server could not be started.", e1);
 			return;
 		}
@@ -236,18 +236,12 @@ public abstract class TCPServer<T> implements IServer {
 	 */
 
 	@Override
-	public void waitForConnection() throws InterruptedException {
+	public Client<T> waitForConnection() throws InterruptedException, ExecutionException, TimeoutException {
 		if (!mRunning || mServerFuture.isDone()) {
 			throw new IllegalStateException("Server not running.");
 		}
 
-		try {
-			mClient.get(60, TimeUnit.SECONDS);
-		} catch (ExecutionException e) {
-			mLogger.error(e);
-		} catch (TimeoutException e) {
-			mLogger.error("timed out waiting for client.", e);
-		}
+		return mClient.get(60, TimeUnit.SECONDS);
 	}
 
 }

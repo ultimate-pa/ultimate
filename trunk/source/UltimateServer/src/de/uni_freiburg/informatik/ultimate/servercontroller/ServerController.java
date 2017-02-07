@@ -33,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.TextFormat.ParseException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
@@ -54,6 +57,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.server.Client;
+import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.server.IServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
@@ -69,7 +75,7 @@ public class ServerController implements IController<RunDefinition> {
 	final static int PORT = 6789;
 
 	private ILogger mLogger;
-	private IServer mServer;
+	private IInteractiveServer<GeneratedMessageV3> mServer;
 	private IToolchainData<RunDefinition> mToolchain;
 
 	@Override
@@ -92,13 +98,19 @@ public class ServerController implements IController<RunDefinition> {
 		mLogger.debug("Starting Server on Port " + PORT);
 		mServer.start();
 		mLogger.debug("Waiting for connection...");
+
+		final IInteractive<GeneratedMessageV3> interactive;
+
 		try {
-			mServer.waitForConnection();
-		} catch (InterruptedException e) {
+			final Client<GeneratedMessageV3> client = mServer.waitForConnection();
+			interactive = client.createInteractiveInterface();
+		} catch (ExecutionException | TimeoutException | InterruptedException e) {
 			mLogger.fatal("No connection established", e);
 			mServer.stop();
 			return -1;
 		}
+		
+		//interactive.send(data);
 
 		// should cl args be used for settings (port)?
 		// final String[] args = Platform.getCommandLineArgs();

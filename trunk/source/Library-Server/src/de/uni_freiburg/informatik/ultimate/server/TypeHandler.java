@@ -46,13 +46,18 @@ public class TypeHandler<T> implements ITypeHandler<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	final <D> Function<D, T> getSupplier(final Class<D> type) {
-		return (Function<D, T>) mSuppliers.get(type);
+	private <D> T wrappedSupply(Class<D> type, Object data) {
+		final Function<D, T> supplier = (Function<D, T>) mSuppliers.get(type);
+		if (supplier == null)
+			return null;
+		return supplier.apply((D) data);
 	}
 
 	@Override
-	public <D> T supply(Class<D> argType, D data) {
-		return getSupplier(argType).apply(data);
+	public <D> T supply(D data) {
+		@SuppressWarnings("unchecked")
+		Class<? extends D> type = (Class<? extends D>) data.getClass();
+		return wrappedSupply(type, data);
 	}
 
 }

@@ -64,6 +64,26 @@ public interface IWrappedMessage<T> {
 
 	public void writeTo(OutputStream output) throws IOException;
 
+	public Writer<T> writer();
+
+	interface Writer<T> {
+		Writer<T> setMessage(Message message);
+
+		Writer<T> setAction(Action action);
+		
+		Writer<T> setQid(String qid);
+		
+		default Writer<T> answer(IWrappedMessage<?> query) {
+			return setQid(query.getUniqueQueryIdentifier());
+		};
+
+		Writer<T> setData(T data);
+
+		Writer<T> setQuery(Class<? extends T> type);
+
+		void write();
+	}
+
 	/**
 	 * blocks until the message is read from input Stream.
 	 * 

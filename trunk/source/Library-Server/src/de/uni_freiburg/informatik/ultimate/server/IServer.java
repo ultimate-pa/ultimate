@@ -11,10 +11,4 @@ public interface IServer {
 	 */
 	void stop();
 
-
-	/**
-	 * Blocks the calling Thread until a connection is established.
-	 * @throws InterruptedException 
-	 */
-	void waitForConnection() throws InterruptedException;
 }

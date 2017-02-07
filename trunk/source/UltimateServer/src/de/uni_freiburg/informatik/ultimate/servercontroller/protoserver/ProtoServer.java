@@ -8,8 +8,6 @@ import de.uni_freiburg.informatik.ultimate.server.TCPServer;
 
 public class ProtoServer extends TCPServer<GeneratedMessageV3> {
 	protected final ITypeRegistry<GeneratedMessageV3> mTypeRegistry = new ProtoTypeRegistry();
-	// protected Map<String, WrappedFuture<? extends GeneratedMessageV3>>
-	// mExpectedData = new HashMap<>();
 
 	public ProtoServer(ILogger logger, int port) {
 		super(logger, port);
@@ -18,7 +16,7 @@ public class ProtoServer extends TCPServer<GeneratedMessageV3> {
 	@Override
 	public void initClient() {
 		mClient.setRegistry(mTypeRegistry);
-		mClient.setFactory(() -> new WrappedProtoMessage());
+		mClient.setFactory(() -> new WrappedProtoMessage(mTypeRegistry));
 	}
 
 }

@@ -10,10 +10,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.interactive.IHandlerRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Action;
@@ -39,7 +42,7 @@ public abstract class Client<T> {
 	protected int mCurrentRequestId = 0;
 
 	private ITypeRegistry<T> mTypeRegistry;
-	private IHandlerRegistry<T> mHandlerRegistry;
+	private HandlerRegistry<T> mHandlerRegistry;
 
 	private Future<?> mInputFuture;
 	private Future<?> mOutputFuture;
@@ -48,7 +51,7 @@ public abstract class Client<T> {
 		mLogger = logger;
 
 		mTypeRegistry = typeRegistry;
-		mQueue = new MessageQueue<T>(logger);
+		mQueue = new MessageQueue<T>(logger, this::construct);
 		mHandlerRegistry = new HandlerRegistry<>(mTypeRegistry);
 		mSocket = connectionSocket;
 	}
@@ -57,10 +60,24 @@ public abstract class Client<T> {
 		return mHelloFuture;
 	}
 
+	public IInteractive<T> createInteractiveInterface() {
+		return new ClientInteractiveInterface();
+	}
+
+	private void warnUnregistered(String typeName) {
+		mLogger.warn(String.format("received message with data of unregistered type %s", typeName));
+	}
+
 	protected void handle(IWrappedMessage<T> msg) {
 		// mLogger.debug("handleWrappged: " + wrapped.header.toString());
 		final String queryId = msg.getUniqueQueryIdentifier();
-		final String typeName = msg.getUniqueQueryDataTypeIdentifier();
+		final String typeName = msg.getUniqueDataTypeIdentifier();
+		final String qTypeName = msg.getUniqueQueryDataTypeIdentifier();
+		ITypeHandler<T> typeHandler = null;
+		final boolean dataTypeRegistered = mTypeRegistry.registered(typeName);
+		if (dataTypeRegistered) {
+			typeHandler = mHandlerRegistry.get(typeName);
+		}
 		Message logmsg = msg.getMessage();
 		logmsg.log(mLogger);
 
@@ -72,41 +89,34 @@ public abstract class Client<T> {
 			// log(data.toString(), logmsg.level);
 			break;
 		case SORRY:
-			mLogger.error(new ClientSorryException(msg));
 		case SEND:
-			if (!mTypeRegistry.registered(typeName)) {
-				mLogger.warn(String.format("received message with data of unregistered type %s", typeName));
+			if (!dataTypeRegistered) {
+				warnUnregistered(typeName);
 				break;
 			}
-			// final RegisteredProtoType<?> wt = mTypeRegistry.get(typeName);
-			// if (mExpectedData.containsKey(queryId)) {
-			// final String wTypeName =
-			// wrapped.get().getDescriptorForType().getFullName();
-			// WrappedFuture<? extends GeneratedMessageV3> wf =
-			// mExpectedData.get(queryId);
-			// if (action == Action.SORRY) {
-			// final ClientSorryException e = new ClientSorryException(wrapped);
-			// wf.future.completeExceptionally(e);
-			// } else if (!Objects.equals(typeName, wTypeName)) {
-			// final String message = String.format("Expected %s, but client
-			// responded with type %s.", wTypeName,
-			// typeName);
-			// final IllegalStateException e = new
-			// IllegalStateException(message);
-			// wf.future.completeExceptionally(e);
-			// } else {
-			// wf.future.complete(wrapped.get());
-			// }
-			// } else {
-			// wt.consume(wrapped.get());
-			// }
+
+			if (!mQueue.complete(queryId, data, action == Action.SORRY ? new ClientSorryException(msg) : null)) {
+				// handle the message regularly, if the queryId is not one we
+				// are waiting for
+				typeHandler.consume(data);
+			}
 			break;
 		case REQUEST:
-			if (queryId != null) {
-				mLogger.error("handling client queries is not implemented yet.");
-			} else {
+			if (queryId.isEmpty()) {
 				mLogger.warn("ignoring request message that has no Query attached");
-				// mLogger.warn(wrapped.header.toString());
+				break;
+			}
+			if (!mTypeRegistry.registered(qTypeName)) {
+				warnUnregistered(qTypeName);
+			}
+			typeHandler = mHandlerRegistry.get(qTypeName);
+			if (data == null) {
+				mQueue.answer(msg, typeHandler.supply());
+			} else if (!dataTypeRegistered) {
+				warnUnregistered(typeName);
+				break;
+			} else {
+				mQueue.answer(msg, typeHandler.supply(data));
 			}
 			break;
 		case QUIT:
@@ -180,8 +190,14 @@ public abstract class Client<T> {
 					break;
 				}
 				msg.readFrom(input, typeRegistry);
-
-				handle(msg);
+				try {
+					handle(msg);
+				} catch (Exception e) {
+					String emsg = String.format("failed to handle %s message (%s).", msg.getAction(),
+							msg.getUniqueQueryDataTypeIdentifier());
+					mLogger.error(emsg, e);
+					continue;
+				}
 			} catch (IOException e) {
 				mLogger.error("failed to read input", e);
 				return;
@@ -190,6 +206,40 @@ public abstract class Client<T> {
 				continue;
 			}
 		}
+	}
+
+	public class ClientInteractiveInterface implements IInteractive<T> {
+
+		@Override
+		public <T1 extends T> void register(Class<T1> type, Consumer<T1> consumer) {
+			mHandlerRegistry.register(type, consumer);
+		}
+
+		@Override
+		public <T1 extends T> void register(Class<T1> type, Supplier<T1> supplier) {
+			mHandlerRegistry.register(type, supplier);
+		}
+
+		@Override
+		public <D extends T, T1 extends T> void register(Class<T1> type, Class<D> dataType, Function<D, T1> supplier) {
+			mHandlerRegistry.register(type, dataType, supplier);
+		}
+
+		@Override
+		public void send(T data) {
+			mQueue.send(data);
+		}
+
+		@Override
+		public <T1 extends T> CompletableFuture<T1> request(Class<T1> type) {
+			return mQueue.request(type);
+		}
+
+		@Override
+		public <T1 extends T> CompletableFuture<T1> request(Class<T1> type, T data) {
+			return mQueue.request(type, data);
+		}
+
 	}
 
 }

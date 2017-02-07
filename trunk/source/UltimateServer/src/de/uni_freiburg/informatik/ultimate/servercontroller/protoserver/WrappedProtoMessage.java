@@ -6,30 +6,24 @@ import java.io.OutputStream;
 
 import com.google.protobuf.GeneratedMessageV3;
 
+import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Writer;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message.Level;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header;
-import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message;
-import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action;
 
 public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> {
+	private static final String REQUEST_ID_PATTERN = "Request%s";
+	private static int REQ_ID_COUNTER = 0;
+
 	private Header header;
 	private GeneratedMessageV3 data;
+	private final ITypeRegistry<GeneratedMessageV3> mTypeRegistry;
 
-	public static WrappedProtoMessage wrap(final GeneratedMessageV3 data) {
-		final Header header = Header.newBuilder().setAction(Header.Action.SEND).setDataType(data.getClass().getName())
-				.build();
-		return new WrappedProtoMessage(header, data);
-	}
-
-	public WrappedProtoMessage(Header header, GeneratedMessageV3 data) {
-		this.header = header;
-		this.data = data;
-	}
-
-	public WrappedProtoMessage() {
+	public WrappedProtoMessage(ITypeRegistry<GeneratedMessageV3> typeRegistry) {
+		mTypeRegistry = typeRegistry;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -96,4 +90,62 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 		}
 
 	}
+
+	private String makeRequestId() {
+		return String.format(REQUEST_ID_PATTERN, REQ_ID_COUNTER++);
+	}
+
+	@Override
+	public Writer<GeneratedMessageV3> writer() {
+		final WrappedProtoMessage me = this;
+		final Header.Builder builder = Header.newBuilder();
+
+		return new Writer<GeneratedMessageV3>() {
+			GeneratedMessageV3 mData;
+
+			@Override
+			public Writer<GeneratedMessageV3> setMessage(IWrappedMessage.Message message) {
+				final Meta.Message.Builder mb = Meta.Message.newBuilder();
+				mb.setLevel(Meta.Message.Level.valueOf(message.level.toString()));
+				mb.setSource(message.source).setText(message.text);
+				builder.setMessage(mb);
+				return this;
+			}
+
+			@Override
+			public Writer<GeneratedMessageV3> setAction(IWrappedMessage.Action action) {
+				builder.setAction(Header.Action.valueOf(action.toString()));
+				return this;
+			}
+
+			@Override
+			public Writer<GeneratedMessageV3> setData(GeneratedMessageV3 data) {
+				final Class<? extends GeneratedMessageV3> dType = (Class<? extends GeneratedMessageV3>) data.getClass();
+				IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(dType);
+				builder.setDataType(rType.registeredName());
+				mData = data;
+				return this;
+			}
+
+			@Override
+			public Writer<GeneratedMessageV3> setQuery(Class<? extends GeneratedMessageV3> type) {
+				IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(type);
+				builder.setQueryType(rType.registeredName());
+				builder.setQueryId(makeRequestId());
+				return this;
+			}
+
+			@Override
+			public Writer<GeneratedMessageV3> setQid(String qid) {
+				builder.setQueryId(qid);
+				return this;
+			}
+
+			@Override
+			public void write() {
+				me.header = builder.build();
+				me.data = mData;
+			}
+		};
+	};
 }
