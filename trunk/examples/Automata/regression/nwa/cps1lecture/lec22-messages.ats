@@ -50,4 +50,3 @@ print(empty);
 
 NestedLassoWord omegaWord = getAcceptedLassoWord(inter);
 print(omegaWord);
-

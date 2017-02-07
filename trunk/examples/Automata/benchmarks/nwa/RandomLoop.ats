@@ -1,0 +1,8 @@
+// example to run an operation in a loop with random nested word automata
+
+int i = 0;
+while( i <= 5 ) {
+    NestedWordAutomaton nwa = getRandomNwaTv(100, 1, 1, 1, 50, 50, 50, 100, 50);
+    print(numberOfStates(removeUnreachable(nwa)));
+    i++;
+}
