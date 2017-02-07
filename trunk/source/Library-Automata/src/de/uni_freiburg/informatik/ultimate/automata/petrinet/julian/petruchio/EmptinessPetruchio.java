@@ -107,7 +107,10 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		final Integer one = Integer.valueOf(1);
 		
 		// construct single invariant p_1 + ... + p_n where p_i \in places
-		// TODO Christian 2017-02-06: Sonar rightly complains that this variable is never actually used -> a bug?
+		/*
+		 * TODO Christian 2017-02-06: Sonar rightly complains that this variable is never actually used.
+		 *      It was used further below once because there is a commented occurrence of it.
+		 */
 		final Collection<Map<Place, Integer>> invariants = new ArrayList<>(1);
 		final Collection<Place> places = mPetruchio.getNet().getPlaces();
 		final Map<Place, Integer> theInvariant = new IdentityHashMap<>(places.size());
@@ -117,7 +120,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		invariants.add(theInvariant);
 		
 		// construct the following target:
-		// at least one of { {p_j} | p_j \in Paccepting } is coverable
+		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
 		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pAcceptingJulian : mNetJulian
 				.getAcceptingPlaces()) {
@@ -134,8 +137,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn(targets);
 		}
-		final SimpleList<Transition> tracePetruchio =
-				Backward.checkCoverability(mPetruchio.getNet(), targets);
+		final SimpleList<Transition> tracePetruchio = Backward.checkCoverability(mPetruchio.getNet(), targets);
 		//, invariants);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("done");
