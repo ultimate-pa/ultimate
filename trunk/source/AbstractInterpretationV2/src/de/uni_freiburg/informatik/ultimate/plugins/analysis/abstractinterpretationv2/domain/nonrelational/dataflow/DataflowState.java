@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
@@ -47,24 +48,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DataflowState<ACTION extends IAction> implements IAbstractState<DataflowState<ACTION>, IProgramVar> {
+public class DataflowState<ACTION extends IAction>
+		implements IAbstractState<DataflowState<ACTION>, IProgramVarOrConst> {
 	
 	private static int sId;
 	private final int mId;
 
-	private final Set<IProgramVar> mVars;
-	private final Map<IProgramVar, Set<ACTION>> mDef;
-	private final Map<IProgramVar, Set<ACTION>> mUse;
-	private final Map<IProgramVar, Set<ACTION>> mReachDef;
-	private final Map<IProgramVar, Set<IcfgLocation>> mNoWrite;
+	private final Set<IProgramVarOrConst> mVars;
+	private final Map<IProgramVarOrConst, Set<ACTION>> mDef;
+	private final Map<IProgramVarOrConst, Set<ACTION>> mUse;
+	private final Map<IProgramVarOrConst, Set<ACTION>> mReachDef;
+	private final Map<IProgramVarOrConst, Set<IcfgLocation>> mNoWrite;
 
 	DataflowState() {
 		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
 
-	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<ACTION>> def,
-			final Map<IProgramVar, Set<ACTION>> use, final Map<IProgramVar, Set<ACTION>> reachdef,
-			final Map<IProgramVar, Set<IcfgLocation>> noWrite) {
+	DataflowState(final Set<IProgramVarOrConst> vars, final Map<IProgramVarOrConst, Set<ACTION>> def,
+			final Map<IProgramVarOrConst, Set<ACTION>> use, final Map<IProgramVarOrConst, Set<ACTION>> reachdef,
+			final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite) {
 		assert vars != null;
 		assert def != null;
 		assert use != null;
@@ -78,53 +80,53 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	}
 
 	@Override
-	public DataflowState<ACTION> addVariable(final IProgramVar variable) {
+	public DataflowState<ACTION> addVariable(final IProgramVarOrConst variable) {
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
+		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
-	public DataflowState<ACTION> removeVariable(final IProgramVar variable) {
+	public DataflowState<ACTION> removeVariable(final IProgramVarOrConst variable) {
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
+		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
 		vars.remove(variable);
-		final Map<IProgramVar, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
 		def.remove(variable);
-		final Map<IProgramVar, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
 		use.remove(variable);
-		final Map<IProgramVar, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		use.remove(variable);
-		final Map<IProgramVar, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		use.remove(variable);
 		return new DataflowState<>(vars, def, use, reachdef, noWrite);
 	}
 
 	@Override
-	public DataflowState<ACTION> addVariables(final Collection<IProgramVar> variables) {
+	public DataflowState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
+		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
 		return new DataflowState<>(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
 
 	@Override
-	public DataflowState<ACTION> removeVariables(final Collection<IProgramVar> variables) {
+	public DataflowState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
-		final Map<IProgramVar, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
-		final Map<IProgramVar, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
-		final Map<IProgramVar, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
+		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		variables.stream().forEach(a -> {
 			vars.remove(a);
 			def.remove(a);
@@ -136,12 +138,12 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	}
 
 	@Override
-	public boolean containsVariable(final IProgramVar var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mVars.contains(var);
 	}
 
 	@Override
-	public Set<IProgramVar> getVariables() {
+	public Set<IProgramVarOrConst> getVariables() {
 		return Collections.unmodifiableSet(mVars);
 	}
 
@@ -199,7 +201,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('{');
-		for (final Entry<IProgramVar, Set<ACTION>> entry : mReachDef.entrySet()) {
+		for (final Entry<IProgramVarOrConst, Set<ACTION>> entry : mReachDef.entrySet()) {
 			if (entry.getValue().isEmpty()) {
 				continue;
 			}
@@ -251,19 +253,19 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 		return other.mId == mId;
 	}
 
-	Map<IProgramVar, Set<ACTION>> getDef() {
+	Map<IProgramVarOrConst, Set<ACTION>> getDef() {
 		return Collections.unmodifiableMap(mDef);
 	}
 
-	Map<IProgramVar, Set<ACTION>> getUse() {
+	Map<IProgramVarOrConst, Set<ACTION>> getUse() {
 		return Collections.unmodifiableMap(mUse);
 	}
 
-	Map<IProgramVar, Set<ACTION>> getReachingDefinitions() {
+	Map<IProgramVarOrConst, Set<ACTION>> getReachingDefinitions() {
 		return Collections.unmodifiableMap(mReachDef);
 	}
 
-	Map<IProgramVar, Set<IcfgLocation>> getNoWrite() {
+	Map<IProgramVarOrConst, Set<IcfgLocation>> getNoWrite() {
 		return Collections.unmodifiableMap(mNoWrite);
 	}
 
@@ -276,15 +278,15 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
 		}
 
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
-		final Map<IProgramVar, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
-		final Map<IProgramVar, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
-		final Map<IProgramVar, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Set<IProgramVarOrConst> vars = AbsIntUtil.getFreshSet(mVars);
+		final Map<IProgramVarOrConst, Set<ACTION>> def = AbsIntUtil.getFreshMap(mDef);
+		final Map<IProgramVarOrConst, Set<ACTION>> use = AbsIntUtil.getFreshMap(mUse);
+		final Map<IProgramVarOrConst, Set<ACTION>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
+		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 
 		// TODO: What about def and use?
 
-		for (final Entry<IProgramVar, Set<ACTION>> otherEntry : other.mReachDef.entrySet()) {
+		for (final Entry<IProgramVarOrConst, Set<ACTION>> otherEntry : other.mReachDef.entrySet()) {
 			final Set<ACTION> set = reachdef.get(otherEntry.getKey());
 			if (set == null) {
 				reachdef.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
@@ -296,7 +298,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 			}
 		}
 
-		for (final Entry<IProgramVar, Set<IcfgLocation>> otherEntry : other.mNoWrite.entrySet()) {
+		for (final Entry<IProgramVarOrConst, Set<IcfgLocation>> otherEntry : other.mNoWrite.entrySet()) {
 			final Set<IcfgLocation> set = noWrite.get(otherEntry.getKey());
 			if (set == null) {
 				noWrite.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
@@ -325,7 +327,7 @@ public class DataflowState<ACTION extends IAction> implements IAbstractState<Dat
 	}
 	
 	@Override
-	public Class<IProgramVar> getVariablesType() {
-		return IProgramVar.class;
+	public Class<IProgramVarOrConst> getVariablesType() {
+		return IProgramVarOrConst.class;
 	}
 }

@@ -32,46 +32,44 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class VPTfBottomState extends VPTfState {
-
-	public VPTfBottomState(Set<IProgramVar> vars) {
-		super(null, null,
-				Collections.emptyMap(), Collections.emptySet(), 
-				new HashRelation<>(), 
-				Collections.emptySet(),false, vars);
+	
+	public VPTfBottomState(final Set<IProgramVarOrConst> vars) {
+		super(null, null, Collections.emptyMap(), Collections.emptySet(), new HashRelation<>(), Collections.emptySet(),
+				false, vars);
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		return true;
 	}
-
+	
 	@Override
 	public boolean isTop() {
 		return false;
 	}
-
+	
 	@Override
 	public TransFormula getTransFormula() {
 		assert false : "check for bottom before asking for a Transformula";
 		return null;
 	}
-
+	
 	@Override
-	public VPTfArrayIdentifier getArrayIdentifier(Term newArray) {
+	public VPTfArrayIdentifier getArrayIdentifier(final Term newArray) {
 		assert false : "check for bottom before asking for an ArrayId";
 		return null;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "VPTfStateBottom " + mVars;

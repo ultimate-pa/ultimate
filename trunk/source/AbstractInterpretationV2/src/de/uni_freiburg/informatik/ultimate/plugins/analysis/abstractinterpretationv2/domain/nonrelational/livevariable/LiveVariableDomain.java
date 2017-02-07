@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * Domain that computes live variables in conjunction with backwards analysis.
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class LiveVariableDomain<ACTION extends IAction>
-		implements IAbstractDomain<LiveVariableState<ACTION>, ACTION, IProgramVar> {
-
+		implements IAbstractDomain<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> {
+	
 	private final LiveVariablePreOperator<ACTION> mPre;
 	private final LiveVariableMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -86,12 +86,12 @@ public class LiveVariableDomain<ACTION extends IAction>
 	}
 
 	@Override
-	public IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVar> getPreOperator() {
+	public IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> getPreOperator() {
 		return mPre;
 	}
 
 	private final class LiveVariableMergeOperator implements IAbstractStateBinaryOperator<LiveVariableState<ACTION>> {
-
+		
 		@Override
 		public LiveVariableState<ACTION> apply(final LiveVariableState<ACTION> first,
 				final LiveVariableState<ACTION> second) {

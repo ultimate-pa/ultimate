@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -51,27 +51,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  *
  * @param <STATE>
  */
-public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IProgramVar>, ACTION extends IAction>
-		implements IVariableProvider<STATE, ACTION, IProgramVar> {
+public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IProgramVarOrConst>, ACTION extends IAction>
+		implements IVariableProvider<STATE, ACTION, IProgramVarOrConst> {
 	
 	private final ILogger mLogger;
 	private final IIcfgSymbolTable mBoogieVarTable;
-	
+
 	public FutureRcfgVariableProvider(final IIcfgSymbolTable boogieVarTable, final IUltimateServiceProvider services) {
 		assert services != null;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogieVarTable = boogieVarTable;
 	}
-	
+
 	@Override
 	public STATE defineInitialVariables(final ACTION current, final STATE state) {
-		final Set<IProgramVar> vars = new HashSet<>();
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
 		mBoogieVarTable.getGlobals().stream().forEach(a -> vars.add(a));
 		mBoogieVarTable.getLocals(current.getPrecedingProcedure()).stream().forEach(a -> vars.add(a));
-		
+
 		return state.addVariables(vars);
 	}
-	
+
 	@Override
 	public STATE defineVariablesAfter(final ACTION action, final STATE localPreState, final STATE hierachicalPreState) {
 		if (action instanceof Call) {
@@ -83,7 +83,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 			return localPreState;
 		}
 	}
-	
+
 	private STATE defineVariablesAfterReturn(final ACTION action, final STATE localPreState,
 			final STATE hierachicalPreState) {
 		// if the action is a return, we have to:
@@ -91,11 +91,11 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 		// - keep all unmasked globals
 		// - add old locals from the scope we are returning to
 		// - add globals that were masked by this scope from the scope we are returning to
-		
+
 		final String sourceProc = action.getPrecedingProcedure();
 		final String targetProc = action.getSucceedingProcedure();
-		final Set<IProgramVar> varsNeededFromOldScope = new HashSet<>();
-		
+		final Set<IProgramVarOrConst> varsNeededFromOldScope = new HashSet<>();
+
 		if (sourceProc != null) {
 			// we need masked globals from the old scope, so we have to determine which globals are masked
 			varsNeededFromOldScope.addAll(getMaskedGlobalsVariables(sourceProc));
@@ -105,11 +105,11 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 			// mask them again
 			varsNeededFromOldScope.addAll(getLocalVariables(targetProc));
 		}
-		
+
 		STATE rtr = localPreState;
 		// in any case, we have to remove all local variables from the state
 		rtr = removeLocals(rtr, sourceProc);
-		
+
 		if (varsNeededFromOldScope.isEmpty()) {
 			// we do not need information from the old scope, so we are finished
 			if (mLogger.isDebugEnabled()) {
@@ -118,19 +118,19 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 			}
 			return rtr;
 		}
-		
+
 		// the program state that has to be used to obtain the values of the old scope
 		// (old locals, unmasked globals) is the pre state of the call
 		STATE preCallState = hierachicalPreState;
 		assert preCallState != null : "There is no abstract state before the call that corresponds to this return";
 		// we determine which variables are not needed ...
-		final Set<IProgramVar> toberemoved = new HashSet<>();
-		for (final IProgramVar entry : preCallState.getVariables()) {
+		final Set<IProgramVarOrConst> toberemoved = new HashSet<>();
+		for (final IProgramVarOrConst entry : preCallState.getVariables()) {
 			if (!varsNeededFromOldScope.contains(entry)) {
 				toberemoved.add(entry);
 			}
 		}
-		
+
 		if (!toberemoved.isEmpty()) {
 			// ... and remove them if there are any
 			if (mLogger.isDebugEnabled()) {
@@ -144,20 +144,20 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 		rtr = rtr.patch(preCallState);
 		return rtr;
 	}
-	
+
 	private STATE defineVariablesAfterCall(final ACTION action, final STATE localPreState) {
 		// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 		// and add all the ones from the new scope (thus also automatically masking globals)
 		final String remove = action.getPrecedingProcedure();
 		final String add = action.getSucceedingProcedure();
-		
+
 		// remove current locals
 		STATE rtr = removeLocals(localPreState, remove);
-		
+
 		// TODO: replace old old variables with fresh ones
-		
+
 		// remove globals that will be masked by the new scope
-		final Set<IProgramVar> masked = getMaskedGlobalsVariables(add);
+		final Set<IProgramVarOrConst> masked = getMaskedGlobalsVariables(add);
 		if (!masked.isEmpty()) {
 			rtr = rtr.removeVariables(masked);
 		}
@@ -165,63 +165,66 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 		rtr = applyLocals(rtr, add, rtr::addVariables);
 		return rtr;
 	}
-	
-	private STATE applyLocals(final STATE state, final String procedure, final Function<Set<IProgramVar>, STATE> fun) {
+
+	private STATE applyLocals(final STATE state, final String procedure,
+			final Function<Set<IProgramVarOrConst>, STATE> fun) {
 		if (procedure == null) {
 			return state;
 		}
-		
-		final Set<IProgramVar> locals = getLocalVariables(procedure);
+
+		final Set<IProgramVarOrConst> locals = getLocalVariables(procedure);
 		if (locals.isEmpty()) {
 			return state;
 		}
-		
+
 		return fun.apply(locals);
 	}
-	
+
 	/**
 	 * Get all global variables that are masked by the specified procedure.
 	 *
 	 * @param procedure
 	 *            the name of the masking procedure.
-	 * @return A set of masked {@link IProgramVar}s.
+	 * @return A set of masked {@link IProgramVarOrConst}s.
 	 */
-	private Set<IProgramVar> getMaskedGlobalsVariables(final String procedure) {
+	private Set<IProgramVarOrConst> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
-		final Set<IProgramVar> globals = new HashSet<>();
+		final Set<IProgramVarOrConst> globals = new HashSet<>();
 		for (final IProgramNonOldVar global : mBoogieVarTable.getGlobals()) {
 			globals.add(global);
 		}
 		// globals.addAll(mBoogieVarTable.getConsts().values());
-		
-		final Set<IProgramVar> locals = new HashSet<>();
+
+		final Set<IProgramVarOrConst> locals = new HashSet<>();
 		locals.addAll(getLocalVariables(procedure));
-		
-		final Set<IProgramVar> rtr = new HashSet<>();
-		
-		for (final IProgramVar local : locals) {
+
+		final Set<IProgramVarOrConst> rtr = new HashSet<>();
+
+		for (final IProgramVarOrConst local : locals) {
 			if (globals.contains(local)) {
 				rtr.add(local);
 			}
 		}
-		
+
 		return rtr;
 	}
-	
+
 	private STATE removeLocals(final STATE state, final String procedure) {
 		return applyLocals(state, procedure, state::removeVariables);
 	}
-	
-	private Set<IProgramVar> getLocalVariables(final String procedure) {
+
+	private Set<IProgramVarOrConst> getLocalVariables(final String procedure) {
 		assert procedure != null;
-		return mBoogieVarTable.getLocals(procedure).stream().map(a -> (IProgramVar) a).collect(Collectors.toSet());
+		return mBoogieVarTable.getLocals(procedure).stream().map(a -> (IProgramVarOrConst) a)
+				.collect(Collectors.toSet());
 	}
-	
-	private StringBuilder getLogMessageRemoveLocalsPreCall(final STATE state, final Set<IProgramVar> toberemoved) {
+
+	private StringBuilder getLogMessageRemoveLocalsPreCall(final STATE state,
+			final Set<IProgramVarOrConst> toberemoved) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" removing vars from pre-call state [")
 				.append(state.hashCode()).append("] ").append(state.toLogString()).append(": ").append(toberemoved);
 	}
-	
+
 	private StringBuilder getLogMessageNoRemoveLocalsPreCall(final STATE state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" using unchanged pre-call state [")
 				.append(state.hashCode()).append("] ").append(state.toLogString());

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * Domain that can be used to compute fixpoints for various dataflow analyses like reaching definitions, def-use, etc.
@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<DataflowState<ACTION>, ACTION, IProgramVar> {
-
+		implements IAbstractDomain<DataflowState<ACTION>, ACTION, IProgramVarOrConst> {
+	
 	private final DataflowPostOperator<ACTION> mPost;
 	private final DataflowMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -88,12 +88,12 @@ public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVar> getPostOperator() {
+	public IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
 		return mPost;
 	}
 
 	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState<ACTION>> {
-
+		
 		@Override
 		public DataflowState<ACTION> apply(final DataflowState<ACTION> first, final DataflowState<ACTION> second) {
 			final DataflowState<ACTION> rtr = first.union(second);

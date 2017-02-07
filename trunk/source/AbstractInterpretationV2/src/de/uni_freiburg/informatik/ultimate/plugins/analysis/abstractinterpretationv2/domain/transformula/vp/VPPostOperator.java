@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
@@ -79,17 +80,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVar> {
-
+		implements IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVarOrConst> {
+	
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-
+	
 	private final VPDomain<ACTION> mDomain;
 	private final VPStateFactory<ACTION> mStateFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
-
+	
 	public VPPostOperator(final ManagedScript script, final IUltimateServiceProvider services,
 			final VPDomain<ACTION> domain) {
 		mScript = script;
@@ -100,75 +101,75 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mTfPreparer = mDomain.getTfPreparer();
 		mTfStateFactory = mDomain.getTfStateFactory();
 	}
-
+	
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> oldState, final ACTION transition) {
 		mPreAnalysis.getBenchmark().unpause(VPSFO.applyClock);
-		
+
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (begin)");
 		}
-
+		
 		final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(transition);
 		if (tf.getOutVars().isEmpty()) {
 			mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 			return Collections.singletonList(oldState);
 		}
-
+		
 		if (oldState.isBottom()) {
 			mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 			return Collections.singletonList(oldState);
 		}
-
+		
 		final VPTfState tfPreState = mTfStateFactory.createTfState(oldState, tf);
-
+		
 		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(tf.getFormula());
 		mDomain.getLogger().debug("Original term: " + tf.getFormula());
 		mDomain.getLogger().debug("Nnf term:      " + nnfTerm);
-
-		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
-
-		mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
-
-		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf, oldState);
 		
+		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
+		
+		mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
+		
+		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf, oldState);
+
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
 			mPreAnalysis.getBenchmark().pause(VPSFO.overallFromPreAnalysis);
 			mPreAnalysis.getBenchmark().printResult(mPreAnalysis.getLogger());
 			mPreAnalysis.getBenchmark().unpause(VPSFO.overallFromPreAnalysis);
-		}	
-
+		}
+		
 		mPreAnalysis.getBenchmark().pause(VPSFO.applyClock);
 		assert VPDomainHelpers.containsNoNullElement(resultStates);
 		assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 		assert resultStates.size() < 50 : "TODO: merge internally";
 		return new ArrayList<>(resultStates);
 	}
-
+	
 	private Set<VPTfState> handleTransition(final VPTfState tfPreState, final Term term, final TransFormula tf,
 			final boolean negated) {
-
+		
 		if (term instanceof ApplicationTerm) {
-
+			
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final String applicationName = appTerm.getFunction().getName();
-
+			
 			if (applicationName == "and") {
 				assert !negated : "we transformed to nnf before, right?";
-
+				
 				final List<Set<VPTfState>> andList = new ArrayList<>();
 				for (final Term conjunct : appTerm.getParameters()) {
 					andList.add(handleTransition(tfPreState, conjunct, tf, false));
 				}
-
+				
 				final Set<VPTfState> resultStates = mTfStateFactory.conjoinAll(andList);
 				assert !resultStates.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 				return resultStates;
 			} else if (applicationName == "or") {
 				assert !negated : "we transformed to nnf before, right?";
-
+				
 				final Set<VPTfState> orList = new HashSet<>();
 				for (final Term t : appTerm.getParameters()) {
 					orList.addAll(handleTransition(tfPreState, t, tf, false));
@@ -177,8 +178,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);
 				return orList;
 			} else if (applicationName == "=") {
-				Set<VPTfState> result = handleEqualitySubterm(tfPreState, tf, negated, 
-						appTerm.getParameters()[0], 
+				final Set<VPTfState> result = handleEqualitySubterm(tfPreState, tf, negated, appTerm.getParameters()[0],
 						appTerm.getParameters()[1]);
 				assert !result.isEmpty();
 				return result;
@@ -189,11 +189,11 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
 				return result;
 			} else if (applicationName == "distinct") {
-
+				
 				mScript.lock(this);
 				final Term equality = mScript.term(this, "=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
 				mScript.unlock(this);
-
+				
 				final Set<VPTfState> result = handleTransition(tfPreState, equality, tf, !negated);
 				assert !result.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
@@ -216,11 +216,11 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				 * finer: if no outVars occur, then the prestate can be returned safely, right?
 				 */
 				// VPState<ACTION> result = mStateFactory.havocVariables(assignedVars, prestate);
-//				assert false : "TODO: implement";
-//				return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
+				// assert false : "TODO: implement";
+				// return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
 				return Collections.singleton(tfPreState);
 			}
-
+			
 		} else if (term instanceof QuantifiedFormula) {
 			// return handleTransition(preState, ((QuantifiedFormula) term).getSubformula(), tvToPvMap);
 			assert false : "we currently cannot deal with quantifiers";
@@ -231,17 +231,18 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			assert !result.isEmpty();
 			return result;
 		}
-
+		
 		assert false : "missed a case?";
 		return Collections.singleton(tfPreState);
 	}
-
+	
 	/**
-	 * 
+	 *
 	 * @param tfPreState
 	 * @param tf
 	 * @param negated
-	 * @param appTerm the subterm of the current transformula that this method should apply to the preState
+	 * @param appTerm
+	 *            the subterm of the current transformula that this method should apply to the preState
 	 * @return
 	 */
 	private Set<VPTfState> handleEqualitySubterm(final VPTfState tfPreState, final TransFormula tf,
@@ -253,122 +254,120 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				return Collections.singleton(tfPreState);
 			}
 			// two arrays are equated
-			
-			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
-//			IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
-			IArrayWrapper lhsWrapper = tfStateBuilder.getArrayWrapper(lhs);
-//			IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
-			IArrayWrapper rhsWrapper = tfStateBuilder.getArrayWrapper(rhs);
-			
-			Set<VPTfState> resultStates = new HashSet<>();
-			for (ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
-				for (ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
+
+			final VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
+			// IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
+			final IArrayWrapper lhsWrapper = tfStateBuilder.getArrayWrapper(lhs);
+			// IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
+			final IArrayWrapper rhsWrapper = tfStateBuilder.getArrayWrapper(rhs);
+
+			final Set<VPTfState> resultStates = new HashSet<>();
+			for (final ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(tfPreState, null)) {
+				for (final ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(tfPreState,
+						null)) {
 					
-					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsArrayWSc,
-							rhsArrayWSc);
-					
+					Set<VPTfState> resultStatesForCurrentNodePair =
+							addSideConditionsToState(tfPreState, lhsArrayWSc, rhsArrayWSc);
+
 					// add equalities for all the indices we track for both arrays
-					for (Entry<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> en : lhsArrayWSc.getIndexToValue().entrySet()) {
+					for (final Entry<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> en : lhsArrayWSc.getIndexToValue()
+							.entrySet()) {
 						if (!rhsArrayWSc.getIndexToValue().containsKey(en.getKey())) {
 							// the other array does not have a value for the current index
 							// --> do nothing
 							continue;
 						}
+
+						final VPTfNodeIdentifier lhS = en.getValue();
+						final VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
 						
-						VPTfNodeIdentifier lhS = en.getValue();
-						VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
-
-						resultStatesForCurrentNodePair = 
-//								VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair, 
-										VPFactoryHelpers.addEquality(
-												lhS,
-												rhS,
-												resultStatesForCurrentNodePair, mTfStateFactory)
-//										, mTfStateFactory)
-											;
+						resultStatesForCurrentNodePair =
+								// VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair,
+								VPFactoryHelpers.addEquality(lhS, rhS, resultStatesForCurrentNodePair, mTfStateFactory)
+						// , mTfStateFactory)
+						;
 					}
-
+					
 					resultStates.addAll(resultStatesForCurrentNodePair);
 				}
 			}
-			
+
 			assert !resultStates.isEmpty();
 			return resultStates;
 		} else {
 			// two "normal" terms are equated
-			
-			VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping --> vanilla builder should suffice
-			IElementWrapper lhsWrapper = tfStateBuilder.getElementWrapper(lhs);
-			IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
-			
+
+			final VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping
+																							// --> vanilla builder
+																							// should suffice
+			final IElementWrapper lhsWrapper = tfStateBuilder.getElementWrapper(lhs);
+			final IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
+
 			if (lhsWrapper == null || rhsWrapper == null) {
 				return Collections.singleton(tfPreState);
 			}
-			
-			Set<VPTfState> resultStates = new HashSet<>();
-//			
-			for (NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
-				for (NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
-					Set<VPTfState> resultStatesForCurrentNodePair = addSideConditionsToState(tfPreState, lhsNodeWSc,
-							rhsNodeWSc);
+
+			final Set<VPTfState> resultStates = new HashSet<>();
+			//
+			for (final NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
+				for (final NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(tfPreState)) {
+					Set<VPTfState> resultStatesForCurrentNodePair =
+							addSideConditionsToState(tfPreState, lhsNodeWSc, rhsNodeWSc);
 					if (lhsNodeWSc instanceof UndeterminedNodeWithSideCondition
 							|| rhsNodeWSc instanceof UndeterminedNodeWithSideCondition) {
-						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the sideconditions
+						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the
+						// sideconditions
 						resultStates.addAll(resultStatesForCurrentNodePair);
 						continue;
-					} 
+					}
 					
 					// add (dis)equality
 					if (!negated) {
-						resultStatesForCurrentNodePair = 
-										VPFactoryHelpers.addEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
+						resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(lhsNodeWSc.getNodeId(),
+								rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
 					} else {
-						resultStatesForCurrentNodePair = 
-										VPFactoryHelpers.addDisEquality(
-												lhsNodeWSc.getNodeId(), rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
-					
+						resultStatesForCurrentNodePair = VPFactoryHelpers.addDisEquality(lhsNodeWSc.getNodeId(),
+								rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
+						
 					}
 					resultStates.addAll(resultStatesForCurrentNodePair);
 				}
 			}
-			
+
 			assert !resultStates.isEmpty();
 			return resultStates;
 		}
 	}
-
-	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState, INodeOrArrayWithSideCondition lhsNodeWSc,
-			INodeOrArrayWithSideCondition rhsNodeWSc) {
-		VPTfStateBuilder preStateCopy = mTfStateFactory.copy(tfPreState);
+	
+	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState,
+			final INodeOrArrayWithSideCondition lhsNodeWSc, final INodeOrArrayWithSideCondition rhsNodeWSc) {
+		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(tfPreState);
 		// add side conditions
-		for (VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
 			preStateCopy.addDisEquality(de);
 		}
-		for (VPDomainSymmetricPair<VPTfNodeIdentifier> de : rhsNodeWSc.getDisEqualities()) {
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : rhsNodeWSc.getDisEqualities()) {
 			preStateCopy.addDisEquality(de);
 		}
-		
+
 		Set<VPTfState> resultStatesForCurrentNodePair = new HashSet<>();
 		resultStatesForCurrentNodePair.add(preStateCopy.build());
-		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
-			resultStatesForCurrentNodePair = 
-							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory);
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
 		}
-		for (VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
-			resultStatesForCurrentNodePair = 
-							VPFactoryHelpers.addEquality(
-									eq.getFirst(), eq.getSecond(), resultStatesForCurrentNodePair, mTfStateFactory);
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
 		}
 		// TODO: filter bottom states?
 		return resultStatesForCurrentNodePair;
 	}
-
+	
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> stateBeforeLeaving,
 			final VPState<ACTION> stateAfterLeaving, final ACTION transition) {
-
+		
 		if (transition instanceof Call) {
 			final List<VPState<ACTION>> result = applyContextSwitch(stateBeforeLeaving, stateAfterLeaving,
 					((Call) transition).getLocalVarsAssignment());
@@ -390,11 +389,11 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		} else {
 			assert false : "unexpected..";
 		}
-
+		
 		assert false : "forgot a case?";
 		return null;
 	}
-
+	
 	private List<VPState<ACTION>> applyContextSwitch(final VPState<ACTION> stateBeforeLeaving,
 			final VPState<ACTION> stateAfterLeaving, final TransFormula variableAssignment) {
 		/*
@@ -404,15 +403,15 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		 * into) - the resulting state(s) is obtained by adding all the extracted (dis)equalities to stateAfterLeaving
 		 * according to the matching of parameters
 		 */
-
+		
 		if (stateAfterLeaving.isBottom()) {
 			return Collections.singletonList(stateAfterLeaving);
 		}
-
+		
 		final VPState<ACTION> copy = mDomain.getVpStateFactory().copy(stateAfterLeaving).build();
-
+		
 		VPState<ACTION> resultState = copy;
-
+		
 		final Set<ApplicationTerm> equations =
 				new ApplicationTermFinder("=", true).findMatchingSubterms(variableAssignment.getFormula());
 		for (final ApplicationTerm eq : equations) {
@@ -423,65 +422,63 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			 */
 			final Term callParam = eq.getParameters()[0];
 			final Term funcParam = eq.getParameters()[1];
-
+			
 			final Set<Pair<EqNode, EqNode>> equalitiesWithGlobals =
 					extractEqualitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (final Pair<EqNode, EqNode> pair : equalitiesWithGlobals) {
 				// TODO: fallback, think through
-				final Set<VPState<ACTION>> newStates =
-						VPFactoryHelpers.addEquality(pair.getFirst(),
-								pair.getSecond(), resultState, mDomain.getVpStateFactory());
+				final Set<VPState<ACTION>> newStates = VPFactoryHelpers.addEquality(pair.getFirst(), pair.getSecond(),
+						resultState, mDomain.getVpStateFactory());
 				resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 			}
 			final Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = extractDisequalitiesWithGlobals(callParam,
 					funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (final Pair<EqNode, EqNode> pair : disequalitiesWithGlobals) {
-				final Set<VPState<ACTION>> newStates =
-						VPFactoryHelpers.addDisEquality(pair.getFirst(),
-								pair.getSecond(), resultState, mDomain.getVpStateFactory());
+				final Set<VPState<ACTION>> newStates = VPFactoryHelpers.addDisEquality(pair.getFirst(),
+						pair.getSecond(), resultState, mDomain.getVpStateFactory());
 				resultState = VPFactoryHelpers.disjoinAll(newStates, mDomain.getVpStateFactory());
 			}
-
+			
 		}
-
+		
 		return Collections.singletonList(resultState);
 	}
-
+	
 	private Set<Pair<EqNode, EqNode>> extractDisequalitiesWithGlobals(final Term callParam, final Term funcParam,
 			final VPState<ACTION> stateBeforeLeaving, final TransFormula varAssignment, final VPDomain<ACTION> domain) {
 		return extractDisequalitiesWithProperty(callParam, funcParam, stateBeforeLeaving, varAssignment, domain,
 				node -> node.isGlobal());
 	}
-
+	
 	public Set<Pair<EqNode, EqNode>> extractDisequalitiesWithProperty(final Term callParam, final Term funcParam,
 			final VPState<ACTION> stateBeforeLeaving, final TransFormula varAssignment, final VPDomain<ACTION> domain,
 			final Predicate<EqNode> property) {
 		final Map<TermVariable, IProgramVar> tvToPvMap =
 				VPDomainHelpers.computeProgramVarMappingFromTransFormula(varAssignment);
-
+		
 		final EqNode callParamNode = domain.getPreAnalysis().getEqNode(callParam, tvToPvMap);
 		final EqNode funcParamNode = domain.getPreAnalysis().getEqNode(funcParam, tvToPvMap);
-
+		
 		// TODO: do this more efficiently if necessary..
 		final Set<EqNode> unequalGlobals =
 				stateBeforeLeaving.getUnequalNodes(callParamNode).stream().filter(property).collect(Collectors.toSet());
-
+		
 		final Set<Pair<EqNode, EqNode>> result = new HashSet<>();
 		for (final EqNode unequalGlobal : unequalGlobals) {
 			result.add(new Pair<>(funcParamNode, unequalGlobal));
 		}
-
+		
 		return result;
 	}
-
+	
 	private Set<Pair<EqNode, EqNode>> extractEqualitiesWithGlobals(final Term callParam, final Term funcParam,
 			final VPState<ACTION> stateBeforeLeaving, final TransFormula varAssignment, final VPDomain<ACTION> domain) {
 		return extractEqualitiesWithProperty(callParam, funcParam, stateBeforeLeaving, varAssignment, domain,
 				EqNode::isGlobal);
 	}
-
+	
 	/**
-	 * 
+	 *
 	 * @param callParam
 	 *            the Term in the stateBeforeLeaving, i.e., we are looking for globals that this term is equal with
 	 * @param funcParam
@@ -496,20 +493,20 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Predicate<EqNode> property) {
 		final Map<TermVariable, IProgramVar> tvToPvMap =
 				VPDomainHelpers.computeProgramVarMappingFromTransFormula(varAssignment);
-
+		
 		final EqNode callParamNode = domain.getPreAnalysis().getEqNode(callParam, tvToPvMap);
 		final EqNode funcParamNode = domain.getPreAnalysis().getEqNode(funcParam, tvToPvMap);
-
+		
 		// TODO: do this more efficiently if necessary..
 		final Set<EqNode> equivalentGlobals = stateBeforeLeaving.getEquivalentEqNodes(callParamNode).stream()
 				.filter(property).collect(Collectors.toSet());
-
+		
 		final Set<Pair<EqNode, EqNode>> result = new HashSet<>();
 		for (final EqNode equivalentGlobal : equivalentGlobals) {
 			result.add(new Pair<>(funcParamNode, equivalentGlobal));
 		}
-
+		
 		return result;
 	}
-
+	
 }

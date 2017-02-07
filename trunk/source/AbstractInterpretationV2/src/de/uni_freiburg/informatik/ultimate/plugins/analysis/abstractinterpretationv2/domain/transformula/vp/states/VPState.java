@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -60,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  *
  */
 public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPStateOrTfState<EqNode, IProgramVarOrConst>
-		implements IAbstractState<VPState<ACTION>, IProgramVar> {
-
+		implements IAbstractState<VPState<ACTION>, IProgramVarOrConst> {
+	
 	private static final String TERM_FUNC_NAME_AND = "and";
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
@@ -79,7 +78,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	 *
 	 * @param domain
 	 */
-	VPState(final VPDomain<ACTION> domain, final Set<IProgramVar> vars) {
+	VPState(final VPDomain<ACTION> domain, final Set<IProgramVarOrConst> vars) {
 		this(Collections.emptyMap(), Collections.emptySet(), vars, domain, false);
 	}
 
@@ -87,9 +86,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	 * Constructor to be used by VPStateFactory.createTopState() only.
 	 */
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
-			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVar> vars,
-			final VPDomain<ACTION> domain,
-			final boolean isTop) {
+			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVarOrConst> vars,
+			final VPDomain<ACTION> domain, final boolean isTop) {
 		super(disEqualitySet, isTop, vars);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDomain = domain;
@@ -120,7 +118,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public VPState<ACTION> addVariable(final IProgramVar variable) {
+	public VPState<ACTION> addVariable(final IProgramVarOrConst variable) {
 		if (mVars.contains(variable)) {
 			return this;
 		}
@@ -130,7 +128,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public VPState<ACTION> addVariables(final Collection<IProgramVar> variables) {
+	public VPState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
@@ -140,7 +138,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public VPState<ACTION> removeVariable(final IProgramVar variable) {
+	public VPState<ACTION> removeVariable(final IProgramVarOrConst variable) {
 		if (!mVars.contains(variable)) {
 			return this;
 		}
@@ -151,7 +149,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public VPState<ACTION> removeVariables(final Collection<IProgramVar> variables) {
+	public VPState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
@@ -162,12 +160,12 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public boolean containsVariable(final IProgramVar var) {
+	public boolean containsVariable(final IProgramVarOrConst var) {
 		return mVars.contains(var);
 	}
 
 	@Override
-	public Set<IProgramVar> getVariables() {
+	public Set<IProgramVarOrConst> getVariables() {
 		return mVars;
 	}
 
@@ -179,7 +177,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		 */
 
 		if (this.isBottom() || dominator.isBottom()) {
-			final Set<IProgramVar> newVars = new HashSet<>(mVars);
+			final Set<IProgramVarOrConst> newVars = new HashSet<>(mVars);
 			newVars.addAll(dominator.mVars);
 			final VPState<ACTION> resultState = mFactory.getBottomState(newVars);
 			return resultState;
@@ -197,7 +195,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		 * for each variable that is in this.mVars, but not in dominator.mVars: obtain all relations with something that
 		 * is in this or in dominator, and add them.
 		 */
-		for (final IProgramVar var : mVars) {
+		for (final IProgramVarOrConst var : mVars) {
 			if (dominator.getVariables().contains(var)) {
 				continue;
 			}
@@ -240,7 +238,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public boolean isEqualTo(final VPState<ACTION> other) {
-
+		
 		if (!mVars.equals(other.mVars)) {
 			return false;
 		}
@@ -308,7 +306,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	private Term constructTerm() {
-
+		
 		mScript.lock(this);
 		final Term trueTerm = mScript.term(this, TERM_TRUE);
 
@@ -354,7 +352,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 					mScript.term(this, TERM_FUNC_NAME_AND, equalityTermSet.toArray(new Term[equalityTermSet.size()]));
 		}
 
-		Term result = mScript.term(this, TERM_FUNC_NAME_AND, disEquality, equality);
+		final Term result = mScript.term(this, TERM_FUNC_NAME_AND, disEquality, equality);
 		mScript.unlock(this);
 
 		return result;
@@ -453,18 +451,17 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	@Override
-	public Class<IProgramVar> getVariablesType() {
-		return IProgramVar.class;
+	public Class<IProgramVarOrConst> getVariablesType() {
+		return IProgramVarOrConst.class;
 	}
 
 	/**
-	 * Returns true iff term1 _must_ equal term2 in this VPState.
-	 * (In particular returns false if this VPState does not have any constraint on the
-	 *  term1 and term2.)
+	 * Returns true iff term1 _must_ equal term2 in this VPState. (In particular returns false if this VPState does not
+	 * have any constraint on the term1 and term2.)
 	 */
 	public boolean areEqual(final Term term1, final Term term2) {
-		EqNode node1 = mPreAnalysis.getEqNode(term1);
-		EqNode node2 = mPreAnalysis.getEqNode(term2);
+		final EqNode node1 = mPreAnalysis.getEqNode(term1);
+		final EqNode node2 = mPreAnalysis.getEqNode(term2);
 		if (node1 == null || node2 == null) {
 			// the analysis did not track at least one of the given terms
 			return false;
@@ -473,13 +470,12 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	/**
-	 * Returns true iff term1 and term2 _must_ be unequal in this VPState.
-	 * (In particular returns false if this VPState does not have any constraint on the
-	 *  term1 and term2.)
+	 * Returns true iff term1 and term2 _must_ be unequal in this VPState. (In particular returns false if this VPState
+	 * does not have any constraint on the term1 and term2.)
 	 */
 	public boolean areUnEqual(final Term term1, final Term term2) {
-		EqNode node1 = mPreAnalysis.getEqNode(term1);
-		EqNode node2 = mPreAnalysis.getEqNode(term2);
+		final EqNode node1 = mPreAnalysis.getEqNode(term1);
+		final EqNode node2 = mPreAnalysis.getEqNode(term2);
 		if (node1 == null || node2 == null) {
 			// the analysis did not track at least one of the given terms
 			return false;

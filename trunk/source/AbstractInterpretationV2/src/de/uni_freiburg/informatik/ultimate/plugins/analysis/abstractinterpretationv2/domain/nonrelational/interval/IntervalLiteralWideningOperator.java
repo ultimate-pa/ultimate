@@ -50,29 +50,29 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		implements IAbstractStateBinaryOperator<IntervalDomainState<VARDECL>> {
 	
 	private final LiteralCollection mLiteralCollection;
-
-	protected IntervalLiteralWideningOperator(final LiteralCollection literalCollection) {
+	
+	public IntervalLiteralWideningOperator(final LiteralCollection literalCollection) {
 		mLiteralCollection = literalCollection;
 	}
-
+	
 	@Override
 	public IntervalDomainState<VARDECL> apply(final IntervalDomainState<VARDECL> first,
 			final IntervalDomainState<VARDECL> second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
-
+		
 		final List<VARDECL> boolsToWiden = new ArrayList<>();
 		final List<BooleanValue> boolValues = new ArrayList<>();
 		final List<VARDECL> varsToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> varValues = new ArrayList<>();
 		final List<VARDECL> arraysToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> arrayValues = new ArrayList<>();
-
+		
 		// TODO: Add array support.
 		final Consumer<VARDECL> varConsumer = var -> {
 			final IntervalDomainValue firstValue = first.getValue(var);
 			final IntervalDomainValue secondValue = second.getValue(var);
-
+			
 			if (secondValue.isContainedIn(firstValue)) {
 				varsToWiden.add(var);
 				varValues.add(firstValue);
@@ -84,41 +84,41 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		final Consumer<VARDECL> boolConsumer = var -> {
 			final BooleanValue firstValue = first.getBooleanValue(var);
 			final BooleanValue secondValue = second.getBooleanValue(var);
-
+			
 			if (!firstValue.isEqualTo(secondValue)) {
 				boolsToWiden.add(var);
 				// Bools are always widened to top.
 				boolValues.add(BooleanValue.TOP);
 			}
 		};
-
+		
 		for (final VARDECL var : first.getVariables()) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
-
+		
 		final VARDECL[] vars = varsToWiden.toArray(first.getVariableTypeArray(varsToWiden.size()));
 		final IntervalDomainValue[] vals = varValues.toArray(new IntervalDomainValue[varValues.size()]);
 		final VARDECL[] bools = boolsToWiden.toArray(first.getVariableTypeArray(boolsToWiden.size()));
 		final BooleanValue[] boolVals = boolValues.toArray(new BooleanValue[boolValues.size()]);
 		final VARDECL[] arrays = arraysToWiden.toArray(first.getVariableTypeArray(arraysToWiden.size()));
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
-
+		
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);
 	}
-
+	
 	private IntervalDomainValue determineNextValue(final IntervalDomainValue first, final IntervalDomainValue second) {
 		// Determine widen mode:
 		// Nothing changed, return same.
 		if (first.isEqualTo(second)) {
 			return first;
 		}
-
+		
 		final IntervalValue firstLower = first.getLower();
 		final IntervalValue firstUpper = first.getUpper();
-
+		
 		final IntervalValue secondLower = second.getLower();
 		final IntervalValue secondUpper = second.getUpper();
-
+		
 		// Lower bound is same, or lower bound of second is not smaller than lower bound of first, but upper bound has
 		// changed: widen upper bound.
 		// @formatter:off
@@ -131,7 +131,7 @@ public class IntervalLiteralWideningOperator<VARDECL>
 				|| (!firstLower.isInfinity() && !secondLower.isInfinity() && firstLower.compareTo(secondLower) <= 0)) {
 			return new IntervalDomainValue(firstLower, widenUpper(firstUpper, secondUpper));
 		}
-
+		
 		// Upper bound is same, or upper bound of second is not larger than upper bound of first, but lower bound has
 		// changed: widen lower bound.
 		// @formatter:off
@@ -143,17 +143,17 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		if (firstUpper.isInfinity() || (!firstUpper.isInfinity() && firstUpper.compareTo(secondUpper) >= 0)) {
 			return new IntervalDomainValue(widenLower(firstLower, secondLower), firstUpper);
 		}
-
+		
 		// If all else fails, widen both ends.
 		return new IntervalDomainValue(widenLower(firstLower, secondLower), widenUpper(firstUpper, secondUpper));
 	}
-
+	
 	private IntervalValue widenLower(final IntervalValue firstLower, final IntervalValue secondLower) {
 		if (firstLower.isInfinity() || secondLower.isInfinity()) {
 			return new IntervalValue();
 		}
 		BigDecimal working;
-
+		
 		final int compResult = firstLower.compareTo(secondLower);
 		if (compResult < 0) {
 			working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
@@ -162,7 +162,7 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		} else {
 			working = firstLower.getValue();
 		}
-
+		
 		if (working == null) {
 			return new IntervalValue();
 		}
@@ -171,14 +171,14 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		}
 		return new IntervalValue(working);
 	}
-
+	
 	private IntervalValue widenUpper(final IntervalValue firstUpper, final IntervalValue secondUpper) {
 		if (firstUpper.isInfinity() || secondUpper.isInfinity()) {
 			return new IntervalValue();
 		}
-
+		
 		BigDecimal working;
-
+		
 		// Widen the upper bound.
 		final int compResult = firstUpper.compareTo(secondUpper);
 		if (compResult > 0) {
@@ -188,7 +188,7 @@ public class IntervalLiteralWideningOperator<VARDECL>
 		} else {
 			working = firstUpper.getValue();
 		}
-
+		
 		if (working == null) {
 			return new IntervalValue();
 		}

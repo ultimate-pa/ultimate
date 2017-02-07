@@ -51,7 +51,7 @@ public class IntervalDomainState<VARDECL>
 	 * @param logger
 	 *            The current logger object in the current context.
 	 */
-	protected IntervalDomainState(final ILogger logger, final Class<VARDECL> variableDeclarationType) {
+	public IntervalDomainState(final ILogger logger, final Class<VARDECL> variableDeclarationType) {
 		super(logger, variableDeclarationType);
 	}
 	
@@ -63,7 +63,7 @@ public class IntervalDomainState<VARDECL>
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
 	 */
-	protected IntervalDomainState(final ILogger logger, final boolean isBottom,
+	public IntervalDomainState(final ILogger logger, final boolean isBottom,
 			final Class<VARDECL> variableDeclarationType) {
 		super(logger, isBottom, variableDeclarationType);
 	}
@@ -83,7 +83,7 @@ public class IntervalDomainState<VARDECL>
 	 * @param variableDeclarationType
 	 *            The type of variables stored by this state.
 	 */
-	protected IntervalDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
+	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
 			final Map<VARDECL, IntervalDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
 			final Class<VARDECL> variableDeclarationType) {
 		super(logger, variablesMap, valuesMap, booleanValuesMap, variableDeclarationType);

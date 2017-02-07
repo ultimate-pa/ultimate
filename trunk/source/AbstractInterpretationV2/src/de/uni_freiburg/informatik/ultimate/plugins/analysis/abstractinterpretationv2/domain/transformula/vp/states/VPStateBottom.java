@@ -32,7 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 
 /**
@@ -42,21 +42,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends VPState<ACTION> {
-
-	VPStateBottom(final VPDomain<ACTION> domain, final Set<IProgramVar> vars) {
+	
+	VPStateBottom(final VPDomain<ACTION> domain, final Set<IProgramVarOrConst> vars) {
 		super(domain, vars);
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		return true;
 	}
-
+	
 	@Override
 	public String toLogString() {
 		return "VPStateBottom, Vars: " + getVariables();
 	}
-
+	
 	@Override
 	public boolean isTop() {
 		return false;

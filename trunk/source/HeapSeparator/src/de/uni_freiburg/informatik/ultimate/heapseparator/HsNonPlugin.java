@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
@@ -58,36 +57,36 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class HsNonPlugin {
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	private final ILogger mLogger;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mManagedScript;
-
+	
 	public HsNonPlugin(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ILogger logger) {
-
+		
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
 	}
-
+	
 	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg) {
 		/*
 		 * obtain partitioning from equality domain abstract interpretation run
 		 */
-
+		
 		// TODO taken from CodeCheck, what timer is suitable here?
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVar, ?> abstractInterpretationResult =
+		final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> abstractInterpretationResult =
 				AbstractInterpreter.runFutureEqualityDomain(oldBoogieIcfg, timer, mServices, false, mLogger);
-
+		
 		final VPDomain<IcfgEdge> vpDomain = (VPDomain<IcfgEdge>) abstractInterpretationResult.getUsedDomain();
-
+		
 		printAIResult(abstractInterpretationResult);
-
+		
 		/*
 		 * process AI result - bring result into partition-form (if it is not yet) - do sanity preprocessing: if, at any
 		 * point in the program, two arrays are assigned to each other, then their partitionings must be made compatible
@@ -98,36 +97,36 @@ public class HsNonPlugin {
 			final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 			final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 			od.setWalker(walker);
-
+			
 			heapSepPreanalysis = new HeapSepPreAnalysisVisitor(mLogger, mManagedScript, vpDomain);
 			walker.addObserver(heapSepPreanalysis);
-
+			
 			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 		}
-
+		
 		final NewArrayIdProvider newArrayIdProvider =
 				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
-
+		
 		mLogger.info("built NewArrayIdProvider: " + newArrayIdProvider);
-
+		
 		/*
 		 * do the transformation itself..
 		 */
-
+		
 		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
-
+		
 		final HeapSepRcfgVisitor hsv =
 				new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mCsToolkit.getManagedScript(), vpDomain);
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
-
+		
 		return oldBoogieIcfg;
 	}
-
+	
 	private void printAIResult(
-			final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVar, ?> abstractInterpretationResult) {
+			final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> abstractInterpretationResult) {
 		mLogger.debug("equality domain result");
 		for (final Entry<?, Set<VPState<IcfgEdge>>> en : abstractInterpretationResult.getLoc2States().entrySet()) {
 			mLogger.debug(en.getKey());
@@ -137,7 +136,7 @@ public class HsNonPlugin {
 			}
 		}
 	}
-
+	
 	/**
 	 *
 	 * @param vpDomainResult
@@ -145,10 +144,10 @@ public class HsNonPlugin {
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
 	private NewArrayIdProvider processAbstractInterpretationResult(
-			final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVar, ?> vpDomainResult,
+			final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, ?> vpDomainResult,
 			final HeapSepPreAnalysisVisitor hspav) {
 		final VPDomain<IcfgEdge> vpDomain = (VPDomain<IcfgEdge>) vpDomainResult.getUsedDomain();
-
+		
 		/*
 		 * compute which arrays are equated somewhere in the program and thus need the same partitioning
 		 */
@@ -166,9 +165,9 @@ public class HsNonPlugin {
 			arrayGroupingUf.union(pair.getFirst(), pair.getSecond());
 		}
 		arrayGroupingUf.getAllEquivalenceClasses();
-
+		
 		final HashRelation<Set<IProgramVarOrConst>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
-
+		
 		for (final Set<IProgramVarOrConst> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
 			for (final IProgramVarOrConst array : ec) {
 				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
@@ -176,7 +175,7 @@ public class HsNonPlugin {
 				}
 			}
 		}
-
+		
 		/*
 		 * Compute the mapping array to VPState: The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at
 		 * which locations. For each array take only the VPStates intro account that belong to a location directly
@@ -192,7 +191,7 @@ public class HsNonPlugin {
 				}
 				statesForCurrentEc.addAll(statesAtLoc);
 			}
-
+			
 			VPState<IcfgEdge> disjoinedState;
 			if (statesForCurrentEc.isEmpty()) {
 				disjoinedState = vpDomain.getVpStateFactory().getTopState(Collections.emptySet());
@@ -201,7 +200,7 @@ public class HsNonPlugin {
 			}
 			arrayGroupToVPState.put(ec, disjoinedState);
 		}
-
+		
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
@@ -211,7 +210,7 @@ public class HsNonPlugin {
 		for (final Entry<Set<IProgramVarOrConst>, VPState<IcfgEdge>> en : arrayGroupToVPState.entrySet()) {
 			final Set<IProgramVarOrConst> arrayGroup = en.getKey();
 			final VPState<IcfgEdge> state = en.getValue();
-
+			
 			final UnionFind<EqNode> uf = new UnionFind<>();
 			for (final EqNode accessingNode : vpPreAnalysis.getAccessingIndicesForArrays(arrayGroup)) {
 				uf.findAndConstructEquivalenceClassIfNeeded(accessingNode);
@@ -229,7 +228,7 @@ public class HsNonPlugin {
 				newArrayIdProvider.registerEquivalenceClass(arrayGroup, ec);
 			}
 		}
-
+		
 		return newArrayIdProvider;
 	}
 }

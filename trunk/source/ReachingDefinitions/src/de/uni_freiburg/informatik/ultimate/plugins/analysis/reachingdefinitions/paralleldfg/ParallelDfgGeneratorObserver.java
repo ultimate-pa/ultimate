@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -25,10 +26,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class ParallelDfgGeneratorObserver extends BaseObserver {
-
+	
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
-	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> mDataflowAnalysisResult;
+	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> mDataflowAnalysisResult;
 	private Integer mEdgeCount;
 	private Integer mNodeCount;
 	private Integer mCFGEdgeCount;
@@ -52,7 +53,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-
+		
 		// rootNode is the dummy note with edges leading to every procedure entry point
 		@SuppressWarnings("unchecked")
 		final IIcfg<IcfgLocation> rootNode = (IIcfg<IcfgLocation>) root;
@@ -112,7 +113,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return false;
 	}
 
-	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
+	private IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
 			obtainDataflowAnalysisResult(final IIcfg<?> r) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFuture(r, timer, mServices, false, mLogger);

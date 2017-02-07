@@ -34,7 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
@@ -53,61 +53,60 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 	private final Set<VPTfNodeIdentifier> mAllNodeIds;
-
-
-	public VPTfState(TransFormula tf,
-			VPTfStateBuilder builder,
-			Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
-			Set<VPTfNodeIdentifier> allNodeIds,
-			HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
-			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, 
-			boolean isTop, 
-			Set<IProgramVar> vars) {
+	
+	public VPTfState(final TransFormula tf, final VPTfStateBuilder builder,
+			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
+			final Set<VPTfNodeIdentifier> allNodeIds,
+			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
+			final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, final boolean isTop,
+			final Set<IProgramVarOrConst> vars) {
 		super(disEqs, isTop, vars);
 		mTransFormula = tf;
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy(); // TODO is copy needed here?
-		
+
 		assert isTopConsistent();
 	}
-
+	
+	@Override
 	public boolean isBottom() {
 		return false;
 	}
-
+	
 	@Override
-	public EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getEqGraphNode(VPTfNodeIdentifier nodeIdentifier) {
+	public EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>
+			getEqGraphNode(final VPTfNodeIdentifier nodeIdentifier) {
 		return mNodeIdToEqGraphNode.get(nodeIdentifier);
 	}
-
+	
 	@Override
 	public Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getAllEqGraphNodes() {
 		return new HashSet<>(mNodeIdToEqGraphNode.values());
 	}
-
+	
 	@Override
-	public VPTfNodeIdentifier find(VPTfNodeIdentifier id) {
+	public VPTfNodeIdentifier find(final VPTfNodeIdentifier id) {
 		return mNodeIdToEqGraphNode.get(id).find().nodeIdentifier;
 	}
-
-	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(VPTfArrayIdentifier array) {
+	
+	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(final VPTfArrayIdentifier array) {
 		return mArrayIdToFunctionNodes.getImage(array);
 	}
-
+	
 	public TransFormula getTransFormula() {
 		return mTransFormula;
 	}
-	
+
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		sb.append("VPTfState\n");
-		sb.append("vars: " + mVars.toString() +"\n");
-		//sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
+		sb.append("vars: " + mVars.toString() + "\n");
+		// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
 		sb.append("Graph:\n");
-		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
+		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
 			if (egn.getRepresentative() != egn) {
 				sb.append(egn.toString() + "\n");
 			}
@@ -115,8 +114,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		sb.append("DisEqualities:" + getDisEqualities() + "\n");
 		return sb.toString();
 	}
-
-	public VPTfArrayIdentifier getArrayIdentifier(Term newArray) {
+	
+	public VPTfArrayIdentifier getArrayIdentifier(final Term newArray) {
 		assert mBuilder.getTransFormula() == mTransFormula;
 		return mBuilder.getOrConstructArrayIdentifier(newArray);
 	}
