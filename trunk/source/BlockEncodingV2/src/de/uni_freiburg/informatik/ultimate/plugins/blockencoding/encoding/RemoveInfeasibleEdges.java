@@ -34,29 +34,28 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
-	
+
 	public RemoveInfeasibleEdges(final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(services, backtranslator);
 	}
-	
+
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
-		
+
 		edges.addAll(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream())
 				.collect(Collectors.toSet()));
-		
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
@@ -64,25 +63,22 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 			}
 			closed.add(current);
 			edges.addAll(current.getTarget().getOutgoingEdges());
-			
-			if (current instanceof CodeBlock) {
-				checkCodeblock((CodeBlock) current);
-			}
+			checkEdge(current);
 		}
-		
+
 		removeDisconnectedLocations(icfg);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
 				+ " locations because of local infeasibility");
 		return icfg;
 	}
-	
-	private void checkCodeblock(final CodeBlock cb) {
-		if (cb instanceof Call || cb instanceof Return) {
+
+	private void checkEdge(final IcfgEdge cb) {
+		if (cb instanceof IIcfgCallTransition<?> || cb instanceof IIcfgReturnTransition<?, ?>) {
 			return;
 		}
-		
+
 		final Infeasibility result = cb.getTransformula().isInfeasible();
-		
+
 		switch (result) {
 		case INFEASIBLE:
 			mLogger.debug("Removing " + result + ": " + cb);
@@ -91,17 +87,16 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 			mRemovedEdges++;
 			break;
 		case NOT_DETERMINED:
-			break;
 		case UNPROVEABLE:
 			break;
 		default:
 			throw new IllegalArgumentException();
 		}
 	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}
-	
+
 }

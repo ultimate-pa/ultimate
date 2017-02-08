@@ -28,28 +28,36 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ActionUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  *
@@ -57,121 +65,97 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
  *
  */
 public class IcfgEdgeBuilder {
-	
-	private final TransFormulaAdder mTransForumlaAdder;
+
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final CodeBlockFactory mCbf;
-	
-	public IcfgEdgeBuilder(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
+	private final ManagedScript mManagedScript;
+
+	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+
+	public IcfgEdgeBuilder(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		mTransForumlaAdder = new TransFormulaAdder(icfg.getBoogie2SMT(), services);
-		mCbf = icfg.getCodeBlockFactory();
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
+		mCallCache = new HashMap<>();
 	}
-	
-	private void addTransFormula(final CodeBlock ss) {
-		addTransFormula(ss, ss.getPrecedingProcedure());
+
+	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final List<IcfgEdge> edges) {
+		return constructSequentialComposition(source, target, edges, false, false);
 	}
-	
-	private void addTransFormula(final CodeBlock cb, final String procId) {
-		mTransForumlaAdder.addTransitionFormulas(cb, procId, mXnfConversionTechnique, mSimplificationTechnique);
-	}
-	
-	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final List<CodeBlock> codeblocks) {
+
+	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final IcfgEdge first, final IcfgEdge second) {
+		final List<IcfgEdge> codeblocks = Arrays.asList(new IcfgEdge[] { first, second });
 		return constructSequentialComposition(source, target, codeblocks, false, false);
 	}
-	
-	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final CodeBlock first, final CodeBlock second) {
-		final List<CodeBlock> codeblocks = Arrays.asList(new CodeBlock[] { first, second });
-		return constructSequentialComposition(source, target, codeblocks, false, false);
-	}
-	
-	public SequentialComposition constructSimplifiedSequentialComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final CodeBlock block) {
+
+	public IcfgEdge constructSimplifiedSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final IcfgEdge block) {
 		return constructSequentialComposition(source, target, Collections.singletonList(block), true, true);
 	}
-	
-	private SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final List<CodeBlock> codeblocks, final boolean simplify,
-			final boolean elimQuants) {
-		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, simplify, elimQuants,
-				codeblocks, mXnfConversionTechnique, mSimplificationTechnique);
-		assert sc.getTransformula() != null : "Transformula was not added although it should have been";
-		assert sc.getTransformula() != null;
-		assert sc.getTarget() != null;
-		assert sc.getSource() != null;
-		return sc;
-	}
-	
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final List<Statement> statements) {
-		final StatementSequence ss = mCbf.constructStatementSequence(source, target, statements, Origin.IMPLEMENTATION);
-		addTransFormula(ss);
-		assert ss.getTransformula() != null : "Transformula was not added although it should have been";
-		assert ss.getTransformula() != null;
-		return ss;
-	}
-	
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final Statement stmt) {
-		return constructStatementSequence(source, target, Collections.singletonList(stmt));
-	}
-	
-	public ParallelComposition constructParallelComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final List<CodeBlock> edges) {
-		return mCbf.constructParallelComposition(source, target, edges, mXnfConversionTechnique,
-				mSimplificationTechnique);
-	}
-	
-	public IcfgEdge constructCopy(final IcfgLocation source, final IcfgLocation target, final IcfgEdge oldEdge) {
-		IcfgEdge rtr;
-		if (oldEdge instanceof CodeBlock) {
-			rtr = constructCopy((BoogieIcfgLocation) source, (BoogieIcfgLocation) target, (CodeBlock) oldEdge);
-		} else {
-			throw new UnsupportedOperationException("Copy of " + oldEdge.getClass().getSimpleName() + " unsupported");
-		}
-		ModelUtils.copyAnnotations(oldEdge, rtr);
+
+	private IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final List<IcfgEdge> transitions, final boolean simplify, final boolean elimQuants) {
+		// TODO: this is also called for interprocedural sequential compositions; check that this is ok
+		final List<UnmodifiableTransFormula> transFormulas =
+				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
+				simplify, elimQuants, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
+		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
 	}
-	
-	private CodeBlock constructCopy(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final CodeBlock oldEdge) {
-		final CodeBlock newEdge;
-		if (oldEdge instanceof Call) {
-			newEdge = mCbf.copyCodeBlock(oldEdge, source, target);
-		} else if (oldEdge instanceof Return) {
-			newEdge = mCbf.copyCodeBlock(oldEdge, source, target);
-		} else if (oldEdge instanceof SequentialComposition) {
-			final SequentialComposition seqComp = (SequentialComposition) oldEdge;
-			final List<CodeBlock> duplicatedCodeblocks = seqComp.getCodeBlocks().stream()
-					.map(a -> constructCopy(null, null, a)).collect(Collectors.toList());
-			newEdge = mCbf.constructSequentialComposition(source, target, false, false, duplicatedCodeblocks,
-					mXnfConversionTechnique, mSimplificationTechnique);
-		} else if (oldEdge instanceof ParallelComposition) {
-			final ParallelComposition parComp = (ParallelComposition) oldEdge;
-			final List<CodeBlock> duplicatedCodeblocks = parComp.getCodeBlocks().stream()
-					.map(a -> constructCopy(null, null, a)).collect(Collectors.toList());
-			newEdge = mCbf.constructParallelComposition(source, target, duplicatedCodeblocks, mXnfConversionTechnique,
-					mSimplificationTechnique);
-		} else if (oldEdge instanceof StatementSequence) {
-			final StatementSequence ss = (StatementSequence) oldEdge;
-			newEdge = mCbf.constructStatementSequence(source, target, ss.getStatements(), ss.getOrigin());
-			addTransFormula(newEdge, oldEdge.getPrecedingProcedure());
-		} else if (oldEdge instanceof Summary) {
-			final Summary sum = (Summary) oldEdge;
-			newEdge = mCbf.constructSummary(source, target, sum.getCallStatement(),
-					sum.calledProcedureHasImplementation());
-			addTransFormula(newEdge, oldEdge.getPrecedingProcedure());
+
+	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
+			final List<IcfgEdge> edges) {
+
+		final List<UnmodifiableTransFormula> transFormulas =
+				edges.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+		final UnmodifiableTransFormula[] tfArray =
+				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
+		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
+		// TODO: How do you ensure that the two return transformulas are kept together in a parallel composition?
+		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
+				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
+		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, parallelTf);
+		ModelUtils.mergeAnnotations(edges, rtr);
+		return rtr;
+	}
+
+	@SuppressWarnings("unchecked")
+	public IcfgEdge constructCopy(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgTransition<?> oldEdge) {
+		// contains transformula copy
+		final IAction newAction = ActionUtils.constructCopy(mManagedScript, oldEdge);
+
+		final IcfgEdge rtr;
+		if (oldEdge instanceof IIcfgInternalTransition<?>) {
+			rtr = new IcfgInternalTransition(source, target, null, newAction.getTransformula());
+		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
+			final ICallAction cAction = (ICallAction) newAction;
+			rtr = new IcfgCallTransition(source, target, null, cAction.getLocalVarsAssignment());
+			mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
+		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgCallTransition<IcfgLocation> correspondingCall = mCallCache.get(oldEdge);
+			if (correspondingCall == null) {
+				throw new AssertionError(
+						"You cannot copy a return transition without previously copying the corresponding call transition");
+			}
+			final IReturnAction rAction = (IReturnAction) newAction;
+			rtr = new IcfgReturnTransition(source, target, correspondingCall, null, rAction.getAssignmentOfReturn(),
+					rAction.getLocalVarsAssignmentOfCall());
 		} else {
-			throw new UnsupportedOperationException("Copy of " + oldEdge.getClass().getSimpleName() + " unsupported");
+			throw new UnsupportedOperationException("Unknown IcfgEdge subtype");
 		}
-		assert newEdge.getTransformula() != null : "copy failed: no transformula for "
-				+ newEdge.getClass().getSimpleName();
-		return newEdge;
+
+		ModelUtils.copyAnnotations(oldEdge, rtr);
+		return rtr;
 	}
 }

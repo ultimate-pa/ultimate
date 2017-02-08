@@ -302,7 +302,7 @@ public class TransFormulaBuilder {
 			tfb.addInVar(bv, freshTv);
 			tfb.addOutVar(bv, freshTv);
 		}
-		final Term formula = (new Substitution(script.getScript(), substitutionMapping)).transform(pred.getFormula());
+		final Term formula = new Substitution(script.getScript(), substitutionMapping).transform(pred.getFormula());
 		final Infeasibility infeasibility;
 		if (SmtUtils.isFalse(pred.getFormula())) {
 			infeasibility = Infeasibility.INFEASIBLE;
