@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
  * Term walker for non-relational abstract domains.
@@ -44,57 +45,82 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class NonrelationalTermProcessor extends NonRecursive {
+public class NonrelationalTermProcessor<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> extends NonRecursive {
 	
 	private final ILogger mLogger;
-	
+
 	protected NonrelationalTermProcessor(final ILogger logger) {
 		mLogger = logger;
 	}
-
+	
 	protected void process(final Term term) {
+		mLogger.debug("ANALYZING TERM: " + term);
 		run(new NonrelationalTermWalker(term, mLogger));
 	}
-	
-	private static class NonrelationalTermWalker extends TermWalker {
+
+	private static final class NonrelationalTermWalker extends TermWalker {
 		
 		private final ILogger mLogger;
-
+		
 		public NonrelationalTermWalker(final Term term, final ILogger logger) {
 			super(term);
 			mLogger = logger;
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
-			throw new UnsupportedOperationException();
+			mLogger.debug("Constant Term: " + term);
+			mLogger.warn("Not implemented!");
+			// throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
-			throw new UnsupportedOperationException();
+			mLogger.debug("Annotated Term: " + term);
+			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			mLogger.debug("Application Term: " + term);
+			
+			final String fName = term.getFunction().getName();
+
+			if (fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not")
+					|| fName.equals(">=")) {
+				// Logic
+
+			} else if (fName.equals("true") || fName.equals("false")) {
+				// Boolean literals
+
+			} else if (fName.equals("=")) {
+				// Equality
+
+			} else {
+				throw new UnsupportedOperationException("Function name " + fName + " not implemented.");
+			}
+			
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new NonrelationalTermWalker(t, mLogger));
 			}
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
-			throw new UnsupportedOperationException();
+			mLogger.debug("Let Term: " + term);
+			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
-			throw new UnsupportedOperationException();
+			mLogger.debug("Quantified Formula: " + term);
+			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
-			throw new UnsupportedOperationException();
+			mLogger.debug("Term Variable: " + term);
+			mLogger.warn("Not implemented!");
 		}
 	}
 }

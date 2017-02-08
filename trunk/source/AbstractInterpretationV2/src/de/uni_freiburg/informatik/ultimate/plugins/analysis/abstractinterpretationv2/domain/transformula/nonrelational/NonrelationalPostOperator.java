@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -51,24 +51,24 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		implements IAbstractPostOperator<STATE, ACTION, IProgramVarOrConst> {
 	
 	private final ILogger mLogger;
-	
+
 	protected NonrelationalPostOperator(final ILogger logger) {
 		mLogger = logger;
 	}
-	
+
 	@Override
 	public List<STATE> apply(final STATE oldstate, final ACTION transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "Trying to compute post for a bottom state.";
 		assert transition != null;
-		
+
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
 		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
 			throw new UnsupportedOperationException("Summary for procedure without implementation");
 		}
-		
+
 		final UnmodifiableTransFormula transformula;
-		
+
 		if (transition instanceof CodeBlock) {
 			transformula = ((CodeBlock) transition).getTransformula();
 		} else if (transition instanceof IcfgEdge) {
@@ -77,29 +77,29 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			throw new UnsupportedOperationException(
 					"Unknown instance of transition: " + transition.getClass().getSimpleName());
 		}
-
-		final Term term = transformula.getFormula();
 		
+		final Term term = transformula.getFormula();
+
 		final NonrelationalTermProcessor termWalker = new NonrelationalTermProcessor(mLogger);
 		termWalker.process(term);
-		
+
 		final List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
-		
+
 		if (true) {
 			throw new UnsupportedOperationException("Not implemented");
 		}
-		
+
 		// TODO
-		
+
 		return currentStates;
 	}
-	
+
 	@Override
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final ACTION transition) {
 		assert transition instanceof Call || transition instanceof Return
 				|| transition instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
-
+		
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
@@ -114,25 +114,25 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 					"Nonrelational domains do not support context switches other than Call and Return (yet)");
 		}
 	}
-	
+
 	private List<STATE> handleCallTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final Call call) {
 		final List<STATE> returnList = new ArrayList<>();
 		final CallStatement callStatement = call.getCallStatement();
 		final Expression[] args = callStatement.getArguments();
-
+		
 		// If there are no arguments, we don't need to rewrite states.
 		if (args.length == 0) {
 			returnList.add(stateAfterLeaving);
 			return returnList;
 		}
-
+		
 		throw new UnsupportedAddressTypeException();
 	}
-
+	
 	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final CallStatement callStatement) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 }

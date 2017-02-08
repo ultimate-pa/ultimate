@@ -13,4 +13,7 @@ procedure ULTIMATE.start()
 
 	assert true;
 	assert x == 5 && y == 4;
+
+	x := x * y;
+	assert x == 20;
 }
