@@ -347,38 +347,57 @@ public class HybridIcfgGenerator {
 			/*
 			 * Forbidden check
 			 */
-			if (loc.isForbidden()) {
-				if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
-					final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
-					String finalInfix = "";
-					final boolean locBelongsToGroup = false;
+			if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
+				String finalInfix = "";
+				final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
+				if (loc.isForbidden()) {
 					// For each forbidden group, check if the location belongs to it, if so, add the infix.
 					for (final SpaceExForbiddenGroup group : forbiddengroup) {
 						// list of the forbidden LocationNames BEFORE any merging.
-						final Collection<List<String>> forbLoc = group.getLocations().values();
-						// infix
-						final String forbInfix = group.getVariableInfix();
-						// forbidden -> forbiddenLocs map
-						final Map<String, List<String>> forbToLocs =
-								mSpaceExPreferenceManager.getForbiddenToForbiddenlocs();
-						// for each forbidden loc of the group, go through the list of each automaton
-						for (final List<String> list : forbLoc) {
-							// for each listelement check if the HA location is part of the forbidden->forbiddenlocs
-							// map, if yes add the infix to the final infix.
-							for (final String f : list) {
-								if (forbToLocs.get(f).contains(loc.getName())) {
-									if (!finalInfix.isEmpty()) {
-										finalInfix += "&";
+						if (group.hasLocations()) {
+							final Collection<List<String>> forbLoc = group.getLocations().values();
+							// infix
+							final String forbInfix = group.getVariableInfix();
+							// forbidden -> forbiddenLocs map
+							final Map<String, List<String>> forbToLocs =
+									mSpaceExPreferenceManager.getForbiddenToForbiddenlocs();
+							// for each forbidden loc of the group, go through the list of each automaton
+							for (final List<String> list : forbLoc) {
+								// for each listelement check if the HA location is part of the forbidden->forbiddenlocs
+								// map, if yes add the infix to the final infix.
+								for (final String f : list) {
+									if (forbToLocs.get(f).contains(loc.getName())) {
+										if (!finalInfix.isEmpty()) {
+											finalInfix += "&";
+										}
+										finalInfix += forbInfix;
 									}
-									finalInfix += forbInfix;
 								}
 							}
+						} else {
+							if (!finalInfix.isEmpty()) {
+								finalInfix += "&";
+							}
+							finalInfix += group.getVariableInfix();
 						}
 					}
-					final String forbiddenInfix = finalInfix;
+					
+				} else {
+					// if the location is not forbidden, get the groups with no locations, and set the infix according
+					// to them.
+					for (final SpaceExForbiddenGroup group : forbiddengroup) {
+						if (!group.hasLocations()) {
+							if (!finalInfix.isEmpty()) {
+								finalInfix += "&";
+							}
+							finalInfix += group.getVariableInfix();
+						}
+					}
+				}
+				if (!finalInfix.isEmpty() || loc.isForbidden()) {
 					// if the current location is forbidden, it shall get a transition from start --> error.
 					// the transformula depends on whether
-					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(forbiddenInfix);
+					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(finalInfix);
 					final IcfgInternalTransition startError =
 							new IcfgInternalTransition(start, mErrorLocation, null, forbiddenTransformula);
 					start.addOutgoing(startError);
