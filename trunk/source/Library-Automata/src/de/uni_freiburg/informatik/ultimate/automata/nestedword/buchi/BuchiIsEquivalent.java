@@ -102,7 +102,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 	
 	/**
-	 * Constructor which performs a sufficient but cheaper equivalence test.
+	 * Constructor which dynamically chooses which test to use in the interest of performance.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -239,11 +239,6 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 	
 	private boolean checkEquivalenceImprecisely() throws AutomataLibraryException {
-		// We first do a semi-test for finite-word language equivalence, which is a sufficient criterion.
-		if (checkFiniteWordEquivalence()) {
-			return true;
-		}
-		
 		// extract some lasso words from the first automaton and check them on the second automaton
 		if (!extractAndCheckLassoWords(mFstOperand, mSndOperand)) {
 			return false;
