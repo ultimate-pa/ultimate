@@ -35,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -274,16 +272,6 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 			throw new AutomataOperationCanceledException(getClass());
 		}
 		return checkEquivalenceImprecisely();
-	}
-	
-	private boolean checkFiniteWordEquivalence() throws AutomataLibraryException {
-		final IsEquivalent<LETTER, STATE> isEquivalent =
-				new IsEquivalent<>(mServices, mStateFactory, mFstOperand, mSndOperand);
-		if (!isEquivalent.getResult()) {
-			mCounterexample = new NestedLassoWord<>(isEquivalent.getCounterexample(), new NestedWord<>());
-			return false;
-		}
-		return true;
 	}
 	
 	private boolean extractAndCheckLassoWords(final INestedWordAutomatonSimple<LETTER, STATE> source,
