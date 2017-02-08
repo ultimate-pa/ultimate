@@ -347,6 +347,8 @@ public class HybridIcfgGenerator {
 			/*
 			 * Forbidden check
 			 */
+			// TODO: could be optimized, but not necessary asap because the size of processed lists is pretty small
+			// usually.
 			if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
 				String finalInfix = "";
 				final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
@@ -354,7 +356,7 @@ public class HybridIcfgGenerator {
 					// For each forbidden group, check if the location belongs to it, if so, add the infix.
 					for (final SpaceExForbiddenGroup group : forbiddengroup) {
 						// list of the forbidden LocationNames BEFORE any merging.
-						if (group.hasLocations()) {
+						if (group.hasLocations() && group.hasVariables()) {
 							final Collection<List<String>> forbLoc = group.getLocations().values();
 							// infix
 							final String forbInfix = group.getVariableInfix();
@@ -374,7 +376,7 @@ public class HybridIcfgGenerator {
 									}
 								}
 							}
-						} else {
+						} else if (group.hasVariables()) {
 							if (!finalInfix.isEmpty()) {
 								finalInfix += "&";
 							}
