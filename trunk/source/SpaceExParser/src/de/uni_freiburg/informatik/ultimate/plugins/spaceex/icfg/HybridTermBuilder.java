@@ -109,8 +109,6 @@ public class HybridTermBuilder {
 					term = tmpTerm;
 					stack.push(tmpTerm.toString());
 					mStringTerm.put(tmpTerm.toString(), term);
-				} else {
-					throw new IllegalStateException("this exception should not happen, ever");
 				}
 			} else {
 				stack.push(element);
@@ -167,7 +165,7 @@ public class HybridTermBuilder {
 		if (tv1 == null && tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), mScript.decimal(operand1));
 		} else if (tv1 != null && tv2 == null) {
-			tmpTerm = mScript.term(operator, tv1, mScript.decimal(operand2));
+			tmpTerm = mScript.term(operator, mScript.decimal(operand2), tv1);
 		} else if (tv1 == null) {
 			tmpTerm = mScript.term(operator, tv2, mScript.decimal(operand1));
 		} else {
@@ -206,7 +204,9 @@ public class HybridTermBuilder {
 			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
 				mInVars.put(progvar, invar);
+				mOutVars.put(progvar, outvar);
 				return invar;
 			} else {
 				return null;

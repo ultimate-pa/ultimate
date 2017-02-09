@@ -41,9 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 
 /**
  *
@@ -51,44 +48,43 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Par
  *
  */
 public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
-	
+
 	private int mEdgesRemoved;
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	
+
 	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(services, backtranslator);
 		mEdgesRemoved = 0;
 		mEdgeBuilder = edgeBuilder;
 	}
-	
+
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		mLogger.info("Creating parallel compositions");
-		
+
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
-		
+
 		nodes.addAll(icfg.getInitialNodes());
-		
+
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (!closed.add(current)) {
 				continue;
 			}
-			
+
 			final List<IcfgEdge> outEdges = current.getOutgoingEdges();
-			final Map<IcfgLocation, List<CodeBlock>> map = new HashMap<>();
+			final Map<IcfgLocation, List<IcfgEdge>> map = new HashMap<>();
 			outEdges.stream().forEach(a -> acc(map, a));
-			
-			for (final Entry<IcfgLocation, List<CodeBlock>> partition : map.entrySet()) {
+
+			for (final Entry<IcfgLocation, List<IcfgEdge>> partition : map.entrySet()) {
 				final IcfgLocation target = partition.getKey();
 				nodes.add(target);
-				final List<CodeBlock> edges = partition.getValue();
+				final List<IcfgEdge> edges = partition.getValue();
 				final int edgeSize = edges.size();
 				if (edgeSize > 1) {
-					final ParallelComposition parComp = mEdgeBuilder.constructParallelComposition(
-							(BoogieIcfgLocation) current, (BoogieIcfgLocation) target, edges);
+					final IcfgEdge parComp = mEdgeBuilder.constructParallelComposition(current, target, edges);
 					edges.stream().forEach(ParallelComposer::disconnect);
 					edges.stream().forEach(a -> rememberEdgeMapping(parComp, a));
 					mEdgesRemoved += edgeSize;
@@ -97,26 +93,26 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 		}
 		return icfg;
 	}
-	
-	private static Map<IcfgLocation, List<CodeBlock>> acc(final Map<IcfgLocation, List<CodeBlock>> map,
+
+	private static Map<IcfgLocation, List<IcfgEdge>> acc(final Map<IcfgLocation, List<IcfgEdge>> map,
 			final IcfgEdge e) {
-		final BoogieIcfgLocation target = (BoogieIcfgLocation) e.getTarget();
-		final List<CodeBlock> set = map.get(target);
+		final IcfgLocation target = e.getTarget();
+		final List<IcfgEdge> set = map.get(target);
 		if (set == null) {
-			final List<CodeBlock> newSet = new ArrayList<>();
-			newSet.add((CodeBlock) e);
+			final List<IcfgEdge> newSet = new ArrayList<>();
+			newSet.add(e);
 			map.put(target, newSet);
 		} else {
-			set.add((CodeBlock) e);
+			set.add(e);
 		}
 		return map;
 	}
-	
+
 	private static void disconnect(final IcfgEdge edge) {
 		edge.disconnectSource();
 		edge.disconnectTarget();
 	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mEdgesRemoved > 0;

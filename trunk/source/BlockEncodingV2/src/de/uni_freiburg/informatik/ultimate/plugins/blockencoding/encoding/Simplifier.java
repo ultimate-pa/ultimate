@@ -33,14 +33,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  *
@@ -48,42 +45,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  *
  */
 public final class Simplifier extends BaseBlockEncoder<IcfgLocation> {
-	
+
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	
+
 	public Simplifier(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}
-	
+
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		mLogger.info("Simplifying codeblocks");
-		
+
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
 		icfg.getProcedureEntryNodes().values().stream().forEach(a -> edges.addAll(a.getOutgoingEdges()));
-		
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (!closed.add(current)) {
 				continue;
 			}
-			if (current instanceof Call || current instanceof Return) {
+			if (current instanceof IIcfgCallTransition<?> || current instanceof IIcfgReturnTransition<?, ?>) {
 				continue;
 			}
 			edges.addAll(current.getTarget().getOutgoingEdges());
-			final SequentialComposition seqComp =
-					mEdgeBuilder.constructSimplifiedSequentialComposition((BoogieIcfgLocation) current.getSource(),
-							(BoogieIcfgLocation) current.getTarget(), (CodeBlock) current);
+			final IcfgEdge seqComp = mEdgeBuilder.constructSimplifiedSequentialComposition(current.getSource(),
+					current.getTarget(), current);
 			rememberEdgeMapping(seqComp, current);
 			current.disconnectSource();
 			current.disconnectTarget();
 		}
 		return icfg;
 	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
 		return false;

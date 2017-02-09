@@ -1,10 +1,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page trimDirectiveWhitespaces="true" %>
 <%@ page import="java.util.*" %>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain" %>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks" %>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Example" %>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.toolchains.*" %>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain" %>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks" %>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Example" %>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.toolchains.*" %>
 <%
     Tasks tasks = new Tasks();
     Map<String, ArrayList<WebToolchain>> toolchains = Tasks.getActiveToolchains();

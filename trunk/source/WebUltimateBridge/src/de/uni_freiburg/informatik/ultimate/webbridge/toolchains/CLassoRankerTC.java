@@ -43,25 +43,25 @@ public class CLassoRankerTC extends WebToolchain {
 	
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
 	protected List<Tool> defineTools() {
 		final List<Tool> tools = new ArrayList<Tool>();
 		
-		tools.add(new Tool(PrefStrings.s_syntaxchecker));
-		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
+		tools.add(new Tool(PrefStrings.SYNTAXCHECKER));
+		tools.add(new Tool(PrefStrings.CACSL2BOOGIETRANSLATOR));
 		tools.addAll(BoogieLassoRankerTC.boogieLassoRankerToolchain());
 
 		return tools;

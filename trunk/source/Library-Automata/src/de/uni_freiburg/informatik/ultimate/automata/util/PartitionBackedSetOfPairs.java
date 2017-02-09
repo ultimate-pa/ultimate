@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <E>
  *            element type
  */
+// false-positive warnings
+@SuppressWarnings({ "findbugs:UUF_UNUSED_FIELD", "findbugs:UWF_UNWRITTEN_FIELD" })
 public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
 	protected final Collection<Set<E>> mPartition;
 	
@@ -81,8 +83,6 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	// false-positive warnings
-	@SuppressWarnings({ "findbugs:UUF_UNUSED_FIELD", "findbugs:UWF_UNWRITTEN_FIELD" })
 	protected final class IteratorFromPartition implements Iterator<Pair<E, E>> {
 		private final Iterator<Set<E>> mBlockIt;
 		private Iterator<E> mElemLhsIt;

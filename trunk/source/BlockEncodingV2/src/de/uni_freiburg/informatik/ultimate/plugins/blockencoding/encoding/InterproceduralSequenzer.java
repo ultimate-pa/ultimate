@@ -33,19 +33,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  *
@@ -53,43 +49,43 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  */
 public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocation> {
-	
+
 	private final IcfgEdgeBuilder mEdgeBuilder;
-	
+
 	public InterproceduralSequenzer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}
-	
+
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
-		
+
 		edges.addAll(icfg.getInitialOutgoingEdges());
-		
+
 		// find sequences of the form l --call--> l' --e--> l'' --return--> l''' and merge them to one sequential
 		// composition
-		
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (!closed.add(current)) {
 				continue;
 			}
 			IcfgLocation target;
-			if (current instanceof Call) {
-				target = createInterproceduralSequenceIfPossible((Call) current);
+			if (current instanceof IIcfgCallTransition<?>) {
+				target = createInterproceduralSequenceIfPossible((IIcfgCallTransition<?>) current);
 			} else {
 				target = current.getTarget();
 			}
-			
+
 			if (target == null) {
 				// can happen if we see an edge that was disconnected during createInterproceduralSequenceIfPossible but
 				// was already in the queue
 				continue;
 			}
-			
+
 			edges.addAll(target.getOutgoingEdges());
 		}
 		if (isGraphStructureChanged()) {
@@ -99,9 +95,9 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 		}
 		return icfg;
 	}
-	
-	private IcfgLocation createInterproceduralSequenceIfPossible(final Call callCb) {
-		final IcfgLocation oldTarget = callCb.getTarget();
+
+	private IcfgLocation createInterproceduralSequenceIfPossible(final IIcfgCallTransition<?> callTransition) {
+		final IcfgLocation oldTarget = callTransition.getTarget();
 		final List<IcfgEdge> outCall = oldTarget.getOutgoingEdges();
 		if (outCall.size() > 1) {
 			// cannot merge
@@ -116,49 +112,63 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 			// TODO: be able to merge
 			return oldTarget;
 		}
-		
-		final Optional<Return> optionalReturn = outIntermediate.stream().filter(a -> a instanceof Return)
-				.map(a -> (Return) a).filter(a -> a.getCorrespondingCall().equals(callCb)).findAny();
+
+		final Optional<IIcfgReturnTransition<?, ?>> optionalReturn = findReturn(callTransition, outIntermediate);
 		if (!optionalReturn.isPresent()) {
 			// cannot merge
 			return oldTarget;
 		}
 		// now we have to remove the summary for this call
-		final List<Summary> summaries = callCb.getSource().getOutgoingEdges().stream().filter(a -> a instanceof Summary)
-				.map(a -> (Summary) a).filter(a -> a.calledProcedureHasImplementation()
-						&& a.getCallStatement().equals(callCb.getCallStatement()))
-				.collect(Collectors.toList());
-		summaries.forEach(this::disconnect);
-		
-		final SequentialComposition ss =
-				createInterproceduralSequentialComposition(callCb, intermediateCb, optionalReturn.get());
-		
-		rememberEdgeMapping(ss, callCb);
+		// TODO: We treated summaries different but in the IIcfg setting we cannot differentiate them
+		// final List<Summary> summaries = callTransition.getSource().getOutgoingEdges().stream().filter(a -> a
+		// instanceof Summary)
+		// .map(a -> (Summary) a).filter(a -> a.calledProcedureHasImplementation()
+		// && a.getCallStatement().equals(callTransition.getCallStatement()))
+		// .collect(Collectors.toList());
+		// summaries.forEach(this::disconnect);
+
+		final IcfgEdge ss =
+				createInterproceduralSequentialComposition(callTransition, intermediateCb, optionalReturn.get());
+
+		rememberEdgeMapping(ss, callTransition);
 		rememberEdgeMapping(ss, intermediateCb);
 		rememberEdgeMapping(ss, optionalReturn.get());
-		
+
 		return ss.getTarget();
 	}
-	
-	private SequentialComposition createInterproceduralSequentialComposition(final Call callCb,
-			final IcfgEdge intermediateCb, final Return returnCb) {
-		final List<CodeBlock> codeblocks = new ArrayList<>(3);
-		codeblocks.add(callCb);
-		codeblocks.add((CodeBlock) intermediateCb);
-		codeblocks.add(returnCb);
-		final SequentialComposition ss = mEdgeBuilder.constructSequentialComposition(
-				(BoogieIcfgLocation) callCb.getSource(), (BoogieIcfgLocation) returnCb.getTarget(), codeblocks);
+
+	private static Optional<IIcfgReturnTransition<?, ?>> findReturn(final IIcfgCallTransition<?> callTransition,
+			final List<IcfgEdge> outIntermediate) {
+		for (final IcfgEdge intermediate : outIntermediate) {
+			if (intermediate instanceof IIcfgReturnTransition<?, ?>) {
+				final IIcfgReturnTransition<?, ?> retTrans = (IIcfgReturnTransition<?, ?>) intermediate;
+				if (retTrans.getCorrespondingCall().equals(callTransition)) {
+					return Optional.of(retTrans);
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	private IcfgEdge createInterproceduralSequentialComposition(final IIcfgCallTransition<?> callCb,
+			final IIcfgTransition<?> intermediateCb, final IIcfgReturnTransition<?, ?> returnCb) {
+		final List<IcfgEdge> codeblocks = new ArrayList<>(3);
+		codeblocks.add((IcfgEdge) callCb);
+		codeblocks.add((IcfgEdge) intermediateCb);
+		codeblocks.add((IcfgEdge) returnCb);
+		final IcfgEdge ss =
+				mEdgeBuilder.constructSequentialComposition(callCb.getSource(), returnCb.getTarget(), codeblocks);
 		codeblocks.stream().forEach(this::disconnect);
 		assert ss.getTarget() != null;
 		return ss;
 	}
-	
-	private void disconnect(final CodeBlock cb) {
+
+	private void disconnect(final IcfgEdge cb) {
 		cb.disconnectSource();
 		cb.disconnectTarget();
 		mRemovedEdges++;
 	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mRemovedEdges > 0;

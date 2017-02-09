@@ -60,6 +60,18 @@ public class AutomataLibraryServices {
 		mProgressAwareTimer = services.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
 	}
 	
+	/**
+	 * @param services
+	 *            Other automata library services instance.
+	 * @param timeoutInMilliseconds
+	 *            timeout in milliseconds
+	 */
+	public AutomataLibraryServices(final AutomataLibraryServices automataLibraryServices,
+			final long timeoutInMilliseconds) {
+		mLoggingService = automataLibraryServices.mLoggingService;
+		mProgressAwareTimer = automataLibraryServices.mProgressAwareTimer.getChildTimer(timeoutInMilliseconds);
+	}
+	
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}

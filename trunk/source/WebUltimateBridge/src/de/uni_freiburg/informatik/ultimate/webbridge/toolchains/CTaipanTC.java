@@ -43,17 +43,17 @@ public class CTaipanTC extends WebToolchain {
 
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
-		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+		return PrefStrings.INTERFACE_LAYOUT_FONTSIZE_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutOrientation() {
-		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+		return PrefStrings.INTERFACE_LAYOUT_ORIENTATION_DEFAULT;
 	}
 
 	@Override
 	protected String defineInterfaceLayoutTransitions() {
-		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+		return PrefStrings.INTERFACE_LAYOUT_TRANSITION_DEFAULT;
 	}
 
 	@Override
@@ -79,8 +79,8 @@ public class CTaipanTC extends WebToolchain {
 	private static List<Tool> cTaipanTools() {
 		final List<Tool> tools = new ArrayList<>();
 
-		tools.add(new Tool(PrefStrings.s_syntaxchecker));
-		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
+		tools.add(new Tool(PrefStrings.SYNTAXCHECKER));
+		tools.add(new Tool(PrefStrings.CACSL2BOOGIETRANSLATOR));
 		tools.addAll(BoogieTaipanTC.boogieTaipanTools());
 
 		return tools;
@@ -88,9 +88,9 @@ public class CTaipanTC extends WebToolchain {
 
 	private static List<Setting> cTaipanAdditionalSettings() {
 		final List<Setting> settings = BoogieTaipanTC.boogieTaipanAdditionalSettings();
-		settings.add(new Setting(PrefStrings.s_CACSL_LABEL_MemoryLeak, SettingType.BOOLEAN,
+		settings.add(new Setting(PrefStrings.CACSL_LABEL_MEMORY_LEAK, SettingType.BOOLEAN,
 		        "Check for memory leak in main procedure", "false", true));
-		settings.add(new Setting(PrefStrings.s_CACSL_LABEL_SignedIntegerOverflow, SettingType.BOOLEAN,
+		settings.add(new Setting(PrefStrings.CACSL_LABEL_SIGNED_INTEGER_OVERFLOW, SettingType.BOOLEAN,
 		        "Check for overflows of signed integers", "false", true));
 
 		return settings;

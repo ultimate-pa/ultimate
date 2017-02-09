@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
@@ -64,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simpli
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
@@ -118,14 +119,14 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Exception {
-		if (root instanceof BoogieIcfgContainer) {
-			processIcfg((BoogieIcfgContainer) root);
+		if (root instanceof IIcfg<?>) {
+			processIcfg((IIcfg<?>) root);
 			return false;
 		}
 		return true;
 	}
 
-	private void processIcfg(final BoogieIcfgContainer node) {
+	private void processIcfg(final IIcfg<?> node) {
 		// measure size of rcfg
 		reportSizeBenchmark("Initial Icfg", node);
 
@@ -137,10 +138,11 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final IcfgEdgeBuilder edgeBuilder =
 				new IcfgEdgeBuilder(node, mServices, mSimplificationTechnique, mXnfConversionTechnique);
-		final List<Supplier<IEncoder<IcfgLocation>>> encoderProviders = getEncoderProviders(ups, edgeBuilder);
+		mIterationResult = createIcfgCopy(edgeBuilder, node);
+		final List<Supplier<IEncoder<IcfgLocation>>> encoderProviders = getEncoderProviders(ups, edgeBuilder, node);
 		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.FXP_UNTIL_FIXPOINT);
 		int i = 1;
-		mIterationResult = createIcfgCopy(edgeBuilder, node);
+
 		while (true) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("==== BE Pass #" + i + "====");
@@ -185,18 +187,18 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
 	}
 
-	private BasicIcfg<IcfgLocation> createIcfgCopy(final IcfgEdgeBuilder edgeBuilder, final BoogieIcfgContainer icfg) {
+	private BasicIcfg<IcfgLocation> createIcfgCopy(final IcfgEdgeBuilder edgeBuilder,
+			final IIcfg<? extends IcfgLocation> icfg) {
 		final BasicIcfg<IcfgLocation> duplicate =
 				new BasicIcfg<>(icfg.getIdentifier() + "_BEv2", icfg.getCfgSmtToolkit(), IcfgLocation.class);
 		ModelUtils.copyAnnotations(icfg, duplicate);
 
 		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
-		final IcfgLocationIterator<BoogieIcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		while (iter.hasNext()) {
-			final BoogieIcfgLocation current = iter.next();
+			final IcfgLocation current = iter.next();
 			final String proc = current.getProcedure();
-			final IcfgLocation currentDuplicate = new BoogieIcfgLocation(current.getDebugIdentifier(), proc,
-					current.isErrorLocation(), current.getBoogieASTNode());
+			final IcfgLocation currentDuplicate = new IcfgLocation(current.getDebugIdentifier(), proc);
 			ModelUtils.copyAnnotations(current, currentDuplicate);
 
 			final boolean isError = icfg.getProcedureErrorNodes().get(proc) != null
@@ -222,7 +224,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	}
 
 	private List<Supplier<IEncoder<IcfgLocation>>> getEncoderProviders(final IPreferenceProvider ups,
-			final IcfgEdgeBuilder edgeBuilder) {
+			final IcfgEdgeBuilder edgeBuilder, final IIcfg<?> icfg) {
 		final List<Supplier<IEncoder<IcfgLocation>>> rtr = new ArrayList<>();
 
 		// note that the order is important
@@ -238,19 +240,21 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final MinimizeStates minimizeStates =
 				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
+		final Predicate<IcfgLocation> funPreserve = a -> hasToBePreserved(icfg, a);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
+
 				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						BlockEncodingObserver::hasToBePreserved));
+						funPreserve));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
 				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						BlockEncodingObserver::hasToBePreserved));
+						funPreserve));
 				break;
 			case MULTI:
 				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(edgeBuilder, mServices, mBacktranslator,
-						BlockEncodingObserver::hasToBePreserved));
+						funPreserve));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -262,7 +266,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
-			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved, mBacktranslator));
+			rtr.add(() -> new RemoveSinkStates(mServices, funPreserve, mBacktranslator));
 		}
 
 		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices, mBacktranslator));
@@ -282,11 +286,21 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
 	}
 
-	private static boolean hasToBePreserved(final IcfgLocation node) {
+	private static boolean hasToBePreserved(final IIcfg<?> icfg, final IcfgLocation node) {
+		if (node == null) {
+			return false;
+		}
 		if (node instanceof BoogieIcfgLocation) {
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
 			return pp.isErrorLocation();
 		}
+
+		final String proc = node.getProcedure();
+		final Set<?> errorNodes = icfg.getProcedureErrorNodes().get(proc);
+		if (!errorNodes.isEmpty()) {
+			return errorNodes.contains(node);
+		}
+
 		return false;
 	}
 

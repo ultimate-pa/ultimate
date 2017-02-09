@@ -39,9 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -52,12 +49,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
-	
+
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funIsAccepting) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting);
 	}
-	
+
 	@Override
 	protected Collection<? extends IcfgLocation> processCandidate(final IIcfg<?> icfg, final IcfgLocation target,
 			final Set<IcfgLocation> closed) {
@@ -66,47 +63,47 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// and the outgoing edges
 		// ej = (q,stj,qj) in EO
 		// and we will try to replace them by |EI| * |EO| edges
-		
+
 		if (isNecessary(target)) {
 			// do not remove necessary nodes
 			return target.getOutgoingNodes();
 		}
-		
+
 		final List<IcfgLocation> incomingNodes = target.getIncomingNodes();
 		final List<IcfgLocation> outgoingNodes = target.getOutgoingNodes();
-		
+
 		if (incomingNodes.isEmpty() || outgoingNodes.isEmpty()) {
 			// do not remove nodes which are disconnected or sinks (not necessary)
 			return target.getOutgoingNodes();
 		}
-		
+
 		if (!areCombinableEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// do not remove anything if blowup is too large or call/return combination prohibits the removal
 			return target.getOutgoingNodes();
 		}
-		
+
 		// we will not change the acceptance conditions, so we can start
 		// with creating new edges
 		// for each ei from EI, for each ej from EO
 		// we add a new edge (qi,sti;stj,qj)
-		
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    will try to remove " + target.getDebugIdentifier());
 		}
-		
-		final List<Pair<CodeBlock, CodeBlock>> pairs = getEdgePairs(target);
+
+		final List<Pair<IcfgEdge, IcfgEdge>> pairs = getEdgePairs(target);
 		if (pairs.isEmpty()) {
 			// nothing to do here
 			return target.getOutgoingNodes();
 		}
-		
+
 		final Set<IcfgEdge> toRemove = new HashSet<>();
 		final Set<IcfgLocation> openLocations = new HashSet<>();
 		final Set<EdgeConstructor> constructors = new HashSet<>();
 		int addE = 0;
-		for (final Pair<CodeBlock, CodeBlock> pair : pairs) {
-			final CodeBlock first = pair.getFirst();
-			final CodeBlock second = pair.getSecond();
+		for (final Pair<IcfgEdge, IcfgEdge> pair : pairs) {
+			final IcfgEdge first = pair.getFirst();
+			final IcfgEdge second = pair.getSecond();
 			toRemove.add(first);
 			toRemove.add(second);
 			if (first.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
@@ -121,23 +118,23 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			openLocations.add(first.getSource());
 			closed.remove(first.getSource());
 		}
-		
+
 		constructors.stream().forEach(a -> a.constructSequentialComposition());
-		
+
 		final int removeE = disconnectEdges(toRemove);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed " + removeE + ", added " + addE + " edges");
 		}
 		mRemovedEdges += removeE;
-		
+
 		// we also need to add all remaining targets of the current node
 		openLocations.addAll(target.getOutgoingNodes());
-		
+
 		return openLocations;
 	}
-	
-	private static List<Pair<CodeBlock, CodeBlock>> getEdgePairs(final IcfgLocation target) {
-		final List<Pair<CodeBlock, CodeBlock>> rtr = new ArrayList<>();
+
+	private static List<Pair<IcfgEdge, IcfgEdge>> getEdgePairs(final IcfgLocation target) {
+		final List<Pair<IcfgEdge, IcfgEdge>> rtr = new ArrayList<>();
 		for (final IcfgEdge inEdge : target.getIncomingEdges()) {
 			if (inEdge instanceof Summary) {
 				// skip combinations with summary edges
@@ -148,12 +145,12 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 					// skip combinations with summary edges
 					continue;
 				}
-				rtr.add(new Pair<>((CodeBlock) inEdge, (CodeBlock) outEdge));
+				rtr.add(new Pair<>(inEdge, outEdge));
 			}
 		}
 		return rtr;
 	}
-	
+
 	private static int disconnectEdges(final Collection<IcfgEdge> edges) {
 		int removedEdges = 0;
 		for (final IcfgEdge succEdge : edges) {
@@ -163,23 +160,22 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		}
 		return removedEdges;
 	}
-	
+
 	private final class EdgeConstructor {
-		private final BoogieIcfgLocation mSource;
-		private final BoogieIcfgLocation mTarget;
-		private final CodeBlock mFirst;
-		private final CodeBlock mSecond;
-		
-		private EdgeConstructor(final CodeBlock first, final CodeBlock second) {
-			mSource = (BoogieIcfgLocation) first.getSource();
-			mTarget = (BoogieIcfgLocation) second.getTarget();
+		private final IcfgLocation mSource;
+		private final IcfgLocation mTarget;
+		private final IcfgEdge mFirst;
+		private final IcfgEdge mSecond;
+
+		private EdgeConstructor(final IcfgEdge first, final IcfgEdge second) {
+			mSource = first.getSource();
+			mTarget = second.getTarget();
 			mFirst = first;
 			mSecond = second;
 		}
-		
-		private SequentialComposition constructSequentialComposition() {
-			final SequentialComposition newEdge =
-					getEdgeBuilder().constructSequentialComposition(mSource, mTarget, mFirst, mSecond);
+
+		private IcfgEdge constructSequentialComposition() {
+			final IcfgEdge newEdge = getEdgeBuilder().constructSequentialComposition(mSource, mTarget, mFirst, mSecond);
 			rememberEdgeMapping(newEdge, mFirst);
 			rememberEdgeMapping(newEdge, mSecond);
 			return newEdge;

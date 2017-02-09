@@ -1,5 +1,5 @@
 <project name="proj1" default="copy_examples" basedir=".">
-	<property name="trunkEx.dir" location="../../../../../examples" />
+	<property name="trunkEx.dir" location="../../../../../../../../../../examples" />
 	<property name="localEx.dir" location="." />
 	<description>
         Copy files from trunk/example to local examples before deployment

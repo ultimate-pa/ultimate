@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
@@ -45,19 +46,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class LiveVariablePreOperator<ACTION extends IAction>
-		implements IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVar> {
-
+		implements IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> {
+	
 	@Override
 	public List<LiveVariableState<ACTION>> apply(final LiveVariableState<ACTION> oldstate, final ACTION transition) {
 		final UnmodifiableTransFormula tf = getTransformula(transition);
-		final Set<IProgramVar> gen = tf.getInVars().keySet();
-		final Set<IProgramVar> kill = tf.getOutVars().keySet();
-
-		final Set<IProgramVar> newLive =
+		final Set<IProgramVarOrConst> gen = new HashSet<IProgramVarOrConst>(tf.getInVars().keySet());
+		final Set<IProgramVarOrConst> kill = new HashSet<IProgramVarOrConst>(tf.getOutVars().keySet());
+		
+		final Set<IProgramVarOrConst> newLive =
 				AbsIntUtil.union(gen, AbsIntUtil.difference(oldstate.getLiveVariables(), kill));
 		return Collections.singletonList(new LiveVariableState<>(newLive));
 	}
-
+	
 	private UnmodifiableTransFormula getTransformula(final ACTION transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();

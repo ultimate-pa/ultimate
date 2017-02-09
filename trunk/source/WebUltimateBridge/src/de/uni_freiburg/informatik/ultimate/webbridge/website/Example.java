@@ -29,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
  * @date 14.02.2012
  */
 public final class Example {
+	private static final String EXAMPLE_DIR_PREFIX =
+			"/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/";
 	/**
 	 * The files content.
 	 */
@@ -62,7 +64,7 @@ public final class Example {
 	/**
 	 * List of examples, sorted by their ids - each example is therefore contained only once!
 	 */
-	private static final Map<String, Example> sExamplesById = new HashMap<>();
+	private static final Map<String, Example> EXAMPLES_BY_ID = new HashMap<>();
 
 	/**
 	 * Initialize the Example lists.
@@ -171,7 +173,7 @@ public final class Example {
 			}
 			sExamplesByTask.get(tn).add(this);
 		}
-		sExamplesById.put(id, this);
+		EXAMPLES_BY_ID.put(id, this);
 	}
 
 	/**
@@ -203,7 +205,7 @@ public final class Example {
 	 *             care for it ...
 	 */
 	private static final String readFile(final String name) throws IOException {
-		final String example = "/resources/examples/" + name;
+		final String example = EXAMPLE_DIR_PREFIX + name;
 		final InputStream inStream = Example.class.getResourceAsStream(example);
 		if (inStream == null) {
 			return "// File not found!";
@@ -231,7 +233,7 @@ public final class Example {
 	 * <i>bundleresource</i>. At the moment these are the only ones that occur in Website and WebsiteEclipseBridge.
 	 */
 	static private String[] filenamesOfFilesInSubdirectory(final String dirSuffix) {
-		final String dir = "/resources/examples/" + dirSuffix;
+		final String dir = EXAMPLE_DIR_PREFIX + dirSuffix;
 		SimpleLogger.log("Trying to get all files in directory " + dir);
 		final URL dirURL = Example.class.getClassLoader().getResource(dir);
 		if (dirURL == null) {
@@ -266,10 +268,9 @@ public final class Example {
 		if (content == null) {
 			SimpleLogger.log("No folder:" + dirURL);
 			return new String[0];
-		} else {
-			Arrays.sort(content);
-			return content;
 		}
+		Arrays.sort(content);
+		return content;
 	}
 
 	/**
@@ -354,11 +355,11 @@ public final class Example {
 	 * @return the corresponding example or null, if ID not found!
 	 */
 	public static final Example get(final String id) {
-		if (sExamplesById.isEmpty()) {
+		if (EXAMPLES_BY_ID.isEmpty()) {
 			SimpleLogger.log("Example list is empty, initializing...");
 			init();
 		}
-		final Example ex = sExamplesById.get(id);
+		final Example ex = EXAMPLES_BY_ID.get(id);
 		if (ex != null) {
 			SimpleLogger.log("Get example returns " + ex.getInfoString());
 		} else {

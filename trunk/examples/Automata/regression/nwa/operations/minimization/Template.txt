@@ -1,0 +1,52 @@
+// template for minimization regression tests
+
+print(numberOfStates(removeUnreachable(nwa)));
+print(numberOfStates(removeDeadEnds(nwa)));
+print(numberOfStates(removeNonLiveStates(nwa)));
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+print(minimizeSevpaSize);
+print(shrinkNwaSize);
+print(minimizeNwaPmaxSatSize);
+print(minimizeNwaPmaxSatAsymmetricSize);
+print(minimizeDfaSimulationSize);
+print(reduceNwaDirectSimulationSize);
+print(reduceNwaDirectSimulationBSize);
+print(reduceNwaDirectFullMultipebbleSimulationSize);
+print(buchiReduceSize);
+print(reduceNwaDelayedSimulationSize);
+print(reduceNwaDelayedSimulationBSize);
+print(reduceNwaDelayedFullMultipebbleSimulationSize);
+print(reduceBuchiFairDirectSimulationSize);
+print(reduceBuchiFairSimulationSize);
+
+// assert(minimizeSevpaSize == 999);
+// assert(shrinkNwaSize == 999);
+// assert(minimizeNwaPmaxSatSize == 999);
+// assert(minimizeNwaPmaxSatAsymmetricSize == 999);
+// assert(minimizeDfaSimulationSize == 999);
+// assert(reduceNwaDirectSimulationSize == 999);
+// assert(reduceNwaDirectSimulationBSize == 999);
+// assert(reduceNwaDirectFullMultipebbleSimulationSize == 999);
+// assert(buchiReduceSize == 999);
+// assert(reduceNwaDelayedSimulationSize == 999);
+// assert(reduceNwaDelayedSimulationBSize == 999);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 999);
+// assert(reduceBuchiFairDirectSimulationSize == 999);
+// assert(reduceBuchiFairSimulationSize == 999);

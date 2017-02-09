@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,15 +64,10 @@ public class IcfgUtils {
 	}
 
 	/**
-	 * @return {@link List} that contains all {@link IcfgEdge}s that are predecessor of the initial location of some
-	 *         procedure.
+	 * @return {@link List} that contains all {@link IcfgEdge}s that originate from an initial location.
 	 */
 	public static <LOC extends IcfgLocation> List<IcfgEdge> extractStartEdges(final IIcfg<LOC> icfg) {
-		final List<IcfgEdge> startEdges = new ArrayList<>();
-		for (final Entry<String, LOC> entry : icfg.getProcedureEntryNodes().entrySet()) {
-			startEdges.addAll(entry.getValue().getOutgoingEdges());
-		}
-		return startEdges;
+		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toList());
 	}
 
 	public static <T extends IIcfgTransition<?>> UnmodifiableTransFormula getTransformula(final T transition) {
@@ -88,7 +82,7 @@ public class IcfgUtils {
 					"Dont know how to extract transformula from transition " + transition);
 		}
 	}
-	
+
 	public static <LOC extends IcfgLocation> Set<LOC> getErrorLocations(final IIcfg<LOC> icfg) {
 		final Map<String, Set<LOC>> proc2ErrorLocations = icfg.getProcedureErrorNodes();
 		final Set<LOC> errorLocs = new HashSet<>();

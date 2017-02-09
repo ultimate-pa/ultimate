@@ -91,7 +91,7 @@ public class TransFormulaUtils {
 			final Map<IProgramVar, TermVariable> outVars) {
 		final HashSet<IProgramVar> assignedVars = new HashSet<>();
 		for (final IProgramVar var : outVars.keySet()) {
-			assert (outVars.get(var) != null);
+			assert outVars.get(var) != null;
 			if (outVars.get(var) != inVars.get(var)) {
 				assignedVars.add(var);
 			}
@@ -182,8 +182,8 @@ public class TransFormulaUtils {
 				}
 			}
 			final Term originalFormula = transFormula.get(i).getFormula();
-			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping))
-					.transform(originalFormula);
+			final Term updatedFormula =
+					new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(originalFormula);
 			nonTheoryConsts.addAll(transFormula.get(i).getNonTheoryConsts());
 			formula = Util.and(script, formula, updatedFormula);
 		}
@@ -307,7 +307,7 @@ public class TransFormulaUtils {
 
 				final TermVariable outVar = tf.getOutVars().get(bv);
 				final TermVariable inVar = tf.getInVars().get(bv);
-				final boolean isAssignedVar = (outVar != inVar);
+				final boolean isAssignedVar = outVar != inVar;
 				if (isAssignedVar) {
 					final Sort sort = tf.getOutVars().get(bv).getSort();
 					assignedInSomeBranch.put(bv, sort);
@@ -339,7 +339,7 @@ public class TransFormulaUtils {
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
 
-				final boolean isAssignedVar = (inVar != outVar);
+				final boolean isAssignedVar = inVar != outVar;
 				if (isAssignedVar) {
 					substitutionMapping.put(outVar, tfb.getOutVar(bv));
 				} else {
@@ -353,8 +353,8 @@ public class TransFormulaUtils {
 				auxVars.add(newAuxVar);
 			}
 			final Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping))
-					.transform(originalFormula);
+			renamedFormulas[i] =
+					new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(originalFormula);
 
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -445,10 +445,10 @@ public class TransFormulaUtils {
 			final List<UnmodifiableTransFormula> beforeCall, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services,
-			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
-			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
-			final ModifiableGlobalsTable modifiableGlobalsTable) {
+			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
+			final IIcfgSymbolTable symbolTable, final String procAtStart, final String procBeforeCall,
+			final String procAfterCall, final String procAtEnd, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		assert procAtStart != null : "proc at start must not be null";
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
@@ -480,7 +480,8 @@ public class TransFormulaUtils {
 			final Map<IProgramVar, TermVariable> varsToHavoc = new HashMap<>();
 			// we havoc all oldvars that are modifiable by the caller
 			// but not modifiable y the callee
-			final Set<IProgramNonOldVar> modifiableByCaller = modifiableGlobalsTable.getModifiedBoogieVars(procBeforeCall);
+			final Set<IProgramNonOldVar> modifiableByCaller =
+					modifiableGlobalsTable.getModifiedBoogieVars(procBeforeCall);
 			for (final IProgramNonOldVar modifiable : modifiableByCaller) {
 				final IProgramOldVar oldVar = modifiable.getOldVar();
 				final boolean modifiableByCallee = oldVarsAssignment.getAssignedVars().contains(oldVar);
@@ -636,7 +637,8 @@ public class TransFormulaUtils {
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
+		resultComposition =
+				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		IPredicate beforeCallPredicate = truePredicate;
 		for (final UnmodifiableTransFormula tf : beforeCall) {
@@ -770,16 +772,16 @@ public class TransFormulaUtils {
 
 		assert SmtUtils.neitherKeyNorValueIsNull(
 				result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
-		assert (isIntraprocedural(result));
-		assert !result.getBranchEncoders().isEmpty()
-				|| predicateBasedResultCheck(services, logger, mgdScript, xnfConversionTechnique, simplificationTechnique,
-						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable,
-						modifiableGlobalsOfCallee) : "sequentialCompositionWithCallAndReturn - incorrect result";
+		assert isIntraprocedural(result);
+		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, logger, mgdScript,
+				xnfConversionTechnique, simplificationTechnique, callTf, oldVarsAssignment, globalVarsAssignment,
+				procedureTf, returnTf, result, symbolTable,
+				modifiableGlobalsOfCallee) : "sequentialCompositionWithCallAndReturn - incorrect result";
 		return result;
 	}
 
-	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services,
-			final ILogger logger, final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
+	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf,
@@ -792,7 +794,8 @@ public class TransFormulaUtils {
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
 		Term resultComposition = pt.strongestPostcondition(truePredicate, result);
-		resultComposition = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
+		resultComposition =
+				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(resultComposition);
 		final IPredicate resultCompositionPredicate = bpf.newPredicate(resultComposition);
 		final Term afterCallTerm = pt.strongestPostconditionCall(truePredicate, callTf, globalVarsAssignment,
 				oldVarsAssignment, modifiableGlobals);
@@ -801,7 +804,8 @@ public class TransFormulaUtils {
 		final IPredicate beforeReturnPredicate = bpf.newPredicate(beforeReturnTerm);
 		Term afterReturnTerm = pt.strongestPostconditionReturn(beforeReturnPredicate, truePredicate, returnTf, callTf,
 				oldVarsAssignment, modifiableGlobals);
-		afterReturnTerm = new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(afterReturnTerm);
+		afterReturnTerm =
+				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(afterReturnTerm);
 		final IPredicate afterReturnPredicate = bpf.newPredicate(afterReturnTerm);
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);

@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -105,7 +106,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
-
+	
 	// Indicates whether the predicates from the weakest precondition are added to the constraints or not.
 	private final boolean mUseWeakestPrecondition;
 	// There are two different ways to add an additional predicate to the invariant templates/patterns.
@@ -116,28 +117,27 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
 	private static final boolean USE_UNDER_APPROX_FOR_MAX_CONJUNCTS = false;
 	private static final boolean USE_OVER_APPROX_FOR_MIN_DISJUNCTS = false;
-
+	
 	/**
 	 * If set to true, we always construct two copies of each invariant pattern, one strict inequality and one
 	 * non-strict inequality. If set to false we use only one non-strict inequality.
 	 */
 	private final static boolean mAlwaysStrictAndNonStrictCopies = false;
 	/**
-	 * If a template contains more than 1 conjunct, then use alternatingly strict and non-strict inequalities.
-	 * I.e. the even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
+	 * If a template contains more than 1 conjunct, then use alternatingly strict and non-strict inequalities. I.e. the
+	 * even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
 	 */
 	private final static boolean mUseStrictInequalitiesAlternatingly = false;
 	/**
-	 * Transform the path program by applying large block encoding.
-	 * Synthesize invariants only for the large block encoded program and use
-	 * less expensive techniques to obtain the remaining invariants. 
+	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
+	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
-
+	
 	private final static int MAX_ROUNDS = Integer.MAX_VALUE;
-
+	
 	private final boolean mUseLiveVariables;
-
+	
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
@@ -148,10 +148,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final PredicateTransformer mPredicateTransformer;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
 	private final IToolchainStorage mStorage;
-	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> mAbstractInterpretationResult;
+	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> mAbstractInterpretationResult;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final PathInvariantsStatisticsGenerator mPathInvariantsStats;
-
+	
 	/**
 	 * Creates a default factory.
 	 *
@@ -176,25 +176,25 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
-
+		
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES,
-				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms,
-				loc2underApprox, loc2overApprox);
+				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
 	}
-
+	
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
-	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-			final Set<IProgramVar> allProgramVariables,
-			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
+					final Set<IProgramVar> allProgramVariables,
+					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
-					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
-							mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
+					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+							locations2LiveVariables, mAlwaysStrictAndNonStrictCopies,
+							mUseStrictInequalitiesAlternatingly);
 				}
-				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
-						mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
+				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+						locations2LiveVariables, mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 			}
 			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
@@ -205,7 +205,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return new AllProgramVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, allProgramVariables,
 				mAlwaysStrictAndNonStrictCopies, mUseStrictInequalitiesAlternatingly);
 	}
-
+	
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by the default
 	 * {@link IInvariantPatternProcessorFactory} (with default settings).
@@ -246,22 +246,20 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mUseLiveVariables = useLiveVariables;
 		mUseWeakestPrecondition = useWPForPathInvariants;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
-
+		
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
-		
+
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
-
-		IIcfg<IcfgLocation> pathProgram =
-				new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
+		
+		IIcfg<IcfgLocation> pathProgram = new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
 		/**
-		 * Map that assigns to each large block encoded icfg location the
-		 * corresponding location in the orginal icfg
+		 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
 		 */
 		Map<IcfgLocation, IcfgLocation> lbeBacktranslation = null;
-		if(APPLY_LARGE_BLOCK_ENCODING) {
-			// TODO: add here some code that transforms the pathProgram icfg 
+		if (APPLY_LARGE_BLOCK_ENCODING) {
+			// TODO: add here some code that transforms the pathProgram icfg
 			// into a large block encoded icfg
 			pathProgram = null;
 			lbeBacktranslation = null;
@@ -271,7 +269,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			mAbstractInterpretationResult = null;
 		}
-
+		
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
 		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg,
@@ -281,7 +279,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mInterpolants = new IPredicate[mRun.getLength()];
 			if (APPLY_LARGE_BLOCK_ENCODING) {
 				// TODO: take invariants from the large block encoded path program
-				// and compute remaining invariants using SP, WP or 
+				// and compute remaining invariants using SP, WP or
 				// (better) interpolation.
 				throw new UnsupportedOperationException("no LBE support yet");
 			} else {
@@ -289,7 +287,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 					final IcfgLocation locFromPathProgram =
 							invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-							.collect(Collectors.toList()).get(0);
+									.collect(Collectors.toList()).get(0);
 					mInterpolants[i] = invariants.get(locFromPathProgram);
 					mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
 				}
@@ -304,7 +302,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
 	}
-
+	
 	/**
 	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
 	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO: If
@@ -332,11 +330,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				// Compute wp only if the source node is not an initial node
 				if (!e.getSource().getIncomingEdges().isEmpty()) {
 					// Compute WP for the formula of the current transition and the predicate at the target location.
-					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()), ((IInternalAction) e).getTransformula());
-					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							mServices, mLogger, managedScript, wpTerm, 
-							SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-					if (new PrenexNormalForm(managedScript).transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
+					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
+							((IInternalAction) e).getTransformula());
+					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
+							mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
+							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+					if (new PrenexNormalForm(managedScript)
+							.transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
 						throw new UnsupportedOperationException("Quantifier elimination failed.");
 					}
 					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
@@ -349,28 +349,28 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			if (loopLocations.isEmpty()) {
 				levelCounter++;
 			}
-
+			
 			if (newEdges.isEmpty() || levelCounter >= 2) {
 				break;
 			}
 			edges2visit = newEdges;
-
+			
 		}
 		// remove the mapping (error-location -> false) from result
 		locs2WP.remove(errorloc);
-		
+
 		return convertMapToPreds_to_MapToUnmodTrans(locs2WP, managedScript);
 	}
-
+	
 	private Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPreds_to_MapToUnmodTrans(
 			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
-
-		final Map<IcfgLocation, UnmodifiableTransFormula> result = locs2Preds.keySet().stream().collect(Collectors.toMap(
-				loc -> loc,
-				loc -> TransFormulaBuilder.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
+		
+		final Map<IcfgLocation, UnmodifiableTransFormula> result =
+				locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
+						.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
 		return result;
 	}
-
+	
 	/**
 	 * Check for each loop location of the path program if it contains some inner statements.
 	 *
@@ -394,7 +394,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		return locationsOfNonEmptyLoops;
 	}
-
+	
 	private boolean nodeIsReachable(final IcfgLocation currLoc, final IcfgEdge e) {
 		final Set<IcfgLocation> visitedNodes = new HashSet<>();
 		final List<IcfgEdge> edgesToProcess = new LinkedList<IcfgEdge>();
@@ -411,9 +411,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		return false;
 	}
-
+	
 	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
-			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation> abstractInterpretationResult,
+			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> abstractInterpretationResult,
 			final ManagedScript managedScript) {
 		final Map<IcfgLocation, UnmodifiableTransFormula> result = new HashMap<>();
 		final Map<IcfgLocation, Term> locs2term = abstractInterpretationResult.getLoc2Term();
@@ -429,13 +429,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		return result;
 	}
-
+	
 	private IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		final Set<IcfgLocation> errorLocs = IcfgUtils.getErrorLocations(pathProgram);
 		assert errorLocs.size() == 1 : "There should be only one error location";
 		return errorLocs.iterator().next();
 	}
-
+	
 	//
 	// private final Map<IcfgLocation, IPredicate> generatePathInvariants(final boolean useVarsFromUnsatCore,
 	// final IIcfg<?> icfg, final SimplificationTechnique simplificationTechnique,
@@ -552,13 +552,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// return invariants;
 	// }
 	//
-
+	
 	private final Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final boolean useVarsFromUnsatCore,
 			final IIcfg<?> icfg, final IIcfg<IcfgLocation> pathProgram,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Settings solverSettings, final boolean useNonlinearConstraints) {
 		mLogger.info("Started with a run of length " + mRun.getLength());
-
+		
 		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
 		final IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
 		final List<IcfgLocation> locationsAsList = new ArrayList<>();
@@ -567,80 +567,80 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Get locations, transitions and program variables from the path program
 		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList,
 				allProgramVars);
-
+		
 		mLogger.info("[PathInvariants] Built projected CFG, " + locationsAsList.size() + " states and "
 				+ transitionsAsList.size() + " transitions.");
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
-
+		
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
 			// pathprogramLocs2LiveVars = applyAbstractInterpretationOnPathProgram(pathProgram);
 			assert (mAbstractInterpretationResult != null) : "Abstract Interpretation has not been applied on path program to"
-			+ " generate live variables";
+					+ " generate live variables";
 			final Map<IcfgLocation, LiveVariableState<IcfgEdge>> loc2states =
 					mAbstractInterpretationResult.getLoc2SingleStates();
 			pathprogramLocs2LiveVars = new HashMap<>();
-
+			
 			for (final Entry<IcfgLocation, LiveVariableState<IcfgEdge>> entry : loc2states.entrySet()) {
-				pathprogramLocs2LiveVars.put(entry.getKey(), entry.getValue().getLiveVariables());
+				pathprogramLocs2LiveVars.put(entry.getKey(), entry.getValue().getLiveVariablesAsProgramVars());
 			}
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
 			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
 		}
-
-		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices, 
-				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
-		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices, 
-				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
-
 		
-		final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = convertHashRelation(underApprox.getResult(),
-				icfg.getCfgSmtToolkit().getManagedScript());
-		final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = convertHashRelation(overApprox.getResult(),
-				icfg.getCfgSmtToolkit().getManagedScript());
+		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
+				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
+		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
+				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
+		
+		final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox =
+				convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+		final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox =
+				convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
 		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
 		if (mUseWeakestPrecondition) {
 			pathprogramLocs2Predicates.putAll(loc2overApprox);
 		}
-
+		
 		if (mUseAbstractInterpretationPredicates) {
 			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 					icfg.getCfgSmtToolkit().getManagedScript()));
 		}
-
+		
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
 				getStrategy(useVarsFromUnsatCore, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
-		
+
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
-			for (Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
-				List<Integer> maxDisjunctsMaxConjuncts = getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
+			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
+				final List<Integer> maxDisjunctsMaxConjuncts =
+						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
 				strategy.setNumOfConjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(1));
 			}
 		} else if (USE_OVER_APPROX_FOR_MIN_DISJUNCTS) {
-			for (Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
-				List<Integer> maxDisjunctsMaxConjuncts = getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
+			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
+				final List<Integer> maxDisjunctsMaxConjuncts =
+						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
 				strategy.setNumOfDisjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(0));
 			}
 		}
-		final IInvariantPatternProcessorFactory<?> invPatternProcFactory =
-				createDefaultFactory(mServices, mStorage, mPredicateUnifier, icfg.getCfgSmtToolkit(),
-						useNonlinearConstraints, useVarsFromUnsatCore, solverSettings, simplificationTechnique,
-						xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy, loc2underApprox, loc2overApprox);
-
+		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
+				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore,
+				solverSettings, simplificationTechnique, xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(),
+				strategy, loc2underApprox, loc2overApprox);
+		
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
 		final Map<IcfgLocation, IPredicate> invariants;
-
+		
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, allProgramVars,
-				false, null,
-				pathprogramLocs2Predicates, (mUseWeakestPrecondition || mUseAbstractInterpretationPredicates),
-				ADD_WP_TO_EACH_CONJUNCT);
-
+				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore,
+				allProgramVars, false, null, pathprogramLocs2Predicates,
+				(mUseWeakestPrecondition || mUseAbstractInterpretationPredicates), ADD_WP_TO_EACH_CONJUNCT);
+		
 		mLogger.info("[PathInvariants] Generated invariant map.");
 		return invariants;
 	}
-
+	
 	private Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
 			final HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
 		
@@ -653,7 +653,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		return convertMapToPreds_to_MapToUnmodTrans(loc2Predicate, managedScript);
 	}
-
+	
 	private static void extractLocationsTransitionsAndVariablesFromPathProgram(final IIcfg<IcfgLocation> pathProgram,
 			final List<IcfgLocation> locationsOfPP, final List<IcfgInternalTransition> transitionsOfPP,
 			final Set<IProgramVar> allVariablesFromPP) {
@@ -679,17 +679,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		locationsOfPP.addAll(visitedLocs);
 		transitionsOfPP.addAll(edges);
 	}
-	
-	private List<Integer> getDisjunctsAndConjunctsFromTerm(Term term) {
-		List<Integer> result = new ArrayList<>(2);
+
+	private List<Integer> getDisjunctsAndConjunctsFromTerm(final Term term) {
+		final List<Integer> result = new ArrayList<>(2);
 		int maxNumOfConjuncts = 1;
 		int maxNumOfDisjuncts = 1;
-		ArrayList<Term> termsToCheck = new ArrayList<>();
+		final ArrayList<Term> termsToCheck = new ArrayList<>();
 		termsToCheck.add(term);
 		while (!termsToCheck.isEmpty()) {
-			Term t = termsToCheck.remove(0);
+			final Term t = termsToCheck.remove(0);
 			if (t instanceof ApplicationTerm) {
-				ApplicationTerm at = ((ApplicationTerm)t);
+				final ApplicationTerm at = ((ApplicationTerm) t);
 				if ("and" == at.getFunction().getName()) {
 					if (at.getParameters().length > maxNumOfConjuncts) {
 						maxNumOfConjuncts = at.getParameters().length;
@@ -699,17 +699,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 						maxNumOfDisjuncts = at.getParameters().length;
 					}
 				}
-				for (Term param : at.getParameters()) {
+				for (final Term param : at.getParameters()) {
 					termsToCheck.add(param);
 				}
-				
+
 			}
 		}
 		result.add(0, maxNumOfDisjuncts);
 		result.add(1, maxNumOfConjuncts);
 		return result;
 	}
-
+	
 	// private List<IcfgLocation> extractLocationsFromPathProgram(IIcfg<IcfgLocation> pathProgram) {
 	// LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
 	// locs2visit.addAll(pathProgram.getInitialNodes());
@@ -726,25 +726,25 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	//
 	// return new ArrayList<IcfgLocation>(visitedLocs);
 	// }
-
+	
 	/**
 	 * Computes for each location of the given path program a set of variables which are <emph> live </emph>.
 	 *
 	 * @param pathProgram
 	 * @return
 	 */
-	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVar, IcfgLocation>
-	applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
+	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
+			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
 	}
-
+	
 	private Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;
-
+		
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) run.getStateAtPosition(i);
 			final IcfgLocation currentLocation = pred.getProgramPoint();
@@ -762,32 +762,31 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return transitions;
 	}
 	
-	
 	@Override
 	public Word<? extends IAction> getTrace() {
 		return mRun.getWord();
 	}
-
+	
 	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
-
+	
 	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
-
+	
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		throw new UnsupportedOperationException("Call/Return not supported yet");
 	}
-
+	
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-
+	
 	/**
 	 * Returns a sequence of interpolants (see definition in {@link IInterpolantGenerator}) the trace which is
 	 * mRun.getWord() with an additional property. If the ProgramPoint and position i and k coincide then the
@@ -805,7 +804,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		System.arraycopy(mInterpolants, 1, interpolantMapWithOutFirstInterpolant, 0, mInterpolants.length - 2);
 		return interpolantMapWithOutFirstInterpolant;
 	}
-
+	
 	@Override
 	public boolean isPerfectSequence() {
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, this, mLogger);
@@ -813,17 +812,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return isPerfect;
 	}
 	
-	
-
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
 		return mInterpolantComputationStatus;
 	}
-	
-	public PathInvariantsStatisticsGenerator getPathInvariantsBenchmarks () {
+
+	public PathInvariantsStatisticsGenerator getPathInvariantsBenchmarks() {
 		return mPathInvariantsStats;
 	}
-	
 	
 	// Benchmarks Section
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
@@ -832,92 +828,88 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
 		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		MaxNumOfInequalitiesPerRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData), 
-		MaxRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
-		;
-		
+		MaxNumOfInequalitiesPerRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+		MaxRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),;
+
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		PathInvariantsStatisticsDefinitions(final Class<?> clazz,
-				final Function<Object, Function<Object, Object>> aggr,
+		
+		PathInvariantsStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
 			mClazz = clazz;
 			mAggr = aggr;
 			mPrettyprinter = prettyprinter;
 		}
-
-
+		
 		@Override
 		public Class<?> getDataType() {
 			return mClazz;
 		}
-
+		
 		@Override
 		public Object aggregate(final Object o1, final Object o2) {
 			return mAggr.apply(o1).apply(o2);
 		}
-
+		
 		@Override
 		public String prettyprint(final Object o) {
 			return mPrettyprinter.apply(name()).apply(o);
 		}
-		
+
 	}
-
-
-//	public static class PathInvariantsBenchmarkType implements IStatisticsType {
-//		private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
-//
-//		/* Keys */
-//		// 
-//		protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
-//
-//		protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
-//
-////		protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
-//		
-//		public static PathInvariantsBenchmarkType getInstance() {
-//			return s_Instance;
-//		}
-//
-//		@Override
-//		public Collection<String> getKeys() {
-//			final ArrayList<String> result = new ArrayList<>();
-//			result.add(s_MaxSizeOfTemplate);
-//			result.add(s_MaxNumOfRounds);
-//			return result;
-//		}
-//
-//		@Override
-//		public Object aggregate(final String key, final Object value1, final Object value2) {
-//			switch (key) {
-//			case s_MaxSizeOfTemplate:
-//			case s_MaxNumOfRounds: {
-//				if ((int) value1 >= (int) value2) {
-//					return (int)value1;
-//				} else {
-//					return (int)value2;
-//				}
-//			}
-//			default:
-//				throw new AssertionError("unknown key");
-//			}
-//		}
-//
-//		@Override
-//		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-//			final StringBuilder sb = new StringBuilder();
-//			
-//			sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
-//			sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
-//			sb.append(" conjuncts");
-//			sb.append("\t").append(s_MaxNumOfRounds).append(": ");
-//			sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
-//			
-//			return sb.toString();
-//		}
-//	}
 	
+	// public static class PathInvariantsBenchmarkType implements IStatisticsType {
+	// private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
+	//
+	// /* Keys */
+	// //
+	// protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
+	//
+	// protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
+	//
+	//// protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
+	//
+	// public static PathInvariantsBenchmarkType getInstance() {
+	// return s_Instance;
+	// }
+	//
+	// @Override
+	// public Collection<String> getKeys() {
+	// final ArrayList<String> result = new ArrayList<>();
+	// result.add(s_MaxSizeOfTemplate);
+	// result.add(s_MaxNumOfRounds);
+	// return result;
+	// }
+	//
+	// @Override
+	// public Object aggregate(final String key, final Object value1, final Object value2) {
+	// switch (key) {
+	// case s_MaxSizeOfTemplate:
+	// case s_MaxNumOfRounds: {
+	// if ((int) value1 >= (int) value2) {
+	// return (int)value1;
+	// } else {
+	// return (int)value2;
+	// }
+	// }
+	// default:
+	// throw new AssertionError("unknown key");
+	// }
+	// }
+	//
+	// @Override
+	// public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
+	// final StringBuilder sb = new StringBuilder();
+	//
+	// sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
+	// sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
+	// sb.append(" conjuncts");
+	// sb.append("\t").append(s_MaxNumOfRounds).append(": ");
+	// sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
+	//
+	// return sb.toString();
+	// }
+	// }
+
 }

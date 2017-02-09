@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.Tool;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting.SettingType;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.Tool;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de
@@ -46,27 +46,27 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> defineTools() {
-		final List<Tool> rtr = new ArrayList<Tool>();
+		final List<Tool> rtr = new ArrayList<>();
 
-		rtr.add(new Tool(PrefStrings.s_syntaxchecker));
-		rtr.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
-		rtr.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		rtr.add(new Tool(PrefStrings.s_rcfgBuilder));
-		rtr.add(new Tool(PrefStrings.s_traceAbstraction));
-		rtr.add(new Tool(PrefStrings.s_ltl2aut));
-		rtr.add(new Tool(PrefStrings.s_buchiProgramProduct));
-		rtr.add(new Tool(PrefStrings.s_buchiautomizer));
+		rtr.add(new Tool(PrefStrings.SYNTAXCHECKER));
+		rtr.add(new Tool(PrefStrings.CACSL2BOOGIETRANSLATOR));
+		rtr.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		rtr.add(new Tool(PrefStrings.RCFGBUILDER));
+		rtr.add(new Tool(PrefStrings.TRACE_ABSTRACTION));
+		rtr.add(new Tool(PrefStrings.LTL2AUT));
+		rtr.add(new Tool(PrefStrings.BUCHIPROGRAMPRODUCT));
+		rtr.add(new Tool(PrefStrings.BUCHIAUTOMIZER));
 
 		return rtr;
 	}
 
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
-		final List<Setting> rtr = new ArrayList<Setting>();
+		final List<Setting> rtr = new ArrayList<>();
 
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
-				"main", true));
-		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
+		rtr.add(new Setting(PrefStrings.CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ", "main",
+				true));
+		rtr.add(new Setting(PrefStrings.TA_LABEL_HOARE, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
 				"true", true));
 
 		return rtr;

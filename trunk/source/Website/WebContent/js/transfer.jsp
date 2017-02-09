@@ -1,7 +1,7 @@
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Worker"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Example"%>
 <%@ page import="org.json.simple.JSONObject"%>
 <%@ page import="java.util.*"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
@@ -21,9 +21,9 @@
 
 var _SERVER_INFO =
             [
-              <% // de.uni_freiburg.informatik.ultimate.website.toolchains:*TC.java::setUserInfo()%>
+              <% // de.uni_freiburg.informatik.ultimate.webbridge.toolchains:*TC.java::setUserInfo()%>
               <c:forEach items="${worker[param.tool].getToolchains()}" var="tc">"<c:out value="${tc.getUserInfo()}" default="" escapeXml="false" />",</c:forEach>
-              <% // de.uni_freiburg.informatik.ultimate.website:Tasks.java::initWorkers()%>
+              <% // de.uni_freiburg.informatik.ultimate.webbridge.website:Tasks.java::initWorkers()%>
               "<c:out value="${worker[param.tool].getUserInfo()}" default="" />",
               <% // /Website/<tool>.json%>
               "<c:out value="${content.user_info}" default="" />"

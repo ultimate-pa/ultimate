@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVar> {
-
+		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVarOrConst> {
+	
 	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -101,7 +101,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVar> getPostOperator() {
+	public IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
 		return mPost;
 	}
 

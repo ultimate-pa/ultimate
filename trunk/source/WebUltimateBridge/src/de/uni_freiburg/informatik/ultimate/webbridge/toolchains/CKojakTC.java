@@ -42,12 +42,12 @@ public class CKojakTC extends WebToolchain {
 	protected List<Tool> defineTools() {
 		final List<Tool> tools = new ArrayList<>();
 
-		tools.add(new Tool(PrefStrings.s_syntaxchecker));
-		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
-		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
-		tools.add(new Tool(PrefStrings.s_blockencoding));
-		tools.add(new Tool(PrefStrings.s_codecheck));
+		tools.add(new Tool(PrefStrings.SYNTAXCHECKER));
+		tools.add(new Tool(PrefStrings.CACSL2BOOGIETRANSLATOR));
+		tools.add(new Tool(PrefStrings.BOOGIE_PREPROCESSOR));
+		tools.add(new Tool(PrefStrings.RCFGBUILDER));
+		tools.add(new Tool(PrefStrings.BLOCKENCODING));
+		tools.add(new Tool(PrefStrings.CODECHECK));
 
 		return tools;
 	}

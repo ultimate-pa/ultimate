@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
@@ -50,12 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
 
 	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
+	private final Map<IcfgLocation, IcfgLocation> mLocationMapping;
 	private final ILogger mLogger;
 
 	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType,
 			final ILogger logger) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
+		mLocationMapping = new HashMap<>();
 		mLogger = logger;
 	}
 

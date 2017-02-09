@@ -31,11 +31,11 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -43,18 +43,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * <p>
  * There are two options available:
  * <ol>
- * <li>a cheap and sufficient semi-test (default),</li>
+ * <li>a cheap and sufficient semi-test,</li>
  * <li>an expensive and complete test.</li>
  * </ol>
  * <p>
  * The semi-test is characterized as follows. If the test finds a counterexample, the languages differ. If the test does
  * not find a counterexample, the result is uncertain, in which case we assume the languages are equivalent.<br>
- * The semi-test works as follows. First the finite-word language is compared. If this test fails, we extract words from
- * one automaton and test them on the other automaton. If this test succeeds, we generate random words and compare the
- * behavior of the two automata. If this test succeeds, we give up and assume that the languages are equivalent.
+ * The semi-test works as follows. We extract words from one automaton and test them on the other automaton. If this
+ * test succeeds, we generate random words and compare the behavior of the two automata. If this test succeeds, we give
+ * up and assume that the languages are equivalent.
  * <p>
  * The complete test checks language inclusion in both directions, which is a very expensive operation for Buchi
  * automata.
+ * <p>
+ * This operation can be run in a dynamic mode. In that case we use the complete test if the automaton is small or
+ * deterministic, guarded by a small timeout. Otherwise we use the incomplete test.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -63,14 +66,41 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+	private static final int MAXIMUM_AUTOMATON_SIZE_FOR_DYNAMIC_TEST = 10;
+	private static final int TIMEOUT_MILLISECONDS_FOR_DYNAMIC_TEST = 1_000;
+	private static final int NUMBER_OF_ONE_SYMBOL_RANDOM_WORDS = 6;
+	private static final int NUMBER_OF_TWO_SYMBOL_RANDOM_WORDS = 11;
+	
 	private final IStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
 	private NestedLassoWord<LETTER> mCounterexample;
+	private boolean mCompleteTestWasApplied;
 	
 	/**
-	 * Constructor which performs a sufficient but cheaper equivalence test.
+	 * Mode of the test.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum TestMode {
+		/**
+		 * Complete test.
+		 */
+		COMPLETE,
+		/**
+		 * Complete test if the automata are small or deterministic. Fall-back to incomplete test in case of short
+		 * timeout.
+		 */
+		DYNAMIC,
+		/**
+		 * Incomplete test.
+		 */
+		INCOMPLETE
+	}
+	
+	/**
+	 * Constructor which dynamically chooses which test to use in the interest of performance.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -87,7 +117,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, stateFactory, fstOperand, sndOperand, false);
+		this(services, stateFactory, fstOperand, sndOperand, TestMode.DYNAMIC);
 	}
 	
 	/**
@@ -101,15 +131,15 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 *            first operand
 	 * @param sndOperand
 	 *            second operand
-	 * @param completeTest
-	 *            true iff a complete but expensive test should be applied
+	 * @param mode
+	 *            mode determining whether, e.g., a complete but expensive test should be applied
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
 	public BuchiIsEquivalent(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final boolean completeTest) throws AutomataLibraryException {
+			final TestMode mode) throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
 		mFstOperand = fstOperand;
@@ -120,12 +150,19 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		}
 		
 		printStartMessage();
-		if (completeTest) {
-			mResult = checkEquivalencePrecisely();
-		} else {
-			mResult = checkEquivalenceImprecisely();
-		}
+		mResult = run(mode);
 		printExitMessage();
+	}
+	
+	@Override
+	public String exitMessage() {
+		if (!mResult) {
+			return "Buchi automata are not equivalent.";
+		}
+		if (mCompleteTestWasApplied) {
+			return "Complete test succeeded. Buchi automata are equivalent.";
+		}
+		return "Incomplete test succeeded. Buchi automata could be equivalent.";
 	}
 	
 	@Override
@@ -153,22 +190,45 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return mCounterexample;
 	}
 	
-	private boolean checkEquivalencePrecisely() throws AutomataLibraryException {
+	/**
+	 * @return {@code true} if the Buchi languages are equivalent and complete test was used. In case of a
+	 *         counterexample the result is arbitrary.
+	 */
+	public boolean isCompleteTestUsed() {
+		return mCompleteTestWasApplied;
+	}
+	
+	private boolean run(final TestMode mode) throws AutomataLibraryException {
+		switch (mode) {
+			case COMPLETE:
+				return checkEquivalencePrecisely(mServices);
+			case DYNAMIC:
+				return checkEquivalenceDynamically();
+			case INCOMPLETE:
+				return checkEquivalenceImprecisely();
+			default:
+				throw new IllegalArgumentException("Unknown test mode: " + mode);
+		}
+	}
+	
+	private boolean checkEquivalencePrecisely(final AutomataLibraryServices services) throws AutomataLibraryException {
 		// check inclusion of first operand language in second operand language
-		if (!checkInclusionPrecisely(mFstOperand, mSndOperand)) {
+		if (!checkInclusionPrecisely(services, mFstOperand, mSndOperand)) {
 			return false;
 		}
 		// check inclusion of second operand language in first operand language
-		if (!checkInclusionPrecisely(mSndOperand, mFstOperand)) {
+		if (!checkInclusionPrecisely(services, mSndOperand, mFstOperand)) {
 			return false;
 		}
+		mCompleteTestWasApplied = true;
 		return true;
 	}
 	
-	private boolean checkInclusionPrecisely(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+	private boolean checkInclusionPrecisely(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		final NestedLassoRun<LETTER, STATE> counterexample =
-				(new BuchiIsIncluded<>(mServices, mStateFactory, fstOperand, sndOperand)).getCounterexample();
+				(new BuchiIsIncluded<>(services, mStateFactory, fstOperand, sndOperand)).getCounterexample();
 		if (counterexample != null) {
 			mCounterexample = counterexample.getNestedLassoWord();
 			return false;
@@ -177,11 +237,6 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 	
 	private boolean checkEquivalenceImprecisely() throws AutomataLibraryException {
-		// We first do a semi-test for finite-word language equivalence, which is a sufficient criterion.
-		if (checkFiniteWordEquivalence()) {
-			return true;
-		}
-		
 		// extract some lasso words from the first automaton and check them on the second automaton
 		if (!extractAndCheckLassoWords(mFstOperand, mSndOperand)) {
 			return false;
@@ -200,14 +255,23 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return true;
 	}
 	
-	private boolean checkFiniteWordEquivalence() throws AutomataLibraryException {
-		final IsEquivalent<LETTER, STATE> isEquivalent =
-				new IsEquivalent<>(mServices, mStateFactory, mFstOperand, mSndOperand);
-		if (!isEquivalent.getResult()) {
-			mCounterexample = new NestedLassoWord<>(isEquivalent.getCounterexample(), new NestedWord<>());
-			return false;
+	private boolean checkEquivalenceDynamically() throws AutomataLibraryException {
+		boolean tryCompleteTest = mFstOperand.size() <= MAXIMUM_AUTOMATON_SIZE_FOR_DYNAMIC_TEST
+				&& mSndOperand.size() <= MAXIMUM_AUTOMATON_SIZE_FOR_DYNAMIC_TEST;
+		tryCompleteTest = tryCompleteTest || (new IsDeterministic<>(mServices, mFstOperand).getResult()
+				&& new IsDeterministic<>(mServices, mSndOperand).getResult());
+		if (tryCompleteTest) {
+			try {
+				return checkEquivalencePrecisely(
+						new AutomataLibraryServices(mServices, TIMEOUT_MILLISECONDS_FOR_DYNAMIC_TEST));
+			} catch (final AutomataOperationCanceledException e) {
+				// fall back to incomplete test in case of timeout
+			}
 		}
-		return true;
+		if (!mServices.getProgressAwareTimer().continueProcessing()) {
+			throw new AutomataOperationCanceledException(getClass());
+		}
+		return checkEquivalenceImprecisely();
 	}
 	
 	private boolean extractAndCheckLassoWords(final INestedWordAutomatonSimple<LETTER, STATE> source,
@@ -244,10 +308,10 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private boolean generateAndCompareRandomLassoWords() throws AutomataLibraryException {
 		final List<NestedLassoWord<LETTER>> randomNestedLassoWords = new ArrayList<>();
 		
-		final int numberOfOneSymbolWords = 6;
+		final int numberOfOneSymbolWords = NUMBER_OF_ONE_SYMBOL_RANDOM_WORDS;
 		addRandomLassoWords(randomNestedLassoWords, 1, numberOfOneSymbolWords);
 		
-		final int numberOfTwoSymbolWords = 11;
+		final int numberOfTwoSymbolWords = NUMBER_OF_TWO_SYMBOL_RANDOM_WORDS;
 		addRandomLassoWords(randomNestedLassoWords, 2, numberOfTwoSymbolWords);
 		
 		// compare the behavior on the random lasso words

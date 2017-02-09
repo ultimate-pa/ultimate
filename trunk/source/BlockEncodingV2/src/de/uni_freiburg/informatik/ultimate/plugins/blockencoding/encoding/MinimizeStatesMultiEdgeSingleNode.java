@@ -39,9 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  * Moderately aggressive minimization. Tries to remove states that have exactly one predecessor and one successor state
@@ -51,21 +48,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  *
  */
 public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
-	
+
 	public MinimizeStatesMultiEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funIsAccepting) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting);
 	}
-	
+
 	@Override
 	protected Collection<? extends IcfgLocation> processCandidate(final IIcfg<?> icfg, final IcfgLocation target,
 			final Set<IcfgLocation> closed) {
-		
+
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {
 			return target.getOutgoingNodes();
 		}
-		
+
 		// this node has exactly one predecessor and one successor, but may have
 		// more edges
 		// so we have the incoming edges
@@ -73,46 +70,46 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		// and the outoging edges
 		// eo = (q2,sto,q3) in Eo
 		// and we will try to replace them by |Ei| * |Eo| edges
-		
+
 		// a precondition is that there is only one predecessor and one
 		// successor, so this is enough to get it
-		final BoogieIcfgLocation pred = (BoogieIcfgLocation) target.getIncomingEdges().get(0).getSource();
-		final BoogieIcfgLocation succ = (BoogieIcfgLocation) target.getOutgoingEdges().get(0).getTarget();
-		
+		final IcfgLocation pred = target.getIncomingEdges().get(0).getSource();
+		final IcfgLocation succ = target.getOutgoingEdges().get(0).getTarget();
+
 		if (!isNotNecessary(target) && !isOneNecessary(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}
-		
+
 		if (!areCombinableEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// the edges do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}
-		
+
 		// all conditions are met so we can start with creating new edges
 		// for each ei from Ei and for each eo from Eo we add a new edge
 		// (q1,st1;st2,q3)
-		
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    will remove " + target.getDebugIdentifier());
 		}
-		
+
 		final List<IcfgEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
 		final List<IcfgEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
-		
+
 		for (final IcfgEdge predEdge : predEdges) {
 			predEdge.disconnectSource();
 			predEdge.disconnectTarget();
 		}
-		
+
 		for (final IcfgEdge succEdge : succEdges) {
 			succEdge.disconnectSource();
 			succEdge.disconnectTarget();
 		}
-		
+
 		int newEdges = 0;
 		for (final IcfgEdge predEdge : predEdges) {
-			final CodeBlock predCB = (CodeBlock) predEdge;
+			final IcfgEdge predCB = predEdge;
 			if (predCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("    already infeasible: " + predCB);
@@ -120,29 +117,28 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 				continue;
 			}
 			for (final IcfgEdge succEdge : succEdges) {
-				final CodeBlock succCB = (CodeBlock) succEdge;
-				
+				final IcfgEdge succCB = succEdge;
+
 				if (succCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("    already infeasible: " + succCB);
 					}
 					continue;
 				}
-				final SequentialComposition seqComp =
-						getEdgeBuilder().constructSequentialComposition(pred, succ, predCB, succCB);
+				final IcfgEdge seqComp = getEdgeBuilder().constructSequentialComposition(pred, succ, predCB, succCB);
 				rememberEdgeMapping(seqComp, predCB);
 				rememberEdgeMapping(seqComp, succCB);
 				newEdges++;
 			}
 		}
-		
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed " + (predEdges.size() + succEdges.size()) + ", added " + newEdges + " edges");
 		}
-		
+
 		mRemovedEdges += predEdges.size() + succEdges.size();
 		// we added new edges to pred, we have to recheck them now
 		return pred.getOutgoingNodes();
 	}
-	
+
 }

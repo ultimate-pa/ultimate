@@ -9,6 +9,7 @@ FiniteAutomaton tracesOfTs = (
          (green "{}" red)
      }
 );
+
 print(tracesOfTs);
 
 FiniteAutomaton badBehaviors = (
@@ -18,14 +19,15 @@ FiniteAutomaton badBehaviors = (
      finalStates = {q1},
      transitions = {
          (q0 "{}" q0)
-		 (q0 "{GREEN}" q0)
+         (q0 "{GREEN}" q0)
          (q0 "{}" q1)
-		 (q0 "{}" q1)
-		 (q1 "{GREEN}" q2)
+         (q0 "{}" q1)
+         (q1 "{GREEN}" q2)
          (q2 "{}" q2)
-		 (q2 "{GREEN}" q2)
+         (q2 "{GREEN}" q2)
      }
 );
+
 print(badBehaviors);
 
 
@@ -35,4 +37,3 @@ print(inter);
 
 boolean empty = BuchiIsEmpty(inter);
 print(empty);
-
