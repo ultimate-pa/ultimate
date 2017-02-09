@@ -39,20 +39,14 @@ assert(reduceBuchiFairDirectSimulationSize == 2);
 assert(reduceBuchiFairSimulationSize == 2);
 
 NestedWordAutomaton nwa = (
-	alphabet = {"a2" "a3" "a5" "a6" "a7" },
-	states = {"q_1" "q_2" "qI_1" },
-	initialStates = {"qI_1" },
+	alphabet = {a b},
+	states = {q0 q1 q2},
+	initialStates = {q0},
 	finalStates = {},
 	transitions = {
-		("q_1" "a2" "q_2")
-		("q_1" "a3" "q_1")
-		("q_1" "a5" "q_1")
-		("q_1" "a6" "q_1")
-		("q_1" "a7" "q_1")
-		("qI_1" "a2" "q_2")
-		("qI_1" "a3" "q_1")
-		("qI_1" "a5" "q_1")
-		("qI_1" "a6" "q_1")
-		("qI_1" "a7" "q_1")
+		(q0 a q1)
+		(q0 b q2)
+		(q1 a q1)
+		(q1 b q2)
 	}
 );
