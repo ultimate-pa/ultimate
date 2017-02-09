@@ -50,7 +50,7 @@ public class CommandLineArgs {
 	private static File validateDir(final String dirName) {
 		final File dir = new File(dirName);
 		if (!dir.isDirectory())
-			throw new IllegalArgumentException(String.format("%1 is not a valid Directory.", dirName));
+			throw new IllegalArgumentException(String.format("%1$s is not a valid Directory.", dirName));
 		return dir;
 	}
 
