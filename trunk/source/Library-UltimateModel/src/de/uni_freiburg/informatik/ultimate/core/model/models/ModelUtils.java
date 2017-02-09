@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations.UnmergeableAnnotationsException;
 
 /**
  * Helper methods for Ultimate models.
@@ -88,12 +89,18 @@ public final class ModelUtils {
 						.flatMap(a -> a.getAnnotations().entrySet().stream()).collect(Collectors.toList());
 		final Map<String, IAnnotations> newElemAnnots = newElem.getPayload().getAnnotations();
 		for (final Entry<String, IAnnotations> oldElemAnnot : oldElemAnnots) {
-			final IAnnotations removedNewElemAnnot = newElemAnnots.put(oldElemAnnot.getKey(), oldElemAnnot.getValue());
-			if (removedNewElemAnnot != null) {
-				throw new UnsupportedOperationException("Annotations would be lost: " + oldElemAnnot.getKey());
-			}
-		}
 
+			final String key = oldElemAnnot.getKey();
+			final IAnnotations oldNewElemAnnot = newElemAnnots.get(key);
+			if (oldNewElemAnnot != null) {
+				try {
+					newElemAnnots.put(key, oldNewElemAnnot.merge(oldElemAnnot.getValue()));
+				} catch (final UnmergeableAnnotationsException e) {
+					// TODO: ignore this exception until the merge debate is concluded.
+				}
+			}
+			newElemAnnots.put(key, oldElemAnnot.getValue());
+		}
 	}
 
 	/**

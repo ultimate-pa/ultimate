@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /*
@@ -36,20 +36,53 @@ package de.uni_freiburg.informatik.ultimate.core.model.models.annotation;
 import java.io.Serializable;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+
 /**
- * IAnnotation
+ * {@link IAnnotations} is an interface that describes all objects that can be annotated to {@link IElement}s via
+ * {@link IPayload}.
  * 
  * @author Björn Buchhold
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface IAnnotations extends Serializable {
 
 	/**
-	 * Gets the annotations as a string-object mapping for use in output
-	 * plug-ins.
+	 * Gets the annotations as a string-object mapping for use in output plug-ins.
 	 * 
 	 * @return the annotations as string-object mapping
 	 */
 	Map<String, Object> getAnnotationsAsMap();
+
+	/**
+	 * Create a new IAnnotations object that contains information from this instance and another one.
+	 * 
+	 * @param other
+	 *            another {@link IAnnotations} instance.
+	 * @return A combined {@link IAnnotations} instance.
+	 */
+	default IAnnotations merge(final IAnnotations other) {
+		if (other == null) {
+			return this;
+		}
+		throw new UnmergeableAnnotationsException("Cannot merge " + getClass() + " with " + other.getClass());
+	}
+
+	/**
+	 * An {@link UnmergeableAnnotationsException} is thrown if two {@link IAnnotations} instances cannot be merged.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static class UnmergeableAnnotationsException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public UnmergeableAnnotationsException(final String msg) {
+			super(msg);
+		}
+	}
 
 }
