@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
+	private static final String INDENT = "    ";
+
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funIsAccepting) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting);
@@ -88,7 +90,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// we add a new edge (qi,sti;stj,qj)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will try to remove " + target.getDebugIdentifier());
+			mLogger.debug(INDENT + "will try to remove " + target.getDebugIdentifier());
 		}
 
 		final List<Pair<IcfgEdge, IcfgEdge>> pairs = getEdgePairs(target);
@@ -109,6 +111,10 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			if (first.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
 					|| second.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				// we will remove these edges but we wont add a new one
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(INDENT + "removing " + first);
+					mLogger.debug(INDENT + "removing " + second);
+				}
 				continue;
 			}
 			constructors.add(new EdgeConstructor(first, second));
@@ -119,7 +125,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			closed.remove(first.getSource());
 		}
 
-		constructors.stream().forEach(a -> a.constructSequentialComposition());
+		constructors.stream().forEach(EdgeConstructor::constructSequentialComposition);
 
 		final int removeE = disconnectEdges(toRemove);
 		if (mLogger.isDebugEnabled()) {
@@ -176,6 +182,14 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 		private IcfgEdge constructSequentialComposition() {
 			final IcfgEdge newEdge = getEdgeBuilder().constructSequentialComposition(mSource, mTarget, mFirst, mSecond);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(INDENT + "replacing");
+				mLogger.debug(INDENT + mFirst);
+				mLogger.debug(INDENT + mSecond);
+				mLogger.debug(INDENT + "with");
+				mLogger.debug(INDENT + newEdge);
+			}
+
 			rememberEdgeMapping(newEdge, mFirst);
 			rememberEdgeMapping(newEdge, mSecond);
 			return newEdge;

@@ -58,10 +58,9 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
-			if (closed.contains(current)) {
+			if (!closed.add(current)) {
 				continue;
 			}
-			closed.add(current);
 			edges.addAll(current.getTarget().getOutgoingEdges());
 			checkEdge(current);
 		}
@@ -72,19 +71,19 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 		return icfg;
 	}
 
-	private void checkEdge(final IcfgEdge cb) {
-		if (cb instanceof IIcfgCallTransition<?> || cb instanceof IIcfgReturnTransition<?, ?>) {
+	private void checkEdge(final IcfgEdge edge) {
+		if (edge instanceof IIcfgCallTransition<?> || edge instanceof IIcfgReturnTransition<?, ?>) {
 			return;
 		}
 
-		final Infeasibility result = cb.getTransformula().isInfeasible();
+		final Infeasibility result = edge.getTransformula().isInfeasible();
 
 		switch (result) {
 		case INFEASIBLE:
-			mLogger.debug("Removing " + result + ": " + cb);
-			cb.disconnectSource();
-			cb.disconnectTarget();
-			mRemovedEdges++;
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Removing " + result + ": " + edge);
+			}
+			removeEdge(edge);
 			break;
 		case NOT_DETERMINED:
 		case UNPROVEABLE:
@@ -92,6 +91,12 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 		default:
 			throw new IllegalArgumentException();
 		}
+	}
+
+	private void removeEdge(final IcfgEdge edge) {
+		edge.disconnectSource();
+		edge.disconnectTarget();
+		mRemovedEdges++;
 	}
 
 	@Override

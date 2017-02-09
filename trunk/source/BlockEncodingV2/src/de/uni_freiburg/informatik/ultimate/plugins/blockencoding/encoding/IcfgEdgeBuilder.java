@@ -109,6 +109,8 @@ public class IcfgEdgeBuilder {
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
 				simplify, elimQuants, false, mXnfConversionTechnique, mSimplificationTechnique, transFormulas);
 		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
 	}
@@ -125,6 +127,8 @@ public class IcfgEdgeBuilder {
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
 		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, parallelTf);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(edges, rtr);
 		return rtr;
 	}
@@ -156,7 +160,8 @@ public class IcfgEdgeBuilder {
 		} else {
 			throw new UnsupportedOperationException("Unknown IcfgEdge subtype");
 		}
-
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldEdge, rtr);
 		return rtr;
 	}

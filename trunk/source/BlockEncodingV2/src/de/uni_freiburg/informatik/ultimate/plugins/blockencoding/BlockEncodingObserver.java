@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.Pre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -191,52 +192,53 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private BasicIcfg<IcfgLocation> createIcfgCopy(final IcfgEdgeBuilder edgeBuilder,
 			final IIcfg<? extends IcfgLocation> icfg) {
-		final BasicIcfg<IcfgLocation> duplicate =
+		final BasicIcfg<IcfgLocation> newIcfg =
 				new BasicIcfg<>(icfg.getIdentifier() + "_BEv2", icfg.getCfgSmtToolkit(), IcfgLocation.class);
-		ModelUtils.copyAnnotations(icfg, duplicate);
+		ModelUtils.copyAnnotations(icfg, newIcfg);
 
 		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
-		final Set<IIcfgReturnTransition<?, ?>> openReturns = new HashSet<>();
+		final Set<Pair<IcfgLocation, IcfgEdge>> openReturns = new HashSet<>();
+		// first, copy all locations
 		while (iter.hasNext()) {
-			final IcfgLocation current = iter.next();
-			final String proc = current.getProcedure();
-			final IcfgLocation currentDuplicate = new IcfgLocation(current.getDebugIdentifier(), proc);
-			ModelUtils.copyAnnotations(current, currentDuplicate);
+			final IcfgLocation oldLoc = iter.next();
+			final String proc = oldLoc.getProcedure();
+			final IcfgLocation newLoc = new IcfgLocation(oldLoc.getDebugIdentifier(), proc);
+			ModelUtils.copyAnnotations(oldLoc, newLoc);
 
 			final boolean isError = icfg.getProcedureErrorNodes().get(proc) != null
-					&& icfg.getProcedureErrorNodes().get(proc).contains(current);
-			duplicate.addLocation(currentDuplicate, icfg.getInitialNodes().contains(current), isError,
-					current.equals(icfg.getProcedureEntryNodes().get(proc)),
-					current.equals(icfg.getProcedureExitNodes().get(proc)), icfg.getLoopLocations().contains(current));
-			old2new.put(current, currentDuplicate);
+					&& icfg.getProcedureErrorNodes().get(proc).contains(oldLoc);
+			newIcfg.addLocation(newLoc, icfg.getInitialNodes().contains(oldLoc), isError,
+					oldLoc.equals(icfg.getProcedureEntryNodes().get(proc)),
+					oldLoc.equals(icfg.getProcedureExitNodes().get(proc)), icfg.getLoopLocations().contains(oldLoc));
+			old2new.put(oldLoc, newLoc);
 		}
 
+		// second, add all non-return edges
 		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
-			final IcfgLocation source = nodePair.getValue();
-			for (final IcfgEdge outEdge : nodePair.getKey().getOutgoingEdges()) {
-				if (outEdge instanceof IIcfgReturnTransition<?, ?>) {
+			final IcfgLocation newSource = nodePair.getValue();
+			for (final IcfgEdge oldEdge : nodePair.getKey().getOutgoingEdges()) {
+				if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
 					// delay creating returns until everything else is processed
-					openReturns.add((IIcfgReturnTransition<?, ?>) outEdge);
+					openReturns.add(new Pair<>(newSource, oldEdge));
 				} else {
-					createEdgeCopy(edgeBuilder, old2new, source, outEdge);
+					createEdgeCopy(edgeBuilder, old2new, newSource, oldEdge);
 				}
 			}
 		}
 
-		// copy delayed returns
-		openReturns.stream().forEach(a -> createEdgeCopy(edgeBuilder, old2new, a.getSource(), (IcfgEdge) a));
+		// third, add all previously ignored return edges
+		openReturns.stream().forEach(a -> createEdgeCopy(edgeBuilder, old2new, a.getFirst(), a.getSecond()));
 
-		return duplicate;
+		return newIcfg;
 	}
 
 	private void createEdgeCopy(final IcfgEdgeBuilder edgeBuilder, final Map<IcfgLocation, IcfgLocation> old2new,
-			final IcfgLocation source, final IcfgEdge outEdge) {
-		final IcfgLocation target = old2new.get(outEdge.getTarget());
-		final IcfgEdge newEdge = edgeBuilder.constructCopy(source, target, outEdge);
-		newEdge.setSource(source);
-		newEdge.setTarget(target);
-		mBacktranslator.mapEdges(newEdge, outEdge);
+			final IcfgLocation newSource, final IcfgEdge oldEdge) {
+		final IcfgLocation newTarget = old2new.get(oldEdge.getTarget());
+		assert newTarget != null;
+		final IcfgEdge newEdge = edgeBuilder.constructCopy(newSource, newTarget, oldEdge);
+		mBacktranslator.mapEdges(newEdge, oldEdge);
 	}
 
 	private List<Supplier<IEncoder<IcfgLocation>>> getEncoderProviders(final IPreferenceProvider ups,
@@ -313,7 +315,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final String proc = node.getProcedure();
 		final Set<?> errorNodes = icfg.getProcedureErrorNodes().get(proc);
-		if (!errorNodes.isEmpty()) {
+		if (errorNodes != null && !errorNodes.isEmpty()) {
 			return errorNodes.contains(node);
 		}
 
