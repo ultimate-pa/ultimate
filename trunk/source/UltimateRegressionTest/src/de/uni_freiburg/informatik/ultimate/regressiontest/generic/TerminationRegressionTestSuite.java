@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class TerminationRegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final int TIMEOUT = 20_000;
+
 	public TerminationRegressionTestSuite() {
 		super();
-		mTimeout = 20 * 1000;
+		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		mIncludeFilterRegex = ".*(lassos|termination).*";

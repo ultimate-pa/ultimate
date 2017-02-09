@@ -20,22 +20,19 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE GUILoggingWindow plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE GUILoggingWindow plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE GUILoggingWindow plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.gui.views;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Arrays;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
@@ -64,7 +61,16 @@ import de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindowAppender;
  */
 public class LoggingView extends ViewPart {
 
+	private static final int RGB_LENGTH = 3;
+	private static final int RGB_BLUE = 255;
+	private static final int RGB_GREEN = 255;
+	private static final int RGB_RED = 255;
+	private static final int FONT_SIZE = 10;
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.views.LoggingView";
+	private static final String[] RELEVANT_EVENTS =
+			new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
+					CorePreferenceInitializer.LABEL_COLOR_INFO, CorePreferenceInitializer.LABEL_COLOR_WARNING,
+					CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL };
 
 	private ILoggingService mLoggingService;
 	private Writer mLastWriter;
@@ -79,44 +85,30 @@ public class LoggingView extends ViewPart {
 	private Color mColorFatal;
 
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		mOldLineCount = 0;
 		parent.setLayout(new GridLayout());
 		mStyledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
-		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), "Courier", 10, SWT.NORMAL));
+		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), "Courier", FONT_SIZE, SWT.NORMAL));
 		mStyledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		mStyledText.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(final ModifyEvent e) {
-				mStyledText.setSelection(mStyledText.getCharCount());
-			}
-		});
+		mStyledText.addModifyListener(e -> mStyledText.setSelection(mStyledText.getCharCount()));
 	}
 
 	public void initializeLogging(final ILoggingService service) {
-		if(service == null){
+		if (service == null) {
 			throw new IllegalArgumentException("No service present");
 		}
 		mLoggingService = service;
-		renewWriter();
 		service.getControllerLogger().info("Activated GUI Logging Window for Log4j Subsystem");
 
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
 		final RcpPreferenceProvider preferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		preferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
-			@Override
-			public void preferenceChange(PreferenceChangeEvent event) {
-				// do things if it concerns the loggers
-				final String ek = event.getKey();
-				if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)) {
-					refreshPreferenceProperties();
-				}
+		preferenceStore.addPreferenceChangeListener(event -> {
+			// do things if it concerns the loggers
+			final String ek = event.getKey();
+			if (Arrays.stream(RELEVANT_EVENTS).anyMatch(ek::equals)) {
+				refreshPreferenceProperties();
 			}
 		});
 
@@ -136,9 +128,9 @@ public class LoggingView extends ViewPart {
 	 * writes a string to the textwidget
 	 * 
 	 * @param s
-	 *            - the string .. callers should prefix with "\n" if they want new lines..
+	 *            the string that should be written. Callers should add their own linebreaks.
 	 */
-	public void write(String s) {
+	public void write(final String s) {
 		mStyledText.append(s);
 		for (int i = mOldLineCount; i < mStyledText.getLineCount(); ++i) {
 			final String line = mStyledText.getLine(i);
@@ -148,15 +140,15 @@ public class LoggingView extends ViewPart {
 			}
 			final String third = splits[2].trim();
 
-			if (third.equals("DEBUG")) {
+			if ("DEBUG".equals(third)) {
 				mStyledText.setLineBackground(i, 1, mColorDebug);
-			} else if (third.equals("INFO")) {
+			} else if ("INFO".equals(third)) {
 				mStyledText.setLineBackground(i, 1, mColorInfo);
-			} else if (third.equals("WARN")) {
+			} else if ("WARN".equals(third)) {
 				mStyledText.setLineBackground(i, 1, mColorWarning);
-			} else if (third.equals("ERROR")) {
+			} else if ("ERROR".equals(third)) {
 				mStyledText.setLineBackground(i, 1, mColorError);
-			} else if (third.equals("FATAL")) {
+			} else if ("FATAL".equals(third)) {
 				mStyledText.setLineBackground(i, 1, mColorFatal);
 			}
 		}
@@ -175,7 +167,7 @@ public class LoggingView extends ViewPart {
 			try {
 				mLastWriter.close();
 			} catch (final IOException e) {
-				e.printStackTrace();
+				// ignore this IO exception
 			}
 		}
 		super.dispose();
@@ -183,7 +175,7 @@ public class LoggingView extends ViewPart {
 
 	@Override
 	public void setFocus() {
-		// TODO Auto-generated method stub
+		// not used
 	}
 
 	private void renewWriter() {
@@ -191,8 +183,8 @@ public class LoggingView extends ViewPart {
 			mLoggingService.removeWriter(mLastWriter);
 		}
 		mLastWriter = GuiLoggingWindowAppender.createWriter();
-		final String layout = new RcpPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
+		final String layout =
+				new RcpPreferenceProvider(Activator.PLUGIN_ID).getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		final ILogger logger = mLoggingService.getControllerLogger();
 		mLoggingService.addWriter(mLastWriter, layout);
 		logger.debug("Renewed GUI Logging Window");
@@ -215,21 +207,21 @@ public class LoggingView extends ViewPart {
 	 *            Color as "red,green,blue" where 0 <= red, green, blue <= 255
 	 * @return a Color object with the given colour
 	 */
-	private Color colorFromString(String colorString) {
+	private static Color colorFromString(final String colorString) {
 		final String[] channels = colorString.split(",");
-		if (channels.length >= 3) {
+		if (channels.length >= RGB_LENGTH) {
 			Color color;
 			try {
 				color = new Color(Display.getDefault(), Integer.parseInt(channels[0]), Integer.parseInt(channels[1]),
 						Integer.parseInt(channels[2]));
 			} catch (final NumberFormatException e) {
-				color = new Color(Display.getDefault(), 255, 255, 255);
+				color = new Color(Display.getDefault(), RGB_RED, RGB_GREEN, RGB_BLUE);
 			}
 			return color;
 		}
 
 		// default colour: white
-		return new Color(Display.getDefault(), 255, 255, 255);
+		return new Color(Display.getDefault(), RGB_RED, RGB_GREEN, RGB_BLUE);
 	}
 
 }

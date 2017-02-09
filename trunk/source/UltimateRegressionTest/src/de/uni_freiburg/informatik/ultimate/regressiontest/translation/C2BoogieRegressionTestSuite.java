@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Regression Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Regression Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Regression Test Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -39,20 +39,18 @@ import de.uni_freiburg.informatik.ultimate.test.decider.TranslationTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * This testsuite tests whether the CACSL2BoogieTranslator translates C programs
- * to correct Boogie code. It runs CACSL2BoogieTranslator and BoogiePrinter on C
- * programs and compares the resulting Boogie file with a reference file.
+ * This testsuite tests whether the CACSL2BoogieTranslator translates C programs to correct Boogie code. It runs
+ * CACSL2BoogieTranslator and BoogiePrinter on C programs and compares the resulting Boogie file with a reference file.
  * 
  * <p>
- * The result of this test and of the comparison is decided in
- * {@link TranslationTestResultDecider}.
+ * The result of this test and of the comparison is decided in {@link TranslationTestResultDecider}.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static String sRootFolder = TestUtil.getPathFromTrunk("examples/CToBoogieTranslation");
+	private static final String ROOT_FOLDER = TestUtil.getPathFromTrunk("examples/CToBoogieTranslation");
 
 	private static final long DEFAULT_TIMEOUT_MILLIS = 5000;
 	private static final String TEMPORARY_BOOGIE_FILENAME_PATTERN = ".*regression.*BoogiePrinter_.*UID.*";
@@ -63,34 +61,35 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 	public C2BoogieRegressionTestSuite() {
 		super();
 		mTimeout = DEFAULT_TIMEOUT_MILLIS;
-		mRootFolder = sRootFolder;
+		mRootFolder = ROOT_FOLDER;
 		mFiletypesToConsider = new String[] { ".c" };
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new TranslationTestResultDecider(runDefinition.selectPrimaryInputFile());
 	}
 
 	/**
-	 * Deletes the temporary Boogie files that have been created after the
-	 * execution of this testsuite. Will be called by the JUnit framework.
+	 * Deletes the temporary Boogie files that have been created after the execution of this testsuite. Will be called
+	 * by the JUnit framework.
 	 */
 	@AfterClass
 	public static void cleanupBoogiePrinterFiles() {
 
-		final File root = getRootFolder(sRootFolder);
+		final File root = getRootFolder(ROOT_FOLDER);
 
 		Collection<File> files = TestUtil.getFiles(root, new String[] { ".bpl" });
 		files = TestUtil.filterFiles(files, TEMPORARY_BOOGIE_FILENAME_PATTERN);
 
 		if (files.isEmpty()) {
-			System.out.println(String.format("No cleanup of %s necessary, no files matching the pattern %s have been found",
-					sRootFolder, TEMPORARY_BOOGIE_FILENAME_PATTERN));
+			System.out.println(
+					String.format("No cleanup of %s necessary, no files matching the pattern %s have been found",
+							ROOT_FOLDER, TEMPORARY_BOOGIE_FILENAME_PATTERN));
 			return;
 		}
 
-		System.out.println(String.format("Begin cleanup of %s", sRootFolder));
+		System.out.println(String.format("Begin cleanup of %s", ROOT_FOLDER));
 		for (final File f : files) {
 			try {
 				if (f.delete()) {

@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class SignedIntegerOverflowRegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final int TIMEOUT = 20_000;
+
 	public SignedIntegerOverflowRegressionTestSuite() {
 		super();
-		mTimeout = 20 * 1000;
+		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/SignedIntegerOverflow/");
 	}
 

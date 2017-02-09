@@ -52,7 +52,6 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 		// exclude paths that match the following regex
 		mExcludeFilterRegex =
 				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata).*";
-		// mIncludeFilterRegex = ".*BlockEncoding.*";
 	}
 
 	@Override

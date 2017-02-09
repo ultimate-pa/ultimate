@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class AutomataLibraryRegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final int TIMEOUT = 10_000;
+
 	public AutomataLibraryRegressionTestSuite() {
 		super();
-		mTimeout = 10 * 1000;
+		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		mIncludeFilterRegex = ".*(Automata).*";
