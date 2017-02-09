@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -129,18 +130,42 @@ public class ServerController implements IController<RunDefinition> {
 			return -1;
 		}
 
-		mLogger.debug("Starting Server on Port " + PORT);
-		mServer.start();
-		mLogger.debug("Waiting for connection...");
-
-		try {
-			final Client<GeneratedMessageV3> client = mServer.waitForConnection();
-			mProtoInterface = client.createInteractiveInterface();
-		} catch (ExecutionException | TimeoutException | InterruptedException e) {
-			mLogger.fatal("No connection established", e);
-			mServer.stop();
+		final File[] availableSettingsFiles = cla.getSettingsFilePath()
+				.listFiles((file, name) -> name.endsWith(".epf"));
+		if (availableSettingsFiles.length == 0) {
+			mLogger.error("No Settings files found in " + cla.getSettingsFilePath().getAbsolutePath());
 			return -1;
 		}
+
+		final File[] availableInputFiles = cla.getInputDirPath().listFiles(f -> f.isFile());
+		if (availableInputFiles.length == 0) {
+			mLogger.error("No Input files found in " + cla.getInputDirPath().getAbsolutePath());
+			return -1;
+		}
+
+		mLogger.debug("Starting Server on Port " + PORT);
+		mServer.start();
+
+		try {
+			initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			mLogger.fatal(e);
+			return -1;
+		} finally {
+			mLogger.info("Interactive Controller terminated - shutting down Server.");
+			mServer.stop();
+		}
+
+		return IApplication.EXIT_OK;
+	}
+
+	private void initWrapper(final ICore<RunDefinition> core,
+			Map<File, IToolchainData<RunDefinition>> availableToolchains, final File[] availableSettingsFiles,
+			final File[] availableInputFiles) throws InterruptedException, ExecutionException, TimeoutException {
+		mLogger.debug("Waiting for connection...");
+
+		final Client<GeneratedMessageV3> client = mServer.waitForConnection();
+		mProtoInterface = client.createInteractiveInterface();
 
 		mInternalInterface = ControllerConverter.get(mProtoInterface, mServer.getTypeRegistry());
 
@@ -157,15 +182,14 @@ public class ServerController implements IController<RunDefinition> {
 		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
 		mServer.getTypeRegistry().register(Controller.Choice.class);
 
-		File tcFile;
+		File settingsFile = requestChoice(availableSettingsFiles, File::getName);
 		try {
-			tcFile = requestChoice(tcFiles, File::getName);
-		} catch (InterruptedException | ExecutionException e) {
-			mLogger.fatal("No Toolchain chosen", e);
-			mServer.stop();
-			return -1;
+			core.loadPreferences(settingsFile.getAbsolutePath());
+		} catch (Exception e) {
+			throw new IllegalStateException("could not load settings", e);
 		}
 
+		File tcFile = requestChoice(tcFiles, File::getName);
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -175,16 +199,20 @@ public class ServerController implements IController<RunDefinition> {
 					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
 
-		
-		
-		// interactive.send(data);
+		File inputFile = requestChoice(availableInputFiles, File::getName);
 
-		// TODO: get settings, model
+		// TODO: allow custom settings for plugins chosen from toolchain (see
+		// cli controller)
 
-		// stop the server before exiting.
-		mServer.stop();
+		File[] inputFiles = new File[] { inputFile };
+		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
+		tcj.schedule();
+		tcj.join();
+	}
 
-		return IApplication.EXIT_OK;
+	private <T> T requestChoice(T[] choices, Function<T, String> toString)
+			throws InterruptedException, ExecutionException {
+		return requestChoice(Arrays.asList(choices), toString);
 	}
 
 	private <T> T requestChoice(List<T> choices, Function<T, String> toString)
@@ -216,43 +244,6 @@ public class ServerController implements IController<RunDefinition> {
 		CompletableFuture<Controller.File> tcFuture = mProtoInterface.request(Controller.File.class, tcRequest);
 
 		return tcFuture.get().getContent();
-	}
-
-	/**
-	 * Creates one or many {@link BasicToolchainJob}s, schedules them and waits
-	 * for their termination. Upon normal termination of this method, the
-	 * controller will terminate with success return code. During the execution
-	 * of a toolchain, {@link ICore} may perform asynchronous callbacks to
-	 * {@link #displayToolchainResults(IToolchainData, Map)} and/or
-	 * {@link #displayException(IToolchainData, String, Throwable)} to signal
-	 * results right before ending.
-	 *
-	 * @param core
-	 *            The {@link ICore} instance managing all toolchains.
-	 * @param cliParams
-	 *            The settings picked up from the command line
-	 * @param logger
-	 *            The {@link ILogger} instance that should be used to
-	 *            communicate with the user.
-	 * @param toolchain
-	 *            The user-selected toolchain.
-	 * @throws ParseException
-	 *             If lazy parsing of command line options fails (i.e., when
-	 *             accessing the input files stored in <code>cliParams</code>,
-	 *             this exception might be thrown.
-	 * @throws InvalidFileArgumentException
-	 *             If a file is not valid or does not exist, this exception
-	 *             might be thrown.
-	 * @throws InterruptedException
-	 *             If during toolchain execution the thread is interrupted, this
-	 *             exception might be thrown.
-	 */
-
-	protected void executeToolchain(final ICore<RunDefinition> core, final File[] inputFiles, final ILogger logger,
-			final IToolchainData<RunDefinition> toolchain) throws InterruptedException {
-		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, logger, inputFiles);
-		tcj.schedule();
-		tcj.join();
 	}
 
 	@Override
