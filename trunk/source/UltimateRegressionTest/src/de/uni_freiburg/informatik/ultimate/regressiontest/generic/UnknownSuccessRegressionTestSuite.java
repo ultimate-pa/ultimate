@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Regression Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Regression Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Regression Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
@@ -49,12 +49,12 @@ public class UnknownSuccessRegressionTestSuite extends AbstractRegressionTestSui
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/abstractInterpretation/");
 
-		// exclude paths that match the following regex 
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow)[\\s\\S])*";
+		// exclude paths that match the following regex
+		mExcludeFilterRegex = ".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow).*";
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
+	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, true);
 	}
 }
