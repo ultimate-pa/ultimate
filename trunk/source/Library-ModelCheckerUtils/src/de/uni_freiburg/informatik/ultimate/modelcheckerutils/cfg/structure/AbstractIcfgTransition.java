@@ -50,4 +50,21 @@ public abstract class AbstractIcfgTransition extends IcfgEdge {
 	public String getSucceedingProcedure() {
 		return super.getTarget().getProcedure();
 	}
+
+	@Override
+	public String toString() {
+		return toDebugString(null);
+	}
+
+	protected String toDebugString(final String suffix) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getSource());
+		sb.append("-->");
+		sb.append(getTarget());
+		if (suffix != null) {
+			sb.append(": ");
+			sb.append(suffix);
+		}
+		return sb.toString();
+	}
 }

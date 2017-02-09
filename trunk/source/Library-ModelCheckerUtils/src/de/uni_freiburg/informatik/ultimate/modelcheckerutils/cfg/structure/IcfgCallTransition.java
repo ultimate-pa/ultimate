@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,12 +45,17 @@ public class IcfgCallTransition extends AbstractIcfgTransition implements IIcfgC
 	public IcfgCallTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
 			final UnmodifiableTransFormula localVarsAssignment) {
 		super(source, target, payload);
-		mLocalVarsAssignment = localVarsAssignment;
+		mLocalVarsAssignment = Objects.requireNonNull(localVarsAssignment);
 	}
 
 	@Override
 	@Visualizable
 	public UnmodifiableTransFormula getLocalVarsAssignment() {
 		return mLocalVarsAssignment;
+	}
+
+	@Override
+	public String toString() {
+		return toDebugString(mLocalVarsAssignment.toString());
 	}
 }

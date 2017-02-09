@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -43,7 +45,7 @@ public class IcfgInternalTransition extends AbstractIcfgTransition implements II
 	public IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
 			final UnmodifiableTransFormula transFormula) {
 		super(source, target, payload);
-		mTransFormula = transFormula;
+		mTransFormula = Objects.requireNonNull(transFormula);
 	}
 
 	@Override
@@ -54,6 +56,6 @@ public class IcfgInternalTransition extends AbstractIcfgTransition implements II
 
 	@Override
 	public String toString() {
-		return mTransFormula.toString();
+		return toDebugString(mTransFormula.toString());
 	}
 }
