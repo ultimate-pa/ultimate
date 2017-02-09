@@ -75,6 +75,8 @@ public final class CFGInvariantsGenerator {
 		pmService = services.getProgressMonitorService();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPathInvariantsStatistics = pathInvariantsStats;
+		// Initialize statistics
+		mPathInvariantsStatistics.initializeStatistics();
 	}
 
 	/**
@@ -108,7 +110,7 @@ public final class CFGInvariantsGenerator {
 
 		mLogger.info("(Path)program has " + locationsAsList.size() + " locations");
 		// Set statistics data
-		mPathInvariantsStatistics.setNumOfLocations(locationsAsList.size());
+		mPathInvariantsStatistics.setNumOfPathProgramLocations(locationsAsList.size());
 		mPathInvariantsStatistics.setNumOfVars(allProgramVars.size());
 
 		final Map<IcfgLocation, IPT> locs2Patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
@@ -141,7 +143,7 @@ public final class CFGInvariantsGenerator {
 				return resultFromPreRound;
 			}
 		}
-		for (int round = 0; round < processor.getMaxRounds(); round++) {
+		for (int round = 1; round < processor.getMaxRounds(); round++) {
 
 			// Die if we run into timeouts or are otherwise requested to cancel.
 			if (!pmService.continueProcessing()) {
@@ -190,13 +192,14 @@ public final class CFGInvariantsGenerator {
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
 
-			// Set the benchmarks
-			mPathInvariantsStatistics.addPathInvariantsData(sumOfTemplateConjuncts, sumOfTemplateConjuncts);
-			// Set the current round
-			mPathInvariantsStatistics.setRound(round + 1);
-
 			// Attempt to find a valid configuration
 			LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
+			
+			// Prepare and submit the statistics
+			int DAGSizeSumOfConstraints = ((LinearInequalityInvariantPatternProcessor)processor).getDAGSizeOfConstraints();
+			prepareAndSetPathInvariantsStatistics(locationsAsList, startLocation, errorLocation, allProgramVars, varsFromUnsatCore, locs2LiveVariables, 
+					sumOfTemplateConjuncts, DAGSizeSumOfConstraints, round);
+			
 			if (constraintsResult == LBool.SAT) {
 				mLogger.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
 
@@ -248,6 +251,36 @@ public final class CFGInvariantsGenerator {
 
 
 
+	private void prepareAndSetPathInvariantsStatistics(List<IcfgLocation> locationsAsList, IcfgLocation startLoc, IcfgLocation errorLoc, Set<IProgramVar> allProgramVars,
+			Set<IProgramVar> varsFromUnsatCore, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, 
+			int numOfTemplateInequalitiesForThisRound, int DAGSizeSumOfConstraints, int round) {
+		int sumOfVarsPerLoc = allProgramVars.size() * (locationsAsList.size() - 2);
+		int diffOfLiveVariables = 0;
+		int diffOfUnsatCoreVars = 0;
+		if (varsFromUnsatCore == null) {
+			diffOfUnsatCoreVars = sumOfVarsPerLoc;
+		}
+		if (locs2LiveVariables == null) {
+			diffOfLiveVariables = sumOfVarsPerLoc;
+		}
+		for (IcfgLocation loc : locationsAsList) {
+			if (loc != startLoc && loc != errorLoc) {
+				if (varsFromUnsatCore != null) {
+					diffOfUnsatCoreVars += allProgramVars.size() - varsFromUnsatCore.size();
+				}
+				if (locs2LiveVariables != null) {
+					if (locs2LiveVariables.containsKey(loc)) {
+						diffOfLiveVariables += allProgramVars.size() - locs2LiveVariables.get(loc).size();
+					} else {
+						diffOfLiveVariables += allProgramVars.size();
+					}
+				}
+			}
+		}
+		mPathInvariantsStatistics.addStatisticsData(numOfTemplateInequalitiesForThisRound, sumOfVarsPerLoc, diffOfLiveVariables,
+				diffOfUnsatCoreVars, DAGSizeSumOfConstraints, round);
+	}
+
 	private <IPT> void addWP_PredicatesToInvariantPatterns(final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns,
 			final Map<IcfgLocation, Set<IProgramVar>> locs2PatternVariables,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2WP,
@@ -289,8 +322,8 @@ public final class CFGInvariantsGenerator {
 			final Set<IProgramVar> allProgramVars,
 			Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates, boolean usePredicates,
 			boolean addWPToEeachDisjunct) {
-		// Start round -1 (because it's the round with empty pattern for each location)
-		round = -1;
+		// Start round 0 (because it's the round with empty pattern for each location)
+		round = 0;
 		processor.startRound(round);
 		mLogger.info("Pre-round with empty patterns for intermediate locations started...");
 

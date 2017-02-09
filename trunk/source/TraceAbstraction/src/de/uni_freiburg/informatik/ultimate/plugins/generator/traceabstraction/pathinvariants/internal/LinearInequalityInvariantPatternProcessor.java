@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * A {@link IInvariantPatternProcessor} using patterns composed of linear inequalities on a linear approximation of the
@@ -154,6 +155,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private Map<Term, Rational> mPatternCoefficients2Values;
 	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2UnderApproximation;
 	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2OverApproximation;
+	
+	/**
+	 * Represents the sum of DAGSize of the constraints from the current round.
+	 */
+	private int mDAGSizeSumOfConstraints;
 
 
 	/**
@@ -211,7 +217,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mPostcondition = mLinearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, csToolkit.getManagedScript()));
 
-		mCurrentRound = -1;
+		mCurrentRound = 0;
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCoreForLocsAndVars = useUnsatCoreVarsForPatterns;
@@ -225,6 +231,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mPatternCoefficients2Values = null;
 		mLoc2UnderApproximation = loc2underApprox;
 		mLoc2OverApproximation = loc2overApprox;
+		mDAGSizeSumOfConstraints = 0;
 
 	}
 
@@ -239,7 +246,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mExitInvariantPattern = null;
 		mPrefixCounter = 0;
 		mCurrentRound = round;
-
+		mDAGSizeSumOfConstraints = 0;
 		mAllPatternCoefficients = new HashSet<>();
 		mLinearInequalities2Locations = new HashMap<>();
 	}
@@ -380,7 +387,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
 		}
-		return SmtUtils.and(mSolver, resultTerms);
+		Term result = SmtUtils.and(mSolver, resultTerms);
+		mDAGSizeSumOfConstraints += new DAGSize().treesize(result);
+		return result;
 	}
 
 	/**
@@ -560,14 +569,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			loc.add(predicate.getSourceLocation());
 			// Store linear inequalities from startPattern, later we may use them to extract the locations from the unsat core 
 			storeLinearInequalitiesToLocations(startInvariantDNF, loc);
-//			final Set<LinearInequality> lineqsFromStartPattern = new HashSet<>(startInvariantDNF.size());
-//			for (final Collection<LinearInequality> conjunct : startInvariantDNF) {
-//				lineqsFromStartPattern.addAll(conjunct);
-//			}
-//			if (!lineqsFromStartPattern.isEmpty()) {
-//				
-//				mLinearInequalities2Locations.put(lineqsFromStartPattern, loc);
-//			}
 		}
 		if (DEBUG_OUTPUT) {
 			mLogger.info(
@@ -587,16 +588,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			loc.add(predicate.getTargetLocation());
 			// Store linear inequalities from endPattern, later we may use them to extract the locations from the unsat core 
 			storeLinearInequalitiesToLocations(targetLocTemplateNegatedDNF, loc);
-//			
-//			final Set<LinearInequality> lineqsFromEndPattern = new HashSet<>(targetLocTemplateNegatedDNF.size());
-//			for (final Collection<LinearInequality> conjunct : targetLocTemplateNegatedDNF) {
-//				lineqsFromEndPattern.addAll(conjunct);
-//			}
-//			if (!lineqsFromEndPattern.isEmpty()) {
-//				final List<IcfgLocation> loc = new ArrayList<>();
-//				loc.add(predicate.getTargetLocation());
-//				mLinearInequalities2Locations.put(lineqsFromEndPattern, loc);
-//			}
 		}
 		final Collection<List<LinearInequality>> transitionDNF_ = transition.getPolyhedra();
 		final Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
@@ -612,14 +603,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			// Store linear inequalities from the transition, later we may use them to extract the locations from the unsat core 
 			storeLinearInequalitiesToLocations(transitionDNF, locs);
 			
-//			final Set<LinearInequality> lineqsFromTransition = new HashSet<>(transitionDNF.size());
-//			for (final Collection<LinearInequality> conjunct : transitionDNF) {
-//				lineqsFromTransition.addAll(conjunct);
-//			}
-//			final List<IcfgLocation> loc = new ArrayList<>();
-//			loc.add(predicate.getSourceLocation());
-//			loc.add(predicate.getTargetLocation());
-//			mLinearInequalities2Locations.put(lineqsFromTransition, loc);
 		}
 		if (PRINT_CONSTRAINTS) {
 			final StringBuilder sb = new StringBuilder();
@@ -821,6 +804,14 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	public Collection<TermVariable> getVarsFromUnsatCore() {
 		return mVarsFromUnsatCore;
 	}
+	
+	/**
+	 * Returns the DAGSize of the constraints for the current round.
+	 * @return
+	 */
+	public int getDAGSizeOfConstraints() {
+		return mDAGSizeSumOfConstraints;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -875,16 +866,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 				}
 
-
+				// Extract the corresponding locations for the current inequality "linq"
 				if (round >= 0) {
-					//					final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
-					//							.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
-					final Set<Set<LinearInequality>> setsContainingLinq = new HashSet<>();
-					for (Set<LinearInequality> key : mLinearInequalities2Locations.keySet()) {
-						if (key.contains(linq)) {
-							setsContainingLinq.add(key);
-						}
-					}
+					final Set<Set<LinearInequality>> setsContainingLinq = mLinearInequalities2Locations.keySet()
+							.stream().filter(key -> key.contains(linq)).collect(Collectors.toSet());
 					for (final Set<LinearInequality> s : setsContainingLinq) {
 						final List<IcfgLocation> locs = mLinearInequalities2Locations.get(s);
 						if (ADD_ONLY_SUCC_LOC_TO_UNSAT_CORE) {
@@ -914,13 +899,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 					}
 				}
 			}
-			// We may safely remove the initial and the error location
-			//				locsInUnsatCore.remove(mStartLocation);
-			//				locsInUnsatCore.remove(mErrorLocation);
 			mLocsInUnsatCore = locsInUnsatCore;
 			if (DEBUG_OUTPUT) {
 				mLogger.info("LocsInUnsatCore: " + locsInUnsatCore);
 			}
+			// Change for all locations the corresponding invariant patterns (i.e. increasing conjuncts and/or disjuncts)
 			if (round >= 0) {
 				mLogger.info("locsInUnsatCore2Frequency:" + locs2Frequency);
 				if (CHANGE_ONLY_MOST_FREQUENT_LOC) {
