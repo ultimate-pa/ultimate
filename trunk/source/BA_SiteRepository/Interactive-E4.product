@@ -35,10 +35,8 @@
       </win>
    </launcher>
 
-
    <vm>
    </vm>
-
 
    <plugins>
       <plugin id="com.github.jhoenicke.javacup"/>
@@ -53,8 +51,10 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.core.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.core"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.test" fragment="true"/>
@@ -80,6 +80,7 @@
       <plugin id="edu.uci.ics.jung"/>
       <plugin id="javax.xml"/>
       <plugin id="net.sf.javabdd"/>
+      <plugin id="org.apache.commons.cli"/>
       <plugin id="org.apache.commons.lang"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.apache.logging.log4j"/>
