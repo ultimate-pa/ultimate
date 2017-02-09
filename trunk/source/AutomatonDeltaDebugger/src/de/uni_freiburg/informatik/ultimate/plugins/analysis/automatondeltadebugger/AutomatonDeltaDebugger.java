@@ -33,10 +33,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
@@ -45,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.AutomatonDebuggerExamples.EOperationType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.AutomatonDebuggerTesters.EAutomatonDeltaDebuggerTestMode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractDebug.DebugPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractTester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CallTransitionShrinker;
@@ -80,14 +76,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * @param <STATE>
  *            state type
  */
-@SuppressWarnings("squid:S1200")
 public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 	
 	// debug mode
-	private final EAutomatonDeltaDebuggerOperationMode mOperationMode;
+	private final EAutomatonDeltaDebuggerTestMode mOperationMode;
 	// debugged operation
 	private final EOperationType mOperationType;
 	// internal debug policy
@@ -101,25 +96,9 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		/*
 		 * NOTE: Insert your own settings here.
 		 */
-		mOperationMode = EAutomatonDeltaDebuggerOperationMode.GENERAL;
+		mOperationMode = EAutomatonDeltaDebuggerTestMode.GENERAL;
 		mOperationType = EOperationType.MINIMIZE_NWA_MAXSAT2;
 		mDebugPolicy = DebugPolicy.BINARY;
-	}
-	
-	/**
-	 * Possible mode of the debugger.
-	 */
-	public enum EAutomatonDeltaDebuggerOperationMode {
-		/**
-		 * The debugger watches for any kind of error. The result might be a different error from the one originally
-		 * seen, but usually "any error is interesting".
-		 */
-		GENERAL,
-		/**
-		 * The debugger watches only for errors in the {@link IOperation#checkResult(IStateFactory)} method. All other
-		 * errors are not considered important.
-		 */
-		CHECK_RESULT
 	}
 	
 	@Override
@@ -130,87 +109,14 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final String creator = graphType.getCreator();
 		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
 			mLogger.info("Preparing to process automaton...");
-			final AbstractTester<LETTER, STATE> tester;
-			switch (mOperationMode) {
-				case GENERAL:
-					tester = getGeneralTester();
-					break;
-				
-				case CHECK_RESULT:
-					tester = getCheckResultTester();
-					break;
-				
-				default:
-					throw new IllegalArgumentException("Unknown mode.");
-			}
+			final AbstractTester<LETTER, STATE> tester =
+					new AutomatonDebuggerTesters<LETTER, STATE>(mServices).getTester(mOperationMode, mOperationType);
 			mObservers.add(new AutomatonDeltaDebuggerObserver<>(
 					mServices, tester, getShrinkersLoop(), getShrinkersBridge(),
 					getShrinkersEnd(), mDebugPolicy));
 		} else {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
-	}
-	
-	/**
-	 * Example tester for debugging general problems.
-	 * 
-	 * @return tester which listens for any throwable
-	 */
-	private AbstractTester<LETTER, STATE> getGeneralTester() {
-		// 'null' stands for any exception
-		final Throwable throwable = null;
-		
-		return new AbstractTester<LETTER, STATE>(throwable) {
-			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
-				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
-				
-				getIOperation(automaton, factory);
-			}
-		};
-	}
-	
-	/**
-	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
-	 * 
-	 * @return tester which debugs the checkResult method
-	 */
-	private AbstractTester<LETTER, STATE> getCheckResultTester() {
-		final String message = "'checkResult' failed";
-		final Throwable throwable = new DebuggerException(message);
-		
-		return new AbstractTester<LETTER, STATE>(throwable) {
-			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
-				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
-				
-				final IOperation<LETTER, STATE> op = getIOperation(automaton, factory);
-				
-				// throws a fresh exception iff checkResult() fails
-				if (!op.checkResult(factory)) {
-					throw throwable;
-				}
-			}
-		};
-	}
-	
-	/**
-	 * Constructs an {@link IOperation} object from the setting.
-	 * 
-	 * @param automaton
-	 *            automaton
-	 * @param factory
-	 *            state factory
-	 * @return IOperation instance
-	 * @throws Throwable
-	 *             when error occurs
-	 */
-	@SuppressWarnings("squid:S00112")
-	private IOperation<LETTER, STATE> getIOperation(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IMergeStateFactory<STATE> factory) throws Throwable {
-		final AutomatonDebuggerExamples<LETTER, STATE> examples = new AutomatonDebuggerExamples<>(mServices);
-		
-		return examples.getOperation(mOperationType, automaton, factory);
 	}
 	
 	/**

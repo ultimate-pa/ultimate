@@ -1,0 +1,52 @@
+// Author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// Date: 2017-02-09
+// 
+// Reduced form of ReduceNwaDirectSimulation_BreathlessWolf01.ats
+// This example showed that MinimizeDfaSimulation and ReduceNwaDirectSimulationB
+// do not have the same result for finite automata. In particular, there are no
+// accepting states in the automaton.
+
+NestedWordAutomaton preprocessed = removeUnreachable(nwa);
+
+int minimizeSevpaSize = numberOfStates(minimizeSevpa(preprocessed));
+int shrinkNwaSize = numberOfStates(shrinkNwa(preprocessed));
+int minimizeNwaPmaxSatSize = numberOfStates(minimizeNwaPmaxSat(preprocessed));
+int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetric(preprocessed));
+int minimizeDfaSimulationSize = numberOfStates(minimizeDfaSimulation(preprocessed));
+int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
+int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
+int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
+int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
+int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
+int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
+
+assert(minimizeSevpaSize == 2);
+assert(shrinkNwaSize == 2);
+assert(minimizeNwaPmaxSatSize == 2);
+assert(minimizeNwaPmaxSatAsymmetricSize == 2);
+assert(minimizeDfaSimulationSize == 3);
+assert(reduceNwaDirectSimulationSize == 2);
+assert(reduceNwaDirectSimulationBSize == 2);
+assert(reduceNwaDirectFullMultipebbleSimulationSize == 2);
+assert(buchiReduceSize == 2);
+assert(reduceNwaDelayedSimulationSize == 2);
+assert(reduceNwaDelayedSimulationBSize == 2);
+assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);
+assert(reduceBuchiFairDirectSimulationSize == 2);
+assert(reduceBuchiFairSimulationSize == 2);
+
+NestedWordAutomaton nwa = (
+	alphabet = {a b},
+	states = {q0 q1 q2},
+	initialStates = {q0},
+	finalStates = {},
+	transitions = {
+		(q0 a q1)
+		(q0 b q2)
+		(q1 a q1)
+		(q1 b q2)
+	}
+);
