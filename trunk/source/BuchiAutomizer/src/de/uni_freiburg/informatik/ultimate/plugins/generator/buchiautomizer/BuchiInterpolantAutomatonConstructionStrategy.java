@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiInterpolantAutomaton;
 
 /**
  * 
@@ -46,11 +46,11 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 		@Override
 		public List<BuchiInterpolantAutomatonConstructionStyle> getBiaConstrucionStyleSequence(final IPreferenceProvider pp) {
 			final BuchiInterpolantAutomaton mInterpolantAutomaton = 
-					pp.getEnum(PreferenceInitializer.LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.class);
+					pp.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.class);
 			final boolean mScroogeNondeterminismStem = 
-					pp.getBoolean(PreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_STEM);
+					pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_STEM);
 			final boolean mScroogeNondeterminismLoop = 
-					pp.getBoolean(PreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_LOOP);
+					pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SCROOGE_NONDETERMINISM_LOOP);
 			if ((mScroogeNondeterminismStem || mScroogeNondeterminismLoop)
 					&& mInterpolantAutomaton != BuchiInterpolantAutomaton.ScroogeNondeterminism) {
 				throw new IllegalArgumentException("illegal combination of settings");
@@ -59,9 +59,9 @@ public enum BuchiInterpolantAutomatonConstructionStrategy {
 					&& mInterpolantAutomaton == BuchiInterpolantAutomaton.ScroogeNondeterminism) {
 				throw new IllegalArgumentException("illegal combination of settings");
 			}
-			final boolean mBouncerStem = pp.getBoolean(PreferenceInitializer.LABEL_BOUNCER_STEM);
-			final boolean mBouncerLoop = pp.getBoolean(PreferenceInitializer.LABEL_BOUNCER_LOOP);
-			final boolean mCannibalizeLoop = pp.getBoolean(PreferenceInitializer.LABEL_CANNIBALIZE_LOOP);
+			final boolean mBouncerStem = pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_BOUNCER_STEM);
+			final boolean mBouncerLoop = pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_BOUNCER_LOOP);
+			final boolean mCannibalizeLoop = pp.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CANNIBALIZE_LOOP);
 			return Arrays.asList(new BuchiInterpolantAutomatonConstructionStyle[] {
 					new BuchiInterpolantAutomatonConstructionStyle(mInterpolantAutomaton, mBouncerStem, mBouncerLoop,
 							mScroogeNondeterminismStem, mScroogeNondeterminismLoop, mCannibalizeLoop) });

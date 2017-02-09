@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -252,13 +252,13 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSymbolTable = symbolTable;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
-		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
-		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GNTA_DIRECTIONS);
+		mRankAnalysisType = baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
+		mGntaAnalysisType = baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
+		mGntaDirections = baPref.getInt(BuchiAutomizerPreferenceInitializer.LABEL_GNTA_DIRECTIONS);
 
-		mTemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
-		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_SIMPLIFY);
-		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
+		mTemplateBenchmarkMode = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
+		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
+		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mInterpolation = interpolation;
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
@@ -608,12 +608,12 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 		final ILassoRankerPreferences pref = new DefaultLassoRankerPreferences() {
 			@Override
 			public boolean isDumpSmtSolverScript() {
-				return baPref.getBoolean(PreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
+				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
 			}
 
 			@Override
 			public String getPathOfDumpedScript() {
-				return baPref.getString(PreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
+				return baPref.getString(BuchiAutomizerPreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
 			}
 
 			@Override
@@ -633,39 +633,39 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 
 			@Override
 			public boolean isUseOldMapElimination() {
-				return baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
+				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
 			}
 
 			@Override
 			public boolean isMapElimAddInequalities() {
-				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
+				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
 			}
 
 			@Override
 			public boolean isMapElimOnlyTrivialImplicationsArrayWrite() {
 				return baPref
-						.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+						.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
 			}
 
 			@Override
 			public boolean isMapElimOnlyTrivialImplicationsIndexAssignment() {
 				return baPref.getBoolean(
-						PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
+						BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
 			}
 
 			@Override
 			public boolean isMapElimOnlyIndicesInFormula() {
-				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
+				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
 			}
 
 			@Override
 			public boolean isExternalSolver() {
 				switch (analysis) {
 				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
-					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
+					return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
 				}
 				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
-					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
+					return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
 				}
 				default:
 					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");
@@ -676,10 +676,10 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 			public String getExternalSolverCommand() {
 				switch (analysis) {
 				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
-					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
+					return baPref.getString(BuchiAutomizerPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
 				}
 				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
-					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
+					return baPref.getString(BuchiAutomizerPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
 				}
 				default:
 					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");

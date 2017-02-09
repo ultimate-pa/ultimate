@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 
 /**
  * Main class of Plug-In BuchiAutomizer
@@ -126,7 +126,7 @@ public class BuchiAutomizer implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new BuchiAutomizerPreferenceInitializer();
 	}
 
 	private boolean programContainsErrors(IResultService service) {

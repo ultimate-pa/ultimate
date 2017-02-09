@@ -84,8 +84,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -272,22 +272,22 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mUseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
-		mDifference = baPref.getBoolean(PreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
+		mUseDoubleDeckers = !baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_IGNORE_DOWN_STATES);
+		mDifference = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_DETERMINIZATION_ON_DEMAND);
 
-		mComplementationConstruction = baPref.getEnum(PreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
+		mComplementationConstruction = baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
 				BuchiComplementationConstruction.class);
 
 		mAutomataMinimizationAfterFeasbilityBasedRefinement =
-				baPref.getEnum(PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
+				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_FEASIBILITY_BASED_REFINEMENT,
 						Minimization.class);
 		mAutomataMinimizationAfterRankBasedRefinement = baPref.getEnum(
-				PreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT, Minimization.class);
+				BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATA_MINIMIZATION_AFTER_RANK_BASED_REFINEMENT, Minimization.class);
 		mInterpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				InterpolationTechnique.class);
 
 		InterpolationPreferenceChecker.check(Activator.PLUGIN_NAME, mInterpolation, mServices);
-		mConstructTermcompProof = baPref.getBoolean(PreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
+		mConstructTermcompProof = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (mConstructTermcompProof) {
 			mTermcompProofBenchmark = new TermcompProofBenchmark(mServices);
 		} else {
@@ -299,7 +299,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				mPref.getAutomataFormat(), mInterpolation, mServices, mLogger, mSimplificationTechnique,
 				mXnfConversionTechnique);
 		final BuchiInterpolantAutomatonConstructionStrategy biaConstructionStrategy =
-				baPref.getEnum(PreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
+				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_BIA_CONSTRUCTION_STRATEGY,
 						BuchiInterpolantAutomatonConstructionStrategy.class);
 		mBiaConstructionStyleSequence = biaConstructionStrategy.getBiaConstrucionStyleSequence(baPref);
 	}
