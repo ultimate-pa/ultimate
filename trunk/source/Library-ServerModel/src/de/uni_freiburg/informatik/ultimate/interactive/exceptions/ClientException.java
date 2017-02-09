@@ -7,5 +7,12 @@ package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
  *
  */
 public abstract class ClientException extends RuntimeException {
+	public ClientException() {
+	}
+	
+	public ClientException(String message) {
+		super(message);
+	}
+
 	private static final long serialVersionUID = -7083822127328710209L;
 }

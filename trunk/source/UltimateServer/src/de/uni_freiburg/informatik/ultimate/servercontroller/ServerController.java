@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.servercontroller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,11 +38,16 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.xml.bind.JAXBException;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
+import org.xml.sax.SAXException;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.TextFormat.ParseException;
@@ -58,10 +65,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.File.Request;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.CommandLineArgs;
@@ -107,16 +116,18 @@ public class ServerController implements IController<RunDefinition> {
 		try {
 			cla = CommandLineArgs.parse(args);
 		} catch (org.apache.commons.cli.ParseException e) {
-			mLogger.fatal(e.getMessage());
+			mLogger.error(e.getMessage());
+			mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
+			mLogger.error("--");
 			return -1;
 		}
 
 		// final File workingDir = RcpUtils.getWorkingDirectory();
-		// final Map<File, IToolchainData<RunDefinition>> availableToolchains =
-		// getAvailableToolchains(core, workingDir);
-		// if (availableToolchains.isEmpty()) {
-		// return -1;
-		// }
+		final Map<File, IToolchainData<RunDefinition>> availableToolchains = getAvailableToolchains(core,
+				cla.getToolchainDirPath());
+		if (availableToolchains.isEmpty()) {
+			return -1;
+		}
 
 		mLogger.debug("Starting Server on Port " + PORT);
 		mServer.start();
@@ -141,50 +152,56 @@ public class ServerController implements IController<RunDefinition> {
 		// mInternalInterface.send(new IllegalStateException("Funny test
 		// exception! :D"));
 
-		// final List<File> tcFiles = new
-		// ArrayList<>(availableToolchains.keySet());
-		//
-		// mServer.getTypeRegistry().register(Controller.ToolChains.class);
-		// mServer.getTypeRegistry().register(Controller.Choice.class);
-		//
-		// Builder tcBuilder = Controller.ToolChains.newBuilder();
-		// tcFiles.stream().map(File::getName).forEach(tcBuilder::addFileNames);
-		// CompletableFuture<Choice> choice =
-		// protoInteractiveInterface.request(Controller.Choice.class,
-		// tcBuilder.build());
-		//
-		// int choiceid = -1;
-		// try {
-		// choiceid = choice.get().getIndex();
-		// if (choiceid < 0 || choiceid > tcFiles.size()) {
-		// throw new ClientCrazyException();
-		// }
-		// } catch (InterruptedException | ExecutionException e) {
-		// e.printStackTrace();
-		// }
-		//
-		// File chosenFile = tcFiles.get(choiceid);
-		//
-		// mLogger.info(chosenFile);
+		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
-		// mLogger.info("The following toolchains are available:");
-		// for (final Entry<File, IToolchainData<RunDefinition>> entry :
-		// availableToolchains.entrySet()) {
-		// mLogger.info(entry.getKey());
-		// mLogger.info(indent + entry.getValue().getRootElement().getName());
-		// }
+		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
+		mServer.getTypeRegistry().register(Controller.Choice.class);
 
+		File tcFile;
+		try {
+			tcFile = requestChoice(tcFiles, File::getName);
+		} catch (InterruptedException | ExecutionException e) {
+			mLogger.fatal("No Toolchain chosen", e);
+			mServer.stop();
+			return -1;
+		}
+
+		try {
+			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
+		} catch (final FileNotFoundException e1) {
+			throw new IllegalStateException("Toolchain file not found at path: " + tcFile.getAbsolutePath());
+		} catch (final SAXException | JAXBException e1) {
+			throw new IllegalStateException(
+					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
+		}
+
+		
+		
 		// interactive.send(data);
 
-		// should cl args be used for settings (port)?
-		// final String[] args = Platform.getCommandLineArgs();
-
-		// TODO: get toolchain, settings, model
+		// TODO: get settings, model
 
 		// stop the server before exiting.
 		mServer.stop();
 
 		return IApplication.EXIT_OK;
+	}
+
+	private <T> T requestChoice(List<T> choices, Function<T, String> toString)
+			throws InterruptedException, ExecutionException {
+		Controller.Choice.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
+		choices.stream().map(toString).forEach(tcBuilder::addChoice);
+		CompletableFuture<Choice> choice = mProtoInterface.request(Controller.Choice.class, tcBuilder.build());
+
+		int choiceid = -1;
+
+		choiceid = choice.get().getIndex();
+		if (choiceid < 0 || choiceid > choices.size()) {
+			throw new ClientCrazyException(String.format("Choice index from Client not within bounds: %1$d", choiceid));
+		}
+		final T result = choices.get(choiceid);
+		mLogger.info("Client has chosen " + toString.apply(result));
+		return result;
 	}
 
 	/**
@@ -310,8 +327,11 @@ public class ServerController implements IController<RunDefinition> {
 
 		Map<File, IToolchainData<RunDefinition>> result = locator.locateToolchains();
 		if (result.isEmpty()) {
-			mLogger.fatal("There are no toolchains in Ultimates working directory" + workingDir);
+			mLogger.fatal("There are no toolchains in directory" + workingDir);
 		}
 		return result;
+	}
+
+	public class FatalControllerException extends Exception {
 	}
 }

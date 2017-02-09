@@ -4,11 +4,11 @@ Bundle-Name: UltimateServer
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.servercontroller;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: de.uni_freiburg.informatik.ultimate.server,
+Require-Bundle: org.apache.commons.cli,
+ de.uni_freiburg.informatik.ultimate.server,
  de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
- com.google.protobuf,
- de.uni_freiburg.informatik.ultimate.lib.util
+ com.google.protobuf
 Export-Package: de.uni_freiburg.informatik.ultimate.servercontroller
 Import-Package: org.apache.commons.cli
