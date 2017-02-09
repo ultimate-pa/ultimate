@@ -31,7 +31,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.xml.bind.JAXBException;
 
@@ -51,7 +49,6 @@ import org.eclipse.equinox.app.IApplication;
 import org.xml.sax.SAXException;
 
 import com.google.protobuf.GeneratedMessageV3;
-import com.google.protobuf.TextFormat.ParseException;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -85,8 +82,6 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
  */
 public class ServerController implements IController<RunDefinition> {
 
-	final static int PORT = 6789;
-
 	private ILogger mLogger;
 	private IInteractiveServer<GeneratedMessageV3> mServer;
 	private IToolchainData<RunDefinition> mToolchain;
@@ -101,7 +96,6 @@ public class ServerController implements IController<RunDefinition> {
 		}
 
 		mLogger = core.getCoreLoggingService().getControllerLogger();
-		mServer = new ProtoServer(mLogger, PORT);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Initializing ServerController...");
@@ -123,6 +117,8 @@ public class ServerController implements IController<RunDefinition> {
 			return -1;
 		}
 
+		mServer = new ProtoServer(mLogger, cla.getPort());
+
 		// final File workingDir = RcpUtils.getWorkingDirectory();
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains = getAvailableToolchains(core,
 				cla.getToolchainDirPath());
@@ -143,7 +139,7 @@ public class ServerController implements IController<RunDefinition> {
 			return -1;
 		}
 
-		mLogger.debug("Starting Server on Port " + PORT);
+		mLogger.debug("Starting Server on Port " + cla.getPort());
 		mServer.start();
 
 		try {
