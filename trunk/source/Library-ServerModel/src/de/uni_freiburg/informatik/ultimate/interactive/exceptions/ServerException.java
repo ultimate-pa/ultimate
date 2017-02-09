@@ -6,5 +6,11 @@ package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
  * @author Julian Jarecki
  *
  */
-public abstract class ServerException extends Exception {
+public abstract class ServerException extends RuntimeException {
+	private static final long serialVersionUID = -5783259998242495330L;
+
+	public ServerException(String string) {
+		super(string);
+	}
+
 }

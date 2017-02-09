@@ -12,6 +12,11 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	public ConverterRegistry() {
 	}
 
+	public void registerATypes(ITypeRegistry<IA> typeRegistry) {
+		mapAB.keySet().forEach(typeRegistry::register);
+		mapBA2.keySet().forEach(typeRegistry::register);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <A extends IA> IConverter<A, ? extends IB> getAB(Class<A> typeA) {

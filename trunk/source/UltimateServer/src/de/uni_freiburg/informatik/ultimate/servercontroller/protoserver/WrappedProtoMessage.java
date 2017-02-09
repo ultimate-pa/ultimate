@@ -9,8 +9,8 @@ import com.google.protobuf.GeneratedMessageV3;
 import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
-import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Writer;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message.Level;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.UnregisteredTypeException;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header;
 
@@ -122,6 +122,8 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 			public Writer<GeneratedMessageV3> setData(GeneratedMessageV3 data) {
 				final Class<? extends GeneratedMessageV3> dType = (Class<? extends GeneratedMessageV3>) data.getClass();
 				IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(dType);
+				if (rType == null)
+					throw new UnregisteredTypeException(dType);
 				builder.setDataType(rType.registeredName());
 				mData = data;
 				return this;

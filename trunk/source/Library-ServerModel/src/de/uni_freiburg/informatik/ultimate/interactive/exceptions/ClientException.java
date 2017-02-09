@@ -6,6 +6,6 @@ package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
  * @author Julian Jarecki
  *
  */
-public abstract class ClientException extends Exception {
+public abstract class ClientException extends RuntimeException {
 	private static final long serialVersionUID = -7083822127328710209L;
 }

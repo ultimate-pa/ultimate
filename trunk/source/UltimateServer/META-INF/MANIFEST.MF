@@ -11,3 +11,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.server,
  com.google.protobuf,
  de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.servercontroller
+Import-Package: org.apache.commons.cli

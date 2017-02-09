@@ -32,10 +32,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -60,8 +60,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
-import de.uni_freiburg.informatik.ultimate.server.IServer;
+import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.File.Request;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
+import de.uni_freiburg.informatik.ultimate.servercontroller.util.CommandLineArgs;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
 
 /**
@@ -77,6 +80,9 @@ public class ServerController implements IController<RunDefinition> {
 	private ILogger mLogger;
 	private IInteractiveServer<GeneratedMessageV3> mServer;
 	private IToolchainData<RunDefinition> mToolchain;
+
+	private IInteractive<Object> mInternalInterface;
+	private IInteractive<GeneratedMessageV3> mProtoInterface;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -95,22 +101,80 @@ public class ServerController implements IController<RunDefinition> {
 			mLogger.debug("ServerController version is " + RcpUtils.getVersion(Activator.PLUGIN_ID));
 		}
 
+		final String[] args = Platform.getCommandLineArgs();
+
+		final CommandLineArgs cla;
+		try {
+			cla = CommandLineArgs.parse(args);
+		} catch (org.apache.commons.cli.ParseException e) {
+			mLogger.fatal(e.getMessage());
+			return -1;
+		}
+
+		// final File workingDir = RcpUtils.getWorkingDirectory();
+		// final Map<File, IToolchainData<RunDefinition>> availableToolchains =
+		// getAvailableToolchains(core, workingDir);
+		// if (availableToolchains.isEmpty()) {
+		// return -1;
+		// }
+
 		mLogger.debug("Starting Server on Port " + PORT);
 		mServer.start();
 		mLogger.debug("Waiting for connection...");
 
-		final IInteractive<GeneratedMessageV3> interactive;
-
 		try {
 			final Client<GeneratedMessageV3> client = mServer.waitForConnection();
-			interactive = client.createInteractiveInterface();
+			mProtoInterface = client.createInteractiveInterface();
 		} catch (ExecutionException | TimeoutException | InterruptedException e) {
 			mLogger.fatal("No connection established", e);
 			mServer.stop();
 			return -1;
 		}
-		
-		//interactive.send(data);
+
+		mInternalInterface = ControllerConverter.get(mProtoInterface, mServer.getTypeRegistry());
+
+		// If we wanted files directly - but thats not supported by Ultimate
+		// Core :(
+		// mServer.getTypeRegistry().register(Controller.File.class);
+		// mServer.getTypeRegistry().register(Controller.File.Request.class);
+
+		// mInternalInterface.send(new IllegalStateException("Funny test
+		// exception! :D"));
+
+		// final List<File> tcFiles = new
+		// ArrayList<>(availableToolchains.keySet());
+		//
+		// mServer.getTypeRegistry().register(Controller.ToolChains.class);
+		// mServer.getTypeRegistry().register(Controller.Choice.class);
+		//
+		// Builder tcBuilder = Controller.ToolChains.newBuilder();
+		// tcFiles.stream().map(File::getName).forEach(tcBuilder::addFileNames);
+		// CompletableFuture<Choice> choice =
+		// protoInteractiveInterface.request(Controller.Choice.class,
+		// tcBuilder.build());
+		//
+		// int choiceid = -1;
+		// try {
+		// choiceid = choice.get().getIndex();
+		// if (choiceid < 0 || choiceid > tcFiles.size()) {
+		// throw new ClientCrazyException();
+		// }
+		// } catch (InterruptedException | ExecutionException e) {
+		// e.printStackTrace();
+		// }
+		//
+		// File chosenFile = tcFiles.get(choiceid);
+		//
+		// mLogger.info(chosenFile);
+
+		// mLogger.info("The following toolchains are available:");
+		// for (final Entry<File, IToolchainData<RunDefinition>> entry :
+		// availableToolchains.entrySet()) {
+		// mLogger.info(entry.getKey());
+		// mLogger.info(indent + entry.getValue().getRootElement().getName());
+		// }
+
+		// interactive.send(data);
 
 		// should cl args be used for settings (port)?
 		// final String[] args = Platform.getCommandLineArgs();
@@ -121,6 +185,20 @@ public class ServerController implements IController<RunDefinition> {
 		mServer.stop();
 
 		return IApplication.EXIT_OK;
+	}
+
+	/**
+	 * Request File contents form Client
+	 * 
+	 * @param ext
+	 *            hint file extension to client.
+	 * @return file content as String.
+	 */
+	private String requestFileContent(final String ext) throws InterruptedException, ExecutionException {
+		Request tcRequest = Controller.File.Request.newBuilder().setExt(ext).build();
+		CompletableFuture<Controller.File> tcFuture = mProtoInterface.request(Controller.File.class, tcRequest);
+
+		return tcFuture.get().getContent();
 	}
 
 	/**
@@ -189,23 +267,17 @@ public class ServerController implements IController<RunDefinition> {
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);
-		switch (summarizer.getResultSummary()) {
-		case CORRECT:
-			mLogger.info("RESULT: Ultimate proved your program to be correct!");
-			break;
-		case INCORRECT:
-			mLogger.info("RESULT: Ultimate proved your program to be incorrect!");
-			break;
-		default:
-			mLogger.info("RESULT: Ultimate could not prove your program: " + summarizer.getResultDescription());
-			break;
-		}
+
+		mInternalInterface.send(summarizer);
 	}
 
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
-		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description, ex);
+		// mLogger.fatal("RESULT: An exception occured during the execution of
+		// Ultimate: " + description, ex);
+		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description);
+		mInternalInterface.send(ex);
 	}
 
 	@Override
@@ -232,21 +304,14 @@ public class ServerController implements IController<RunDefinition> {
 		return a -> lowerCaseIds.contains(a.toLowerCase());
 	}
 
-	private void printAvailableToolchains(final ICore<RunDefinition> core) {
-		final File workingDir = RcpUtils.getWorkingDirectory();
+	private Map<File, IToolchainData<RunDefinition>> getAvailableToolchains(final ICore<RunDefinition> core,
+			final File workingDir) {
 		final ToolchainLocator locator = new ToolchainLocator(workingDir, core, mLogger);
 
-		final Map<File, IToolchainData<RunDefinition>> availableToolchains = locator.locateToolchains();
-		if (availableToolchains.isEmpty()) {
-			mLogger.warn("There are no toolchains in Ultimates working directory " + workingDir);
-			return;
+		Map<File, IToolchainData<RunDefinition>> result = locator.locateToolchains();
+		if (result.isEmpty()) {
+			mLogger.fatal("There are no toolchains in Ultimates working directory" + workingDir);
 		}
-		final String indent = "    ";
-
-		mLogger.info("The following toolchains are available:");
-		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
-			mLogger.info(entry.getKey());
-			mLogger.info(indent + entry.getValue().getRootElement().getName());
-		}
+		return result;
 	}
 }

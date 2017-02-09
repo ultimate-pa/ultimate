@@ -12,10 +12,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
-	//private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
+	// private static final String CLIENT_MESSAGE_PREFIX = "[Client] ";
 
 	protected final ILogger mLogger;
 	protected int mPort;
@@ -35,7 +37,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		mClient = new FutureClient<T>(mLogger);
 	}
 
-	public abstract void initClient();
+	public abstract IWrappedMessage<T> newMessage();
 
 	private void setupExecutorService() {
 		if (mExecutor == null || mExecutor.isTerminated()) {
@@ -56,7 +58,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		mLogger.info("stopping Server..");
 		mRunning = false;
 		try {
-			//mClient.closeConnection();
+			// mClient.closeConnection();
 			mClient.cancel(true);
 			mServerFuture.get(10, TimeUnit.SECONDS);
 			mLogger.info("Server stopped.");
@@ -78,7 +80,8 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		}
 		// mClient = new FutureClient<T>(mLogger);
 
-		initClient();
+		mClient.setRegistry(getTypeRegistry());
+		mClient.setFactory(this::newMessage);
 
 		// while (mRunning) {
 		try {

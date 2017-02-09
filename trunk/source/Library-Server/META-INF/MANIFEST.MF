@@ -7,5 +7,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.interactive;visibility:=reexport
-Export-Package: de.uni_freiburg.informatik.ultimate.server,
- de.uni_freiburg.informatik.ultimate.server.exceptions
+Export-Package: de.uni_freiburg.informatik.ultimate.server

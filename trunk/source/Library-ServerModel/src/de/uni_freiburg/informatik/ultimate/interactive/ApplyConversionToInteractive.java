@@ -1,19 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.interactive;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.interactive.IConverterRegistry.IConverter;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.UnregisteredTypeException;
+import de.uni_freiburg.informatik.ultimate.interactive.utils.InheritanceUtil;
 
 public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	private IInteractive<O> mOriginal;
 	private IConverterRegistry<O, M> mConverter;
+	private Class<M> mTypeBound;
 
-	public ApplyConversionToInteractive(IInteractive<O> original, IConverterRegistry<O, M> converter) {
+	public ApplyConversionToInteractive(IInteractive<O> original, IConverterRegistry<O, M> converter,
+			Class<M> typeBound) {
 		mOriginal = original;
 		mConverter = converter;
+		mTypeBound = typeBound;
 	}
 
 	@Override
@@ -53,7 +59,12 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	public void send(M data) {
 		@SuppressWarnings("unchecked")
 		Class<? extends M> type = (Class<? extends M>) data.getClass();
-		IConverter<? extends M, ? extends O> converter = mConverter.getBA(type);
+		IConverter<? extends M, ? extends O> converter;
+		converter = mConverter.getBA(type);
+		if (converter == null) {
+			converter = InheritanceUtil.getInheritance(type, mTypeBound).stream().map(mConverter::getBA)
+					.filter(Objects::nonNull).findFirst().orElseThrow(() -> new UnregisteredTypeException(type));
+		}
 		wrapSend(converter, data);
 	}
 

@@ -13,6 +13,7 @@ public class ConversionNotImplementedException extends ServerException {
 	private Class<?> mTypeB;
 
 	public ConversionNotImplementedException(Class<?> typeA, Class<?> typeB) {
+		super(String.format("Conversion from type %1 to %2 is not implemented", typeA, typeB));
 		mTypeA = typeA;
 		mTypeB = typeB;
 	}

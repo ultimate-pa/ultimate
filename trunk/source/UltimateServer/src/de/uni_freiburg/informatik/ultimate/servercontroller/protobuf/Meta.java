@@ -15,28 +15,28 @@ public final class Meta {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   public interface HeaderOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.server.protobuf.Header)
+      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
      */
     int getActionValue();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
      */
     de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action getAction();
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     boolean hasMessage();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message getMessage();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder getMessageOrBuilder();
 
@@ -71,11 +71,11 @@ public final class Meta {
         getQueryTypeBytes();
   }
   /**
-   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Header}
+   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header}
    */
   public  static final class Header extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.server.protobuf.Header)
+      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header)
       HeaderOrBuilder {
     // Use Header.newBuilder() to construct.
     private Header(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
@@ -163,18 +163,18 @@ public final class Meta {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor;
+      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_fieldAccessorTable
+      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Builder.class);
     }
 
     /**
-     * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action}
+     * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action}
      */
     public enum Action
         implements com.google.protobuf.ProtocolMessageEnum {
@@ -352,19 +352,19 @@ public final class Meta {
         this.value = value;
       }
 
-      // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action)
+      // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action)
     }
 
     public static final int ACTION_FIELD_NUMBER = 1;
     private int action_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
      */
     public int getActionValue() {
       return action_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
      */
     public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action getAction() {
       de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action result = de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action.valueOf(action_);
@@ -374,19 +374,19 @@ public final class Meta {
     public static final int MESSAGE_FIELD_NUMBER = 2;
     private de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message message_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     public boolean hasMessage() {
       return message_ != null;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message getMessage() {
       return message_ == null ? de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.getDefaultInstance() : message_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
      */
     public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder getMessageOrBuilder() {
       return getMessage();
@@ -678,25 +678,25 @@ public final class Meta {
       return builder;
     }
     /**
-     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Header}
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.server.protobuf.Header)
+        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header)
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.HeaderOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor;
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_fieldAccessorTable
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Builder.class);
       }
 
-      // Construct using de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Header.newBuilder()
+      // Construct using de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -732,7 +732,7 @@ public final class Meta {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor;
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor;
       }
 
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header getDefaultInstanceForType() {
@@ -845,13 +845,13 @@ public final class Meta {
 
       private int action_ = 0;
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
        */
       public int getActionValue() {
         return action_;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
        */
       public Builder setActionValue(int value) {
         action_ = value;
@@ -859,14 +859,14 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
        */
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action getAction() {
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action result = de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action.valueOf(action_);
         return result == null ? de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
        */
       public Builder setAction(de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header.Action value) {
         if (value == null) {
@@ -878,7 +878,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Header.Action action = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header.Action action = 1;</code>
        */
       public Builder clearAction() {
         
@@ -891,13 +891,13 @@ public final class Meta {
       private com.google.protobuf.SingleFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder> messageBuilder_;
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public boolean hasMessage() {
         return messageBuilder_ != null || message_ != null;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message getMessage() {
         if (messageBuilder_ == null) {
@@ -907,7 +907,7 @@ public final class Meta {
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public Builder setMessage(de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message value) {
         if (messageBuilder_ == null) {
@@ -923,7 +923,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public Builder setMessage(
           de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder builderForValue) {
@@ -937,7 +937,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public Builder mergeMessage(de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message value) {
         if (messageBuilder_ == null) {
@@ -955,7 +955,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public Builder clearMessage() {
         if (messageBuilder_ == null) {
@@ -969,7 +969,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder getMessageBuilder() {
         
@@ -977,7 +977,7 @@ public final class Meta {
         return getMessageFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder getMessageOrBuilder() {
         if (messageBuilder_ != null) {
@@ -988,7 +988,7 @@ public final class Meta {
         }
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message message = 2;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message message = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder> 
@@ -1221,10 +1221,10 @@ public final class Meta {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Header)
+      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header)
     }
 
-    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Header)
+    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Header)
     private static final de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Header();
@@ -1260,7 +1260,7 @@ public final class Meta {
   }
 
   public interface MessageOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.server.protobuf.Message)
+      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message)
       com.google.protobuf.MessageOrBuilder {
 
     /**
@@ -1284,20 +1284,20 @@ public final class Meta {
         getTextBytes();
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
      */
     int getLevelValue();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
      */
     de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level getLevel();
   }
   /**
-   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Message}
+   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message}
    */
   public  static final class Message extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.server.protobuf.Message)
+      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message)
       MessageOrBuilder {
     // Use Message.newBuilder() to construct.
     private Message(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
@@ -1365,18 +1365,18 @@ public final class Meta {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor;
+      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_fieldAccessorTable
+      return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder.class);
     }
 
     /**
-     * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level}
+     * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level}
      */
     public enum Level
         implements com.google.protobuf.ProtocolMessageEnum {
@@ -1488,7 +1488,7 @@ public final class Meta {
         this.value = value;
       }
 
-      // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level)
+      // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level)
     }
 
     public static final int SOURCE_FIELD_NUMBER = 1;
@@ -1562,13 +1562,13 @@ public final class Meta {
     public static final int LEVEL_FIELD_NUMBER = 4;
     private int level_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
      */
     public int getLevelValue() {
       return level_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
      */
     public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level getLevel() {
       de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level result = de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level.valueOf(level_);
@@ -1733,25 +1733,25 @@ public final class Meta {
       return builder;
     }
     /**
-     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.server.protobuf.Message}
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.server.protobuf.Message)
+        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message)
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.MessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor;
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_fieldAccessorTable
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Builder.class);
       }
 
-      // Construct using de.uni_freiburg.informatik.ultimate.server.protobuf.Meta.Message.newBuilder()
+      // Construct using de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1779,7 +1779,7 @@ public final class Meta {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor;
+        return de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor;
       }
 
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message getDefaultInstanceForType() {
@@ -2017,13 +2017,13 @@ public final class Meta {
 
       private int level_ = 0;
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
        */
       public int getLevelValue() {
         return level_;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
        */
       public Builder setLevelValue(int value) {
         level_ = value;
@@ -2031,14 +2031,14 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
        */
       public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level getLevel() {
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level result = de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level.valueOf(level_);
         return result == null ? de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
        */
       public Builder setLevel(de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message.Level value) {
         if (value == null) {
@@ -2050,7 +2050,7 @@ public final class Meta {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.server.protobuf.Message.Level level = 4;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message.Level level = 4;</code>
        */
       public Builder clearLevel() {
         
@@ -2069,10 +2069,10 @@ public final class Meta {
       }
 
 
-      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Message)
+      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message)
     }
 
-    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.server.protobuf.Message)
+    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Message)
     private static final de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Meta.Message();
@@ -2108,15 +2108,15 @@ public final class Meta {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor;
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_fieldAccessorTable;
+      internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor;
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_fieldAccessorTable;
+      internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2126,18 +2126,19 @@ public final class Meta {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\016messages.proto\0223de.uni_freiburg.inform" +
-      "atik.ultimate.server.protobuf\"\262\002\n\006Header" +
-      "\022R\n\006action\030\001 \001(\0162B.de.uni_freiburg.infor" +
-      "matik.ultimate.server.protobuf.Header.Ac" +
-      "tion\022M\n\007message\030\002 \001(\0132<.de.uni_freiburg." +
-      "informatik.ultimate.server.protobuf.Mess" +
-      "age\022\021\n\tdata_type\030\003 \001(\t\022\020\n\010query_id\030\004 \001(\t" +
-      "\022\022\n\nquery_type\030\005 \001(\t\"L\n\006Action\022\010\n\004QUIT\020\000" +
-      "\022\t\n\005HELLO\020\001\022\013\n\007LOGGING\020\002\022\010\n\004SEND\020\003\022\013\n\007RE" +
-      "QUEST\020\004\022\t\n\005SORRY\020\006\"\255\001\n\007Message\022\016\n\006source",
-      "\030\001 \001(\t\022\014\n\004text\030\002 \001(\t\022Q\n\005level\030\004 \001(\0162B.de" +
-      ".uni_freiburg.informatik.ultimate.server" +
+      "\n\016messages.proto\022=de.uni_freiburg.inform" +
+      "atik.ultimate.servercontroller.protobuf\"" +
+      "\306\002\n\006Header\022\\\n\006action\030\001 \001(\0162L.de.uni_frei" +
+      "burg.informatik.ultimate.servercontrolle" +
+      "r.protobuf.Header.Action\022W\n\007message\030\002 \001(" +
+      "\0132F.de.uni_freiburg.informatik.ultimate." +
+      "servercontroller.protobuf.Message\022\021\n\tdat" +
+      "a_type\030\003 \001(\t\022\020\n\010query_id\030\004 \001(\t\022\022\n\nquery_" +
+      "type\030\005 \001(\t\"L\n\006Action\022\010\n\004QUIT\020\000\022\t\n\005HELLO\020" +
+      "\001\022\013\n\007LOGGING\020\002\022\010\n\004SEND\020\003\022\013\n\007REQUEST\020\004\022\t\n",
+      "\005SORRY\020\006\"\267\001\n\007Message\022\016\n\006source\030\001 \001(\t\022\014\n\004" +
+      "text\030\002 \001(\t\022[\n\005level\030\004 \001(\0162L.de.uni_freib" +
+      "urg.informatik.ultimate.servercontroller" +
       ".protobuf.Message.Level\"1\n\005Level\022\t\n\005DEBU" +
       "G\020\000\022\010\n\004INFO\020\001\022\010\n\004WARN\020\002\022\t\n\005ERROR\020\003B\006B\004Me" +
       "tab\006proto3"
@@ -2154,17 +2155,17 @@ public final class Meta {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor =
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor =
       getDescriptor().getMessageTypes().get(0);
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_fieldAccessorTable = new
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Header_descriptor,
+        internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Header_descriptor,
         new java.lang.String[] { "Action", "Message", "DataType", "QueryId", "QueryType", });
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor =
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor =
       getDescriptor().getMessageTypes().get(1);
-    internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_fieldAccessorTable = new
+    internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_server_protobuf_Message_descriptor,
+        internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Message_descriptor,
         new java.lang.String[] { "Source", "Text", "Level", });
   }
 

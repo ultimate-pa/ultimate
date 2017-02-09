@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package de.uni_freiburg.informatik.ultimate.server.protobuf;
+package de.uni_freiburg.informatik.ultimate.servercontroller.protobuf;
 
 //option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "Meta";
