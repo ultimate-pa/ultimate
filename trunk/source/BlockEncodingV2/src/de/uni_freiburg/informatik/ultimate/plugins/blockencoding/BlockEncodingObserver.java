@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -195,6 +197,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+		final Set<IIcfgReturnTransition<?, ?>> openReturns = new HashSet<>();
 		while (iter.hasNext()) {
 			final IcfgLocation current = iter.next();
 			final String proc = current.getProcedure();
@@ -212,15 +215,28 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
 			final IcfgLocation source = nodePair.getValue();
 			for (final IcfgEdge outEdge : nodePair.getKey().getOutgoingEdges()) {
-				final IcfgLocation target = old2new.get(outEdge.getTarget());
-				final IcfgEdge newEdge = edgeBuilder.constructCopy(source, target, outEdge);
-				newEdge.setSource(source);
-				newEdge.setTarget(target);
-				mBacktranslator.mapEdges(newEdge, outEdge);
+				if (outEdge instanceof IIcfgReturnTransition<?, ?>) {
+					// delay creating returns until everything else is processed
+					openReturns.add((IIcfgReturnTransition<?, ?>) outEdge);
+				} else {
+					createEdgeCopy(edgeBuilder, old2new, source, outEdge);
+				}
 			}
 		}
 
+		// copy delayed returns
+		openReturns.stream().forEach(a -> createEdgeCopy(edgeBuilder, old2new, a.getSource(), (IcfgEdge) a));
+
 		return duplicate;
+	}
+
+	private void createEdgeCopy(final IcfgEdgeBuilder edgeBuilder, final Map<IcfgLocation, IcfgLocation> old2new,
+			final IcfgLocation source, final IcfgEdge outEdge) {
+		final IcfgLocation target = old2new.get(outEdge.getTarget());
+		final IcfgEdge newEdge = edgeBuilder.constructCopy(source, target, outEdge);
+		newEdge.setSource(source);
+		newEdge.setTarget(target);
+		mBacktranslator.mapEdges(newEdge, outEdge);
 	}
 
 	private List<Supplier<IEncoder<IcfgLocation>>> getEncoderProviders(final IPreferenceProvider ups,

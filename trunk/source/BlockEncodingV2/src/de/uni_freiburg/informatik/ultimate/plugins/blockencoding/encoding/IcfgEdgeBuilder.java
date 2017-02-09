@@ -143,7 +143,9 @@ public class IcfgEdgeBuilder {
 			rtr = new IcfgCallTransition(source, target, null, cAction.getLocalVarsAssignment());
 			mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
 		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
-			final IIcfgCallTransition<IcfgLocation> correspondingCall = mCallCache.get(oldEdge);
+			final IIcfgReturnTransition<?, ?> oldReturn = (IIcfgReturnTransition<?, ?>) oldEdge;
+			final IIcfgCallTransition<IcfgLocation> correspondingCall =
+					mCallCache.get(oldReturn.getCorrespondingCall());
 			if (correspondingCall == null) {
 				throw new AssertionError(
 						"You cannot copy a return transition without previously copying the corresponding call transition");
