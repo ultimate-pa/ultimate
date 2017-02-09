@@ -62,7 +62,7 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		IConverter<? extends M, ? extends O> converter;
 		converter = mConverter.getBA(type);
 		if (converter == null) {
-			converter = InheritanceUtil.getInheritance(type, mTypeBound).stream().map(mConverter::getBA)
+			converter = InheritanceUtil.getInheritance(type, mTypeBound).stream().map(e -> mConverter.getBA(e))
 					.filter(Objects::nonNull).findFirst().orElseThrow(() -> new UnregisteredTypeException(type));
 		}
 		wrapSend(converter, data);
