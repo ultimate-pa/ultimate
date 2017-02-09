@@ -227,17 +227,4 @@ public interface IStateFactory<STATE> {
 	default STATE finitePrefix2net(final Condition<?, STATE> condition) {
 		return null;
 	}
-	
-	/**
-	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.Senwa Senwa}.
-	 * 
-	 * @param entry
-	 *            entry
-	 * @param state
-	 *            state
-	 * @return state representing a Senwa state
-	 */
-	default STATE senwa(final STATE entry, final STATE state) {
-		return null;
-	}
 }

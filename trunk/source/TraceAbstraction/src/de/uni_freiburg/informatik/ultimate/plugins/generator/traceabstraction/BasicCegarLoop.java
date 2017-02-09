@@ -381,8 +381,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
-					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
-							interpolantAutomaton, psd, false);
+					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+							oldAbstraction, interpolantAutomaton, psd, false);
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 							oldAbstraction, interpolantAutomaton, psd, explointSigmaStarConcatOfIA);
