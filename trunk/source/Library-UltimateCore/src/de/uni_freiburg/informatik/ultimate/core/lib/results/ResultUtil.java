@@ -111,11 +111,7 @@ public final class ResultUtil {
 		if (loc == null) {
 			return null;
 		}
-		final ILocation origin = loc.getOrigin();
-		if (origin == null) {
-			return null;
-		}
-		final IAnnotations checkCand = origin.getCheck();
+		final IAnnotations checkCand = loc.getCheck();
 		if (checkCand instanceof Check) {
 			return (Check) checkCand;
 		}

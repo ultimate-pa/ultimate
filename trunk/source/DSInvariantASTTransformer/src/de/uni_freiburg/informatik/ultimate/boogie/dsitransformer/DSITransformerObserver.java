@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.dsitransformer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -71,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.dsitransformer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -86,8 +86,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * 
  * @author arenis
  */
-public final class DSITransformerObserver extends BoogieTransformer implements
-		IUnmanagedObserver {
+public final class DSITransformerObserver extends BoogieTransformer implements IUnmanagedObserver {
 
 	private static final int PROC_NOT_VALID = 0;
 	private static final int PROC_INITIALIZER = 1;
@@ -112,7 +111,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * Label that marks the initialization section of the procedure
 	 */
 	private static final String PROC_INIT_LABEL = "$DSInvariant_INIT";
-	
+
 	/**
 	 * Name of the procedure that gets created
 	 */
@@ -122,13 +121,12 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * The type of the structure we want to investigate
 	 */
 	private String mStructureType = "^_TYPE";
-	
+
 	/**
 	 * Label for the exit of the loop
 	 */
 	private static final String procLoopEndLabel = "$DSInvariant_EXIT";
 
-	
 	/**
 	 * Output to console
 	 */
@@ -158,8 +156,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * A set containing the identifiers of the local variables for the procedure being processed
 	 */
 	private Map<String, String> procLocals;
-	
-	
+
 	/**
 	 * Enable to convert all assignments to $result into labels
 	 */
@@ -169,10 +166,6 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * will not be considered
 	 */
 	private boolean mTrimAfterWrap = true;
-
-
-
-
 
 	/**
 	 * TRUE if should just take all functions and put them in the loop. This is used for GUI Testing applications
@@ -219,28 +212,21 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		mProcedures = new HashMap<String, ProcedureContainer>();
 
 		// Retrieve settings from the Preferences Page
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(
-				Activator.PLUGIN_ID);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mTrimAfterWrap = prefs.getBoolean(PreferenceInitializer.LABEL_TRIMWRAP,
-				mTrimAfterWrap);
+		mTrimAfterWrap = prefs.getBoolean(PreferenceInitializer.LABEL_TRIMWRAP, mTrimAfterWrap);
 
-		mStructureType = prefs.getString(
-				PreferenceInitializer.LABEL_STRUCTURETYPE, mStructureType);
-		mStructureProcID = prefs.getString(
-				PreferenceInitializer.LABEL_PROCEDUREID, mStructureProcID);
-		mAllFunctions = prefs.getBoolean(
-				PreferenceInitializer.LABEL_ALLFUNCTIONS,
+		mStructureType = prefs.getString(PreferenceInitializer.LABEL_STRUCTURETYPE, mStructureType);
+		mStructureProcID = prefs.getString(PreferenceInitializer.LABEL_PROCEDUREID, mStructureProcID);
+		mAllFunctions = prefs.getBoolean(PreferenceInitializer.LABEL_ALLFUNCTIONS,
 				PreferenceInitializer.VALUE_ALLFUNCTIONS_DEFAULT);
-		mLeaveOriginalProcedures = prefs.getBoolean(
-				PreferenceInitializer.LABEL_LEAVEPROCEDURES,
+		mLeaveOriginalProcedures = prefs.getBoolean(PreferenceInitializer.LABEL_LEAVEPROCEDURES,
 				PreferenceInitializer.VALUE_LEAVEPROCEDURES);
 
 		mLogger.info("Generating procedure '" + mStructureProcID + "'.");
 
 		if (!mAllFunctions) {
-			mLogger.info("Transforming for Data Structure '" + mStructureType
-					+ "'.");
+			mLogger.info("Transforming for Data Structure '" + mStructureType + "'.");
 
 			String willTrim = "";
 			if (!mTrimAfterWrap) {
@@ -252,8 +238,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			if (mLeaveOriginalProcedures) {
 				willLeave = "NOT";
 			}
-			mLogger.info("Will " + willLeave
-					+ "remove original procedure declarations.");
+			mLogger.info("Will " + willLeave + "remove original procedure declarations.");
 		} else {
 			mLogger.info("Will process ALL procedures.");
 		}
@@ -286,8 +271,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					// a list: Procedures that have an implementation and
 					// aren't part of the prelude
 					final Procedure proc = (Procedure) d;
-					if (!proc.getIdentifier().startsWith("$")
-							&& !proc.getIdentifier().contains("#")) {
+					if (!proc.getIdentifier().startsWith("$") && !proc.getIdentifier().contains("#")) {
 						captured = true;
 						ProcedureContainer pCont;
 						if (mProcedures.containsKey(proc.getIdentifier())) {
@@ -300,16 +284,14 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 						if (proc.getBody() == null) {
 							pCont.declaration = (Procedure) processDeclaration(proc);
 
-							mLogger.debug("Found procedure declaration: "
-									+ proc.getIdentifier());
+							mLogger.debug("Found procedure declaration: " + proc.getIdentifier());
 						} else {
 							pCont.implementation = (Procedure) processDeclaration(proc);
 							if (pCont.declaration == null) {
 								pCont.declaration = pCont.implementation;
 							}
 
-							mLogger.debug("Found procedure implementation: "
-									+ proc.getIdentifier());
+							mLogger.debug("Found procedure implementation: " + proc.getIdentifier());
 						}
 					}
 				}
@@ -324,23 +306,18 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			final Procedure newProcedure = processProcedures();
 			if (newProcedure != null) {
 				if (mAllFunctions) {
-					newDeclarations.add(new FunctionDeclaration(null,
-							new Attribute[] {}, "action", new String[] {},
-							new VarList[] { new VarList(null,
-									new String[] { "step" }, new PrimitiveType(
-											null, "int")) },
-							new VarList(null,
-									new String[] { "result" },
-									new PrimitiveType(null, "int"))));
+					newDeclarations
+							.add(new FunctionDeclaration(null, new Attribute[] {}, "action", new String[] {},
+									new VarList[] { new VarList(null, new String[] { "step" },
+											new PrimitiveType(null, "int")) },
+									new VarList(null, new String[] { "result" }, new PrimitiveType(null, "int"))));
 				}
 
 				newDeclarations.add(newProcedure);
 			}
-			newUnit.setDeclarations(newDeclarations
-					.toArray(new Declaration[newDeclarations.size()]));
+			newUnit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 
-			mLogger.info("Processed " + newUnit.getDeclarations().length
-					+ " declarations.");
+			mLogger.info("Processed " + newUnit.getDeclarations().length + " declarations.");
 			return false;
 		}
 
@@ -356,14 +333,11 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					// IdentifierExpressions
 					// that are on the
 					// list of locals
-					final IdentifierExpression result = new IdentifierExpression(
-							null, e.getType(),
-							procLocals.get(e.getIdentifier()),
-							e.getDeclarationInformation());
+					final IdentifierExpression result = new IdentifierExpression(null, e.getType(),
+							procLocals.get(e.getIdentifier()), e.getDeclarationInformation());
 					ModelUtils.copyAnnotations(expr, result);
 
-					mLogger.debug("Renamed in expression: "
-							+ procLocals.get(e.getIdentifier()));
+					mLogger.debug("Renamed in expression: " + procLocals.get(e.getIdentifier()));
 					return result;
 				}
 			}
@@ -378,8 +352,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				|| !procLocals.containsKey(((VariableLHS) lhs).getIdentifier())) {
 			return super.processLeftHandSide(lhs);
 		}
-		final VariableLHS newLhs = new VariableLHS(null,
-				procLocals.get(((VariableLHS) lhs).getIdentifier()));
+		final VariableLHS newLhs = new VariableLHS(null, procLocals.get(((VariableLHS) lhs).getIdentifier()));
 		ModelUtils.copyAnnotations(lhs, newLhs);
 		return newLhs;
 	}
@@ -398,8 +371,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 *            A collection of Statements containing the processed procedure body
 	 * @return an integer representing the type of procedure identified
 	 */
-	private int processProcedure(final ProcedureContainer p,
-			final Collection<VariableDeclaration> vardecls,
+	private int processProcedure(final ProcedureContainer p, final Collection<VariableDeclaration> vardecls,
 			final Set<VariableLHS> modifies, final Collection<Statement> statements) {
 
 		procedureIDPrefix = p.getIdentifier() + "_";
@@ -422,8 +394,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			}
 		}
 
-		final Set<String> parms = new HashSet<String>(
-				p.declaration.getInParams().length);
+		final Set<String> parms = new HashSet<String>(p.declaration.getInParams().length);
 		final Map<String, String> parmCorrespondences = new HashMap<String, String>();
 		// Include the in-parameters for the renaming
 		int pIdx = 0;
@@ -433,13 +404,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				parms.add(parm);
 				procLocals.put(parm, procedureIDPrefix + parm);
 				// Also rename the corresponding parameter in the implementation
-				procLocals
-						.put(p.implementation.getInParams()[pIdx]
-								.getIdentifiers()[idIdx], procedureIDPrefix
-										+ parm);
-				parmCorrespondences
-						.put(parm, p.implementation.getInParams()[pIdx]
-								.getIdentifiers()[idIdx]);
+				procLocals.put(p.implementation.getInParams()[pIdx].getIdentifiers()[idIdx], procedureIDPrefix + parm);
+				parmCorrespondences.put(parm, p.implementation.getInParams()[pIdx].getIdentifiers()[idIdx]);
 				idIdx++;
 			}
 			pIdx++;
@@ -449,11 +415,9 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// We'll know by looking for something in the form $ptr(Type, Parm)
 
 		String theParm = null;
-		final PtrExpressionFinder finder = new PtrExpressionFinder(mStructureType,
-				parms);
+		final PtrExpressionFinder finder = new PtrExpressionFinder(mStructureType, parms);
 		for (final Specification s : p.declaration.getSpecification()) {
-			if (s instanceof RequiresSpecification
-					|| s instanceof EnsuresSpecification) {
+			if (s instanceof RequiresSpecification || s instanceof EnsuresSpecification) {
 				Expression theSpec;
 				if (s instanceof RequiresSpecification) {
 					theSpec = ((RequiresSpecification) s).getFormula();
@@ -471,8 +435,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		if (!mAllFunctions) {
 			if (theParm != null) {
 				procLocals.put(theParm, STRUCTURE_VAR_ID);
-				procLocals
-						.put(parmCorrespondences.get(theParm), STRUCTURE_VAR_ID);
+				procLocals.put(parmCorrespondences.get(theParm), STRUCTURE_VAR_ID);
 				parms.remove(theParm); // Take it out of the list or else it
 				// would
 				// be declared again;
@@ -498,18 +461,15 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				}
 			}
 			if (!ids.isEmpty()) {
-				newList = new VarList(null,
-						ids.toArray(new String[ids.size()]), l.getType());
+				newList = new VarList(null, ids.toArray(new String[ids.size()]), l.getType());
 				newLists.add(newList);
 			}
 		}
 
-		final ILocation loccationOfP = new BoogieLocation(p.getFilename(),
-				p.getLineNr(), -1, -1, -1, null);
+		final ILocation loccationOfP = new BoogieLocation(p.getFilename(), p.getLineNr(), -1, -1, -1, false);
 		if (!newLists.isEmpty()) {
-			vardecls.add(new VariableDeclaration(loccationOfP,
-					new NamedAttribute[0], newLists
-							.toArray(new VarList[newLists.size()])));
+			vardecls.add(new VariableDeclaration(loccationOfP, new NamedAttribute[0],
+					newLists.toArray(new VarList[newLists.size()])));
 		}
 
 		// Create the list of the statements to be returned
@@ -522,8 +482,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			final VariableLHS[] parmsArray = new VariableLHS[parms.size()];
 			int i = 0;
 			for (final String id : parms) {
-				parmsArray[i++] = new VariableLHS(loccationOfP,
-						procedureIDPrefix + id);
+				parmsArray[i++] = new VariableLHS(loccationOfP, procedureIDPrefix + id);
 			}
 			result.add(new HavocStatement(loccationOfP, parmsArray));
 		}
@@ -534,22 +493,17 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// end.
 		for (final Specification s : p.declaration.getSpecification()) {
 			if (s instanceof ModifiesSpecification) {
-				for (final VariableLHS id : ((ModifiesSpecification) s)
-						.getIdentifiers()) {
+				for (final VariableLHS id : ((ModifiesSpecification) s).getIdentifiers()) {
 					modifies.add(id);
 				}
 			} else if (s instanceof RequiresSpecification) {
-				final AssumeStatement newAssume = new AssumeStatement(
-						s.getLocation(),
-						processExpression(((RequiresSpecification) s)
-								.getFormula()));
+				final AssumeStatement newAssume = new AssumeStatement(s.getLocation(),
+						processExpression(((RequiresSpecification) s).getFormula()));
 				result.add(newAssume);
 			} else if (s instanceof EnsuresSpecification) {
 				if (!((EnsuresSpecification) s).isFree()) {
-					final AssertStatement newAssert = new AssertStatement(
-							s.getLocation(),
-							processExpression(((EnsuresSpecification) s)
-									.getFormula()));
+					final AssertStatement newAssert = new AssertStatement(s.getLocation(),
+							processExpression(((EnsuresSpecification) s).getFormula()));
 					postConditions.add(newAssert);
 				}
 			}
@@ -569,10 +523,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		if (p.declaration.getOutParams().length > 0) {
 			final VarList[] resultList = new VarList[1];
 			final String[] resultStringList = { procedureIDPrefix + "$result" };
-			resultList[0] = new VarList(null, resultStringList,
-					p.declaration.getOutParams()[0].getType());
-			vardecls.add(new VariableDeclaration(loccationOfP,
-					new Attribute[0], resultList));
+			resultList[0] = new VarList(null, resultStringList, p.declaration.getOutParams()[0].getType());
+			vardecls.add(new VariableDeclaration(loccationOfP, new Attribute[0], resultList));
 		}
 
 		final Statement[] block = newBody.getBlock();
@@ -588,33 +540,27 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			// After each wrap a non-deterministic jump to the loop start
 			// should be added
 			if (s instanceof CallStatement
-					&& (((CallStatement) s).getMethodName().equals("$wrap") || ((CallStatement) s)
-							.getMethodName().equals("$static_wrap"))
-					&& (((CallStatement) s).getArguments()[0]) instanceof FunctionApplication) {
-				final FunctionApplication fa = (FunctionApplication) (((CallStatement) s)
-						.getArguments()[0]);
+					&& (((CallStatement) s).getMethodName().equals("$wrap")
+							|| ((CallStatement) s).getMethodName().equals("$static_wrap"))
+					&& ((CallStatement) s).getArguments()[0] instanceof FunctionApplication) {
+				final FunctionApplication fa = (FunctionApplication) ((CallStatement) s).getArguments()[0];
 				if (fa.getArguments()[0] instanceof IdentifierExpression
-						&& ((IdentifierExpression) fa.getArguments()[0])
-								.getIdentifier().equals(mStructureType)) {
+						&& ((IdentifierExpression) fa.getArguments()[0]).getIdentifier().equals(mStructureType)) {
 					if (unwrap > 0 && i > unwrap) { // Only do this if we saw an
 						// unwrap before
-						final String newLabel = mStructureProcID + "$"
-								+ Integer.toString(mProcLabelCounter++);
-						result.add(new GotoStatement(null, new String[] {
-								PROC_LOOP_START_LABEL, newLabel }));
+						final String newLabel = mStructureProcID + "$" + Integer.toString(mProcLabelCounter++);
+						result.add(new GotoStatement(null, new String[] { PROC_LOOP_START_LABEL, newLabel }));
 						result.add(new Label(null, newLabel));
 					}
 					lastwrap = i;
 				}
 			} else if (s instanceof CallStatement
-					&& (((CallStatement) s).getMethodName().equals("$unwrap") || ((CallStatement) s)
-							.getMethodName().equals("$static_unwrap"))
-					&& (((CallStatement) s).getArguments()[0]) instanceof FunctionApplication) {
-				final FunctionApplication fa = (FunctionApplication) (((CallStatement) s)
-						.getArguments()[0]);
+					&& (((CallStatement) s).getMethodName().equals("$unwrap")
+							|| ((CallStatement) s).getMethodName().equals("$static_unwrap"))
+					&& ((CallStatement) s).getArguments()[0] instanceof FunctionApplication) {
+				final FunctionApplication fa = (FunctionApplication) ((CallStatement) s).getArguments()[0];
 				if (fa.getArguments()[0] instanceof IdentifierExpression
-						&& ((IdentifierExpression) fa.getArguments()[0])
-								.getIdentifier().equals(mStructureType)) {
+						&& ((IdentifierExpression) fa.getArguments()[0]).getIdentifier().equals(mStructureType)) {
 					unwrap = i;
 				}
 			}
@@ -675,11 +621,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			final Collection<VariableDeclaration> localVars = new ArrayList<VariableDeclaration>();
 			final Collection<Statement> localStatements = new ArrayList<Statement>();
 			int procType;
-			if ((procType = processProcedure(p, localVars, procModifies,
-					localStatements)) != PROC_NOT_VALID) {
+			if ((procType = processProcedure(p, localVars, procModifies, localStatements)) != PROC_NOT_VALID) {
 
-				final Statement label = new Label(new BoogieLocation(p.getFilename(),
-						-2, -2, -2, -2, null), PROCEDURE_PREFIX + p.getIdentifier());
+				final Statement label = new Label(new BoogieLocation(p.getFilename(), -2, -2, -2, -2, false),
+						PROCEDURE_PREFIX + p.getIdentifier());
 				// Add the label to the corresponding group
 				if (mAllFunctions || procType == PROC_MODIFIER) {
 					procLabels.add(PROCEDURE_PREFIX + p.getIdentifier());
@@ -691,19 +636,11 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				// Add the assume statement for the structure with the counter
 				// function
 				if (mAllFunctions) {
-					statements
-							.add(new AssumeStatement(
-									null,
-									new BinaryExpression(
-											null,
-											Operator.COMPEQ,
-											new FunctionApplication(
-													null,
-													"action",
-													new Expression[] { new IdentifierExpression(
-															null, "$counter") }),
-											new IntegerLiteral(null, Integer
-													.toString(procCounter++)))));
+					statements.add(new AssumeStatement(null,
+							new BinaryExpression(null, Operator.COMPEQ,
+									new FunctionApplication(null, "action",
+											new Expression[] { new IdentifierExpression(null, "$counter") }),
+									new IntegerLiteral(null, Integer.toString(procCounter++)))));
 				}
 				// Add the statements
 				if (mAllFunctions || procType == PROC_MODIFIER) {
@@ -724,55 +661,42 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		} else {
 			idArray = new String[] { STRUCTURE_VAR_ID, "$counter" };
 		}
-		final VarList structPtr = new VarList(null, idArray, new PrimitiveType(null,
-				"int"));
+		final VarList structPtr = new VarList(null, idArray, new PrimitiveType(null, "int"));
 		// Careful, should be bound with a RealType
 		VarList[] strPtrDecl;
 		strPtrDecl = new VarList[] { structPtr };
 
-		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5,
-				-5, null), new NamedAttribute[0], strPtrDecl));
+		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5, -5, false), new NamedAttribute[0],
+				strPtrDecl));
 
 		// Now collect the statements in the right order
 		final List<Statement> procStatements = new ArrayList<Statement>();
 		// Add the init label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
-				null), PROC_INIT_LABEL));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), PROC_INIT_LABEL));
 
 		// Create the expression that represents the invariant
 		// $inv($s, $ptr(THE_TYPE, structureVarID), THE_TYPE);
 
 		final Expression closedExp = new FunctionApplication(null, "$closed",
-				new Expression[] {
-						new IdentifierExpression(null, "$s"),
+				new Expression[] { new IdentifierExpression(null, "$s"),
 						new FunctionApplication(null, "$ptr",
-								new Expression[] {
-										new IdentifierExpression(null,
-												mStructureType),
-										new IdentifierExpression(null,
-												STRUCTURE_VAR_ID) }) });
+								new Expression[] { new IdentifierExpression(null, mStructureType),
+										new IdentifierExpression(null, STRUCTURE_VAR_ID) }) });
 
 		final Expression ownerExp = new FunctionApplication(null, "$owner",
-				new Expression[] {
-						new IdentifierExpression(null, "$s"),
+				new Expression[] { new IdentifierExpression(null, "$s"),
 						new FunctionApplication(null, "$ptr",
-								new Expression[] {
-										new IdentifierExpression(null,
-												mStructureType),
-										new IdentifierExpression(null,
-												STRUCTURE_VAR_ID) }) });
+								new Expression[] { new IdentifierExpression(null, mStructureType),
+										new IdentifierExpression(null, STRUCTURE_VAR_ID) }) });
 
-		final Expression ownedExp = new BinaryExpression(null,
-				BinaryExpression.Operator.COMPEQ, ownerExp,
+		final Expression ownedExp = new BinaryExpression(null, BinaryExpression.Operator.COMPEQ, ownerExp,
 				new FunctionApplication(null, "$me", new Expression[0]));
 
-		final Expression inv = new BinaryExpression(null,
-				BinaryExpression.Operator.LOGICAND, closedExp, ownedExp);
+		final Expression inv = new BinaryExpression(null, BinaryExpression.Operator.LOGICAND, closedExp, ownedExp);
 
 		if (!mAllFunctions) {
 			if (!initLabels.isEmpty()) { // Add the initializer procedures
-				final GotoStatement initGoto = new GotoStatement(new BoogieLocation(
-						"", -3, -3, -3, -3, null),
+				final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3, false),
 						initLabels.toArray(new String[initLabels.size()]));
 				procStatements.add(initGoto);
 				procStatements.addAll(initStatements);
@@ -782,17 +706,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		}
 
 		// Add the start label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
-				null), PROC_LOOP_START_LABEL));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), PROC_LOOP_START_LABEL));
 
 		// Increment the counter (for the action(ctr))
 		if (mAllFunctions) {
-			procStatements.add(new AssignmentStatement(null,
-					new LeftHandSide[] { new VariableLHS(null, "$counter") },
-					new Expression[] { new BinaryExpression(null,
-							BinaryExpression.Operator.ARITHPLUS,
-							new IdentifierExpression(null, "$counter"),
-							new IntegerLiteral(null, "1")) }));
+			procStatements.add(new AssignmentStatement(null, new LeftHandSide[] { new VariableLHS(null, "$counter") },
+					new Expression[] { new BinaryExpression(null, BinaryExpression.Operator.ARITHPLUS,
+							new IdentifierExpression(null, "$counter"), new IntegerLiteral(null, "1")) }));
 		}
 
 		// Add the invariant assertion (as loop invariant)
@@ -800,29 +720,24 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// procStatements.add(new AssertStatement(null, null, inv));
 
 		// Create the initial GOTO statement
-		final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3,
-				-3, -3, -3, null), procLabels.toArray(new String[procLabels
-						.size()]));
+		final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3, false),
+				procLabels.toArray(new String[procLabels.size()]));
 		procStatements.add(initGoto);
 		// Add the procedure bodies
 		procStatements.addAll(statements);
 		// Add the exit label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
-				null), procLoopEndLabel));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), procLoopEndLabel));
 		// Create the procedure's body
-		final Body procBody = new Body(null,
-				procVars.toArray(new VariableDeclaration[procVars.size()]),
+		final Body procBody = new Body(null, procVars.toArray(new VariableDeclaration[procVars.size()]),
 				procStatements.toArray(new Statement[statements.size()]));
 		// Create the Modifies clause
 		if (!procModifies.isEmpty()) {
-			procSpecs.add(new ModifiesSpecification(null, false, procModifies
-					.toArray(new VariableLHS[procModifies.size()])));
+			procSpecs.add(
+					new ModifiesSpecification(null, false, procModifies.toArray(new VariableLHS[procModifies.size()])));
 		}
 		// Finally return the new procedure
-		return new Procedure(new BoogieLocation("", -1, -1, -1, -1, null),
-				new Attribute[0], mStructureProcID, new String[0],
-				new VarList[0], new VarList[0],
-				procSpecs.toArray(new Specification[procSpecs.size()]),
+		return new Procedure(new BoogieLocation("", -1, -1, -1, -1, false), new Attribute[0], mStructureProcID,
+				new String[0], new VarList[0], new VarList[0], procSpecs.toArray(new Specification[procSpecs.size()]),
 				procBody);
 	}
 
@@ -832,12 +747,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			Statement newStatement = null;
 			if (statement instanceof ReturnStatement) {
 				final String[] labels = { mProcExitLabel };
-				newStatement = new GotoStatement(statement.getLocation(),
-						labels);
+				newStatement = new GotoStatement(statement.getLocation(), labels);
 			}
 			if (statement instanceof Label) {
-				newStatement = new Label(statement.getLocation(),
-						procedureIDPrefix + ((Label) statement).getName());
+				newStatement = new Label(statement.getLocation(), procedureIDPrefix + ((Label) statement).getName());
 			}
 			if (statement instanceof GotoStatement) {
 				final GotoStatement st = (GotoStatement) statement;
@@ -847,16 +760,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				}
 				newStatement = new GotoStatement(st.getLocation(), newlabels);
 			}
-			if (mSupressResultAssignments
-					&& statement instanceof AssignmentStatement) {
+			if (mSupressResultAssignments && statement instanceof AssignmentStatement) {
 				final AssignmentStatement assign = (AssignmentStatement) statement;
 				if (assign.getLhs()[0] instanceof VariableLHS) {
 					final VariableLHS var = (VariableLHS) assign.getLhs()[0];
 					if (var.getIdentifier().equals("$result")) {
 						newStatement = new Label(statement.getLocation(),
-								procedureIDPrefix
-										+ Integer.toString(statement
-												.getLocation().getStartLine()));
+								procedureIDPrefix + Integer.toString(statement.getLocation().getStartLine()));
 					}
 				}
 			}
@@ -875,8 +785,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			final ASTType type = vl.getType();
 			final ASTType newType = processType(type);
 			final Expression where = vl.getWhereClause();
-			final Expression newWhere = where != null ? processExpression(where)
-					: null;
+			final Expression newWhere = where != null ? processExpression(where) : null;
 			final String[] ids = vl.getIdentifiers(), newids = new String[ids.length];
 			for (int i = 0; i < ids.length; i++) {
 				if (procLocals.containsKey(ids[i])) {
@@ -983,13 +892,11 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 						return super.processExpression(expr);
 					}
 					final Expression[] args = processExpressions(app.getArguments());
-					if (args.length == 2
-							&& args[0] instanceof IdentifierExpression
+					if (args.length == 2 && args[0] instanceof IdentifierExpression
 							&& args[1] instanceof IdentifierExpression) {
 						final IdentifierExpression left = (IdentifierExpression) args[0];
 						final IdentifierExpression right = (IdentifierExpression) args[1];
-						if (left.getIdentifier().equals(type)
-								&& parms.contains(right.getIdentifier())) {
+						if (left.getIdentifier().equals(type) && parms.contains(right.getIdentifier())) {
 							found = true;
 							theParm = right.getIdentifier();
 							return expr;

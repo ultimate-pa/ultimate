@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE WitnessParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
@@ -37,11 +37,11 @@ public class WitnessLocation implements ILocation {
 	private final int mStartColumn;
 	private final int mEndColumn;
 
-	public WitnessLocation(String filename, int startline) {
+	public WitnessLocation(final String filename, final int startline) {
 		this(filename, startline, startline);
 	}
 
-	public WitnessLocation(String filename, int startline, int endline) {
+	public WitnessLocation(final String filename, final int startline, final int endline) {
 		mFilename = filename;
 		mStartLine = startline;
 		if (endline == -1) {
@@ -76,11 +76,6 @@ public class WitnessLocation implements ILocation {
 	@Override
 	public int getEndColumn() {
 		return mEndColumn;
-	}
-
-	@Override
-	public ILocation getOrigin() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

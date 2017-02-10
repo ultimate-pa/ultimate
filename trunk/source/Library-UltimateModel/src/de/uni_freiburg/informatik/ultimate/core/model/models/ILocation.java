@@ -68,16 +68,6 @@ public interface ILocation {
 	int getEndColumn();
 
 	/**
-	 * This {@code Location} can be an auxiliary {@code Location} constructed with respect to some <i>origin</i>
-	 * {@code Location}. E.g., if this is an auxiliary {@code Location} for the else-branch the <i>origin</i>
-	 * {@code Location} can be the {@code Location} of an if-then-else statement of a program.
-	 * 
-	 * If this {@code Location} is no auxiliary location the <i>origin</i> is the location itself.
-	 */
-	@Deprecated
-	ILocation getOrigin();
-
-	/**
 	 * Textual description of the type of specification which is checked here. E.g., "NullPointerException",
 	 * "AssertStatement" etc.
 	 */

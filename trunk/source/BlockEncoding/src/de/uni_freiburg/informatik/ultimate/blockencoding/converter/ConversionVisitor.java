@@ -54,12 +54,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -320,18 +318,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		}
-		BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
-		if (astNode == null && node.getOriginalNode().getPayload().hasLocation()) {
-			final ILocation loc = node.getOriginalNode().getPayload().getLocation();
-			if (loc instanceof BoogieLocation) {
-				astNode = ((BoogieLocation) loc).getBoogieASTNode();
-				if (loc.getOrigin() != null) {
-					// we have to update the ast node with the original
-					// location
-					astNode.getPayload().setLocation(loc.getOrigin());
-				}
-			}
-		}
+		final BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
 		final BoogieIcfgLocation newNode = new BoogieIcfgLocation(node.getOriginalNode().getDebugIdentifier(),
 				node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 		// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor

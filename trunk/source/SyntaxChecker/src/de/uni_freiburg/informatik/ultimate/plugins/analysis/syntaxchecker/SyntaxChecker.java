@@ -257,11 +257,6 @@ public class SyntaxChecker implements IAnalysis {
 		}
 
 		@Override
-		public ILocation getOrigin() {
-			return null;
-		}
-
-		@Override
 		public Check getCheck() {
 			return null;
 		}

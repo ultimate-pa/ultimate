@@ -287,10 +287,9 @@ public class UnstructureCode extends BaseObserver {
 
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
-			final ILocation loopLocation =
-					new BoogieLocation(stmt.getLocation().getFileName(), stmt.getLocation().getStartLine(),
-							stmt.getLocation().getEndLine(), stmt.getLocation().getStartColumn(),
-							stmt.getLocation().getEndColumn(), stmt.getLocation().getOrigin(), true);
+			final ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
+					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
+					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn(), true);
 			addLabel(new Label(loopLocation, head));
 			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
@@ -403,7 +402,7 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	private String generateLabel() {
-		return sLabelPrefix + (mLabelNr++);
+		return sLabelPrefix + mLabelNr++;
 	}
 
 	/**

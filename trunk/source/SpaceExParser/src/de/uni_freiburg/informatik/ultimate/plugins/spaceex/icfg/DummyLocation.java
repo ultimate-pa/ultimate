@@ -37,11 +37,6 @@ public class DummyLocation implements ILocation {
 	}
 
 	@Override
-	public ILocation getOrigin() {
-		return null;
-	}
-
-	@Override
 	public IAnnotations getCheck() {
 		return null;
 	}

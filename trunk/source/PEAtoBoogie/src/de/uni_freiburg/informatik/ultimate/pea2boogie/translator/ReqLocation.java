@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -39,110 +39,64 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @date 06.03.2012
  */
 public class ReqLocation implements Serializable, ILocation {
-    /**
-     * Serial version UID.
-     */
-    private static final long serialVersionUID = -194821240021400957L;
-    /**
-     * The mCheckedSpecification of check/assertion applied to this node.
-     */
-    protected ReqCheck mCheckedSpecification;
+	/**
+	 * Serial version UID.
+	 */
+	private static final long serialVersionUID = -194821240021400957L;
+	/**
+	 * The mCheckedSpecification of check/assertion applied to this node.
+	 */
+	protected ReqCheck mCheckedSpecification;
 
-    /**
-     * Constructor.
-     * 
-     * @param cNode
-     *            the corresponding C AST node.
-     * @param type
-     *            the type of check/assertion
-     */
-    public ReqLocation(ReqCheck checkNode) {
-        mCheckedSpecification = checkNode;
-    }
+	/**
+	 * Constructor.
+	 * 
+	 * @param cNode
+	 *            the corresponding C AST node.
+	 * @param type
+	 *            the type of check/assertion
+	 */
+	public ReqLocation(final ReqCheck checkNode) {
+		mCheckedSpecification = checkNode;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-    	return mCheckedSpecification.toString();
-    }
+	@Override
+	public String toString() {
+		return mCheckedSpecification.toString();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getStartLine()
-     */
-    @Override
-    public int getStartLine() {
-    	return mCheckedSpecification.getStartLine();
-    }
+	@Override
+	public int getStartLine() {
+		return mCheckedSpecification.getStartLine();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getEndLine()
-     */
-    @Override
-    public int getEndLine() {
-    	return mCheckedSpecification.getEndLine();
-    }
+	@Override
+	public int getEndLine() {
+		return mCheckedSpecification.getEndLine();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getStartColumn()
-     */
-    @Override
-    public int getStartColumn() {
-        return -1;
-    }
+	@Override
+	public int getStartColumn() {
+		return -1;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getEndColumn()
-     */
-    @Override
-    public int getEndColumn() {
-        return -1;
-    }
+	@Override
+	public int getEndColumn() {
+		return -1;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getFileName()
-     */
-    @Override
-    public String getFileName() {
-    	return mCheckedSpecification.getFileName();
-    }
+	@Override
+	public String getFileName() {
+		return mCheckedSpecification.getFileName();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.model.Location#getOrigin()
-     */
-    @Override
-    public ILocation getOrigin() {
-        return this;
-    }
+	@Override
+	public Check getCheck() {
+		return mCheckedSpecification;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * de.uni_freiburg.informatik.ultimate.model.Location#checkedSpecification()
-     */
-    @Override
-    public Check getCheck() {
-    	return mCheckedSpecification;
-    }
-
-    @Override
-    public boolean isLoop() {
-        return false;
-    }
+	@Override
+	public boolean isLoop() {
+		return false;
+	}
 }

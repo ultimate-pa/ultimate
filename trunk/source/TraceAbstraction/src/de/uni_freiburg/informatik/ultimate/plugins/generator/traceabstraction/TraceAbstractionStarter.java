@@ -401,7 +401,7 @@ public class TraceAbstractionStarter {
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
 			if (errorIpp instanceof BoogieIcfgLocation) {
-				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation().getOrigin();
+				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
 				timeOutMessage += " (line " + origin.getStartLine() + ").";
 			}
 			if (rtsp != null) {
