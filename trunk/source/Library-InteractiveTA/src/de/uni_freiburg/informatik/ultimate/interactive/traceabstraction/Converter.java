@@ -32,11 +32,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class Converter {
-	private static ConverterRegistry<GeneratedMessageV3, Object> ProtoObjectConverter = new ConverterRegistry<>();
-	
-	
-	
-	
 
 	public static TraceAbstractionProtos.IterationInfo.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
 		TraceAbstractionProtos.IterationInfo.NestedRun.Builder builder = TraceAbstractionProtos.IterationInfo.NestedRun

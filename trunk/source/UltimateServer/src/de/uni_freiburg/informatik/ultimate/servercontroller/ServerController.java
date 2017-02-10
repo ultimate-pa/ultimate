@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
-import de.uni_freiburg.informatik.ultimate.interactive.utils.ToolchainUtil;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
@@ -165,7 +164,9 @@ public class ServerController implements IController<RunDefinition> {
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection();
 		mProtoInterface = client.createInteractiveInterface();
 
-		mInternalInterface = ControllerConverter.get(mProtoInterface, mServer.getTypeRegistry());
+		ControllerConverter converter = ControllerConverter.get();
+		converter.initInterface(mProtoInterface, mServer.getTypeRegistry());
+		mInternalInterface = converter.getInterface();
 
 		// If we wanted files directly - but thats not supported by Ultimate
 		// Core :(
@@ -198,9 +199,8 @@ public class ServerController implements IController<RunDefinition> {
 			throw new IllegalStateException(
 					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
-		
+
 		final IToolchainStorage storage = mToolchain.getStorage();
-		ToolchainUtil.storeInteractive(null, storage);
 
 		final File inputFile = requestChoice(availableInputFiles, File::getName);
 
