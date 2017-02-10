@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -43,17 +44,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
-public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
-
+public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata
+		implements IFinitePrefix2PetriNetStateFactory<IPredicate> {
 	public TaConcurContentFactory(final AbstractCegarLoop<?> abstractCegarLoop, final CfgSmtToolkit theory,
 			final PredicateFactory predicateFactory, final boolean taPrefs, final boolean hoareAnnotation,
 			final boolean interprocedural) {
 		super(theory.getManagedScript(), predicateFactory, taPrefs);
 	}
-
+	
 	@Override
 	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
-
+		
 		final List<IPredicate> programPoints = new ArrayList<>();
 		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
@@ -69,7 +70,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 		programPoints.add(c2);
 		return result;
 	}
-
+	
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
 		final LinkedList<IPredicate> programPoints = new LinkedList<>();
@@ -78,11 +79,10 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 		}
 		return mPredicateFactory.getNewProdState(programPoints);
 	}
-
+	
 	@Override
 	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
 		final IcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
 		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
-
 }

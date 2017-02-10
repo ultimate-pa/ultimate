@@ -32,7 +32,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 
 /**
  * Abstract factory for states used in typical automata operations.
@@ -191,18 +190,6 @@ public interface IStateFactory<STATE> {
 	 * @return state representing the TMA
 	 */
 	default STATE constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
-		return null;
-	}
-	
-	/**
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet FinitePrefix2PetriNet}
-	 * construction of a condition.
-	 * 
-	 * @param condition
-	 *            condition
-	 * @return state representing the condition
-	 */
-	default STATE finitePrefix2net(final Condition<?, STATE> condition) {
 		return null;
 	}
 }
