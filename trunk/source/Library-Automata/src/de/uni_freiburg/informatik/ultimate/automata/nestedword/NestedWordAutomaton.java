@@ -221,13 +221,13 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	
 	@Override
 	public boolean isInitial(final STATE state) {
-		assert contains(state);
+		assert contains(state) : "state " + state + " not in automaton";
 		return mInitialStates.contains(state);
 	}
 	
 	@Override
 	public boolean isFinal(final STATE state) {
-		assert contains(state);
+		assert contains(state) : "state " + state + " not in automaton";
 		return mFinalStates.contains(state);
 	}
 	
