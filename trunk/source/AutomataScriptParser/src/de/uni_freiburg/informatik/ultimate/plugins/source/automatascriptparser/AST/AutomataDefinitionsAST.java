@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -47,11 +48,11 @@ public class AutomataDefinitionsAST extends AtsASTNode {
 	
 	private final List<AutomatonAST> mAutomataDefinitions;
 	public AutomataDefinitionsAST() {
-		super(null);
+		super(new DefaultLocation());
 		mAutomataDefinitions = new ArrayList<AutomatonAST>();
 	}
 	
-	public AutomataDefinitionsAST(AutomatonAST a) {
+	public AutomataDefinitionsAST(final AutomatonAST a) {
 		this();
 		mAutomataDefinitions.add(a);
 	}
@@ -60,16 +61,16 @@ public class AutomataDefinitionsAST extends AtsASTNode {
 		return mAutomataDefinitions;
 	}
 
-	public void addAutomaton(AutomatonAST a) {
+	public void addAutomaton(final AutomatonAST a) {
 		mAutomataDefinitions.add(a);
 		// I add the automaton also to the set of outgoing nodes, because of Jung Visualization
 		addOutgoingNode(a);
 	}
 	
-	public void addAutomata(List<AutomatonAST> atm) {
+	public void addAutomata(final List<AutomatonAST> atm) {
 		mAutomataDefinitions.addAll(atm);
 	}
-	public boolean hasAutomaton(AutomatonAST a) {
+	public boolean hasAutomaton(final AutomatonAST a) {
 		return mAutomataDefinitions.contains(a);
 	}
 
