@@ -56,8 +56,8 @@ public class BinaryExpressionAST extends AtsASTNode {
 	 * 
 	 */
 	private void setBothTypesTo(Class<?> type) {
-		mreturnType = type;
-		mexpectingType = type;
+		mReturnType = type;
+		mExpectingType = type;
 	}
 	
 	public BinaryExpressionAST(ILocation loc, AtsASTNode leftChild, AtsASTNode rightChild) {
@@ -108,10 +108,10 @@ public class BinaryExpressionAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (mchildren.size() == 2) {
-			return mchildren.get(0).getAsString() + 
+		if (mChildren.size() == 2) {
+			return mChildren.get(0).getAsString() + 
 		           operatorToString(moperator) + 
-				   mchildren.get(1).getAsString();
+				   mChildren.get(1).getAsString();
 		} else {
 			return "";
 		}

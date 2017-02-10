@@ -29,16 +29,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
-import java.io.Serializable;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
 /**
  * @author Jochen Hoenicke
  * @date 06.03.2012
  */
-public class ReqLocation implements Serializable, ILocation {
+public class ReqLocation extends DefaultLocation {
 	/**
 	 * Serial version UID.
 	 */
@@ -57,37 +55,13 @@ public class ReqLocation implements Serializable, ILocation {
 	 *            the type of check/assertion
 	 */
 	public ReqLocation(final ReqCheck checkNode) {
+		super(checkNode.getFileName(), checkNode.getStartLine(), checkNode.getEndLine(), -1, -1);
 		mCheckedSpecification = checkNode;
 	}
 
 	@Override
 	public String toString() {
 		return mCheckedSpecification.toString();
-	}
-
-	@Override
-	public int getStartLine() {
-		return mCheckedSpecification.getStartLine();
-	}
-
-	@Override
-	public int getEndLine() {
-		return mCheckedSpecification.getEndLine();
-	}
-
-	@Override
-	public int getStartColumn() {
-		return -1;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return -1;
-	}
-
-	@Override
-	public String getFileName() {
-		return mCheckedSpecification.getFileName();
 	}
 
 	@Override

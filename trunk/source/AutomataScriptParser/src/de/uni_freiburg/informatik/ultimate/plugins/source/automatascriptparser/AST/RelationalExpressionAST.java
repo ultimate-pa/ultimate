@@ -55,8 +55,8 @@ public class RelationalExpressionAST extends AtsASTNode {
 	
 	public RelationalExpressionAST(ILocation loc) {
 		super(loc);
-		mreturnType = Boolean.class;
-		mexpectingType = Integer.class;
+		mReturnType = Boolean.class;
+		mExpectingType = Integer.class;
 	}
 
 	@Override
@@ -82,10 +82,10 @@ public class RelationalExpressionAST extends AtsASTNode {
 	
 	@Override
 	public String getAsString() {
-		if (mchildren.size() == 2) {
-			return mchildren.get(0).getAsString() +  
+		if (mChildren.size() == 2) {
+			return mChildren.get(0).getAsString() +  
 		           operatorToString(moperator) +
-				   mchildren.get(1).getAsString();	
+				   mChildren.get(1).getAsString();	
 		} else {
 			return "";
 		}

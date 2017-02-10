@@ -54,8 +54,8 @@ public class AssignmentExpressionAST extends AtsASTNode {
 		setOperator(operator);
 		addOutgoingNode(var);
 		addOutgoingNode(value);
-		mreturnType = var.getReturnType();
-		mexpectingType = mreturnType;
+		mReturnType = var.getReturnType();
+		mExpectingType = mReturnType;
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class AssignmentExpressionAST extends AtsASTNode {
 	public String getAsString() {
 		AtsASTNode var = null;
 		AtsASTNode value = null;
-		for (final AtsASTNode n : mchildren) {
+		for (final AtsASTNode n : mChildren) {
 			if (n instanceof VariableExpressionAST) {
 				var = n;
 			} else {

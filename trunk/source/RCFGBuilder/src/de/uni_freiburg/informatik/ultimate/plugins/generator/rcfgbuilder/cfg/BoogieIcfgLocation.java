@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -46,25 +45,29 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  */
 
 public class BoogieIcfgLocation extends IcfgLocation {
-	
+
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
 	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	private final BoogieASTNode mBoogieASTNode;
-	
+
 	@Visualizable
 	private final boolean mIsErrorLocation;
-	
+
 	public BoogieIcfgLocation(final String debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
-		super(debugIdentifier, procedure, new Payload(getLocationFromASTNode(boogieASTNode)));
+		super(debugIdentifier, procedure);
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
+		final ILocation loc = getLocationFromASTNode(boogieASTNode);
+		if (loc != null) {
+			loc.annotate(this);
+		}
 	}
-	
+
 	private static ILocation getLocationFromASTNode(final BoogieASTNode node) {
 		final ILocation loc;
 		if (node instanceof Statement) {
@@ -80,15 +83,15 @@ public class BoogieIcfgLocation extends IcfgLocation {
 		}
 		return loc;
 	}
-	
+
 	public boolean isErrorLocation() {
 		return mIsErrorLocation;
 	}
-	
+
 	public BoogieASTNode getBoogieASTNode() {
 		return mBoogieASTNode;
 	}
-	
+
 	public String getBoogieASTNodeType() {
 		if (mBoogieASTNode instanceof AssertStatement) {
 			return "AssertStatement";

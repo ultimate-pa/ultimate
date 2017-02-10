@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisR
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -245,7 +246,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes =
 					new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda, Activator.PLUGIN_ID,
-							mServices.getBacktranslationService(), stemPE, loopPE, honda.getPayload().getLocation());
+							mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -297,7 +298,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new IcfgProgramExecution(loop, partialProgramStateMapping, new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
-					position.getPayload().getLocation(), ltlAnnot.getLTLProperty()));
+					ILocation.getAnnotation(position), ltlAnnot.getLTLProperty()));
 		}
 	}
 

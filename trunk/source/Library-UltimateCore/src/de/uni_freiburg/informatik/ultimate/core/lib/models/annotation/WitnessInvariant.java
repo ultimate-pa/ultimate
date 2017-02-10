@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -56,6 +57,6 @@ public class WitnessInvariant extends ModernAnnotations {
 	}
 
 	public static WitnessInvariant getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (WitnessInvariant) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessInvariant) a);
 	}
 }

@@ -29,8 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
 /**
  * 
@@ -39,75 +38,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class AutomataScriptLocation implements ILocation {
-	protected int mStartLine;
-	protected int mEndLine;
-	protected int mStartColumn;
-	protected int mEndColumn;
-	protected String mFileName;
+public class AutomataScriptLocation extends DefaultLocation {
+
+	private static final long serialVersionUID = -236140718161674236L;
 
 	public AutomataScriptLocation(final String filename, final int startline, final int endLine, final int startColumn,
 			final int endColumn) {
-		mStartLine = startline;
-		mEndLine = endLine;
-		mStartColumn = startColumn;
-		mEndColumn = endColumn;
-		mFileName = filename;
+		super(filename, startline, endLine, startColumn, endColumn);
 	}
 
 	public AutomataScriptLocation(final String fileName) {
-		mFileName = fileName;
+		this(fileName, 0, 0, 0, 0);
 	}
 
 	public AutomataScriptLocation(final int startLine, final int endLine) {
-		mStartLine = startLine;
-		mEndLine = endLine;
+		this(null, startLine, endLine, 0, 0);
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("Location: File \"");
-		builder.append(mFileName);
+		builder.append(getFileName());
 		builder.append("\" at Line: ");
-		builder.append(mStartLine);
+		builder.append(getStartLine());
 		builder.append(", Col: ");
-		builder.append(mStartColumn);
+		builder.append(getStartColumn());
 		return builder.toString();
-	}
-
-	@Override
-	public String getFileName() {
-		return mFileName;
-	}
-
-	@Override
-	public int getStartLine() {
-		return mStartLine;
-	}
-
-	@Override
-	public int getEndLine() {
-		return mEndLine;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return mStartColumn;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return mEndColumn;
-	}
-
-	@Override
-	public Check getCheck() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isLoop() {
-		throw new UnsupportedOperationException();
 	}
 }

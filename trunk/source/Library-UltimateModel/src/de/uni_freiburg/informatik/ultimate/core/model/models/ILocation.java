@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ILocation {
+public interface ILocation extends IAnnotations {
 
 	/**
 	 * @return Name of this {@code Location}s file.
@@ -80,4 +80,21 @@ public interface ILocation {
 	 */
 	@Deprecated
 	boolean isLoop();
+
+	default void annotate(final IElement node) {
+		annotate(node.getPayload());
+	}
+
+	default void annotate(final IPayload payload) {
+		payload.getAnnotations().put(ILocation.class.getName(), this);
+	}
+
+	/**
+	 * @return the {@link ILocation} instance annotated to <code>elem</code> or null if there is no such instance of if
+	 *         elem is null
+	 */
+	static ILocation getAnnotation(final IElement elem) {
+		return ModelUtils.getAnnotation(elem, ILocation.class.getName(), a -> (ILocation) a);
+	}
+
 }

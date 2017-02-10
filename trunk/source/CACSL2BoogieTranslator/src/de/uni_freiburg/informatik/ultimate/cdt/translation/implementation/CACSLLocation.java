@@ -27,9 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
-import java.io.Serializable;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -37,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class CACSLLocation implements Serializable, ILocation {
+public abstract class CACSLLocation extends ModernAnnotations implements ILocation {
 
 	private static final long serialVersionUID = -5505219183722347819L;
 
@@ -61,5 +60,4 @@ public abstract class CACSLLocation implements Serializable, ILocation {
 	public boolean ignoreDuringBacktranslation() {
 		return mIgnoreDuringBacktranslation;
 	}
-
 }

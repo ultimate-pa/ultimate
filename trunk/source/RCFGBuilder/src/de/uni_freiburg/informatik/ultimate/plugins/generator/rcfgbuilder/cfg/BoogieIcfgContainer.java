@@ -117,8 +117,9 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
 		mCodeBlockFactory =
 				new CodeBlockFactory(services, mManagedScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
-		mPayload = new Payload(loc);
+		mPayload = new Payload();
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
+		loc.annotate(mPayload);
 	}
 
 	@Override
@@ -192,7 +193,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	}
 
 	public String getFilename() {
-		final String pathAndFilename = getPayload().getLocation().getFileName();
+		final String pathAndFilename = ILocation.getAnnotation(this).getFileName();
 		return new File(pathAndFilename).getName();
 	}
 
@@ -204,7 +205,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	}
 
 	public RootNode constructRootNode() {
-		final RootNode rootNode = new RootNode(getPayload().getLocation(), this);
+		final RootNode rootNode = new RootNode(ILocation.getAnnotation(this), this);
 		for (final Entry<String, BoogieIcfgLocation> entry : getProcedureEntryNodes().entrySet()) {
 			new RootEdge(rootNode, entry.getValue());
 		}

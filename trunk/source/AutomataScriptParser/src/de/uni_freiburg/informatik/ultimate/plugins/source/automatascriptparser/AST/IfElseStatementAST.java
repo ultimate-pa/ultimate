@@ -57,13 +57,13 @@ public class IfElseStatementAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (mchildren.size() == 3) {
+		if (mChildren.size() == 3) {
 			final StringBuilder builder = new StringBuilder("if (");
-			builder.append(mchildren.get(0).getAsString());
+			builder.append(mChildren.get(0).getAsString());
 			builder.append(") {\n");
-			builder.append(mchildren.get(1).getAsString());
+			builder.append(mChildren.get(1).getAsString());
 			builder.append("\n} else {\n");
-			builder.append(mchildren.get(2).getAsString());
+			builder.append(mChildren.get(2).getAsString());
 			builder.append("\n}");
 			return builder.toString();
 		} else {

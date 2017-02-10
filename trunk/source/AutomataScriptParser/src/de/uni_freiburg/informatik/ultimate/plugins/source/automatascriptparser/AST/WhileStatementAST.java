@@ -59,9 +59,9 @@ public class WhileStatementAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		final StringBuilder builder = new StringBuilder("while(");
-		if (mchildren.size() == 2) {
-			builder.append(mchildren.get(0).getAsString() + ") {\n");
-			builder.append(mchildren.get(1).getAsString());
+		if (mChildren.size() == 2) {
+			builder.append(mChildren.get(0).getAsString() + ") {\n");
+			builder.append(mChildren.get(1).getAsString());
 		}
 		builder.append("}");
 		return builder.toString();

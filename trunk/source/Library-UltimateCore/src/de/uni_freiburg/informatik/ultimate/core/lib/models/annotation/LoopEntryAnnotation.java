@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -61,7 +62,7 @@ public class LoopEntryAnnotation extends ModernAnnotations {
 	}
 
 	public static LoopEntryAnnotation getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (LoopEntryAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (LoopEntryAnnotation) a);
 	}
 
 	@Override

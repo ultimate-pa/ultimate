@@ -88,7 +88,7 @@ public abstract class CodeBlock extends IcfgEdge {
 
 	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
-		super(source, target, source == null ? new Payload() : new Payload(source.getPayload().getLocation()));
+		super(source, target, source == null ? new Payload() : new Payload(source.getPayload()));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
 		connectSource(source);
@@ -105,7 +105,7 @@ public abstract class CodeBlock extends IcfgEdge {
 	 */
 	@Deprecated
 	public CodeBlock(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
-		super(source, target, source == null ? new Payload() : new Payload(source.getPayload().getLocation()));
+		super(source, target, source == null ? new Payload() : new Payload(source.getPayload()));
 		mSerialnumber = -1;
 		mLogger = logger;
 		connectSource(source);
@@ -118,6 +118,7 @@ public abstract class CodeBlock extends IcfgEdge {
 	/**
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
+	@Override
 	@Visualizable
 	public UnmodifiableTransFormula getTransformula() {
 		return mTransitionFormula;

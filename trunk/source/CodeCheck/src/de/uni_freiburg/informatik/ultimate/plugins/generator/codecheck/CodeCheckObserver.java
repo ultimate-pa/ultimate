@@ -695,8 +695,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		final int startLine = pp.getPayload().getLocation().getStartLine();
-		final int endLine = pp.getPayload().getLocation().getStartLine();
+		final ILocation loc = ILocation.getAnnotation(pp);
+		final int startLine = loc.getStartLine();
+		final int endLine = loc.getEndLine();
 		final StringBuilder sb = new StringBuilder();
 		sb.append(pp);
 		if (startLine == endLine) {

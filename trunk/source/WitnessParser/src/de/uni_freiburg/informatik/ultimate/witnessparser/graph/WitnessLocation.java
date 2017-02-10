@@ -26,66 +26,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
-public class WitnessLocation implements ILocation {
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class WitnessLocation extends DefaultLocation {
 
-	private final String mFilename;
-	private final int mStartLine;
-	private int mEndLine;
-	private final int mStartColumn;
-	private final int mEndColumn;
+	private static final long serialVersionUID = 1L;
 
 	public WitnessLocation(final String filename, final int startline) {
-		this(filename, startline, startline);
+		super(filename, startline, startline, -1, -1);
 	}
 
 	public WitnessLocation(final String filename, final int startline, final int endline) {
-		mFilename = filename;
-		mStartLine = startline;
-		if (endline == -1) {
-			mEndLine = startline;
-		} else {
-			mEndLine = endline;
-		}
-		mStartColumn = -1;
-		mEndColumn = -1;
+		super(filename, startline, endline == -1 ? startline : endline, -1, -1);
 	}
-
-	@Override
-	public String getFileName() {
-		return mFilename;
-	}
-
-	@Override
-	public int getStartLine() {
-		return mStartLine;
-	}
-
-	@Override
-	public int getEndLine() {
-		return mEndLine;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return mStartColumn;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return mEndColumn;
-	}
-
-	@Override
-	public Check getCheck() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isLoop() {
-		throw new UnsupportedOperationException();
-	}
-
 }

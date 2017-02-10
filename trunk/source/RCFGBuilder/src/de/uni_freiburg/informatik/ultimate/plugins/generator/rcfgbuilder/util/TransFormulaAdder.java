@@ -56,20 +56,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * 
  */
 public class TransFormulaAdder {
-	
+
 	// We use Boogie2SMT to translate boogie Statements to SMT formulas
 	private final Boogie2SMT mBoogie2smt;
 	private final boolean mSimplifyCodeBlocks;
-	
+
 	private final IUltimateServiceProvider mServices;
-	
+
 	public TransFormulaAdder(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services) {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
 		mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
-	
+
 	/**
 	 * Add TransitionFormulas to an edge in the recursive control flow graph. If the edge is a CallEdge or ReturnEdge
 	 * two formulas are added. One that represents the local variable assignments one that represents the global
@@ -94,7 +94,7 @@ public class TransFormulaAdder {
 			throw new AssertionError(
 					"Cannot add transition formula to CodeBlock of type " + cb.getClass().getSimpleName());
 		}
-		
+
 		TranslationResult tlres = null;
 		try {
 			tlres = mBoogie2smt.getStatements2TransFormula().statementSequence(mSimplifyCodeBlocks,
@@ -111,9 +111,9 @@ public class TransFormulaAdder {
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}
-	
+
 	void reportUnsupportedSyntax(final CodeBlock cb, final String longDescription) {
-		final ILocation loc = cb.getPayload().getLocation();
+		final ILocation loc = ILocation.getAnnotation(cb);
 		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, longDescription);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();

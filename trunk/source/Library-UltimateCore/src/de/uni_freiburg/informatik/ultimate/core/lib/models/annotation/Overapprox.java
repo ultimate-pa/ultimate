@@ -33,6 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
@@ -84,6 +85,6 @@ public class Overapprox extends ModernAnnotations {
 	}
 
 	public static Overapprox getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, getIdentifier(), a -> (Overapprox) a);
+		return ModelUtils.getAnnotation(node, getIdentifier(), a -> (Overapprox) a);
 	}
 }

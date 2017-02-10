@@ -20,26 +20,22 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
- * Root node in a Ultimate Model of a program. Information about about the
- * program represented by this Ultimate Model which can not be expressed by the
- * recursive control flow graph are stored in a RootAnnot object stored in the
- * Payload of this RootNode.
- * The ILocation of the RootNode should be the ILocation of the unit of a
- * Boogie Program.
+ * Root node in a Ultimate Model of a program. Information about about the program represented by this Ultimate Model
+ * which can not be expressed by the recursive control flow graph are stored in a RootAnnot object stored in the Payload
+ * of this RootNode. The ILocation of the RootNode should be the ILocation of the unit of a Boogie Program.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
@@ -47,31 +43,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RootNode extends IcfgLocation {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
 	public RootNode(final ILocation location, final BoogieIcfgContainer rootAnnot) {
-		super("rootNode", "rootNode", new Payload(location));
+		super("rootNode", "rootNode");
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
+		location.annotate(this);
 	}
 
 	public BoogieIcfgContainer getRootAnnot() {
-		return ((BoogieIcfgContainer) getPayload().getAnnotations().get(
-				Activator.PLUGIN_ID));
+		return (BoogieIcfgContainer) getPayload().getAnnotations().get(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean addIncoming(final IcfgEdge incoming) {
-		throw new UnsupportedOperationException(
-				"RootNode has no incoming edges");
+		throw new UnsupportedOperationException("RootNode has no incoming edges");
 	}
 
 	@Override
 	public String toString() {
 		return "RootNode";
 	}
-	
+
 }

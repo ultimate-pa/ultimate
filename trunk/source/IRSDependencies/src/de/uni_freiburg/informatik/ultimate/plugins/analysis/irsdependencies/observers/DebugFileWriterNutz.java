@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -84,11 +85,12 @@ public class DebugFileWriterNutz {
 		prepareTraces(mUnrollingDepth, tmp);
 	}
 
-	private void prepareTraces(final int unrollingDepth, final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
+	private void prepareTraces(final int unrollingDepth,
+			final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> procToTraces) {
 		mLogger.debug("Sorting all traces of each procedure...");
-		final HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<RootEdge, TreeSet<String>>();
+		final HashMap<RootEdge, TreeSet<String>> procToTraceStrings = new HashMap<>();
 		for (final Entry<RootEdge, ArrayList<ArrayList<CodeBlock>>> en : procToTraces.entrySet()) {
-			final TreeSet<String> allProcTraces = new TreeSet<String>();
+			final TreeSet<String> allProcTraces = new TreeSet<>();
 			for (final ArrayList<CodeBlock> trace : en.getValue()) {
 				final String traceString = traceToString(trace);
 				allProcTraces.add("--------\n" + traceString);
@@ -98,12 +100,11 @@ public class DebugFileWriterNutz {
 		mLogger.debug("Writing all traces of Main to file...");
 		try {
 			for (final Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
-				final String currentFileName = Paths
-						.get(((BoogieIcfgLocation) en.getKey().getTarget()).getPayload().getLocation().getFileName())
+				final String currentFileName = Paths.get(ILocation.getAnnotation(en.getKey().getTarget()).getFileName())
 						.getFileName().toString();
 				final String currentMethodName = ((BoogieIcfgLocation) en.getKey().getTarget()).getProcedure();
-				final String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_" + "_n_is_"
-						+ unrollingDepth + "_" + ".txt";
+				final String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_"
+						+ "_n_is_" + unrollingDepth + "_" + ".txt";
 
 				writeLargerTextFile(sFolderPath + filename, en.getValue());
 			}

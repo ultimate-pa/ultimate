@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -542,18 +543,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @return the converted "assume true"
 	 */
 	private CodeBlock replaceGotoEdge(final CodeBlock gotoEdge, final CodeBlock secondGotoEdge) {
-		StatementSequence replacement = null;
+
+		final ILocation loc = ILocation.getAnnotation(gotoEdge);
+		final StatementSequence replacement = mCbf.constructStatementSequence(null, null,
+				new AssumeStatement(loc, new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true)));
 		if (secondGotoEdge == null) {
-			replacement =
-					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
-			replacement =
-					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
-			ModelUtils.copyAnnotations(gotoEdge, replacement);
-			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
+			ModelUtils.mergeAnnotations(replacement, gotoEdge, secondGotoEdge);
 		}
 		final String procId = gotoEdge.getPrecedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);

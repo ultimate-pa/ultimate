@@ -1,49 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
-public class DummyLocation implements ILocation {
+public class DummyLocation extends DefaultLocation {
 
-	private final String mFilename;
+	private static final long serialVersionUID = 4063704608726743410L;
 
 	public DummyLocation(final String filename) {
-		mFilename = filename;
+		super(filename, -1, -1, -1, -1);
 	}
-
-	@Override
-	public String getFileName() {
-		return mFilename;
-	}
-
-	@Override
-	public int getStartLine() {
-		return -1;
-	}
-
-	@Override
-	public int getEndLine() {
-		return -1;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return -1;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return -1;
-	}
-
-	@Override
-	public IAnnotations getCheck() {
-		return null;
-	}
-
-	@Override
-	public boolean isLoop() {
-		return false;
-	}
-
 }

@@ -29,11 +29,13 @@
 package de.uni_freiburg.informatik.ultimate.core.model.models;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -106,6 +108,13 @@ public final class ModelUtils {
 		}
 	}
 
+	public static void mergeAnnotations(final IElement newElem, final IElement... oldElements) {
+		if (oldElements == null || oldElements.length == 0) {
+			return;
+		}
+		mergeAnnotations(Arrays.asList(oldElements), newElem);
+	}
+
 	/**
 	 * Takes annotations from one {@link IElement} that are assignable from <code>annotation</code> and adds them to
 	 * another {@link IElement}. This is a shallow copy.
@@ -153,6 +162,34 @@ public final class ModelUtils {
 			return;
 		}
 		annots.entrySet().stream().forEach(funConsumer);
+	}
+
+	/**
+	 * Get some {@link IAnnotations} implementer from an {@link IElement} with the matching key if present.
+	 * 
+	 * @param node
+	 *            The {@link IElement} instance which has the annotation
+	 * @param key
+	 *            The key of the annotation
+	 * @param funCast
+	 *            A function that casts IAnnotations to the desired type
+	 * @return An instance of a type implementing {@link IAnnotations} and annotated to <code>node</code>
+	 */
+	public static <T extends IAnnotations> T getAnnotation(final IElement node, final String key,
+			final Function<IAnnotations, T> funCast) {
+		if (node == null) {
+			return null;
+		}
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(key);
+				if (annot != null) {
+					return funCast.apply(annot);
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

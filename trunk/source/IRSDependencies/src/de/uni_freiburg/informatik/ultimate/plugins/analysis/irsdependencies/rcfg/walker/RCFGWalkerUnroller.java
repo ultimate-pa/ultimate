@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -41,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class RCFGWalkerUnroller extends RCFGWalker {
@@ -64,7 +64,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	@Override
-	public void startFrom(Collection<IcfgEdge> startEdges) {
+	public void startFrom(final Collection<IcfgEdge> startEdges) {
 		init();
 		final IcfgEdge start = searchMainEdge(startEdges);
 		if (start == null) {
@@ -103,7 +103,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 			mFinalPaths.add(newPath);
 		}
-		mLogger.info("Processed "+mFinalPaths.size()+" traces");
+		mLogger.info("Processed " + mFinalPaths.size() + " traces");
 
 		mGraph = null;
 		mPaths = null;
@@ -126,8 +126,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		for (final IcfgEdge edge : startEdges) {
 			final BoogieIcfgLocation possibleMain = (BoogieIcfgLocation) edge.getTarget();
 			mLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
-			if (possibleMain.getProcedure()
-					.equalsIgnoreCase(MAIN_PROCEDURE_NAME)) {
+			if (possibleMain.getProcedure().equalsIgnoreCase(MAIN_PROCEDURE_NAME)) {
 				mLogger.debug("Found match");
 				return edge;
 			}
@@ -147,9 +146,8 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			mLogger.debug("--reached unrolling limit");
 			mLogger.debug("");
 			return;
-		} else {
-			current.visit();
 		}
+		current.visit();
 
 		if (currentEdge instanceof Call) {
 			mCalls.push(currentEdge);
@@ -257,8 +255,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 
 			if (current.mBacking instanceof Return) {
-				mCalls.push(((Return) current.mBacking)
-						.getCorrespondingCall());
+				mCalls.push(((Return) current.mBacking).getCorrespondingCall());
 				mGraphs.push(mGraph);
 				final String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
@@ -274,11 +271,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				mLogger.debug("------new mGraph: " + mGraph.values());
 			}
 
-			mLogger.debug("----change visit counter in mGraph: "
-					+ current.mBacking);
+			mLogger.debug("----change visit counter in mGraph: " + current.mBacking);
 			if (!mGraph.containsKey(current.mBacking)) {
-				mLogger.debug("------not in current mGraph (so visit is 0): "
-						+ current.mBacking);
+				mLogger.debug("------not in current mGraph (so visit is 0): " + current.mBacking);
 			} else {
 				// instead of removing, just reduce the visit counter by one
 				// mGraph.remove(current.mBacking);
@@ -297,7 +292,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	protected void findLoopEntryExit(final IcfgLocation loopNode) {
-		if (loopNode.getPayload().getLocation().isLoop()) {
+		if (ILocation.getAnnotation(loopNode).isLoop()) {
 			for (final IcfgEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
 				if (potentialSelfLoop.getTarget().equals(loopNode)) {
 					addAnnotation(potentialSelfLoop, loopNode, true, true);
@@ -306,8 +301,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 
 			for (final IcfgEdge potentialEntryEdge : loopNode.getOutgoingEdges()) {
-				final IcfgEdge potentialBackEdge = findBackedge(potentialEntryEdge,
-						loopNode, new HashSet<IcfgEdge>());
+				final IcfgEdge potentialBackEdge = findBackedge(potentialEntryEdge, loopNode, new HashSet<IcfgEdge>());
 				if (potentialBackEdge != null) {
 					addAnnotation(potentialEntryEdge, loopNode, true, false);
 					addAnnotation(potentialBackEdge, loopNode, false, true);
@@ -316,29 +310,26 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 	}
 
-	protected void addAnnotation(final IcfgEdge edge, final IcfgLocation honda,
-			final boolean isEntry, final boolean isExit) {
-		new RCFGUnrollWalkerAnnotation(honda, isEntry, isExit)
-				.addAnnotation(edge);
+	protected void addAnnotation(final IcfgEdge edge, final IcfgLocation honda, final boolean isEntry,
+			final boolean isExit) {
+		new RCFGUnrollWalkerAnnotation(honda, isEntry, isExit).addAnnotation(edge);
 	}
 
 	protected IcfgEdge findBackedge(final IcfgEdge current, final IcfgLocation target,
 			final HashSet<IcfgEdge> visited) {
 		if (current.getTarget().equals(target)) {
 			return current;
-		} else {
-			visited.add(current);
-			for (final IcfgEdge succ : current.getTarget().getOutgoingEdges()) {
-				if (!visited.contains(succ)) {
-					final IcfgEdge potential = findBackedge(succ, target, visited);
-					if (potential != null
-							&& potential.getTarget().equals(target)) {
-						return potential;
-					}
+		}
+		visited.add(current);
+		for (final IcfgEdge succ : current.getTarget().getOutgoingEdges()) {
+			if (!visited.contains(succ)) {
+				final IcfgEdge potential = findBackedge(succ, target, visited);
+				if (potential != null && potential.getTarget().equals(target)) {
+					return potential;
 				}
 			}
-			return null;
 		}
+		return null;
 	}
 
 	protected boolean isMaxCallDepth(final IcfgEdge c) {
@@ -368,11 +359,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		} else if (next instanceof Return) {
 			if (mCalls.isEmpty()) {
 				return false;
-			} else {
-				// TODO: search for the last return; necessary?
-				return ((Return) next).getCorrespondingCall().equals(
-						mCalls.peek());
 			}
+			// TODO: search for the last return; necessary?
+			return ((Return) next).getCorrespondingCall().equals(mCalls.peek());
 		}
 		return true;
 	}
@@ -426,18 +415,16 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		@Override
 		public String toString() {
 			if (isLoopEntry() && isLoopExit()) {
-				return mBacking.toString() + " (visited=" + mVisited
-						+ ", isLoopEntry&Exit, honda=" + getLoopHead() + ")";
+				return mBacking.toString() + " (visited=" + mVisited + ", isLoopEntry&Exit, honda=" + getLoopHead()
+						+ ")";
 			}
 
 			if (isLoopEntry()) {
-				return mBacking.toString() + " (visited=" + mVisited
-						+ ", isLoopEntry, honda=" + getLoopHead() + ")";
+				return mBacking.toString() + " (visited=" + mVisited + ", isLoopEntry, honda=" + getLoopHead() + ")";
 			}
 
 			if (isLoopExit()) {
-				return mBacking.toString() + " (visited=" + mVisited
-						+ ", isLoopExit, honda=" + getLoopHead() + ")";
+				return mBacking.toString() + " (visited=" + mVisited + ", isLoopExit, honda=" + getLoopHead() + ")";
 			}
 
 			return mBacking.toString() + " (visited=" + mVisited + ")";
@@ -448,50 +435,44 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopEntry();
-			} else {
-				return false;
 			}
+			return false;
 		}
 
 		private boolean isLoopExit() {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopExit();
-			} else {
-				return false;
 			}
+			return false;
 		}
 
 		private boolean isNestedLoopEntry() {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return !annot.isLoopExit() && annot.isLoopEntry();
-			} else {
-				return false;
 			}
+			return false;
 		}
 
 		private boolean isNestedLoopExit() {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.isLoopExit() && !annot.isLoopEntry();
-			} else {
-				return false;
 			}
+			return false;
 		}
 
 		private IcfgLocation getLoopHead() {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.getHonda();
-			} else {
-				return null;
 			}
+			return null;
 		}
 
 		private RCFGUnrollWalkerAnnotation getAnnotation() {
-			return IRSDependenciesAnnotation.getAnnotation(mBacking,
-					IRSDependenciesAnnotation.class);
+			return IRSDependenciesAnnotation.getAnnotation(mBacking, IRSDependenciesAnnotation.class);
 		}
 	}
 

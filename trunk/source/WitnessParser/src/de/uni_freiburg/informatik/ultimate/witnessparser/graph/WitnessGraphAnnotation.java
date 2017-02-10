@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.Activator;
 
@@ -67,7 +68,7 @@ public class WitnessGraphAnnotation extends ModernAnnotations {
 	}
 
 	public static WitnessGraphAnnotation getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (WitnessGraphAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessGraphAnnotation) a);
 	}
 
 	public String getSourceCodeLanguage() {

@@ -144,20 +144,16 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
 			rtr.add(payloadGroup);
 
-			final ILocation loc = payload.getLocation();
+			final ILocation loc = ILocation.getAnnotation(elem);
 			if (loc != null) {
 				final GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
 				rtr.add(location);
-				location.addEntry(new Entry("Source Info", payload.getLocation().toString(), location));
-				location.addEntry(new Entry("Filename", payload.getLocation().getFileName(), location));
-				location.addEntry(new Entry("Start Line Number", Integer.toString(payload.getLocation().getStartLine()),
-						location));
-				location.addEntry(new Entry("Start Column Number",
-						Integer.toString(payload.getLocation().getStartColumn()), location));
-				location.addEntry(
-						new Entry("End Line Number", Integer.toString(payload.getLocation().getEndLine()), location));
-				location.addEntry(new Entry("End Column Number", Integer.toString(payload.getLocation().getEndColumn()),
-						location));
+				location.addEntry(new Entry("Source Info", loc.toString(), location));
+				location.addEntry(new Entry("Filename", loc.getFileName(), location));
+				location.addEntry(new Entry("Start Line Number", Integer.toString(loc.getStartLine()), location));
+				location.addEntry(new Entry("Start Column Number", Integer.toString(loc.getStartColumn()), location));
+				location.addEntry(new Entry("End Line Number", Integer.toString(loc.getEndLine()), location));
+				location.addEntry(new Entry("End Column Number", Integer.toString(loc.getEndColumn()), location));
 			}
 			final GroupEntry annotationGroup = new GroupEntry("IPayload.Annotation", null);
 			rtr.add(annotationGroup);

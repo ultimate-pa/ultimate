@@ -27,72 +27,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import java.io.Serializable;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
 /**
  * Location in a boogie program.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class BoogieLocation implements Serializable, ILocation {
+public class BoogieLocation extends DefaultLocation {
 	private static final long serialVersionUID = 4495864682359937328L;
 
-	protected int mStartLine;
-	protected int mEndLine;
-	protected int mStartColumn;
-	protected int mEndColumn;
-	protected String mFileName;
-
 	protected BoogieASTNode mBoogieASTNode;
-
 	private final boolean mLoopEntry;
 
 	public BoogieLocation(final String fileName, final int startLine, final int endLine, final int startColum,
 			final int endColumn, final boolean isLoopEntry) {
-		mFileName = fileName;
-		mStartLine = startLine;
-		mEndLine = endLine;
-		mStartColumn = startColum;
-		mEndColumn = endColumn;
+		super(fileName, startLine, endLine, startColum, endColumn);
 		mLoopEntry = isLoopEntry;
 	}
 
 	@Override
 	public String toString() {
-		return "BPL: " + mFileName + ":" + mStartLine + "/" + mStartColumn + "-" + mEndLine + "/" + mEndColumn;
-	}
-
-	@Override
-	public int getStartLine() {
-		return mStartLine;
-	}
-
-	@Override
-	public int getEndLine() {
-		return mEndLine;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return mStartColumn;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return mEndColumn;
-	}
-
-	@Override
-	public String getFileName() {
-		return mFileName;
+		return "BPL: " + getFileName() + ":" + getStartLine() + "/" + getStartColumn() + "-" + getEndLine() + "/"
+				+ getEndColumn();
 	}
 
 	@Override

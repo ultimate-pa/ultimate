@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -61,7 +62,7 @@ public class LoopExitAnnotation extends ModernAnnotations {
 	}
 
 	public static LoopExitAnnotation getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (LoopExitAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (LoopExitAnnotation) a);
 	}
 
 	@Override

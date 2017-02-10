@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -100,7 +101,7 @@ public class LTLPropertyCheck extends Check {
 	}
 
 	public static LTLPropertyCheck getAnnotation(final IElement elem) {
-		return ModernAnnotations.getAnnotation(elem, KEY, a -> (LTLPropertyCheck) a);
+		return ModelUtils.getAnnotation(elem, KEY, a -> (LTLPropertyCheck) a);
 	}
 
 	/**

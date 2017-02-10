@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  */
 public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
 		implements IIcfgElement {
-	
+
 	private static final long serialVersionUID = -7381268073266733825L;
-	
+
 	/**
 	 * Procedure to which this location belongs to.
 	 */
@@ -50,42 +50,42 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	 */
 	@Visualizable
 	private final String mDebugIdentifier;
-	
+
 	public IcfgLocation(final String debugIdentifier, final String procedure, final Payload payload) {
 		super(payload);
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;
 	}
-	
+
 	public IcfgLocation(final String debugIdentifier, final String procedure) {
 		super();
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;
 	}
-	
+
 	@Override
 	public IcfgLocation getLabel() {
 		return this;
 	}
-	
+
 	public String getProcedure() {
 		return mProcedure;
 	}
-	
+
 	public String getDebugIdentifier() {
 		return mDebugIdentifier;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mDebugIdentifier;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

@@ -46,21 +46,21 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 	
 	public ConditionalBooleanExpressionAST(ILocation loc) {
 		super(loc);
-		mreturnType = Boolean.class;
-		mexpectingType = mreturnType;
+		mReturnType = Boolean.class;
+		mExpectingType = mReturnType;
 	}
 	
 	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element) {
 		super(loc);
-		mreturnType = Boolean.class;
-		mexpectingType = mreturnType;
+		mReturnType = Boolean.class;
+		mExpectingType = mReturnType;
 		addOutgoingNode(element);
 	}
 	
 	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element1, AtsASTNode element2) {
 		super(loc);
-		mreturnType = Boolean.class;
-		mexpectingType = mreturnType;
+		mReturnType = Boolean.class;
+		mExpectingType = mReturnType;
 		addOutgoingNode(element1);
 		addOutgoingNode(element2);
 	}
@@ -80,14 +80,14 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (mchildren.size() == 2) {
+		if (mChildren.size() == 2) {
 			final String operatorAsString = (moperator == ConditionalBooleanOperatorAST.AND? "&&" : "||");
-			return mchildren.get(0).getAsString() + " " +
+			return mChildren.get(0).getAsString() + " " +
 		           operatorAsString + " " +
-				   mchildren.get(1).getAsString();	
+				   mChildren.get(1).getAsString();	
 		           
-		} else if (mchildren.size() == 1) {
-			return "!" + mchildren.get(0).getAsString();
+		} else if (mChildren.size() == 1) {
+			return "!" + mChildren.get(0).getAsString();
 		} else {
 			return "";
 		}
