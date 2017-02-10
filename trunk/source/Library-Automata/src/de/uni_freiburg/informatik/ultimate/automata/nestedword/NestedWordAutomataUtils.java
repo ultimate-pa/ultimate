@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutg
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs.PartitionSizeInformation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -199,6 +200,13 @@ public final class NestedWordAutomataUtils {
 				sizeOfLargestEquivalenceClass);
 	}
 	
+	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(final String operationName,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionSizeInformation initialPartition) {
+		return "applying " + operationName + " to NWA with " + operand.size() + " states" + " (initial partition has "
+				+ initialPartition.toString() + ")";
+	}
+	
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -268,4 +276,6 @@ public final class NestedWordAutomataUtils {
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
 	}
+
+
 }
