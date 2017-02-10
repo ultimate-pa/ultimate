@@ -144,28 +144,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            non-final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE complementBuchiDeterministicNonFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE complementBuchiDeterministicFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
 	 * 
 	 * @param downState

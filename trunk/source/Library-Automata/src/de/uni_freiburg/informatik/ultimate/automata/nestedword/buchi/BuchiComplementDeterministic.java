@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementDeterministicStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -63,7 +64,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		implements IOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mTotalizedOperand;
-	private final IStateFactory<STATE> mContentFactory;
+	private final IBuchiComplementDeterministicStateFactory<STATE> mContentFactory;
 	
 	private final HashMap<STATE, STATE> mNew2Old = new HashMap<>();
 	
@@ -82,7 +83,8 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementDeterministic(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiComplementDeterministic(final AutomataLibraryServices services,
+			final IBuchiComplementDeterministicStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -132,11 +134,11 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 				: mOld2NonFinal.get(oldState);
 		if (newState == null) {
 			if (isFinal) {
-				newState = mContentFactory.complementBuchiDeterministicFinal(oldState);
+				newState = mContentFactory.buchiComplementDeterministicFinal(oldState);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, newState);
 				mOld2Final.put(oldState, newState);
 			} else {
-				newState = mContentFactory.complementBuchiDeterministicNonFinal(oldState);
+				newState = mContentFactory.buchiComplementDeterministicNonFinal(oldState);
 				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, newState);
 				mOld2NonFinal.put(oldState, newState);
 			}
