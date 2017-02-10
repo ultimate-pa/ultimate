@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 
 /**
  * Test for language equivalence of two Buchi nested word automata.
@@ -71,7 +71,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private static final int NUMBER_OF_ONE_SYMBOL_RANDOM_WORDS = 6;
 	private static final int NUMBER_OF_TWO_SYMBOL_RANDOM_WORDS = 11;
 	
-	private final IStateFactory<STATE> mStateFactory;
+	private final IBuchiComplementFkvStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
@@ -114,7 +114,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 *             if some operation fails
 	 */
 	public BuchiIsEquivalent(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, TestMode.DYNAMIC);
@@ -136,7 +136,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public BuchiIsEquivalent(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiIsEquivalent(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final TestMode mode) throws AutomataLibraryException {

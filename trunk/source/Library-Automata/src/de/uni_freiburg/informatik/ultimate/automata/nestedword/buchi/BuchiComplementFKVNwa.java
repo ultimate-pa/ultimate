@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -80,7 +81,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	
 	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
 	
-	private final IStateFactory<STATE> mStateFactory;
+	private final IBuchiComplementFkvStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Maps DeterminizedState to its representative in the resulting automaton.
@@ -112,8 +113,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	 */
 	private int mHighestRank = -1;
 	
-	private final MultiOptimizationLevelRankingGenerator<LETTER, STATE, LevelRankingConstraint<LETTER, STATE>>
-			mLevelRankingGenerator;
+	private final MultiOptimizationLevelRankingGenerator<LETTER, STATE, LevelRankingConstraint<LETTER, STATE>> mLevelRankingGenerator;
 	
 	private final STATE mSinkState;
 	
@@ -137,8 +137,9 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	 */
 	public BuchiComplementFKVNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory,
-			final FkvOptimization optimization, final int userDefinedMaxRank)
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory, final FkvOptimization optimization,
+			final int userDefinedMaxRank)
 			throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -177,7 +178,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		STATE resSucc = mLrk2res.get(lrkState);
 		if (resSucc == null) {
-			resSucc = mStateFactory.buchiComplementFKV(lrkState);
+			resSucc = mStateFactory.buchiComplementFkv(lrkState);
 			assert resSucc != null;
 			mCache.addState(false, lrkState.isOempty(), resSucc);
 			mLrk2res.put(lrkState, resSucc);

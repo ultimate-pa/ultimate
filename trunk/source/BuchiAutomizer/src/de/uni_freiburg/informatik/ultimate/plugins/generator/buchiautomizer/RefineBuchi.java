@@ -282,7 +282,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 		} else {
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(
-					new AutomataLibraryServices(mServices), mInterpolAutomatonUsedInRefinement, stateDeterminizer);
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert complNwa.checkResult(mStateFactoryInterpolAutom);

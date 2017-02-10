@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory
 		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
-		IBuchiComplementNcsbStateFactory<String> {
+		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -173,7 +173,7 @@ public class StringFactory
 	}
 	
 	@Override
-	public String buchiComplementFKV(final LevelRankingState<?, String> complementState) {
+	public String buchiComplementFkv(final LevelRankingState<?, String> complementState) {
 		if (complementState.isNonAcceptingSink()) {
 			return complementState.toString();
 		}

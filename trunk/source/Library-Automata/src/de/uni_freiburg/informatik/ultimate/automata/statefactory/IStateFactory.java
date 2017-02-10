@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 
 /**
@@ -119,17 +118,6 @@ public interface IStateFactory<STATE> {
 	 */
 	default STATE getContentOnConcurrentProduct(final STATE content1, final STATE content2) {
 		return intersection(content1, content2);
-	}
-	
-	/**
-	 * Complement state in <tt>FKV</tt> construction for Buchi automata.
-	 * 
-	 * @param complementState
-	 *            complement state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementFKV(final LevelRankingState<?, STATE> complementState) {
-		return null;
 	}
 	
 	/**
