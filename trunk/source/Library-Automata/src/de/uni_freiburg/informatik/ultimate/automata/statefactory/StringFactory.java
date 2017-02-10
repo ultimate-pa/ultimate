@@ -51,7 +51,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class StringFactory
 		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
-		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String> {
+		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
+		IBuchiComplementSvwStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -305,7 +306,7 @@ public class StringFactory
 	}
 	
 	@Override
-	public String constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
+	public String buchiComplementSvw(final Integer stateNb, final Integer tmaNb) {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
 		builder.append(OPEN_PARENTHESIS)

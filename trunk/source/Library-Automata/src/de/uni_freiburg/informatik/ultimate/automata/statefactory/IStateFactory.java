@@ -134,17 +134,4 @@ public interface IStateFactory<STATE> {
 	default STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
 		return null;
 	}
-	
-	/**
-	 * State in <tt>SVW</tt> result construction ("TMA") for Buchi automata.
-	 * 
-	 * @param stateNb
-	 *            state number inside the TMA
-	 * @param tmaNb
-	 *            number of the TMA instance
-	 * @return state representing the TMA
-	 */
-	default STATE constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
-		return null;
-	}
 }

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementSvwStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -71,7 +72,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private static final String IS_NOT_YET_KNOWN = " is not (yet) known.";
 	private static final String STATE_STRING = "State ";
 	private static final String UNSUPPORTED_OPERATION_MESSAGE = "Transform to NestedWordAutomaton to get full support.";
-	protected final IStateFactory<STATE> mStateFactory;
+	protected final IBuchiComplementSvwStateFactory<STATE> mStateFactory;
 	protected final STATE mEmptyStackState;
 	protected final AutomataLibraryServices mServices;
 	private final TransitionMonoidAutomaton mTma;
@@ -100,8 +101,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *             if operation was canceled
 	 */
 	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			final IBuchiComplementSvwStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mTma = new TransitionMonoidAutomaton(operand);
@@ -665,7 +666,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public MetaState(final Integer stateNb, final Integer tmaNb) {
 			mStateNb = stateNb;
 			mTmaNb = tmaNb;
-			mOutputState = mStateFactory.constructBuchiSVWState(stateNb, tmaNb);
+			mOutputState = mStateFactory.buchiComplementSvw(stateNb, tmaNb);
 		}
 		
 		Integer getStateNb() {

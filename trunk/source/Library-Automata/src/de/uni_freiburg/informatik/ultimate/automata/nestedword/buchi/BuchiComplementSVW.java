@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementSvwStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -67,9 +68,9 @@ public final class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<L
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementSVW(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+	public BuchiComplementSVW(final AutomataLibraryServices services,
+			final IBuchiComplementSvwStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		
