@@ -211,13 +211,18 @@ public enum StatisticsType {
 	 */
 	MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
 	/**
-	 * Number of variables.
-	 */
-	NUMBER_OF_VARIABLES,
-	/**
 	 * Number of clauses.
 	 */
 	NUMBER_OF_CLAUSES,
+	/**
+	 * Number of pairs in the initial partition which is provided e.g., by the
+	 * {@link LookaheadPartitionConstructor}.
+	 */
+	NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS,
+	/**
+	 * Number of variables.
+	 */
+	NUMBER_OF_VARIABLES,
 	/**
 	 * Operation name.
 	 */
