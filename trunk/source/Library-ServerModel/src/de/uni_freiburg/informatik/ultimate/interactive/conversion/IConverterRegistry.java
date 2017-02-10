@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.interactive;
+package de.uni_freiburg.informatik.ultimate.interactive.conversion;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

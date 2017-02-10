@@ -1,7 +1,9 @@
-package de.uni_freiburg.informatik.ultimate.interactive;
+package de.uni_freiburg.informatik.ultimate.interactive.conversion;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 
 public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	private final Map<Class<? extends IA>, IConverter<? extends IA, ? extends IB>> mapAB = new HashMap<>();

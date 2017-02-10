@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.interactive;
+package de.uni_freiburg.informatik.ultimate.interactive.conversion;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -6,7 +6,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.interactive.IConverterRegistry.IConverter;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.IConverterRegistry.IConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.UnregisteredTypeException;
 import de.uni_freiburg.informatik.ultimate.interactive.utils.InheritanceUtil;
 

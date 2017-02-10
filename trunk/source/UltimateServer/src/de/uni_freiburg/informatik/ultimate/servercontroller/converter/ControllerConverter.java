@@ -5,10 +5,10 @@ import java.util.Arrays;
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
-import de.uni_freiburg.informatik.ultimate.interactive.ApplyConversionToInteractive;
-import de.uni_freiburg.informatik.ultimate.interactive.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.ApplyConversionToInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ResultSummary;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolChainResult;

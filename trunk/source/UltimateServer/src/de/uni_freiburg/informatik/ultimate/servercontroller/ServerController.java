@@ -62,8 +62,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
+import de.uni_freiburg.informatik.ultimate.interactive.utils.ToolchainUtil;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
@@ -178,14 +180,16 @@ public class ServerController implements IController<RunDefinition> {
 		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
 		mServer.getTypeRegistry().register(Controller.Choice.class);
 
-		File settingsFile = requestChoice(availableSettingsFiles, File::getName);
+		final File settingsFile = requestChoice(availableSettingsFiles, File::getName);
 		try {
 			core.loadPreferences(settingsFile.getAbsolutePath());
 		} catch (Exception e) {
 			throw new IllegalStateException("could not load settings", e);
 		}
+		// TODO: allow custom settings for plugins chosen from toolchain (see
+		// cli controller)
 
-		File tcFile = requestChoice(tcFiles, File::getName);
+		final File tcFile = requestChoice(tcFiles, File::getName);
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -194,13 +198,14 @@ public class ServerController implements IController<RunDefinition> {
 			throw new IllegalStateException(
 					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
+		
+		final IToolchainStorage storage = mToolchain.getStorage();
+		ToolchainUtil.storeInteractive(null, storage);
 
-		File inputFile = requestChoice(availableInputFiles, File::getName);
+		final File inputFile = requestChoice(availableInputFiles, File::getName);
 
-		// TODO: allow custom settings for plugins chosen from toolchain (see
-		// cli controller)
+		final File[] inputFiles = new File[] { inputFile };
 
-		File[] inputFiles = new File[] { inputFile };
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 		tcj.schedule();
 		tcj.join();

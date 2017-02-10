@@ -7,4 +7,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive,
- de.uni_freiburg.informatik.ultimate.interactive.exceptions
+ de.uni_freiburg.informatik.ultimate.interactive.conversion,
+ de.uni_freiburg.informatik.ultimate.interactive.exceptions,
+ de.uni_freiburg.informatik.ultimate.interactive.utils
