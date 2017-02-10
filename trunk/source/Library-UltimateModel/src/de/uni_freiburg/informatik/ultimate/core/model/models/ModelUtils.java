@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -46,6 +47,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * 
  */
 public final class ModelUtils {
+
+	private ModelUtils() {
+		// do not instantiate utility class.
+	}
+
 	/**
 	 * Takes annotations from one {@link IElement} (if any) and adds them to another {@link IElement}. This is a shallow
 	 * copy.
@@ -59,12 +65,10 @@ public final class ModelUtils {
 		if (oldE == null || newE == null) {
 			return;
 		}
-		if (!oldE.hasPayload()) {
-			return;
-		}
-		final IPayload oldPayload = oldE.getPayload();
-		if (oldPayload.hasAnnotation()) {
-			newE.getPayload().getAnnotations().putAll(oldPayload.getAnnotations());
+
+		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
+		if (oldAnnots != null) {
+			newE.getPayload().getAnnotations().putAll(oldAnnots);
 		}
 	}
 
@@ -84,9 +88,8 @@ public final class ModelUtils {
 			return;
 		}
 
-		final List<Entry<String, IAnnotations>> oldElemAnnots =
-				oldElem.stream().filter(IElement::hasPayload).map(IElement::getPayload).filter(IPayload::hasAnnotation)
-						.flatMap(a -> a.getAnnotations().entrySet().stream()).collect(Collectors.toList());
+		final List<Entry<String, IAnnotations>> oldElemAnnots = oldElem.stream().map(ModelUtils::getAnnotations)
+				.filter(a -> a != null).flatMap(a -> a.entrySet().stream()).collect(Collectors.toList());
 		final Map<String, IAnnotations> newElemAnnots = newElem.getPayload().getAnnotations();
 		for (final Entry<String, IAnnotations> oldElemAnnot : oldElemAnnots) {
 
@@ -111,18 +114,16 @@ public final class ModelUtils {
 	 *            old {@link IElement} to take annotations from
 	 * @param newE
 	 *            new {@link IElement} to add annotations to
+	 * @param annotation
+	 *            the type of annotation that should be copied
 	 */
 	public static <E extends IAnnotations> void copyAnnotations(final IElement oldE, final IElement newE,
 			final Class<E> annotation) {
 		if (oldE == null || newE == null || annotation == null) {
 			return;
 		}
-		if (!oldE.hasPayload()) {
-			return;
-		}
-		final IPayload oldPayload = oldE.getPayload();
-		if (oldPayload.hasAnnotation()) {
-			final Map<String, IAnnotations> oldAnnots = oldPayload.getAnnotations();
+		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
+		if (oldAnnots != null) {
 			final Collection<Entry<String, IAnnotations>> toMerge = new ArrayList<>();
 			for (final Entry<String, IAnnotations> entry : oldAnnots.entrySet()) {
 				if (annotation.isAssignableFrom(entry.getValue().getClass())) {
@@ -135,5 +136,39 @@ public final class ModelUtils {
 			final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
 			toMerge.forEach(entry -> newAnnots.put(entry.getKey(), entry.getValue()));
 		}
+	}
+
+	/**
+	 * Applies all annotations of <code>elem</code> (if any) to a provided {@link Consumer}.
+	 * 
+	 * @param elem
+	 *            The element from which annotations should be taken.
+	 * @param funConsumer
+	 *            The consumer instance.
+	 */
+	public static void consumeAnnotations(final IElement elem,
+			final Consumer<Entry<String, IAnnotations>> funConsumer) {
+		final Map<String, IAnnotations> annots = getAnnotations(elem);
+		if (annots == null) {
+			return;
+		}
+		annots.entrySet().stream().forEach(funConsumer);
+	}
+
+	/**
+	 * @return annotation map of an {@link IElement} without creating an empty map.
+	 */
+	private static Map<String, IAnnotations> getAnnotations(final IElement elem) {
+		if (elem == null) {
+			return null;
+		}
+		if (!elem.hasPayload()) {
+			return null;
+		}
+		final IPayload oldPayload = elem.getPayload();
+		if (oldPayload.hasAnnotation()) {
+			return oldPayload.getAnnotations();
+		}
+		return null;
 	}
 }
