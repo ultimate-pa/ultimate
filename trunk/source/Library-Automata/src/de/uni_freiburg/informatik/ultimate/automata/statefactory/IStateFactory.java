@@ -123,28 +123,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * White content for "black and white" construction.
-	 * 
-	 * @param content
-	 *            content
-	 * @return state representing the white content
-	 */
-	default STATE getWhiteContent(final STATE content) {
-		return content;
-	}
-	
-	/**
-	 * Black content for "black and white" construction.
-	 * 
-	 * @param content
-	 *            content
-	 * @return state representing the black content
-	 */
-	default STATE getBlackContent(final STATE content) {
-		return content;
-	}
-	
-	/**
 	 * Complement state in <tt>FKV</tt> construction for Buchi automata.
 	 * 
 	 * @param complementState
