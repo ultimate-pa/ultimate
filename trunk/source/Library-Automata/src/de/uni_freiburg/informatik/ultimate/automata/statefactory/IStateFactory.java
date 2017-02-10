@@ -133,17 +133,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * Complement state in <tt>NCSB</tt> construction for Buchi automata.
-	 * 
-	 * @param complementState
-	 *            complement state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementNCSB(final LevelRankingState<?, STATE> complementState) {
-		return null;
-	}
-	
-	/**
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
 	 * 
 	 * @param downState

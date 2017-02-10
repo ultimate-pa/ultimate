@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 public class PredicateFactoryForInterpolantAutomata
-		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate> {
+		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
+		IBuchiComplementNcsbStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -122,7 +124,7 @@ public class PredicateFactoryForInterpolantAutomata
 	}
 
 	@Override
-	public IPredicate buchiComplementNCSB(final LevelRankingState<?, IPredicate> compl) {
+	public IPredicate buchiComplementNcsb(final LevelRankingState<?, IPredicate> compl) {
 		return buchiComplementFKV(compl);
 	}
 

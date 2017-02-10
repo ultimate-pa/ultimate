@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -66,7 +67,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementNCSB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends IStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiComplementNCSB(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -75,7 +77,7 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 			mLogger.info(startMessage());
 		}
 		final BuchiComplementNCSBNwa<LETTER, STATE> complemented =
-				new BuchiComplementNCSBNwa<>(mServices, operand, stateFactory);
+				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());

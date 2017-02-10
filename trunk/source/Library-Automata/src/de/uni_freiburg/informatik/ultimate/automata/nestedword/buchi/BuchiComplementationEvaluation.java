@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -68,9 +69,9 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementationEvaluation(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> nwa)
-			throws AutomataOperationCanceledException {
+	public <FACTORY extends IStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiComplementationEvaluation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
 		// TODO Christian 2016-09-18: This conversion is not necessary for receiving the required type. Use operand?
 		mOperand = new NestedWordAutomatonReachableStates<>(mServices, nwa);
@@ -109,7 +110,8 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		return mOperand;
 	}
 	
-	private String evaluate(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+	private <FACTORY extends IStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> String
+			evaluate(final FACTORY stateFactory) throws AutomataOperationCanceledException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		evaluateBs(stateFactory, results);
 		for (final FkvOptimization fkvOptimization : FkvOptimization.values()) {
@@ -126,8 +128,9 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		return prettyPrint(results);
 	}
 	
-	private void evaluateBs(final IStateFactory<STATE> stateFactory, final LinkedHashMap<String, Integer> results)
-			throws AutomataOperationCanceledException {
+	private <FACTORY extends IStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> void
+			evaluateBs(final FACTORY stateFactory, final LinkedHashMap<String, Integer> results)
+					throws AutomataOperationCanceledException {
 		final String name = "BuchiComplementBS";
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
 				(new BuchiComplementNCSB<>(mServices, stateFactory, mOperand)).getResult();

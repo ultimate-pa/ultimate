@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -73,7 +74,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	
 	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
 	
-	private final IStateFactory<STATE> mStateFactory;
+	private final IBuchiComplementNcsbStateFactory<STATE> mStateFactory;
 	
 	private final StateWithRankInfo<STATE> mEmptyStackStateWri;
 	
@@ -95,16 +96,16 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param operand
-	 *            operand
 	 * @param stateFactory
 	 *            state factory
+	 * @param operand
+	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBNwa(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory)
-			throws AutomataOperationCanceledException {
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
@@ -135,7 +136,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	private STATE getOrAdd(final boolean isInitial, final LevelRankingState<LETTER, STATE> lvlrk) {
 		STATE resState = mDet2res.get(lvlrk);
 		if (resState == null) {
-			resState = mStateFactory.buchiComplementNCSB(lvlrk);
+			resState = mStateFactory.buchiComplementNcsb(lvlrk);
 			mDet2res.put(lvlrk, resState);
 			mRes2det.put(resState, lvlrk);
 			final boolean isFinal = !lvlrk.isNonAcceptingSink() && lvlrk.isOempty();
