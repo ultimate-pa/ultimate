@@ -30,7 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -48,9 +48,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBa
  */
 public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 
-	private final Predicate<IcfgLocation> mFunHasToBePreserved;
+	private final BiPredicate<IIcfg<?>, IcfgLocation> mFunHasToBePreserved;
 
-	public RemoveSinkStates(final IUltimateServiceProvider services, final Predicate<IcfgLocation> funHasToBePreserved,
+	public RemoveSinkStates(final IUltimateServiceProvider services,
+			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(services, backtranslator);
 		mFunHasToBePreserved = funHasToBePreserved;
@@ -58,14 +59,12 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
-		mFunHasToBePreserved.or(a -> icfg.getProcedureErrorNodes().get(a.getProcedure()) != null
-				&& icfg.getProcedureErrorNodes().get(a.getProcedure()).contains(a));
 		final List<IcfgLocation> sinks = collectInitialSinks(icfg);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Collected " + sinks.size() + " initial sink states:");
 			sinks.stream().forEach(mLogger::debug);
 		}
-		disconnectSinks(sinks);
+		disconnectSinks(icfg, sinks);
 		removeDisconnectedLocations(icfg);
 		mLogger.info(
 				"Removed " + mRemovedEdges + " edges and " + mRemovedLocations + " locations by removing sink states");
@@ -74,20 +73,20 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 
 	private List<IcfgLocation> collectInitialSinks(final IIcfg<?> icfg) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
-		return iter.asStream().filter(this::isSink).collect(Collectors.toList());
+		return iter.asStream().filter(a -> isSink(icfg, a)).collect(Collectors.toList());
 	}
 
-	private void disconnectSinks(final List<IcfgLocation> initialSinks) {
+	private void disconnectSinks(final IIcfg<?> icfg, final List<IcfgLocation> initialSinks) {
 		final Deque<IcfgLocation> sinks = new ArrayDeque<>();
 		sinks.addAll(initialSinks);
 		while (!sinks.isEmpty()) {
 			final IcfgLocation current = sinks.removeFirst();
-			assert isSink(current);
-			sinks.addAll(disconnectSink(current));
+			assert isSink(icfg, current);
+			sinks.addAll(disconnectSink(icfg, current));
 		}
 	}
 
-	private List<IcfgLocation> disconnectSink(final IcfgLocation current) {
+	private List<IcfgLocation> disconnectSink(final IIcfg<?> icfg, final IcfgLocation current) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Removing sink " + current);
 		}
@@ -98,15 +97,15 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 			edge.disconnectSource();
 			edge.disconnectTarget();
 			mRemovedEdges++;
-			if (isSink(sinkCandidate)) {
+			if (isSink(icfg, sinkCandidate)) {
 				sinkCanidates.add(sinkCandidate);
 			}
 		}
 		return sinkCanidates;
 	}
 
-	private boolean isSink(final IcfgLocation current) {
-		return current.getOutgoingEdges().isEmpty() && !mFunHasToBePreserved.test(current);
+	private boolean isSink(final IIcfg<?> icfg, final IcfgLocation current) {
+		return current.getOutgoingEdges().isEmpty() && !mFunHasToBePreserved.test(icfg, current);
 	}
 
 	@Override

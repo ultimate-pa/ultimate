@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -156,6 +157,13 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 			for (final Supplier<IEncoder<IcfgLocation>> provider : encoderProviders) {
 				final IEncoder<IcfgLocation> encoder = provider.get();
 				currentResult = applyEncoder(currentResult, encoder);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Current error locations: " + IcfgUtils.getErrorLocations(currentResult.getIcfg()));
+					new IcfgLocationIterator<>(currentResult.getIcfg()).asStream().forEach(a -> {
+						mLogger.debug("Annotations of " + a);
+						ModelUtils.consumeAnnotations(a, mLogger::debug);
+					});
+				}
 			}
 
 			mIterationResult = currentResult.getIcfg();
@@ -214,6 +222,8 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 			old2new.put(oldLoc, newLoc);
 		}
 
+		assert noEdges(newIcfg) : "Icfg contains edges but should not";
+
 		// second, add all non-return edges
 		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
 			final IcfgLocation newSource = nodePair.getValue();
@@ -230,7 +240,30 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		// third, add all previously ignored return edges
 		openReturns.stream().forEach(a -> createEdgeCopy(edgeBuilder, old2new, a.getFirst(), a.getSecond()));
 
+		if (mLogger.isDebugEnabled()) {
+			new IcfgLocationIterator<>(newIcfg).asStream().forEach(a -> {
+				mLogger.debug("Annotations of " + a);
+				ModelUtils.consumeAnnotations(a, mLogger::debug);
+			});
+		}
 		return newIcfg;
+	}
+
+	private boolean noEdges(final IIcfg<IcfgLocation> icfg) {
+
+		final Set<IcfgLocation> programPoints = icfg.getProgramPoints().entrySet().stream()
+				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue()).collect(Collectors.toSet());
+		for (final IcfgLocation loc : programPoints) {
+			if (loc.getOutgoingEdges().isEmpty() && loc.getIncomingEdges().isEmpty()) {
+				continue;
+			}
+			mLogger.fatal("Location " + loc + " contains incoming or outgoing edges");
+			mLogger.fatal("Incoming: " + loc.getIncomingEdges());
+			mLogger.fatal("Outgoing: " + loc.getOutgoingEdges());
+			return false;
+		}
+
+		return true;
 	}
 
 	private void createEdgeCopy(final IcfgEdgeBuilder edgeBuilder, final Map<IcfgLocation, IcfgLocation> old2new,
@@ -258,21 +291,20 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final MinimizeStates minimizeStates =
 				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
-		final Predicate<IcfgLocation> funPreserve = a -> hasToBePreserved(icfg, a);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
 
 				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
 				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case MULTI:
 				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -284,7 +316,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
-			rtr.add(() -> new RemoveSinkStates(mServices, funPreserve, mBacktranslator));
+			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved, mBacktranslator));
 		}
 
 		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices, mBacktranslator));

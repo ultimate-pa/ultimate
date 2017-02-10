@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -53,7 +53,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	private static final String INDENT = "    ";
 
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funIsAccepting) {
+			final BlockEncodingBacktranslator backtranslator,
+			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting);
 	}
 
@@ -66,7 +67,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// ej = (q,stj,qj) in EO
 		// and we will try to replace them by |EI| * |EO| edges
 
-		if (isNecessary(target)) {
+		if (isNecessary(icfg, target)) {
 			// do not remove necessary nodes
 			return target.getOutgoingNodes();
 		}

@@ -32,6 +32,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -55,11 +56,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.Pre
 public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> {
 
 	private final boolean mIgnoreBlowup;
-	private final Predicate<IcfgLocation> mFunHasToBePreserved;
+	private final BiPredicate<IIcfg<?>, IcfgLocation> mFunHasToBePreserved;
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public BaseMinimizeStates(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator, final Predicate<IcfgLocation> funHasToBePreserved) {
+			final BlockEncodingBacktranslator backtranslator,
+			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved) {
 		super(services, backtranslator);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
@@ -148,20 +150,20 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		return predEdge.getTarget() != predEdge.getSource() && succEdge.getTarget() != succEdge.getSource();
 	}
 
-	protected boolean areAllNecessary(final List<IcfgLocation> nodes) {
-		return nodes.stream().allMatch(mFunHasToBePreserved);
+	protected boolean areAllNecessary(final IIcfg<?> icfg, final List<IcfgLocation> nodes) {
+		return nodes.stream().allMatch(a -> mFunHasToBePreserved.test(icfg, a));
 	}
 
-	protected boolean isNecessary(final IcfgLocation target) {
-		return mFunHasToBePreserved.test(target);
+	protected boolean isNecessary(final IIcfg<?> icfg, final IcfgLocation target) {
+		return mFunHasToBePreserved.test(icfg, target);
 	}
 
-	protected boolean isNotNecessary(final IcfgLocation target) {
-		return mFunHasToBePreserved.negate().test(target);
+	protected boolean isNotNecessary(final IIcfg<?> icfg, final IcfgLocation target) {
+		return mFunHasToBePreserved.negate().test(icfg, target);
 	}
 
-	protected boolean isOneNecessary(final IcfgLocation pred, final IcfgLocation succ) {
-		return mFunHasToBePreserved.test(pred) || mFunHasToBePreserved.test(succ);
+	protected boolean isOneNecessary(final IIcfg<?> icfg, final IcfgLocation pred, final IcfgLocation succ) {
+		return mFunHasToBePreserved.test(icfg, pred) || mFunHasToBePreserved.test(icfg, succ);
 	}
 
 	protected IcfgEdgeBuilder getEdgeBuilder() {
