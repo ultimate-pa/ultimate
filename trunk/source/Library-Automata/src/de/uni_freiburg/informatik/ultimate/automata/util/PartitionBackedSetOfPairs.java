@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @SuppressWarnings({ "findbugs:UUF_UNUSED_FIELD", "findbugs:UWF_UNWRITTEN_FIELD" })
 public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
 	protected final Collection<Set<E>> mPartition;
+	private PartitionSizeInformation mPartitionSizeInformation;
 	
 	/**
 	 * @param partition
@@ -76,6 +77,13 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	@Override
 	public Collection<Set<E>> getRelation() {
 		return mPartition;
+	}
+	
+	public PartitionSizeInformation getOrConstructPartitionSizeInformation() {
+		if (mPartitionSizeInformation == null) {
+			mPartitionSizeInformation = new PartitionSizeInformation(mPartition); 
+		}
+		return mPartitionSizeInformation;
 	}
 	
 	/**
@@ -123,5 +131,45 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			mElemLhsIt = mBlock.iterator();
 			mElemRhsIt = mBlock.iterator();
 		}
+	}
+	
+	public static class PartitionSizeInformation {
+		private long mNumberOfPairs = 0;
+		private int mSizeOfLargestBlock = 0;
+		private final int mNumberOfBlocks;
+		
+		public PartitionSizeInformation(final Collection<? extends Set<?>> partition) {
+			mNumberOfBlocks = partition.size();
+			for (final Set<?> block : partition) {
+				mSizeOfLargestBlock = Math.max(mSizeOfLargestBlock, block.size());
+				mNumberOfPairs += ((long) block.size() - 1) * ((long) block.size() - 1) + block.size();
+			}
+		}
+
+		public long getNumberOfPairs() {
+			return mNumberOfPairs;
+		}
+
+		public int getSizeOfLargestBlock() {
+			return mSizeOfLargestBlock;
+		}
+
+		public int getNumberOfBlocks() {
+			return mNumberOfBlocks;
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(getNumberOfPairs());
+			sb.append(" pairs,");
+			sb.append(getNumberOfBlocks());
+			sb.append(" blocks, ");
+			sb.append( "largest block has ");
+			sb.append(getSizeOfLargestBlock());
+			sb.append( " elements");
+			return sb.toString();
+		}
+		
 	}
 }
