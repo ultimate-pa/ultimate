@@ -250,7 +250,7 @@ public class CoreUtil {
 		}
 
 		final char last = original.charAt(original.length() - 1);
-		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
+		if (forceRemoveLastLinebreak || last != '\n' && last != '\r') {
 			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");
 		}
 		return sb;
@@ -331,7 +331,8 @@ public class CoreUtil {
 		T last = iter.next();
 		while (iter.hasNext()) {
 			final T current = iter.next();
-			if (last.compareTo(current) >= 0) {
+			final int cmp = last.compareTo(current);
+			if (cmp > 0) {
 				return false;
 			}
 			last = current;
