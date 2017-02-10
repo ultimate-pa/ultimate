@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>  {
 	
-	public DirectFullMultipebbleStateFactory(final HashRelation<STATE, STATE> initialPartition) {
+	public DirectFullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		super(initialPartition);
 	}
 

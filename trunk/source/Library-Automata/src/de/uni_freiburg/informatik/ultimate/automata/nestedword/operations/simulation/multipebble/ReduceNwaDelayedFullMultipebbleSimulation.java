@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -64,7 +64,7 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 	}
 		
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
+	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		return new DelayedFullMultipebbleStateFactory<>(initialPartition);
 	}
 	
