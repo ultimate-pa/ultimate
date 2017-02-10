@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
@@ -33,42 +33,38 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 
 public class GenericServiceProvider implements IStorable {
 
-	private static final String sKey = "GenericServiceProvider";
+	private static final String KEY = "GenericServiceProvider";
 	private final IServiceFactoryFactory mFactory;
 
-	public GenericServiceProvider(IServiceFactoryFactory factory) {
+	public GenericServiceProvider(final IServiceFactoryFactory factory) {
 		mFactory = factory;
 	}
 
 	@SuppressWarnings("unchecked")
-	static <T extends IService,K extends IServiceFactory<T>> T getServiceInstance(
-			ToolchainStorage toolchainStorage,
-			Class<K> serviceType) {
+	static <T extends IService, K extends IServiceFactory<T>> T
+			getServiceInstance(final ToolchainStorage toolchainStorage, final Class<K> serviceType) {
 		assert toolchainStorage != null;
 
 		// first, check if this instance already exists in storage
-		final IStorable storable = toolchainStorage
-				.getStorable(serviceType.getName());
+		final IStorable storable = toolchainStorage.getStorable(serviceType.getName());
 		if (storable != null) {
 			return (T) storable;
 		}
 
 		// no it doesnt, we need to create a new one
-		final GenericServiceProvider instance = (GenericServiceProvider) toolchainStorage
-				.getStorable(sKey);
-		final T rtrValue = instance.mFactory.createService(serviceType,
-				toolchainStorage, toolchainStorage);
+		final GenericServiceProvider instance = (GenericServiceProvider) toolchainStorage.getStorable(KEY);
+		final T rtrValue = instance.mFactory.createService(serviceType, toolchainStorage, toolchainStorage);
 		toolchainStorage.putStorable(serviceType.getName(), rtrValue);
 		return rtrValue;
 	}
 
 	public static String getServiceKey() {
-		return sKey;
+		return KEY;
 	}
 
 	@Override
 	public void destroy() {
-		// doesnt need destruction, the actual services destroy themselves 
+		// doesnt need destruction, the actual services destroy themselves
 	}
 
 }
