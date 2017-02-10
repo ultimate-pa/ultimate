@@ -221,12 +221,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCoreForLocsAndVars = useUnsatCoreVarsForPatterns;
-		//		mUseUnsatCoreForDynamicPatternSettingChanges = useUnsatCoreForDynamicPatternSettingChanges;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2MotzkinTerm = new HashMap<>();
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		mLinearInequalities2Locations = new HashMap<>();
-		//		mLinearInequalities2Transitions =  new HashMap<>();
 		mAllPatternCoefficients = null;
 		mPatternCoefficients2Values = null;
 		mLoc2UnderApproximation = loc2underApprox;
@@ -547,6 +545,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private Term buildPredicateTerm(
 			final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate,
 			final Map<IProgramVar, Term> programVarsRecentlyOccurred) {
+		if (DEBUG_OUTPUT) {
+			String transformulaAsString = predicate.getTransition().toString();
+			mLogger.info("Building constraints for transition (" + predicate.getSourceLocation() + ", " + transformulaAsString.substring(0, transformulaAsString.indexOf("InVars")) +
+					", " + predicate.getTargetLocation() + ")");
+		}
 		final LinearTransition transition = mLinearizer.linearize(predicate.getTransition());
 		final Map<IProgramVar, Term> unprimedMapping = new HashMap<>(transition.getInVars());
 		programVarsRecentlyOccurred.putAll(unprimedMapping);
@@ -559,6 +562,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		completePatternVariablesMapping(primedMapping, predicate.getVariablesForTargetPattern(),
 				programVarsRecentlyOccurred);
 		if (DEBUG_OUTPUT) {
+			String transformulaAsString = predicate.getTransition().toString();
+			mLogger.info("Building constraints for transition (" + predicate.getSourceLocation() + ", " + transformulaAsString.substring(0, transformulaAsString.indexOf("InVars")) +
+					", " + predicate.getTargetLocation());
 			mLogger.info("Size of start-pattern before mapping to lin-inequalities: "
 					+ getSizeOfPattern(predicate.getInvStart()));
 		}
