@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Partition implementation of a set of pairs.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
  */
@@ -79,9 +80,12 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		return mPartition;
 	}
 	
+	/**
+	 * @return Size information of the partition.
+	 */
 	public PartitionSizeInformation getOrConstructPartitionSizeInformation() {
 		if (mPartitionSizeInformation == null) {
-			mPartitionSizeInformation = new PartitionSizeInformation(mPartition); 
+			mPartitionSizeInformation = new PartitionSizeInformation(mPartition);
 		}
 		return mPartitionSizeInformation;
 	}
@@ -129,15 +133,27 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		private void advanceToNextBlock() {
 			mBlock = mBlockIt.next();
 			mElemLhsIt = mBlock.iterator();
+			if (mElemLhsIt.hasNext()) {
+				mElemLhs = mElemLhsIt.next();
+			}
 			mElemRhsIt = mBlock.iterator();
 		}
 	}
 	
+	/**
+	 * Size information of the partition.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	public static class PartitionSizeInformation {
-		private long mNumberOfPairs = 0;
-		private int mSizeOfLargestBlock = 0;
+		private long mNumberOfPairs;
+		private int mSizeOfLargestBlock;
 		private final int mNumberOfBlocks;
 		
+		/**
+		 * @param partition
+		 *            Partition.
+		 */
 		public PartitionSizeInformation(final Collection<? extends Set<?>> partition) {
 			mNumberOfBlocks = partition.size();
 			for (final Set<?> block : partition) {
@@ -145,15 +161,15 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 				mNumberOfPairs += ((long) block.size() - 1) * ((long) block.size() - 1) + block.size();
 			}
 		}
-
+		
 		public long getNumberOfPairs() {
 			return mNumberOfPairs;
 		}
-
+		
 		public int getSizeOfLargestBlock() {
 			return mSizeOfLargestBlock;
 		}
-
+		
 		public int getNumberOfBlocks() {
 			return mNumberOfBlocks;
 		}
@@ -161,13 +177,15 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
-			sb.append(getNumberOfPairs());
-			sb.append(" pairs,");
-			sb.append(getNumberOfBlocks());
-			sb.append(" blocks, ");
-			sb.append( "largest block has ");
-			sb.append(getSizeOfLargestBlock());
-			sb.append( " elements");
+			// @formatter:off
+			sb.append(getNumberOfPairs())
+				.append(" pairs,")
+				.append(getNumberOfBlocks())
+				.append(" blocks, ")
+				.append("largest block has ")
+				.append(getSizeOfLargestBlock())
+				.append(" elements");
+			// @formatter:on
 			return sb.toString();
 		}
 		
