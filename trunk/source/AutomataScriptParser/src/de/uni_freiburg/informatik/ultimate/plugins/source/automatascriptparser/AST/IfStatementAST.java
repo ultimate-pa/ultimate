@@ -61,11 +61,11 @@ public class IfStatementAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		if (mchildren.size() == 2) {
+		if (mChildren.size() == 2) {
 			final StringBuilder builder = new StringBuilder("if (");
-			builder.append(mchildren.get(0).getAsString());
+			builder.append(mChildren.get(0).getAsString());
 			builder.append(") {\n");
-			builder.append(mchildren.get(1).getAsString());
+			builder.append(mChildren.get(1).getAsString());
 			builder.append("\n}\n");
 			return builder.toString();
 		} else {

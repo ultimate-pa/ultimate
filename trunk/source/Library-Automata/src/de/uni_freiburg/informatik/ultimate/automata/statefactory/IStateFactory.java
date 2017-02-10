@@ -30,9 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 
 /**
  * Abstract factory for states used in typical automata operations.
@@ -123,72 +121,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * White content for "black and white" construction.
-	 * 
-	 * @param content
-	 *            content
-	 * @return state representing the white content
-	 */
-	default STATE getWhiteContent(final STATE content) {
-		return content;
-	}
-	
-	/**
-	 * Black content for "black and white" construction.
-	 * 
-	 * @param content
-	 *            content
-	 * @return state representing the black content
-	 */
-	default STATE getBlackContent(final STATE content) {
-		return content;
-	}
-	
-	/**
-	 * Complement state in <tt>FKV</tt> construction for Buchi automata.
-	 * 
-	 * @param complementState
-	 *            complement state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementFKV(final LevelRankingState<?, STATE> complementState) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in <tt>NCSB</tt> construction for Buchi automata.
-	 * 
-	 * @param complementState
-	 *            complement state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementNCSB(final LevelRankingState<?, STATE> complementState) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            non-final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE complementBuchiDeterministicNonFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE complementBuchiDeterministicFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
 	 * 
 	 * @param downState
@@ -200,44 +132,6 @@ public interface IStateFactory<STATE> {
 	 */
 	@Deprecated
 	default STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
-		return null;
-	}
-	
-	/**
-	 * State in <tt>SVW</tt> result construction ("TMA") for Buchi automata.
-	 * 
-	 * @param stateNb
-	 *            state number inside the TMA
-	 * @param tmaNb
-	 *            number of the TMA instance
-	 * @return state representing the TMA
-	 */
-	default STATE constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
-		return null;
-	}
-	
-	/**
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet FinitePrefix2PetriNet}
-	 * construction of a condition.
-	 * 
-	 * @param condition
-	 *            condition
-	 * @return state representing the condition
-	 */
-	default STATE finitePrefix2net(final Condition<?, STATE> condition) {
-		return null;
-	}
-	
-	/**
-	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.Senwa Senwa}.
-	 * 
-	 * @param entry
-	 *            entry
-	 * @param state
-	 *            state
-	 * @return state representing a Senwa state
-	 */
-	default STATE senwa(final STATE entry, final STATE state) {
 		return null;
 	}
 }

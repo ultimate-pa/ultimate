@@ -47,20 +47,20 @@ public class HornAnnot implements IAnnotations {
 
 	private static final long serialVersionUID = -3542578811318106167L;
 	private final ManagedScript mBackendSolverScript;
-	private final Map<String, Object> mp = new HashMap<>();
+	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
 	private final HCSymbolTable mSymbolTable;
 
 	public HornAnnot(final List<HornClause> clauses, 
 			final ManagedScript backendSolver,
 			final HCSymbolTable symbolTable) {
-		mp.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
+		mMaechtigUnnoetigBenannteMap.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
 	}
 
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		return mp;
+		return mMaechtigUnnoetigBenannteMap;
 	}
 
 	public ManagedScript getScript() {
@@ -74,7 +74,7 @@ public class HornAnnot implements IAnnotations {
 	@Override
 	public String toString() {
 		StringBuilder res = new StringBuilder();
-		for (final Entry<String, Object> en : mp.entrySet()) {
+		for (final Entry<String, Object> en : mMaechtigUnnoetigBenannteMap.entrySet()) {
 			if (res.length() != 0) {
 				res.append('\t');
 			}

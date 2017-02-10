@@ -144,7 +144,7 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private void matchLocations(final Return ret) {
-		matchLocations(ret.getPayload().getLocation());
+		matchLocations(ILocation.getAnnotation(ret));
 	}
 
 	private void matchLocations(final SequentialComposition sc) {

@@ -83,10 +83,10 @@ public class ArgumentListAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
         final StringBuilder builder = new StringBuilder();
-        for (final AtsASTNode arg : mchildren) {
+        for (final AtsASTNode arg : mChildren) {
         	builder.append(arg.getAsString() + ", ");
         }
-        if (!mchildren.isEmpty()) {
+        if (!mChildren.isEmpty()) {
 			builder.delete(builder.length() - 2, builder.length());
 		}
 		return builder.toString();

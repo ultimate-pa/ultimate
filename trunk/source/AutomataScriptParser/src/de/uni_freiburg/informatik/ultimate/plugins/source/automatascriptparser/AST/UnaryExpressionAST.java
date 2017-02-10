@@ -49,14 +49,14 @@ public class UnaryExpressionAST extends AtsASTNode {
 	
 	public UnaryExpressionAST(ILocation loc) {
 		super(loc);
-		mreturnType = Integer.class;
-		mexpectingType = mreturnType;
+		mReturnType = Integer.class;
+		mExpectingType = mReturnType;
 	}
 	
 	public UnaryExpressionAST(ILocation loc, VariableExpressionAST expr) {
 		super(loc);
-		mreturnType = Integer.class;
-		mexpectingType = mreturnType;
+		mReturnType = Integer.class;
+		mExpectingType = mReturnType;
 		addOutgoingNode(expr);
 	}
 	
@@ -89,10 +89,10 @@ public class UnaryExpressionAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		switch (moperator) {
-		case EXPR_PLUSPLUS: return mchildren.get(0).getAsString() + "++";
-		case EXPR_MINUSMINUS: return mchildren.get(0).getAsString() + "--";
-		case PLUSPLUS_EXPR: return "++" + mchildren.get(0).getAsString();
-		case MINUSMINUS_EXPR: return "--" + mchildren.get(0).getAsString();
+		case EXPR_PLUSPLUS: return mChildren.get(0).getAsString() + "++";
+		case EXPR_MINUSMINUS: return mChildren.get(0).getAsString() + "--";
+		case PLUSPLUS_EXPR: return "++" + mChildren.get(0).getAsString();
+		case MINUSMINUS_EXPR: return "--" + mChildren.get(0).getAsString();
 		default: return "";
 		}
 	}

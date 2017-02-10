@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -47,7 +47,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
 	public MinimizeStatesSingleEdgeSingleNode(final IcfgEdgeBuilder edgeBuilder,
 			final IUltimateServiceProvider services, final BlockEncodingBacktranslator backtranslator,
-			final Predicate<IcfgLocation> funIsAccepting) {
+			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting) {
 		super(edgeBuilder, services, backtranslator, funIsAccepting);
 	}
 
@@ -69,7 +69,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		final IcfgLocation pred = predEdge.getSource();
 		final IcfgLocation succ = succEdge.getTarget();
 
-		if (!isNotNecessary(target) && !isOneNecessary(pred, succ)) {
+		if (!isNotNecessary(icfg, target) && !isOneNecessary(icfg, pred, succ)) {
 			// the nodes do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}

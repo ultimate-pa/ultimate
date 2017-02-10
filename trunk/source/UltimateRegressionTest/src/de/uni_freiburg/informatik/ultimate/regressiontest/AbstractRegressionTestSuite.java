@@ -32,7 +32,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
@@ -54,15 +56,20 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
+	private static final Predicate<File> FILTER_XML = TestUtil.getFileEndingTest(".xml");
+	private static final Predicate<File> FILTER_EPF = TestUtil.getFileEndingTest(".epf");
+
 	protected long mTimeout;
 	protected String mRootFolder;
-	protected String mFilterRegex;
+	protected String mExcludeFilterRegex;
+	protected String mIncludeFilterRegex;
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
 		mTimeout = 1000;
-		mFilterRegex = ".*";
-		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i",  ".ats" };
+		mExcludeFilterRegex = "";
+		mIncludeFilterRegex = "";
+		mFiletypesToConsider = new String[] { ".c", ".bpl", ".i", ".ats" };
 	}
 
 	@Override
@@ -101,13 +108,24 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return rtr;
 		}
 
-		Collection<File> toolchainFiles = TestUtil.getFiles(root, new String[] { ".xml" });
-		Collection<File> settingsFiles = TestUtil.getFiles(root, new String[] { ".epf" });
+		final List<File> tcAndSettingsFiles = TestUtil.getFiles(root, new String[] { ".xml", ".epf" });
 
-		toolchainFiles = TestUtil.filterFiles(toolchainFiles, ".*regression.*");
-		toolchainFiles = TestUtil.filterFiles(toolchainFiles, mFilterRegex);
-		settingsFiles = TestUtil.filterFiles(settingsFiles, ".*regression.*");
-		settingsFiles = TestUtil.filterFiles(settingsFiles, mFilterRegex);
+		final List<String> regexes = new ArrayList<>();
+		regexes.add(".*regression.*");
+		if (!mIncludeFilterRegex.isEmpty()) {
+			regexes.add(mIncludeFilterRegex);
+		}
+		Predicate<File> regexFilter;
+		if (!mExcludeFilterRegex.isEmpty()) {
+			regexFilter = TestUtil.getRegexTest(regexes).and(TestUtil.getRegexTest(mExcludeFilterRegex).negate());
+		} else {
+			regexFilter = TestUtil.getRegexTest(regexes);
+		}
+
+		final Collection<File> toolchainFiles =
+				tcAndSettingsFiles.stream().filter(FILTER_XML.and(regexFilter)).collect(Collectors.toSet());
+		final Collection<File> settingsFiles =
+				tcAndSettingsFiles.stream().filter(FILTER_EPF.and(regexFilter)).collect(Collectors.toSet());
 
 		for (final File toolchain : toolchainFiles) {
 			final String toolchainName = toolchain.getName().replaceAll("\\..*", "");
@@ -193,8 +211,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((mSettingsFile == null) ? 0 : mSettingsFile.hashCode());
-			result = prime * result + ((mToolchainFile == null) ? 0 : mToolchainFile.hashCode());
+			result = prime * result + (mSettingsFile == null ? 0 : mSettingsFile.hashCode());
+			result = prime * result + (mToolchainFile == null ? 0 : mToolchainFile.hashCode());
 			return result;
 		}
 

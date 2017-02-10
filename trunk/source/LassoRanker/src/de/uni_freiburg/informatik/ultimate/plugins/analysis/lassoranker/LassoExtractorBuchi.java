@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDiffer
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -66,7 +65,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 	private final IUltimateServiceProvider mServices;
 	private final INestedWordAutomatonSimple<LETTER, IPredicate> mCfgAutomaton;
 	private INestedWordAutomatonSimple<LETTER, IPredicate> mLassoAutomaton;
-	private final IStateFactory<IPredicate> mPredicateFactoryRc;
+	private final PredicateFactoryResultChecking mPredicateFactoryRc;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;

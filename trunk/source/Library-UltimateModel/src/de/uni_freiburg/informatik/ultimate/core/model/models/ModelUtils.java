@@ -29,13 +29,17 @@
 package de.uni_freiburg.informatik.ultimate.core.model.models;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations.UnmergeableAnnotationsException;
 
 /**
  * Helper methods for Ultimate models.
@@ -45,6 +49,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * 
  */
 public final class ModelUtils {
+
+	private ModelUtils() {
+		// do not instantiate utility class.
+	}
+
 	/**
 	 * Takes annotations from one {@link IElement} (if any) and adds them to another {@link IElement}. This is a shallow
 	 * copy.
@@ -58,12 +67,10 @@ public final class ModelUtils {
 		if (oldE == null || newE == null) {
 			return;
 		}
-		if (!oldE.hasPayload()) {
-			return;
-		}
-		final IPayload oldPayload = oldE.getPayload();
-		if (oldPayload.hasAnnotation()) {
-			newE.getPayload().getAnnotations().putAll(oldPayload.getAnnotations());
+
+		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
+		if (oldAnnots != null) {
+			newE.getPayload().getAnnotations().putAll(oldAnnots);
 		}
 	}
 
@@ -83,17 +90,29 @@ public final class ModelUtils {
 			return;
 		}
 
-		final List<Entry<String, IAnnotations>> oldElemAnnots =
-				oldElem.stream().filter(IElement::hasPayload).map(IElement::getPayload).filter(IPayload::hasAnnotation)
-						.flatMap(a -> a.getAnnotations().entrySet().stream()).collect(Collectors.toList());
+		final List<Entry<String, IAnnotations>> oldElemAnnots = oldElem.stream().map(ModelUtils::getAnnotations)
+				.filter(a -> a != null).flatMap(a -> a.entrySet().stream()).collect(Collectors.toList());
 		final Map<String, IAnnotations> newElemAnnots = newElem.getPayload().getAnnotations();
 		for (final Entry<String, IAnnotations> oldElemAnnot : oldElemAnnots) {
-			final IAnnotations removedNewElemAnnot = newElemAnnots.put(oldElemAnnot.getKey(), oldElemAnnot.getValue());
-			if (removedNewElemAnnot != null) {
-				throw new UnsupportedOperationException("Annotations would be lost: " + oldElemAnnot.getKey());
-			}
-		}
 
+			final String key = oldElemAnnot.getKey();
+			final IAnnotations oldNewElemAnnot = newElemAnnots.get(key);
+			if (oldNewElemAnnot != null) {
+				try {
+					newElemAnnots.put(key, oldNewElemAnnot.merge(oldElemAnnot.getValue()));
+				} catch (final UnmergeableAnnotationsException e) {
+					// TODO: ignore this exception until the merge debate is concluded.
+				}
+			}
+			newElemAnnots.put(key, oldElemAnnot.getValue());
+		}
+	}
+
+	public static void mergeAnnotations(final IElement newElem, final IElement... oldElements) {
+		if (oldElements == null || oldElements.length == 0) {
+			return;
+		}
+		mergeAnnotations(Arrays.asList(oldElements), newElem);
 	}
 
 	/**
@@ -104,18 +123,16 @@ public final class ModelUtils {
 	 *            old {@link IElement} to take annotations from
 	 * @param newE
 	 *            new {@link IElement} to add annotations to
+	 * @param annotation
+	 *            the type of annotation that should be copied
 	 */
 	public static <E extends IAnnotations> void copyAnnotations(final IElement oldE, final IElement newE,
 			final Class<E> annotation) {
 		if (oldE == null || newE == null || annotation == null) {
 			return;
 		}
-		if (!oldE.hasPayload()) {
-			return;
-		}
-		final IPayload oldPayload = oldE.getPayload();
-		if (oldPayload.hasAnnotation()) {
-			final Map<String, IAnnotations> oldAnnots = oldPayload.getAnnotations();
+		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
+		if (oldAnnots != null) {
 			final Collection<Entry<String, IAnnotations>> toMerge = new ArrayList<>();
 			for (final Entry<String, IAnnotations> entry : oldAnnots.entrySet()) {
 				if (annotation.isAssignableFrom(entry.getValue().getClass())) {
@@ -128,5 +145,67 @@ public final class ModelUtils {
 			final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
 			toMerge.forEach(entry -> newAnnots.put(entry.getKey(), entry.getValue()));
 		}
+	}
+
+	/**
+	 * Applies all annotations of <code>elem</code> (if any) to a provided {@link Consumer}.
+	 * 
+	 * @param elem
+	 *            The element from which annotations should be taken.
+	 * @param funConsumer
+	 *            The consumer instance.
+	 */
+	public static void consumeAnnotations(final IElement elem,
+			final Consumer<Entry<String, IAnnotations>> funConsumer) {
+		final Map<String, IAnnotations> annots = getAnnotations(elem);
+		if (annots == null) {
+			return;
+		}
+		annots.entrySet().stream().forEach(funConsumer);
+	}
+
+	/**
+	 * Get some {@link IAnnotations} implementer from an {@link IElement} with the matching key if present.
+	 * 
+	 * @param node
+	 *            The {@link IElement} instance which has the annotation
+	 * @param key
+	 *            The key of the annotation
+	 * @param funCast
+	 *            A function that casts IAnnotations to the desired type
+	 * @return An instance of a type implementing {@link IAnnotations} and annotated to <code>node</code>
+	 */
+	public static <T extends IAnnotations> T getAnnotation(final IElement node, final String key,
+			final Function<IAnnotations, T> funCast) {
+		if (node == null) {
+			return null;
+		}
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(key);
+				if (annot != null) {
+					return funCast.apply(annot);
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return annotation map of an {@link IElement} without creating an empty map.
+	 */
+	private static Map<String, IAnnotations> getAnnotations(final IElement elem) {
+		if (elem == null) {
+			return null;
+		}
+		if (!elem.hasPayload()) {
+			return null;
+		}
+		final IPayload oldPayload = elem.getPayload();
+		if (oldPayload.hasAnnotation()) {
+			return oldPayload.getAnnotations();
+		}
+		return null;
 	}
 }

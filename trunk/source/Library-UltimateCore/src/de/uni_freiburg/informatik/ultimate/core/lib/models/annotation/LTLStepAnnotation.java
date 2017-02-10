@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * Annotation that marks that after this statement, an LTL step should occur.
@@ -45,6 +46,6 @@ public class LTLStepAnnotation extends ModernAnnotations {
 	}
 
 	public static LTLStepAnnotation getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (LTLStepAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (LTLStepAnnotation) a);
 	}
 }

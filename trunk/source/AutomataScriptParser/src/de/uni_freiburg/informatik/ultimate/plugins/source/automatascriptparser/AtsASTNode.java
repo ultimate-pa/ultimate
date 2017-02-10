@@ -19,14 +19,12 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AutomataScriptParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AutomataScriptParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
-
-
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,118 +33,97 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-
-
 
 /***
  * AST Node for AutomataScript parser.
+ * 
  * @author musab@informatik.uni-freiburg.de
  */
 
 public class AtsASTNode extends BaseAST<AtsASTNode> {
 
-	
 	private static final long serialVersionUID = 8077752308820134631L;
-	protected List<AtsASTNode> mchildren;
-	protected AtsASTNode mparent;
+	protected List<AtsASTNode> mChildren;
+	protected AtsASTNode mParent;
 	// The type of the returned value
-	protected Class<?> mreturnType;
+	protected Class<?> mReturnType;
 	// The type the children of this node should have.
-	protected Class<?> mexpectingType;
+	protected Class<?> mExpectingType;
 
-	private Map<Class<?>, Class<?>> mprimitiveToClassTypes;
-	
- 	public AtsASTNode(ILocation loc) {
- 		super(new Payload(loc));
-		mchildren = new ArrayList<AtsASTNode>();
-		mparent = null;
-		mprimitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
-		mprimitiveToClassTypes.put(int.class, Integer.class);
-		mprimitiveToClassTypes.put(boolean.class, Boolean.class);
-	}
-	
-//	public AtsASTNode(ILocation loc) {
-//		super(new Payload(loc, "AtsASTNode"));
-//		mchildren = new ArrayList<AtsASTNode>();
-//		mparent = null;
-//		mlocation = loc;
-//	}
-	
-	public AtsASTNode(ILocation loc, AtsASTNode par) {
-		super(new Payload(loc));
-		mchildren = new ArrayList<AtsASTNode>();
-		mparent = par;
+	private final Map<Class<?>, Class<?>> mPrimitiveToClassTypes;
+
+	public AtsASTNode(final ILocation loc) {
+		super();
+		loc.annotate(this);
+		mChildren = new ArrayList<>();
+		mParent = null;
+		mPrimitiveToClassTypes = new HashMap<>();
+		mPrimitiveToClassTypes.put(int.class, Integer.class);
+		mPrimitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 
-	
 	@Override
 	public AtsASTNode getIncomingNode() {
-		return mparent;
+		return mParent;
 	}
 
 	@Override
 	public List<AtsASTNode> getOutgoingNodes() {
-		return mchildren;
+		return mChildren;
 	}
-	
-	
-	public boolean addIncomingNode(AtsASTNode par) {
-		mparent = par;
+
+	public boolean addIncomingNode(final AtsASTNode par) {
+		mParent = par;
 		return true;
 	}
 
-	
-	public boolean addOutgoingNode(AtsASTNode element) {
-		mchildren.add(element);
+	public boolean addOutgoingNode(final AtsASTNode element) {
+		mChildren.add(element);
 		if (element != null) {
 			element.addIncomingNode(this);
 		}
 		return true;
 	}
-	
-		
+
 	public Class<?> getReturnType() {
-		return mreturnType;
-	}
-	
-	public Class<?> getExpectingType() {
-		return mexpectingType;
+		return mReturnType;
 	}
 
-	public void setType(Class<?> type) {
+	public Class<?> getExpectingType() {
+		return mExpectingType;
+	}
+
+	public void setType(final Class<?> type) {
 		Class<?> classType = type;
-		if (mprimitiveToClassTypes.containsKey(type)) {
-			classType = mprimitiveToClassTypes.get(type);
+		if (mPrimitiveToClassTypes.containsKey(type)) {
+			classType = mPrimitiveToClassTypes.get(type);
 		}
 		setReturnType(classType);
 		setExpectingType(classType);
 	}
-	
-	public void setReturnType(Class<?> type) {
-		mreturnType = type;
-	}
-	
-	public void setExpectingType(Class<?> type) {
-		mexpectingType = type;
-	}
-	
-	
-	public ILocation getLocation() {
-		return getPayload().getLocation();
+
+	public void setReturnType(final Class<?> type) {
+		mReturnType = type;
 	}
 
-	
+	public void setExpectingType(final Class<?> type) {
+		mExpectingType = type;
+	}
+
+	public ILocation getLocation() {
+		return ILocation.getAnnotation(this);
+	}
+
 	/**
 	 * 
 	 * @return String representation of this AtsASTNode
 	 */
 	public String getAsString() {
 		final StringBuilder builder = new StringBuilder();
-		for (final AtsASTNode n : mchildren) {
+		for (final AtsASTNode n : mChildren) {
 			builder.append(n.getAsString());
 		}
 		return builder.toString();
 	}
-	
+
 }

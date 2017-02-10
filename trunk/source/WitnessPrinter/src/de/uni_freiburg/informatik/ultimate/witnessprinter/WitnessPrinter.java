@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -61,33 +62,33 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  *
  */
 public class WitnessPrinter implements IOutput {
-	
+
 	private enum Mode {
 		TRUE_WITNESS, FALSE_WITNESS, NO_WITNESS
 	}
-	
+
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 	private Mode mMode;
 	private RCFGCatcher mRCFGCatcher;
 	private boolean mMatchingModel;
-	
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
+
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.ALL;
 	}
-	
+
 	@Override
 	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		if ("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder".equals(graphType.getCreator())) {
@@ -96,7 +97,7 @@ public class WitnessPrinter implements IOutput {
 			mMatchingModel = false;
 		}
 	}
-	
+
 	@Override
 	public List<IObserver> getObservers() {
 		if (mMode == Mode.TRUE_WITNESS && mMatchingModel) {
@@ -107,18 +108,18 @@ public class WitnessPrinter implements IOutput {
 		}
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
-	
+
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
+
 	@Override
 	public void init() {
 		mMode = Mode.NO_WITNESS;
@@ -126,7 +127,7 @@ public class WitnessPrinter implements IOutput {
 			mLogger.info("Witness generation is disabled");
 			return;
 		}
-		
+
 		// determine if there are true or false witnesses
 		final Map<String, List<IResult>> results = mServices.getResultService().getResults();
 		if (!ResultUtil.filterResults(results, CounterExampleResult.class).isEmpty()) {
@@ -137,7 +138,7 @@ public class WitnessPrinter implements IOutput {
 			mMode = Mode.TRUE_WITNESS;
 		}
 	}
-	
+
 	@Override
 	public void finish() {
 		final Collection<Supplier<Triple<IResult, String, String>>> supplier;
@@ -153,7 +154,7 @@ public class WitnessPrinter implements IOutput {
 			// do nothing
 			return;
 		}
-		
+
 		final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
 		try {
 			cexVerifier.run(supplier);
@@ -161,23 +162,23 @@ public class WitnessPrinter implements IOutput {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private Collection<Supplier<Triple<IResult, String, String>>> generateTrueWitnessSupplier() {
 		final Collection<AllSpecificationsHoldResult> validResults =
 				ResultUtil.filterResults(mServices.getResultService().getResults(), AllSpecificationsHoldResult.class);
-		
+
 		// we take only one AllSpecificationsHold result
 		final AllSpecificationsHoldResult result = validResults.stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
-		final String filename = root.getPayload().getLocation().getFileName();
+		final String filename = ILocation.getAnnotation(root).getFileName();
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
 				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 		final IBacktranslatedCFG<?, ?> translatedCFG = backtrans.translateCFG(origCfg);
-		
+
 		return Collections.singleton(() -> new Triple<>(result, filename, translatedCFG.getSVCOMPWitnessString()));
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Collection<Supplier<Triple<IResult, String, String>>> generateFalseWitnessSupplier() {
 		final Collection<Supplier<Triple<IResult, String, String>>> supplier = new ArrayList<>();
@@ -190,17 +191,17 @@ public class WitnessPrinter implements IOutput {
 		}
 		return supplier;
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();

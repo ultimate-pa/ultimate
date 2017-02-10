@@ -391,11 +391,12 @@ public class TraceAbstractionStarter {
 	}
 
 	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		if (!pp.hasPayload() || pp.getPayload().getLocation() == null) {
+		final ILocation loc = ILocation.getAnnotation(pp);
+		if (loc == null) {
 			return "";
 		}
-		final int startLine = pp.getPayload().getLocation().getStartLine();
-		final int endLine = pp.getPayload().getLocation().getStartLine();
+		final int startLine = loc.getStartLine();
+		final int endLine = loc.getEndLine();
 		final StringBuilder sb = new StringBuilder();
 		sb.append(pp);
 		if (startLine == endLine) {
@@ -428,7 +429,7 @@ public class TraceAbstractionStarter {
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
 			if (errorIpp instanceof BoogieIcfgLocation) {
-				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation().getOrigin();
+				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
 				timeOutMessage += " (line " + origin.getStartLine() + ").";
 			}
 			if (rtsp != null) {

@@ -34,7 +34,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -45,7 +49,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
-public class PredicateFactoryForInterpolantAutomata implements IMergeStateFactory<IPredicate> {
+public class PredicateFactoryForInterpolantAutomata
+		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
+		IBuchiComplementNcsbStateFactory<IPredicate>, IBuchiComplementFkvStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -114,13 +120,13 @@ public class PredicateFactoryForInterpolantAutomata implements IMergeStateFactor
 	}
 
 	@Override
-	public IPredicate buchiComplementFKV(final LevelRankingState<?, IPredicate> compl) {
+	public IPredicate buchiComplementFkv(final LevelRankingState<?, IPredicate> compl) {
 		return mPredicateFactory.newDebugPredicate(compl.toString());
 	}
 
 	@Override
-	public IPredicate buchiComplementNCSB(final LevelRankingState<?, IPredicate> compl) {
-		return buchiComplementFKV(compl);
+	public IPredicate buchiComplementNcsb(final LevelRankingState<?, IPredicate> compl) {
+		return buchiComplementFkv(compl);
 	}
 
 	@Override

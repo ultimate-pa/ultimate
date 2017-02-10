@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -320,18 +319,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		}
-		BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
-		if (astNode == null && node.getOriginalNode().getPayload().hasLocation()) {
-			final ILocation loc = node.getOriginalNode().getPayload().getLocation();
-			if (loc instanceof BoogieLocation) {
-				astNode = ((BoogieLocation) loc).getBoogieASTNode();
-				if (loc.getOrigin() != null) {
-					// we have to update the ast node with the original
-					// location
-					astNode.getPayload().setLocation(loc.getOrigin());
-				}
-			}
-		}
+		final BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
 		final BoogieIcfgLocation newNode = new BoogieIcfgLocation(node.getOriginalNode().getDebugIdentifier(),
 				node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 		// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
@@ -555,18 +543,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @return the converted "assume true"
 	 */
 	private CodeBlock replaceGotoEdge(final CodeBlock gotoEdge, final CodeBlock secondGotoEdge) {
-		StatementSequence replacement = null;
+
+		final ILocation loc = ILocation.getAnnotation(gotoEdge);
+		final StatementSequence replacement = mCbf.constructStatementSequence(null, null,
+				new AssumeStatement(loc, new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true)));
 		if (secondGotoEdge == null) {
-			replacement =
-					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
-			replacement =
-					mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.TYPE_BOOL, true)));
-			ModelUtils.copyAnnotations(gotoEdge, replacement);
-			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
+			ModelUtils.mergeAnnotations(replacement, gotoEdge, secondGotoEdge);
 		}
 		final String procId = gotoEdge.getPrecedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);

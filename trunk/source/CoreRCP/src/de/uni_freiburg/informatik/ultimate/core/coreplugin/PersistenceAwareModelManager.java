@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjec
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.IRepository;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository.SerializationRepository;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -96,8 +97,9 @@ public class PersistenceAwareModelManager implements IModelManager {
 			return "";
 		}
 		String graphName = "";
-		if (node.hasPayload() && node.getPayload().hasLocation()) {
-			graphName = node.getPayload().getLocation().getFileName();
+		final ILocation loc = ILocation.getAnnotation(node);
+		if (loc != null) {
+			graphName = loc.getFileName();
 		}
 		if (graphName.contains(", ")) {
 			final String fileSep = ", ";

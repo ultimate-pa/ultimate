@@ -34,12 +34,13 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final int TIMEOUT = 10_000;
 	private static final String ROOT_DIR = TestUtil.getPathFromTrunk("examples/Backtranslation");
 	private static final String FILE_ENDING = ".c";
 
 	public CBacktranslationRegressionTestSuite() {
 		super();
-		mTimeout = 10 * 1000;
+		mTimeout = TIMEOUT;
 		mRootFolder = ROOT_DIR;
 		mFiletypesToConsider = new String[] { FILE_ENDING };
 	}

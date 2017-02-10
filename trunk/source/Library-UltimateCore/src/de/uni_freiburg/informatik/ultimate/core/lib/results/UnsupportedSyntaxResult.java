@@ -81,7 +81,7 @@ public class UnsupportedSyntaxResult<ELEM extends IElement> extends AbstractResu
 	public final ILocation getLocation() {
 		assert mPosition == null ^ mLocation == null : "exactly one has to be non-null";
 		if (mPosition != null) {
-			return mPosition.getPayload().getLocation();
+			return ILocation.getAnnotation(mPosition);
 		}
 		return mLocation;
 	}

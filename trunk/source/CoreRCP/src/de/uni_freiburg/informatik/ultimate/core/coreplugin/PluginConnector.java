@@ -254,7 +254,8 @@ public class PluginConnector {
 		if (models.isEmpty()) {
 			mLogger.warn("no suitable model selected, skipping...");
 		}
-		assert CoreUtil.isSorted(models.stream().map(a -> a.getCreated()).collect(Collectors.toList()));
+		assert CoreUtil.isSorted(models.stream().map(ModelType::getCreated)
+				.collect(Collectors.toList())) : "Available models are not sorted according to creation time";
 		return models;
 	}
 

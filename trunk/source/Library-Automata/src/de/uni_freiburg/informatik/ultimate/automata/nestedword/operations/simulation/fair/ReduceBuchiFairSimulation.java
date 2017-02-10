@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -608,8 +609,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct = (new BuchiIsEquivalent<>(mServices, stateFactory, mOperand, mResult))
-				.getResult();
+		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
+		final boolean correct = (new BuchiIsEquivalent<>(mServices,
+				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, mOperand, mResult)).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

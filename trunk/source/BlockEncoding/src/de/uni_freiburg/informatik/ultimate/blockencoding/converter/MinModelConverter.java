@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.StatisticBasedHe
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -90,10 +91,10 @@ public class MinModelConverter {
 	 * @return the converted rootNode
 	 */
 	public RootNode startConversion(final RootNode root) {
-		final RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
+		final RootNode newRoot = new RootNode(ILocation.getAnnotation(root), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
-		final boolean simplify = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final boolean simplify = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
 		for (final IcfgEdge edge : root.getOutgoingEdges()) {

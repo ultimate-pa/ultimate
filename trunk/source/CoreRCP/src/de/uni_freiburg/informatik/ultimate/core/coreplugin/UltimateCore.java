@@ -123,6 +123,9 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		// loading default settings
 		mSettingsManager = new SettingsManager(mLogger);
 		mSettingsManager.registerPlugin(this);
+		// reload loggers to ensure that even if RCP loading of core plugin preferences failed, logger settings are
+		// applied
+		mLoggingService.reloadLoggers();
 
 		// loading classes exported by plugins
 		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);

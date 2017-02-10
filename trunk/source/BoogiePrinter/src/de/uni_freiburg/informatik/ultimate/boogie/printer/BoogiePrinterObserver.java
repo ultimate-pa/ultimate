@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePrinter plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePrinter plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePrinter plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -58,7 +59,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final PrintWriter writer = openTempFile(root);
 			if (writer != null) {
@@ -72,7 +73,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-	private PrintWriter openTempFile(IElement root) {
+	private PrintWriter openTempFile(final IElement root) {
 
 		String path;
 		String filename;
@@ -80,7 +81,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			path = new File(root.getPayload().getLocation().getFileName()).getParent();
+			path = new File(ILocation.getAnnotation(root).getFileName()).getParent();
 			if (path == null) {
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
 				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -95,7 +96,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 			if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(PreferenceInitializer.UNIQUE_NAME_LABEL)) {
 				file = File.createTempFile(
-						"BoogiePrinter_" + new File(root.getPayload().getLocation().getFileName()).getName() + "_UID",
+						"BoogiePrinter_" + new File(ILocation.getAnnotation(root).getFileName()).getName() + "_UID",
 						".bpl", new File(path));
 			} else {
 				filename = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -126,7 +127,7 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// not required
 	}
 

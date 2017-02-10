@@ -20,13 +20,12 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
-
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -35,32 +34,32 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 
 /**
  * Superclass of all results that are reported for a specific element.
+ * 
  * @author Matthias Heizmann
  *
- * @param <ELEM> Type of node of the ultimate model at which this result was
- * 		obtained.
+ * @param <ELEM>
+ *            Type of node of the ultimate model at which this result was obtained.
  */
-public abstract class AbstractResultAtElement<ELEM extends IElement> 
-						extends AbstractResult implements IResultWithLocation {
-	
+public abstract class AbstractResultAtElement<ELEM extends IElement> extends AbstractResult
+		implements IResultWithLocation {
+
 	private final ELEM mElement;
 	protected final IBacktranslationService mTranslatorSequence;
-	
-	public AbstractResultAtElement(ELEM element, String plugin,
-			IBacktranslationService translatorSequence) {
+
+	public AbstractResultAtElement(final ELEM element, final String plugin,
+			final IBacktranslationService translatorSequence) {
 		super(plugin);
 		mElement = element;
 		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
-	
+
 	@Override
 	public final ILocation getLocation() {
-		return mElement.getPayload().getLocation();
+		return ILocation.getAnnotation(mElement);
 	}
 
 	public final ELEM getElement() {
 		return mElement;
 	}
-
 
 }

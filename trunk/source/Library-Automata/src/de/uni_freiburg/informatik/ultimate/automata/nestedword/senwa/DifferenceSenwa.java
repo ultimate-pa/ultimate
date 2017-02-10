@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.SenwaWalker
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -70,7 +71,7 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
-	private final IStateFactory<STATE> mContentFactory;
+	private final ISenwaStateFactory<STATE> mContentFactory;
 	
 	private final Senwa<LETTER, STATE> mSenwa;
 	
@@ -94,6 +95,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param minuend
 	 *            minuend
 	 * @param subtrahend
@@ -101,9 +104,10 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public DifferenceSenwa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> minuend,
+	public DifferenceSenwa(final AutomataLibraryServices services, final ISenwaStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
-		this(services, minuend, subtrahend,
+		this(services, stateFactory, minuend, subtrahend,
 				new PowersetDeterminizer<>(subtrahend, true, minuend.getStateFactory()), true);
 	}
 	
@@ -112,6 +116,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param minuend
 	 *            minuend
 	 * @param subtrahend
@@ -124,12 +130,13 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public DifferenceSenwa(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> minuend,
+	public DifferenceSenwa(final AutomataLibraryServices services, final ISenwaStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEndsImmediately)
 			throws AutomataOperationCanceledException {
 		super(services);
-		mContentFactory = minuend.getStateFactory();
+		mContentFactory = stateFactory;
 		
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
@@ -280,7 +287,9 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	
 	/**
 	 * FIXME: Remove this.
-	 * @param computeRemovedDoubleDeckersAndCallSuccessors nocomment
+	 * 
+	 * @param computeRemovedDoubleDeckersAndCallSuccessors
+	 *            nocomment
 	 * @return nocomment
 	 */
 	public boolean removeStatesThatCanNotReachFinal(final boolean computeRemovedDoubleDeckersAndCallSuccessors) {

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisR
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -73,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -128,7 +129,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(benchDecomp);
 
 		final boolean constructTermcompProof = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
+				.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (constructTermcompProof) {
 			final IResult termcompProof = new BenchmarkResult<>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
@@ -245,7 +246,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
 			final IResult ntreportRes =
 					new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda, Activator.PLUGIN_ID,
-							mServices.getBacktranslationService(), stemPE, loopPE, honda.getPayload().getLocation());
+							mServices.getBacktranslationService(), stemPE, loopPE, ILocation.getAnnotation(honda));
 			reportResult(ntreportRes);
 		} else {
 			throw new AssertionError();
@@ -297,7 +298,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					new IcfgProgramExecution(loop, partialProgramStateMapping, new Map[loop.size()]);
 			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
-					position.getPayload().getLocation(), ltlAnnot.getLTLProperty()));
+					ILocation.getAnnotation(position), ltlAnnot.getLTLProperty()));
 		}
 	}
 

@@ -70,7 +70,7 @@ final class SettingsManager {
 
 	SettingsManager(final ILogger logger) {
 		mLogger = logger;
-		mActivePreferenceListener = new HashMap<String, LogPreferenceChangeListener>();
+		mActivePreferenceListener = new HashMap<>();
 	}
 
 	void registerPlugin(final IUltimatePlugin plugin) {
@@ -226,11 +226,10 @@ final class SettingsManager {
 		final String listenerID = pluginID + scope;
 		if (mActivePreferenceListener.containsKey(listenerID)) {
 			return mActivePreferenceListener.get(listenerID);
-		} else {
-			final LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
-			mActivePreferenceListener.put(listenerID, listener);
-			return listener;
 		}
+		final LogPreferenceChangeListener listener = new LogPreferenceChangeListener(scope, pluginID, pluginName);
+		mActivePreferenceListener.put(listenerID, listener);
+		return listener;
 	}
 
 	class LogPreferenceChangeListener implements IPreferenceChangeListener {

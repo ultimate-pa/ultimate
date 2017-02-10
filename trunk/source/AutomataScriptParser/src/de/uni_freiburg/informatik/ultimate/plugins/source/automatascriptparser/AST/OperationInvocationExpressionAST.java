@@ -87,7 +87,7 @@ public class OperationInvocationExpressionAST extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
-		return moperationName + "(" + mchildren.get(0).getAsString() + ")";
+		return moperationName + "(" + mChildren.get(0).getAsString() + ")";
 	}
 	
 

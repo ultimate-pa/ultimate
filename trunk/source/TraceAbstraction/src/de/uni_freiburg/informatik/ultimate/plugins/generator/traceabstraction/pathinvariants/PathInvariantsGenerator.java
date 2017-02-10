@@ -823,13 +823,27 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	
 	// Benchmarks Section
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
+		// the sum of path program locations for each overall iteration
 		SumOfLocs(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		NumOfVars(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		// the sum of path program variables for each overall iteration
+		ProgramVars(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		// the difference of path program locations and the locations extracted from unsat cores 
 		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
 		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		// the sum of template inequalities per location per round per iteration
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
-		MaxNumOfInequalitiesPerRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
-		MaxRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),;
+		// the maximum of the sum of template inequalities per location per round
+		MaxNumOfInequalities(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+		// the maximum number of rounds 
+		MaxRound(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+		// the maximum DAG-size of (the sum of template inequalities per location per round) 
+		DAGSizeConstraints(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_KeyBeforeData),
+		// the sum of variables per location per round 
+		VarsPerLoc(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		// the sum of the difference of all variables and the live variables per location per round
+		DiffLiveVarsPerLoc(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData),
+		// the sum of the difference of all variables and the variables from the unsat core per location per round
+		DiffUnsatCoreVars(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_KeyBeforeData);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
@@ -858,58 +872,4 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 	}
-	
-	// public static class PathInvariantsBenchmarkType implements IStatisticsType {
-	// private static PathInvariantsBenchmarkType s_Instance = new PathInvariantsBenchmarkType();
-	//
-	// /* Keys */
-	// //
-	// protected final static String s_MaxSizeOfTemplate = "MaxSizeOfTemplate";
-	//
-	// protected final static String s_MaxNumOfRounds = "MaxNumOfRounds";
-	//
-	//// protected final static String s_TimeOfPathInvariants = "TimeOfPathInvariants";
-	//
-	// public static PathInvariantsBenchmarkType getInstance() {
-	// return s_Instance;
-	// }
-	//
-	// @Override
-	// public Collection<String> getKeys() {
-	// final ArrayList<String> result = new ArrayList<>();
-	// result.add(s_MaxSizeOfTemplate);
-	// result.add(s_MaxNumOfRounds);
-	// return result;
-	// }
-	//
-	// @Override
-	// public Object aggregate(final String key, final Object value1, final Object value2) {
-	// switch (key) {
-	// case s_MaxSizeOfTemplate:
-	// case s_MaxNumOfRounds: {
-	// if ((int) value1 >= (int) value2) {
-	// return (int)value1;
-	// } else {
-	// return (int)value2;
-	// }
-	// }
-	// default:
-	// throw new AssertionError("unknown key");
-	// }
-	// }
-	//
-	// @Override
-	// public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-	// final StringBuilder sb = new StringBuilder();
-	//
-	// sb.append("\t").append(s_MaxSizeOfTemplate).append(": ");
-	// sb.append((int) benchmarkData.getValue(s_MaxSizeOfTemplate));
-	// sb.append(" conjuncts");
-	// sb.append("\t").append(s_MaxNumOfRounds).append(": ");
-	// sb.append((int) benchmarkData.getValue(s_MaxNumOfRounds));
-	//
-	// return sb.toString();
-	// }
-	// }
-
 }

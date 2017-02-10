@@ -453,7 +453,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	boolean isCompatible(final Return ret, final WitnessEdge we) {
-		if (isCompatible(ret.getPayload().getLocation(), we)) {
+		if (isCompatible(ILocation.getAnnotation(ret), we)) {
 			return true;
 		}
 		return isCompatible(ret.getCorrespondingCall(), we);

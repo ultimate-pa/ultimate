@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -70,7 +71,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiComplementFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
@@ -91,10 +93,11 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiComplementFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final String optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
-		this(services, operand.getStateFactory(), operand, new PowersetDeterminizer<>(operand, true, stateFactory),
+		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory),
 				FkvOptimization.valueOf(optimization), userDefinedMaxRank);
 	}
 	
@@ -103,6 +106,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param operand
 	 *            operand
 	 * @param stateDeterminizer
@@ -111,9 +116,10 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 *             if operation was canceled
 	 */
 	public BuchiComplementFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
-		this(services, operand.getStateFactory(), operand, stateDeterminizer, FkvOptimization.HEIMAT2,
+		this(services, stateFactory, operand, stateDeterminizer, FkvOptimization.HEIMAT2,
 				Integer.MAX_VALUE);
 	}
 	
@@ -139,7 +145,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	private BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	private BuchiComplementFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {

@@ -39,8 +39,8 @@ public class ReturnStatementAST extends AtsASTNode {
 
 	public ReturnStatementAST(ILocation loc, AtsASTNode expr) {
 		super(loc);
-		mreturnType = expr.getReturnType();
-		mexpectingType = Object.class;
+		mReturnType = expr.getReturnType();
+		mExpectingType = Object.class;
 	}
 
 	public ReturnStatementAST(ILocation loc) {

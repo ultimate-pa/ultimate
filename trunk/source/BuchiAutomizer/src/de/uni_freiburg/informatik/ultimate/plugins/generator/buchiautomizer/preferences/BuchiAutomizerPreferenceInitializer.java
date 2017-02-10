@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class BuchiAutomizerPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum BuchiInterpolantAutomaton {
 		LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage
@@ -107,7 +107,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 			"Add implications only for indices occuring in the current formula";
 	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
 
-	public PreferenceInitializer() {
+	public BuchiAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
 	}
 

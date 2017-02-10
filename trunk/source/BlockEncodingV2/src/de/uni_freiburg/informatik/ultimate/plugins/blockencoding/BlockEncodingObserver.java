@@ -29,12 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -45,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -68,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.Pre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -153,6 +157,13 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 			for (final Supplier<IEncoder<IcfgLocation>> provider : encoderProviders) {
 				final IEncoder<IcfgLocation> encoder = provider.get();
 				currentResult = applyEncoder(currentResult, encoder);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Current error locations: " + IcfgUtils.getErrorLocations(currentResult.getIcfg()));
+					new IcfgLocationIterator<>(currentResult.getIcfg()).asStream().forEach(a -> {
+						mLogger.debug("Annotations of " + a);
+						ModelUtils.consumeAnnotations(a, mLogger::debug);
+					});
+				}
 			}
 
 			mIterationResult = currentResult.getIcfg();
@@ -189,38 +200,78 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private BasicIcfg<IcfgLocation> createIcfgCopy(final IcfgEdgeBuilder edgeBuilder,
 			final IIcfg<? extends IcfgLocation> icfg) {
-		final BasicIcfg<IcfgLocation> duplicate =
+		final BasicIcfg<IcfgLocation> newIcfg =
 				new BasicIcfg<>(icfg.getIdentifier() + "_BEv2", icfg.getCfgSmtToolkit(), IcfgLocation.class);
-		ModelUtils.copyAnnotations(icfg, duplicate);
+		ModelUtils.copyAnnotations(icfg, newIcfg);
 
 		final Map<IcfgLocation, IcfgLocation> old2new = new HashMap<>();
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+		final Set<Pair<IcfgLocation, IcfgEdge>> openReturns = new HashSet<>();
+		// first, copy all locations
 		while (iter.hasNext()) {
-			final IcfgLocation current = iter.next();
-			final String proc = current.getProcedure();
-			final IcfgLocation currentDuplicate = new IcfgLocation(current.getDebugIdentifier(), proc);
-			ModelUtils.copyAnnotations(current, currentDuplicate);
+			final IcfgLocation oldLoc = iter.next();
+			final String proc = oldLoc.getProcedure();
+			final IcfgLocation newLoc = new IcfgLocation(oldLoc.getDebugIdentifier(), proc);
+			ModelUtils.copyAnnotations(oldLoc, newLoc);
 
 			final boolean isError = icfg.getProcedureErrorNodes().get(proc) != null
-					&& icfg.getProcedureErrorNodes().get(proc).contains(current);
-			duplicate.addLocation(currentDuplicate, icfg.getInitialNodes().contains(current), isError,
-					current.equals(icfg.getProcedureEntryNodes().get(proc)),
-					current.equals(icfg.getProcedureExitNodes().get(proc)), icfg.getLoopLocations().contains(current));
-			old2new.put(current, currentDuplicate);
+					&& icfg.getProcedureErrorNodes().get(proc).contains(oldLoc);
+			newIcfg.addLocation(newLoc, icfg.getInitialNodes().contains(oldLoc), isError,
+					oldLoc.equals(icfg.getProcedureEntryNodes().get(proc)),
+					oldLoc.equals(icfg.getProcedureExitNodes().get(proc)), icfg.getLoopLocations().contains(oldLoc));
+			old2new.put(oldLoc, newLoc);
 		}
 
+		assert noEdges(newIcfg) : "Icfg contains edges but should not";
+
+		// second, add all non-return edges
 		for (final Entry<IcfgLocation, IcfgLocation> nodePair : old2new.entrySet()) {
-			final IcfgLocation source = nodePair.getValue();
-			for (final IcfgEdge outEdge : nodePair.getKey().getOutgoingEdges()) {
-				final IcfgLocation target = old2new.get(outEdge.getTarget());
-				final IcfgEdge newEdge = edgeBuilder.constructCopy(source, target, outEdge);
-				newEdge.setSource(source);
-				newEdge.setTarget(target);
-				mBacktranslator.mapEdges(newEdge, outEdge);
+			final IcfgLocation newSource = nodePair.getValue();
+			for (final IcfgEdge oldEdge : nodePair.getKey().getOutgoingEdges()) {
+				if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
+					// delay creating returns until everything else is processed
+					openReturns.add(new Pair<>(newSource, oldEdge));
+				} else {
+					createEdgeCopy(edgeBuilder, old2new, newSource, oldEdge);
+				}
 			}
 		}
 
-		return duplicate;
+		// third, add all previously ignored return edges
+		openReturns.stream().forEach(a -> createEdgeCopy(edgeBuilder, old2new, a.getFirst(), a.getSecond()));
+
+		if (mLogger.isDebugEnabled()) {
+			new IcfgLocationIterator<>(newIcfg).asStream().forEach(a -> {
+				mLogger.debug("Annotations of " + a);
+				ModelUtils.consumeAnnotations(a, mLogger::debug);
+			});
+		}
+		return newIcfg;
+	}
+
+	private boolean noEdges(final IIcfg<IcfgLocation> icfg) {
+
+		final Set<IcfgLocation> programPoints = icfg.getProgramPoints().entrySet().stream()
+				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue()).collect(Collectors.toSet());
+		for (final IcfgLocation loc : programPoints) {
+			if (loc.getOutgoingEdges().isEmpty() && loc.getIncomingEdges().isEmpty()) {
+				continue;
+			}
+			mLogger.fatal("Location " + loc + " contains incoming or outgoing edges");
+			mLogger.fatal("Incoming: " + loc.getIncomingEdges());
+			mLogger.fatal("Outgoing: " + loc.getOutgoingEdges());
+			return false;
+		}
+
+		return true;
+	}
+
+	private void createEdgeCopy(final IcfgEdgeBuilder edgeBuilder, final Map<IcfgLocation, IcfgLocation> old2new,
+			final IcfgLocation newSource, final IcfgEdge oldEdge) {
+		final IcfgLocation newTarget = old2new.get(oldEdge.getTarget());
+		assert newTarget != null;
+		final IcfgEdge newEdge = edgeBuilder.constructCopy(newSource, newTarget, oldEdge);
+		mBacktranslator.mapEdges(newEdge, oldEdge);
 	}
 
 	private List<Supplier<IEncoder<IcfgLocation>>> getEncoderProviders(final IPreferenceProvider ups,
@@ -240,21 +291,20 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final MinimizeStates minimizeStates =
 				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
-		final Predicate<IcfgLocation> funPreserve = a -> hasToBePreserved(icfg, a);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
 
 				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
 				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			case MULTI:
 				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(edgeBuilder, mServices, mBacktranslator,
-						funPreserve));
+						BlockEncodingObserver::hasToBePreserved));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -266,7 +316,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 
 		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
-			rtr.add(() -> new RemoveSinkStates(mServices, funPreserve, mBacktranslator));
+			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncodingObserver::hasToBePreserved, mBacktranslator));
 		}
 
 		rtr.add(() -> new InterproceduralSequenzer(edgeBuilder, mServices, mBacktranslator));
@@ -297,7 +347,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		final String proc = node.getProcedure();
 		final Set<?> errorNodes = icfg.getProcedureErrorNodes().get(proc);
-		if (!errorNodes.isEmpty()) {
+		if (errorNodes != null && !errorNodes.isEmpty()) {
 			return errorNodes.contains(node);
 		}
 

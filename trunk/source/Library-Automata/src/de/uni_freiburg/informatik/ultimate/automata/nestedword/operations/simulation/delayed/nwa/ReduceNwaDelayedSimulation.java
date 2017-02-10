@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
@@ -44,19 +45,17 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For correctness its important that the inputed automaton has <b>no dead
  * ends</b> nor <b>duplicate transitions</b>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
  *            State class of nwa automaton
  */
 public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce<LETTER, STATE> {
-
+	
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -74,10 +73,10 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 */
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services,
 			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
-
+	
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -102,7 +101,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
 	}
-
+	
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -129,15 +128,16 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services,
 			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClasses)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						new DelayedNwaGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
 								operand, possibleEquivalenceClasses.getRelation())));
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -148,12 +148,13 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct = (new BuchiIsEquivalent<>(getServices(), stateFactory, getOperand(),
-				getResult())).getResult();
+		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
+		final boolean correct = (new BuchiIsEquivalent<>(getServices(),
+				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 

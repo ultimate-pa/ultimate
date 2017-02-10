@@ -39,9 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -64,7 +65,7 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 	}
 		
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final HashRelation<STATE, STATE> initialPartition) {
+	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		return new DelayedFullMultipebbleStateFactory<>(initialPartition);
 	}
 	
@@ -95,8 +96,9 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Start testing correctness of " + operationName());
-		final boolean correct = (new BuchiIsEquivalent<>(mServices, stateFactory, getOperand(),
-				getResult())).getResult();
+		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
+		final boolean correct = (new BuchiIsEquivalent<>(mServices,
+				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

@@ -48,7 +48,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class StringFactory implements IMergeStateFactory<String> {
+public class StringFactory
+		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
+		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
+		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
+		IBuchiComplementSvwStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -170,7 +174,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 	}
 	
 	@Override
-	public String buchiComplementFKV(final LevelRankingState<?, String> complementState) {
+	public String buchiComplementFkv(final LevelRankingState<?, String> complementState) {
 		if (complementState.isNonAcceptingSink()) {
 			return complementState.toString();
 		}
@@ -194,7 +198,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 	}
 	
 	@Override
-	public String buchiComplementNCSB(final LevelRankingState<?, String> complementState) {
+	public String buchiComplementNcsb(final LevelRankingState<?, String> complementState) {
 		if (complementState.isNonAcceptingSink()) {
 			return complementState.toString();
 		}
@@ -269,12 +273,12 @@ public class StringFactory implements IMergeStateFactory<String> {
 	}
 	
 	@Override
-	public String complementBuchiDeterministicNonFinal(final String state) {
+	public String buchiComplementDeterministicNonFinal(final String state) {
 		return "NonFinal:" + state;
 	}
 	
 	@Override
-	public String complementBuchiDeterministicFinal(final String state) {
+	public String buchiComplementDeterministicFinal(final String state) {
 		return "Final:" + state;
 	}
 	
@@ -302,7 +306,7 @@ public class StringFactory implements IMergeStateFactory<String> {
 	}
 	
 	@Override
-	public String constructBuchiSVWState(final Integer stateNb, final Integer tmaNb) {
+	public String buchiComplementSvw(final Integer stateNb, final Integer tmaNb) {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
 		builder.append(OPEN_PARENTHESIS)

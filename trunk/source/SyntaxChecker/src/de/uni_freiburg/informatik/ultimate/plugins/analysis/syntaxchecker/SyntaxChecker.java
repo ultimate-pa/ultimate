@@ -37,7 +37,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
@@ -229,47 +229,12 @@ public class SyntaxChecker implements IAnalysis {
 		return new PreferenceInitializer();
 	}
 
-	private final class DummyLocation implements ILocation {
+	private final class DummyLocation extends DefaultLocation {
 
-		@Override
-		public String getFileName() {
-			return mFilenameExtractionObserver.getFilename();
+		private static final long serialVersionUID = 1L;
+
+		public DummyLocation() {
+			super(mFilenameExtractionObserver.getFilename(), -1, 0, 0, 0);
 		}
-
-		@Override
-		public int getStartLine() {
-			return -1;
-		}
-
-		@Override
-		public int getEndLine() {
-			return 0;
-		}
-
-		@Override
-		public int getStartColumn() {
-			return 0;
-		}
-
-		@Override
-		public int getEndColumn() {
-			return 0;
-		}
-
-		@Override
-		public ILocation getOrigin() {
-			return null;
-		}
-
-		@Override
-		public Check getCheck() {
-			return null;
-		}
-
-		@Override
-		public boolean isLoop() {
-			return false;
-		}
-
 	}
 }

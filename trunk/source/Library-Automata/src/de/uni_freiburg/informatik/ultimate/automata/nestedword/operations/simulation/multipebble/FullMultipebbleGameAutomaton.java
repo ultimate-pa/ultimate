@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * 
@@ -55,12 +56,12 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
 	private final GS mEmptyStackState;
-	private final Collection<Set<STATE>> mPossibleEquivalenceClasses;
+	private final ISetOfPairs<STATE,?> mPossibleEquivalenceClasses;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 	private final Set<GS> mInitialStates;
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
-			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final ISetOfPairs<STATE,?> possibleEquivalentClasses,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mOperand = operand;
 		mStateFactory = gameFactory;
@@ -68,8 +69,19 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		mPossibleEquivalenceClasses = possibleEquivalentClasses;
 		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
-		final InitialStateConstructor te = new InitialStateConstructor(services);
-		te.process(possibleEquivalentClasses);
+		constructInitialStates();
+	}
+
+	private void constructInitialStates() {
+		for (final Pair<STATE, STATE> pair : mPossibleEquivalenceClasses) {
+			final STATE q0 = pair.getFirst();
+			final STATE q1 = pair.getSecond();
+			if (!mStateFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand)) {
+				final GS gs = mStateFactory.constructInitialState(q0, q1, mOperand);
+				mGameStateMapping.put(q0, q1, gs);
+				mInitialStates.add(gs);
+			}
+		}
 	}
 	
 	public NestedMap2<STATE, STATE, GS> getGameStateMapping() {
@@ -186,26 +198,4 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		return result;
 	}
 
-
-	private class InitialStateConstructor extends InitialPartitionProcessor<STATE> {
-
-		public InitialStateConstructor(final AutomataLibraryServices services) {
-			super(services);
-		}
-
-		@Override
-		public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
-			return !mStateFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand);
-		}
-
-		@Override
-		public void doProcess(final STATE q0, final STATE q1) {
-			final GS gs = mStateFactory.constructInitialState(q0, q1, mOperand);
-			mGameStateMapping.put(q0, q1, gs);
-			mInitialStates.add(gs);
-		}
-		
-	}
-
-	
 }

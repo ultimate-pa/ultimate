@@ -26,9 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
-import java.util.Collection;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
@@ -41,10 +38,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionAndMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -83,25 +81,20 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	
 		printStartMessage();
 		
-		final Collection<Set<STATE>> possibleEquivalentClasses =
-				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation();
-		final int sizeOfLargestEquivalenceClass =
-				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
-		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()
-				+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
-
-		final HashRelation<STATE, STATE> initialPartition = NestedWordAutomataUtils.constructHashRelation(mServices, possibleEquivalentClasses);
-		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(initialPartition);
+		final PartitionBackedSetOfPairs<STATE> partition = new PartitionAndMapBackedSetOfPairs<STATE>(
+				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation());
+		mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
+		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(partition);
 		
 		try {
 			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton =
-					new FullMultipebbleGameAutomaton<>(mServices, gameFactory, possibleEquivalentClasses, operand);
+					new FullMultipebbleGameAutomaton<>(mServices, gameFactory, partition, operand);
 			final Pair<IDoubleDeckerAutomaton<LETTER, GS>, Integer> simRes = computeSimulation(gameAutomaton);
 			final int maxGameAutomatonSize = simRes.getSecond();
 			final NestedMap2<STATE, STATE, GS> gsm = gameAutomaton.getGameStateMapping();
 			
 			final ReadoutSimulation rs = new ReadoutSimulation(gsm, simRes.getFirst(), gameFactory);
-			rs.process(possibleEquivalentClasses);
+			rs.process(partition.getRelation());
 			final UnionFind<STATE> equivalenceRelation = rs.getMutuallySimulating();
 			final boolean mergeFinalAndNonFinalStates = !false;
 			// TODO make this an option?
@@ -120,7 +113,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			mStatistics = super.getAutomataOperationStatistics();
 			mStatistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES, gameFactory.getMaxNumberOfDoubleDeckerPebbles());
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					sizeOfLargestEquivalenceClass);
+					partition.getOrConstructPartitionSizeInformation().getSizeOfLargestBlock());
+			mStatistics.addKeyValuePair(StatisticsType.NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS,
+					partition.getOrConstructPartitionSizeInformation().getNumberOfPairs());
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
 					maxGameAutomatonSize);
 			mStatistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
@@ -129,7 +124,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(), mOperand,
-							possibleEquivalentClasses));
+							partition.getOrConstructPartitionSizeInformation()));
 			aoce.addRunningTaskInfo(rti);
 			throw aoce;
 		}
@@ -138,7 +133,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	protected abstract Pair<IDoubleDeckerAutomaton<LETTER, GS>,Integer> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
 
-	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final HashRelation<STATE, STATE> initialPartition);
+	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition);
 	
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {
 		private final NestedMap2<STATE, STATE, GS> mGameStateMapping;

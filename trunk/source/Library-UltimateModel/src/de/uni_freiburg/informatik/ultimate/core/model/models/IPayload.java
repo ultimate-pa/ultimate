@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.model.models;
@@ -49,12 +49,6 @@ public interface IPayload extends Serializable {
 	Map<String, IAnnotations> getAnnotations();
 
 	/**
-	 * @return an {@link ILocation} instance describing which part of the input is described by this {@link IPayload}.
-	 */
-	@Deprecated
-	ILocation getLocation();
-
-	/**
 	 * Returns true if the annotation map is already initialized and contains elements. Returns false if the annotations
 	 * are not initialized or contain no elements. Should be used instead of a direct null test of the
 	 * {@link #getAnnotations()} method to prevent unnecessary initialization.
@@ -63,21 +57,4 @@ public interface IPayload extends Serializable {
 	 *         are not initialized or contain no elements.
 	 */
 	boolean hasAnnotation();
-
-	/**
-	 * Returns true if this {@link IPayload} instance has a {@link ILocation}. Should be used instead of a direct null
-	 * test of the {@link #getLocation()} method to prevent unnecessary initialization.
-	 * 
-	 * @return true iff this {@link IPayload} has a {@link ILocation} instance, false otherwise.
-	 */
-	@Deprecated
-	boolean hasLocation();
-
-	/**
-	 * Overwrites the {@link ILocation} attached to this {@link IPayload} with <code>loc</code>.
-	 * 
-	 * @deprecated Should not be used anymore because {@link IPayload} should become immutable.
-	 */
-	@Deprecated
-	void setLocation(ILocation loc);
 }

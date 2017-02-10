@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -49,9 +51,9 @@ public class IcfgReturnTransition extends AbstractIcfgTransition
 			final UnmodifiableTransFormula assignmentOfReturn,
 			final UnmodifiableTransFormula localVarsAssignmentOfCall) {
 		super(source, target, payload);
-		mCorrespondingCall = correspondingCall;
-		mAssignmentOfReturn = assignmentOfReturn;
-		mLocalVarsAssignment = localVarsAssignmentOfCall;
+		mCorrespondingCall = Objects.requireNonNull(correspondingCall);
+		mAssignmentOfReturn = Objects.requireNonNull(assignmentOfReturn);
+		mLocalVarsAssignment = Objects.requireNonNull(localVarsAssignmentOfCall);
 	}
 
 	@Override
@@ -70,5 +72,10 @@ public class IcfgReturnTransition extends AbstractIcfgTransition
 	@Visualizable
 	public IIcfgCallTransition<IcfgLocation> getCorrespondingCall() {
 		return mCorrespondingCall;
+	}
+
+	@Override
+	public String toString() {
+		return toDebugString("AOR: " + mAssignmentOfReturn + " LVA: " + mLocalVarsAssignment);
 	}
 }

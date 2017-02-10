@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -282,7 +282,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 
 		} else {
 			final BuchiComplementFKV<LETTER, IPredicate> complNwa = new BuchiComplementFKV<>(
-					new AutomataLibraryServices(mServices), mInterpolAutomatonUsedInRefinement, stateDeterminizer);
+					new AutomataLibraryServices(mServices), mStateFactoryInterpolAutom,
+					mInterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert complNwa.checkResult(mStateFactoryInterpolAutom);

@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -109,6 +109,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
 			StatisticsType.SIZE_GAME_GRAPH.toString(), 
 			StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES.toString(),
+			StatisticsType.NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS.toString(),
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));

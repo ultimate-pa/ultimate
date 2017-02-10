@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Regression Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Regression Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Regression Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
@@ -39,18 +39,19 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  */
 public class AutomataLibraryRegressionTestSuite extends AbstractRegressionTestSuite {
 
+	private static final int TIMEOUT = 10_000;
+
 	public AutomataLibraryRegressionTestSuite() {
 		super();
-		mTimeout = 10 * 1000;
+		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		mFilterRegex = ".*(Automata).*";
+		mIncludeFilterRegex = ".*(Automata).*";
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition) {
 		return new AutomataScriptTestResultDecider();
 	}
-
 
 }

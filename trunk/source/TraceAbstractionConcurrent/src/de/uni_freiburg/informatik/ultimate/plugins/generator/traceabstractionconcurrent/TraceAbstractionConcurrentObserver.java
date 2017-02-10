@@ -91,7 +91,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final BoogieIcfgContainer rootAnnot = ((BoogieIcfgContainer) root);
+		final BoogieIcfgContainer rootAnnot = (BoogieIcfgContainer) root;
 
 		final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
@@ -239,7 +239,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
 		for (final BoogieIcfgLocation errorIpp : errorLocs) {
 			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
 			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";

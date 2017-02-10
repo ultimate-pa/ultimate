@@ -77,12 +77,12 @@ public class VariableDeclarationAST extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append(mreturnType.getSimpleName());
+		builder.append(mReturnType.getSimpleName());
 		for (final String id : midentifiers) {
 			builder.append(" " + id);
 		}
-		if (mchildren.size() == 1) {
-			builder.append(" = " + mchildren.get(0).getAsString());
+		if (mChildren.size() == 1) {
+			builder.append(" = " + mChildren.get(0).getAsString());
 		}
 		return builder.toString();
 	}

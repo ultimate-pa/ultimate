@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -59,7 +60,7 @@ public class ConditionAnnotation extends ModernAnnotations {
 	}
 
 	public static ConditionAnnotation getAnnotation(final IElement node) {
-		return ModernAnnotations.getAnnotation(node, KEY, a -> (ConditionAnnotation) a);
+		return ModelUtils.getAnnotation(node, KEY, a -> (ConditionAnnotation) a);
 	}
 	
 	@Override

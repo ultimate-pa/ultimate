@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 public class IcfgProgramExecutionBuilder {
@@ -87,8 +87,8 @@ public class IcfgProgramExecutionBuilder {
 			final UnmodifiableTransFormula tf = mTrace.getSymbolAt(position).getTransformula();
 			result = tf.getAssignedVars().contains(bv);
 		} else if (mTrace.isCallPosition(position)) {
-			final Call call = (Call) mTrace.getSymbolAt(position);
-			final String callee = call.getCallStatement().getMethodName();
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbolAt(position);
+			final String callee = call.getSucceedingProcedure();
 			if (bv.isGlobal()) {
 				final Set<IProgramNonOldVar> modGlobals =
 						mModifiableGlobalVariableManager.getModifiedBoogieVars(callee);

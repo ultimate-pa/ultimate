@@ -148,7 +148,7 @@ public class CfgBuilder {
 		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		final String pathAndFilename = unit.getPayload().getLocation().getFileName();
+		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
 		final Script script = constructAndInitializeSolver(services, storage, filename);
 		final ManagedScript maScript = new ManagedScript(mServices, script);
@@ -851,7 +851,7 @@ public class CfgBuilder {
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
 				if (st instanceof Label && locNode.getDebugIdentifier() == labelName) {
 					final ILocation loc = st.getLocation();
-					locNode.getPayload().setLocation(loc);
+					loc.annotate(locNode);
 					if (st.getLocation().isLoop()) {
 						mLogger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
 						mIcfg.getLoopLocations().add(locNode);

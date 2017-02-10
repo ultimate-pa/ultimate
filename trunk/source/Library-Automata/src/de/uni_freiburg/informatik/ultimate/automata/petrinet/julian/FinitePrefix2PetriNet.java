@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -59,6 +60,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 	private final BranchingProcess<L, C> mInput;
 	private final PetriNetJulian<L, C> mNet;
 	private final UnionFind<Condition<L, C>> mRepresentatives;
+	private IFinitePrefix2PetriNetStateFactory<C> mContentFactory;
 	
 	/**
 	 * Constructor.
@@ -171,7 +173,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 			assert mRepresentatives.find(c) != null;
 			// equality intended here
 			if (c == mRepresentatives.find(c)) {
-				final Place<L, C> place = mNet.addPlace(oldNet.getStateFactory().finitePrefix2net(c),
+				final Place<L, C> place = mNet.addPlace(mContentFactory.finitePrefix2net(c),
 						bp.initialConditions().contains(c), bp.isAccepting(c));
 				placeMap.put(c, place);
 			}

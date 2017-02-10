@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.ast;
@@ -35,25 +35,27 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
 public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode> {
 
 	private static final long serialVersionUID = 5856434889026482850L;
 
-	public BoogieASTNode(ILocation location) {
-		super(new Payload(location));
-
+	public BoogieASTNode(final ILocation location) {
+		super();
+		if (location == null) {
+			return;
+		}
 		if (location instanceof BoogieLocation) {
 			((BoogieLocation) location).setBoogieASTNode(this);
 		}
+		location.annotate(this);
 	}
 
 	public ILocation getLocation() {
-		return getPayload().getLocation();
+		return ILocation.getAnnotation(this);
 	}
 
-	protected BoogieASTNode createSpecialChild(String name, Object[] childs) {
+	protected BoogieASTNode createSpecialChild(final String name, final Object[] childs) {
 		final BoogieASTWrapper parent = new BoogieASTWrapper(null, name);
 		for (final Object obj : childs) {
 			parent.getOutgoingNodes().add(createSpecialChild(obj));
@@ -61,7 +63,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 		return parent;
 	}
 
-	protected BoogieASTNode createSpecialChild(Object obj) {
+	protected BoogieASTNode createSpecialChild(final Object obj) {
 		return new BoogieASTWrapper(null, obj);
 	}
 
@@ -81,7 +83,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 	@Override
 	public List<BoogieASTNode> getOutgoingNodes() {
-		return new ArrayList<BoogieASTNode>();
+		return new ArrayList<>();
 	}
 
 	private class BoogieASTWrapper extends BoogieASTNode {
@@ -89,7 +91,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 		private static final long serialVersionUID = 1L;
 		private final Object mBacking;
 
-		public BoogieASTWrapper(ILocation location, Object backing) {
+		public BoogieASTWrapper(final ILocation location, final Object backing) {
 			super(location);
 			mBacking = backing;
 		}
@@ -98,9 +100,8 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 		public String toString() {
 			if (mBacking != null) {
 				return mBacking.toString();
-			} else {
-				return super.toString();
 			}
+			return super.toString();
 		}
 
 	}

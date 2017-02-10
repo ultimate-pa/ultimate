@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -83,7 +85,7 @@ public final class TestUtil {
 			final List<File> shuffle = new ArrayList<>(files);
 			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
 			int nPlusOffset;
-			if (((long) offset + (long) n > Integer.MAX_VALUE)) {
+			if ((long) offset + (long) n > Integer.MAX_VALUE) {
 				nPlusOffset = Integer.MAX_VALUE;
 			} else {
 				nPlusOffset = offset + n;
@@ -267,7 +269,7 @@ public final class TestUtil {
 		return sb.toString();
 	}
 
-	public static List<File> getFiles(final File root, final String[] endings) {
+	public static List<File> getFiles(final File root, final String... endings) {
 		final List<File> rtr = new ArrayList<>();
 
 		if (root.isFile()) {
@@ -289,6 +291,29 @@ public final class TestUtil {
 			rtr.addAll(getFiles(f, endings));
 		}
 		return rtr;
+	}
+
+	public static Predicate<File> getFileEndingTest(final String... endings) {
+		return file -> {
+			if (!file.isFile()) {
+				return false;
+			}
+			final String abspath = file.getAbsolutePath();
+			for (final String s : endings) {
+				if (abspath.endsWith(s)) {
+					return true;
+				}
+			}
+			return false;
+		};
+	}
+
+	public static Predicate<File> getRegexTest(final String... regexes) {
+		return file -> file != null && Arrays.stream(regexes).allMatch(regex -> file.getAbsolutePath().matches(regex));
+	}
+
+	public static Predicate<File> getRegexTest(final Collection<String> regexes) {
+		return file -> file != null && regexes.stream().allMatch(regex -> file.getAbsolutePath().matches(regex));
 	}
 
 	/**
@@ -354,7 +379,7 @@ public final class TestUtil {
 
 		int step = 1;
 		if (n != 0) {
-			step = (int) Math.floor(((double) size) / ((double) n));
+			step = (int) Math.floor((double) size / (double) n);
 		}
 
 		int i = 1;
@@ -377,19 +402,9 @@ public final class TestUtil {
 			final Collection<String> customMessages, final IResultService resultService) {
 
 		if (logger == null) {
-			logResults(new ILogWriter() {
-				@Override
-				public void write(final String message) {
-					System.err.println(message);
-				}
-			}, inputFile, fail, customMessages, resultService);
+			logResults(message -> System.err.println(message), inputFile, fail, customMessages, resultService);
 		} else {
-			logResults(new ILogWriter() {
-				@Override
-				public void write(final String message) {
-					logger.info(message);
-				}
-			}, inputFile, fail, customMessages, resultService);
+			logResults(message -> logger.info(message), inputFile, fail, customMessages, resultService);
 		}
 	}
 

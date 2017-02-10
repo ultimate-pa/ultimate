@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Partition implementation of a set of pairs.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
  */
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 @SuppressWarnings({ "findbugs:UUF_UNUSED_FIELD", "findbugs:UWF_UNWRITTEN_FIELD" })
 public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
 	protected final Collection<Set<E>> mPartition;
+	private PartitionSizeInformation mPartitionSizeInformation;
 	
 	/**
 	 * @param partition
@@ -76,6 +78,16 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	@Override
 	public Collection<Set<E>> getRelation() {
 		return mPartition;
+	}
+	
+	/**
+	 * @return Size information of the partition.
+	 */
+	public PartitionSizeInformation getOrConstructPartitionSizeInformation() {
+		if (mPartitionSizeInformation == null) {
+			mPartitionSizeInformation = new PartitionSizeInformation(mPartition);
+		}
+		return mPartitionSizeInformation;
 	}
 	
 	/**
@@ -121,7 +133,61 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		private void advanceToNextBlock() {
 			mBlock = mBlockIt.next();
 			mElemLhsIt = mBlock.iterator();
+			if (mElemLhsIt.hasNext()) {
+				mElemLhs = mElemLhsIt.next();
+			}
 			mElemRhsIt = mBlock.iterator();
 		}
+	}
+	
+	/**
+	 * Size information of the partition.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
+	public static class PartitionSizeInformation {
+		private long mNumberOfPairs;
+		private int mSizeOfLargestBlock;
+		private final int mNumberOfBlocks;
+		
+		/**
+		 * @param partition
+		 *            Partition.
+		 */
+		public PartitionSizeInformation(final Collection<? extends Set<?>> partition) {
+			mNumberOfBlocks = partition.size();
+			for (final Set<?> block : partition) {
+				mSizeOfLargestBlock = Math.max(mSizeOfLargestBlock, block.size());
+				mNumberOfPairs += ((long) block.size() - 1) * ((long) block.size() - 1) + block.size();
+			}
+		}
+		
+		public long getNumberOfPairs() {
+			return mNumberOfPairs;
+		}
+		
+		public int getSizeOfLargestBlock() {
+			return mSizeOfLargestBlock;
+		}
+		
+		public int getNumberOfBlocks() {
+			return mNumberOfBlocks;
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			// @formatter:off
+			sb.append(getNumberOfPairs())
+				.append(" pairs,")
+				.append(getNumberOfBlocks())
+				.append(" blocks, ")
+				.append("largest block has ")
+				.append(getSizeOfLargestBlock())
+				.append(" elements");
+			// @formatter:on
+			return sb.toString();
+		}
+		
 	}
 }

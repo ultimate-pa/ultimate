@@ -34,14 +34,15 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class BoogieBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static String sRootFolder = TestUtil.getPathFromTrunk("examples/Backtranslation");
-	private static String sFileending = ".bpl";
+	private static final int TIMEOUT = 60_000;
+	private static final String ROOT_FOLDER = TestUtil.getPathFromTrunk("examples/Backtranslation");
+	private static final String FILE_ENDING = ".bpl";
 
 	public BoogieBacktranslationRegressionTestSuite() {
 		super();
-		mTimeout = 500000;
-		mRootFolder = sRootFolder;
-		mFiletypesToConsider = new String[] { sFileending };
+		mTimeout = TIMEOUT;
+		mRootFolder = ROOT_FOLDER;
+		mFiletypesToConsider = new String[] { FILE_ENDING };
 	}
 
 	@Override

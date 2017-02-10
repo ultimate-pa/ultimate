@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.SenwaWalker
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -56,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
 		implements ISuccessorVisitor<LETTER, STATE> {
+	private final ISenwaStateFactory<STATE> mStateFactory;
 	private final Senwa<LETTER, STATE> mSenwa;
 	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
@@ -69,14 +71,17 @@ public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param nwa
 	 *            nested word automaton
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public SenwaBuilder(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> nwa)
-			throws AutomataOperationCanceledException {
+	public SenwaBuilder(final AutomataLibraryServices services, final ISenwaStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
+		mStateFactory = stateFactory;
 		mNwa = nwa;
 		mLogger.info(startMessage());
 		mSenwa = new Senwa<>(mServices, mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(),
@@ -105,7 +110,7 @@ public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		}
 		STATE resState = op2res.get(opState);
 		if (resState == null) {
-			resState = mNwa.getStateFactory().senwa(opEntry, opState);
+			resState = mStateFactory.senwa(opEntry, opState);
 			op2res.put(opState, resState);
 			mResult2Operand.put(resState, opState);
 			final STATE resEntry = op2res.get(opEntry);

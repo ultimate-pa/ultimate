@@ -31,7 +31,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -42,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  *
  */
-public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate> {
+public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>,
+		IBuchiComplementFkvStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
@@ -90,7 +93,7 @@ public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredi
 	}
 
 	@Override
-	public IPredicate buchiComplementFKV(final LevelRankingState compl) {
+	public IPredicate buchiComplementFkv(final LevelRankingState compl) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 

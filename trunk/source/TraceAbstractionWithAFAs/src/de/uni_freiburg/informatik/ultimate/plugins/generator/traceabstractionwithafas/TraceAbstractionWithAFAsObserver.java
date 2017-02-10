@@ -186,7 +186,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
 		for (final BoogieIcfgLocation errorIpp : errorLocs) {
 			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
 			String timeOutMessage =
 					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";

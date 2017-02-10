@@ -27,117 +27,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
-import java.io.Serializable;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
 /**
  * Location in a boogie program.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class BoogieLocation implements Serializable, ILocation {
+public class BoogieLocation extends DefaultLocation {
 	private static final long serialVersionUID = 4495864682359937328L;
 
-	protected int mStartLine;
-	protected int mEndLine;
-	protected int mStartColumn;
-	protected int mEndColumn;
-	protected String mFileName;
-
 	protected BoogieASTNode mBoogieASTNode;
+	private final boolean mLoopEntry;
 
-	/**
-	 * This {@code Location} can be an auxiliary {@code Location} constructed
-	 * with respect to some <i>origin</i> {@code Location}. E.g., if this is an
-	 * auxiliary {@code Location} for the else-branch the <i>origin</i>
-	 * {@code Location} can be the {@code Location} of an if-then-else statement
-	 * of a program.
-	 * 
-	 * If this {@code Location} is no auxiliary location the <i>origin</i> is
-	 * the location itself.
-	 */
-	protected ILocation mOrigin;
-
-	private boolean mLoopEntry;
-
-	@SuppressWarnings("unused")
-	private BoogieLocation() {
-	}
-
-	public BoogieLocation(final String fileName, final int startLine, final int endLine,
-			final int startColum, final int endColumn, final boolean isLoopEntry) {
-		mFileName = fileName;
-		mStartLine = startLine;
-		mEndLine = endLine;
-		mStartColumn = startColum;
-		mEndColumn = endColumn;
-		mOrigin = this;
-		mLoopEntry = isLoopEntry;
-	}
-
-	public BoogieLocation(final String fileName, final int startLine, final int endLine,
-			final int startColum, final int endColumn, final ILocation origin) {
-		mFileName = fileName;
-		mStartLine = startLine;
-		mEndLine = endLine;
-		mStartColumn = startColum;
-		mEndColumn = endColumn;
-		mOrigin = origin;
-		mLoopEntry = false;
-	}
-
-	public BoogieLocation(final String fileName, final int startLine, final int endLine,
-			final int startColum, final int endColumn, final ILocation origin, final boolean isLoopEntry) {
-		mFileName = fileName;
-		mStartLine = startLine;
-		mEndLine = endLine;
-		mStartColumn = startColum;
-		mEndColumn = endColumn;
-		mOrigin = origin;
+	public BoogieLocation(final String fileName, final int startLine, final int endLine, final int startColum,
+			final int endColumn, final boolean isLoopEntry) {
+		super(fileName, startLine, endLine, startColum, endColumn);
 		mLoopEntry = isLoopEntry;
 	}
 
 	@Override
 	public String toString() {
-		return "BPL: " + mFileName + ":" + mStartLine + "/" + mStartColumn
-				+ "-" + mEndLine + "/" + mEndColumn;
-	}
-
-	@Override
-	public int getStartLine() {
-		return mStartLine;
-	}
-
-	@Override
-	public int getEndLine() {
-		return mEndLine;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return mStartColumn;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return mEndColumn;
-	}
-
-	@Override
-	public String getFileName() {
-		return mFileName;
-	}
-
-	@Override
-	public ILocation getOrigin() {
-		return mOrigin;
+		return "BPL: " + getFileName() + ":" + getStartLine() + "/" + getStartColumn() + "-" + getEndLine() + "/"
+				+ getEndColumn();
 	}
 
 	@Override
@@ -166,7 +84,7 @@ public class BoogieLocation implements Serializable, ILocation {
 		return mBoogieASTNode;
 	}
 
-	public void setBoogieASTNode(final BoogieASTNode BoogieASTNode) {
-		mBoogieASTNode = BoogieASTNode;
+	public void setBoogieASTNode(final BoogieASTNode boogieASTNode) {
+		mBoogieASTNode = boogieASTNode;
 	}
 }

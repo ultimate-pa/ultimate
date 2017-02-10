@@ -63,7 +63,7 @@ public final class ResultUtil {
 		final List<ILocation> result = new ArrayList<>();
 		for (int i = 0; i < pe.getLength(); i++) {
 			final AtomicTraceElement<TE> te = pe.getTraceElement(i);
-			result.add(te.getTraceElement().getPayload().getLocation());
+			result.add(ILocation.getAnnotation(te.getTraceElement()));
 		}
 		return result;
 	}
@@ -107,15 +107,11 @@ public final class ResultUtil {
 		if (check != null) {
 			return check;
 		}
-		final ILocation loc = element.getPayload().getLocation();
+		final ILocation loc = ILocation.getAnnotation(element);
 		if (loc == null) {
 			return null;
 		}
-		final ILocation origin = loc.getOrigin();
-		if (origin == null) {
-			return null;
-		}
-		final IAnnotations checkCand = origin.getCheck();
+		final IAnnotations checkCand = loc.getCheck();
 		if (checkCand instanceof Check) {
 			return (Check) checkCand;
 		}

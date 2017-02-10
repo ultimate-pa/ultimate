@@ -19,78 +19,29 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE WitnessParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE WitnessParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 
-public class WitnessLocation implements ILocation {
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class WitnessLocation extends DefaultLocation {
 
-	private final String mFilename;
-	private final int mStartLine;
-	private int mEndLine;
-	private final int mStartColumn;
-	private final int mEndColumn;
+	private static final long serialVersionUID = 1L;
 
-	public WitnessLocation(String filename, int startline) {
-		this(filename, startline, startline);
+	public WitnessLocation(final String filename, final int startline) {
+		super(filename, startline, startline, -1, -1);
 	}
 
-	public WitnessLocation(String filename, int startline, int endline) {
-		mFilename = filename;
-		mStartLine = startline;
-		if (endline == -1) {
-			mEndLine = startline;
-		} else {
-			mEndLine = endline;
-		}
-		mStartColumn = -1;
-		mEndColumn = -1;
+	public WitnessLocation(final String filename, final int startline, final int endline) {
+		super(filename, startline, endline == -1 ? startline : endline, -1, -1);
 	}
-
-	@Override
-	public String getFileName() {
-		return mFilename;
-	}
-
-	@Override
-	public int getStartLine() {
-		return mStartLine;
-	}
-
-	@Override
-	public int getEndLine() {
-		return mEndLine;
-	}
-
-	@Override
-	public int getStartColumn() {
-		return mStartColumn;
-	}
-
-	@Override
-	public int getEndColumn() {
-		return mEndColumn;
-	}
-
-	@Override
-	public ILocation getOrigin() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Check getCheck() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isLoop() {
-		throw new UnsupportedOperationException();
-	}
-
 }

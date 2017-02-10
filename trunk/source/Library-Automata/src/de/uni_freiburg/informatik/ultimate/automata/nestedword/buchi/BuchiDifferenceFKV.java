@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 
 /**
  * Buchi difference "<tt>FKV</tt>".
@@ -61,10 +61,11 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiDifferenceFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
+		this(services, stateFactory, fstOperand, sndOperand,
 				new PowersetDeterminizer<>(sndOperand, true, stateFactory), FkvOptimization.HEIMAT2, Integer.MAX_VALUE);
 	}
 	
@@ -88,27 +89,29 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiDifferenceFKV(final AutomataLibraryServices services,
+			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
 			final int userDefinedMaxRank) throws AutomataLibraryException {
-		super(services, stateFactory, fstOperand, sndOperand);
+		super(services, fstOperand, sndOperand);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		constructResult(stateDeterminizer, userDefinedMaxRank, optimization);
+		constructResult(stateFactory, stateDeterminizer, userDefinedMaxRank, optimization);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
 	
-	private void constructResult(final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+	private void constructResult(final IBuchiComplementFkvStateFactory<STATE> stateFactory,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
-		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, mStateFactory,
+		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
 				optimization, userDefinedMaxRank);
-		constructDifferenceFromComplement();
+		constructDifferenceFromComplement(stateFactory);
 	}
 	
 	public int getHighestRank() {

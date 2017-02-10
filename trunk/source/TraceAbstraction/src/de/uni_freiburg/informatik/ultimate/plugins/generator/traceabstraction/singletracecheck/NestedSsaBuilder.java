@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -55,8 +57,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
  * A trace has single static assignment form (SSA) is each variable is assigned exactly once (
@@ -195,8 +195,9 @@ public class NestedSsaBuilder {
 		for (int i = numberPendingContexts - 1; i >= 0; i--) {
 			final int pendingReturnPosition = pendingReturns[i];
 			mPendingContext2PendingReturn.put(mStartOfCallingContext, pendingReturnPosition);
-			final Return ret = (Return) mFormulas.getTrace().getSymbol(pendingReturnPosition);
-			final Call correspondingCall = ret.getCorrespondingCall();
+			final IIcfgReturnTransition<?, ?> ret =
+					(IIcfgReturnTransition<?, ?>) mFormulas.getTrace().getSymbol(pendingReturnPosition);
+			final IIcfgCallTransition<?> correspondingCall = ret.getCorrespondingCall();
 			mCurrentProcedure = correspondingCall.getPrecedingProcedure();
 
 			reVersionModifiableGlobals();
@@ -216,7 +217,7 @@ public class NestedSsaBuilder {
 			final VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
 
-			final String calledProcedure = correspondingCall.getCallStatement().getMethodName();
+			final String calledProcedure = correspondingCall.getSucceedingProcedure();
 			final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
 			final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 			initOldVarsVV.versionInVars();
@@ -283,12 +284,12 @@ public class NestedSsaBuilder {
 			tfVV.versionInVars();
 
 			if (mFormulas.getTrace().isCallPosition(i)) {
-				assert symbol instanceof Call : "current implementation supports only Call";
+				assert symbol instanceof IIcfgCallTransition<?> : "current implementation supports only Call";
 				if (mFormulas.getTrace().isPendingCall(i)) {
 					numberOfPendingCalls++;
 				}
-				final Call call = (Call) symbol;
-				final String calledProcedure = call.getCallStatement().getMethodName();
+				final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) symbol;
+				final String calledProcedure = call.getSucceedingProcedure();
 				mCurrentProcedure = calledProcedure;
 				final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(i);
 				final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
@@ -312,7 +313,7 @@ public class NestedSsaBuilder {
 
 			}
 			if (mFormulas.getTrace().isReturnPosition(i)) {
-				final Return ret = (Return) symbol;
+				final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) symbol;
 				mCurrentProcedure = ret.getCallerProgramPoint().getProcedure();
 				currentLocalAndOldVarVersion = mCurrentVersionStack.pop();
 				mStartOfCallingContext = mStartOfCallingContextStack.pop();

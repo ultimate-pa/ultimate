@@ -40,15 +40,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public final class Payload implements IPayload {
 
 	private static final long serialVersionUID = 9150283961581614549L;
-	private ILocation mLocation;
 	private Map<String, IAnnotations> mAnnotations;
 
+	/**
+	 * Construct an empty {@link Payload} instance.
+	 */
 	public Payload() {
-		this(null);
+		// do nothing
 	}
 
-	public Payload(final ILocation loc) {
-		mLocation = loc;
+	/**
+	 * Create a new {@link Payload} instance that contains the same annotations as the given {@link IPayload} instance.
+	 * 
+	 * @param otherPayload
+	 *            the other payload.
+	 */
+	public Payload(final IPayload otherPayload) {
+		if (otherPayload != null && otherPayload.hasAnnotation()) {
+			mAnnotations = new HashMap<>(otherPayload.getAnnotations());
+		}
 	}
 
 	@Override
@@ -60,11 +70,6 @@ public final class Payload implements IPayload {
 	}
 
 	@Override
-	public ILocation getLocation() {
-		return mLocation;
-	}
-
-	@Override
 	public boolean hasAnnotation() {
 		if (mAnnotations == null) {
 			return false;
@@ -73,20 +78,13 @@ public final class Payload implements IPayload {
 	}
 
 	@Override
-	public boolean hasLocation() {
-		return (mLocation != null);
-	}
-
-	@Override
 	public String toString() {
-		if (hasLocation()) {
-			return getLocation().toString();
+		if (hasAnnotation()) {
+			final IAnnotations locationAnnot = getAnnotations().get(ILocation.class.getName());
+			if (locationAnnot != null) {
+				return locationAnnot.toString();
+			}
 		}
 		return super.toString();
-	}
-
-	@Override
-	public void setLocation(final ILocation loc) {
-		mLocation = loc;
 	}
 }

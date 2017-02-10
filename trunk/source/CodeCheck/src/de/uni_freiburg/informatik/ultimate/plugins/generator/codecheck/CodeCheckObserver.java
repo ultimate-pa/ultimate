@@ -695,8 +695,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		final int startLine = pp.getPayload().getLocation().getStartLine();
-		final int endLine = pp.getPayload().getLocation().getStartLine();
+		final ILocation loc = ILocation.getAnnotation(pp);
+		final int startLine = loc.getStartLine();
+		final int endLine = loc.getEndLine();
 		final StringBuilder sb = new StringBuilder();
 		sb.append(pp);
 		if (startLine == endLine) {
@@ -859,7 +860,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
 		for (final BoogieIcfgLocation errorIpp : errorLocs) {
 			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
 			String timeOutMessage =
 					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";

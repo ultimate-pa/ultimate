@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -65,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C> {
 	private final PetriNetJulian<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
-	private final IStateFactory<C> mContentFactory;
+	private final IBlackWhiteStateFactory<C> mContentFactory;
 	
 	private PetriNetJulian<S, C> mResult;
 	
@@ -90,7 +91,7 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final IStateFactory<C> factory,
+	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final IBlackWhiteStateFactory<C> factory,
 			final PetriNetJulian<S, C> net, final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;

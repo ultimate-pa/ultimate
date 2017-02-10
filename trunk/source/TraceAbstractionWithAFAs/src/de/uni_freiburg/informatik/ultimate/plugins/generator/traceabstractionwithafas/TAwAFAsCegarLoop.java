@@ -493,8 +493,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 				new PowersetDeterminizer<>(determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
-					false);
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2,	explointSigmaStarConcatOfIA);
