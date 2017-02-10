@@ -31,11 +31,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ActionUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -53,10 +56,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -73,6 +78,7 @@ public class IcfgEdgeBuilder {
 	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	public IcfgEdgeBuilder(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique,
@@ -82,6 +88,7 @@ public class IcfgEdgeBuilder {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
+		mCfgSmtToolkit = icfg.getCfgSmtToolkit();
 		mCallCache = new HashMap<>();
 	}
 
@@ -103,7 +110,7 @@ public class IcfgEdgeBuilder {
 
 	private IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
 			final List<IcfgEdge> transitions, final boolean simplify, final boolean elimQuants) {
-		// TODO: this is also called for interprocedural sequential compositions; check that this is ok
+		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
 		final List<UnmodifiableTransFormula> transFormulas =
 				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
@@ -115,21 +122,54 @@ public class IcfgEdgeBuilder {
 		return rtr;
 	}
 
-	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
-			final List<IcfgEdge> edges) {
+	public IcfgEdge constructInterproceduralSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgCallTransition<?> callTrans, final IIcfgTransition<?> intermediateTrans,
+			final IIcfgReturnTransition<?, ?> returnTrans) {
+		return constructInterproceduralSequentialComposition(source, target, callTrans, intermediateTrans, returnTrans,
+				false, false);
+	}
 
+	private IcfgEdge constructInterproceduralSequentialComposition(final IcfgLocation source, final IcfgLocation target,
+			final IIcfgCallTransition<?> callTrans, final IIcfgTransition<?> intermediateTrans,
+			final IIcfgReturnTransition<?, ?> returnTrans, final boolean simplify, final boolean elimQuants) {
+
+		final String calledProc = callTrans.getSucceedingProcedure();
+		final UnmodifiableTransFormula callTf = callTrans.getLocalVarsAssignment();
+		final UnmodifiableTransFormula oldVarsAssignment =
+				mCfgSmtToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProc);
+		final UnmodifiableTransFormula globalVarsAssignment =
+				mCfgSmtToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProc);
+		final UnmodifiableTransFormula procedureTf = intermediateTrans.getTransformula();
+		final UnmodifiableTransFormula returnTf = returnTrans.getAssignmentOfReturn();
+		final IIcfgSymbolTable symbolTable = mCfgSmtToolkit.getSymbolTable();
+		final Set<IProgramNonOldVar> modifiableGlobalsOfCallee =
+				mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc);
+		final UnmodifiableTransFormula tf =
+				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mManagedScript, simplify, elimQuants, false,
+						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, mLogger, mServices,
+						mXnfConversionTechnique, mSimplificationTechnique, symbolTable, modifiableGlobalsOfCallee);
+
+		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
+		ModelUtils.mergeAnnotations(rtr, callTrans, intermediateTrans, returnTrans);
+		return rtr;
+	}
+
+	public IcfgEdge constructParallelComposition(final IcfgLocation source, final IcfgLocation target,
+			final List<IcfgEdge> transitions) {
+		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
 		final List<UnmodifiableTransFormula> transFormulas =
-				edges.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
 		final int serialNumber = HashUtils.hashHsieh(293, (Object[]) tfArray);
-		// TODO: How do you ensure that the two return transformulas are kept together in a parallel composition?
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
 				serialNumber, mManagedScript, null, false, mXnfConversionTechnique, tfArray);
 		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, parallelTf);
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
-		ModelUtils.mergeAnnotations(edges, rtr);
+		ModelUtils.mergeAnnotations(transitions, rtr);
 		return rtr;
 	}
 
@@ -164,5 +204,10 @@ public class IcfgEdgeBuilder {
 		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldEdge, rtr);
 		return rtr;
+	}
+
+	private static boolean onlyInternal(final List<IcfgEdge> transitions) {
+		return transitions.stream().noneMatch(a -> a instanceof IIcfgCallTransition<?>
+				|| a instanceof IIcfgReturnTransition<?, ?> || a instanceof Summary);
 	}
 }
