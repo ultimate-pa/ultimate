@@ -87,7 +87,7 @@ public class TermVarsProc {
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbolTable.getProgramVar(tv);
 			if (bv == null) {
-				throw new AssertionError("No corresponding BoogieVar for " + tv);
+				throw new AssertionError("No corresponding IProgramVar for " + tv);
 			}
 			vars.add(bv);
 			if (bv.getProcedure() != null) {
@@ -118,7 +118,7 @@ public class TermVarsProc {
 		for (final TermVariable tv : term.getFreeVars()) {
 			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getProgramVar(tv);
 			if (bv == null) {
-				throw new AssertionError("No corresponding BoogieVar for " + tv);
+				throw new AssertionError("No corresponding IProgramVar for " + tv);
 			}
 			if (replaceNonModifiableOldVars) {
 				if (bv instanceof IProgramOldVar) {
