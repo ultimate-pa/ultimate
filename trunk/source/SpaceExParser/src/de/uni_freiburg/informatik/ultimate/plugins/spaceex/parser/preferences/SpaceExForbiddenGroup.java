@@ -11,13 +11,12 @@ public class SpaceExForbiddenGroup {
 	private final boolean mHasLocations;
 	private final boolean mHasVariables;
 	
-	public SpaceExForbiddenGroup(final Map<String, List<String>> Locations, final String initialVariableInfix,
-			final int id) {
+	public SpaceExForbiddenGroup(final Map<String, List<String>> locations, final String variableInfix, final int id) {
 		mId = id;
-		mLocations = (!Locations.isEmpty()) ? Locations : new HashMap<>();
-		mVariableInfix = initialVariableInfix;
-		mHasLocations = (!Locations.isEmpty()) ? true : false;
-		mHasVariables = (!initialVariableInfix.isEmpty()) ? true : false;
+		mLocations = (!locations.isEmpty()) ? locations : new HashMap<>();
+		mVariableInfix = variableInfix;
+		mHasLocations = (!locations.isEmpty()) ? true : false;
+		mHasVariables = (!variableInfix.isEmpty()) ? true : false;
 	}
 	
 	public Map<String, List<String>> getLocations() {

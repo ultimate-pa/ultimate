@@ -525,6 +525,9 @@ public class HybridIcfgGenerator {
 	 * @return
 	 */
 	private UnmodifiableTransFormula buildTransformula(final String infix, final BuildScenario scenario) {
+		if (infix.isEmpty()) {
+			return TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
+		}
 		final HybridTermBuilder tb =
 				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript());
 		final Term term = tb.infixToTerm(infix, scenario);

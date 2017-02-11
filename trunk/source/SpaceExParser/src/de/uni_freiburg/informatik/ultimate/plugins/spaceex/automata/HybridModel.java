@@ -64,7 +64,6 @@ public class HybridModel {
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private Map<String, HybridSystem> mSystems;
-	private Map<String, HybridAutomaton> mMergedAutomata;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
 	/*
@@ -76,7 +75,6 @@ public class HybridModel {
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
 		mSystems = new HashMap<>();
-		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
@@ -120,7 +118,7 @@ public class HybridModel {
 	 * @param preferenceManager
 	 * @throws Exception
 	 */
-	public HybridModel(final Sspaceex root, final ILogger logger, SpaceExPreferenceManager preferenceManager)
+	public HybridModel(final Sspaceex root, final ILogger logger, final SpaceExPreferenceManager preferenceManager)
 			throws Exception {
 		mLogger = logger;
 		mPreferenceManager = preferenceManager;
@@ -128,7 +126,6 @@ public class HybridModel {
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
 		mSystems = new HashMap<>();
-		mMergedAutomata = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
 					mLogger.warn("A hybrid automaton with name " + oldEntry.getId()
@@ -193,7 +190,7 @@ public class HybridModel {
 	}
 	
 	// function that creates possible parallel compositions for preference groups for the system specified.
-	public Map<Integer, HybridAutomaton> calculateParallelCompositionsForGroups(HybridSystem configSystem) {
+	public Map<Integer, HybridAutomaton> calculateParallelCompositionsForGroups(final HybridSystem configSystem) {
 		final Map<Integer, HybridAutomaton> groupIdtoMergedAutomaton = new HashMap<>();
 		// get preference groups
 		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
@@ -205,10 +202,13 @@ public class HybridModel {
 		return groupIdtoMergedAutomaton;
 	}
 	
-	public HybridAutomaton mergeAutomata(HybridSystem configSystem, SpaceExPreferenceGroup group) {
+	public HybridAutomaton mergeAutomata(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final Deque<HybridAutomaton> mergeStack = new LinkedList<>();
 		final Map<String, String> initLocs = (group == null) ? null : group.getInitialLocations();
 		final Map<String, HybridAutomaton> automata = configSystem.getAutomata();
+		if (automata.size() == 1) {
+			return automata.values().iterator().next();
+		}
 		mergeStack.addAll(automata.values());
 		HybridAutomaton merge = null;
 		while (!mergeStack.isEmpty()) {
@@ -232,7 +232,7 @@ public class HybridModel {
 		return merge;
 	}
 	
-	private Location getInitLocation(HybridAutomaton aut, Map<String, String> initLocs) {
+	private Location getInitLocation(final HybridAutomaton aut, final Map<String, String> initLocs) {
 		if (initLocs == null) {
 			return aut.getInitialLocation();
 		}
@@ -248,9 +248,4 @@ public class HybridModel {
 	public Map<String, HybridSystem> getSystems() {
 		return mSystems;
 	}
-	
-	public Map<String, HybridAutomaton> getMergedAutomata() {
-		return mMergedAutomata;
-	}
-	
 }
