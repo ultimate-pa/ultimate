@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.SdHoareTripleCheckerHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 
 /**
  * Hoare triple checker that uses only simple dataflow analysis to check triples. If this simple analysis is not able to
@@ -175,7 +174,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 				final Validity toFalse = sdecToFalse(preLin, preHier, act);
 				if (toFalse == null) {
 					// we are unable to determine validity with SD checks
-					assert (sdec(preLin, preHier, act, succ) == null) : "inconsistent check results";
+					assert sdec(preLin, preHier, act, succ) == null : "inconsistent check results";
 					return Validity.UNKNOWN;
 				}
 				switch (toFalse) {
@@ -235,8 +234,8 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
 			assert preHier == null;
-			return (preLin == succ) && (getSdHoareTripleChecker().sdecInternalSelfloop(preLin,
-					(IInternalAction) act) == Validity.VALID);
+			return preLin == succ
+					&& getSdHoareTripleChecker().sdecInternalSelfloop(preLin, (IInternalAction) act) == Validity.VALID;
 		}
 
 		@Override
@@ -265,8 +264,8 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
 			assert preHier == null;
-			return (preLin == succ)
-					&& (getSdHoareTripleChecker().sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID);
+			return preLin == succ
+					&& getSdHoareTripleChecker().sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID;
 		}
 
 		@Override
@@ -280,7 +279,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
 			assert preHier == null;
-			return getSdHoareTripleChecker().sdLazyEcCall(preLin, (Call) act, succ);
+			return getSdHoareTripleChecker().sdLazyEcCall(preLin, (ICallAction) act, succ);
 		}
 
 	}
@@ -294,12 +293,12 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 		@Override
 		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
 				final IPredicate succ) {
-			if ((preLin == succ) && (getSdHoareTripleChecker().sdecReturnSelfloopPre(preLin,
-					(IReturnAction) act) == Validity.VALID)) {
+			if (preLin == succ
+					&& getSdHoareTripleChecker().sdecReturnSelfloopPre(preLin, (IReturnAction) act) == Validity.VALID) {
 				return true;
 			}
-			return (preHier == succ) && (getSdHoareTripleChecker().sdecReturnSelfloopHier(preHier,
-					(IReturnAction) act) == Validity.VALID);
+			return preHier == succ
+					&& getSdHoareTripleChecker().sdecReturnSelfloopHier(preHier, (IReturnAction) act) == Validity.VALID;
 		}
 
 		@Override
