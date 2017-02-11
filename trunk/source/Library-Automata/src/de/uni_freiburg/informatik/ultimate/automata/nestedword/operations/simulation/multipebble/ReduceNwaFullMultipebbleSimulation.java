@@ -135,6 +135,20 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition);
 	
+	private boolean isInSimulationRelation(final STATE q0, final STATE q1, final FullMultipebbleStateFactory<STATE,?> gameFactory, 
+			final NestedMap2<STATE, STATE, GS> gameStateMapping, final IDoubleDeckerAutomaton<LETTER, GS> mRemoved) {
+		if (gameFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand)) {
+			return false;
+		} else {
+			final GS s1 = gameStateMapping.get(q0, q1);
+			if (mRemoved.isInitial(s1)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+	
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {
 		private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 		private final IDoubleDeckerAutomaton<LETTER, GS> mRemoved;
@@ -152,19 +166,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 		@Override
 		public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
-			if (mGameFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand) ||
-					mGameFactory.isImmediatelyWinningForSpoiler(q1, q0, mOperand)) {
-				return false;
-			}
-			final GS s1 = mGameStateMapping.get(q0, q1);
-			if (mRemoved.isInitial(s1)) {
-				return false;
-			}
-			final GS s2 = mGameStateMapping.get(q1, q0);
-			if (mRemoved.isInitial(s2)) {
-				return false;
-			}
-			return true;
+			return isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) && 
+					isInSimulationRelation(q1, q0, mGameFactory, mGameStateMapping, mRemoved); 
 		}
 
 		@Override
