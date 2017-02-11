@@ -238,8 +238,10 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		return mNonterminationArgument;
 	}
 
-	public BuchiCegarLoop(final IIcfg<?> icfg, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public BuchiCegarLoop(final IIcfg<?> icfg, final CfgSmtToolkit csToolkitWithoutRankVars, 
+			final RankVarConstructor rankVarConstructor,  
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs, 
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert services != null;
 		mLTLMode = false;
 		mServices = services;
@@ -249,8 +251,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		mName = "BuchiCegarLoop";
 		mIcfg = icfg;
 		mPredicateFactory = predicateFactory;
-		mRankVarConstructor = new RankVarConstructor(icfg);
-		mCsToolkitWithoutRankVars = csToolkit;
+		mRankVarConstructor = rankVarConstructor;
+		mCsToolkitWithoutRankVars = csToolkitWithoutRankVars;
 		mCsToolkitWithRankVars = mRankVarConstructor.getCsToolkitWithRankVariables();
 		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkitWithRankVars, predicateFactory,
 				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
@@ -382,7 +384,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			try {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				lassoChecker = new LassoChecker<>(mInterpolation, mCsToolkitWithoutRankVars, mPredicateFactory,
-						mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
+						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 						generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique,
 						mXnfConversionTechnique);

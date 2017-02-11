@@ -111,15 +111,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		mCsToolkit = new CfgSmtToolkit(mIcfg.getCfgSmtToolkit().getModifiableGlobalsTable(),
-				mIcfg.getCfgSmtToolkit().getManagedScript(), mIcfg.getSymboltable(),
+				mIcfg.getCfgSmtToolkit().getManagedScript(), mIcfg.getCfgSmtToolkit().getSymbolTable(),
 				mIcfg.getCfgSmtToolkit().getAxioms(), mIcfg.getCfgSmtToolkit().getProcedures());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
-				mCsToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg);
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
+				rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(), 
+				taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+
 
 		final BuchiCegarLoop<?> bcl =
-				new BuchiCegarLoop<>(mIcfg, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
+				new BuchiCegarLoop<>(mIcfg, mCsToolkit, rankVarConstructor, 
+						predicateFactory, 
+						mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
