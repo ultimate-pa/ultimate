@@ -596,7 +596,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
-		final String name = constructBoogieVarName(identifier, procedure, false, false);
+		final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, false, false);
 
 		final TermVariable termVariable = mScript.variable(name, sort);
 
@@ -629,7 +629,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		BoogieOldVar oldVar;
 		{
 			final boolean isOldVar = true;
-			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
+			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mScript.variable(name, sort);
 			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
 			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
@@ -642,7 +642,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		BoogieNonOldVar nonOldVar;
 		{
 			final boolean isOldVar = false;
-			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
+			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mScript.variable(name, sort);
 			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
 			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
@@ -658,23 +658,6 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	}
 
 
-
-	private static String constructBoogieVarName(final String identifier, final String procedure,
-			final boolean isGlobal, final boolean isOldvar) {
-		String name;
-		if (isGlobal) {
-			assert procedure == null;
-			if (isOldvar) {
-				name = "old(" + identifier + ")";
-			} else {
-				name = identifier;
-			}
-		} else {
-			assert (!isOldvar) : "only global vars can be oldvars";
-			name = procedure + "_" + identifier;
-		}
-		return name;
-	}
 
 	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList) {

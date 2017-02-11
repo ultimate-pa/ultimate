@@ -138,4 +138,22 @@ public class ProgramVarUtils {
 		return result;
 	}
 	
+	
+	public static String buildBoogieVarName(final String identifier, final String procedure,
+			final boolean isGlobal, final boolean isOldvar) {
+		String name;
+		if (isGlobal) {
+			assert procedure == null;
+			if (isOldvar) {
+				name = "old(" + identifier + ")";
+			} else {
+				name = identifier;
+			}
+		} else {
+			assert (!isOldvar) : "only global vars can be oldvars";
+			name = procedure + "_" + identifier;
+		}
+		return name;
+	}
+	
 }
