@@ -623,36 +623,19 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
 			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
-		final String procedure = null;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
+		
+		
+		final BoogieNonOldVar nonOldVar = ProgramVarUtils.constructGlobalProgramVarPair(identifier, sort, mScript, this);
+		mSmtVar2BoogieVar.put(nonOldVar.getTermVariable(), nonOldVar);
+		mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
+		mBoogieVar2AstNode.put(nonOldVar, varlist);
 
-		BoogieOldVar oldVar;
-		{
-			final boolean isOldVar = true;
-			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
+		final BoogieOldVar oldVar = nonOldVar.getOldVar();
+		mSmtVar2BoogieVar.put(oldVar.getTermVariable(), oldVar);
+		mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
+		mBoogieVar2AstNode.put(oldVar, varlist);
 
-			oldVar = new BoogieOldVar(identifier, iType, termVariable, defaultConstant, primedConstant);
-			mSmtVar2BoogieVar.put(termVariable, oldVar);
-			mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
-			mBoogieVar2AstNode.put(oldVar, varlist);
-		}
-		BoogieNonOldVar nonOldVar;
-		{
-			final boolean isOldVar = false;
-			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
-
-			nonOldVar = new BoogieNonOldVar(identifier, iType, termVariable, defaultConstant, primedConstant, oldVar);
-			mSmtVar2BoogieVar.put(termVariable, nonOldVar);
-			mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
-			mBoogieVar2AstNode.put(nonOldVar, varlist);
-		}
-		oldVar.setNonOldVar(nonOldVar);
 		mICfgSymbolTable.add(nonOldVar);
 		return nonOldVar;
 	}
