@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ActionUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -80,15 +79,15 @@ public class IcfgEdgeBuilder {
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 
-	public IcfgEdgeBuilder(final IIcfg<?> icfg, final IUltimateServiceProvider services,
+	public IcfgEdgeBuilder(final CfgSmtToolkit toolkit, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
-		mCfgSmtToolkit = icfg.getCfgSmtToolkit();
+		mManagedScript = toolkit.getManagedScript();
+		mCfgSmtToolkit = toolkit;
 		mCallCache = new HashMap<>();
 	}
 
