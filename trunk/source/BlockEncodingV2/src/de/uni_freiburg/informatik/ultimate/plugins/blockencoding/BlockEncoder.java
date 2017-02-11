@@ -134,7 +134,7 @@ public class BlockEncoder {
 					mLogger.debug("Current error locations: " + IcfgUtils.getErrorLocations(currentResult.getIcfg()));
 					new IcfgLocationIterator<>(currentResult.getIcfg()).asStream().forEach(a -> {
 						mLogger.debug("Annotations of " + a);
-						ModelUtils.consumeAnnotations(a, mLogger::debug);
+						ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getClass()));
 					});
 				}
 			}
@@ -216,7 +216,7 @@ public class BlockEncoder {
 		if (mLogger.isDebugEnabled()) {
 			new IcfgLocationIterator<>(newIcfg).asStream().forEach(a -> {
 				mLogger.debug("Annotations of " + a);
-				ModelUtils.consumeAnnotations(a, mLogger::debug);
+				ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getClass()));
 			});
 		}
 		return newIcfg;
