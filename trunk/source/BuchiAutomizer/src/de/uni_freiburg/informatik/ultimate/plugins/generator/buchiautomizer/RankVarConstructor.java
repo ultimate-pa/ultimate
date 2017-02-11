@@ -27,23 +27,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * Constructs auxiliary variables that store the old value of a ranking 
+ * function (oldRank) and that store if we already check for decreases of
+ * the ranking function (unseeded). 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class RankVarConstructor {
 	public static final String UNSEEDED_IDENTIFIER = "unseeded";
 	public static final String OLD_RANK_IDENTIFIER = "oldRank";
-	public static final int MAX_LEX_COMPONENTS = 10;
+	public static final int MAX_LEX_COMPONENTS = 7;
 
 	private final ManagedScript mManagedScript;
 	private final IProgramNonOldVar mUnseededVariable;
@@ -51,16 +55,11 @@ public class RankVarConstructor {
 
 	private final CfgSmtToolkit mCfgSmtToolkitWithRankVariables;
 
-	public RankVarConstructor(final IIcfg<?> icfg) {
-		if (!(icfg instanceof BoogieIcfgContainer)) {
-			throw new UnsupportedOperationException(
-					"We still need to construct global variables here, so we need the icfg to be of type BoogieIcfgContainer");
-		}
-		final Boogie2SMT boogie2Smt = ((BoogieIcfgContainer) icfg).getBoogie2SMT();
-		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
+	public RankVarConstructor(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
 
-		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(
+				csToolkit.getSymbolTable(), csToolkit.getProcedures());
 
 		
 		mManagedScript.lock(newSymbolTable);
@@ -93,17 +92,6 @@ public class RankVarConstructor {
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		mCfgSmtToolkitWithRankVariables = new CfgSmtToolkit(modifiableGlobalsTable, csToolkit.getManagedScript(),
 				newSymbolTable, csToolkit.getAxioms(), csToolkit.getProcedures());
-	}
-
-	/**
-	 * Construct a global BoogieVar and the corresponding oldVar. Return the global var.
-	 * 
-	 * @param type
-	 */
-	private static IProgramNonOldVar constructGlobalBoogieVar(final String name, final Boogie2SMT boogie2Smt,
-			final PrimitiveType type) {
-		final IProgramNonOldVar globalBv = boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, null);
-		return globalBv;
 	}
 
 	/**
