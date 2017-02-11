@@ -24,11 +24,15 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
@@ -49,9 +53,9 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class CorrectnessWitnessUtils {
+public final class CdtASTUtils {
 
-	private CorrectnessWitnessUtils() {
+	private CdtASTUtils() {
 		// do not instantiate a utility class
 	}
 
@@ -184,10 +188,62 @@ public final class CorrectnessWitnessUtils {
 		return null;
 	}
 
+	/**
+	 * Checks whether <code>canidate</code> is a transitive child of <code>possibleParent</code> or not.
+	 * 
+	 * @param candidate
+	 *            The possible child.
+	 * @param possibleParent
+	 *            The possible parent.
+	 * 
+	 * @return true iff candidate is a transitive child of possibleParent.
+	 */
 	public static boolean isContainedInSubtree(final IASTNode candidate, final IASTNode possibleParent) {
 		final SubtreeChecker sc = new SubtreeChecker(candidate);
 		possibleParent.accept(sc);
 		return sc.isContainedInSubtree();
+	}
+
+	/**
+	 * Find the first {@link IASTNode} that is a parent to all of the provided nodes.
+	 * 
+	 * @param nodes
+	 *            a collection of nodes for which a common parent should be found.
+	 * @return The first IASTNode that is a parent to all the provided nodes or the node itself if only one node is
+	 *         provided, or null if there are no nodes or there is no common parent to all nodes.
+	 */
+	public static IASTNode findCommonParent(final Collection<IASTNode> nodes) {
+		if (nodes == null || nodes.isEmpty()) {
+			return null;
+		}
+		assert nodes.stream().noneMatch(Objects::isNull);
+		if (nodes.size() == 1) {
+			return nodes.iterator().next();
+		}
+
+		final List<Set<IASTNode>> pathsToRoot = new ArrayList<>();
+		nodes.stream().forEach(a -> pathsToRoot.add(getParentNodes(a)));
+		IASTNode possibleParent = nodes.iterator().next();
+		while (possibleParent != null) {
+			final IASTNode testedParent = possibleParent;
+			if (pathsToRoot.stream().allMatch(a -> a.contains(testedParent))) {
+				return testedParent;
+			}
+			possibleParent = possibleParent.getParent();
+		}
+
+		return null;
+	}
+
+	private static Set<IASTNode> getParentNodes(final IASTNode node) {
+		final Set<IASTNode> rtr = new LinkedHashSet<>();
+		rtr.add(node);
+		IASTNode parent = node.getParent();
+		while (parent != null) {
+			rtr.add(parent);
+			parent = parent.getParent();
+		}
+		return rtr;
 	}
 
 	public static Set<IASTStatement> findDesiredType(final IASTNode node, final Collection<Class<?>> desiredTypes) {

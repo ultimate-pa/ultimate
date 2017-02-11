@@ -56,6 +56,7 @@ import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -287,7 +288,7 @@ public class CorrectnessWitnessExtractor {
 		while (iter.hasNext()) {
 			final MatchedASTNode loopHead = iter.next();
 			final Set<IASTStatement> loopStatements =
-					CorrectnessWitnessUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
+					CdtASTUtils.findDesiredType(loopHead.getNode(), mLoopTypes);
 			if (loopStatements.isEmpty()) {
 				continue;
 			} else {
@@ -317,7 +318,7 @@ public class CorrectnessWitnessExtractor {
 		IASTNode currentParent = commonParent;
 		Set<IASTStatement> loopStatements = Collections.emptySet();
 		while (currentParent != null && currentParent instanceof IASTStatement) {
-			loopStatements = CorrectnessWitnessUtils.findDesiredType(currentParent, mLoopTypes);
+			loopStatements = CdtASTUtils.findDesiredType(currentParent, mLoopTypes);
 			if (!loopStatements.isEmpty()) {
 				break;
 			}
@@ -413,14 +414,14 @@ public class CorrectnessWitnessExtractor {
 		final Set<MatchedASTNode> before = getIncomingSet(nodes);
 
 		// collect all scopes from the after list
-		final Set<IASTDeclaration> afterScopes = after.stream().map(a -> CorrectnessWitnessUtils.findScope(a.getNode()))
+		final Set<IASTDeclaration> afterScopes = after.stream().map(a -> CdtASTUtils.findScope(a.getNode()))
 				.filter(a -> a != null).collect(Collectors.toSet());
 
 		// iterate over before list and remove all matches that would lead to a scope change
 		final Iterator<MatchedASTNode> beforeIter = before.iterator();
 		while (beforeIter.hasNext()) {
 			final MatchedASTNode beforeCurrent = beforeIter.next();
-			final IASTDeclaration beforeScope = CorrectnessWitnessUtils.findScope(beforeCurrent.getNode());
+			final IASTDeclaration beforeScope = CdtASTUtils.findScope(beforeCurrent.getNode());
 			if (beforeScope == null) {
 				// its the global scope
 				continue;
@@ -448,7 +449,7 @@ public class CorrectnessWitnessExtractor {
 		while (iter.hasNext()) {
 			final MatchedASTNode currentParent = iter.next();
 			if (list.stream().allMatch(a -> a == currentParent
-					|| CorrectnessWitnessUtils.isContainedInSubtree(a.getNode(), currentParent.getNode()))) {
+					|| CdtASTUtils.isContainedInSubtree(a.getNode(), currentParent.getNode()))) {
 				return currentParent.getNode();
 			}
 		}
@@ -463,7 +464,7 @@ public class CorrectnessWitnessExtractor {
 			}
 			final IASTNode pParent = possibleParent;
 			if (list.stream().allMatch(a -> a.getNode() == pParent
-					|| CorrectnessWitnessUtils.isContainedInSubtree(a.getNode(), pParent))) {
+					|| CdtASTUtils.isContainedInSubtree(a.getNode(), pParent))) {
 				return pParent;
 			}
 			possibleParent = possibleParent.getParent();
@@ -556,7 +557,7 @@ public class CorrectnessWitnessExtractor {
 			}
 			final IASTStatement stmt;
 			if (!(node instanceof IASTStatement)) {
-				stmt = CorrectnessWitnessUtils.getEnclosingStatement(node);
+				stmt = CdtASTUtils.getEnclosingStatement(node);
 				if (stmt == null) {
 					return false;
 				}
@@ -565,10 +566,10 @@ public class CorrectnessWitnessExtractor {
 			}
 			// we assume that node is a conditional and search for conditionals at this location
 			final Set<IASTStatement> result;
-			if (CorrectnessWitnessUtils.isBranchingStatement(stmt)) {
+			if (CdtASTUtils.isBranchingStatement(stmt)) {
 				result = Collections.singleton(stmt);
 			} else {
-				result = CorrectnessWitnessUtils.findDesiredType(node.getParent(), mConditionalTypes);
+				result = CdtASTUtils.findDesiredType(node.getParent(), mConditionalTypes);
 			}
 			if (result.isEmpty()) {
 				return false;
@@ -579,7 +580,7 @@ public class CorrectnessWitnessExtractor {
 			}
 
 			final IASTStatement branchingSuccessor =
-					CorrectnessWitnessUtils.findBranchingSuccessorStatement(condition, result.iterator().next());
+					CdtASTUtils.findBranchingSuccessorStatement(condition, result.iterator().next());
 			if (branchingSuccessor == null) {
 				return false;
 			}

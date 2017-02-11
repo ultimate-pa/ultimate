@@ -258,7 +258,7 @@ public class TraceAbstractionStarter {
 			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
 				final Check check = (Check) annot;
-				if (check.getSpec() == Spec.WITNESS_INVARIANT) {
+				if (check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
 					numberOfCheckedInvariants++;
 				}
 			}
