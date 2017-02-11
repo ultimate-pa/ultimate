@@ -659,14 +659,6 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 
 
 
-	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
-			final IBoogieType iType, final VarList varList) {
-		final BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
-		mGlobals.put(identifier, bv);
-		mOldGlobals.put(identifier, bv.getOldVar());
-		return bv;
-	}
-	
 	public HashRelation<String, IProgramNonOldVar> constructProc2ModifiableGlobalsMapping() {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, Set<String>> proc2vars : mBoogieDeclarations.getModifiedVars().entrySet()) {
