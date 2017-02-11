@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -154,6 +156,38 @@ public class ProgramVarUtils {
 			name = procedure + "_" + identifier;
 		}
 		return name;
+	}
+	
+	
+	/**
+	 * Construct global {@link BoogieNonOldVar} together with corresponding 
+	 * {@link BoogieOldVar} and return the {@link BoogieNonOldVar}
+	 */
+	public static BoogieNonOldVar constructGlobalProgramVarPair(final String identifier, final Sort sort, 
+			final ManagedScript mgdScript, final Object lockOwner) {
+		final String procedure = null;
+		BoogieOldVar oldVar;
+		{
+			final boolean isOldVar = true;
+			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
+			final TermVariable termVariable = mgdScript.variable(name, sort);
+			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
+
+			oldVar = new BoogieOldVar(identifier, null, termVariable, defaultConstant, primedConstant);
+		}
+		BoogieNonOldVar nonOldVar;
+		{
+			final boolean isOldVar = false;
+			final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, true, isOldVar);
+			final TermVariable termVariable = mgdScript.variable(name, sort);
+			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, name);
+			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, name);
+
+			nonOldVar = new BoogieNonOldVar(identifier, null, termVariable, defaultConstant, primedConstant, oldVar);
+		}
+		oldVar.setNonOldVar(nonOldVar);
+		return nonOldVar;
 	}
 	
 }
