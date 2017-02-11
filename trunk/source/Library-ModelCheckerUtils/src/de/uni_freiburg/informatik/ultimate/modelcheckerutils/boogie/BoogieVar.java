@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,7 +48,6 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 
 	private static final long serialVersionUID = 103072739646531062L;
 	protected final String mIdentifier;
-	private final IBoogieType mIType;
 
 	/**
 	 * TermVariable which represents this BoogieVar in SMT terms.
@@ -67,18 +65,12 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 	 */
 	private final ApplicationTerm mPrimedConstant;
 
-	public BoogieVar(final String identifier, final IBoogieType iType, final TermVariable tv,
-			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
+	public BoogieVar(final String identifier, final TermVariable tv, final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedContant) {
 		mIdentifier = identifier;
-		mIType = iType;
 		mTermVariable = tv;
 		mDefaultConstant = defaultConstant;
 		mPrimedConstant = primedContant;
-	}
-
-	@Override
-	public IBoogieType getIType() {
-		return mIType;
 	}
 
 	@Override

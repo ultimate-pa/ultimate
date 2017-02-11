@@ -47,7 +47,7 @@ public abstract class GlobalBoogieVar extends BoogieVar implements Serializable 
 
 	public GlobalBoogieVar(final String identifier, final IBoogieType iType, final TermVariable tv,
 			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
-		super(identifier, iType, tv, defaultConstant, primedContant);
+		super(identifier, tv, defaultConstant, primedContant);
 	}
 
 	@Override

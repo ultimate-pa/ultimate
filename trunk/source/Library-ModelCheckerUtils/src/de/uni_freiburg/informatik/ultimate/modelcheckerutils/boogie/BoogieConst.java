@@ -74,11 +74,6 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 	}
 
 	@Override
-	public IBoogieType getIType() {
-		return mIType;
-	}
-
-	@Override
 	public Term getTerm() {
 		return getDefaultConstant();
 	}
