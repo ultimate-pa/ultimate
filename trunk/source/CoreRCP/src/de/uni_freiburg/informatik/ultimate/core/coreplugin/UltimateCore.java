@@ -30,7 +30,9 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.JAXBException;
 
@@ -178,10 +180,10 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 
 	@Override
 	public IUltimatePlugin[] getRegisteredUltimatePlugins() {
-		final List<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
-		rtr.addAll(mPluginFactory.getAllAvailableToolchainPlugins());
+		final Set<IUltimatePlugin> rtr = new LinkedHashSet<>();
 		rtr.add(this);
 		rtr.add(getCurrentController());
+		rtr.addAll(mPluginFactory.getAllAvailableToolchainPlugins());
 		return rtr.toArray(new IUltimatePlugin[rtr.size()]);
 	}
 

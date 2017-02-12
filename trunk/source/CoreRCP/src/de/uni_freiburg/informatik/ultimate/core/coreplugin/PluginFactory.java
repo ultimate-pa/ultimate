@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
@@ -118,21 +120,10 @@ final class PluginFactory implements IServiceFactoryFactory {
 		return rtr;
 	}
 
-	/**
-	 *
-	 * TODO: How to check feasibility / admissibility ?
-	 *
-	 * @return
-	 */
 	List<String> getPluginIds() {
 		return new ArrayList<>(mPluginIDToClassName.keySet());
 	}
 
-	/**
-	 *
-	 * @param toolId
-	 * @return
-	 */
 	<T extends IToolchainPlugin> T createTool(final String toolId) {
 		IConfigurationElement element = mAvailableToolsByClassName.get(toolId);
 		if (element == null) {
@@ -196,6 +187,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info("--------------------------------------------------------------------------------");
 		mLogger.info("Loading all admissible plugins (creating one instance, loading preferences)");
 		int notAdmissible = 0;
+		final Set<String> pluginIds = new HashSet<>();
 		for (final Class<?> type : ITOOLCHAIN_PLUGIN_CLASSES) {
 			final List<IConfigurationElement> elements = mAvailableToolsByClass.get(type);
 			if (elements == null) {
@@ -206,6 +198,9 @@ final class PluginFactory implements IServiceFactoryFactory {
 					final IToolchainPlugin tool = prepareToolchainPlugin((IToolchainPlugin) createInstance(elem));
 					if (tool == null) {
 						notAdmissible++;
+						continue;
+					}
+					if (!pluginIds.add(tool.getPluginID())) {
 						continue;
 					}
 					rtr.add(tool);
@@ -317,7 +312,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 					mSettingsManager.registerPlugin(factory);
 					mAvailableServicesByClassName.put(myClass, factory);
 				} catch (final ClassNotFoundException e) {
-					e.printStackTrace();
+					mLogger.fatal("Cannot register type: " + e);
 				}
 			}
 			mLogger.info(mAvailableServicesByClassName.size() + " " + clazz.getSimpleName() + " services available");
@@ -327,7 +322,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private void registerTool(final Class<?> clazz) {
-		final List<IConfigurationElement> result = new ArrayList<IConfigurationElement>();
+		final List<IConfigurationElement> result = new ArrayList<>();
 		mAvailableToolsByClass.put(clazz, result);
 		for (final IConfigurationElement element : mRegistry
 				.getConfigurationElementsFor(getExtensionPointFromClass(clazz))) {
@@ -339,12 +334,12 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mLogger.info(result.size() + " " + clazz.getSimpleName() + " plugins available");
 	}
 
-	private String createPluginID(final String classname) {
+	private static String createPluginID(final String classname) {
 		final String rtr = classname.substring(0, classname.lastIndexOf('.'));
 		return rtr;
 	}
 
-	private String getExtensionPointFromClass(final Class<?> clazz) {
+	private static String getExtensionPointFromClass(final Class<?> clazz) {
 		final String qualifiedName = clazz.getName();
 		switch (qualifiedName) {
 		case "de.uni_freiburg.informatik.ultimate.core.model.IController":
