@@ -55,10 +55,10 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		mTargetLocations = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
 		mReplacementVarFactory = Objects.requireNonNull(replacementVarFactory);
-		preprocessIcfg(icfg);
 	}
 
-	private void preprocessIcfg(final IIcfg<?> icfg) {
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();

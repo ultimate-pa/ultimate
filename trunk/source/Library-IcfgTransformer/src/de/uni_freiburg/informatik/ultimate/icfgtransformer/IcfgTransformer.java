@@ -83,7 +83,7 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 		mBacktranslationTracker = backtranslationTracker;
-
+		transformer.preprocessIcfg(origIcfg);
 		// perform transformation last
 		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
 				Objects.requireNonNull(outLocationClass), transformer);
