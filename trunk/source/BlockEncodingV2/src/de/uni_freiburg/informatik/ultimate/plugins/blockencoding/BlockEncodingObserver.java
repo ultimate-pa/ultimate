@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IcfgEdgeBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -143,6 +144,13 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 					// delay creating returns until everything else is processed
 					openReturns.add(new Pair<>(newSource, oldEdge));
 				} else {
+					if (oldEdge instanceof Summary) {
+						// hack to prevent copying "useless" summary edges
+						final Summary oldSummary = (Summary) oldEdge;
+						if (oldSummary.calledProcedureHasImplementation()) {
+							continue;
+						}
+					}
 					createEdgeCopy(edgeBuilder, old2new, newSource, oldEdge);
 				}
 			}
