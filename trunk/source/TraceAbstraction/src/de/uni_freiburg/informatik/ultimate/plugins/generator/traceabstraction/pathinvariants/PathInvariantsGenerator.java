@@ -137,7 +137,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
+	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
@@ -215,6 +215,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_INTERPROCEDURAL_COMPOSITION, false);
 			ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.MULTI);
+			// TODO: If you remove infeasible edges, you may end up with an empty program. Either disable this or deal
+			// with it.
+			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
 			final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, pathProgram,
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			pathProgram = blockEncoder.getResult();
