@@ -6,11 +6,11 @@ Bundle-Version: 0.0.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  com.google.protobuf,
+ de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
- de.uni_freiburg.informatik.ultimate.interactive
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction
 Bundle-ClassPath: .
