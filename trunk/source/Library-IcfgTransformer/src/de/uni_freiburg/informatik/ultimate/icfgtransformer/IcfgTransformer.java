@@ -52,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgR
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * A basic IcfgTransformer that applies the
+ * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
  * transformulas of an {@link IIcfg} with a new instance.
  *
  * @param <INLOC>
@@ -71,7 +72,6 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
 	private final IBacktranslationTracker mBacktranslationTracker;
-	private final ITransformulaTransformer mTransformer;
 
 	public IcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
@@ -83,18 +83,17 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 		mBacktranslationTracker = backtranslationTracker;
-		mTransformer = Objects.requireNonNull(transformer);
 
 		// perform transformation last
 		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
-				Objects.requireNonNull(outLocationClass));
+				Objects.requireNonNull(outLocationClass), transformer);
 	}
 
 	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
-			final Class<OUTLOC> outLocationClass) {
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+			final Class<OUTLOC> outLocationClass, final ITransformulaTransformer transformer) {
+		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
+				outLocationClass);
 
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -114,13 +113,13 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 				final IcfgEdge newTransition;
 				if (oldTransition instanceof IIcfgInternalTransition) {
 					newTransition = createNewLocalTransition(newSource, newTarget,
-							(IIcfgInternalTransition<INLOC>) oldTransition);
+							(IIcfgInternalTransition<INLOC>) oldTransition, transformer);
 				} else if (oldTransition instanceof IIcfgCallTransition) {
-					newTransition =
-							createNewCallTransition(newSource, newTarget, (IIcfgCallTransition<INLOC>) oldTransition);
+					newTransition = createNewCallTransition(newSource, newTarget,
+							(IIcfgCallTransition<INLOC>) oldTransition, transformer);
 				} else if (oldTransition instanceof IIcfgReturnTransition) {
 					newTransition = createNewReturnTransition(newSource, newTarget,
-							(IIcfgReturnTransition<INLOC, ?>) oldTransition);
+							(IIcfgReturnTransition<INLOC, ?>) oldTransition, transformer);
 				} else {
 					throw new IllegalArgumentException("Unknown edge type " + oldTransition.getClass().getSimpleName());
 				}
@@ -130,38 +129,39 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			}
 		}
 		final CfgSmtToolkit oldToolkit = originalIcfg.getCfgSmtToolkit();
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), 
-				oldToolkit.getManagedScript(), mTransformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(), oldToolkit.getProcedures());
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(),
+				oldToolkit.getManagedScript(), transformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(),
+				oldToolkit.getProcedures());
 		resultIcfg.setCfgSmtToolkit(csToolkit);
 		return resultIcfg;
 	}
 
 	private IcfgReturnTransition createNewReturnTransition(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgReturnTransition<INLOC, ?> oldTransition) {
+			final IIcfgReturnTransition<INLOC, ?> oldTransition, final ITransformulaTransformer transformer) {
 		final IIcfgCallTransition<INLOC> oldCorrespondingCall = oldTransition.getCorrespondingCall();
 		final IcfgCallTransition newCorrespondingCall = mOldCalls2NewCalls.get(oldCorrespondingCall);
 		assert newCorrespondingCall != null : "The Icfg has been traversed out of order "
 				+ "(found return before having found the corresponding call)";
-		final UnmodifiableTransFormula retAssign = mTransformer.transform(oldTransition.getAssignmentOfReturn());
-		final UnmodifiableTransFormula localVarAssign =
-				mTransformer.transform(oldTransition.getLocalVarsAssignmentOfCall());
+		final UnmodifiableTransFormula retAssign = transformer.transform(oldTransition.getAssignmentOfReturn());
+		final UnmodifiableTransFormula localVarAssign = transformer
+				.transform(oldTransition.getLocalVarsAssignmentOfCall());
 		return new IcfgReturnTransition(source, target, newCorrespondingCall, getPayloadIfAvailable(oldTransition),
 				retAssign, localVarAssign);
 	}
 
 	private IcfgCallTransition createNewCallTransition(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgCallTransition<INLOC> oldTransition) {
-		final UnmodifiableTransFormula unmodTf = mTransformer.transform(oldTransition.getLocalVarsAssignment());
-		final IcfgCallTransition rtr =
-				new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf);
+			final IIcfgCallTransition<INLOC> oldTransition, final ITransformulaTransformer transformer) {
+		final UnmodifiableTransFormula unmodTf = transformer.transform(oldTransition.getLocalVarsAssignment());
+		final IcfgCallTransition rtr = new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition),
+				unmodTf);
 		// cache the created call for usage during return creation
 		mOldCalls2NewCalls.put(oldTransition, rtr);
 		return rtr;
 	}
 
 	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgInternalTransition<INLOC> oldTransition) {
-		final UnmodifiableTransFormula unmodTf = mTransformer.transform(oldTransition.getTransformula());
+			final IIcfgInternalTransition<INLOC> oldTransition, final ITransformulaTransformer transformer) {
+		final UnmodifiableTransFormula unmodTf = transformer.transform(oldTransition.getTransformula());
 		return new IcfgInternalTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf);
 	}
 
@@ -208,7 +208,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	}
 
 	/**
-	 * Interface that describes a factory which creates locations for an {@link IIcfg} based on an old location.
+	 * Interface that describes a factory which creates locations for an
+	 * {@link IIcfg} based on an old location.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
