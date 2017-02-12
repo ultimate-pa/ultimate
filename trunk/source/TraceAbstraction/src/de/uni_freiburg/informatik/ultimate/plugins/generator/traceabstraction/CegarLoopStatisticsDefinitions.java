@@ -39,58 +39,58 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, AStatisticsType.s_DataBeforeKey),
+	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, AStatisticsType.sDataBeforeKey),
 
-	OverallTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	OverallTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	OverallIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	TraceHistogramMax(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey),
+	TraceHistogramMax(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sDataBeforeKey),
 
-	AutomataDifference(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	AutomataDifference(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	DeadEndRemovalTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	HoareAnnotationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 
-	PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 
-	BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	BasicInterpolantAutomatonTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
 	BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+			AStatisticsType.sKeyBeforeData),
 
-	TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	TraceCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 
 	InterpolantConsolidationStatistics(StatisticsData.class,
 
-			AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+			AStatisticsType.sStatisticsDataAggregation, AStatisticsType.sKeyBeforeData),
 	PathInvariantsStatistics(StatisticsData.class,
 
-			AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+			AStatisticsType.sStatisticsDataAggregation, AStatisticsType.sKeyBeforeData),
 
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			AStatisticsType.s_DataBeforeKey),
+			AStatisticsType.sDataBeforeKey),
 
-	TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 
-	AbstIntTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	AbstIntTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	AbstIntIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	AbstIntStrong(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
-	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 	
-	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-			AStatisticsType.s_KeyBeforeData),
+	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
+			AStatisticsType.sKeyBeforeData),
 	;
 
 	private final Class<?> mClazz;

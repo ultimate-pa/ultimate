@@ -36,36 +36,36 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 public enum TraceCheckerStatisticsDefinitions implements IStatisticsElement {
 	
 	
-	SsaConstructionTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	SsaConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	SatisfiabilityAnalysisTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	SatisfiabilityAnalysisTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	InterpolantComputationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	InterpolantComputationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 
-	NumberOfCodeBlocks(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	NumberOfCodeBlocks(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	NumberOfCodeBlocksAsserted(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	NumberOfCodeBlocksAsserted(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	NumberOfCheckSat(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	NumberOfCheckSat(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	ConstructedInterpolants(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	ConstructedInterpolants(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	QuantifiedInterpolants(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	QuantifiedInterpolants(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
-	SizeOfPredicates(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
+	SizeOfPredicates(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
 	
-	NumberOfNonLiveVariables(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	NumberOfNonLiveVariables(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
-	ConjunctsInSsa(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	ConjunctsInSsa(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
-	ConjunctsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	ConjunctsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
-	InterpolantComputations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	InterpolantComputations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
-	PerfectInterpolantSequences(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	PerfectInterpolantSequences(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 	
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			AStatisticsType.s_DataBeforeKey),;
+			AStatisticsType.sDataBeforeKey),;
 
 	
 	
