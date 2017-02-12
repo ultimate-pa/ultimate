@@ -562,9 +562,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		completePatternVariablesMapping(primedMapping, predicate.getVariablesForTargetPattern(),
 				programVarsRecentlyOccurred);
 		if (DEBUG_OUTPUT) {
-			String transformulaAsString = predicate.getTransition().toString();
-			mLogger.info("Building constraints for transition (" + predicate.getSourceLocation() + ", " + transformulaAsString.substring(0, transformulaAsString.indexOf("InVars")) +
-					", " + predicate.getTargetLocation());
 			mLogger.info("Size of start-pattern before mapping to lin-inequalities: "
 					+ getSizeOfPattern(predicate.getInvStart()));
 		}
@@ -610,23 +607,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			storeLinearInequalitiesToLocations(transitionDNF, locs);
 			
 		}
-		if (PRINT_CONSTRAINTS) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("\nStartPattern: ");
-			startInvariantDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(")OR ");});
-			sb.append("\nTransition: ");
-			transitionDNF.forEach(dis -> dis.forEach(lineq -> sb.append(lineq.toString() + " AND ")));
-			// sb.append(" AND ");
-			sb.append("\nEndPattern: ");
-			targetLocTemplateNegatedDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(")OR ");});
-			String s = sb.toString();
-			s = s.replaceAll("AND \\)OR", "\\)OR");
-			s = s.replaceAll("OR \n", "\n");
-			s = s.replaceAll("AND \n", "\n");
-			s = s.replaceAll("StartPattern: \\(\\)", "StartPattern: (true)");
-			s = s.replaceAll("EndPattern: \\(\\)", "EndPattern: (false)");
-			mLogger.info(s);
-		}
+
 		// Respect timeout / toolchain cancellation
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(LinearInequalityInvariantPatternProcessor.class);
@@ -645,10 +626,16 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 					// Store linear inequalities from SP, later we may use them to extract the locations from the unsat core 
 					storeLinearInequalitiesToLocations(spTemplateDNF, locForSp);
 				}
-				mSolver.echo(new QuotedObject("Assertion for SP: " +  mLoc2UnderApproximation.get(loc).toString()));
+				if (PRINT_CONSTRAINTS) {
+					final StringBuilder sb = new StringBuilder();
+					appendConstraintToStringBuilder(sb, "\nSP-" + loc + ": ", "(true)", spTemplateDNF);
+					appendConstraintToStringBuilder(sb, "\nnegatedPattern-" + loc + ": ", "()", targetLocTemplateNegatedDNF);
+					printConstraintFromStringBuilder(sb);
+				}
+				String transformulaAsString = mLoc2UnderApproximation.get(loc).toString();
+				mSolver.echo(new QuotedObject("Assertion for SP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(spTemplateDNF, targetLocTemplateNegatedDNF));
 			}
-
 		}
 		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT &&  mCurrentRound >= 0) {
 			IcfgLocation loc = predicate.getTargetLocation();
@@ -664,13 +651,45 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 					// Store linear inequalities from WP, later we may use them to extract the locations from the unsat core 
 					storeLinearInequalitiesToLocations(wpTemplateNegatedDNF, locForWp);
 				}
-				mSolver.echo(new QuotedObject("Assertion for WP: " +  mLoc2OverApproximation.get(loc).toString()));
+				if (PRINT_CONSTRAINTS) {
+					final StringBuilder sb = new StringBuilder();
+					appendConstraintToStringBuilder(sb, "\nPattern-" + loc + ": ", "(true)", targetLocTemplateMappedDNF);
+					appendConstraintToStringBuilder(sb, "\nnegatedWP-" + loc + ": ", "()", wpTemplateNegatedDNF);
+					printConstraintFromStringBuilder(sb);
+				}
+				String transformulaAsString = mLoc2OverApproximation.get(loc).toString();
+				mSolver.echo(new QuotedObject("Assertion for WP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
 				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
 			}
 		}
-
+		if (PRINT_CONSTRAINTS) {
+			final StringBuilder sb = new StringBuilder();
+			appendConstraintToStringBuilder(sb, "\nStartPattern: ", "(true)", startInvariantDNF);
+			appendConstraintToStringBuilder(sb, "\nTransition: ", "(true)", transitionDNF);
+			appendConstraintToStringBuilder(sb, "\nEndPattern: ", "(false)", targetLocTemplateNegatedDNF);
+			printConstraintFromStringBuilder(sb);
+		}
 		mSolver.echo(new QuotedObject("Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
 		return transformNegatedConjunction(startInvariantDNF, targetLocTemplateNegatedDNF, transitionDNF);
+	}
+	
+	private void printConstraintFromStringBuilder(final StringBuilder sb) {
+		String s = sb.toString();
+		s = s.replaceAll("AND \\) OR", "\\) OR");
+		s = s.replaceAll("OR \n", "\n");
+		s = s.replaceAll("AND \n", "\n");
+//		s = s.replaceAll("\\(\\)", "(true)");
+		mLogger.info(s);
+	}
+	
+	private void appendConstraintToStringBuilder(final StringBuilder sb, String constraintName, String toReplaceEmptyFormula, final Collection<Collection<LinearInequality>> patternDNF) {
+		sb.append(constraintName);
+		if (patternDNF.isEmpty()) {
+			sb.append(toReplaceEmptyFormula);
+		} else {
+			patternDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(") OR ");});
+		}
+
 	}
 
 	private Set<IProgramVar> extractVarsFromPattern(Collection<Collection<AbstractLinearInvariantPattern>> spTemplate) {
