@@ -166,10 +166,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
-		final LinkedHashMap<String, IStorable> newStorage = new LinkedHashMap<>(mToolchainStorage);
 		final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 		if (pluginIds == null || pluginIds.length == 0) {
-			return new ToolchainStorage(newStorage, newLayers);
+			return new ToolchainStorage(mToolchainStorage, newLayers);
 		}
 		for (final String pluginId : pluginIds) {
 			final PreferenceLayer existingLayer = newLayers.get(pluginId);
@@ -181,6 +180,6 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			}
 			newLayers.put(pluginId, newLayer);
 		}
-		return new ToolchainStorage(newStorage, newLayers);
+		return new ToolchainStorage(mToolchainStorage, newLayers);
 	}
 }
