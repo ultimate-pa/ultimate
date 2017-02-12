@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -45,19 +46,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBa
  *
  */
 public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
-	
+
 	private int mNewAcceptingStates;
 	private final Consumer<IcfgLocation> mFunMarkAsAccepting;
 	private final Predicate<IcfgLocation> mFunIsAccepting;
-	
+
 	public MaximizeFinalStates(final IUltimateServiceProvider services, final Consumer<IcfgLocation> funMarkAsAccepting,
-			final Predicate<IcfgLocation> funIsAccepting, final BlockEncodingBacktranslator backtranslator) {
-		super(services, backtranslator);
+			final Predicate<IcfgLocation> funIsAccepting, final BlockEncodingBacktranslator backtranslator,
+			final ILogger logger) {
+		super(logger, services, backtranslator);
 		mNewAcceptingStates = 0;
 		mFunMarkAsAccepting = funMarkAsAccepting;
 		mFunIsAccepting = funIsAccepting;
 	}
-	
+
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		int lastRun = processInternal(icfg);
@@ -69,14 +71,14 @@ public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
 		mLogger.info(mNewAcceptingStates + " new accepting states");
 		return icfg;
 	}
-	
+
 	private int processInternal(final BasicIcfg<IcfgLocation> icfg) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 		int newAcceptingStates = 0;
-		
+
 		nodes.addAll(icfg.getInitialNodes());
-		
+
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
@@ -88,19 +90,19 @@ public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
 				nodes.addAll(getSuccessors(current));
 				continue;
 			}
-			
+
 			final List<IcfgLocation> succs = getSuccessors(current);
 			if (succs.isEmpty()) {
 				// there are no successors
 				continue;
 			}
-			
+
 			boolean allSuccessorsAreAccepting = true;
 			for (final IcfgLocation succ : succs) {
 				allSuccessorsAreAccepting = allSuccessorsAreAccepting && mFunIsAccepting.test(succ);
 				nodes.add(succ);
 			}
-			
+
 			if (allSuccessorsAreAccepting) {
 				// all successors are accepting, make this one also accepting
 				mFunMarkAsAccepting.accept(current);
@@ -109,11 +111,11 @@ public final class MaximizeFinalStates extends BaseBlockEncoder<IcfgLocation> {
 		}
 		return newAcceptingStates;
 	}
-	
+
 	public int getNewAcceptingStates() {
 		return mNewAcceptingStates;
 	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
 		return mNewAcceptingStates > 0;

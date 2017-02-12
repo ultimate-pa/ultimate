@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -53,8 +54,8 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public ParallelComposer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator) {
-		super(services, backtranslator);
+			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+		super(logger, services, backtranslator);
 		mEdgesRemoved = 0;
 		mEdgeBuilder = edgeBuilder;
 	}

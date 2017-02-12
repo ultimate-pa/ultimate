@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -44,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBa
 public class RemoveInfeasibleEdges extends BaseBlockEncoder<IcfgLocation> {
 
 	public RemoveInfeasibleEdges(final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator) {
-		super(services, backtranslator);
+			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+		super(logger, services, backtranslator);
 	}
 
 	@Override

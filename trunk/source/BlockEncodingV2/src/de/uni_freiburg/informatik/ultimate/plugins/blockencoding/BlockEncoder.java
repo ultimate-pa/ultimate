@@ -205,11 +205,12 @@ public final class BlockEncoder {
 
 		if (ups.getBoolean(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION)) {
 			mIterationResult =
-					new ParallelComposer(mEdgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
+					new ParallelComposer(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.POST_SIMPLIFY_CODEBLOCKS)) {
-			mIterationResult = new Simplifier(mEdgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
+			mIterationResult =
+					new Simplifier(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
 
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
@@ -222,12 +223,12 @@ public final class BlockEncoder {
 		// note that the order is important
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES)) {
-			rtr.add(() -> new RemoveInfeasibleEdges(mServices, mBacktranslator));
+			rtr.add(() -> new RemoveInfeasibleEdges(mServices, mBacktranslator, mLogger));
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_MAXIMIZE_FINAL_STATES)) {
 			rtr.add(() -> new MaximizeFinalStates(mServices, BlockEncoder::markBuchiProgramAccepting,
-					BlockEncoder::isBuchiProgramAccepting, mBacktranslator));
+					BlockEncoder::isBuchiProgramAccepting, mBacktranslator, mLogger));
 		}
 
 		final MinimizeStates minimizeStates =
@@ -237,15 +238,15 @@ public final class BlockEncoder {
 			case SINGLE:
 
 				rtr.add(() -> new MinimizeStatesSingleEdgeSingleNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved));
+						BlockEncoder::hasToBePreserved, mLogger));
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
 				rtr.add(() -> new MinimizeStatesMultiEdgeSingleNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved));
+						BlockEncoder::hasToBePreserved, mLogger));
 				break;
 			case MULTI:
 				rtr.add(() -> new MinimizeStatesMultiEdgeMultiNode(mEdgeBuilder, mServices, mBacktranslator,
-						BlockEncoder::hasToBePreserved));
+						BlockEncoder::hasToBePreserved, mLogger));
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -253,14 +254,14 @@ public final class BlockEncoder {
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_SIMPLIFY_ASSUMES)) {
-			rtr.add(() -> new AssumeMerger(mEdgeBuilder, mServices, mBacktranslator));
+			rtr.add(() -> new AssumeMerger(mEdgeBuilder, mServices, mBacktranslator, mLogger));
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES)) {
-			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncoder::hasToBePreserved, mBacktranslator));
+			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncoder::hasToBePreserved, mBacktranslator, mLogger));
 		}
 
-		rtr.add(() -> new InterproceduralSequenzer(mEdgeBuilder, mServices, mBacktranslator));
+		rtr.add(() -> new InterproceduralSequenzer(mEdgeBuilder, mServices, mBacktranslator, mLogger));
 
 		return rtr;
 	}
