@@ -8,7 +8,7 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-InteractiveTA</groupId>
-  <artifactId>Library-InteractiveTA</artifactId>
+  <groupId>de.uni_freiburg.informatik.ultimate.interactive.traceabstraction</groupId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.interactive.traceabstraction</artifactId>
   <version>0.0.1</version>
 </project>

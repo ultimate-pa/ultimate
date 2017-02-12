@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
-	protected TAConverter(IToolchainStorage storage) {
+	public TAConverter(IToolchainStorage storage) {
 		super(Object.class, storage);
 	}
 

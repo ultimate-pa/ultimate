@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-InteractiveTA
-Bundle-SymbolicName: Library-InteractiveTA
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction
 Bundle-Version: 0.0.1
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
@@ -12,7 +12,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.interactive
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction,
- de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
+Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction
 Bundle-ClassPath: .
-Import-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg
