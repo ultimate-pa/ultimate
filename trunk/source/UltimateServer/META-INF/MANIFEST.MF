@@ -9,6 +9,7 @@ Require-Bundle: org.apache.commons.cli,
  de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.interactive.traceabstraction,
  com.google.protobuf
 Export-Package: de.uni_freiburg.informatik.ultimate.servercontroller
 Import-Package: org.apache.commons.cli

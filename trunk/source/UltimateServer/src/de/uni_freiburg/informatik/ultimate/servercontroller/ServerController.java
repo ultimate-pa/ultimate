@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.TAConverter;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
@@ -201,6 +202,9 @@ public class ServerController implements IController<RunDefinition> {
 		}
 
 		final IToolchainStorage storage = mToolchain.getStorage();
+
+		TAConverter taConverter = new TAConverter(storage);
+		converter.initInterface(mProtoInterface, mServer.getTypeRegistry());
 
 		final File inputFile = requestChoice(availableInputFiles, File::getName);
 
