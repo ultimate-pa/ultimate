@@ -50,6 +50,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.core.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
@@ -68,6 +69,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.server"/>
