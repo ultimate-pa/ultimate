@@ -60,6 +60,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 //			"examples/programs/spaceex/",
 			"examples/programs/spaceex/toy_safe.xml",
 			"examples/programs/spaceex/simple1-unsafe.xml",
+			"examples/programs/spaceex/simple1_Unsafe.xml",
 	};
 	//@formatter:on
 	
