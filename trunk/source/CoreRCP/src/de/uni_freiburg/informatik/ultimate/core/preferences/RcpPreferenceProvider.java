@@ -319,4 +319,13 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		return DefaultScope.INSTANCE.getNode(mPluginID);
 	}
 
+	@Override
+	public void put(final String key, final Object value) {
+		if (value == null) {
+			put(key, (String) null);
+		} else {
+			put(key, value.toString());
+		}
+	}
+
 }

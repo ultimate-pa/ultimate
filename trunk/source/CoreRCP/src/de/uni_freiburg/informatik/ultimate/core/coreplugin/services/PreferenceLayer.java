@@ -145,7 +145,8 @@ public class PreferenceLayer implements IPreferenceProvider {
 		put(key, (Object) value);
 	}
 
-	private void put(final String key, final Object value) {
+	@Override
+	public void put(final String key, final Object value) {
 		mPreferenceOverlay.put(key, value);
 	}
 
