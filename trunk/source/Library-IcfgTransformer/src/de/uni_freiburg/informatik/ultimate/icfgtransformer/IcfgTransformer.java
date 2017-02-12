@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -76,17 +77,21 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	public IcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer) {
+			final List<ITransformulaTransformer> transformers) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 		mLocationFactory = Objects.requireNonNull(funLocFac);
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 		mBacktranslationTracker = backtranslationTracker;
-		transformer.preprocessIcfg(origIcfg);
-		// perform transformation last
-		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
-				Objects.requireNonNull(outLocationClass), transformer);
+		IIcfg<?> tmpIcfg = origIcfg;
+		for (final ITransformulaTransformer transformer : transformers) {
+			transformer.preprocessIcfg(tmpIcfg);
+			// perform transformation last
+			tmpIcfg = transform((IIcfg<INLOC>) tmpIcfg, Objects.requireNonNull(newIcfgIdentifier),
+					Objects.requireNonNull(outLocationClass), transformer);
+		}
+		mResultIcfg = (IIcfg<OUTLOC>) tmpIcfg;
 	}
 
 	@SuppressWarnings("unchecked")
