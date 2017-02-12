@@ -32,6 +32,8 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ISimpleAST;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
@@ -46,7 +48,12 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			return;
 		}
 		if (location instanceof BoogieLocation) {
-			((BoogieLocation) location).setBoogieASTNode(this);
+			final BoogieLocation bplLocation = (BoogieLocation) location;
+			bplLocation.setBoogieASTNode(this);
+			final Check check = bplLocation.getCheck();
+			if (!check.getSpec().contains(Spec.UNKNOWN)) {
+				check.annotate(this);
+			}
 		}
 		location.annotate(this);
 	}
