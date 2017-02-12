@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -70,9 +70,9 @@ public final class AssumeMerger extends BaseBlockEncoder<IcfgLocation> {
 		super(services, backtranslator);
 		mAssumesMerged = 0;
 		mRewriteNotEquals = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
+				.getBoolean(BlockEncodingPreferences.FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_SBE);
+				.getBoolean(BlockEncodingPreferences.FXP_SIMPLIFY_ASSUMES_SBE);
 		mEdgeBuilder = edgeBuilder;
 	}
 

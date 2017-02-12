@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,5 +115,20 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		}
 		// mLogger.info("Mapped [" + newEdge.hashCode() + "] " + newEdge);
 		// mLogger.info("To [" + mEdgeMapping.get(newEdge).hashCode() + "] " + mEdgeMapping.get(newEdge));
+	}
+
+	public void mapLocations(final IcfgLocation newLoc, final IcfgLocation oldLoc) {
+		final IcfgLocation realOldLoc = mLocationMapping.get(oldLoc);
+		if (realOldLoc != null) {
+			// this means we replaced an edge which we already replaced again
+			// with something new, we have to map this to the real original
+			mLocationMapping.put(newLoc, realOldLoc);
+		} else {
+			mLocationMapping.put(newLoc, oldLoc);
+		}
+	}
+
+	public Map<IcfgLocation, IcfgLocation> getLocationMapping() {
+		return Collections.unmodifiableMap(mLocationMapping);
 	}
 }

@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -75,6 +76,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -133,7 +137,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
+	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
@@ -206,10 +210,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		 */
 		Map<IcfgLocation, IcfgLocation> lbeBacktranslation = null;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
-			// TODO: add here some code that transforms the pathProgram icfg
-			// into a large block encoded icfg
-			pathProgram = null;
-			lbeBacktranslation = null;
+			final IUltimateServiceProvider beServices =
+					services.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
+			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
+			ups.put(BlockEncodingPreferences.FXP_INTERPROCEDURAL_COMPOSITION, false);
+			ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.MULTI);
+			final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, pathProgram,
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			pathProgram = blockEncoder.getResult();
+			lbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
 		}
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
 			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(pathProgram);

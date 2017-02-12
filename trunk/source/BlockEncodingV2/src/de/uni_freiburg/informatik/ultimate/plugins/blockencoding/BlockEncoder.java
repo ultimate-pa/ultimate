@@ -31,16 +31,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IcfgEdgeBuilder;
@@ -53,18 +59,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Parall
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveSinkStates;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simplifier;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer.MinimizeStates;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
 /**
  *
+ * The {@link BlockEncoder} provides different kinds of transformations for {@link IIcfg}s. These transformations
+ * transcode the {@link TransFormula}s and the structure of an {@link IIcfg} s.t. you may have more or less edges and
+ * nodes.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BlockEncoder {
+public final class BlockEncoder {
 
 	private static final BuchiProgramAcceptingStateAnnotation BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION =
 			new BuchiProgramAcceptingStateAnnotation();
@@ -76,6 +85,20 @@ public class BlockEncoder {
 
 	private BasicIcfg<IcfgLocation> mIterationResult;
 
+	/**
+	 * Create a {@link BlockEncoder} for the BlockEncoding plugin.
+	 * 
+	 * @param logger
+	 *            The logger to use.
+	 * @param services
+	 *            A {@link IUltimateServiceProvider} instance.
+	 * @param backtranslator
+	 *            A backtranslator that is already registered with the toolchain
+	 * @param builder
+	 *            An edge builder
+	 * @param icfg
+	 *            An icfg
+	 */
 	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final IcfgEdgeBuilder builder,
 			final BasicIcfg<IcfgLocation> icfg) {
@@ -87,8 +110,43 @@ public class BlockEncoder {
 		processIcfg(icfg);
 	}
 
-	public IIcfg<?> getResult() {
+	/**
+	 * Create a {@link BlockEncoder} instance for usage from anywhere. Does not register its backtranslation and does
+	 * create the necessary data structures for itself.
+	 * 
+	 * @param logger
+	 *            The logger we should use.
+	 * @param services
+	 *            A {@link IUltimateServiceProvider} instance that is used to get the preferences (use
+	 *            {@link IUltimateServiceProvider#registerPreferenceLayer(Class, String...) and
+	 *            BlockEncodingPreferences}.
+	 * @param originalIcfg
+	 *            The {@link IIcfg} you wish to encode.
+	 * @param simplificationTechnique
+	 *            The {@link SimplificationTechnique} that should be used.
+	 * @param xnfConversionTechnique
+	 *            The {@link XnfConversionTechnique} that should be used.
+	 */
+	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<?> originalIcfg,
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		mServices = services;
+		mLogger = logger;
+		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+		mEdgeBuilder = new IcfgEdgeBuilder(originalIcfg.getCfgSmtToolkit(), mServices, simplificationTechnique,
+				xnfConversionTechnique);
+		final BasicIcfg<IcfgLocation> copiedIcfg =
+				new IcfgDuplicator(mLogger, mServices, mBacktranslator, simplificationTechnique, xnfConversionTechnique)
+						.copy(originalIcfg);
+		processIcfg(copiedIcfg);
+	}
+
+	public IIcfg<IcfgLocation> getResult() {
 		return mIterationResult;
+	}
+
+	public BlockEncodingBacktranslator getBacktranslator() {
+		return mBacktranslator;
 	}
 
 	private void processIcfg(final BasicIcfg<IcfgLocation> node) {
@@ -96,14 +154,14 @@ public class BlockEncoder {
 		reportSizeBenchmark("Initial Icfg", node);
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		int maxIters = ups.getInt(PreferenceInitializer.FXP_MAX_ITERATIONS) - 1;
+		int maxIters = ups.getInt(BlockEncodingPreferences.FXP_MAX_ITERATIONS) - 1;
 		if (maxIters < 0) {
 			maxIters = -1;
 		}
 
 		mIterationResult = node;
 		final List<Supplier<IEncoder<IcfgLocation>>> encoderProviders = getEncoderProviders(ups, node);
-		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.FXP_UNTIL_FIXPOINT);
+		final boolean optimizeUntilFixpoint = ups.getBoolean(BlockEncodingPreferences.FXP_UNTIL_FIXPOINT);
 		int i = 1;
 
 		while (true) {
@@ -120,7 +178,7 @@ public class BlockEncoder {
 					mLogger.debug("Current error locations: " + IcfgUtils.getErrorLocations(currentResult.getIcfg()));
 					new IcfgLocationIterator<>(currentResult.getIcfg()).asStream().forEach(a -> {
 						mLogger.debug("Annotations of " + a);
-						ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getClass()));
+						ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getValue().getClass()));
 					});
 				}
 			}
@@ -145,12 +203,12 @@ public class BlockEncoder {
 			mLogger.debug("==== BE Post Processing ====");
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.POST_USE_PARALLEL_COMPOSITION)) {
+		if (ups.getBoolean(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION)) {
 			mIterationResult =
 					new ParallelComposer(mEdgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.POST_SIMPLIFY_CODEBLOCKS)) {
+		if (ups.getBoolean(BlockEncodingPreferences.POST_SIMPLIFY_CODEBLOCKS)) {
 			mIterationResult = new Simplifier(mEdgeBuilder, mServices, mBacktranslator).getResult(mIterationResult);
 		}
 
@@ -163,17 +221,17 @@ public class BlockEncoder {
 
 		// note that the order is important
 
-		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_INFEASIBLE_EDGES)) {
+		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES)) {
 			rtr.add(() -> new RemoveInfeasibleEdges(mServices, mBacktranslator));
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.FXP_MAXIMIZE_FINAL_STATES)) {
+		if (ups.getBoolean(BlockEncodingPreferences.FXP_MAXIMIZE_FINAL_STATES)) {
 			rtr.add(() -> new MaximizeFinalStates(mServices, BlockEncoder::markBuchiProgramAccepting,
 					BlockEncoder::isBuchiProgramAccepting, mBacktranslator));
 		}
 
 		final MinimizeStates minimizeStates =
-				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
+				ups.getEnum(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.class);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
@@ -194,11 +252,11 @@ public class BlockEncoder {
 			}
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES)) {
+		if (ups.getBoolean(BlockEncodingPreferences.FXP_SIMPLIFY_ASSUMES)) {
 			rtr.add(() -> new AssumeMerger(mEdgeBuilder, mServices, mBacktranslator));
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
+		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES)) {
 			rtr.add(() -> new RemoveSinkStates(mServices, BlockEncoder::hasToBePreserved, mBacktranslator));
 		}
 

@@ -197,7 +197,7 @@ public class IcfgEdgeBuilder {
 			rtr = new IcfgReturnTransition(source, target, correspondingCall, null, rAction.getAssignmentOfReturn(),
 					rAction.getLocalVarsAssignmentOfCall());
 		} else {
-			throw new UnsupportedOperationException("Unknown IcfgEdge subtype");
+			throw new UnsupportedOperationException("Unknown IcfgEdge subtype: " + oldEdge.getClass());
 		}
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);

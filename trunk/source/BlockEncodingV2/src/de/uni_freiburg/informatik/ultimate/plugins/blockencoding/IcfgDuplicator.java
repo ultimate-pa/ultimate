@@ -90,8 +90,7 @@ public class IcfgDuplicator {
 		while (iter.hasNext()) {
 			final IcfgLocation oldLoc = iter.next();
 			final String proc = oldLoc.getProcedure();
-			final IcfgLocation newLoc = new IcfgLocation(oldLoc.getDebugIdentifier(), proc);
-			ModelUtils.copyAnnotations(oldLoc, newLoc);
+			final IcfgLocation newLoc = createLocCopy(oldLoc);
 
 			final boolean isError = icfg.getProcedureErrorNodes().get(proc) != null
 					&& icfg.getProcedureErrorNodes().get(proc).contains(oldLoc);
@@ -129,10 +128,17 @@ public class IcfgDuplicator {
 		if (mLogger.isDebugEnabled()) {
 			new IcfgLocationIterator<>(newIcfg).asStream().forEach(a -> {
 				mLogger.debug("Annotations of " + a);
-				ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getClass()));
+				ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getValue().getClass()));
 			});
 		}
 		return newIcfg;
+	}
+
+	private IcfgLocation createLocCopy(final IcfgLocation oldLoc) {
+		final IcfgLocation newLoc = new IcfgLocation(oldLoc.getDebugIdentifier(), oldLoc.getProcedure());
+		ModelUtils.copyAnnotations(oldLoc, newLoc);
+		mBacktranslator.mapLocations(newLoc, oldLoc);
+		return newLoc;
 	}
 
 	private boolean noEdges(final IIcfg<IcfgLocation> icfg) {

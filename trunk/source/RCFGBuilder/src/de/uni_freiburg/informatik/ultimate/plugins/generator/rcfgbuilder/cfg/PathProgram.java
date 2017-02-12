@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
@@ -39,6 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -59,7 +64,6 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	private static final long serialVersionUID = 6691317791231881900L;
 	private final IIcfg<LOC> mOriginalIcfg;
 	private final String mIdentifier;
-	private final Map<IcfgLocation, PathProgramIcfgLocation> mIcfgLoc2PathProgramLoc;
 	private final Map<String, Map<String, IcfgLocation>> mProgramPoints;
 	private final Map<String, IcfgLocation> mProcEntries;
 	private final Map<String, IcfgLocation> mProcExits;
@@ -71,7 +75,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 			final Set<? extends IcfgEdge> allowedTransitions) {
 		mOriginalIcfg = originalIcfg;
 		mIdentifier = identifier;
-		mIcfgLoc2PathProgramLoc = new HashMap<>();
+
 		mProgramPoints = new HashMap<>();
 		mProcEntries = new HashMap<>();
 		mProcExits = new HashMap<>();
@@ -79,47 +83,63 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		mInitialNodes = new HashSet<>();
 		mLoopLocations = new HashSet<>();
 
-		for (final IcfgEdge transition : allowedTransitions) {
-			final IcfgLocation origSource = transition.getSource();
-			final IcfgLocation origTarget = transition.getTarget();
-			final PathProgramIcfgLocation ppSource = addPathProgramLocation(origSource);
-			final PathProgramIcfgLocation ppTarget = addPathProgramLocation(origTarget);
-			final IcfgEdge ppTransition = createPathProgramTransition(ppSource, ppTarget, transition);
-			ppTransition.redirectSource(ppSource);
-			ppTransition.redirectTarget(ppTarget);
-		}
+		final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall = new HashMap<>();
+		final Map<IcfgLocation, PathProgramIcfgLocation> oldLoc2NewLoc = new HashMap<>();
+		final Predicate<IcfgEdge> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
+		final Consumer<IcfgEdge> transform = a -> createPathProgramTransition(a, oldCall2NewCall, oldLoc2NewLoc);
+		allowedTransitions.stream().filter(onlyReturn.negate()).forEach(transform);
+		allowedTransitions.stream().filter(onlyReturn).forEach(transform);
 
 		assert !getInitialNodes()
 				.isEmpty() : "You cannot have a path program that does not start at an initial location";
 	}
 
+	private void createPathProgramTransition(final IcfgEdge transition,
+			final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall,
+			final Map<IcfgLocation, PathProgramIcfgLocation> oldLoc2NewLoc) {
+		final IcfgLocation origSource = transition.getSource();
+		final IcfgLocation origTarget = transition.getTarget();
+		final PathProgramIcfgLocation ppSource = addPathProgramLocation(origSource, oldLoc2NewLoc);
+		final PathProgramIcfgLocation ppTarget = addPathProgramLocation(origTarget, oldLoc2NewLoc);
+		final IcfgEdge ppTransition = createPathProgramTransition(ppSource, ppTarget, transition, oldCall2NewCall);
+		if (transition instanceof IIcfgCallTransition<?>) {
+			oldCall2NewCall.put(transition, (PathProgramCallAction<?>) ppTransition);
+		}
+		ppTransition.redirectSource(ppSource);
+		ppTransition.redirectTarget(ppTarget);
+	}
+
 	private static IcfgEdge createPathProgramTransition(final IcfgLocation source, final IcfgLocation target,
-			final IcfgEdge transition) {
-		if (transition instanceof ICallAction) {
+			final IcfgEdge transition, final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall) {
+		if (transition instanceof IIcfgCallTransition<?>) {
 			return new PathProgramCallAction<>(source, target, (IcfgEdge & ICallAction) transition);
-		} else if (transition instanceof IInternalAction) {
+		} else if (transition instanceof IIcfgInternalTransition<?>) {
 			return new PathProgramInternalAction<>(source, target, (IcfgEdge & IInternalAction) transition);
-		} else if (transition instanceof IReturnAction) {
-			return new PathProgramReturnAction<>(source, target, (IcfgEdge & IReturnAction) transition);
+		} else if (transition instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> retTrans = (IIcfgReturnTransition<?, ?>) transition;
+			final PathProgramCallAction<?> corrCall = oldCall2NewCall.get(retTrans.getCorrespondingCall());
+			return new PathProgramReturnAction<>(source, target, corrCall, (IcfgEdge & IReturnAction) transition);
 		} else {
 			throw new UnsupportedOperationException(
 					"Cannot create path program transition for " + transition.getClass().getSimpleName());
 		}
 	}
 
-	private PathProgramIcfgLocation createPathProgramLocation(final IcfgLocation loc) {
+	private static PathProgramIcfgLocation createPathProgramLocation(final IcfgLocation loc,
+			final Map<IcfgLocation, PathProgramIcfgLocation> oldLoc2NewLoc) {
 		Objects.requireNonNull(loc, "ICFG location must not be null");
-		final PathProgramIcfgLocation ppLoc = mIcfgLoc2PathProgramLoc.get(loc);
+		final PathProgramIcfgLocation ppLoc = oldLoc2NewLoc.get(loc);
 		if (ppLoc == null) {
 			final PathProgramIcfgLocation newPpLoc = new PathProgramIcfgLocation(loc);
-			mIcfgLoc2PathProgramLoc.put(loc, newPpLoc);
+			oldLoc2NewLoc.put(loc, newPpLoc);
 			return newPpLoc;
 		}
 		return ppLoc;
 	}
 
-	private PathProgramIcfgLocation addPathProgramLocation(final IcfgLocation loc) {
-		final PathProgramIcfgLocation ppLoc = createPathProgramLocation(loc);
+	private PathProgramIcfgLocation addPathProgramLocation(final IcfgLocation loc,
+			final Map<IcfgLocation, PathProgramIcfgLocation> oldLoc2NewLoc) {
+		final PathProgramIcfgLocation ppLoc = createPathProgramLocation(loc, oldLoc2NewLoc);
 		final String procedure = loc.getProcedure();
 
 		final LOC procEntry = mOriginalIcfg.getProcedureEntryNodes().get(procedure);
@@ -198,7 +218,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 
 	@Override
 	public IIcfgSymbolTable getSymboltable() {
-		return mOriginalIcfg.getSymboltable();
+		return getCfgSmtToolkit().getSymbolTable();
 	}
 
 	@Override
@@ -335,7 +355,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	}
 
 	private static final class PathProgramCallAction<T extends IcfgEdge & ICallAction> extends PathProgramIcfgAction<T>
-			implements ICallAction {
+			implements IIcfgCallTransition<IcfgLocation> {
 		private static final long serialVersionUID = 1L;
 
 		protected PathProgramCallAction(final IcfgLocation source, final IcfgLocation target, final T backing) {
@@ -349,7 +369,7 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	}
 
 	private static final class PathProgramInternalAction<T extends IcfgEdge & IInternalAction>
-			extends PathProgramIcfgAction<T> implements IInternalAction {
+			extends PathProgramIcfgAction<T> implements IIcfgInternalTransition<IcfgLocation> {
 		private static final long serialVersionUID = 1L;
 
 		protected PathProgramInternalAction(final IcfgLocation source, final IcfgLocation target, final T backing) {
@@ -363,11 +383,14 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	}
 
 	private static final class PathProgramReturnAction<T extends IcfgEdge & IReturnAction>
-			extends PathProgramIcfgAction<T> implements IReturnAction {
+			extends PathProgramIcfgAction<T> implements IIcfgReturnTransition<IcfgLocation, PathProgramCallAction<?>> {
 		private static final long serialVersionUID = 1L;
+		private final PathProgramCallAction<?> mCorrespondingCall;
 
-		protected PathProgramReturnAction(final IcfgLocation source, final IcfgLocation target, final T backing) {
+		protected PathProgramReturnAction(final IcfgLocation source, final IcfgLocation target,
+				final PathProgramCallAction<?> call, final T backing) {
 			super(source, target, backing);
+			mCorrespondingCall = call;
 		}
 
 		@Override
@@ -378,6 +401,11 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		@Override
 		public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 			return getBacking().getLocalVarsAssignmentOfCall();
+		}
+
+		@Override
+		public PathProgramCallAction<?> getCorrespondingCall() {
+			return mCorrespondingCall;
 		}
 	}
 }
