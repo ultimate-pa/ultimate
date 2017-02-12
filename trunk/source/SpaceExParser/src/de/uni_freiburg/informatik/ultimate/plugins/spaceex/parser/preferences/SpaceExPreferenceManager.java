@@ -154,7 +154,6 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseInitially(final String initially) {
-		testPostFixToGroups();
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
 			final List<String> formerGroups = infixToGroups(initially);
