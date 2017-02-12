@@ -48,12 +48,10 @@ public final class TemporaryBoogieVar implements IBoogieVar {
 
 	private static final Script SCRIPT_MOCK = new MockScript();
 
-	private final IBoogieType mType;
 	private final String mId;
 	private final Sort mSort;
 
 	public TemporaryBoogieVar(final IBoogieType type, final String identifier) {
-		mType = type;
 		mId = identifier;
 		mSort = new TypeSortTranslator(Collections.emptyList(), SCRIPT_MOCK, null).constructSort(type, a -> null);
 	}
@@ -61,11 +59,6 @@ public final class TemporaryBoogieVar implements IBoogieVar {
 	@Override
 	public String getGloballyUniqueId() {
 		return mId;
-	}
-
-	@Override
-	public IBoogieType getIType() {
-		return mType;
 	}
 
 	@Override

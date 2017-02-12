@@ -27,22 +27,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * Constructs auxiliary variables that store the old value of a ranking 
+ * function (oldRank) and that store if we already check for decreases of
+ * the ranking function (unseeded). 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public class RankVarConstructor {
 	public static final String UNSEEDED_IDENTIFIER = "unseeded";
 	public static final String OLD_RANK_IDENTIFIER = "oldRank";
-	public static final int MAX_LEX_COMPONENTS = 10;
+	public static final int MAX_LEX_COMPONENTS = 7;
 
 	private final ManagedScript mManagedScript;
 	private final IProgramNonOldVar mUnseededVariable;
@@ -50,27 +55,29 @@ public class RankVarConstructor {
 
 	private final CfgSmtToolkit mCfgSmtToolkitWithRankVariables;
 
-	public RankVarConstructor(final IIcfg<?> icfg) {
-		if (!(icfg instanceof BoogieIcfgContainer)) {
-			throw new UnsupportedOperationException(
-					"We still need to construct global variables here, so we need the icfg to be of type BoogieIcfgContainer");
-		}
-		final Boogie2SMT boogie2Smt = ((BoogieIcfgContainer) icfg).getBoogie2SMT();
-		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
+	public RankVarConstructor(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
 
-		final IIcfgSymbolTable symbolTable = csToolkit.getSymbolTable();
+		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(
+				csToolkit.getSymbolTable(), csToolkit.getProcedures());
 
-		mManagedScript.lock(csToolkit.getSymbolTable());
+		
+		mManagedScript.lock(newSymbolTable);
 
-		mUnseededVariable = constructGlobalBoogieVar(UNSEEDED_IDENTIFIER, boogie2Smt, BoogieType.TYPE_BOOL);
+		final Sort boolSort = csToolkit.getManagedScript().getScript().sort("Bool");
+		mUnseededVariable = ProgramVarUtils.constructGlobalProgramVarPair(UNSEEDED_IDENTIFIER, 
+				boolSort, csToolkit.getManagedScript(), newSymbolTable);
+		newSymbolTable.add(mUnseededVariable);
 
 		mOldRankVariables = new IProgramNonOldVar[MAX_LEX_COMPONENTS];
+		final Sort intSort = csToolkit.getManagedScript().getScript().sort("Int");
 		for (int i = 0; i < MAX_LEX_COMPONENTS; i++) {
 			final String name = OLD_RANK_IDENTIFIER + i;
-			mOldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.TYPE_INT);
+			mOldRankVariables[i] = ProgramVarUtils.constructGlobalProgramVarPair(name, 
+					intSort, csToolkit.getManagedScript(), newSymbolTable);
+			newSymbolTable.add(mOldRankVariables[i]);
 		}
-		mManagedScript.unlock(symbolTable);
+		mManagedScript.unlock(newSymbolTable);
 
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
 		for (final String proc : csToolkit.getProcedures()) {
@@ -84,18 +91,7 @@ public class RankVarConstructor {
 		}
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
 		mCfgSmtToolkitWithRankVariables = new CfgSmtToolkit(modifiableGlobalsTable, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable(), csToolkit.getAxioms(), csToolkit.getProcedures());
-	}
-
-	/**
-	 * Construct a global BoogieVar and the corresponding oldVar. Return the global var.
-	 * 
-	 * @param type
-	 */
-	private static IProgramNonOldVar constructGlobalBoogieVar(final String name, final Boogie2SMT boogie2Smt,
-			final PrimitiveType type) {
-		final IProgramNonOldVar globalBv = boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, null);
-		return globalBv;
+				newSymbolTable, csToolkit.getAxioms(), csToolkit.getProcedures());
 	}
 
 	/**

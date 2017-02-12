@@ -596,7 +596,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
-		final String name = constructBoogieVarName(identifier, procedure, false, false);
+		final String name = ProgramVarUtils.buildBoogieVarName(identifier, procedure, false, false);
 
 		final TermVariable termVariable = mScript.variable(name, sort);
 
@@ -623,67 +623,25 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	private BoogieNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
 			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
-		final String procedure = null;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
+		
+		
+		final BoogieNonOldVar nonOldVar = ProgramVarUtils.constructGlobalProgramVarPair(identifier, sort, mScript, this);
+		mSmtVar2BoogieVar.put(nonOldVar.getTermVariable(), nonOldVar);
+		mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
+		mBoogieVar2AstNode.put(nonOldVar, varlist);
 
-		BoogieOldVar oldVar;
-		{
-			final boolean isOldVar = true;
-			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
+		final BoogieOldVar oldVar = nonOldVar.getOldVar();
+		mSmtVar2BoogieVar.put(oldVar.getTermVariable(), oldVar);
+		mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
+		mBoogieVar2AstNode.put(oldVar, varlist);
 
-			oldVar = new BoogieOldVar(identifier, iType, termVariable, defaultConstant, primedConstant);
-			mSmtVar2BoogieVar.put(termVariable, oldVar);
-			mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
-			mBoogieVar2AstNode.put(oldVar, varlist);
-		}
-		BoogieNonOldVar nonOldVar;
-		{
-			final boolean isOldVar = false;
-			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
-			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
-			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
-
-			nonOldVar = new BoogieNonOldVar(identifier, iType, termVariable, defaultConstant, primedConstant, oldVar);
-			mSmtVar2BoogieVar.put(termVariable, nonOldVar);
-			mBoogieVar2DeclarationInformation.put(nonOldVar, declarationInformation);
-			mBoogieVar2AstNode.put(nonOldVar, varlist);
-		}
-		oldVar.setNonOldVar(nonOldVar);
 		mICfgSymbolTable.add(nonOldVar);
 		return nonOldVar;
 	}
 
 
 
-	private static String constructBoogieVarName(final String identifier, final String procedure,
-			final boolean isGlobal, final boolean isOldvar) {
-		String name;
-		if (isGlobal) {
-			assert procedure == null;
-			if (isOldvar) {
-				name = "old(" + identifier + ")";
-			} else {
-				name = identifier;
-			}
-		} else {
-			assert (!isOldvar) : "only global vars can be oldvars";
-			name = procedure + "_" + identifier;
-		}
-		return name;
-	}
-
-	IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
-			final IBoogieType iType, final VarList varList) {
-		final BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
-		mGlobals.put(identifier, bv);
-		mOldGlobals.put(identifier, bv.getOldVar());
-		return bv;
-	}
-	
 	public HashRelation<String, IProgramNonOldVar> constructProc2ModifiableGlobalsMapping() {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, Set<String>> proc2vars : mBoogieDeclarations.getModifiedVars().entrySet()) {

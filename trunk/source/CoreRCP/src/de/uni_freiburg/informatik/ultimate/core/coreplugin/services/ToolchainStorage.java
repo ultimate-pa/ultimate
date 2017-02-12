@@ -30,9 +30,11 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
@@ -57,9 +59,16 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
 
 	private final Map<String, IStorable> mToolchainStorage;
+	private final Map<String, PreferenceLayer> mPreferenceLayers;
 
 	public ToolchainStorage() {
 		mToolchainStorage = new LinkedHashMap<>();
+		mPreferenceLayers = new HashMap<>();
+	}
+
+	private ToolchainStorage(final Map<String, IStorable> storage, final Map<String, PreferenceLayer> layers) {
+		mToolchainStorage = Objects.requireNonNull(storage);
+		mPreferenceLayers = Objects.requireNonNull(layers);
 	}
 
 	@Override
@@ -148,6 +157,29 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IPreferenceProvider getPreferenceProvider(final String pluginId) {
+		final PreferenceLayer layer = mPreferenceLayers.get(pluginId);
+		if (layer != null) {
+			return layer;
+		}
 		return new RcpPreferenceProvider(pluginId);
+	}
+
+	@Override
+	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
+		final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
+		if (pluginIds == null || pluginIds.length == 0) {
+			return new ToolchainStorage(mToolchainStorage, newLayers);
+		}
+		for (final String pluginId : pluginIds) {
+			final PreferenceLayer existingLayer = newLayers.get(pluginId);
+			final PreferenceLayer newLayer;
+			if (existingLayer != null) {
+				newLayer = new PreferenceLayer(existingLayer, creator);
+			} else {
+				newLayer = new PreferenceLayer(getPreferenceProvider(pluginId), creator);
+			}
+			newLayers.put(pluginId, newLayer);
+		}
+		return new ToolchainStorage(mToolchainStorage, newLayers);
 	}
 }

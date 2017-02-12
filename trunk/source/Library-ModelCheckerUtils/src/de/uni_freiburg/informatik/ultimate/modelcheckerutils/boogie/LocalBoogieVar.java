@@ -56,7 +56,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 			final TermVariable tv,
 			final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedContant) {
-		super(identifier, iType, tv, defaultConstant, primedContant);
+		super(identifier, tv, defaultConstant, primedContant);
 		mProcedure = procedure;
 		mHashCode = computeHashCode();
 	}

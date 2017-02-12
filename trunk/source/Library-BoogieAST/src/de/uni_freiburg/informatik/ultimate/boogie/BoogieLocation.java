@@ -34,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * Location in a boogie program.
@@ -86,5 +89,17 @@ public class BoogieLocation extends DefaultLocation {
 
 	public void setBoogieASTNode(final BoogieASTNode boogieASTNode) {
 		mBoogieASTNode = boogieASTNode;
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other == null) {
+			return this;
+		}
+		if (other instanceof ILocation) {
+			// this looses the check, but the check should be annotated separately anyways.
+			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
+		}
+		throw new UnmergeableAnnotationsException(this, other);
 	}
 }

@@ -39,7 +39,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations.UnmergeableAnnotationsException;
 
 /**
  * Helper methods for Ultimate models.
@@ -98,13 +97,14 @@ public final class ModelUtils {
 			final String key = oldElemAnnot.getKey();
 			final IAnnotations oldNewElemAnnot = newElemAnnots.get(key);
 			if (oldNewElemAnnot != null) {
-				try {
-					newElemAnnots.put(key, oldNewElemAnnot.merge(oldElemAnnot.getValue()));
-				} catch (final UnmergeableAnnotationsException e) {
-					// TODO: ignore this exception until the merge debate is concluded.
+				final IAnnotations mergedAnnotation = oldNewElemAnnot.merge(oldElemAnnot.getValue());
+				if (mergedAnnotation != null) {
+					// if we get null, the annotation wants to be deleted
+					newElemAnnots.put(key, mergedAnnotation);
 				}
+			} else {
+				newElemAnnots.put(key, oldElemAnnot.getValue());
 			}
-			newElemAnnots.put(key, oldElemAnnot.getValue());
 		}
 	}
 

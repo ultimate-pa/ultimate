@@ -32,8 +32,13 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -45,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author Matthias Heizmann
  */
 public class Check extends ModernAnnotations {
+
+	private static final String MSG_AND = " and ";
 
 	public enum Spec {
 		/**
@@ -125,18 +132,45 @@ public class Check extends ModernAnnotations {
 	private static final String KEY = Check.class.getName();
 
 	@Visualizable
-	private final Spec mSpec;
+	private final EnumSet<Spec> mSpec;
 
 	public Check(final Check.Spec spec) {
-		mSpec = spec;
+		mSpec = EnumSet.of(spec);
 	}
 
-	public Spec getSpec() {
+	private Check(final EnumSet<Spec> newSpec) {
+		mSpec = newSpec;
+		assert !mSpec.isEmpty();
+	}
+
+	public EnumSet<Spec> getSpec() {
 		return mSpec;
 	}
 
 	public String getPositiveMessage() {
-		switch (mSpec) {
+		return getMessage(this::getPositiveMessage);
+	}
+
+	public String getNegativeMessage() {
+		return getMessage(this::getNegativeMessage);
+	}
+
+	private String getMessage(final Function<Spec, String> funMessageProvider) {
+		final Iterator<Spec> iter = mSpec.iterator();
+		if (mSpec.size() == 1) {
+			return funMessageProvider.apply(iter.next());
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		while (iter.hasNext()) {
+			sb.append(funMessageProvider.apply(iter.next())).append(MSG_AND);
+		}
+		sb.delete(sb.length() - MSG_AND.length(), sb.length());
+		return sb.toString();
+	}
+
+	private String getPositiveMessage(final Spec spec) {
+		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index is always in bounds";
 		case PRE_CONDITION:
@@ -174,8 +208,8 @@ public class Check extends ModernAnnotations {
 		}
 	}
 
-	public String getNegativeMessage() {
-		switch (mSpec) {
+	private String getNegativeMessage(final Spec spec) {
+		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index can be out of bounds";
 		case PRE_CONDITION:
@@ -213,6 +247,21 @@ public class Check extends ModernAnnotations {
 		}
 	}
 
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other == null) {
+			return this;
+		}
+		if (!(other instanceof Check)) {
+			throw new UnmergeableAnnotationsException(this, other);
+		}
+		final Check otherCheck = (Check) other;
+
+		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
+		newSpec.addAll(otherCheck.getSpec());
+		return new Check(newSpec);
+	}
+
 	/**
 	 * Adds this Check object to the annotations of a IElement.
 	 * 
@@ -226,4 +275,15 @@ public class Check extends ModernAnnotations {
 	public static Check getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (Check) a);
 	}
+
+	public static Check mergeCheck(final Check one, final Check other) {
+		if (one == null) {
+			return other;
+		}
+		if (other == null) {
+			return one;
+		}
+		return (Check) one.merge(other);
+	}
+
 }

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -62,9 +63,18 @@ public class ConditionAnnotation extends ModernAnnotations {
 	public static ConditionAnnotation getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (ConditionAnnotation) a);
 	}
-	
+
 	@Override
 	public String toString() {
 		return "IsNegated=" + mIsNegated;
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof ConditionAnnotation) {
+			// merging condition annotations looses all information
+			return null;
+		}
+		return super.merge(other);
 	}
 }

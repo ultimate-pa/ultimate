@@ -388,7 +388,9 @@ public class TransFormulaBuilder {
 		}
 		tfb.setFormula(tf.getFormula());
 		tfb.setInfeasibility(infeasibility);
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		if (!auxVars.isEmpty()) {
+			tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		}
 		return tfb.finishConstruction(script);
 	}
 }

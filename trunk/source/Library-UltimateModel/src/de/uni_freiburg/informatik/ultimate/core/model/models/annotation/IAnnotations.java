@@ -38,6 +38,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 /**
  * {@link IAnnotations} is an interface that describes all objects that can be annotated to {@link IElement}s via
@@ -57,7 +58,11 @@ public interface IAnnotations extends Serializable {
 	Map<String, Object> getAnnotationsAsMap();
 
 	/**
-	 * Create a new IAnnotations object that contains information from this instance and another one.
+	 * Create a new IAnnotations object that contains information from this instance and another one. Callers should
+	 * ensure that only same-type implementers are merged. If same-type implementers cannot be merged because a merged
+	 * object is useless, they should return null (thus signaling, that one should not use the merged annotation).
+	 * 
+	 * This is used prominently by {@link ModelUtils#mergeAnnotations(java.util.Collection, IElement)}.
 	 * 
 	 * @param other
 	 *            another {@link IAnnotations} instance.
@@ -67,7 +72,7 @@ public interface IAnnotations extends Serializable {
 		if (other == null) {
 			return this;
 		}
-		throw new UnmergeableAnnotationsException("Cannot merge " + getClass() + " with " + other.getClass());
+		throw new UnmergeableAnnotationsException(this, other);
 	}
 
 	/**
@@ -82,6 +87,11 @@ public interface IAnnotations extends Serializable {
 
 		public UnmergeableAnnotationsException(final String msg) {
 			super(msg);
+		}
+
+		public UnmergeableAnnotationsException(final IAnnotations one, final IAnnotations other) {
+			super("Cannot merge " + (one == null ? "NULL" : one.getClass()) + " with "
+					+ (other == null ? "NULL" : other.getClass()));
 		}
 	}
 

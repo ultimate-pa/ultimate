@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -53,9 +54,9 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	private static final String INDENT = "    ";
 
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator,
-			final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting) {
-		super(edgeBuilder, services, backtranslator, funIsAccepting);
+			final BlockEncodingBacktranslator backtranslator, final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting,
+			final ILogger logger) {
+		super(edgeBuilder, services, backtranslator, funIsAccepting, logger);
 	}
 
 	@Override

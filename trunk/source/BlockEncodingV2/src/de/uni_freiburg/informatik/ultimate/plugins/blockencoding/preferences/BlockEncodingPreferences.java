@@ -31,7 +31,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
+
+	public static final String PLUGIN_ID = Activator.PLUGIN_ID;
 
 	public enum MinimizeStates {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
@@ -77,7 +79,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String POST_USE_PARALLEL_COMPOSITION_DESC = null;
 	private static final String POST_SIMPLIFY_CODEBLOCKS_DESC = null;
 
-	public PreferenceInitializer() {
+	public BlockEncodingPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 

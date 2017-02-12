@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -37,6 +38,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  *
  */
 public interface ITransformulaTransformer {
+	
+	/**
+	 * Do pre-processing that is required to transform {@link TransFormula}s.
+	 * By default the preprocessing does not do anything.
+	 */
+	default void preprocessIcfg(final IIcfg<?> icfg) {
+		return;
+	}
 	/**
 	 * @return The result of the transformation through this transformer.
 	 */

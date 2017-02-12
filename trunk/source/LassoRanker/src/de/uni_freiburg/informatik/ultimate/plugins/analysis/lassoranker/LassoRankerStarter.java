@@ -365,7 +365,7 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg);
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory,
 				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);

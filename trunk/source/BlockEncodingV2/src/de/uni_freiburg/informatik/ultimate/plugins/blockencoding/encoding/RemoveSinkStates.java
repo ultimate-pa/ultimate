@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -52,8 +53,8 @@ public final class RemoveSinkStates extends BaseBlockEncoder<IcfgLocation> {
 
 	public RemoveSinkStates(final IUltimateServiceProvider services,
 			final BiPredicate<IIcfg<?>, IcfgLocation> funHasToBePreserved,
-			final BlockEncodingBacktranslator backtranslator) {
-		super(services, backtranslator);
+			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+		super(logger, services, backtranslator);
 		mFunHasToBePreserved = funHasToBePreserved;
 	}
 

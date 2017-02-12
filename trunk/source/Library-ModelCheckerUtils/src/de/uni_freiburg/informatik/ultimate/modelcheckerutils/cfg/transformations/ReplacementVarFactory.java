@@ -238,7 +238,9 @@ public class ReplacementVarFactory {
 		final DefaultIcfgSymbolTable result =
 				new DefaultIcfgSymbolTable(mCsToolkit.getSymbolTable(), mCsToolkit.getProcedures());
 		for (final Entry<Term, IReplacementVarOrConst> entry : mRepVarMapping.entrySet()) {
-			result.add(entry.getValue());
+			if (!(entry.getValue() instanceof IProgramOldVar)) {
+				result.add(entry.getValue());
+			}
 		}
 		return result;
 	}

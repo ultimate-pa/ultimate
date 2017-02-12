@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -49,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -297,8 +296,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final NestedWord<? extends IIcfgTransition<?>> subtrace =
 					mTrace.getSubWord(nonPendingCall + 1, returnPosition);
 
-			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
-			final String calledMethod = call.getCallStatement().getMethodName();
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
+			final String calledMethod = call.getSucceedingProcedure();
 			final TermVarsProc oldVarsEquality = TraceAbstractionUtils.getOldVarsEquality(calledMethod,
 					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript.getScript());
 
@@ -376,7 +375,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		final Set<Integer> newInterpolatedPositions = new HashSet<>();
 
 		int currentContextStackDepth = 0;
-		final NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) mTrace;
+		final NestedWord<?> nestedTrace = mTrace;
 		for (int i = 0; i < nestedTrace.length() - 1; i++) {
 
 			if (nestedTrace.isInternalPosition(i)) {

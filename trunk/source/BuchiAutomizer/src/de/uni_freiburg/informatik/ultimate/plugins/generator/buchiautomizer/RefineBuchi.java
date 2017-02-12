@@ -167,7 +167,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
 		final PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-				mICfgContainer.getSymboltable(), mSimplificationTechnique, mXnfConversionTechnique,
+				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
 				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;

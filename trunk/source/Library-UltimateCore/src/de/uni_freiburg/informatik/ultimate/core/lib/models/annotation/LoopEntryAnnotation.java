@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -70,6 +71,18 @@ public class LoopEntryAnnotation extends ModernAnnotations {
 		return mType.toString();
 	}
 
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof LoopEntryAnnotation) {
+			final LoopEntryAnnotation otherLoopEntry = (LoopEntryAnnotation) other;
+			if (otherLoopEntry.mType.equals(mType)) {
+				return this;
+			}
+			return new LoopEntryAnnotation(LoopEntryType.UNKNOWN);
+		}
+		return super.merge(other);
+	}
+
 	public enum LoopEntryType {
 		/**
 		 * A GOTO loop entry may or may not be an edge leading into a loop. All original gotos are marked with this
@@ -79,6 +92,8 @@ public class LoopEntryAnnotation extends ModernAnnotations {
 		/**
 		 * A WHILE loop entry is always an edge that leads into a loop.
 		 */
-		WHILE
+		WHILE,
+
+		UNKNOWN
 	}
 }

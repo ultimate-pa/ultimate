@@ -100,7 +100,7 @@ public class TypeSortTranslator {
 				type = BoogieType.createBitvectorType(bvsize.intValueExact());
 				return type;
 			} else {
-				throw new IllegalArgumentException("Unknown sort" + sort);
+				throw new IllegalArgumentException("Unknown sort " + sort);
 			}
 		}
 		return type;

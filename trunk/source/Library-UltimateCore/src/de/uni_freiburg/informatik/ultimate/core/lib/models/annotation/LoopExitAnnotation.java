@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
@@ -53,7 +54,7 @@ public class LoopExitAnnotation extends ModernAnnotations {
 		mType = loopEntryType;
 	}
 
-	public LoopExitType getLoopEntryType() {
+	public LoopExitType getLoopExitType() {
 		return mType;
 	}
 
@@ -66,11 +67,23 @@ public class LoopExitAnnotation extends ModernAnnotations {
 	}
 
 	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof LoopExitAnnotation) {
+			final LoopExitAnnotation otherLoopExit = (LoopExitAnnotation) other;
+			if (otherLoopExit.mType.equals(mType)) {
+				return this;
+			}
+			return new LoopExitAnnotation(LoopExitType.UNKNOWN);
+		}
+		return super.merge(other);
+	}
+
+	@Override
 	public String toString() {
 		return mType.toString();
 	}
 
 	public enum LoopExitType {
-		BREAK, RETURN, GOTO, WHILE
+		BREAK, RETURN, GOTO, WHILE, UNKNOWN
 	}
 }

@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -50,16 +50,17 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	//@formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-	        new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
-	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
+	        //new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing2.epf"),
 	};
 	//@formatter:on
 	
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
 //			"examples/programs/spaceex/",
-
-			"examples/programs/spaceex/toy.xml",
+			"examples/programs/spaceex/toy_safe.xml",
+			"examples/programs/spaceex/simple1-unsafe.xml",
+			"examples/programs/spaceex/simple1_Unsafe.xml",
 	};
 	//@formatter:on
 	
@@ -83,7 +84,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, !true);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 	
 	@Override

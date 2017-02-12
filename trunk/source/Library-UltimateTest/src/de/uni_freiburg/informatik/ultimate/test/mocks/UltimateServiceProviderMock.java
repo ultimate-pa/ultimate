@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JUnit Helper Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JUnit Helper Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JUnit Helper Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -64,13 +64,18 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 	}
 
 	@Override
-	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
-		//never find the matching service
+	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(final Class<K> serviceType) {
+		// never find the matching service
 		return null;
 	}
 
 	@Override
-	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+	public IPreferenceProvider getPreferenceProvider(final String pluginId) {
+		throw new UnsupportedOperationException("Not yet supported");
+	}
+
+	@Override
+	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
 

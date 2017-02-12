@@ -19,14 +19,17 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 public class ACSLLocation extends CACSLLocation {
@@ -34,7 +37,7 @@ public class ACSLLocation extends CACSLLocation {
 	private static final long serialVersionUID = -4361747376994862578L;
 	private final ACSLNode mNode;
 
-	ACSLLocation(ACSLNode acslNode, Check checkedSpec, boolean ignoreDuringBacktranslation) {
+	ACSLLocation(final ACSLNode acslNode, final Check checkedSpec, final boolean ignoreDuringBacktranslation) {
 		super(checkedSpec, ignoreDuringBacktranslation);
 		mNode = acslNode;
 	}
@@ -99,6 +102,17 @@ public class ACSLLocation extends CACSLLocation {
 			sb.append(mNode.toString());
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other == null) {
+			return this;
+		}
+		if (!(other instanceof ILocation)) {
+			throw new UnmergeableAnnotationsException(this, other);
+		}
+		return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 	}
 
 }

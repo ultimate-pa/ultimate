@@ -47,17 +47,17 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	public Object getValue(String key) {
 		final PathInvariantsStatisticsDefinitions keyEnum = Enum.valueOf(PathInvariantsStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case SumOfLocs: return mNumOfPathProgramLocations;
-		case ProgramVars: return mNumOfVars;
-		case SumOfTemplateInequalities: return mSumOfTemplateInequalities;
-		case DiffOfLocsInUnsatCore: return mDiffOfLocsInUnsatCore;
-		case DiffOfVarsInUnsatCore: return mDiffOfVarsInUnsatCore;
-		case MaxNumOfInequalities: return mMaxNumOfInequalitiesPerRound;
-		case MaxRound : return mMaxRound;
-		case DAGSizeConstraints : return mDAGSizeSumOfConstraints;
-		case VarsPerLoc: return mSumOfVarsPerLoc;
-		case DiffLiveVarsPerLoc: return mDiffOfLiveVariables;
-		case DiffUnsatCoreVars: return mDiffOfUnsatCoreVars;
+		case SUM_OF_LOCS: return mNumOfPathProgramLocations;
+		case PROGRAM_VARS: return mNumOfVars;
+		case SUM_OF_TEMPLATE_INEQUALITIES: return mSumOfTemplateInequalities;
+		case DIFF_OF_LOCS_IN_UNSAT_CORE: return mDiffOfLocsInUnsatCore;
+		case DIFF_OF_VARS_IN_UNSAT_CORE: return mDiffOfVarsInUnsatCore;
+		case MAX_NUM_OF_INEQUALITIES: return mMaxNumOfInequalitiesPerRound;
+		case MAX_ROUND : return mMaxRound;
+		case DAG_SIZE_CONSTRAINTS : return mDAGSizeSumOfConstraints;
+		case VARS_PER_LOC: return mSumOfVarsPerLoc;
+		case DIFF_LIVE_VARS_PER_LOC: return mDiffOfLiveVariables;
+		case DIFF_UNSAT_CORE_VARS: return mDiffOfUnsatCoreVars;
 		default:
 			throw new AssertionError("unknown key");
 		}

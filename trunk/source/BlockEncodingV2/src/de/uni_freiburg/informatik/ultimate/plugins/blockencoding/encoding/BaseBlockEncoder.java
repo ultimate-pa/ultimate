@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 
 /**
@@ -63,10 +62,11 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 	protected int mRemovedLocations;
 	private BasicIcfg<LOC> mResult;
 
-	public BaseBlockEncoder(final IUltimateServiceProvider services, final BlockEncodingBacktranslator backtranslator) {
+	public BaseBlockEncoder(final ILogger logger, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator) {
 		assert services != null;
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = logger;
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
 		mBacktranslator = backtranslator;

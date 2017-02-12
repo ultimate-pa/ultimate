@@ -110,8 +110,7 @@ public class SpaceExParser implements ISource {
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBacktranslator = new DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String>(IcfgEdge.class,
-				IcfgEdge.class, Term.class, Term.class);
+		mBacktranslator = new DefaultTranslator<>(IcfgEdge.class, IcfgEdge.class, Term.class, Term.class);
 		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
 	

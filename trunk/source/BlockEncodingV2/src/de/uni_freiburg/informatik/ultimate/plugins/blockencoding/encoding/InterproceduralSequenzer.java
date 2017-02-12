@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -53,8 +54,8 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
 	public InterproceduralSequenzer(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
-			final BlockEncodingBacktranslator backtranslator) {
-		super(services, backtranslator);
+			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+		super(logger, services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
 	}
 
@@ -150,15 +151,15 @@ public final class InterproceduralSequenzer extends BaseBlockEncoder<IcfgLocatio
 		return Optional.empty();
 	}
 
-	private IcfgEdge createInterproceduralSequentialComposition(final IIcfgCallTransition<?> callCb,
-			final IIcfgTransition<?> intermediateCb, final IIcfgReturnTransition<?, ?> returnCb) {
-		final List<IcfgEdge> codeblocks = new ArrayList<>(3);
-		codeblocks.add((IcfgEdge) callCb);
-		codeblocks.add((IcfgEdge) intermediateCb);
-		codeblocks.add((IcfgEdge) returnCb);
-		final IcfgEdge ss =
-				mEdgeBuilder.constructSequentialComposition(callCb.getSource(), returnCb.getTarget(), codeblocks);
-		codeblocks.stream().forEach(this::disconnect);
+	private IcfgEdge createInterproceduralSequentialComposition(final IIcfgCallTransition<?> callTrans,
+			final IIcfgTransition<?> intermediateTrans, final IIcfgReturnTransition<?, ?> returnTrans) {
+		final List<IcfgEdge> transitions = new ArrayList<>(3);
+		transitions.add((IcfgEdge) callTrans);
+		transitions.add((IcfgEdge) intermediateTrans);
+		transitions.add((IcfgEdge) returnTrans);
+		final IcfgEdge ss = mEdgeBuilder.constructInterproceduralSequentialComposition(callTrans.getSource(),
+				returnTrans.getTarget(), callTrans, intermediateTrans, returnTrans);
+		transitions.stream().forEach(this::disconnect);
 		assert ss.getTarget() != null;
 		return ss;
 	}

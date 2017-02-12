@@ -17,7 +17,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
- de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
+ de.uni_freiburg.informatik.ultimate.plugins.blockencoding
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,

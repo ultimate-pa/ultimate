@@ -154,7 +154,6 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseInitially(final String initially) {
-		testPostFixToGroups();
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
 			final List<String> formerGroups = infixToGroups(initially);
@@ -401,7 +400,6 @@ public class SpaceExPreferenceManager {
 	
 	private String toInfix(final List<String> postfix) {
 		final Deque<String> stack = new LinkedList<>();
-		// Else we iterate over the postfix.
 		for (final String element : postfix) {
 			if (HybridTermBuilder.isOperator(element)) {
 				final String operand1 = stack.pop();
@@ -481,57 +479,6 @@ public class SpaceExPreferenceManager {
 			mLogger.info("########### END ###########");
 		}
 		
-	}
-	
-	public HybridAutomaton getRegardedAutomaton(final HybridModel model) {
-		/*
-		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
-		 * system.
-		 */
-		final String configSystem = mSystem != null ? mSystem : "";
-		final Map<String, HybridSystem> systems = model.getSystems();
-		final Map<String, HybridAutomaton> mergedAutomata = model.getMergedAutomata();
-		HybridAutomaton aut;
-		if (configSystem.isEmpty()) {
-			if (!systems.isEmpty()) {
-				final HybridSystem firstsys = systems.values().iterator().next();
-				if (mergedAutomata.containsKey(firstsys.getName())) {
-					aut = mergedAutomata.get(firstsys.getName());
-				} else {
-					aut = firstsys.getAutomata().values().iterator().next();
-				}
-			} else {
-				throw new IllegalStateException("Hybridmodel" + model.toString() + " is empty");
-			}
-			return aut;
-		}
-		// if the system specified in the config file is present in the models systems
-		if (systems.containsKey(configSystem)) {
-			// if the system exists, we check if the system has a mergedAutomaton
-			// if not it has to be a single automaton (at least it should be)
-			if (mergedAutomata.containsKey(configSystem)) {
-				aut = mergedAutomata.get(configSystem);
-			} else {
-				if (systems.get(configSystem).getAutomata().size() != 1) {
-					throw new UnsupportedOperationException(
-							"The automata of system" + systems.get(configSystem).getName()
-									+ " have not been merged or are empty, the size of automata is:"
-									+ systems.get(configSystem).getAutomata().size());
-				} else {
-					// should be a single automaton, thus just get it with an iterator.
-					final HybridSystem firstsys = systems.values().iterator().next();
-					if (mergedAutomata.containsKey(firstsys.getName())) {
-						aut = mergedAutomata.get(firstsys.getName());
-					} else {
-						aut = firstsys.getAutomata().values().iterator().next();
-					}
-				}
-			}
-		} else {
-			throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
-					+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
-		}
-		return aut;
 	}
 	
 	public HybridSystem getRegardedSystem(final HybridModel model) {

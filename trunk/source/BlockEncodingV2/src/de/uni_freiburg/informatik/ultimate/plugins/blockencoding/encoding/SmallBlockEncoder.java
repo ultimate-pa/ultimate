@@ -95,8 +95,8 @@ public class SmallBlockEncoder extends BaseObserver {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-		final IcfgEdgeBuilder edgeBuilder =
-				new IcfgEdgeBuilder(icfg, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		// final IcfgEdgeBuilder edgeBuilder = new IcfgEdgeBuilder(icfg.getCfgSmtToolkit(), mServices,
+		// mSimplificationTechnique, mXnfConversionTechnique);
 
 		int countDisjunctiveAssumes = 0;
 		int countNewEdges = 0;

@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -106,16 +107,16 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof CounterExampleResult) {
 			final CounterExampleResult<?, ?, ?> cer = (CounterExampleResult<?, ?, ?>) result;
-			final Spec spec = cer.getCheckedSpecification().getSpec();
-			switch (spec) {
-			case ARRAY_INDEX:
-			case MEMORY_DEREFERENCE:
+
+			// TODO: This should change to take into account multiple specs
+			final EnumSet<Spec> spec = cer.getCheckedSpecification().getSpec();
+			if (spec.contains(Spec.ARRAY_INDEX) || spec.contains(Spec.MEMORY_DEREFERENCE)) {
 				return SafetyCheckerOverallResult.UNSAFE_DEREF;
-			case MEMORY_FREE:
+			} else if (spec.contains(Spec.MEMORY_FREE)) {
 				return SafetyCheckerOverallResult.UNSAFE_FREE;
-			case MEMORY_LEAK:
+			} else if (spec.contains(Spec.MEMORY_LEAK)) {
 				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
-			default:
+			} else {
 				return SafetyCheckerOverallResult.UNSAFE;
 			}
 		} else if (result instanceof UnprovableResult) {
