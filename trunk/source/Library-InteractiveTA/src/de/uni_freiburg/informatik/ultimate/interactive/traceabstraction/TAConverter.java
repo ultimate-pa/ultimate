@@ -14,7 +14,9 @@ import com.google.protobuf.GeneratedMessageV3;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
@@ -31,12 +33,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class Converter {
+public class TAConverter extends Converter<GeneratedMessageV3, Object> {
+
+	protected TAConverter(IToolchainStorage storage) {
+		super(Object.class, storage);
+	}
+
+	@Override
+	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
+		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.NestedRun.class, IRun.class,
+				TAConverter::fromNestedRun);
+		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls = (Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
+		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, TAConverter::fromAutomaton);
+		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
+				TAConverter::fromTAPreferences);
+		converterRegistry.registerBA(TraceAbstractionProtos.CegarResult.class, AbstractCegarLoop.Result.class,
+				TAConverter::fromResult);
+	}
 
 	public static TraceAbstractionProtos.IterationInfo.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
 		TraceAbstractionProtos.IterationInfo.NestedRun.Builder builder = TraceAbstractionProtos.IterationInfo.NestedRun
 				.newBuilder();
-		run.getWord().asList().stream().map(Converter::fromCodeblock).forEach(builder::addNestedWord);
+		run.getWord().asList().stream().map(TAConverter::fromCodeblock).forEach(builder::addNestedWord);
 		// builder.addAllNestedWord(values)
 		return builder.build();
 	}
@@ -179,8 +197,7 @@ public class Converter {
 				.build();
 	}
 
-	public static TraceAbstractionProtos.Result fromResult(AbstractCegarLoop.Result result) {
-		return Result.valueOf(result.name());
+	public static TraceAbstractionProtos.CegarResult fromResult(AbstractCegarLoop.Result result) {
+		return TraceAbstractionProtos.CegarResult.newBuilder().setResult(Result.valueOf(result.name())).build();
 	}
-
 }
