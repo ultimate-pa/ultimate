@@ -33,27 +33,32 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	private final Map<TransFormula, ModifiableTransFormula> mTransFormulas;
 	private final Map<TransFormula, IcfgLocation> mSourceLocations;
 	private final Map<TransFormula, IcfgLocation> mTargetLocations;
-	private final MapEliminator mMapEliminator;
+	private MapEliminator mMapEliminator = null;
 	private final ManagedScript mManagedScript;
 	private final ReplacementVarFactory mReplacementVarFactory;
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final IIcfgSymbolTable mSymbolTable;
+	private final MapEliminationSettings mSettings;
 
 	public MapEliminationTransformer(final IIcfg<?> icfg, final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable,
 			final ReplacementVarFactory replacementVarFactory, final MapEliminationSettings settings,
 			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider) {
+		mServices = services;
+		mLogger = logger;
+		mSymbolTable = symbolTable;
+		mSettings = settings;
 		mEqualityProvider = equalityProvider;
 		mTransFormulas = new HashMap<>();
 		mSourceLocations = new HashMap<>();
 		mTargetLocations = new HashMap<>();
 		mManagedScript = Objects.requireNonNull(managedScript);
 		mReplacementVarFactory = Objects.requireNonNull(replacementVarFactory);
-		preprocessIcfg(icfg, replacementVarFactory, managedScript);
-		mMapEliminator = new MapEliminator(services, logger, managedScript, symbolTable, replacementVarFactory,
-				mTransFormulas.values(), settings);
+		preprocessIcfg(icfg);
 	}
 
-	private void preprocessIcfg(final IIcfg<?> icfg, final ReplacementVarFactory replacementVarFactory,
-			final ManagedScript managedScript) {
+	private void preprocessIcfg(final IIcfg<?> icfg) {
 		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 		while (iter.hasNext()) {
 			final IIcfgTransition<?> transition = iter.next();
@@ -61,11 +66,13 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 			final IcfgLocation sourceLocation = transition.getSource();
 			final IcfgLocation targetLocation = transition.getTarget();
 			final ModifiableTransFormula modifiable =
-					ModifiableTransFormulaUtils.buildTransFormula(transformula, replacementVarFactory, managedScript);
+					ModifiableTransFormulaUtils.buildTransFormula(transformula, mReplacementVarFactory, mManagedScript);
 			mTransFormulas.put(transformula, modifiable);
 			mSourceLocations.put(transformula, sourceLocation);
 			mTargetLocations.put(transformula, targetLocation);
 		}
+		mMapEliminator = new MapEliminator(mServices, mLogger, mManagedScript, mSymbolTable, mReplacementVarFactory,
+				mTransFormulas.values(), mSettings);
 	}
 
 	@Override
