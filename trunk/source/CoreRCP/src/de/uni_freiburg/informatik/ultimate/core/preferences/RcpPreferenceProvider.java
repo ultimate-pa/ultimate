@@ -58,12 +58,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
  */
 public class RcpPreferenceProvider implements IPreferenceProvider {
 
-	static {
-		sActiveListener = new HashMap<>();
-	}
-
 	private final String mPluginID;
-	private static final Map<String, Set<IPreferenceChangeListener>> sActiveListener;
+	private static final Map<String, Set<IPreferenceChangeListener>> ACTIVE_LISTENER = new HashMap<>();
 
 	public RcpPreferenceProvider(final String pluginID) {
 		mPluginID = pluginID;
@@ -164,7 +160,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	 */
 	@Override
 	public double getDouble(final String key) {
-		return getDouble(key, 0.0d);
+		return getDouble(key, 0.0D);
 	}
 
 	@Override
@@ -181,7 +177,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	 */
 	@Override
 	public float getFloat(final String key) {
-		return getFloat(key, 0.0f);
+		return getFloat(key, 0.0F);
 	}
 
 	@Override
@@ -241,18 +237,18 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 			final IPreferenceChangeListener iPreferenceChangeListener) {
 		InstanceScope.INSTANCE.getNode(id).addPreferenceChangeListener(iPreferenceChangeListener);
 
-		Set<IPreferenceChangeListener> set = sActiveListener.get(id);
+		Set<IPreferenceChangeListener> set = ACTIVE_LISTENER.get(id);
 		if (set == null) {
 			set = new HashSet<>();
-			sActiveListener.put(id, set);
+			ACTIVE_LISTENER.put(id, set);
 		}
 		set.add(iPreferenceChangeListener);
 	}
 
 	public void removePreferenceChangeListener(final IPreferenceChangeListener iPreferenceChangeListener) {
 		getInstance().removePreferenceChangeListener(iPreferenceChangeListener);
-		if (sActiveListener.containsKey(mPluginID)) {
-			sActiveListener.get(mPluginID).remove(iPreferenceChangeListener);
+		if (ACTIVE_LISTENER.containsKey(mPluginID)) {
+			ACTIVE_LISTENER.get(mPluginID).remove(iPreferenceChangeListener);
 		}
 	}
 
@@ -275,7 +271,7 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	public static IStatus importPreferences(final InputStream inputStream) throws CoreException {
 		final IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
 		if (status.isOK()) {
-			for (final Entry<String, Set<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
+			for (final Entry<String, Set<IPreferenceChangeListener>> entry : ACTIVE_LISTENER.entrySet()) {
 				for (final IPreferenceChangeListener listener : entry.getValue()) {
 					InstanceScope.INSTANCE.getNode(entry.getKey()).removePreferenceChangeListener(listener);
 					addPreferenceChangeListener(entry.getKey(), listener);
