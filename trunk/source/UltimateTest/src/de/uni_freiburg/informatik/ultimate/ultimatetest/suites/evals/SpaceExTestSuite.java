@@ -51,7 +51,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
 	        //new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
-	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing2.epf"),
 	};
 	//@formatter:on
 	
