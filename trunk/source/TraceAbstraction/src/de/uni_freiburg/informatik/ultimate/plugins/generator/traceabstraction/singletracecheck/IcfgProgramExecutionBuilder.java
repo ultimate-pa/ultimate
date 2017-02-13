@@ -38,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -169,9 +167,6 @@ public class IcfgProgramExecutionBuilder {
 			final Map<IProgramVar, Term> varValAtPos = varValAtPos(i);
 			final Map<Term, Collection<Term>> variable2Values = new HashMap<>();
 			for (final Entry<IProgramVar, Term> entry : varValAtPos.entrySet()) {
-				if (!(entry.getKey() instanceof BoogieVar) && !(entry.getKey() instanceof BoogieConst)) {
-					throw new IllegalArgumentException("in backtranslation we need BoogieVars");
-				}
 				final IProgramVar bv = entry.getKey();
 				variable2Values.put(bv.getTermVariable(), Collections.singleton(entry.getValue()));
 			}
