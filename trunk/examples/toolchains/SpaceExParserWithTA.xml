@@ -3,6 +3,5 @@
 	<name>Last Ultimate Toolchain</name>
 	<toolchain>
 		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
-		<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
 	</toolchain>
 </rundefinition>
