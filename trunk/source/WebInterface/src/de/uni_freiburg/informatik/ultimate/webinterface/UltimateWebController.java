@@ -109,14 +109,17 @@ public class UltimateWebController implements IController<RunDefinition> {
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
-		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
 
 	}
 }

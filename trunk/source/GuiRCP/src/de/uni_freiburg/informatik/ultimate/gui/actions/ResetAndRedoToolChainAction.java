@@ -84,6 +84,7 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 				return;
 			}
 		}
+
 		tcj.schedule();
 	}
 
