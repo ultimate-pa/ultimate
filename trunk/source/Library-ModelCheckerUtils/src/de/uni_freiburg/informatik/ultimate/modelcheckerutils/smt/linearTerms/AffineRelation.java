@@ -59,7 +59,7 @@ public class AffineRelation {
 	 * mOriginalTerm.
 	 * 
 	 */
-	private AffineTerm mAffineTerm;
+	private final AffineTerm mAffineTerm;
 	
 	public enum TransformInequality { NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT };
 	
@@ -337,6 +337,10 @@ public class AffineRelation {
 			final Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
 			return SmtUtils.mul(script, term.getSort(), coefficient, term);
 		}
+	}
+
+	public AffineTerm getAffineTerm() {
+		return mAffineTerm;
 	}
 	
 
