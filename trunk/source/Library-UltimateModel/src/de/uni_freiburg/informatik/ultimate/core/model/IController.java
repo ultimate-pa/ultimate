@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 
 /**
  * This is the interface that all plugins providing a user interface to Ultimate should implement. UltimateCore should
@@ -82,6 +83,15 @@ public interface IController<T> extends IUltimatePlugin {
 	 * @return string with model id
 	 */
 	List<String> selectModel(List<String> modelNames);
+
+	/**
+	 * {@link IController#prerun(IToolchainData)} is called just before the selected toolchain is executed by the core.
+	 * This allows the controller to modify {@link IToolchainStorage} or to abort toolchain execution with an exception.
+	 * 
+	 * @param tcData
+	 *            The toolchain that is about to be executed.
+	 */
+	void prerun(IToolchainData<T> tcData);
 
 	/**
 	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may display the results of

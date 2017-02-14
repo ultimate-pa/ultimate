@@ -196,21 +196,18 @@ public class CDTController implements IController<RunDefinition> {
 		}
 
 		public void startUltimate() {
-			final Thread t = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					mIsRunning = true;
-					// initialize ultimate core in its own thread, which then
-					// delegates control to init and should stay there until
-					// close() is called
-					final UltimateCore core = new UltimateCore();
-					try {
-						core.startManually(mController);
-					} catch (final Exception e) {
-						mUltimateException = e;
-					}
-					mIsRunning = false;
+			final Thread t = new Thread((Runnable) () -> {
+				mIsRunning = true;
+				// initialize ultimate core in its own thread, which then
+				// delegates control to init and should stay there until
+				// close() is called
+				final UltimateCore core = new UltimateCore();
+				try {
+					core.startManually(mController);
+				} catch (final Exception e) {
+					mUltimateException = e;
 				}
+				mIsRunning = false;
 			}, "CDTUltimateThread");
 			t.start();
 		}
@@ -249,6 +246,11 @@ public class CDTController implements IController<RunDefinition> {
 				mCurrentChain = null;
 			}
 		}
+
+	}
+
+	@Override
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
 
 	}
 }

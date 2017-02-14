@@ -122,8 +122,8 @@ public abstract class RunToolchainAction extends Action {
 
 	protected File[] getInputFilesFromUser(final String dialogTitle) {
 
-		final List<String> extensions = new ArrayList<String>();
-		final List<String> names = new ArrayList<String>();
+		final List<String> extensions = new ArrayList<>();
+		final List<String> names = new ArrayList<>();
 
 		extensions.add("*.*");
 		names.add("All");
@@ -170,7 +170,7 @@ public abstract class RunToolchainAction extends Action {
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {
-		final ArrayList<ISource> sourceplugins = new ArrayList<ISource>();
+		final ArrayList<ISource> sourceplugins = new ArrayList<>();
 		final IExtensionRegistry reg = Platform.getExtensionRegistry();
 
 		final IConfigurationElement[] configElements_source =

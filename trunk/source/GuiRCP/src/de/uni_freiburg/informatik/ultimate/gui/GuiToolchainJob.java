@@ -65,7 +65,7 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 		if (mToolchain.getCurrentToolchainData() == null) {
 			super.releaseToolchain();
 		} else {
-			((GuiController) mController).setCurrentToolchain(mToolchain);
+			((GuiController) mController).setAfterRerunCurrentToolchain(mToolchain);
 		}
 	}
 }

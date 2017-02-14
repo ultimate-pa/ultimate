@@ -33,14 +33,18 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionAndMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.UnionFindBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -58,8 +62,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
 		extends AbstractMinimizeNwaDd<LETTER, STATE> {
+	
+	private enum Metrie {SYM, ASYM};
+	
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
+	private final Metrie mMetrie = Metrie.SYM;
+	
 	
 	/**
 	 * @param services
@@ -93,18 +102,29 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final int maxGameAutomatonSize = simRes.getSecond();
 			final NestedMap2<STATE, STATE, GS> gsm = gameAutomaton.getGameStateMapping();
 			
-			final ReadoutSimulation rs = new ReadoutSimulation(gsm, simRes.getFirst(), gameFactory);
-			rs.process(partition.getRelation());
-			final UnionFind<STATE> equivalenceRelation = rs.getMutuallySimulating();
-			final boolean mergeFinalAndNonFinalStates = !false;
+			final boolean mergeFinalAndNonFinalStates = false;
 			// TODO make this an option?
 			final boolean addMapOldState2NewState = false;
-			final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
-					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
-							new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
-							new MinimizeNwaMaxSat2.Settings<STATE>()
-									.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
-									.setAddMapOldState2NewState(addMapOldState2NewState));
+			final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
+					.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+					.setAddMapOldState2NewState(addMapOldState2NewState);
+			
+			final AbstractMinimizeNwa<LETTER, STATE> maxSatMinimizer;
+			switch (mMetrie) {
+			case ASYM:
+				maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand,
+						readoutExactSimulationRelation(partition, gsm, simRes.getFirst(), gameFactory).getRelation(),
+						settings); 
+				break;
+			case SYM:
+				maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
+						readoutSymmetricCoreOfSimulationRelation(partition, gsm, simRes.getFirst(), gameFactory),
+						settings); 
+				break;
+			default:
+				throw new AssertionError("illegal value " + mMetrie);
+			}
+			
 			super.directResultConstruction(maxSatMinimizer.getResult());
 			if (addMapOldState2NewState) {
 				super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
@@ -147,6 +167,39 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				return true;
 			}
 		}
+	}
+	
+	private UnionFindBackedSetOfPairs<STATE> readoutSymmetricCoreOfSimulationRelation(
+			final ISetOfPairs<STATE,?> initialPartition,
+			final NestedMap2<STATE, STATE, GS> mGameStateMapping,
+			final IDoubleDeckerAutomaton<LETTER, GS> mRemoved,
+			final FullMultipebbleStateFactory<STATE,?> mGameFactory) {
+		final UnionFindBackedSetOfPairs<STATE> result = new UnionFindBackedSetOfPairs<>();
+		for (final Pair<STATE, STATE> pair : initialPartition) {
+			final STATE q0 = pair.getFirst();
+			final STATE q1 = pair.getSecond();
+			if(isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) && 
+					isInSimulationRelation(q1, q0, mGameFactory, mGameStateMapping, mRemoved)) {
+				result.addPair(q0, q1);
+			}
+		}
+		return result;
+	}
+	
+	private NestedMapBackedSetOfPairs<STATE> readoutExactSimulationRelation(			
+			final ISetOfPairs<STATE,?> initialPartition,
+			final NestedMap2<STATE, STATE, GS> mGameStateMapping,
+			final IDoubleDeckerAutomaton<LETTER, GS> mRemoved,
+			final FullMultipebbleStateFactory<STATE,?> mGameFactory) {
+		final NestedMapBackedSetOfPairs<STATE> result = new NestedMapBackedSetOfPairs<>();
+		for (final Pair<STATE, STATE> pair : initialPartition) {
+			final STATE q0 = pair.getFirst();
+			final STATE q1 = pair.getSecond();
+			if(isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved)) {
+				result.addPair(q0, q1);
+			}
+		}
+		return result;
 	}
 	
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {

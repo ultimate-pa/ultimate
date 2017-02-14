@@ -160,4 +160,9 @@ public class UltimateStarter implements IController<RunDefinition> {
 	public IUltimateServiceProvider getServices() {
 		return mCurrentSerivces;
 	}
+
+	@Override
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
+
+	}
 }

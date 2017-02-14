@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.model;
@@ -46,7 +46,7 @@ public interface IToolchain<T> {
 	 * 
 	 * <b> Has to be called first</b>
 	 */
-	public void init(IToolchainProgressMonitor monitor);
+	void init(IToolchainProgressMonitor monitor);
 
 	/**
 	 * Sets the file(s) that should be parsed by this {@link IToolchain}.
@@ -56,7 +56,7 @@ public interface IToolchain<T> {
 	 * @param inputfiles
 	 *            input files as array of File
 	 */
-	public void setInputFiles(File[] inputfiles);
+	void setInputFiles(File[] inputfiles);
 
 	/**
 	 * Call to define the tools that should be used in this toolchain.
@@ -64,7 +64,7 @@ public interface IToolchain<T> {
 	 * @return {@link ToolchainData} instance describing the desired tools and their order or null if no valid data
 	 *         could be selected.
 	 */
-	public IToolchainData<T> makeToolSelection(IToolchainProgressMonitor monitor);
+	IToolchainData<T> makeToolSelection(IToolchainProgressMonitor monitor);
 
 	/**
 	 * Instead of {@link #makeToolSelection(IProgressMonitor)}, you can directly give {@link ToolchainData} to the
@@ -74,7 +74,7 @@ public interface IToolchain<T> {
 	 * @param data
 	 * @return data or null if data was an invalid selection
 	 */
-	public IToolchainData<T> setToolSelection(IToolchainProgressMonitor monitor, IToolchainData<T> data);
+	IToolchainData<T> setToolSelection(IToolchainProgressMonitor monitor, IToolchainData<T> data);
 
 	/**
 	 * Initiates parsers for the previously set input files.
@@ -84,14 +84,14 @@ public interface IToolchain<T> {
 	 * 
 	 * @return True iff there is a usable parser for the given files and its initialization worked. False otherwise.
 	 */
-	public boolean initializeParsers();
+	boolean initializeParsers();
 
 	/**
 	 * Runs the previously select parsers
 	 * 
 	 * @throws Exception
 	 */
-	public void runParsers() throws Exception;
+	void runParsers() throws Exception;
 
 	/**
 	 * If everything has been properly initiated, this method will process the set toolchain by calling
@@ -103,15 +103,15 @@ public interface IToolchain<T> {
 	 * @throws Throwable
 	 *             that is normally caused by some tool in the toolchain and results in toolchain cancellation.
 	 */
-	public ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable;
+	ReturnCode processToolchain(IToolchainProgressMonitor monitor) throws Throwable;
 
-	public void addAST(IElement root, ModelType outputDefinition);
+	void addAST(IElement root, ModelType outputDefinition);
 
-	public long getId();
+	long getId();
 
 	boolean hasInputFiles();
 
-	public IToolchainData<T> getCurrentToolchainData();
+	IToolchainData<T> getCurrentToolchainData();
 
 	public enum ReturnCode {
 		Ok, Error, Cancel

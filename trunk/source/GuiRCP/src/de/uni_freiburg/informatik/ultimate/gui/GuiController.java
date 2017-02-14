@@ -123,7 +123,7 @@ public class GuiController implements IController<RunDefinition> {
 			mLogger.fatal("An exception occured", ex);
 			return returnCode;
 		} finally {
-			setCurrentToolchain(null);
+			setAfterRerunCurrentToolchain(null);
 			mDisplay.dispose();
 		}
 	}
@@ -131,12 +131,9 @@ public class GuiController implements IController<RunDefinition> {
 	@Override
 	public synchronized ISource selectParser(final Collection<ISource> parsers) {
 
-		mDisplay.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				final Shell shell = new Shell(mDisplay);
-				mParser = new ParserChooseDialog(shell, parsers).open();
-			}
+		mDisplay.syncExec(() -> {
+			final Shell shell = new Shell(mDisplay);
+			mParser = new ParserChooseDialog(shell, parsers).open();
 		});
 		return mParser;
 	}
@@ -149,21 +146,17 @@ public class GuiController implements IController<RunDefinition> {
 
 	private synchronized IToolchainData<RunDefinition> selectTools(final List<ITool> tools,
 			final List<ITool> previous) {
-		mDisplay.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				final Shell shell = new Shell(mDisplay);
-				try {
-					mTools = new AnalysisChooseDialog(mLogger, shell, tools, previous, mCore).open();
-				} catch (final FileNotFoundException e) {
-					MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
+		mDisplay.syncExec(() -> {
+			final Shell shell = new Shell(mDisplay);
+			try {
+				mTools = new AnalysisChooseDialog(mLogger, shell, tools, previous, mCore).open();
+			} catch (final FileNotFoundException e1) {
+				MessageDialog.openError(shell, "An error occured", "Toolchain XML file was not found.");
 
-				} catch (final JAXBException e) {
-					MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be validated.");
-				} catch (final SAXException e) {
-					MessageDialog.openError(shell, "An error occured",
-							"Toolchain XML file could not be properly parsed.");
-				}
+			} catch (final JAXBException e2) {
+				MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be validated.");
+			} catch (final SAXException e3) {
+				MessageDialog.openError(shell, "An error occured", "Toolchain XML file could not be properly parsed.");
 			}
 		});
 		return mTools;
@@ -171,12 +164,9 @@ public class GuiController implements IController<RunDefinition> {
 
 	@Override
 	public synchronized List<String> selectModel(final List<String> modelNames) {
-		mDisplay.syncExec(new Runnable() {
-			@Override
-			public void run() {
-				final Shell shell = new Shell(mDisplay);
-				mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
-			}
+		mDisplay.syncExec(() -> {
+			final Shell shell = new Shell(mDisplay);
+			mModels = new ModelChooseDialog(shell, modelNames, "Choose the model").open();
 		});
 		return mModels;
 	}
@@ -215,7 +205,6 @@ public class GuiController implements IController<RunDefinition> {
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -223,7 +212,7 @@ public class GuiController implements IController<RunDefinition> {
 		return null;
 	}
 
-	public void setCurrentToolchain(final IToolchain<RunDefinition> toolchain) {
+	public void setAfterRerunCurrentToolchain(final IToolchain<RunDefinition> toolchain) {
 		if (mCurrentToolchain != null && !mCurrentToolchain.equals(toolchain)) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
@@ -236,5 +225,10 @@ public class GuiController implements IController<RunDefinition> {
 
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
+	}
+
+	@Override
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
+
 	}
 }

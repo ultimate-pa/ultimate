@@ -279,7 +279,7 @@ public class ToolchainManager {
 				final Collection<ISource> parsers = mParsers.values();
 				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
-
+				data.getController().prerun(mToolchainData);
 				return mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
 
 			} finally {
