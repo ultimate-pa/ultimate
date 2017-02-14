@@ -184,6 +184,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
+	protected final IInteractive<Object> mInteractive;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -202,6 +203,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
+
+		mInteractive = IInteractive.getFromStorage(mToolchainStorage, Object.class);
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
@@ -309,13 +312,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
-		IInteractive<Object> interactive = IInteractive.getFromStorage(mToolchainStorage, Object.class);
-		if (interactive != null) {
+		if (mInteractive != null) {
 			mLogger.info("Interactive Client connected.");
 
-			interactive.send(mPref);
-		}		
-		
+			mInteractive.send(mPref);
+		}
+
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
