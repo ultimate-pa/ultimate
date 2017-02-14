@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -308,6 +309,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
+		IInteractive<Object> interactive = IInteractive.getFromStorage(mToolchainStorage, Object.class);
+		if (interactive != null) {
+			mLogger.info("Interactive Client connected.");
+
+			interactive.send(mPref);
+		}		
+		
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
@@ -357,29 +365,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 			}
-			/*
-			if (mPref.interactive()) {
-				final TraceAbstractionProtos.IterationInfo itinfo = TraceAbstractionProtos.IterationInfo.newBuilder()
-						.setIteration(mIteration).build();
-				Server.get().send(itinfo);
-
-				try {
-					Server.get().waitForConnection();
-
-					CompletableFuture<Question> fut = Server.get().request(Question.class, null);
-
-					Question q = fut.get();
-
-					mLogger.info("Client response: " + q.getAnswer());
-					if (!q.getAnswer()) {
-						return Result.UNKNOWN;
-					} else {
-
-					}
-				} catch (ExecutionException | InterruptedException e) {
-					mLogger.error("got no answer", e.getCause());
-				}
-			}*/
 
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();

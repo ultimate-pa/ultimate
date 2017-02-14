@@ -38,7 +38,7 @@ public abstract class Converter<A, B> {
 		mConverterRegistry.registerATypes(typeRegistry);
 		mTargetInterface = new ApplyConversionToInteractive<>(sourceInterface, mConverterRegistry, mTargetClass);
 		if (mStorage != null)
-			ToolchainUtil.storeInteractive(mTargetInterface, mStorage);
+			ToolchainUtil.storeInteractive(mTargetInterface, mTargetClass, mStorage);
 	}
 
 	public IInteractive<B> getInterface() {

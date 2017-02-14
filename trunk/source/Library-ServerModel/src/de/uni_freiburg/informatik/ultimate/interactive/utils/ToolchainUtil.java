@@ -4,14 +4,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 
 public class ToolchainUtil {
-	// ITool tool
-	@SuppressWarnings("unchecked")
-	public static <M> IInteractive<M> getInteractive(final IToolchainStorage storage,
-			final Class<IInteractive<M>> interactive) {
-		return (IInteractive<M>) storage.getStorable(interactive.getName());
+	private static final String STORAGE_IDENTIFIER_PREFIX = IInteractive.class.getName();
+
+	private static <M> String getStorageIdentifier(final Class<M> bound) {
+		return STORAGE_IDENTIFIER_PREFIX + "_" + bound.getName();
 	}
 
-	public static <M> void storeInteractive(IInteractive<M> interactive, final IToolchainStorage storage) {
-		storage.putStorable(interactive.getClass().getName(), interactive);
+	// ITool tool
+	@SuppressWarnings("unchecked")
+	public static <M> IInteractive<M> getInteractive(final IToolchainStorage storage, final Class<M> bound) {
+		return (IInteractive<M>) storage.getStorable(getStorageIdentifier(bound));
+	}
+
+	public static <M> void storeInteractive(final IInteractive<M> interactive, final Class<M> bound,
+			final IToolchainStorage storage) {
+		storage.putStorable(getStorageIdentifier(bound), interactive);
 	}
 }

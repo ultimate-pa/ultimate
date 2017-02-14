@@ -201,11 +201,6 @@ public class ServerController implements IController<RunDefinition> {
 					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
 
-		final IToolchainStorage storage = mToolchain.getStorage();
-
-		TAConverter taConverter = new TAConverter(storage);
-		converter.initInterface(mProtoInterface, mServer.getTypeRegistry());
-
 		final File inputFile = requestChoice(availableInputFiles, File::getName);
 
 		final File[] inputFiles = new File[] { inputFile };
@@ -328,6 +323,11 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
-	public class FatalControllerException extends Exception {
+	@Override
+	public void prerun(IToolchainData<RunDefinition> tcData) {
+		final IToolchainStorage storage = mToolchain.getStorage();
+
+		TAConverter taConverter = new TAConverter(storage);
+		taConverter.initInterface(mProtoInterface, mServer.getTypeRegistry());
 	}
 }
