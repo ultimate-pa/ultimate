@@ -62,7 +62,7 @@ public class SpaceExPreferenceManager {
 	private String mSystem;
 	private final String mModelFilename;
 	// replacement map for groups
-	private Map<String, String> mReplacement;
+	private final Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
 	// the forbiddengroup holds the specified locations + variables of the "forbidden" property.
@@ -106,6 +106,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseConfigFile(final File configfile) throws Exception {
+		testPostFixToGroups();
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
@@ -172,7 +173,6 @@ public class SpaceExPreferenceManager {
 			} else {
 				mHasPreferenceGroups = true;
 			}
-			mReplacement = new HashMap<>();
 		}
 	}
 	
@@ -268,6 +268,7 @@ public class SpaceExPreferenceManager {
 	// helper function to replace all elements in a string of the form x==2 & loc(x)==wuargh, with single literals.
 	// x==2 & loc(x)==wuargh & y<=4---> A0 & A1 & A2
 	private String replaceAllWithLiterals(final String initially) {
+		mReplacement.clear();
 		// regex stuff for initial locations
 		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
 		final Pattern locPattern = Pattern.compile(locRegex);
@@ -426,7 +427,7 @@ public class SpaceExPreferenceManager {
 			final List<String> eval = evaluateOrAndAnd(operand2, operand1);
 			openGroupstack.addAll(eval);
 			
-		} else if (operand1.contains("&") && operand2.contains("&")) {
+		} else if (operand2.contains("&")) {
 			openGroupstack.add(operand2 + "&" + operand1);
 		}
 		return openGroupstack;
@@ -456,21 +457,25 @@ public class SpaceExPreferenceManager {
 	
 	private void testPostFixToGroups() {
 		final List<String> testStrings = new ArrayList<>();
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
-		testStrings.add("A==1 & B==1 | C==1");
 		testStrings.add("A==1");
 		testStrings.add("A==1 | B==1");
 		testStrings.add("A==1 & B==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1)");
+		testStrings.add("A==1 & B==1 | C==1");
+		testStrings.add("A==1 & B==1 & C==1");
+		testStrings.add("A==1 & B==1 | C==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 & F==2)");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1 | E==1)");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
+		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1 & G==1");
 		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 | F==1) & G==1");
 		
 		for (final String testString : testStrings) {
 			mLogger.info("########### START ###########");
+			mLogger.info("Original: " + testString);
 			final String test = replaceAllWithLiterals(testString);
-			mLogger.info(test);
+			mLogger.info("replaced: " + test);
 			final String[] testarr = HybridTermBuilder.expressionToArray(test);
 			final List<String> postfix = HybridTermBuilder.postfix(testarr);
 			mLogger.info("postfix: " + postfix);
