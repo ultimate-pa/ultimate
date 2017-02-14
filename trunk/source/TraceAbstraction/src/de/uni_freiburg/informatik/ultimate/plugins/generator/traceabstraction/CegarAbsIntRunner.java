@@ -238,21 +238,21 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
-						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getSymboltable(), currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique);
+						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getCfgSmtToolkit().getSymbolTable(),
+						currentCex, mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getSymboltable());
+						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable());
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
-						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex, mRoot.getSymboltable(),
-						mSimplificationTechnique, mXnfConversionTechnique);
+						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
+						mRoot.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
@@ -325,8 +325,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
-				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mServices, mResult.getUsedDomain(),
-						mPredicateUnifier);
+				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices,
+						mResult.getUsedDomain(), mResult.getUsedVariableProvider(), mPredicateUnifier);
 				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
 			}
 			return mHtc;

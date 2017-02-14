@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
@@ -46,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -66,14 +67,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final HoareTripleCheckerStatisticsGenerator mBenchmark;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
+	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 
-	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain, final IPredicateUnifier predicateUnifer) {
+	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
+			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer) {
+		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mMergeOp = Objects.requireNonNull(mDomain.getMergeOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mVarProvider = Objects.requireNonNull(varProvider);
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
@@ -258,18 +262,20 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private STATE getValidPoststate(final STATE origPostState, final ACTION act) {
-		// TODO Auto-generated method stub
-		return null;
+		return mVarProvider.makeValidPostState(act, origPostState);
 	}
 
 	private STATE getValidPrestate(final STATE origPreState, final ACTION act) {
-		// TODO Auto-generated method stub
-		return null;
+		return mVarProvider.makeValidPreState(act, origPreState);
 	}
 
+	@SuppressWarnings("unchecked")
 	private STATE getValidPreHierstate(final STATE origPreHierState, final ACTION act) {
-		// TODO Auto-generated method stub
-		return null;
+		if (act instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) act;
+			return getValidPrestate(origPreHierState, (ACTION) retAct.getCorrespondingCall());
+		}
+		throw new UnsupportedOperationException("Cannot create hierprestate for non-return action: " + act.getClass());
 	}
 
 }
