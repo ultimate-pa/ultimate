@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -63,6 +64,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final IInteractive<Object> mInteractive;
 
 	/**
 	 * @param logger
@@ -95,6 +97,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation<>();
+		mInteractive = IInteractive.getFromStorage(storage, Object.class);
 	}
 
 	/**
@@ -147,6 +150,14 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
 					benchmark);
+		case PARROT:
+			if (mInteractive == null) {
+				throw new IllegalArgumentException(
+						"Interactive strategy chosen, but interface available. Please start ultimate in Interactive mode.");
+			}
+			return new ParrotRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+					mInteractive, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

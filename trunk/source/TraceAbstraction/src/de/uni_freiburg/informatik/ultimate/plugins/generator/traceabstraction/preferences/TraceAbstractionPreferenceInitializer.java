@@ -367,6 +367,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		WALRUS,
 
 		CAMEL, WOLF,
+		
+		/**
+		 * Interactive strategy that asks the user for a configuration.
+		 */
+		PARROT,
 	}
 
 	/**

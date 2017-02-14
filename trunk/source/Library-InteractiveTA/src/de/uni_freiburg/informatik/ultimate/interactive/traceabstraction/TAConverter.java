@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.interactive.traceabstraction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
@@ -29,9 +29,13 @@ import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Minimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
 
 public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
@@ -49,6 +53,26 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				TAConverter::fromTAPreferences);
 		converterRegistry.registerBA(TraceAbstractionProtos.CegarResult.class, AbstractCegarLoop.Result.class,
 				TAConverter::fromResult);
+
+		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
+				TraceAbstractionProtos.Question::getAnswer);
+
+		converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
+				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::toTracks);
+		converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
+				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::fromTracks);
+	}
+
+	private static TraceAbstractionProtos.Tracks fromTracks(
+			MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
+		final TraceAbstractionProtos.Tracks.Builder builder = TraceAbstractionProtos.Tracks.newBuilder();
+		Arrays.stream(tracks).map(convertToEnum(Tracks.Track.class)).forEach(builder::addTrack);
+		return builder.build();
+	}
+
+	private static MultiTrackTraceAbstractionRefinementStrategy.Track[] toTracks(TraceAbstractionProtos.Tracks tracks) {
+		return tracks.getTrackList().stream()
+				.map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new);
 	}
 
 	public static TraceAbstractionProtos.IterationInfo.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
@@ -167,7 +191,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 			enhancment = InterpolantAutomatonEnhancement.NO_ENHANCEMENT;
 			break;
 		default:
-			enhancment = InterpolantAutomatonEnhancement.valueOf(preferences.interpolantAutomatonEnhancement().name());
+			enhancment = convertTo(InterpolantAutomatonEnhancement.class,
+					preferences.interpolantAutomatonEnhancement());
 		}
 
 		final Minimization minimization;
@@ -177,27 +202,35 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 			break;
 
 		default:
-			minimization = Minimization.valueOf(preferences.getMinimization().name());
+			minimization = convertTo(Minimization.class, preferences.getMinimization());
 			break;
 		}
 
 		return TraceAbstractionProtos.TAPreferences.newBuilder().setMInterprocedural(preferences.interprocedural())
 				.setMMaxIterations(preferences.maxIterations()).setMWatchIteration(preferences.watchIteration())
-				.setMArtifact(Artifact.valueOf(preferences.artifact().name()))
-				.setMInterpolation(InterpolationTechnique.valueOf(preferences.interpolation().name()))
-				.setMInterpolantAutomaton(InterpolantAutomaton.valueOf(preferences.interpolantAutomaton().name()))
+				.setMArtifact(convertTo(Artifact.class, preferences.artifact()))
+				.setMInterpolation(convertTo(InterpolationTechnique.class, preferences.interpolation()))
+				.setMInterpolantAutomaton(convertTo(InterpolantAutomaton.class, preferences.interpolantAutomaton()))
 				.setMDumpAutomata(preferences.dumpAutomata())
-				.setMAutomataFormat(Format.valueOf(preferences.getAutomataFormat().name()))
+				.setMAutomataFormat(convertTo(Format.class, preferences.getAutomataFormat()))
 				.setMDumpPath(preferences.dumpPath()).setMDeterminiation(enhancment).setMMinimize(minimization)
 				.setMHoare(preferences.computeHoareAnnotation())
-				.setMConcurrency(Concurrency.valueOf(preferences.getConcurrency().name()))
-				.setMHoareTripleChecks(HoareTripleChecks.valueOf(preferences.getHoareTripleChecks().name()))
+				.setMConcurrency(convertTo(Concurrency.class, preferences.getConcurrency()))
+				.setMHoareTripleChecks(convertTo(HoareTripleChecks.class, preferences.getHoareTripleChecks()))
 				.setMHoareAnnotationPositions(
-						HoareAnnotationPositions.valueOf(preferences.getHoareAnnotationPositions().name()))
+						convertTo(HoareAnnotationPositions.class, preferences.getHoareAnnotationPositions()))
 				.build();
 	}
 
 	public static TraceAbstractionProtos.CegarResult fromResult(AbstractCegarLoop.Result result) {
-		return TraceAbstractionProtos.CegarResult.newBuilder().setResult(Result.valueOf(result.name())).build();
+		return TraceAbstractionProtos.CegarResult.newBuilder().setResult(convertTo(Result.class, result)).build();
+	}
+
+	public static <E extends Enum<E>> Function<Enum<?>, E> convertToEnum(Class<E> toCls) {
+		return f -> convertTo(toCls, f);
+	}
+
+	public static <E extends Enum<E>> E convertTo(Class<E> toCls, Enum<?> from) {
+		return Enum.valueOf(toCls, from.name());
 	}
 }
