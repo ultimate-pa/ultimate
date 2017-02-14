@@ -191,7 +191,8 @@ public class CachedTransFormulaLinearizer {
 				new SimplifyPreprocessor(mServices, mStorage, mCsToolkit.getManagedScript(), mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
-				new RewriteStrictInequalities(), };
+//				new RewriteStrictInequalities(), 
+				};
 	}
 
 }
