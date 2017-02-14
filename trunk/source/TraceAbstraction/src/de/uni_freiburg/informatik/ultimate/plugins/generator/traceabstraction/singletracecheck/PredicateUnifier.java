@@ -615,7 +615,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		@Override
 		public IPartialComparator<IPredicate> getPartialComperator() {
 			return (o1, o2) -> {
-				if (o1 == o2) {
+				if (o1.equals(o2)) {
 					return ComparisonResult.EQUAL;
 				}
 				final Validity implies = mLhs2RhsValidity.get(o1, o2);
