@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -67,6 +69,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final HoareTripleCheckerStatisticsGenerator mBenchmark;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
+	private final STATE mTopState;
+	private final STATE mBottomState;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
@@ -81,6 +85,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
+		mTopState = mDomain.createTopState();
+		mBottomState = mDomain.createBottomState();
 
 	}
 
@@ -126,8 +132,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(origPreState, preState, "Modified preState");
 			logDebugIfNotEqual(origPostState, postState, "Modified postState");
-			mLogger.debug(preState.toLogString() + " " + act + " " + postState.toLogString());
+			mLogger.debug("Pre : " + preState.toLogString());
+			mLogger.debug("Act : " + act);
+			mLogger.debug("Post: " + postState.toLogString());
 			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
 		}
 		return result;
 	}
@@ -142,9 +151,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			logDebugIfNotEqual(origPreLinState, preLinState, "Modified preLinState");
 			logDebugIfNotEqual(origPreHierState, preHierState, "Modified preHierState");
 			logDebugIfNotEqual(origPostState, postState, "Modified postState");
-			mLogger.debug(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
-					+ postState.toLogString());
+			mLogger.debug("Pre : " + preLinState.toLogString());
+			mLogger.debug("PreH: " + preHierState.toLogString());
+			mLogger.debug("Act : " + act);
+			mLogger.debug("Post: " + postState.toLogString());
 			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
 		}
 
 		return result;
@@ -163,13 +175,14 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
 		if (postState.isBottom()) {
-			if (calculatedPost == null || calculatedPost.isBottom()) {
+			if (calculatedPost != null && !calculatedPost.isBottom()) {
+				return trackPost(Validity.INVALID, act);
+			} else if (calculatedPost == null || calculatedPost.isBottom()) {
 				return trackPost(Validity.VALID, act);
 			}
-			return Validity.UNKNOWN;
 		}
 
-		final SubsetResult subs = postState.isSubsetOf(calculatedPost);
+		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
 		if (subs != SubsetResult.NONE) {
 			return trackPost(Validity.VALID, act);
 		}
@@ -191,13 +204,14 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 				mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
 
 		if (postState.isBottom()) {
-			if (calculatedPost == null || calculatedPost.isBottom()) {
+			if (calculatedPost != null && !calculatedPost.isBottom()) {
+				return trackPost(Validity.INVALID, act);
+			} else if (calculatedPost == null || calculatedPost.isBottom()) {
 				return trackPost(Validity.VALID, act);
 			}
-			return Validity.UNKNOWN;
 		}
 
-		final SubsetResult subs = postState.isSubsetOf(calculatedPost);
+		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
 		if (subs != SubsetResult.NONE) {
 			return trackPost(Validity.VALID, act);
 		}
@@ -206,37 +220,21 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 	private Validity trackPost(final Validity valid, final ACTION act) {
 		if (act instanceof ICallAction) {
-			return trackCallPost(valid);
+			return trackPost(valid, InCaReCounter::incCa);
 		} else if (act instanceof IReturnAction) {
-			return trackReturnPost(valid);
+			return trackPost(valid, InCaReCounter::incRe);
 		} else {
-			return trackInternalPost(valid);
+			return trackPost(valid, InCaReCounter::incIn);
 		}
 	}
 
-	private Validity trackCallPost(final Validity valid) {
+	private Validity trackPost(final Validity valid, final Consumer<InCaReCounter> inc) {
 		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incCa();
+			inc.accept(mBenchmark.getSolverCounterUnknown());
 		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incCa();
-		}
-		return valid;
-	}
-
-	private Validity trackInternalPost(final Validity valid) {
-		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incIn();
-		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incIn();
-		}
-		return valid;
-	}
-
-	private Validity trackReturnPost(final Validity valid) {
-		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incRe();
-		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incRe();
+			inc.accept(mBenchmark.getSolverCounterUnsat());
+		} else if (valid == Validity.INVALID) {
+			inc.accept(mBenchmark.getSolverCounterSat());
 		}
 		return valid;
 	}
@@ -245,12 +243,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private STATE getState(final IPredicate pred) {
 		if (pred instanceof AbsIntPredicate<?, ?>) {
 			return ((AbsIntPredicate<STATE, ?>) pred).getAbstractState();
-		} else if (pred == mTruePred) {
-			return mDomain.createTopState();
-		} else if (pred == mFalsePred) {
-			return mDomain.createBottomState();
+		} else if (pred.equals(mTruePred)) {
+			return mTopState;
+		} else if (pred.equals(mFalsePred)) {
+			return mBottomState;
 		} else {
-			throw new UnsupportedOperationException("Cannot handle non-absint predicates");
+			throw new UnsupportedOperationException("Cannot handle non-absint predicates: " + pred.getClass());
 		}
 	}
 
@@ -270,11 +268,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private STATE getValidPoststate(final STATE origPostState, final ACTION act) {
-		return mVarProvider.makeValidPostState(act, origPostState);
+		final STATE rtr = mVarProvider.makeValidPostState(act, origPostState);
+		assert !origPostState.isBottom() || rtr.isBottom() : "Bottom was lost";
+		return rtr;
 	}
 
 	private STATE getValidPrestate(final STATE origPreState, final ACTION act) {
-		return mVarProvider.makeValidPreState(act, origPreState);
+		final STATE rtr = mVarProvider.makeValidPreState(act, origPreState);
+		assert !origPreState.isBottom() || rtr.isBottom() : "Bottom was lost";
+		return rtr;
 	}
 
 	@SuppressWarnings("unchecked")
