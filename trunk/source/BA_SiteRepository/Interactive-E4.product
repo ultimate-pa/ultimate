@@ -14,7 +14,7 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog  -TC ${workspace_loc}/../examples/Interactive/toolchains -I ${workspace_loc}/../examples/Interactive/input -S ${workspace_loc}/../examples/Interactive/settings
       </programArgs>
       <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
