@@ -159,9 +159,6 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 			//inductivity failed
 			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-			
-			//the rubber taipan doesnt strike
-			"examples/programs/abstractInterpretation/regression/stmt-simpleassign-safe.bpl",
 
 	};
 	// @formatter:on
