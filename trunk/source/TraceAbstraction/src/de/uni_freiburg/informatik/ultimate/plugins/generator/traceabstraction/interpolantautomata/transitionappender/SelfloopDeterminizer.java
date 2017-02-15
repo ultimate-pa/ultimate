@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -57,7 +57,7 @@ public class SelfloopDeterminizer implements IStateDeterminizer<IIcfgTransition<
 	PowersetDeterminizer<IIcfgTransition<?>, IPredicate> mPowersetDeterminizer;
 
 	INestedWordAutomaton<IIcfgTransition<?>, IPredicate> mInterpolantAutomaton;
-	private final IStateFactory<IPredicate> mStateFactory;
+	private final IDeterminizeStateFactory<IPredicate> mStateFactory;
 	IPredicate mInterpolantAutomatonFinalState;
 
 	DeterminizedState<IIcfgTransition<?>, IPredicate> mResultFinalState;
@@ -73,7 +73,7 @@ public class SelfloopDeterminizer implements IStateDeterminizer<IIcfgTransition<
 
 	public SelfloopDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
 			final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> interpolantAutom,
-			final IStateFactory<IPredicate> stateFactory) {
+			final IDeterminizeStateFactory<IPredicate> stateFactory) {
 		super();
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
 		mInterpolantAutomaton = interpolantAutom;

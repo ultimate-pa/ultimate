@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.InclusionViaDifference;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -74,7 +74,7 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	 *             if construction fails
 	 */
 	public IsIncluded2(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory,
+			final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandA,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)

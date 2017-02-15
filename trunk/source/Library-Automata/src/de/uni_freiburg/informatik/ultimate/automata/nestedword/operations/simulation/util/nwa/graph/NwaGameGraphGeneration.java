@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -1514,11 +1515,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				mSimulationPerformance.setCountingMeasure(ECountingMeasure.ALREADY_WAS_DETERMINISTIC, 1);
 			}
 
+			final IDeterminizeStateFactory<IGameState> stateFactory =
+					(IDeterminizeStateFactory<IGameState>) gameAutomatonWithSummaries.getStateFactory();
 			// Determinizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<>(
-					mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
-							.getResult();
+			// // TODO Christian 2017-02-15 Cast is temporary workaround until state factory becomes parameter
+			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
+					new Determinize<>(mServices, stateFactory, gameAutomatonWithSummaries, summarySources).getResult();
 			mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
 					determinizedGameAutomaton.size());
 			final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(

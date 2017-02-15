@@ -42,9 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -85,7 +86,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public DeterminizeDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public DeterminizeDD(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
@@ -231,13 +232,13 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 			mLogger.info("Testing correctness of determinization");
 			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
-			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultSadd, mTraversedNwa)
-					.getResult();
-			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mTraversedNwa, resultSadd)
-					.getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+					(new DeterminizeSadd<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, operandOld))
+							.getResult();
+			correct &= new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultSadd,
+					mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of determinization");
 		}
 		return correct;

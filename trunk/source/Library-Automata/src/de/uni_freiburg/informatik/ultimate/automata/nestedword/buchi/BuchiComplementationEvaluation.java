@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -70,7 +71,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiComplementationEvaluation(
+	public <FACTORY extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>> BuchiComplementationEvaluation(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
@@ -111,7 +112,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		return mOperand;
 	}
 	
-	private <FACTORY extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>>
+	private <FACTORY extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>>
 			String evaluate(final FACTORY stateFactory) throws AutomataOperationCanceledException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		evaluateBs(stateFactory, results);
@@ -138,8 +139,9 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 		addToResultsWithSizeReduction(results, name, result);
 	}
 	
-	private void evaluateFkv(final IBuchiComplementFkvStateFactory<STATE> stateFactory,
-			final LinkedHashMap<String, Integer> results, final FkvOptimization fkvOptimization)
+	private <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> void evaluateFkv(
+			final FACTORY stateFactory, final LinkedHashMap<String, Integer> results,
+			final FkvOptimization fkvOptimization)
 			throws AutomataOperationCanceledException {
 		final String name = "FKV_" + fkvOptimization;
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<>(mServices,

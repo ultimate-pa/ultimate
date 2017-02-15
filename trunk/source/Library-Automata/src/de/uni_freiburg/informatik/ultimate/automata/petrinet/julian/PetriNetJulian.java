@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -180,14 +181,12 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 			mLogger.info("Testing correctness of PetriNetJulian constructor");
 		}
 		
-		boolean correct;
 		// TODO Christian 2017-02-15 Casts are temporary workarounds, either get a state factory or drop this check
-		final INestedWordAutomaton<S, C> resultAutomata = (new PetriNet2FiniteAutomaton<>(mServices,
+		final INestedWordAutomaton<S, C> resultAutomaton = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) nwa.getStateFactory(), this)).getResult();
-		correct =
-				new IsIncluded<>(mServices, (ISinkStateFactory<C>) getStateFactory(), resultAutomata, nwa).getResult();
-		correct = correct && new IsIncluded<>(mServices, (ISinkStateFactory<C>) getStateFactory(), nwa, resultAutomata)
-				.getResult();
+		final boolean correct =
+				new IsEquivalent<>(mServices, (ISinkStateFactory<C> & IDeterminizeStateFactory<C>) getStateFactory(),
+						resultAutomaton, nwa).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of PetriNetJulian constructor");

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
  * Buchi difference "<tt>FKV</tt>".
@@ -61,8 +62,8 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services,
-			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiDifferenceFKV(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand,

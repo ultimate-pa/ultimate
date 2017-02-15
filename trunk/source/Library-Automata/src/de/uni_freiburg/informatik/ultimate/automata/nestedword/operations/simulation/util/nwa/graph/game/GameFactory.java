@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
@@ -13,8 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
-public final class GameFactory implements ISinkStateFactory<IGameState> {
-
+public final class GameFactory implements ISinkStateFactory<IGameState>, IDeterminizeStateFactory<IGameState> {
 	/**
 	 * The state that represents an empty stack.
 	 */
@@ -32,37 +32,16 @@ public final class GameFactory implements ISinkStateFactory<IGameState> {
 		mSinkState = new GameSinkState();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory#
-	 * createEmptyStackState()
-	 */
 	@Override
 	public IGameState createEmptyStackState() {
 		return mEmptyStackState;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory#
-	 * createSinkStateContent()
-	 */
 	@Override
 	public IGameState createSinkStateContent() {
 		return mSinkState;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory#
-	 * determinize(java.util.Map)
-	 */
 	@Override
 	public IGameState determinize(final Map<IGameState, Set<IGameState>> down2up) {
 		return new GameDoubleDeckerSet(down2up);

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
@@ -73,15 +74,16 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
-	public MinimizeNfaBrzozowski(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IMergeStateFactory<STATE>> MinimizeNfaBrzozowski(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-
+		
 		printStartMessage();
 		assert super.isFiniteAutomaton() : "The input automaton contains call or return transitions.";
 		
-		minimize();
+		minimize(stateFactory);
 		printExitMessage();
 	}
 	
@@ -97,14 +99,15 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
-	private void minimize() throws AutomataOperationCanceledException {
+	private void minimize(final IDeterminizeStateFactory<STATE> determinizeStateFactory)
+			throws AutomataOperationCanceledException {
 		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
 			automaton = reverse(automaton);
 			
 			super.checkForContinuation();
-			automaton = determinize(automaton);
+			automaton = determinize(determinizeStateFactory, automaton);
 		}
 		directResultConstruction(automaton);
 	}
@@ -153,9 +156,8 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
-	private INestedWordAutomaton<LETTER, STATE> determinize(
-			final INestedWordAutomaton<LETTER, STATE> automaton)
-			throws AutomataOperationCanceledException {
-		return new Determinize<>(mServices, mStateFactory, automaton).getResult();
+	private INestedWordAutomaton<LETTER, STATE> determinize(final IDeterminizeStateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataOperationCanceledException {
+		return new Determinize<>(mServices, stateFactory, automaton).getResult();
 	}
 }

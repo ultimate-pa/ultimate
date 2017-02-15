@@ -27,9 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Abstract factory for states used in typical automata operations.
  * 
@@ -66,17 +63,6 @@ public interface IStateFactory<STATE> {
 	 */
 	default STATE intersectBuchi(final STATE state1, final STATE state2, final int track) {
 		return intersection(state1, state2);
-	}
-	
-	/**
-	 * Determinization of several states.
-	 * 
-	 * @param down2up
-	 *            mapping (down state -> up states)
-	 * @return state representing the determinization
-	 */
-	default STATE determinize(final Map<STATE, Set<STATE>> down2up) {
-		return null;
 	}
 	
 	/**

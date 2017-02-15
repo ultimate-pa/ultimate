@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -63,7 +64,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mLocalMA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mLocalMB;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mLocalMB2;
-	private final IStateFactory<STATE> mLocalStateFactory;
+	private final IDeterminizeStateFactory<STATE> mLocalStateFactory;
 	private final AutomataLibraryServices mLocalServiceProvider;
 	private HashSet<NodeData<LETTER, STATE>> mAllNodes;
 	private LinkedList<NodeData<LETTER, STATE>> mErrorNodes;
@@ -74,7 +75,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	private HashSet<NodeData<LETTER, STATE>> toBeKeepedNodes;
 
 	public IncrementalInclusionCheck2DeadEndRemoval(final AutomataLibraryServices services,
-			final IStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final IDeterminizeStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services, a);
 		IncrementalInclusionCheck2DeadEndRemoval.abortIfContainsCallOrReturn(a);
@@ -400,7 +401,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	 * counterexample.
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final IDeterminizeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);

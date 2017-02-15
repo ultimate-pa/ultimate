@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -56,7 +57,7 @@ public class Jeffery_Test_2<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private static ILogger mLogger;
 	Boolean result1, result2;
 
-	public Jeffery_Test_2(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+	public Jeffery_Test_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final int num) throws AutomataLibraryException {
 		switch (num) {

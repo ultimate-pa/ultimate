@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -66,7 +67,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	private final LinkedList<INestedWordAutomatonSimple<LETTER, STATE>> union_mBs;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IStateFactory<STATE> localStateFactory;
+	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private int counterExampleFlag;
 	public PseudoAutomata workingAutomata;
@@ -873,7 +874,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
-			final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final boolean acc) throws AutomataLibraryException {
 		super(services, a);
@@ -918,7 +919,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
-			final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
 			throws AutomataLibraryException {
 		super(services, a);
@@ -1090,7 +1091,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	 * counterexample.
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final IDeterminizeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);

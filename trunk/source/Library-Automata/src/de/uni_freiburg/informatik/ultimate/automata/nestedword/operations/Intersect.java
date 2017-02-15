@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -121,9 +122,9 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
-		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult).getResult();
-		assert correct;
-		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd).getResult();
+		correct &=
+				new IsEquivalent<>(mServices, (ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory,
+						resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

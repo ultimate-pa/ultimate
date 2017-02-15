@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.StateDeterminizerCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.SenwaWalker
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -105,11 +106,12 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public DifferenceSenwa(final AutomataLibraryServices services, final ISenwaStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE>> DifferenceSenwa(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
-		this(services, stateFactory, minuend, subtrahend,
-				new PowersetDeterminizer<>(subtrahend, true, minuend.getStateFactory()), true);
+		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
+				true);
 	}
 	
 	/**
@@ -337,13 +339,11 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultSadd, mSenwa)
-					.getResult();
-			correct =
-					correct && new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mSenwa, resultSadd)
+			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd = (new DifferenceSadd<>(mServices,
+					(IDeterminizeStateFactory<STATE>) stateFactory, mMinuend, mSubtrahend)).getResult();
+			correct &= new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultSadd, mSenwa)
 							.getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

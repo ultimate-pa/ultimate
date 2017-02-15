@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -60,7 +61,7 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IStateFactory<STATE> localStateFactory;
+	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private ArrayList<HashSet<STATE>> newBnStates = new ArrayList<>();
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
@@ -123,7 +124,7 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 		// run();
 	}
 
-	public IncrementalInclusionCheck3(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+	public IncrementalInclusionCheck3(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
 			throws AutomataLibraryException {
 		super(services, a);

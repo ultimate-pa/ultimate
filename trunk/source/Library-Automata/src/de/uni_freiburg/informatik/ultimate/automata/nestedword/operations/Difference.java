@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -102,7 +103,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Difference(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> Difference(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand,
@@ -174,18 +176,19 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new DifferenceDD<>(mServices,
-				stateFactory, mFstOperand, mSndOperand, new PowersetDeterminizer<>(mSndOperand, true, stateFactory),
-				false, false)).getResult();
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+				(new DifferenceDD<>(mServices, stateFactory, mFstOperand, mSndOperand,
+						new PowersetDeterminizer<>(mSndOperand, true, (IDeterminizeStateFactory<STATE>) stateFactory),
+						false, false)).getResult();
 		boolean correct = true;
 		/*
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
 		*/
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult).getResult();
-		assert correct;
-		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd).getResult();
+		correct &=
+				new IsEquivalent<>(mServices, (ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory,
+						resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

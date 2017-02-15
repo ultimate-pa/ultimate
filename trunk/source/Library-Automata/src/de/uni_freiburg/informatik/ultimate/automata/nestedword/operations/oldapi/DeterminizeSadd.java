@@ -41,10 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -64,7 +65,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private final STATE mAuxiliaryEmptyStackState;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IDeterminizeStateFactory<STATE> mStateFactory;
 	
 	private final List<StatePair> mQueue = new LinkedList<>();
 	
@@ -81,7 +82,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 */
-	public DeterminizeSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public DeterminizeSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -353,12 +354,12 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		
 		boolean correct;
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-				(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		correct = (new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult)).getResult();
-		correct = correct && (new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd))
-				.getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+				(new DeterminizeDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand)).getResult();
+		correct = (new IsEquivalent<>(mServices,
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultDd, mResult))
+						.getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of determinization");

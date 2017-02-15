@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -215,7 +216,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		
 		// call submethod to enable overriding by subclasses
 		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		final Pair<Boolean, String> equivalenceResult = checkResultHelper((ISinkStateFactory<STATE>) stateFactory);
+		final Pair<Boolean, String> equivalenceResult =
+				checkResultHelper((ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
@@ -553,8 +555,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected Pair<Boolean, String> checkResultHelper(final ISinkStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	protected <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> Pair<Boolean, String>
+			checkResultHelper(final FACTORY stateFactory) throws AutomataLibraryException {
 		// by default only check finite-word language equivalence
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =
 				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());

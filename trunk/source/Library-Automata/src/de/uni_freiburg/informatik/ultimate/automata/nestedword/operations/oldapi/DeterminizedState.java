@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
  * Determinized state in the classical determinization algorithm for NWAs.
@@ -120,7 +120,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 *            A state factory.
 	 * @return content created by the factory for the determinized state
 	 */
-	public STATE getContent(final IStateFactory<STATE> stateFactory) {
+	public STATE getContent(final IDeterminizeStateFactory<STATE> stateFactory) {
 		if (mCachedResultingState == null) {
 			mCachedResultingState = stateFactory.determinize(mCaller2presents);
 		}

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -255,15 +256,15 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), oldNet)).getResult();
 		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), newNet)).getResult();
-		final NestedRun<L, C> subsetCounterex =
-				new IsIncluded<>(mServices, (ISinkStateFactory<C>) oldNet.getStateFactory(), finAuto1, finAuto2)
+		final NestedRun<L, C> subsetCounterex = new IsIncluded<>(mServices,
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C>) oldNet.getStateFactory(), finAuto1, finAuto2)
 						.getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		final NestedRun<L, C> supersetCounterex =
-				new IsIncluded<>(mServices, (ISinkStateFactory<C>) oldNet.getStateFactory(), finAuto2, finAuto1)
+		final NestedRun<L, C> supersetCounterex = new IsIncluded<>(mServices,
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C>) oldNet.getStateFactory(), finAuto2, finAuto1)
 						.getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset && mLogger.isErrorEnabled()) {

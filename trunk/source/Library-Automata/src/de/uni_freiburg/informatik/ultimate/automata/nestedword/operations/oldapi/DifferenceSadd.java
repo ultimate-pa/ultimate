@@ -41,11 +41,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -144,7 +145,7 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * @throws AutomataLibraryException
 	 *             if alphabets are different
 	 */
-	public DifferenceSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public DifferenceSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, minuend.getStateFactory(), minuend, subtrahend,
@@ -407,13 +408,11 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDD =
-					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-			correct = new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDD, mDifference)
-					.getResult();
-			correct = correct
-					&& new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mDifference, resultDD)
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = (new DifferenceDD<>(mServices,
+					(IDeterminizeStateFactory<STATE>) stateFactory, mMinuend, mSubtrahend)).getResult();
+			correct = new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultDD, mDifference)
 							.getResult();
 			if (!correct) {
 				mLogger.info("Finished testing correctness of " + operationName());

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
@@ -149,7 +150,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 		getLogger().info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(getServices(),
-				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, getOperand(),
+				getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}
