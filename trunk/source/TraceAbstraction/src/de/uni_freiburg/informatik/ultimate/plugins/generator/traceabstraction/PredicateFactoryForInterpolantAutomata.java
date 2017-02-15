@@ -57,7 +57,7 @@ public class PredicateFactoryForInterpolantAutomata
 		IBuchiComplementNcsbStateFactory<IPredicate>, IBuchiComplementFkvStateFactory<IPredicate>,
 		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate> {
 
-	final protected boolean mComputeHoareAnnotation;
+	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
 	protected final ManagedScript mMgdScript;
 	protected final PredicateFactory mPredicateFactory;

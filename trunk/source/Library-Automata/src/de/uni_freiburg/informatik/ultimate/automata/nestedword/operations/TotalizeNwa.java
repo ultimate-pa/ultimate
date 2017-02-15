@@ -40,9 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Totalized automaton of input. Expects that input is deterministic.
- * If a transition is nondeterministic an empty transition set is returned and
- * mNondeterminismInInputDetected is set to true.
+ * Totalized automaton of input. Expects that input is deterministic. If a transition is nondeterministic an empty
+ * transition set is returned and mNondeterminismInInputDetected is set to true.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
@@ -57,7 +56,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	private boolean mSinkStateWasConstructed;
 	private boolean mNondeterministicTransitionsDetected;
 	private boolean mNondeterministicInitialsDetected;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -71,7 +70,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		mOperand = operand;
 		mStateFactory = stateFactory;
 	}
-	
+
 	private void requestSinkState() {
 		if (mSinkStateWasConstructed) {
 			// do nothing
@@ -82,14 +81,14 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 			if (mSinkState == null) {
 				throw new IllegalArgumentException("sink state must not be null");
 			}
-			if ((mOperand instanceof INestedWordAutomaton)
-					&& (((INestedWordAutomaton<?, ?>) mOperand).getStates().contains(mSinkState))) {
+			if (mOperand instanceof INestedWordAutomaton
+					&& ((INestedWordAutomaton<?, ?>) mOperand).getStates().contains(mSinkState)) {
 				throw new UnsupportedOperationException("Operand already contains the state " + mSinkState);
 			}
 		}
 		mSinkStateWasConstructed = true;
 	}
-	
+
 	/**
 	 * @param state
 	 *            The candidate state.
@@ -100,28 +99,28 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		// equality intended here
 		return mSinkStateWasConstructed && state == mSinkState;
 	}
-	
+
 	/**
 	 * @return {@code true} iff automaton is nondeterministic.
 	 */
 	public boolean nonDeterminismInInputDetected() {
 		return mNondeterministicTransitionsDetected || mNondeterministicInitialsDetected;
 	}
-	
+
 	/**
 	 * @return {@code true} iff automaton has nondeterministic transitions.
 	 */
 	public boolean nondeterministicTransitionsDetected() {
 		return mNondeterministicTransitionsDetected;
 	}
-	
+
 	/**
 	 * @return {@code true} iff automaton has more than one initial state.
 	 */
 	public boolean nondeterministicInitialsDetected() {
 		return mNondeterministicInitialsDetected;
 	}
-	
+
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		final Iterator<STATE> it = mOperand.getInitialStates().iterator();
@@ -139,78 +138,72 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		result.add(initial);
 		return result;
 	}
-	
+
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	@Override
 	public boolean isInitial(final STATE state) {
 		/*
-		 * There are problems if the input already contains the state that
-		 * is the sink state of this automaton.
-		 * We approach these problems by comparing a state only to
-		 * the sink state if a new sink state was constructed.
+		 * There are problems if the input already contains the state that is the sink state of this automaton. We
+		 * approach these problems by comparing a state only to the sink state if a new sink state was constructed.
 		 */
 		if (isNewSinkState(state)) {
 			// return true iff operand does not have initial states
 			return !mOperand.getInitialStates().iterator().hasNext();
-		} else {
-			return mOperand.isInitial(state);
 		}
+		return mOperand.isInitial(state);
 	}
-	
+
 	@Override
 	public boolean isFinal(final STATE state) {
 		/*
-		 * There are problems if the input already contains the state that
-		 * is the sink state of this automaton.
-		 * We approach these problems by comparing a state only to
-		 * the sink state if a newly sink state was constructed
+		 * There are problems if the input already contains the state that is the sink state of this automaton. We
+		 * approach these problems by comparing a state only to the sink state if a newly sink state was constructed
 		 */
 		if (isNewSinkState(state)) {
 			return false;
-		} else {
-			return mOperand.isFinal(state);
 		}
+		return mOperand.isFinal(state);
 	}
-	
+
 	@Override
 	public STATE getEmptyStackState() {
 		return mOperand.getEmptyStackState();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
@@ -225,16 +218,15 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
 					return Collections.emptySet();
-				} else {
-					return Collections.singleton(trans);
 				}
+				return Collections.singleton(trans);
 			}
 		}
 		requestSinkState();
 		final OutgoingInternalTransition<LETTER, STATE> trans = new OutgoingInternalTransition<>(letter, mSinkState);
 		return Collections.singleton(trans);
 	}
-	
+
 	@SuppressWarnings("squid:S1941")
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
@@ -253,7 +245,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
@@ -267,16 +259,15 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
 					return Collections.emptySet();
-				} else {
-					return Collections.singleton(trans);
 				}
+				return Collections.singleton(trans);
 			}
 		}
 		requestSinkState();
 		final OutgoingCallTransition<LETTER, STATE> trans = new OutgoingCallTransition<>(letter, mSinkState);
 		return Collections.singleton(trans);
 	}
-	
+
 	@SuppressWarnings("squid:S1941")
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
@@ -295,10 +286,10 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		}
 		return result;
 	}
-	
+
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
@@ -310,20 +301,19 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				if (it.hasNext()) {
 					mNondeterministicTransitionsDetected = true;
 					return Collections.emptySet();
-				} else {
-					return Collections.singleton(trans);
 				}
+				return Collections.singleton(trans);
 			}
 		}
 		requestSinkState();
 		final OutgoingReturnTransition<LETTER, STATE> trans = new OutgoingReturnTransition<>(hier, letter, mSinkState);
 		return Collections.singleton(trans);
 	}
-	
+
 	@SuppressWarnings("squid:S1941")
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		if (mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
@@ -340,17 +330,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		}
 		return result;
 	}
-	
+
 	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		return "size Information not available";
