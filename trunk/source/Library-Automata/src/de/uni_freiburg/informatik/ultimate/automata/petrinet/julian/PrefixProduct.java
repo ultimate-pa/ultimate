@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -272,10 +273,11 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 		
-		final INestedWordAutomatonSimple<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
+		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+		final INestedWordAutomatonSimple<S, C> op1AsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
+				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult();
+		final INestedWordAutomatonSimple<S, C> resultAsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
+				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mResult)).getResult();
 		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final INestedWordAutomatonSimple<S, C> nwaResult = (new ConcurrentProduct<>(mServices,
 				(IConcurrentProductStateFactory<C>) stateFactory, op1AsNwa, mNwa, true)).getResult();
