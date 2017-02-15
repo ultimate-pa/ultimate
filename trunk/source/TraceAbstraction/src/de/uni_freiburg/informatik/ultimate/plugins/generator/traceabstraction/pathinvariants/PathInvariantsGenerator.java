@@ -647,10 +647,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore,
-				allProgramVars, false, null, pathprogramLocs2Predicates,
+				allProgramVars, false, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
+		
+		// Output the benchmarks per round into CSV file
+//		Map<Integer, PathInvariantsStatisticsGenerator> round2PathInvariantsStatistics = generator.getRound2PathInvariantsStatistics();
 		return invariants;
 	}
 
@@ -848,16 +851,18 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the maximum of the sum of template inequalities per location per round
 		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		// the minimum size of all templates occurring in the most recent round
+		MinNumOfInequalitiesInMostRecentRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
 		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round)
 		DAGSizeConstraints(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the sum of variables per location per round
-		VarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
-		DiffLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumNonLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		DiffUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
+		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

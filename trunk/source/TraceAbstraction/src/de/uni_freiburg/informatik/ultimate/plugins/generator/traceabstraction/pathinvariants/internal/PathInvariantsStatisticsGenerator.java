@@ -17,8 +17,9 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mMaxRound; 
 	private int mDAGSizeSumOfConstraints;
 	private int mSumOfVarsPerLoc;
-	private int mDiffOfLiveVariables;
-	private int mDiffOfUnsatCoreVars;
+	private int mNumOfNonLiveVariables;
+	private int mNumOfNonUnsatCoreVars;
+	private int mMinNumOfInequalitiesOfMostRecentRound;
 	
 	public void initializeStatistics() {
 		mNumOfPathProgramLocations = 0;
@@ -30,8 +31,9 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mMaxRound = 0;
 		mDAGSizeSumOfConstraints = 0;
 		mSumOfVarsPerLoc = 0;
-		mDiffOfLiveVariables = 0;
-		mDiffOfUnsatCoreVars = 0;
+		mNumOfNonLiveVariables = 0;
+		mNumOfNonUnsatCoreVars = 0;
+		mMinNumOfInequalitiesOfMostRecentRound = 0;
 	}
 
 
@@ -50,11 +52,12 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		case DiffOfLocsInUnsatCore: return mDiffOfLocsInUnsatCore;
 		case DiffOfVarsInUnsatCore: return mDiffOfVarsInUnsatCore;
 		case MaxNumOfInequalities: return mMaxNumOfInequalitiesPerRound;
+		case MinNumOfInequalitiesInMostRecentRound: return mMinNumOfInequalitiesOfMostRecentRound;
 		case MaxRound : return mMaxRound;
 		case DAGSizeConstraints : return mDAGSizeSumOfConstraints;
-		case VarsPerLoc: return mSumOfVarsPerLoc;
-		case DiffLiveVarsPerLoc: return mDiffOfLiveVariables;
-		case DiffUnsatCoreVars: return mDiffOfUnsatCoreVars;
+		case SumVarsPerLoc: return mSumOfVarsPerLoc;
+		case SumNonLiveVarsPerLoc: return mNumOfNonLiveVariables;
+		case SumNonUnsatCoreVars: return mNumOfNonUnsatCoreVars;
 		default:
 			throw new AssertionError("unknown key");
 		}
@@ -80,16 +83,17 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 
-	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, final int sumOfVarsPerLoc, final int diffOfLiveVariables,
-			final int diffOfUnsatCoreVars, final int DAGSizeSumOfConstraints, final int round) {
+	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, final int minimalTemplateSizeOfThisRound, final int sumOfVarsPerLoc, final int numfOfNonLiveVariables,
+			final int numOfNonUnsatCoreVars, final int DAGSizeSumOfConstraints, final int round) {
 		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalitiesPerRound) {
 			mMaxNumOfInequalitiesPerRound = numOfTemplateInequalitiesForThisRound;
 		}
+		mMinNumOfInequalitiesOfMostRecentRound = minimalTemplateSizeOfThisRound;
 		mSumOfTemplateInequalities += numOfTemplateInequalitiesForThisRound;
 		mDAGSizeSumOfConstraints += DAGSizeSumOfConstraints;
 		mSumOfVarsPerLoc += sumOfVarsPerLoc;
-		mDiffOfLiveVariables += diffOfLiveVariables;
-		mDiffOfUnsatCoreVars += diffOfUnsatCoreVars;
+		mNumOfNonLiveVariables += numfOfNonLiveVariables;
+		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
 		if (round > mMaxRound) {
 			mMaxRound  = round;
 		}
