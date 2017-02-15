@@ -836,28 +836,28 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	// Benchmarks Section
-	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
+	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement { 
 		// the sum of path program locations for each overall iteration
-		SUM_OF_LOCS(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumOfLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
-		PROGRAM_VARS(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the difference of path program locations and the locations extracted from unsat cores
-		DIFF_OF_LOCS_IN_UNSAT_CORE(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		DIFF_OF_VARS_IN_UNSAT_CORE(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration
-		SUM_OF_TEMPLATE_INEQUALITIES(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the maximum of the sum of template inequalities per location per round
-		MAX_NUM_OF_INEQUALITIES(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
-		MAX_ROUND(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round)
-		DAG_SIZE_CONSTRAINTS(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		DAGSizeConstraints(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the sum of variables per location per round
-		VARS_PER_LOC(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		VarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
-		DIFF_LIVE_VARS_PER_LOC(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		DiffLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		DIFF_UNSAT_CORE_VARS(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
+		DiffUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
