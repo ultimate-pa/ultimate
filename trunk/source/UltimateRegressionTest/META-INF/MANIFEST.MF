@@ -21,7 +21,8 @@ Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
- de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent,
+ de.uni_freiburg.informatik.ultimate.buchiprogramproduct
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
