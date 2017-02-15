@@ -27,17 +27,17 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	public static Function<Object, Function<Object, Object>> sIntegerMaximum =
 			x -> y -> Math.max((Integer) x, (Integer) y);
 
-	private final Class<T> mKeys;
+	private final Class<T> mKeyType;
 
-	public AStatisticsType(final Class<T> keys) {
+	public AStatisticsType(final Class<T> keyType) {
 		super();
-		mKeys = keys;
+		mKeyType = keyType;
 	}
 
 	@Override
 	public Collection<String> getKeys() {
 		final List<String> result = new ArrayList<>();
-		for (final Enum<?> test : mKeys.getEnumConstants()) {
+		for (final Enum<?> test : mKeyType.getEnumConstants()) {
 			result.add(test.toString());
 		}
 		return result;
@@ -45,23 +45,28 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 
 	@Override
 	public Object aggregate(final String key, final Object value1, final Object value2) {
-		final T keyEnum = Enum.valueOf(mKeys, key);
+		final T keyEnum = Enum.valueOf(mKeyType, key);
 		final Object result = keyEnum.aggregate(value1, value2);
 		return result;
 	}
 
 	@Override
 	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
+		return prettyprintBenchmarkData(getKeys(), mKeyType, benchmarkData);
+	}
+	
+	public static <T extends Enum<T> & IStatisticsElement> String prettyprintBenchmarkData(
+			final Collection<String> keys, final Class<T> keyType, final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (final String key : getKeys()) {
+		for (final String key : keys) {
 			if (first) {
 				first = false;
 			} else {
 				sb.append(", ");
 			}
 			final Object value = benchmarkData.getValue(key);
-			final T keyE = Enum.valueOf(mKeys, key);
+			final T keyE = Enum.valueOf(keyType, key);
 			sb.append(keyE.prettyprint(value));
 		}
 		return sb.toString();
