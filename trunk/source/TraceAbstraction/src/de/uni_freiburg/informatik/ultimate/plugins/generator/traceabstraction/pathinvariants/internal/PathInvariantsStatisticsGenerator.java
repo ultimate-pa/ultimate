@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
-import java.util.HashSet;
-//import java.util.List;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
@@ -44,7 +41,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	@Override
-	public Object getValue(String key) {
+	public Object getValue(final String key) {
 		final PathInvariantsStatisticsDefinitions keyEnum = Enum.valueOf(PathInvariantsStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SUM_OF_LOCS: return mNumOfPathProgramLocations;
@@ -77,14 +74,14 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	
-	public void setLocationAndVariablesData(int diffOfLocsInUnsatCore, int diffVarsInUnsatCore) {
+	public void setLocationAndVariablesData(final int diffOfLocsInUnsatCore, final int diffVarsInUnsatCore) {
 		mDiffOfLocsInUnsatCore += diffOfLocsInUnsatCore;
 		mDiffOfVarsInUnsatCore += diffVarsInUnsatCore;
 	}
 
 
-	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, int sumOfVarsPerLoc, int diffOfLiveVariables,
-			int diffOfUnsatCoreVars, int DAGSizeSumOfConstraints, int round) {
+	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, final int sumOfVarsPerLoc, final int diffOfLiveVariables,
+			final int diffOfUnsatCoreVars, final int DAGSizeSumOfConstraints, final int round) {
 		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalitiesPerRound) {
 			mMaxNumOfInequalitiesPerRound = numOfTemplateInequalitiesForThisRound;
 		}
@@ -96,5 +93,10 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		if (round > mMaxRound) {
 			mMaxRound  = round;
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return AStatisticsType.prettyprintBenchmarkData(getKeys(), PathInvariantsStatisticsDefinitions.class, this);
 	}
 }
