@@ -171,6 +171,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		if (mLargestBlockInitialPartition != 0) {
 			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, mInitialPartitionSize);
 		}
 		return statistics;
 	}

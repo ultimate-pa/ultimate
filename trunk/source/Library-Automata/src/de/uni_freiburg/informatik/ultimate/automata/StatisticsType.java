@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
@@ -215,10 +214,9 @@ public enum StatisticsType {
 	 */
 	NUMBER_OF_CLAUSES,
 	/**
-	 * Number of pairs in the initial partition which is provided e.g., by the
-	 * {@link LookaheadPartitionConstructor}.
+	 * Number of pairs in an initial partition.
 	 */
-	NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS,
+	NUMBER_PAIRS_INITIAL_PARTITION,
 	/**
 	 * Number of variables.
 	 */
@@ -332,9 +330,11 @@ public enum StatisticsType {
 	 */
 	SIZE_GAME_GRAPH,
 	/**
-	 * Number of states in the biggest equivalence class of an initial
-	 * partition which is provided e.g., by the
-	 * {@link LookaheadPartitionConstructor}.
+	 * Number of blocks in an initial partition.
+	 */
+	SIZE_INITIAL_PARTITION,
+	/**
+	 * Number of states in the biggest block of an initial partition.
 	 */
 	SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 	/**
