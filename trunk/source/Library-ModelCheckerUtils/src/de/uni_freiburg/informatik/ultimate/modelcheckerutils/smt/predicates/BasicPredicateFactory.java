@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -152,13 +151,6 @@ public class BasicPredicateFactory {
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
 		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), inputPreds);
-	}
-
-	public <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbsIntPredicate<STATE, VARDECL>
-			newAbstractStatePredicate(final STATE abstractState) {
-		final Term stateTerm = abstractState.getTerm(mScript);
-		final BasicPredicate predicate = newPredicate(stateTerm);
-		return new AbsIntPredicate<>(predicate, abstractState);
 	}
 
 	public Term and(final IPredicate... preds) {

@@ -81,6 +81,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
+
 	}
 
 	@Override
@@ -121,45 +122,64 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private Validity checkNonReturnTransition(final STATE origPreState, final ACTION act, final STATE origPostState) {
 		final STATE preState = getValidPrestate(origPreState, act);
 		final STATE postState = getValidPoststate(origPostState, act);
-
-		if (preState.isBottom()) {
-			mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
-			return Validity.VALID;
+		final Validity result = checkNonReturnTransitionNoLogging(preState, act, postState);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(origPreState, preState, "Modified preState");
+			logDebugIfNotEqual(origPostState, postState, "Modified postState");
+			mLogger.debug(preState.toLogString() + " " + act + " " + postState.toLogString());
+			mLogger.debug("Result: " + result);
 		}
-
-		try {
-			final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
-			if (postState.isBottom()) {
-				if (calculatedPost == null || calculatedPost.isBottom()) {
-					mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
-					return trackPost(Validity.VALID, act);
-				}
-				return Validity.UNKNOWN;
-			}
-
-			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
-			if (subs != SubsetResult.NONE) {
-				mLogger.info(preState.toLogString() + " " + act + " " + postState.toLogString());
-				return trackPost(Validity.VALID, act);
-			}
-			return Validity.UNKNOWN;
-		} catch (final Throwable e) {
-			// dirty hack
-			mLogger.error("Suppressing exception: " + e.getMessage());
-			return Validity.UNKNOWN;
-		}
+		return result;
 	}
 
 	private Validity checkReturnTransition(final STATE origPreLinState, final STATE origPreHierState, final ACTION act,
 			final STATE origPostState) {
-
 		final STATE preLinState = getValidPrestate(origPreLinState, act);
 		final STATE preHierState = getValidPreHierstate(origPreHierState, act);
 		final STATE postState = getValidPoststate(origPostState, act);
+		final Validity result = checkReturnTransitionNoLogging(preLinState, preHierState, act, postState);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(origPreLinState, preLinState, "Modified preLinState");
+			logDebugIfNotEqual(origPreHierState, preHierState, "Modified preHierState");
+			logDebugIfNotEqual(origPostState, postState, "Modified postState");
+			mLogger.debug(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
+					+ postState.toLogString());
+			mLogger.debug("Result: " + result);
+		}
+
+		return result;
+	}
+
+	private void logDebugIfNotEqual(final STATE orig, final STATE modified, final String msg) {
+		if (!modified.equals(orig)) {
+			mLogger.debug(msg + ": " + modified.toLogString() + "(was: " + orig.toLogString() + ")");
+		}
+	}
+
+	private Validity checkNonReturnTransitionNoLogging(final STATE preState, final ACTION act, final STATE postState) {
+		if (preState.isBottom()) {
+			return Validity.VALID;
+		}
+
+		final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
+		if (postState.isBottom()) {
+			if (calculatedPost == null || calculatedPost.isBottom()) {
+				return trackPost(Validity.VALID, act);
+			}
+			return Validity.UNKNOWN;
+		}
+
+		final SubsetResult subs = postState.isSubsetOf(calculatedPost);
+		if (subs != SubsetResult.NONE) {
+			return trackPost(Validity.VALID, act);
+		}
+		return Validity.UNKNOWN;
+	}
+
+	private Validity checkReturnTransitionNoLogging(final STATE preLinState, final STATE preHierState, final ACTION act,
+			final STATE postState) {
 
 		if (preLinState.isBottom()) {
-			mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
-					+ postState.toLogString());
 			return Validity.VALID;
 		}
 
@@ -167,33 +187,21 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return Validity.VALID;
 		}
 
-		try {
-			final STATE calculatedPost =
-					mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
+		final STATE calculatedPost =
+				mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
 
-			if (postState.isBottom()) {
-				if (calculatedPost == null || calculatedPost.isBottom()) {
-					mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
-							+ postState.toLogString());
-					return trackPost(Validity.VALID, act);
-				}
-				mLogger.info("NOT " + preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
-						+ postState.toLogString());
-				return Validity.UNKNOWN;
-			}
-
-			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
-			if (subs != SubsetResult.NONE) {
-				mLogger.info(preLinState.toLogString() + " " + preHierState.toLogString() + " " + act + " "
-						+ postState.toLogString());
+		if (postState.isBottom()) {
+			if (calculatedPost == null || calculatedPost.isBottom()) {
 				return trackPost(Validity.VALID, act);
 			}
 			return Validity.UNKNOWN;
-		} catch (final Throwable e) {
-			// dirty hack
-			mLogger.error("Suppressing exception: " + e.getMessage());
-			return Validity.UNKNOWN;
 		}
+
+		final SubsetResult subs = postState.isSubsetOf(calculatedPost);
+		if (subs != SubsetResult.NONE) {
+			return trackPost(Validity.VALID, act);
+		}
+		return Validity.UNKNOWN;
 	}
 
 	private Validity trackPost(final Validity valid, final ACTION act) {
