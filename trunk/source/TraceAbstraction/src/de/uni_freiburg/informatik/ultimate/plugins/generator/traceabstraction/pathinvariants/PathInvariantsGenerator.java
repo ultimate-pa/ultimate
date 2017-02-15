@@ -840,8 +840,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	// Benchmarks Section
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement { 
+		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall iteration
+		ProgramSize(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
-		SumOfLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
 		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the difference of path program locations and the locations extracted from unsat cores
@@ -849,10 +851,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		// the maximum of the sum of template inequalities per location per round
-		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the minimum size of all templates occurring in the most recent round
-		MinNumOfInequalitiesInMostRecentRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		SizeOfLargestTemplate(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		// the minimum size of all templates occurring in the most recent round
+		SizeOfSmallestTemplate(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		// the maximum of the sum of template inequalities per round
+		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
 		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round)
@@ -862,7 +866,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// the sum of the difference of all variables and the live variables per location per round
 		SumNonLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
+		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Number of Motzkin Transformations
+		MotzkinTransformations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Sat status
+		SatStatus(String.class, s1 -> s2 -> new String((String)s1 + "; " + (String)s2), AStatisticsType.sKeyBeforeData);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

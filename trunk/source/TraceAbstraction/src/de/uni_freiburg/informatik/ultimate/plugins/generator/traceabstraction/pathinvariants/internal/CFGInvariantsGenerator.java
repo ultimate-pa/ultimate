@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessor.LinearInequalityPatternProcessorStatistics;
 
 /**
  * A generator for a map of invariants to {@link ControlFlowGraph.Location}s within a {@link ControlFlowGraph}, using a
@@ -182,6 +183,7 @@ public final class CFGInvariantsGenerator {
 			predicates.clear();
 			int sumOfTemplateConjuncts = 0;
 			int minimalTemplateSizeOfThisRound = Integer.MAX_VALUE;
+			int maximalTemplateSizeOfThisRound = 0;
 			for (final IcfgInternalTransition transition : transitions) {
 				final IPT invStart = locs2Patterns.get(transition.getSource());
 				final IPT invEnd = locs2Patterns.get(transition.getTarget());
@@ -194,8 +196,13 @@ public final class CFGInvariantsGenerator {
 						(Collection<Collection<AbstractLinearInvariantPattern>>) invEnd);
 				// Compute the total size of all non-trivial templates
 				sumOfTemplateConjuncts = sumOfTemplateConjuncts + sizeOfTemplate2;
-				if (transition.getTarget() != errorLocation && sizeOfTemplate2 < minimalTemplateSizeOfThisRound) {
-					minimalTemplateSizeOfThisRound = sizeOfTemplate2;
+				if (transition.getTarget() != errorLocation) {
+					if (sizeOfTemplate2 < minimalTemplateSizeOfThisRound) {
+						minimalTemplateSizeOfThisRound = sizeOfTemplate2;
+					}
+					if (sizeOfTemplate2 > maximalTemplateSizeOfThisRound) {
+						maximalTemplateSizeOfThisRound = sizeOfTemplate2;
+					}
 				}
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
@@ -204,9 +211,9 @@ public final class CFGInvariantsGenerator {
 			LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
 			
 			// Prepare and submit the statistics
-			int DAGSizeSumOfConstraints = ((LinearInequalityInvariantPatternProcessor)processor).getDAGSizeOfConstraints();
+			Map<LinearInequalityPatternProcessorStatistics, Integer> stats = ((LinearInequalityInvariantPatternProcessor)processor).getStatistics();
 			prepareAndSetPathInvariantsStatistics(locationsAsList, startLocation, errorLocation, allProgramVars, varsFromUnsatCore, locs2LiveVariables, 
-					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, DAGSizeSumOfConstraints, round);
+					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, constraintsResult.toString(), stats, round);
 			
 			if (constraintsResult == LBool.SAT) {
 				mLogger.info("[CFGInvariants] Found valid " + "configuration in round " + round + ".");
@@ -263,16 +270,11 @@ public final class CFGInvariantsGenerator {
 
 	private void prepareAndSetPathInvariantsStatistics(List<IcfgLocation> locationsAsList, IcfgLocation startLoc, IcfgLocation errorLoc, Set<IProgramVar> allProgramVars,
 			Set<IProgramVar> varsFromUnsatCore, Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, 
-			int numOfTemplateInequalitiesForThisRound, int minimalTemplateSizeOfThisRound, int DAGSizeSumOfConstraints, int round) {
+			int numOfTemplateInequalitiesForThisRound, int minimalTemplateSizeOfThisRound, int maximalTemplateSizeOfThisRound, String constraintsResult, Map<LinearInequalityPatternProcessorStatistics, Integer> linearInequalityStatistics, 
+			int round) {
 		int sumOfVarsPerLoc = allProgramVars.size() * (locationsAsList.size() - 2);
 		int numOfNonLiveVariables = 0;
 		int numOfNonUnsatCoreVars = 0;
-//		if (varsFromUnsatCore == null) {
-//			numOfNonUnsatCoreVars = 0;
-//		}
-//		if (locs2LiveVariables == null) {
-//			numOfNonLiveVariables = 0;
-//		}
 		for (IcfgLocation loc : locationsAsList) {
 			if (loc != startLoc && loc != errorLoc) {
 				if (varsFromUnsatCore != null) {
@@ -285,12 +287,12 @@ public final class CFGInvariantsGenerator {
 				}
 			}
 		}
-		mPathInvariantsStatistics.addStatisticsData(numOfTemplateInequalitiesForThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
-				numOfNonUnsatCoreVars, DAGSizeSumOfConstraints, round);
+		mPathInvariantsStatistics.addStatisticsData(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
+				numOfNonUnsatCoreVars, linearInequalityStatistics, round, constraintsResult);
 		PathInvariantsStatisticsGenerator pathInvariantsStatisticsForThisRound = new PathInvariantsStatisticsGenerator();
 		pathInvariantsStatisticsForThisRound.initializeStatistics();
-		pathInvariantsStatisticsForThisRound.addStatisticsData(numOfTemplateInequalitiesForThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
-				numOfNonUnsatCoreVars, DAGSizeSumOfConstraints, round);
+		pathInvariantsStatisticsForThisRound.addStatisticsData(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, sumOfVarsPerLoc, numOfNonLiveVariables,
+				numOfNonUnsatCoreVars, linearInequalityStatistics, round, constraintsResult);
 		mRound2PathInvariantsStatistics.put(round, pathInvariantsStatisticsForThisRound);
 	}
 
