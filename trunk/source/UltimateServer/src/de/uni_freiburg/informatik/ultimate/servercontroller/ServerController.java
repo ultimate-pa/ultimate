@@ -184,6 +184,7 @@ public class ServerController implements IController<RunDefinition> {
 
 		final File settingsFile = requestChoice(availableSettingsFiles, File::getName);
 		try {
+			core.resetPreferences();
 			core.loadPreferences(settingsFile.getAbsolutePath());
 		} catch (Exception e) {
 			throw new IllegalStateException("could not load settings", e);
