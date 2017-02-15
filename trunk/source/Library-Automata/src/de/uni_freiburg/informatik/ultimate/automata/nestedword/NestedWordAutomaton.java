@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -2207,7 +2208,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	 * @return nested word automaton which represents the concurrent product
 	 */
 	public INestedWordAutomaton<LETTER, STATE> concurrentProduct(final INestedWordAutomaton<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<>(mServices, mStateFactory, this, nwa, false)).getResult();
+		// TODO Christian 2017-02-15 Temporary workaround, state factory should become a parameter
+		//      Actually, this method should be removed!
+		return (new ConcurrentProduct<>(mServices, (IConcurrentProductStateFactory<STATE>)mStateFactory, this, nwa, false)).getResult();
 	}
 	
 	/**
@@ -2216,7 +2219,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	 * @return nested word automaton which represents the concurrent product prefix
 	 */
 	public INestedWordAutomaton<LETTER, STATE> concurrentPrefixProduct(final INestedWordAutomaton<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<>(mServices, mStateFactory, this, nwa, true)).getResult();
+		// TODO Christian 2017-02-15 Temporary workaround, state factory should become a parameter
+		return (new ConcurrentProduct<>(mServices, (IConcurrentProductStateFactory<STATE>)mStateFactory, this, nwa, true)).getResult();
 	}
 	
 	/**

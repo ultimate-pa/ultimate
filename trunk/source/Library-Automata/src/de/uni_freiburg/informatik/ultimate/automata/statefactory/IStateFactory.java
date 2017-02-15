@@ -108,19 +108,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * Concurrent product construction of two states.
-	 * 
-	 * @param content1
-	 *            first content
-	 * @param content2
-	 *            second content
-	 * @return state representing the concurrent product
-	 */
-	default STATE getContentOnConcurrentProduct(final STATE content1, final STATE content2) {
-		return intersection(content1, content2);
-	}
-	
-	/**
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
 	 * 
 	 * @param downState
