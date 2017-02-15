@@ -74,11 +74,20 @@ public class Location {
 	}
 	
 	protected void setInvariant(final String invariant) {
-		mInvariant = invariant;
+		if (invariant != null) {
+			mInvariant = invariant.replaceAll("&&", "&");
+		} else {
+			mInvariant = "";
+		}
 	}
 	
 	protected void setFlow(final String flow) {
-		mFlow = flow;
+		if (flow != null) {
+			mFlow = flow.replaceAll("&&", "&");
+		} else {
+			mFlow = "";
+		}
+		
 	}
 	
 	public String getInvariant() {
@@ -93,7 +102,7 @@ public class Location {
 		return mIsForbidden;
 	}
 	
-	public void setForbidden(boolean isForbidden) {
+	public void setForbidden(final boolean isForbidden) {
 		mIsForbidden = isForbidden;
 	}
 	

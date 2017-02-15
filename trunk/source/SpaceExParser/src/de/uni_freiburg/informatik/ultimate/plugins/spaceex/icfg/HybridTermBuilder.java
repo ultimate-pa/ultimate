@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -63,7 +65,7 @@ public class HybridTermBuilder {
 	}
 	
 	public Term infixToTerm(final String infix, final BuildScenario scenario) {
-		final String[] infixArray = expressionToArray(infix);
+		final List<String> infixArray = expressionToArray(infix);
 		final List<String> postfix = postfix(infixArray);
 		return postfixToTerm(postfix, scenario);
 	}
@@ -191,7 +193,46 @@ public class HybridTermBuilder {
 	// helper function to get the correct termvariable for each scenario
 	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario,
 			final boolean isAssignedValue) {
-		if (scenario == BuildScenario.INITIALLY) {
+		if (mVariableManager.getConstants().contains(operand1)) {
+			return null;
+		} else if (scenario == BuildScenario.INITIALLY) {
+			return getInitiallyTV(operand1);
+		} else if (scenario == BuildScenario.GUARD || scenario == BuildScenario.INVARIANT) {
+			return getInvariantTV(operand1);
+		} else {
+			return getUpdateTV(operand1, isAssignedValue);
+		}
+	}
+	
+	// helper function to get TermVariable for initially Terms
+	private TermVariable getInitiallyTV(final String operand1) {
+		if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+			mOutVars.put(progvar, outvar);
+			return outvar;
+		} else {
+			return null;
+		}
+	}
+	
+	// helper function to get TermVariable for Invariant or Guard Terms
+	private TermVariable getInvariantTV(final String operand1) {
+		if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
+			final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+			mInVars.put(progvar, invar);
+			mOutVars.put(progvar, outvar);
+			return invar;
+		} else {
+			return null;
+		}
+	}
+	
+	// helper function to get TermVariable for Invariant or Update Terms
+	private TermVariable getUpdateTV(final String operand1, final boolean isAssignedValue) {
+		if (isAssignedValue) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
@@ -200,39 +241,15 @@ public class HybridTermBuilder {
 			} else {
 				return null;
 			}
-		} else if (scenario == BuildScenario.GUARD || scenario == BuildScenario.INVARIANT) {
+		} else {
 			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
-				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
 				mInVars.put(progvar, invar);
-				mOutVars.put(progvar, outvar);
 				return invar;
 			} else {
 				return null;
 			}
-		} else if (scenario == BuildScenario.UPDATE) {
-			if (isAssignedValue) {
-				if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-					final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-					final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
-					mOutVars.put(progvar, outvar);
-					return outvar;
-				} else {
-					return null;
-				}
-			} else {
-				if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-					final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-					final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
-					mInVars.put(progvar, invar);
-					return invar;
-				} else {
-					return null;
-				}
-			}
-		} else {
-			return null;
 		}
 	}
 	
@@ -242,10 +259,23 @@ public class HybridTermBuilder {
 	 * @param expression
 	 * @return
 	 */
-	public static String[] expressionToArray(final String expression) {
-		final String regex = "(?<=\\G(\\w+(?!\\w+)|\\+|-|\\/|\\*|\\&|\\||<(?!=)|>(?!=)|<=|>=|==|\\(|\\)))\\s*";
-		return expression.split(regex);
-		
+	public static List<String> expressionToArray(final String expression) {
+		final List<String> res = new ArrayList<>();
+		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|-|\\*|\\||\\(|\\)| +)");
+		final String s = expression.replaceAll("\\s", "");
+		final Matcher m = p.matcher(s);
+		int pos = 0;
+		while (m.find()) {
+			if (pos != m.start()) {
+				res.add(s.substring(pos, m.start()));
+			}
+			res.add(m.group());
+			pos = m.end();
+		}
+		if (pos != s.length()) {
+			res.add(s.substring(pos));
+		}
+		return res;
 	}
 	
 	private static boolean isHigherPrec(final String op, final String sub) {
@@ -255,14 +285,14 @@ public class HybridTermBuilder {
 	/**
 	 * Function to convert infix to postfix (Shunting yard algorithm)
 	 *
-	 * @param infix
+	 * @param infixArray
 	 * @return
 	 */
-	public static List<String> postfix(final String[] infix) {
+	public static List<String> postfix(final List<String> infixArray) {
 		final List<String> output = new ArrayList<>();
 		final Deque<String> stack = new LinkedList<>();
 		
-		for (final String element : infix) {
+		for (final String element : infixArray) {
 			// operator
 			if (mOperators.containsKey(element)) {
 				while (!stack.isEmpty() && isHigherPrec(element, stack.peek())) {

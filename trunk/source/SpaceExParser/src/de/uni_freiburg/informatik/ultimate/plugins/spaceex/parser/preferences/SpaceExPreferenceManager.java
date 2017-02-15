@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilde
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 
 /**
- * Class that shall parse the config file of a SpaceEx model.
+ * Class that shall parse the config file of a SpaceEx model and hold important settings and values.
  * 
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
@@ -61,13 +61,14 @@ public class SpaceExPreferenceManager {
 	private final ILogger mLogger;
 	private String mSystem;
 	private final String mModelFilename;
-	// replacement map for groups
+	// replacement map for variables of the form Literal -> real variable.. e.g A0 -> x<=5
 	private final Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
-	// the forbiddengroup holds the specified locations + variables of the "forbidden" property.
+	// the forbiddengroups hold the specified locations + variables of the "forbidden" property.
 	private final List<SpaceExForbiddenGroup> mForbiddenGroups;
 	private final Map<String, List<String>> mForbiddenToForbiddenlocs;
+	// Map that holds the parallel composition of each preference group.
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
@@ -148,7 +149,7 @@ public class SpaceExPreferenceManager {
 	
 	private List<String> infixToGroups(final String infix) {
 		final String infixWithLiterals = replaceAllWithLiterals(infix);
-		final String[] infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
+		final List<String> infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
 		final List<String> postfix = HybridTermBuilder.postfix(infixToArray);
 		final List<String> groups = postfixToGroups(postfix);
 		return replaceLiterals(groups);
@@ -168,11 +169,13 @@ public class SpaceExPreferenceManager {
 							+ preferenceGroup.getInitialVariableInfix());
 				}
 			}
-			if (mPreferenceGroups.isEmpty()) {
-				mHasPreferenceGroups = false;
-			} else {
-				mHasPreferenceGroups = true;
-			}
+		} else {
+			mLogger.info("-Config file has no initially property-");
+		}
+		if (mPreferenceGroups.isEmpty()) {
+			mHasPreferenceGroups = false;
+		} else {
+			mHasPreferenceGroups = true;
 		}
 	}
 	
@@ -265,8 +268,8 @@ public class SpaceExPreferenceManager {
 		return res;
 	}
 	
-	// helper function to replace all elements in a string of the form x==2 & loc(x)==wuargh, with single literals.
-	// x==2 & loc(x)==wuargh & y<=4---> A0 & A1 & A2
+	// helper function to replace all elements in a string of the form x==2 & loc(x)==loc1, with single literals.
+	// x==2 & loc(x)==loc1 & y<=4 ---> A0 & A1 & A2
 	private String replaceAllWithLiterals(final String initially) {
 		mReplacement.clear();
 		// regex stuff for initial locations
@@ -315,9 +318,6 @@ public class SpaceExPreferenceManager {
 	 * @return
 	 */
 	public List<String> postfixToGroups(final List<String> postfix) {
-		/*
-		 * TODO: Explain how the hell this algorithm works
-		 */
 		final Deque<String> stack = new LinkedList<>();
 		final List<String> openGroupstack = new ArrayList<>();
 		final List<String> finishedGroups = new ArrayList<>();
@@ -476,7 +476,7 @@ public class SpaceExPreferenceManager {
 			mLogger.info("Original: " + testString);
 			final String test = replaceAllWithLiterals(testString);
 			mLogger.info("replaced: " + test);
-			final String[] testarr = HybridTermBuilder.expressionToArray(test);
+			final List<String> testarr = HybridTermBuilder.expressionToArray(test);
 			final List<String> postfix = HybridTermBuilder.postfix(testarr);
 			mLogger.info("postfix: " + postfix);
 			final List<String> groups = postfixToGroups(postfix);

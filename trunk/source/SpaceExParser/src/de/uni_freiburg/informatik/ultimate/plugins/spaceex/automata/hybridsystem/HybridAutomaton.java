@@ -58,7 +58,8 @@ public class HybridAutomaton {
 	private final ILogger mLogger;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
-	protected HybridAutomaton(ComponentType automaton, ILogger logger, SpaceExPreferenceManager preferenceManager) {
+	protected HybridAutomaton(final ComponentType automaton, final ILogger logger,
+			final SpaceExPreferenceManager preferenceManager) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 					"The input automaton must be a hybrid automaton, not a system template.");
@@ -92,9 +93,10 @@ public class HybridAutomaton {
 		mInitialLocation = mLocations.get(1);
 	}
 	
-	protected HybridAutomaton(String name, Map<Integer, Location> locations, Location initialLocation,
-			List<Transition> transitions, Set<String> localParameters, Set<String> localConstants,
-			Set<String> globalParameters, Set<String> globalConstants, Set<String> labels, ILogger logger) {
+	protected HybridAutomaton(final String name, final Map<Integer, Location> locations, final Location initialLocation,
+			final List<Transition> transitions, final Set<String> localParameters, final Set<String> localConstants,
+			final Set<String> globalParameters, final Set<String> globalConstants, final Set<String> labels,
+			final ILogger logger) {
 		mName = name;
 		mLocations = locations;
 		mInitialLocation = initialLocation;
@@ -111,7 +113,7 @@ public class HybridAutomaton {
 		}
 	}
 	
-	private void addLocation(LocationType location) {
+	private void addLocation(final LocationType location) {
 		if (mLocations.containsKey(location.getId())) {
 			throw new IllegalArgumentException(
 					"The location " + location.getId() + " is already part of the automaton.");
@@ -135,7 +137,7 @@ public class HybridAutomaton {
 		}
 	}
 	
-	private void addTransition(TransitionType trans) {
+	private void addTransition(final TransitionType trans) {
 		final Location source = mLocations.get(trans.getSource());
 		final Location target = mLocations.get(trans.getTarget());
 		
@@ -162,7 +164,7 @@ public class HybridAutomaton {
 	 * @param autBinds
 	 * @return
 	 */
-	public Map<String, String> renameAccordingToBinds(Map<String, String> autBinds) {
+	public Map<String, String> renameAccordingToBinds(final Map<String, String> autBinds) {
 		final Map<String, String> newBinds = new HashMap<>();
 		autBinds.forEach((glob, loc) -> {
 			if (mLabels.contains(loc)) {
@@ -198,7 +200,7 @@ public class HybridAutomaton {
 	/*
 	 * Function that renames variables of guards and updates of transitions
 	 */
-	private void renameTransitionVariables(String loc, String glob) {
+	private void renameTransitionVariables(final String loc, final String glob) {
 		mTransitions.forEach(trans -> {
 			String guard = trans.getGuard() != null ? trans.getGuard() : "";
 			guard = guard.replaceAll(loc, glob);
@@ -212,10 +214,10 @@ public class HybridAutomaton {
 	/*
 	 * Function that renames invariant and flow of a location
 	 */
-	private void renameLocationVariables(String loc, String glob) {
+	private void renameLocationVariables(final String loc, final String glob) {
 		mLocations.forEach((id, location) -> {
 			String invariant = (location.getInvariant() != null) ? location.getInvariant() : "";
-			invariant = invariant.replaceAll(loc, glob);
+			invariant = invariant.replaceAll("\\b" + loc + "\\b", glob);
 			location.setInvariant(invariant);
 			String flow = (location.getFlow() != null) ? location.getFlow() : "";
 			flow = flow.replaceAll(loc, glob);
@@ -226,7 +228,7 @@ public class HybridAutomaton {
 	/*
 	 * function that replaces a value in a set
 	 */
-	private void replaceValueInSet(Set<String> set, String loc, String glob) {
+	private void replaceValueInSet(final Set<String> set, final String loc, final String glob) {
 		set.remove(loc);
 		set.add(glob);
 	}
@@ -234,7 +236,7 @@ public class HybridAutomaton {
 	/*
 	 * function that renames labels in transitions
 	 */
-	private void renameTransitionLabels(String loc, String glob) {
+	private void renameTransitionLabels(final String loc, final String glob) {
 		mTransitions.forEach(trans -> {
 			if (trans.getLabel() != null && trans.getLabel().equals(loc)) {
 				trans.setLabel(glob);

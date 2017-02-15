@@ -37,8 +37,8 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	 * @param script
 	 * @param automaton
 	 */
-	public HybridIcfgSymbolTable(ManagedScript script, HybridAutomaton automaton, String procedure,
-			HybridVariableManager variableManager) {
+	public HybridIcfgSymbolTable(final ManagedScript script, final HybridAutomaton automaton, final String procedure,
+			final HybridVariableManager variableManager) {
 		mScript = script;
 		mLocals = new HashMap<>();
 		mTVtoProgVar = new HashMap<>();
@@ -59,9 +59,11 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 			mTVtoProgVar.put(inVar, progVar);
 			mTVtoProgVar.put(outVar, progVar);
 			progVars.add(progVar);
+			if (automaton.getLocalConstants().contains(var) || automaton.getGlobalConstants().contains(var)) {
+				variableManager.addVarToConstants(var);
+			}
 		}
 		mLocals.put(procedure, progVars);
-		
 	}
 	
 	@Override
@@ -80,12 +82,12 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	}
 	
 	@Override
-	public IProgramVar getProgramVar(TermVariable tv) {
+	public IProgramVar getProgramVar(final TermVariable tv) {
 		return mTVtoProgVar.get(tv);
 	}
 	
 	@Override
-	public IProgramConst getProgramConst(ApplicationTerm at) {
+	public IProgramConst getProgramConst(final ApplicationTerm at) {
 		// TODO Auto-generated method stub
 		return null;
 	}

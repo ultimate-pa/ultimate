@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -16,6 +18,7 @@ public class HybridVariableManager {
 	private final Map<HybridProgramVar, String> mProgramVar2Var;
 	private final Map<String, TermVariable> mVar2InVarTermVariable;
 	private final Map<String, TermVariable> mVar2OutVarTermVariable;
+	private final List<String> mConstants;
 	private Map<TermVariable, String> mTermVariable2Var;
 	private final Map<TermVariable, String> mTermVariable2InVar;
 	private final Map<TermVariable, String> mTermVariable2OutVar;
@@ -28,6 +31,7 @@ public class HybridVariableManager {
 		mVar2OutVarTermVariable = new HashMap<>();
 		mTermVariable2InVar = new HashMap<>();
 		mTermVariable2OutVar = new HashMap<>();
+		mConstants = new ArrayList<>();
 	}
 	
 	public HybridProgramVar constructProgramVar(final String identifier, final String procedure) {
@@ -82,6 +86,14 @@ public class HybridVariableManager {
 	public void addOutVarTermVariable(final String varName, final TermVariable termVariable) {
 		mVar2OutVarTermVariable.put(varName, termVariable);
 		mTermVariable2OutVar.put(termVariable, varName);
+	}
+	
+	public void addVarToConstants(final String var) {
+		mConstants.add(var);
+	}
+	
+	public List<String> getConstants() {
+		return mConstants;
 	}
 	
 }

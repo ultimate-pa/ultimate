@@ -50,7 +50,8 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
 		assertEquals("[x, y]", merge.getLocalParameters().toString());
-		assertEquals("{1=loc_1_1(1), Invariant: y <= 10 && x <= 10, Flow: y' == 10 && x' == 10, IsForbidden?: false}",
+		assertEquals(
+				"{1=loc_loc1_loc1(1), Invariant: y <= 10 & x <= 10, Flow: y' == 10 & x' == 10, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals("[]", merge.getTransitions().toString());
 		long estimatedTime = System.nanoTime() - startTime;
@@ -71,8 +72,8 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[]", merge.getLocalConstants().toString());
 		assertEquals("[x, y]", merge.getLocalParameters().toString());
 		assertEquals(
-				"{1=loc_1_1(1), Invariant: y <= 10 && x <= 10, Flow: y' == 10 && x' == 10, IsForbidden?: false,"
-						+ " 2=loc_2_1(2), Invariant: x <= 10, Flow: x' == 10, IsForbidden?: false}",
+				"{1=loc_loc1_loc1(1), Invariant: y <= 10 & x <= 10, Flow: y' == 10 & x' == 10, IsForbidden?: false, "
+						+ "2=loc_loc2_loc1(2), Invariant: x <= 10, Flow: x' == 10, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals("[(1) === (); {} ===> (2)]", merge.getTransitions().toString());
 		estimatedTime = System.nanoTime() - startTime;
@@ -95,11 +96,11 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[x, y]", merge.getLocalParameters().toString());
 		assertEquals("[jump1]", merge.getLabels().toString());
 		assertEquals(
-				"{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 2=loc_2_2(2), Invariant: y <= 5 && x <= 5, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 3=loc_2_3(3), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 4=loc_3_2(4), Invariant: y <= 6 && x <= 5, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 5=loc_3_3(5), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1, IsForbidden?: false}",
+				"{1=loc_loc1_loc1(1), Invariant: y <= 4 & x <= 4, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "2=loc_loc2_loc2(2), Invariant: y <= 5 & x <= 5, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "3=loc_loc2_loc3(3), Invariant: y <= 5 & x <= 6, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "4=loc_loc3_loc2(4), Invariant: y <= 6 & x <= 5, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "5=loc_loc3_loc3(5), Invariant: y <= 6 & x <= 6, Flow: y'==1 & x'==1, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals(
 				"[(1) === (); {y:=0 && x:=0}; Label: jump1 ===> (2), " + "(2) === (); {} ===> (3), "
@@ -125,10 +126,10 @@ public class ParallelCompositionGeneratorTest {
 		assertEquals("[x, y]", merge.getLocalParameters().toString());
 		assertEquals("[jump1]", merge.getLabels().toString());
 		assertEquals(
-				"{1=loc_1_1(1), Invariant: y <= 4 && x <= 4, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 2=loc_1_2(2), Invariant: y <= 4 && x <= 5, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 3=loc_2_3(3), Invariant: y <= 5 && x <= 6, Flow: y'==1 && x'==1, IsForbidden?: false,"
-						+ " 4=loc_3_3(4), Invariant: y <= 6 && x <= 6, Flow: y'==1 && x'==1, IsForbidden?: false}",
+				"{1=loc_loc1_loc1(1), Invariant: y <= 4 & x <= 4, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "2=loc_loc1_loc2(2), Invariant: y <= 4 & x <= 5, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "3=loc_loc2_loc3(3), Invariant: y <= 5 & x <= 6, Flow: y'==1 & x'==1, IsForbidden?: false, "
+						+ "4=loc_loc3_loc3(4), Invariant: y <= 6 & x <= 6, Flow: y'==1 & x'==1, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals("[(1) === (); {} ===> (2)," + " (2) === (); {y:=0 && x:=0}; Label: jump1 ===> (3),"
 				+ " (3) === (); {} ===> (4)]", merge.getTransitions().toString());
