@@ -157,9 +157,22 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private Map<IcfgLocation, UnmodifiableTransFormula> mLoc2OverApproximation;
 	
 	/**
-	 * Represents the sum of DAGSize of the constraints from the current round.
+	 * Statistics section - the following statistics are collected
+	 * - the DAGTreeSize of the constraints
+	 * - the number of Motzkin Transformations
+	 * - the program size measured as the number of inequalities of all tranformulas
+	 * - the size of largest template
+	 * - the size of smallest template
 	 */
-	private int mDAGSizeSumOfConstraints;
+	private int mDAGTreeSizeSumOfConstraints;
+	private int mMotzkinTransformations;
+	private int mProgramSize;
+	
+	public enum LinearInequalityPatternProcessorStatistics {
+		ProgramSize,
+		MotzkinTransformations,
+		DAGTreesizeOfConstraints
+	}
 
 
 	/**
@@ -229,7 +242,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mPatternCoefficients2Values = null;
 		mLoc2UnderApproximation = loc2underApprox;
 		mLoc2OverApproximation = loc2overApprox;
-		mDAGSizeSumOfConstraints = 0;
+		// Benchmark section
+		mDAGTreeSizeSumOfConstraints = 0;
+		mMotzkinTransformations = 0;
+		mProgramSize = 0;
 
 	}
 
@@ -244,10 +260,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mExitInvariantPattern = null;
 		mPrefixCounter = 0;
 		mCurrentRound = round;
-		mDAGSizeSumOfConstraints = 0;
 		mAllPatternCoefficients = new HashSet<>();
 		mLinearInequalities2Locations = new HashMap<>();
 	}
+	
 
 	/**
 	 * Reset the solver and additionally reset the annotation term counter and the map mAnnotTerm2OriginalTerm
@@ -262,7 +278,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
-
+		// Reset statistics
+		mDAGTreeSizeSumOfConstraints = 0;
+		mMotzkinTransformations = 0;
+		mProgramSize = 0;
 	}
 
 	/**
@@ -386,7 +405,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
 		}
 		Term result = SmtUtils.and(mSolver, resultTerms);
-		mDAGSizeSumOfConstraints += new DAGSize().treesize(result);
+		// Statistics section
+		mDAGTreeSizeSumOfConstraints += new DAGSize().treesize(result);
+		mMotzkinTransformations += conjunctionDNF.size();
 		return result;
 	}
 
@@ -598,6 +619,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final Collection<LinearInequality> newList = new ArrayList<>();
 			newList.addAll(list);
 			transitionDNF.add(newList);
+			// statistics section 
+			mProgramSize += list.size();
 		}
 		if (mUseUnsatCoreForLocsAndVars) {
 			final List<IcfgLocation> locs = new ArrayList<>();
@@ -830,12 +853,12 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		return mVarsFromUnsatCore;
 	}
 	
-	/**
-	 * Returns the DAGSize of the constraints for the current round.
-	 * @return
-	 */
-	public int getDAGSizeOfConstraints() {
-		return mDAGSizeSumOfConstraints;
+	public Map<LinearInequalityPatternProcessorStatistics, Integer> getStatistics() {
+		Map<LinearInequalityPatternProcessorStatistics, Integer> stats = new HashMap<>();
+		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSize, mProgramSize);
+		stats.put(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints, mDAGTreeSizeSumOfConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformations, mMotzkinTransformations);
+		return stats;
 	}
 
 	/**
@@ -874,7 +897,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			}
 			mVarsFromUnsatCore = new HashSet<>();
 			final Set<IcfgLocation> locsInUnsatCore = new HashSet<>();
-			//				mTransitionsInUnsatCore = new HashSet<>();
+
 			final Map<IcfgLocation, Integer> locs2Frequency = new HashMap<>();
 			for (final String motzkinVar : motzkinVariables) {
 				final LinearInequality linq = mMotzkinCoefficients2LinearInequalities.get(motzkinVar);

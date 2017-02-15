@@ -50,7 +50,7 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
 			final IMergeStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand);
+		super(services, stateFactory, operand, false);
 	}
 	
 	@Override

@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  */
 public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>,
-		IBuchiComplementFkvStateFactory<IPredicate> {
+		IBuchiComplementFkvStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
@@ -103,8 +104,7 @@ public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredi
 	}
 	
 	@Override
-	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
-			final IPredicate c2) {
+	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 }

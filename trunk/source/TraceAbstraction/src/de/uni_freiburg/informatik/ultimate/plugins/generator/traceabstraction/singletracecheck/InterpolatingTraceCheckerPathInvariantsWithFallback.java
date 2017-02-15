@@ -101,7 +101,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsStats);
 			if (!mInterpolantComputationStatus.wasComputationSuccesful()) {
 				final String message = "invariant synthesis failed";
-				final String taskDescription = "trying to synthesize invariant for path program";
+				final String taskDescription = "trying to synthesize invariant for path program " + mPathInvariantsStats;
 				throw new ToolchainCanceledException(message, getClass(), taskDescription);
 			}
 		}

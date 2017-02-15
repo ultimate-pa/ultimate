@@ -26,33 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
+import petruchio.interfaces.petrinet.PetriNet;
+
 /**
- * State factory for Buchi complementation of deterministic automata.
+ * State factory for converting a {@link PetriNet} to a finite automaton.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
+ * @see PetriNet2FiniteAutomaton
  */
-public interface IBuchiComplementDeterministicStateFactory<STATE> extends IStateFactory<STATE> {
+@FunctionalInterface
+public interface IPetriNet2FiniteAutomatonStateFactory<STATE> extends IStateFactory<STATE> {
 	/**
-	 * Complement state in construction for deterministic Buchi automata.
+	 * State representation of a {@link PetriNet} {@link Marking} used for conversion to a finite automaton.
 	 * 
-	 * @param state
-	 *            non-final state
-	 * @return state representing the state in the complement automaton
+	 * @param marking
+	 *            Petri net marking
+	 * @return state representing the marking
 	 */
-	default STATE buchiComplementDeterministicNonFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementDeterministicFinal(final STATE state) {
-		return null;
-	}
+	STATE getContentOnPetriNet2FiniteAutomaton(Marking<?, STATE> marking);
 }

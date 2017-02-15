@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -98,39 +99,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVariablesType,
-				getPostWithVarOp());
+		mResult =
+				new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVarProvider, mVariablesType);
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
 		return mResult;
-	}
-
-	private IAbstractPostOperator<STATE, ACTION, VARDECL> getPostWithVarOp() {
-		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
-		return new IAbstractPostOperator<STATE, ACTION, VARDECL>() {
-
-			@Override
-			public List<STATE> apply(final STATE preState, final ACTION transition) {
-				final STATE preStateWithFreshVariables =
-						mVarProvider.defineVariablesAfter(transition, preState, preState);
-				if (preState == preStateWithFreshVariables) {
-					return postOp.apply(preStateWithFreshVariables, transition);
-				}
-				return postOp.apply(preStateWithFreshVariables, preState, transition);
-			}
-
-			@Override
-			public List<STATE> apply(final STATE preState, final STATE hierState, final ACTION transition) {
-				final STATE preStateWithFreshVariables =
-						mVarProvider.defineVariablesAfter(transition, preState, hierState);
-				if (preState == preStateWithFreshVariables) {
-					return postOp.apply(preStateWithFreshVariables, transition);
-				}
-				return postOp.apply(preStateWithFreshVariables, preState, transition);
-			}
-
-		};
 	}
 
 	private void calculateFixpoint(final Collection<LOC> start) {

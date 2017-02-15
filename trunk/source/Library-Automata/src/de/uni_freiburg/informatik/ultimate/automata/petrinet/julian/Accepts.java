@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -156,10 +157,12 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C> {
 		}
 		
 		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
+		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
-						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))
-								.getResult();
+						(new PetriNet2FiniteAutomaton<>(mServices,
+								(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult(),
+						nw)).getResult();
 		final boolean correct = mResult == resultAutomata;
 		
 		if (mLogger.isInfoEnabled()) {

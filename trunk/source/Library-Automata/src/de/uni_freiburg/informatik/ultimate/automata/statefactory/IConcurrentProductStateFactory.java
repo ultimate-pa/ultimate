@@ -26,33 +26,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ConcurrentProduct;
+
 /**
- * State factory for Buchi complementation of deterministic automata.
+ * State factory for the {@link ConcurrentProduct} operation.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
  */
-public interface IBuchiComplementDeterministicStateFactory<STATE> extends IStateFactory<STATE> {
+@FunctionalInterface
+public interface IConcurrentProductStateFactory<STATE> extends IStateFactory<STATE> {
 	/**
-	 * Complement state in construction for deterministic Buchi automata.
+	 * Concurrent product construction of two states.
 	 * 
-	 * @param state
-	 *            non-final state
-	 * @return state representing the state in the complement automaton
+	 * @param state1
+	 *            first state
+	 * @param state2
+	 *            second state
+	 * @return state representing the concurrent product
 	 */
-	default STATE buchiComplementDeterministicNonFinal(final STATE state) {
-		return null;
-	}
-	
-	/**
-	 * Complement state in construction for deterministic Buchi automata.
-	 * 
-	 * @param state
-	 *            final state
-	 * @return state representing the state in the complement automaton
-	 */
-	default STATE buchiComplementDeterministicFinal(final STATE state) {
-		return null;
-	}
+	STATE getContentOnConcurrentProduct(final STATE state1, final STATE state2);
 }

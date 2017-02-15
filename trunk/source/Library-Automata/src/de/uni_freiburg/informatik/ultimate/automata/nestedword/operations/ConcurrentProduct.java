@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 
 /**
  * Product of two automata that is similar to the synchronization operator
@@ -84,7 +84,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 */
 	private final HashSet<LETTER> mSynchronizationAlphabet;
 	
-	private final IStateFactory<STATE> mContentFactory;
+	private final IConcurrentProductStateFactory<STATE> mContentFactory;
 	
 	/**
 	 * @param services
@@ -100,7 +100,8 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 *            of the old places was final)
 	 */
 	@SuppressWarnings("squid:S1067")
-	public ConcurrentProduct(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ConcurrentProduct(final AutomataLibraryServices services,
+			final IConcurrentProductStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final boolean concurrentPrefixProduct) {
 		super(services);

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -94,8 +95,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STAT
 	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton =
-				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
+		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices,
+				(IPetriNet2FiniteAutomatonStateFactory<STATE>) stateFactory, mOperand)).getResult();
 		final boolean automatonEmpty =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty<>(mServices,
 						finiteAutomaton)).getResult();

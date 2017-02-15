@@ -55,10 +55,6 @@ public class PredicateFactory extends BasicPredicateFactory {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 	}
 
-	public static HoareAnnotation getHoareAnnotation(final BoogieIcfgLocation programPoint) {
-		return HoareAnnotation.getAnnotation(programPoint);
-	}
-
 	public PredicateWithHistory newPredicateWithHistory(final IcfgLocation pp, final Term term,
 			final Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);

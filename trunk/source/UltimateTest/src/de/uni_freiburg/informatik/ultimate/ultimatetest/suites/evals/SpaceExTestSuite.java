@@ -58,11 +58,11 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
 //			"examples/programs/spaceex/",
-//			"examples/programs/spaceex/toy_safe.xml",
-//			"examples/programs/spaceex/simple1-unsafe.xml",
-//			"examples/programs/spaceex/simple1_Unsafe.xml",
+			"examples/programs/spaceex/toy_safe.xml",
+			"examples/programs/spaceex/simple1-unsafe.xml",
+			"examples/programs/spaceex/simple1_Unsafe.xml",
 //			"examples/programs/spaceex/minimal.xml",
-			"examples/programs/spaceex/regression/vartest.xml",
+//			"examples/programs/spaceex/regression/vartest.xml",
 	};
 	//@formatter:on
 	

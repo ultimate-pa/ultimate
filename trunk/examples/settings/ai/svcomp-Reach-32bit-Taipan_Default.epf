@@ -56,6 +56,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=CompoundDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Log\ string\ format=TERM
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Create\ assumptions\ of\ other\ states\ before\ post=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Simplify\ assumptions\ before\ abstract\ post=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Check\ feasibility\ of\ abstract\ posts\ with\ an\ SMT\ solver=false

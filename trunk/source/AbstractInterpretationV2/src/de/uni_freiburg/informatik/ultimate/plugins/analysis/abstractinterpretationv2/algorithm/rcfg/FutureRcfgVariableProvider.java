@@ -35,12 +35,12 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  */
 public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IProgramVarOrConst>, ACTION extends IAction>
 		implements IVariableProvider<STATE, ACTION, IProgramVarOrConst> {
-	
+
 	private final ILogger mLogger;
 	private final IIcfgSymbolTable mBoogieVarTable;
 
@@ -82,6 +82,16 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 			// nothing changes
 			return localPreState;
 		}
+	}
+
+	@Override
+	public STATE makeValidPreState(final ACTION action, final STATE state) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public STATE makeValidPostState(final ACTION action, final STATE state) {
+		throw new UnsupportedOperationException();
 	}
 
 	private STATE defineVariablesAfterReturn(final ACTION action, final STATE localPreState,
@@ -229,4 +239,5 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" using unchanged pre-call state [")
 				.append(state.hashCode()).append("] ").append(state.toLogString());
 	}
+
 }

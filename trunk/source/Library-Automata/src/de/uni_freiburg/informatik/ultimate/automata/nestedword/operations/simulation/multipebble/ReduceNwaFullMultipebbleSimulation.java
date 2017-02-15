@@ -83,14 +83,14 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	 *             if suboperations fail
 	 */
 	public ReduceNwaFullMultipebbleSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean allowToMergeFinalAndNonFinalStates)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 	
 		printStartMessage();
 		
-		final PartitionBackedSetOfPairs<STATE> partition = new PartitionAndMapBackedSetOfPairs<STATE>(
+		final PartitionBackedSetOfPairs<STATE> partition = new PartitionAndMapBackedSetOfPairs<>(
 				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation());
 		mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(partition);
@@ -102,11 +102,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final int maxGameAutomatonSize = simRes.getSecond();
 			final NestedMap2<STATE, STATE, GS> gsm = gameAutomaton.getGameStateMapping();
 			
-			final boolean mergeFinalAndNonFinalStates = false;
 			// TODO make this an option?
 			final boolean addMapOldState2NewState = false;
 			final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
-					.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+					.setFinalStateConstraints(!allowToMergeFinalAndNonFinalStates)
 					.setAddMapOldState2NewState(addMapOldState2NewState);
 			
 			final AbstractMinimizeNwa<LETTER, STATE> maxSatMinimizer;
@@ -114,12 +113,12 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			case ASYM:
 				maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand,
 						readoutExactSimulationRelation(partition, gsm, simRes.getFirst(), gameFactory).getRelation(),
-						settings); 
+						settings);
 				break;
 			case SYM:
 				maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
 						readoutSymmetricCoreOfSimulationRelation(partition, gsm, simRes.getFirst(), gameFactory),
-						settings); 
+						settings);
 				break;
 			default:
 				throw new AssertionError("illegal value " + mMetrie);
@@ -130,16 +129,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
 			}
 			
-			mStatistics = super.getAutomataOperationStatistics();
-			mStatistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES, gameFactory.getMaxNumberOfDoubleDeckerPebbles());
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					partition.getOrConstructPartitionSizeInformation().getSizeOfLargestBlock());
-			mStatistics.addKeyValuePair(StatisticsType.NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS,
-					partition.getOrConstructPartitionSizeInformation().getNumberOfPairs());
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
-					maxGameAutomatonSize);
-			mStatistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
-			mStatistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, getResult().size());
+			mStatistics = addStatistics(partition, gameFactory, maxGameAutomatonSize);
 			
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -151,11 +141,27 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		printExitMessage();
 	}
 
+	private AutomataOperationStatistics addStatistics(final PartitionBackedSetOfPairs<STATE> partition,
+			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final int maxGameAutomatonSize) {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		statistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
+				gameFactory.getMaxNumberOfDoubleDeckerPebbles());
+		statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
+				partition.getOrConstructPartitionSizeInformation().getSizeOfLargestBlock());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_PAIRS_INITIAL_PARTITION,
+				partition.getOrConstructPartitionSizeInformation().getNumberOfPairs());
+		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON,
+				maxGameAutomatonSize);
+		statistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
+		statistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, getResult().size());
+		return statistics;
+	}
+
 	protected abstract Pair<IDoubleDeckerAutomaton<LETTER, GS>,Integer> computeSimulation(FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton) throws AutomataOperationCanceledException;
 
 	protected abstract FullMultipebbleStateFactory<STATE, GS> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition);
 	
-	private boolean isInSimulationRelation(final STATE q0, final STATE q1, final FullMultipebbleStateFactory<STATE,?> gameFactory, 
+	private boolean isInSimulationRelation(final STATE q0, final STATE q1, final FullMultipebbleStateFactory<STATE,?> gameFactory,
 			final NestedMap2<STATE, STATE, GS> gameStateMapping, final IDoubleDeckerAutomaton<LETTER, GS> mRemoved) {
 		if (gameFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand)) {
 			return false;
@@ -178,7 +184,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		for (final Pair<STATE, STATE> pair : initialPartition) {
 			final STATE q0 = pair.getFirst();
 			final STATE q1 = pair.getSecond();
-			if(isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) && 
+			if(isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) &&
 					isInSimulationRelation(q1, q0, mGameFactory, mGameStateMapping, mRemoved)) {
 				result.addPair(q0, q1);
 			}
@@ -186,7 +192,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		return result;
 	}
 	
-	private NestedMapBackedSetOfPairs<STATE> readoutExactSimulationRelation(			
+	private NestedMapBackedSetOfPairs<STATE> readoutExactSimulationRelation(
 			final ISetOfPairs<STATE,?> initialPartition,
 			final NestedMap2<STATE, STATE, GS> mGameStateMapping,
 			final IDoubleDeckerAutomaton<LETTER, GS> mRemoved,
@@ -219,8 +225,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 		@Override
 		public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
-			return isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) && 
-					isInSimulationRelation(q1, q0, mGameFactory, mGameStateMapping, mRemoved); 
+			return isInSimulationRelation(q0, q1, mGameFactory, mGameStateMapping, mRemoved) &&
+					isInSimulationRelation(q1, q0, mGameFactory, mGameStateMapping, mRemoved);
 		}
 
 		@Override

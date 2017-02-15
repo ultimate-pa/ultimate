@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-
 /**
  * State factory for Petri net places in black and white operation.
- * <p>
- * TODO remove inheritance from {@link IStateFactory} after {@link IAutomaton#getStateFactory()} has been removed.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <CONTENT>

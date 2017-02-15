@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -24,18 +24,22 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
-
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 /**
+ *
+ * An {@link IVariableProvider} creates abstract states that track certain variables according to the actions that
+ * should happen before or after.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <STATE>
+ *            The type of states that are created by this {@link IVariableProvider}. Must be a subtype of
+ *            {@link IAbstractState}.
  * @param <ACTION>
+ *            The type of action that should be considered by this {@link IVariableProvider}.
  * @param <VARDECL>
+ *            The type of variables defined by the abstract state interface.
  */
 public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
 
@@ -78,5 +82,30 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	 *         <code>current</code> and that are visible in the scope after execution of <code>current</code>.
 	 */
 	STATE defineVariablesAfter(final ACTION current, final STATE localPreState, final STATE hierachicalPreState);
+
+	/**
+	 * Create a new state by adding or removing variables to <code>state</code> s.t. the new state can act as pre state
+	 * of the action <code>action</code>.
+	 * 
+	 * @param action
+	 *            The action for which the created state should be a possible pre state (in terms of defined variables).
+	 * @param state
+	 *            The state that is the basis of the new state.
+	 * @return A new state that is usable as pre state of <code>action</code>
+	 */
+	STATE makeValidPreState(final ACTION action, final STATE state);
+
+	/**
+	 * Create a new state by adding or removing variables to <code>state</code> s.t. the new state can act as post state
+	 * of the action <code>action</code>.
+	 * 
+	 * @param action
+	 *            The action for which the created state should be a possible post state (in terms of defined
+	 *            variables).
+	 * @param state
+	 *            The state that is the basis of the new state.
+	 * @return A new state that is usable as post state of <code>action</code>
+	 */
+	STATE makeValidPostState(final ACTION action, final STATE state);
 
 }

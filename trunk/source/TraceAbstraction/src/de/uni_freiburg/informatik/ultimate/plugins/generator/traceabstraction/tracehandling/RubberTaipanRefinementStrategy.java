@@ -163,15 +163,15 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 	public void nextTraceChecker() {
 		switch (mCurrentMode) {
 		case SMTINTERPOL:
-			mCurrentMode = Mode.Z3_NO_IG;
+			mCurrentMode = Mode.Z3_IG;
 			break;
-		case Z3_NO_IG:
-			mCurrentMode = Mode.CVC4_NO_IG;
+		case Z3_IG:
+			mCurrentMode = Mode.CVC4_IG;
 			mZ3TraceCheckUnsuccessful = true;
 			break;
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
-		case Z3_IG:
+		case Z3_NO_IG:
 		case CVC4_IG:
 			assert !hasNextTraceChecker();
 			throw new NoSuchElementException("No next trace checker available.");
@@ -434,7 +434,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 		case ABSTRACT_INTERPRETATION:
-			assert false : "The rubber Taipan doesnt strike";
+			assert false : "The rubber Taipan doesnt strike: " + mode;
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
 					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, getPredicateUnifier());

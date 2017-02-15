@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -67,7 +68,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
 	private final Map<Marking<S, C>, C> mMarking2State = new HashMap<>();
-	private final IStateFactory<C> mContentFactory;
+	private final IPetriNet2FiniteAutomatonStateFactory<C> mContentFactory;
 	
 	/**
 	 * Constructor.
@@ -79,8 +80,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * @param operand
 	 *            operand Petri net
 	 */
-	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, final IStateFactory<C> factory,
-			final IPetriNet<S, C> operand) {
+	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
+			final IPetriNet2FiniteAutomatonStateFactory<C> factory, final IPetriNet<S, C> operand) {
 		super(services);
 		mOperand = operand;
 		

@@ -1,12 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
-import java.util.HashSet;
-//import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessor.LinearInequalityPatternProcessorStatistics;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
@@ -20,8 +19,14 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mMaxRound; 
 	private int mDAGSizeSumOfConstraints;
 	private int mSumOfVarsPerLoc;
-	private int mDiffOfLiveVariables;
-	private int mDiffOfUnsatCoreVars;
+	private int mNumOfNonLiveVariables;
+	private int mNumOfNonUnsatCoreVars;
+	private int mMinNumOfInequalitiesOfMostRecentRound;
+	private int mProgramSize;
+	private int mSizeOfLargestTemplate;
+	private int mSizeOfSmallestTemplate;
+	private int mMotzkinTransformations;
+	private String mSatStatus;
 	
 	public void initializeStatistics() {
 		mNumOfPathProgramLocations = 0;
@@ -33,8 +38,14 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mMaxRound = 0;
 		mDAGSizeSumOfConstraints = 0;
 		mSumOfVarsPerLoc = 0;
-		mDiffOfLiveVariables = 0;
-		mDiffOfUnsatCoreVars = 0;
+		mNumOfNonLiveVariables = 0;
+		mNumOfNonUnsatCoreVars = 0;
+		mMinNumOfInequalitiesOfMostRecentRound = 0;
+		mProgramSize = 0;
+		mSizeOfLargestTemplate = 0;
+		mSizeOfSmallestTemplate = 0;
+		mMotzkinTransformations = 0;
+		mSatStatus = "";
 	}
 
 
@@ -44,20 +55,25 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	@Override
-	public Object getValue(String key) {
+	public Object getValue(final String key) {
 		final PathInvariantsStatisticsDefinitions keyEnum = Enum.valueOf(PathInvariantsStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case SUM_OF_LOCS: return mNumOfPathProgramLocations;
-		case PROGRAM_VARS: return mNumOfVars;
-		case SUM_OF_TEMPLATE_INEQUALITIES: return mSumOfTemplateInequalities;
-		case DIFF_OF_LOCS_IN_UNSAT_CORE: return mDiffOfLocsInUnsatCore;
-		case DIFF_OF_VARS_IN_UNSAT_CORE: return mDiffOfVarsInUnsatCore;
-		case MAX_NUM_OF_INEQUALITIES: return mMaxNumOfInequalitiesPerRound;
-		case MAX_ROUND : return mMaxRound;
-		case DAG_SIZE_CONSTRAINTS : return mDAGSizeSumOfConstraints;
-		case VARS_PER_LOC: return mSumOfVarsPerLoc;
-		case DIFF_LIVE_VARS_PER_LOC: return mDiffOfLiveVariables;
-		case DIFF_UNSAT_CORE_VARS: return mDiffOfUnsatCoreVars;
+		case ProgramLocs: return mNumOfPathProgramLocations;
+		case ProgramSize: return mProgramSize;
+		case ProgramVars: return mNumOfVars;
+		case DiffOfLocsInUnsatCore: return mDiffOfLocsInUnsatCore;
+		case DiffOfVarsInUnsatCore: return mDiffOfVarsInUnsatCore;
+		case SumOfTemplateInequalities: return mSumOfTemplateInequalities;
+		case SizeOfLargestTemplate: return mSizeOfLargestTemplate;
+		case SizeOfSmallestTemplate: return mSizeOfSmallestTemplate;
+		case MaxNumOfInequalities: return mMaxNumOfInequalitiesPerRound;
+		case MaxRound : return mMaxRound;
+		case DAGSizeConstraints : return mDAGSizeSumOfConstraints;
+		case SumVarsPerLoc: return mSumOfVarsPerLoc;
+		case SumNonLiveVarsPerLoc: return mNumOfNonLiveVariables;
+		case SumNonUnsatCoreVars: return mNumOfNonUnsatCoreVars;
+		case MotzkinTransformations: return mMotzkinTransformations;
+		case SatStatus: return mSatStatus;
 		default:
 			throw new AssertionError("unknown key");
 		}
@@ -77,24 +93,43 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	
-	public void setLocationAndVariablesData(int diffOfLocsInUnsatCore, int diffVarsInUnsatCore) {
+	public void setLocationAndVariablesData(final int diffOfLocsInUnsatCore, final int diffVarsInUnsatCore) {
 		mDiffOfLocsInUnsatCore += diffOfLocsInUnsatCore;
 		mDiffOfVarsInUnsatCore += diffVarsInUnsatCore;
 	}
 
 
-	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, int sumOfVarsPerLoc, int diffOfLiveVariables,
-			int diffOfUnsatCoreVars, int DAGSizeSumOfConstraints, int round) {
+	public void addStatisticsData(final int numOfTemplateInequalitiesForThisRound, final int maximalTemplateSizeOfThisRound, final int minimalTemplateSizeOfThisRound, final int sumOfVarsPerLoc, final int numfOfNonLiveVariables,
+			final int numOfNonUnsatCoreVars, Map<LinearInequalityPatternProcessorStatistics, Integer> linearInequalityStats, final int round,
+			String satResult) {
 		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalitiesPerRound) {
 			mMaxNumOfInequalitiesPerRound = numOfTemplateInequalitiesForThisRound;
 		}
+		mMinNumOfInequalitiesOfMostRecentRound = minimalTemplateSizeOfThisRound;
 		mSumOfTemplateInequalities += numOfTemplateInequalitiesForThisRound;
-		mDAGSizeSumOfConstraints += DAGSizeSumOfConstraints;
+		mDAGSizeSumOfConstraints += linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints);
 		mSumOfVarsPerLoc += sumOfVarsPerLoc;
-		mDiffOfLiveVariables += diffOfLiveVariables;
-		mDiffOfUnsatCoreVars += diffOfUnsatCoreVars;
+		mNumOfNonLiveVariables += numfOfNonLiveVariables;
+		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
 		if (round > mMaxRound) {
 			mMaxRound  = round;
 		}
+		mProgramSize = linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
+		if (maximalTemplateSizeOfThisRound > mSizeOfLargestTemplate) {
+			mSizeOfLargestTemplate = maximalTemplateSizeOfThisRound;
+		}
+		mSizeOfSmallestTemplate = minimalTemplateSizeOfThisRound;
+		mMotzkinTransformations += linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformations);
+		if (mSatStatus == "") {
+			mSatStatus = satResult;
+		} else {
+			mSatStatus = mSatStatus + ", " + satResult;
+		}
+		
+	}
+	
+	@Override
+	public String toString() {
+		return AStatisticsType.prettyprintBenchmarkData(getKeys(), PathInvariantsStatisticsDefinitions.class, this);
 	}
 }

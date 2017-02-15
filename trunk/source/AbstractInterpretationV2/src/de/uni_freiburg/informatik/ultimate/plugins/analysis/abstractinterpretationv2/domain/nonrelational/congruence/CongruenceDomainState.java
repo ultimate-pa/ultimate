@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class CongruenceDomainState<VARDECL>
 		extends NonrelationalState<CongruenceDomainState<VARDECL>, CongruenceDomainValue, VARDECL> {
-	
+
 	/**
 	 * Default constructor of an {@link CongruenceDomainState}.
 	 *
@@ -67,7 +67,7 @@ public class CongruenceDomainState<VARDECL>
 	protected CongruenceDomainState(final ILogger logger, final boolean isBottom, final Class<VARDECL> variablesType) {
 		super(logger, isBottom, variablesType);
 	}
-	
+
 	/**
 	 * Creates a new instance of {@link CongruenceDomainState} with given logger, variables map, values map and boolean
 	 * values map.
@@ -107,29 +107,29 @@ public class CongruenceDomainState<VARDECL>
 			final boolean isBottom, final Class<VARDECL> variablesType) {
 		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom, variablesType);
 	}
-	
+
 	@Override
 	protected CongruenceDomainState<VARDECL> createCopy() {
 		return new CongruenceDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), mVariablesType);
+				new HashMap<>(getVar2ValueBoolean()), isBottom(), mVariablesType);
 	}
-	
+
 	@Override
 	protected CongruenceDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
 			final Map<VARDECL, CongruenceDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap) {
-		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, mVariablesType);
+		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom(), mVariablesType);
 	}
-	
+
 	@Override
 	protected CongruenceDomainValue createBottomValue() {
 		return CongruenceDomainValue.createBottom();
 	}
-	
+
 	@Override
 	protected CongruenceDomainValue createTopValue() {
 		return CongruenceDomainValue.createTop();
 	}
-	
+
 	@Override
 	protected CongruenceDomainValue[] getArray(final int size) {
 		return new CongruenceDomainValue[size];

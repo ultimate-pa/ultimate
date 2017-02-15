@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
-	
+
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	
+
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
@@ -70,14 +70,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 
 
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_FUTURE_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_FUTURE_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
@@ -143,57 +143,34 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
-			"examples/programs/abstractInterpretation/regression/stmt-simpleassign-safe.bpl",
 
-			// current fails
-//			"examples/programs/abstractInterpretation/regression/affine-int-expressions.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-110517_Martin01.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-nested-assume-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/loop-skips-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/proc-statesplit-logiciff.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
-//			"examples/programs/abstractInterpretation/regression/all/stmt-bool-assign.bpl",
-//			"examples/programs/abstractInterpretation/regression/expr-inequalityTest.bpl",
-//			"examples/programs/abstractInterpretation/regression/expr-inequalityTest_reals.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-110517_Martin01-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-Goto.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nested.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nondet.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-//			"examples/programs/abstractInterpretation/regression/non-unary-affine-expressions.bpl",
-//			"examples/programs/abstractInterpretation/regression/proc-bool-ret-value.bpl",
-//			"examples/programs/abstractInterpretation/regression/proc-looping-call.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-assert-relations-int-nonstrict.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-assert-relations-int-strict.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-assert-relations-real-epsilon.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-assign-relational-twoVar.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-bool-true-assign-top.bpl",
-//			"examples/programs/abstractInterpretation/regression/stmt-multiassign-bug.bpl",
+			// ## current fails
+			// non-absint preds
+			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
+			
+			//incompatible matrices
+			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+			
+			//inductivity failed
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 
 	};
 	// @formatter:on
-	
+
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000 * 1000;
+		// return 90 * 1000 * 1000;
 		// return 15 * 1000;
-		// return 30 * 1000;
+		return 30 * 1000;
 		// return 15 * 60 * 1000;
 	}
-	
+
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		return new ColumnDefinition[] {
@@ -224,12 +201,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
 	}
-	
+
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {

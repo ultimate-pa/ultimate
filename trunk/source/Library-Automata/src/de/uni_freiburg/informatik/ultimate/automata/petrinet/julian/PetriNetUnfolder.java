@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -358,8 +359,12 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 		
 		boolean correct;
 		if (mRun == null) {
-			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
+			// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+			final NestedRun<S, C> automataRun =
+					(new IsEmpty<>(mServices,
+							(new PetriNet2FiniteAutomaton<>(mServices,
+									(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult()))
+											.getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;

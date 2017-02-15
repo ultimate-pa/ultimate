@@ -109,7 +109,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
 			StatisticsType.SIZE_GAME_GRAPH.toString(), 
 			StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES.toString(),
-			StatisticsType.NUMBER_PAIRS_INITIAL_EQUIVALENCE_CLASS.toString(),
+			StatisticsType.NUMBER_PAIRS_INITIAL_PARTITION.toString(),
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));

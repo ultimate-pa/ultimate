@@ -26,17 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-
 /**
  * State factory for intersecting two automata.
- * <p>
- * TODO remove inheritance from {@link IStateFactory} after {@link IAutomaton#getStateFactory()} has been removed.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
  */
+@FunctionalInterface
 public interface ISenwaStateFactory<STATE> extends IStateFactory<STATE> {
 	/**
 	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.Senwa Senwa}.

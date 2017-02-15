@@ -52,7 +52,7 @@ public class StringFactory
 		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
-		IBuchiComplementSvwStateFactory<String> {
+		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*

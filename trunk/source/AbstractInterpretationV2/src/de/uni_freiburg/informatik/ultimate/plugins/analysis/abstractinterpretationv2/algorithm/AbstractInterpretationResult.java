@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -59,12 +59,13 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
+	private final IVariableProvider<STATE, ACTION, VARDECL> mVariableProvider;
+	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
-	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
+
 	private final Class<VARDECL> mVariablesType;
 	private final Script mScript;
-	private final IAbstractPostOperator<STATE, ACTION, VARDECL> mPostWithVarOp;
 
 	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
 	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
@@ -76,15 +77,16 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	protected AbstractInterpretationResult(final Script script,
 			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
-			final ITransitionProvider<ACTION, LOCATION> transProvider, final Class<VARDECL> variablesType,
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postWithVarOp) {
+			final ITransitionProvider<ACTION, LOCATION> transProvider,
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final Class<VARDECL> variablesType) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
 		mScript = Objects.requireNonNull(script);
 		mTransProvider = Objects.requireNonNull(transProvider);
+		mVariableProvider = Objects.requireNonNull(varProvider);
 		mVariablesType = Objects.requireNonNull(variablesType);
-		mPostWithVarOp = postWithVarOp;
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
+
 	}
 
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
@@ -190,6 +192,11 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	@Override
+	public IVariableProvider<STATE, ACTION, VARDECL> getUsedVariableProvider() {
+		return mVariableProvider;
+	}
+
+	@Override
 	public List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples() {
 		return mCounterexamples;
@@ -224,9 +231,4 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		return sb.toString();
 	}
 
-	@Override
-	public IAbstractPostOperator<STATE, ACTION, VARDECL> getHtcPostOperator() {
-		// A post operator that already includes variable definitions with a suitable varprovider
-		return mPostWithVarOp;
-	}
 }

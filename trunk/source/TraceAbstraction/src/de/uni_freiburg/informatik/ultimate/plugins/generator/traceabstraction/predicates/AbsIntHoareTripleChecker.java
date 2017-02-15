@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,8 +38,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
@@ -46,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
  * {@link IHoareTripleChecker} that performs hoare triple checks using an abstract post operator.
@@ -66,158 +69,30 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final HoareTripleCheckerStatisticsGenerator mBenchmark;
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
+	private final STATE mTopState;
+	private final STATE mBottomState;
+	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 
-	public AbsIntHoareTripleChecker(final IUltimateServiceProvider services,
+	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp, final IPredicateUnifier predicateUnifer) {
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer) {
+		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
-		mPostOp = Objects.requireNonNull(postOp);
+		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mMergeOp = Objects.requireNonNull(mDomain.getMergeOperator());
-
-		// TODO: Implement AbsIntPredicate unifier and use it as parameter instead of the normal
-		// PredicateUnifier
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mVarProvider = Objects.requireNonNull(varProvider);
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
-	}
+		mTopState = mDomain.createTopState();
+		mBottomState = mDomain.createBottomState();
 
-	private Validity checkNonReturnTransition(final STATE preState, final ACTION act, final STATE postState) {
-		if (preState == null) {
-			// this is a dirty hack to signify a top state -- creation of top states wont work until we got rid of
-			// variables
-			return Validity.UNKNOWN;
-		}
-		if (postState == null) {
-			// see above
-			return Validity.VALID;
-		}
-
-		if (preState.isBottom()) {
-			return Validity.VALID;
-		}
-
-		try {
-			final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
-			if (postState.isBottom()) {
-				if (calculatedPost == null || calculatedPost.isBottom()) {
-					return trackPost(Validity.VALID, act);
-				}
-				return Validity.UNKNOWN;
-			}
-
-			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
-			if (subs != SubsetResult.NONE) {
-				return trackPost(Validity.VALID, act);
-			}
-			return Validity.UNKNOWN;
-		} catch (final Throwable t) {
-			// dirty hack
-			return Validity.UNKNOWN;
-		}
-	}
-
-	private Validity trackPost(final Validity valid, final ACTION act) {
-		if (act instanceof ICallAction) {
-			return trackCallPost(valid);
-		} else if (act instanceof IReturnAction) {
-			return trackReturnPost(valid);
-		} else {
-			return trackInternalPost(valid);
-		}
-	}
-
-	private Validity trackCallPost(final Validity valid) {
-		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incCa();
-		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incCa();
-		}
-		return valid;
-	}
-
-	private Validity trackInternalPost(final Validity valid) {
-		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incIn();
-		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incIn();
-		}
-		return valid;
-	}
-
-	private Validity trackReturnPost(final Validity valid) {
-		if (valid == Validity.UNKNOWN) {
-			mBenchmark.getSolverCounterUnknown().incRe();
-		} else if (valid == Validity.VALID) {
-			mBenchmark.getSolverCounterUnsat().incRe();
-		}
-		return valid;
-	}
-
-	private Validity checkReturnTransition(final STATE preLinState, final STATE preHierState, final ACTION act,
-			final STATE postState) {
-		if (preLinState.isBottom()) {
-			return Validity.VALID;
-		}
-
-		if (preHierState.isBottom()) {
-			return Validity.VALID;
-		}
-
-		try {
-			final STATE calculatedPost =
-					mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
-
-			if (postState.isBottom()) {
-				if (calculatedPost == null || calculatedPost.isBottom()) {
-					return trackPost(Validity.VALID, act);
-				}
-				return Validity.INVALID;
-			}
-
-			final SubsetResult subs = postState.isSubsetOf(calculatedPost);
-			if (subs != SubsetResult.NONE) {
-				return trackPost(Validity.VALID, act);
-			}
-			return Validity.UNKNOWN;
-		} catch (final Throwable e) {
-			// dirty hack
-			return Validity.UNKNOWN;
-		}
 	}
 
 	@Override
 	public void releaseLock() {
 		// no lock needed
-	}
-
-	@SuppressWarnings("unchecked")
-	private STATE getState(final IPredicate pred) {
-		if (pred instanceof AbsIntPredicate<?, ?>) {
-			return ((AbsIntPredicate<STATE, ?>) pred).getAbstractState();
-		} else if (pred == mTruePred) {
-			return null;
-		} else if (pred == mFalsePred) {
-			return mDomain.createBottomState();
-		} else {
-			throw new UnsupportedOperationException("Cannot handle non-absint predicates");
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private ACTION getAction(final IAction act) {
-		return (ACTION) act;
-	}
-
-	private Validity checkNonReturn(final IPredicate prePred, final IAction act, final IPredicate succPred) {
-		mBenchmark.continueEdgeCheckerTime();
-		final STATE pre = getState(prePred);
-		final STATE succ = getState(succPred);
-		final ACTION action = getAction(act);
-		final Validity rtr = checkNonReturnTransition(pre, action, succ);
-		mBenchmark.stopEdgeCheckerTime();
-		return rtr;
 	}
 
 	@Override
@@ -249,4 +124,168 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return mBenchmark;
 	}
+
+	private Validity checkNonReturnTransition(final STATE origPreState, final ACTION act, final STATE origPostState) {
+		final STATE preState = getValidPrestate(origPreState, act);
+		final STATE postState = getValidPoststate(origPostState, act);
+		final Validity result = checkNonReturnTransitionNoLogging(preState, act, postState);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(origPreState, preState, "Modified preState");
+			logDebugIfNotEqual(origPostState, postState, "Modified postState");
+			mLogger.debug("Pre : " + preState.toLogString());
+			mLogger.debug("Act : " + act);
+			mLogger.debug("Post: " + postState.toLogString());
+			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
+		}
+		return result;
+	}
+
+	private Validity checkReturnTransition(final STATE origPreLinState, final STATE origPreHierState, final ACTION act,
+			final STATE origPostState) {
+		final STATE preLinState = getValidPrestate(origPreLinState, act);
+		final STATE preHierState = getValidPreHierstate(origPreHierState, act);
+		final STATE postState = getValidPoststate(origPostState, act);
+		final Validity result = checkReturnTransitionNoLogging(preLinState, preHierState, act, postState);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(origPreLinState, preLinState, "Modified preLinState");
+			logDebugIfNotEqual(origPreHierState, preHierState, "Modified preHierState");
+			logDebugIfNotEqual(origPostState, postState, "Modified postState");
+			mLogger.debug("Pre : " + preLinState.toLogString());
+			mLogger.debug("PreH: " + preHierState.toLogString());
+			mLogger.debug("Act : " + act);
+			mLogger.debug("Post: " + postState.toLogString());
+			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
+		}
+
+		return result;
+	}
+
+	private void logDebugIfNotEqual(final STATE orig, final STATE modified, final String msg) {
+		if (!modified.equals(orig)) {
+			mLogger.debug(msg + ": " + modified.toLogString() + "(was: " + orig.toLogString() + ")");
+		}
+	}
+
+	private Validity checkNonReturnTransitionNoLogging(final STATE preState, final ACTION act, final STATE postState) {
+		if (preState.isBottom()) {
+			return Validity.VALID;
+		}
+
+		final STATE calculatedPost = mPostOp.apply(preState, act).stream().reduce(mMergeOp::apply).orElse(null);
+		if (postState.isBottom()) {
+			if (calculatedPost != null && !calculatedPost.isBottom()) {
+				return trackPost(Validity.INVALID, act);
+			} else if (calculatedPost == null || calculatedPost.isBottom()) {
+				return trackPost(Validity.VALID, act);
+			}
+		}
+
+		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
+		if (subs != SubsetResult.NONE) {
+			return trackPost(Validity.VALID, act);
+		}
+		return Validity.UNKNOWN;
+	}
+
+	private Validity checkReturnTransitionNoLogging(final STATE preLinState, final STATE preHierState, final ACTION act,
+			final STATE postState) {
+
+		if (preLinState.isBottom()) {
+			return Validity.VALID;
+		}
+
+		if (preHierState.isBottom()) {
+			return Validity.VALID;
+		}
+
+		final STATE calculatedPost =
+				mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
+
+		if (postState.isBottom()) {
+			if (calculatedPost != null && !calculatedPost.isBottom()) {
+				return trackPost(Validity.INVALID, act);
+			} else if (calculatedPost == null || calculatedPost.isBottom()) {
+				return trackPost(Validity.VALID, act);
+			}
+		}
+
+		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
+		if (subs != SubsetResult.NONE) {
+			return trackPost(Validity.VALID, act);
+		}
+		return Validity.UNKNOWN;
+	}
+
+	private Validity trackPost(final Validity valid, final ACTION act) {
+		if (act instanceof ICallAction) {
+			return trackPost(valid, InCaReCounter::incCa);
+		} else if (act instanceof IReturnAction) {
+			return trackPost(valid, InCaReCounter::incRe);
+		} else {
+			return trackPost(valid, InCaReCounter::incIn);
+		}
+	}
+
+	private Validity trackPost(final Validity valid, final Consumer<InCaReCounter> inc) {
+		if (valid == Validity.UNKNOWN) {
+			inc.accept(mBenchmark.getSolverCounterUnknown());
+		} else if (valid == Validity.VALID) {
+			inc.accept(mBenchmark.getSolverCounterUnsat());
+		} else if (valid == Validity.INVALID) {
+			inc.accept(mBenchmark.getSolverCounterSat());
+		}
+		return valid;
+	}
+
+	@SuppressWarnings("unchecked")
+	private STATE getState(final IPredicate pred) {
+		if (pred instanceof AbsIntPredicate<?, ?>) {
+			return ((AbsIntPredicate<STATE, ?>) pred).getAbstractState();
+		} else if (pred.equals(mTruePred)) {
+			return mTopState;
+		} else if (pred.equals(mFalsePred)) {
+			return mBottomState;
+		} else {
+			throw new UnsupportedOperationException("Cannot handle non-absint predicates: " + pred.getClass());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private ACTION getAction(final IAction act) {
+		return (ACTION) act;
+	}
+
+	private Validity checkNonReturn(final IPredicate prePred, final IAction act, final IPredicate succPred) {
+		mBenchmark.continueEdgeCheckerTime();
+		final STATE pre = getState(prePred);
+		final STATE succ = getState(succPred);
+		final ACTION action = getAction(act);
+		final Validity rtr = checkNonReturnTransition(pre, action, succ);
+		mBenchmark.stopEdgeCheckerTime();
+		return rtr;
+	}
+
+	private STATE getValidPoststate(final STATE origPostState, final ACTION act) {
+		final STATE rtr = mVarProvider.makeValidPostState(act, origPostState);
+		assert !origPostState.isBottom() || rtr.isBottom() : "Bottom was lost";
+		return rtr;
+	}
+
+	private STATE getValidPrestate(final STATE origPreState, final ACTION act) {
+		final STATE rtr = mVarProvider.makeValidPreState(act, origPreState);
+		assert !origPreState.isBottom() || rtr.isBottom() : "Bottom was lost";
+		return rtr;
+	}
+
+	@SuppressWarnings("unchecked")
+	private STATE getValidPreHierstate(final STATE origPreHierState, final ACTION act) {
+		if (act instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) act;
+			return getValidPrestate(origPreHierState, (ACTION) retAct.getCorrespondingCall());
+		}
+		throw new UnsupportedOperationException("Cannot create hierprestate for non-return action: " + act.getClass());
+	}
+
 }

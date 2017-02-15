@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-
 /**
  * Abstract factory for states used in typical automata operations.
  * 
@@ -93,31 +91,6 @@ public interface IStateFactory<STATE> {
 	 */
 	default STATE createEmptyStackState() {
 		return null;
-	}
-	
-	/**
-	 * State representation of a Petri net marking used for conversion to a finite automaton.
-	 * 
-	 * @param marking
-	 *            Petri net marking
-	 * @return state representing the marking
-	 */
-	default STATE getContentOnPetriNet2FiniteAutomaton(
-			final Marking<?, STATE> marking) {
-		return null;
-	}
-	
-	/**
-	 * Concurrent product construction of two states.
-	 * 
-	 * @param content1
-	 *            first content
-	 * @param content2
-	 *            second content
-	 * @return state representing the concurrent product
-	 */
-	default STATE getContentOnConcurrentProduct(final STATE content1, final STATE content2) {
-		return intersection(content1, content2);
 	}
 	
 	/**

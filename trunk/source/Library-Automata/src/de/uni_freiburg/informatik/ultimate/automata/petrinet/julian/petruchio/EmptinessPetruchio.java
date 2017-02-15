@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
@@ -193,8 +194,12 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		
 		final boolean correct;
 		if (mAcceptedRun == null) {
-			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mNetJulian)).getResult())).getNestedRun();
+			// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+			final NestedRun<S, C> automataRun =
+					(new IsEmpty<>(mServices,
+							(new PetriNet2FiniteAutomaton<>(mServices,
+									(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mNetJulian)).getResult()))
+											.getNestedRun();
 			correct = automataRun == null;
 		} else {
 			correct = mNetJulian.accepts(mAcceptedRun.getWord());
