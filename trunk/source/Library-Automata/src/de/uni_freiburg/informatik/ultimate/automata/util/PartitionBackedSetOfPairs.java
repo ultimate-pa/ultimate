@@ -158,7 +158,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			mNumberOfBlocks = partition.size();
 			for (final Set<?> block : partition) {
 				mSizeOfLargestBlock = Math.max(mSizeOfLargestBlock, block.size());
-				mNumberOfPairs += ((long) block.size() - 1) * ((long) block.size() - 1) + block.size();
+				mNumberOfPairs += ((long) block.size()) * ((long) block.size()) - block.size();
 			}
 		}
 		
