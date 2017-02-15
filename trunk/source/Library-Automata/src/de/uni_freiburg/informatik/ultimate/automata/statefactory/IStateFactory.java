@@ -80,13 +80,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * @return The sink state.
-	 */
-	default STATE createSinkStateContent() {
-		return null;
-	}
-	
-	/**
 	 * @return The empty stack state/symbol.
 	 */
 	default STATE createEmptyStackState() {

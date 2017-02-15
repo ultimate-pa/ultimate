@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -232,8 +233,11 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultSadd, mTraversedNwa)
+					.getResult();
+			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mTraversedNwa, resultSadd)
+					.getResult();
 			mLogger.info("Finished testing correctness of determinization");
 		}
 		return correct;

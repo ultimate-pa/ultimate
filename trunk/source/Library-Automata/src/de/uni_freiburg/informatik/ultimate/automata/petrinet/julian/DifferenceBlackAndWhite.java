@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -92,8 +93,9 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public DifferenceBlackAndWhite(final AutomataLibraryServices services, final IBlackWhiteStateFactory<C> factory,
-			final PetriNetJulian<S, C> net, final NestedWordAutomaton<S, C> nwa) {
+	public <FACTORY extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
+			final AutomataLibraryServices services, final FACTORY factory, final PetriNetJulian<S, C> net,
+			final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
@@ -117,7 +119,7 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
 			mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
-			final C sinkContent = mContentFactory.createSinkStateContent();
+			final C sinkContent = factory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
 			copyNetStatesOnly();
@@ -384,18 +386,17 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			mLogger.info("Testing correctness of " + operationName());
 		}
 		
-		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final INestedWordAutomatonSimple<S, C> op1AsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final INestedWordAutomatonSimple<S, C> resultAsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mResult)).getResult();
 		
 		boolean correct = true;
-		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
-		correct &= new IsIncluded<>(mServices, stateFactory, rcResult, resultAsNwa).getResult();
+		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<C>) stateFactory, resultAsNwa, rcResult).getResult();
+		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<C>) stateFactory, rcResult, resultAsNwa).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());

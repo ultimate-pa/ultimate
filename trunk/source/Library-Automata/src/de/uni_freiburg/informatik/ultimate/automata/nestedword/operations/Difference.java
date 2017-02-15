@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -58,13 +59,13 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private IntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private DoubleDeckerAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 	
 	// TODO Christian 2016-09-04: These fields are only used locally. Is there some functionality missing?
 	private DeterminizeNwa<LETTER, STATE> mSndDeterminized;
 	private ComplementDeterministicNwa<LETTER, STATE> mSndComplemented;
 	
-	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Difference(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean finalIsTrap)
@@ -101,7 +102,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Difference(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand,
@@ -181,9 +182,10 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
 		*/
-		correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult).getResult();
 		assert correct;
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+		correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -338,8 +339,12 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 			
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
-			correct = correct && new IsIncluded<>(mServices, stateFactory, mSenwa, resultSadd).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultSadd, mSenwa)
+					.getResult();
+			correct =
+					correct && new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mSenwa, resultSadd)
+							.getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 						"language is different", mMinuend, mSubtrahend);

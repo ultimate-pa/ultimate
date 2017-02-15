@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -408,8 +409,12 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 			
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDD =
 					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
-			correct = new IsIncluded<>(mServices, stateFactory, resultDD, mDifference).getResult();
-			correct = correct && new IsIncluded<>(mServices, stateFactory, mDifference, resultDD).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			correct = new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDD, mDifference)
+					.getResult();
+			correct = correct
+					&& new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mDifference, resultDD)
+							.getResult();
 			if (!correct) {
 				mLogger.info("Finished testing correctness of " + operationName());
 			} else {

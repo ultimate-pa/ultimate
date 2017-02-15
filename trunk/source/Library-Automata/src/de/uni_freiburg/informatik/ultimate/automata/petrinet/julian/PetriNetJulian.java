@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -180,11 +181,13 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		}
 		
 		boolean correct;
-		// TODO Christian 2017-02-15 Temporary workaround, either get a state factory or drop this check
+		// TODO Christian 2017-02-15 Casts are temporary workarounds, either get a state factory or drop this check
 		final INestedWordAutomaton<S, C> resultAutomata = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) nwa.getStateFactory(), this)).getResult();
-		correct = new IsIncluded<>(mServices, getStateFactory(), resultAutomata, nwa).getResult();
-		correct = correct && new IsIncluded<>(mServices, getStateFactory(), nwa, resultAutomata).getResult();
+		correct =
+				new IsIncluded<>(mServices, (ISinkStateFactory<C>) getStateFactory(), resultAutomata, nwa).getResult();
+		correct = correct && new IsIncluded<>(mServices, (ISinkStateFactory<C>) getStateFactory(), nwa, resultAutomata)
+				.getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of PetriNetJulian constructor");

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 /**
@@ -148,9 +148,10 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 * @throws Throwable
 	 *             when operation fails
 	 */
+	// TODO Christian 2017-02-15 Casts are temporary workarounds until STATE is replaced by String
 	public IOperation<LETTER, STATE> getOperation(final EOperationType type,
-			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IMergeStateFactory<STATE> factory) throws Throwable {
+			final INestedWordAutomaton<LETTER, STATE> automaton, final IMergeStateFactory<STATE> factory)
+			throws Throwable {
 		final IOperation<LETTER, STATE> operation;
 		switch (type) {
 			case MINIMIZE_NWA_MAXSAT:
@@ -190,11 +191,12 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 				break;
 			
 			case COMPLEMENT:
-				operation = complement(automaton, factory);
+				operation = complement(automaton, (ISinkStateFactory<STATE>) factory);
 				break;
 			
 			case MINIMIZE_NWA_OVERAPPROXIMATION:
-				operation = minimizeNwaOverapproximation(automaton, factory);
+				operation = minimizeNwaOverapproximation(automaton,
+						(IMergeStateFactory<STATE> & ISinkStateFactory<STATE>) factory);
 				break;
 			
 			case REMOVE_NON_LIVE_STATES:
@@ -366,7 +368,7 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 *             when error occurs
 	 */
 	public IOperation<LETTER, STATE> complement(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IStateFactory<STATE> factory) throws Throwable {
+			final ISinkStateFactory<STATE> factory) throws Throwable {
 		return new Complement<>(mServices, factory, automaton);
 	}
 	
@@ -379,8 +381,9 @@ public class AutomatonDebuggerExamples<LETTER, STATE> {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<LETTER, STATE> minimizeNwaOverapproximation(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IMergeStateFactory<STATE> factory) throws Throwable {
+	public <FACTORY extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> IOperation<LETTER, STATE>
+			minimizeNwaOverapproximation(final INestedWordAutomaton<LETTER, STATE> automaton, final FACTORY factory)
+					throws Throwable {
 		final IDoubleDeckerAutomaton<LETTER, STATE> preprocessed =
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new MinimizeNwaOverapproximation<>(mServices, factory, preprocessed);

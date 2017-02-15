@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 	private STATE mSinkState;
 	private boolean mSinkStateWasConstructed;
 	private boolean mNondeterministicTransitionsDetected;
@@ -66,7 +67,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	 *            state factory
 	 */
 	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory) {
+			final ISinkStateFactory<STATE> stateFactory) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
 	}

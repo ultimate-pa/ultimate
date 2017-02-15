@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -307,7 +308,8 @@ public class SenwaWalker<LETTER, STATE> {
 		final Senwa<LETTER, STATE> emptyAutomaton =
 				new Senwa<>(mServices, mTraversedSenwa.getInternalAlphabet(), mTraversedSenwa.getCallAlphabet(),
 						mTraversedSenwa.getReturnAlphabet(), mTraversedSenwa.getStateFactory());
-		final STATE sinkState = emptyAutomaton.getStateFactory().createSinkStateContent();
+		// TODO Christian 2017-02-15 Temporary workaround, make state factory a parameter
+		final STATE sinkState = ((ISinkStateFactory<STATE>) emptyAutomaton.getStateFactory()).createSinkStateContent();
 		emptyAutomaton.addState(sinkState, true, false, sinkState);
 		
 		for (final STATE state : emptyAutomaton.getStates()) {

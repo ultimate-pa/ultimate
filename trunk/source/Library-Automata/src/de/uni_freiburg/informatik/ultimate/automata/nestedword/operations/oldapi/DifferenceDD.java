@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -531,8 +532,11 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, resultSadd).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultSadd, mTraversedNwa)
+					.getResult();
+			correct &= new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mTraversedNwa, resultSadd)
+					.getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 						operationName() + "Failed", "language is different",

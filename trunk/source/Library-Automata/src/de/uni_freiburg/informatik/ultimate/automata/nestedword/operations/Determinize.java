@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -53,6 +54,7 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
+	
 	/**
 	 * Default constructor.
 	 * 
@@ -140,8 +142,11 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			correct &=
+					new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult).getResult();
+			correct &=
+					new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());

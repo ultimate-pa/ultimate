@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -61,7 +62,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Totalize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Totalize(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -107,8 +108,9 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		final boolean correct;
 		
 		// check language equivalence
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =
-				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
+				new IsEquivalent<>(mServices, (ISinkStateFactory<STATE>) stateFactory, getOperand(), getResult());
 		
 		if (!equivalenceCheck.getResult()) {
 			// language equivalence check failed

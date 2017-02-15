@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -46,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  */
 public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>,
-		IBuchiComplementFkvStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate> {
+		IBuchiComplementFkvStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
+		ISinkStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =

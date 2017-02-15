@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -213,7 +214,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		}
 		
 		// call submethod to enable overriding by subclasses
-		final Pair<Boolean, String> equivalenceResult = checkResultHelper(stateFactory);
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+		final Pair<Boolean, String> equivalenceResult = checkResultHelper((ISinkStateFactory<STATE>) stateFactory);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
@@ -551,7 +553,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected Pair<Boolean, String> checkResultHelper(final IStateFactory<STATE> stateFactory)
+	protected Pair<Boolean, String> checkResultHelper(final ISinkStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		// by default only check finite-word language equivalence
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =

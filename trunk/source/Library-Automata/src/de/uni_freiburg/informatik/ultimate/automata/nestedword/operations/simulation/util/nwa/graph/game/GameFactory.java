@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  * Implementation of a StateFactory for game automaton used for summarize edge
@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
-public final class GameFactory implements IStateFactory<IGameState> {
+public final class GameFactory implements ISinkStateFactory<IGameState> {
 
 	/**
 	 * The state that represents an empty stack.

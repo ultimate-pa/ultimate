@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -52,7 +53,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	private ComplementDeterministicNwa<LETTER, STATE> mComplement;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Constructor with default values.
@@ -66,7 +67,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Complement(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
@@ -85,7 +86,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Complement(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
@@ -176,6 +177,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			
 			// intersection of operand and result should be empty
 			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
 					(new IntersectDD<>(mServices, stateFactory, mOperand, mResult)).getResult();
@@ -188,8 +191,10 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			//		correct &= (resultDD.size() == mResult.size());
 			
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+			correct &=
+					new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, resultDd, mResult).getResult();
+			correct &=
+					new IsIncluded<>(mServices, (ISinkStateFactory<STATE>) stateFactory, mResult, resultDd).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());

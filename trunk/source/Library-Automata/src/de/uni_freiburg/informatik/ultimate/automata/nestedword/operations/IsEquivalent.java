@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  * Test for language equivalence of two nested word automata.
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
@@ -64,7 +64,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public IsEquivalent(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public IsEquivalent(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
