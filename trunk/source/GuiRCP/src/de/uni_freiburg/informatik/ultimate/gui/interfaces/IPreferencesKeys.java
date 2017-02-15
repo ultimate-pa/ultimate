@@ -20,15 +20,15 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE DebugGUI plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.gui.interfaces;
 
 public interface IPreferencesKeys {
-	public final static String LASTPATH="LASTPATH";
-	public final static String PRELUDEFILE="PRELUDEFILE";
-	public final static String LASTTOOLCHAINPATH="LASTTOOLCHAINPATH";
+	String LASTPATH = "LASTPATH";
+	String PRELUDEFILE = "PRELUDEFILE";
+	String LASTTOOLCHAINPATH = "LASTTOOLCHAINPATH";
 }
