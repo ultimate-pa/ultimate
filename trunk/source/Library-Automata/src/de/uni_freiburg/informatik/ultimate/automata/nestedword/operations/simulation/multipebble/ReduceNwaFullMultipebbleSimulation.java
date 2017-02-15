@@ -83,7 +83,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	 *             if suboperations fail
 	 */
 	public ReduceNwaFullMultipebbleSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean allowToMergeFinalAndNonFinalStates)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -102,11 +102,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final int maxGameAutomatonSize = simRes.getSecond();
 			final NestedMap2<STATE, STATE, GS> gsm = gameAutomaton.getGameStateMapping();
 			
-			final boolean mergeFinalAndNonFinalStates = false;
 			// TODO make this an option?
 			final boolean addMapOldState2NewState = false;
 			final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
-					.setFinalStateConstraints(!mergeFinalAndNonFinalStates)
+					.setFinalStateConstraints(!allowToMergeFinalAndNonFinalStates)
 					.setAddMapOldState2NewState(addMapOldState2NewState);
 			
 			final AbstractMinimizeNwa<LETTER, STATE> maxSatMinimizer;
