@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -34,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix
 
 /**
  * State factory for conversion from a {@link BranchingProcess} to an {@link IPetriNet}.
- * <p>
- * TODO remove inheritance from {@link IStateFactory} after {@link IAutomaton#getStateFactory()} has been removed.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>

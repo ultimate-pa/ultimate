@@ -38,6 +38,7 @@ import petruchio.interfaces.petrinet.PetriNet;
  *            state type
  * @see PetriNet2FiniteAutomaton
  */
+@FunctionalInterface
 public interface IPetriNet2FiniteAutomatonStateFactory<STATE> extends IStateFactory<STATE> {
 	/**
 	 * State representation of a {@link PetriNet} {@link Marking} used for conversion to a finite automaton.

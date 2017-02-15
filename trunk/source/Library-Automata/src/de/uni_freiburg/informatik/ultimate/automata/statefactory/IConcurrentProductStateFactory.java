@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Concur
  * @param <STATE>
  *            state type
  */
+@FunctionalInterface
 public interface IConcurrentProductStateFactory<STATE> extends IStateFactory<STATE> {
 	/**
 	 * Concurrent product construction of two states.

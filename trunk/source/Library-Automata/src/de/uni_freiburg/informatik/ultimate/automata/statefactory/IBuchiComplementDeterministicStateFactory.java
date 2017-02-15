@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-
 /**
  * State factory for Buchi complementation of deterministic automata.
- * <p>
- * TODO remove inheritance from {@link IStateFactory} after {@link IAutomaton#getStateFactory()} has been removed.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
