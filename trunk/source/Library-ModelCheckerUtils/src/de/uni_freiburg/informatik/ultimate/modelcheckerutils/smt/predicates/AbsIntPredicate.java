@@ -104,7 +104,7 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 			return false;
 		}
 
-		if (obj instanceof IPredicate) {
+		if (obj instanceof IPredicate && !(obj instanceof AbsIntPredicate<?, ?>)) {
 			return mPredicate.equals(obj);
 		}
 		if (obj instanceof IAbstractState<?, ?>) {
