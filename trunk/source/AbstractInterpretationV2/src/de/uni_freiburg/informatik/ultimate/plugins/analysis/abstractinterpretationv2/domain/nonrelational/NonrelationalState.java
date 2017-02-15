@@ -570,19 +570,19 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	@Override
 	public boolean isBottom() {
-		for (final Entry<VARDECL, V> entry : getVar2ValueNonrelational().entrySet()) {
-			if (entry.getValue().isBottom()) {
-				return true;
-			}
+		if (mIsBottom) {
+			return true;
 		}
 
-		for (final Entry<VARDECL, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
-			if (entry.getValue() == BooleanValue.BOTTOM) {
-				return true;
-			}
+		if (getVar2ValueNonrelational().entrySet().stream().anyMatch(a -> a.getValue().isBottom())) {
+			return true;
 		}
 
-		return mIsBottom;
+		if (getVar2ValueBoolean().entrySet().stream().anyMatch(a -> a.getValue().isBottom())) {
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
@@ -618,6 +618,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public String toLogString() {
 		final StringBuilder stringBuilder = new StringBuilder();
+		if (isBottom()) {
+			stringBuilder.append("BOTTOM ");
+		}
 		for (final VARDECL entry : mVariables) {
 			final String varName;
 			if (entry instanceof IBoogieVar) {
