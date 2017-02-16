@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
  * This is an implementation of our incremental inclusion check based on a
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class InclusionViaDifference<LETTER, STATE>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE> {
-	private final IStateFactory<STATE> mStateFactoryIntersect;
+	private final IIntersectionStateFactory<STATE> mStateFactoryIntersect;
 	private final IDeterminizeStateFactory<STATE> mStateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDifference;
 	private NestedRun<LETTER, STATE> mAcceptingRun;
@@ -75,8 +75,9 @@ public class InclusionViaDifference<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public InclusionViaDifference(final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> InclusionViaDifference(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, stateFactory, nwaA);
 	}
@@ -98,7 +99,7 @@ public class InclusionViaDifference<LETTER, STATE>
 	 *             if operation was canceled
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactoryIntersect,
+			final IIntersectionStateFactory<STATE> stateFactoryIntersect,
 			final IDeterminizeStateFactory<STATE> stateFactoryDeterminize,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
 			throws AutomataOperationCanceledException {

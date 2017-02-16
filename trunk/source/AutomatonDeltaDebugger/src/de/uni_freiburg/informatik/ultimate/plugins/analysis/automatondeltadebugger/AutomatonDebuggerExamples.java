@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -381,7 +382,7 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public <FACTORY extends IMergeStateFactory<String> & ISinkStateFactory<String> & IDeterminizeStateFactory<String>>
+	public <FACTORY extends IMergeStateFactory<String> & ISinkStateFactory<String> & IDeterminizeStateFactory<String> & IIntersectionStateFactory<String>>
 			IOperation<String, String> minimizeNwaOverapproximation(
 					final INestedWordAutomaton<String, String> automaton, final FACTORY factory) throws Throwable {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =

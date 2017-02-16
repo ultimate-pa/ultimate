@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -73,7 +74,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
-	private final ISenwaStateFactory<STATE> mContentFactory;
+	private final ISenwaStateFactory<STATE> mContentFactorySenwa;
+	private final IIntersectionStateFactory<STATE> mContentFactoryIntersection;
 	
 	private final Senwa<LETTER, STATE> mSenwa;
 	
@@ -106,7 +108,7 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public <FACTORY extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE>> DifferenceSenwa(
+	public <FACTORY extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
@@ -133,13 +135,15 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public DifferenceSenwa(final AutomataLibraryServices services, final ISenwaStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISenwaStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEndsImmediately)
 			throws AutomataOperationCanceledException {
 		super(services);
-		mContentFactory = stateFactory;
+		mContentFactorySenwa = stateFactory;
+		mContentFactoryIntersection = stateFactory;
 		
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
@@ -164,8 +168,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 		}
 		STATE resState = op2res.get(diffState);
 		if (resState == null) {
-			resState = mContentFactory.senwa(diffEntry.getState(mContentFactory, mStateDeterminizer),
-					diffState.getState(mContentFactory, mStateDeterminizer));
+			resState = mContentFactorySenwa.senwa(diffEntry.getState(mContentFactoryIntersection, mStateDeterminizer),
+					diffState.getState(mContentFactoryIntersection, mStateDeterminizer));
 			op2res.put(diffState, resState);
 			mResult2Operand.put(resState, diffState);
 			final STATE resEntry = op2res.get(diffEntry);
@@ -341,10 +345,11 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 			
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd = (new DifferenceSadd<>(mServices,
-					(IDeterminizeStateFactory<STATE>) stateFactory, mMinuend, mSubtrahend)).getResult();
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mMinuend,
+					mSubtrahend)).getResult();
 			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultSadd, mSenwa)
-							.getResult();
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+					resultSadd, mSenwa).getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 						"language is different", mMinuend, mSubtrahend);

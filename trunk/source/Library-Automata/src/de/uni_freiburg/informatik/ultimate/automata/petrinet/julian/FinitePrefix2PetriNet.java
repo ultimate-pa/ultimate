@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -257,15 +258,17 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), newNet)).getResult();
 		final NestedRun<L, C> subsetCounterex = new IsIncluded<>(mServices,
-				(ISinkStateFactory<C> & IDeterminizeStateFactory<C>) oldNet.getStateFactory(), finAuto1, finAuto2)
-						.getCounterexample();
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) oldNet
+						.getStateFactory(),
+				finAuto1, finAuto2).getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
 		final NestedRun<L, C> supersetCounterex = new IsIncluded<>(mServices,
-				(ISinkStateFactory<C> & IDeterminizeStateFactory<C>) oldNet.getStateFactory(), finAuto2, finAuto1)
-						.getCounterexample();
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) oldNet
+						.getStateFactory(),
+				finAuto2, finAuto1).getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by second: " + supersetCounterex.getWord());

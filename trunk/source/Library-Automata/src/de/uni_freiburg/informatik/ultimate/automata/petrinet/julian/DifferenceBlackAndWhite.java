@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -390,13 +391,14 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final INestedWordAutomatonSimple<S, C> op1AsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> rcResult =
-				(new DifferenceDD<>(mServices, (IDeterminizeStateFactory<C>) stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomatonSimple<S, C> rcResult = (new DifferenceDD<>(mServices,
+				(IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomatonSimple<S, C> resultAsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mResult)).getResult();
 		
 		boolean correct = true;
-		correct &= new IsEquivalent<>(mServices, (ISinkStateFactory<C> & IDeterminizeStateFactory<C>) stateFactory,
+		correct &= new IsEquivalent<>(mServices,
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) stateFactory,
 				resultAsNwa, rcResult).getResult();
 		
 		if (mLogger.isInfoEnabled()) {

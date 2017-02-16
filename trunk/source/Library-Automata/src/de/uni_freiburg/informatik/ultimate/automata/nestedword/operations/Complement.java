@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -183,9 +184,9 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-					(new IntersectDD<>(mServices, (IBuchiIntersectStateFactory<STATE>) stateFactory, mOperand, mResult))
-							.getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
+					(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mOperand,
+					mResult)).getResult();
 			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
@@ -197,8 +198,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultDd, mResult)
-							.getResult();
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+					resultDd, mResult).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());

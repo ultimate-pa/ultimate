@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -56,7 +57,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstNwa;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER, STATE> mResultNwa;
-	private final IBuchiIntersectStateFactory<STATE> mContentFactory;
+	private final IIntersectionStateFactory<STATE> mContentFactory;
+	private final IBuchiIntersectStateFactory<STATE> mContentFactoryBuchi;
 	
 	private final boolean mBuchi;
 	
@@ -85,8 +87,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public AbstractIntersect(final AutomataLibraryServices services,
-			final IBuchiIntersectStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> AbstractIntersect(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean buchiIntersection,
 			final boolean minimizeResult) throws AutomataLibraryException {
@@ -102,6 +104,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		}
 		
 		mContentFactory = stateFactory;
+		mContentFactoryBuchi = stateFactory;
 		mLogger.info(startMessage());
 		
 		final Set<LETTER> newInternals = new HashSet<>();
@@ -145,7 +148,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		if (state == null) {
 			final boolean isFinal = mBuchi ? mFstNwa.isFinal(fst) : mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
 			
-			state = mBuchi ? mContentFactory.intersectBuchi(fst, snd, 1) : mContentFactory.intersection(fst, snd);
+			state = mBuchi ? mContentFactoryBuchi.intersectBuchi(fst, snd, 1) : mContentFactory.intersection(fst, snd);
 			
 			mResultNwa.addState(isInitial, isFinal, state);
 			snd2result.put(snd, state);
@@ -167,7 +170,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 			final boolean isInitial = false;
 			final boolean isFinal = false;
 			assert mBuchi;
-			state = mContentFactory.intersectBuchi(fst, snd, 2);
+			state = mContentFactoryBuchi.intersectBuchi(fst, snd, 2);
 			mResultNwa.addState(isInitial, isFinal, state);
 			snd2result.put(snd, state);
 			mResult2fst.put(state, fst);

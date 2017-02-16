@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
@@ -64,7 +65,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> IsEquivalent(
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> IsEquivalent(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
@@ -113,8 +114,8 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		return mMessage;
 	}
 	
-	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> boolean
-			checkEquivalence(final FACTORY stateFactory) throws AutomataLibraryException {
+	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean checkEquivalence(final FACTORY stateFactory) throws AutomataLibraryException {
 		if (!checkInclusion(stateFactory, mFstOperand, mSndOperand)) {
 			mMessage = "The first operand recognizes a word not recognized by the second one.";
 			return false;
@@ -126,9 +127,10 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		return true;
 	}
 	
-	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> boolean checkInclusion(
-			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean checkInclusion(final FACTORY stateFactory,
+					final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+					final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		final IsIncluded<LETTER, STATE> isIncluded = new IsIncluded<>(mServices, stateFactory, fstOperand, sndOperand);
 		if (!isIncluded.getResult()) {
 			mCounterexample = isIncluded.getCounterexample().getWord();

@@ -36,6 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -58,7 +59,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeB;
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 
-	private final IStateFactory<STATE> mStateFactory;
+	private final IIntersectionStateFactory<STATE> mStateFactory;
 	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> mPairsMap;
 	private final Map<Pair<STATE, STATE>, STATE> mReducedStates;
 
@@ -71,7 +72,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param t1
 	 * @param t2
 	 */
-	public Intersect(final AutomataLibraryServices services, final IStateFactory<STATE> factory,
+	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> factory,
 			final ITreeAutomatonBU<LETTER, STATE> t1, final ITreeAutomatonBU<LETTER, STATE> t2) {
 		mReducedStates = new HashMap<>();
 		mPairsMap = new HashMap<>();

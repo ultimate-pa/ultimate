@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -111,7 +112,8 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		// check language equivalence
 		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, getOperand(), getResult());
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				getOperand(), getResult());
 		
 		if (!equivalenceCheck.getResult()) {
 			// language equivalence check failed

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -525,8 +526,9 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);

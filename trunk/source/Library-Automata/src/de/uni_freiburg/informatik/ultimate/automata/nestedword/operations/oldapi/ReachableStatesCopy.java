@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -292,8 +293,9 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<>(mServices, (IBuchiIntersectStateFactory<STATE>) stateFactory, mOperand,
-								mTraversedNwa)).getResult();
+						(new IntersectDD<>(mServices,
+								(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+								mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 						(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
@@ -302,8 +304,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			}
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, input, mTraversedNwa)
-							.getResult();
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+					input, mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		if (!correct) {

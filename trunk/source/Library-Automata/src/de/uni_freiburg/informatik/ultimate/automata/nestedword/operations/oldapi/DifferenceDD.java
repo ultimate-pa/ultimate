@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -62,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ),
  * where Psi is a transformation of the automaton nwa_subtrahend that is defined
  * by an implementation of IStateDeterminizer.
+ * <p>
+ * TODO Christian 2017-02-16 The constructors seem very confusing, are they really intended?
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
@@ -101,7 +104,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	 */
 	private final Map<STATE, DifferenceState<LETTER, STATE>> mRes2diff = new HashMap<>();
 	
-	private final IStateFactory<STATE> mStateFactoryForIntersection;
+	private final IIntersectionStateFactory<STATE> mStateFactoryForIntersection;
 	
 	// private INestedWordAutomaton<LETTER, DeterminizedState<LETTER, STATE>> mDeterminizedSubtrahend;
 	
@@ -145,7 +148,8 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public DifferenceDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactoryForIntersection,
+	public DifferenceDD(final AutomataLibraryServices services,
+			final IIntersectionStateFactory<STATE> stateFactoryForIntersection,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEnds,
@@ -182,7 +186,8 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public DifferenceDD(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceDD(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
@@ -207,7 +212,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	private DifferenceDD(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactoryForIntersection,
+			final IIntersectionStateFactory<STATE> stateFactoryForIntersection,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEnds,
@@ -533,10 +538,11 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			
 			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd = (new DifferenceSadd<>(mServices,
-					(IDeterminizeStateFactory<STATE>) stateFactory, mMinuend, mSubtrahend)).getResult();
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mMinuend,
+					mSubtrahend)).getResult();
 			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultSadd,
-					mTraversedNwa).getResult();
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+					resultSadd, mTraversedNwa).getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices,
 						operationName() + "Failed", "language is different",

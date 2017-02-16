@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
@@ -64,7 +65,7 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> IsIncluded(
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> IsIncluded(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {

@@ -38,19 +38,6 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 @SuppressWarnings("squid:S1172")
 public interface IStateFactory<STATE> {
 	/**
-	 * Intersection of two states ("product construction").
-	 * 
-	 * @param state1
-	 *            first state
-	 * @param state2
-	 *            second state
-	 * @return state representing the intersection
-	 */
-	default STATE intersection(final STATE state1, final STATE state2) {
-		return null;
-	}
-	
-	/**
 	 * @return The empty stack state/symbol.
 	 */
 	default STATE createEmptyStackState() {

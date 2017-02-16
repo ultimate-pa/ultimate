@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -99,7 +100,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 	private final AutomataMinimizationStatisticsGenerator mStatistics;
 	private final static long DEFAULT_TIMEOUT_FOR_EXPENSIVE_NWA_MINIMIZATIONS = 5_000;
 
-	public <FACTORY extends IMergeStateFactory<IPredicate> & ISinkStateFactory<IPredicate> & IDeterminizeStateFactory<IPredicate>>
+	public <FACTORY extends IMergeStateFactory<IPredicate> & ISinkStateFactory<IPredicate> & IDeterminizeStateFactory<IPredicate> & IIntersectionStateFactory<IPredicate>>
 		AutomataMinimization(
 			final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
@@ -188,7 +189,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 				statesRemovedByMinimization);
 	}
 
-	private <FACTORY extends IMergeStateFactory<IPredicate> & ISinkStateFactory<IPredicate> & IDeterminizeStateFactory<IPredicate>>
+	private <FACTORY extends IMergeStateFactory<IPredicate> & ISinkStateFactory<IPredicate> & IDeterminizeStateFactory<IPredicate> & IIntersectionStateFactory<IPredicate>>
 		MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
 			final FACTORY predicateFactoryRefinement, final int minimizeEveryKthIteration,

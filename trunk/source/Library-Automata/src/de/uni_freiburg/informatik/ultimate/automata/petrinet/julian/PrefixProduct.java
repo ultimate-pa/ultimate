@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -283,7 +284,8 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		final INestedWordAutomatonSimple<S, C> nwaResult = (new ConcurrentProduct<>(mServices,
 				(IConcurrentProductStateFactory<C>) stateFactory, op1AsNwa, mNwa, true)).getResult();
 		boolean correct;
-		correct = (new IsEquivalent<>(mServices, (ISinkStateFactory<C> & IDeterminizeStateFactory<C>) stateFactory,
+		correct = (new IsEquivalent<>(mServices,
+				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) stateFactory,
 				resultAsNwa, nwaResult)).getResult();
 		
 		mLogger.info("Finished testing correctness of prefixProduct");

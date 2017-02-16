@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
@@ -59,7 +60,8 @@ public class PredicateFactoryForInterpolantAutomata
 		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
 		IBuchiComplementNcsbStateFactory<IPredicate>, IBuchiComplementFkvStateFactory<IPredicate>,
 		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate> {
+		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate>,
+		IIntersectionStateFactory<IPredicate> {
 
 	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;

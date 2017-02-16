@@ -33,12 +33,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class IncrementalInclusionCheckDifference<LETTER, STATE> extends InclusionViaDifference<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	public  IncrementalInclusionCheckDifference(
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> IncrementalInclusionCheckDifference(
 			final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> stateFactory,
+			final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services,stateFactory,a);

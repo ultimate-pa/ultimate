@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -613,7 +614,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		mLogger.info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(mServices,
-				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>) stateFactory,
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
 				mOperand, mResult)).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;

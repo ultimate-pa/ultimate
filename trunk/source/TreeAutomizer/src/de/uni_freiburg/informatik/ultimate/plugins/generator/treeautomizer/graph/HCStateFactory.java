@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCStateFactory implements IMergeStateFactory<HCPredicate> {
+public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IIntersectionStateFactory<HCPredicate> {
 
 	// final protected boolean mComputeHoareAnnotation;
 	// final protected TAPreferences mPref;

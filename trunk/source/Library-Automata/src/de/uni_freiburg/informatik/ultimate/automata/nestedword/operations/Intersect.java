@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -67,7 +68,7 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Intersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
@@ -119,13 +120,14 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		
 		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new IntersectDD<>(mServices,
-				(IBuchiIntersectStateFactory<STATE>) stateFactory, mFstOperand, mSndOperand)).getResult();
+				(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mFstOperand,
+				mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
-		correct &=
-				new IsEquivalent<>(mServices, (ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory,
-						resultDd, mResult).getResult();
+		correct &= new IsEquivalent<>(mServices,
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

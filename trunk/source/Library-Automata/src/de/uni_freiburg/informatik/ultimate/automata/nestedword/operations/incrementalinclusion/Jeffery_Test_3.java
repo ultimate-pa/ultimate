@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -80,7 +81,8 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
 
-	public Jeffery_Test_3(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> Jeffery_Test_3(
+			final AutomataLibraryServices services, final FACTORY sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final int num) throws AutomataLibraryException {
 

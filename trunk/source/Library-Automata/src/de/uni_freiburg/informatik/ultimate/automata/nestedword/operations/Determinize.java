@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -146,8 +147,8 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 							.getResult();
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>) stateFactory, resultDd, mResult)
-							.getResult();
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+					resultDd, mResult).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());

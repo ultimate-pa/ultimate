@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -59,7 +60,8 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	static long faster_i = 0, slower_i = 0;
 	static long timeBuffer1, timeBuffer2;
 
-	public Jeffery_Test_4(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>Jeffery_Test_4(
+			final AutomataLibraryServices services, final FACTORY sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
 			throws AutomataLibraryException, IOException {
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
@@ -132,7 +134,8 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	}
 
-	public Jeffery_Test_4(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> Jeffery_Test_4(
+			final AutomataLibraryServices services, final FACTORY sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final String folderInput) throws AutomataLibraryException, IOException {
 		folder = folderInput;
