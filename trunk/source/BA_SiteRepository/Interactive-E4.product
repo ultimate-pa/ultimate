@@ -20,7 +20,7 @@
       </programArgsLin>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx8g -Xms512M
+      <vmArgs>-Xmx8g -ea
       </vmArgs>
    </launcherArgs>
 
