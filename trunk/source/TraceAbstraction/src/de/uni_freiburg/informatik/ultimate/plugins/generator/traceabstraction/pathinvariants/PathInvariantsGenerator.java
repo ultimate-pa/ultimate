@@ -860,9 +860,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
 		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		// the difference of path program locations and the locations extracted from unsat cores
-		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the minimum size of all templates occurring in the most recent round
@@ -879,6 +876,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
 		SumNonLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the sum of the difference of all variables and the variables from the unsat core per location per round
+		SumNonUnsatCoreLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations
