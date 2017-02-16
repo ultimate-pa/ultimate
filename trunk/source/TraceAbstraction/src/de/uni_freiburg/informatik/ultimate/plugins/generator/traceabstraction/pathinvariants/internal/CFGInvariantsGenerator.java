@@ -64,7 +64,7 @@ public final class CFGInvariantsGenerator {
 	/**
 	 * Report a {@link BenchmarkResult} for every round.
 	 */
-	private final boolean mTemplateStatisticsMode = false;
+	private static final boolean TEMPLATE_STATISTICS_MODE = false;
 
 
 	private static boolean INIT_USE_EMPTY_PATTERNS = true;
@@ -222,7 +222,7 @@ public final class CFGInvariantsGenerator {
 			prepareAndSetPathInvariantsStatistics(locationsAsList, startLocation, errorLocation, allProgramVars, varsFromUnsatCore, locs2LiveVariables, 
 					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, constraintsResult.toString(), stats, round);
 			
-			if (mTemplateStatisticsMode) {
+			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
 				stat.aggregateBenchmarkData(mPathInvariantsStatistics);
 				final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
