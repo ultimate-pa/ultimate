@@ -65,9 +65,37 @@ public class HybridTermBuilder {
 	}
 	
 	public Term infixToTerm(final String infix, final BuildScenario scenario) {
-		final List<String> infixArray = expressionToArray(infix);
+		List<String> infixArray = expressionToArray(infix);
+		if (scenario == BuildScenario.UPDATE) {
+			infixArray = preprocessForUpdate(infixArray);
+		}
 		final List<String> postfix = postfix(infixArray);
 		return postfixToTerm(postfix, scenario);
+	}
+	
+	// update of the form x := x+1 becomes x := (x+1)
+	// needed for postfix form.
+	private List<String> preprocessForUpdate(final List<String> infixArray) {
+		final List<String> res = new ArrayList<>();
+		boolean open = false;
+		for (final String el : infixArray) {
+			if ("==".equals(el)) {
+				res.add(el);
+				res.add("(");
+				open = true;
+			} else if ("&".equals(el)) {
+				res.add(")");
+				res.add(el);
+				open = false;
+			} else {
+				res.add(el);
+			}
+		}
+		if (open) {
+			res.add(")");
+			open = false;
+		}
+		return res;
 	}
 	
 	/**

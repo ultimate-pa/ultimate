@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="aut1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <location id="1" name="loc1" x="205.0" y="180.0">
+      <invariant>x &lt;= 5</invariant>
+      <flow>x'==4</flow>
+    </location>
+  </component>
+  <component id="aut2">
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <location id="2" name="loc1" x="204.0" y="217.0">
+      <invariant>y &lt;= 5</invariant>
+      <flow>y'==4</flow>
+    </location>
+  </component>
+  <component id="aut3">
+    <param name="z" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <location id="2" name="loc1" x="184.0" y="218.0">
+      <invariant>z &lt;= 5</invariant>
+      <flow>z'==4</flow>
+    </location>
+  </component>
+  <component id="sys1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="z" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut1" as="aut1_1" x="290.0" y="165.0">
+      <map key="x">x</map>
+    </bind>
+    <bind component="aut2" as="aut2_1" x="285.0" y="239.0">
+      <map key="y">y</map>
+    </bind>
+    <bind component="aut3" as="aut3_1" x="292.0" y="321.0">
+      <map key="z">z</map>
+    </bind>
+  </component>
+</sspaceex>
+

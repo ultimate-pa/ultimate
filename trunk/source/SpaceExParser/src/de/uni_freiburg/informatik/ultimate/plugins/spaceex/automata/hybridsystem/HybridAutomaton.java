@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +91,7 @@ public class HybridAutomaton {
 			addTransition(trans);
 		}
 		// if initial location is simply the first location.
-		mInitialLocation = mLocations.get(1);
+		mInitialLocation = mLocations.values().iterator().next();
 	}
 	
 	protected HybridAutomaton(final String name, final Map<Integer, Location> locations, final Location initialLocation,
@@ -98,14 +99,14 @@ public class HybridAutomaton {
 			final Set<String> globalParameters, final Set<String> globalConstants, final Set<String> labels,
 			final ILogger logger) {
 		mName = name;
-		mLocations = locations;
+		mLocations = (locations != null) ? locations : Collections.emptyMap();
 		mInitialLocation = initialLocation;
-		mTransitions = transitions;
-		mGlobalParameters = globalParameters;
-		mLocalParameters = localParameters;
-		mGlobalConstants = globalConstants;
-		mLocalConstants = localConstants;
-		mLabels = labels;
+		mTransitions = (transitions != null) ? transitions : Collections.emptyList();
+		mGlobalParameters = (globalParameters != null) ? globalParameters : Collections.emptySet();
+		mLocalParameters = (localParameters != null) ? localParameters : Collections.emptySet();
+		mGlobalConstants = (globalConstants != null) ? globalConstants : Collections.emptySet();
+		mLocalConstants = (localConstants != null) ? localConstants : Collections.emptySet();
+		mLabels = (labels != null) ? labels : Collections.emptySet();
 		mLogger = logger;
 		mNametoId = new HashMap<>();
 		for (final Location location : mLocations.values()) {

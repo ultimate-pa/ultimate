@@ -36,6 +36,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	 * 
 	 * @param script
 	 * @param automaton
+	 * @param binds
 	 */
 	public HybridIcfgSymbolTable(final ManagedScript script, final HybridAutomaton automaton, final String procedure,
 			final HybridVariableManager variableManager) {
@@ -59,11 +60,18 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 			mTVtoProgVar.put(inVar, progVar);
 			mTVtoProgVar.put(outVar, progVar);
 			progVars.add(progVar);
-			if (automaton.getLocalConstants().contains(var) || automaton.getGlobalConstants().contains(var)) {
-				variableManager.addVarToConstants(var);
+			if ((automaton.getLocalConstants().contains(var) || automaton.getGlobalConstants().contains(var))) {
+				if (varIsNumber(var)) {
+					variableManager.addVarToConstants(var);
+				}
 			}
 		}
 		mLocals.put(procedure, progVars);
+	}
+	
+	private boolean varIsNumber(final String var) {
+		
+		return false;
 	}
 	
 	@Override

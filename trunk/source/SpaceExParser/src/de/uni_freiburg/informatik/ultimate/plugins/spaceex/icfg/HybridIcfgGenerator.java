@@ -112,6 +112,9 @@ public class HybridIcfgGenerator {
 	 * @return
 	 */
 	public BasicIcfg<IcfgLocation> createIfcgFromComponents(final HybridAutomaton automaton) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("AUTOMATON: " + automaton);
+		}
 		// If scenario is that we have preferencegroups, get the parallel compositions of the groups.
 		// else just build the ICFG for one automaton without initial assignments.
 		if (mScenario == Scenario.PREF_GROUPS) {

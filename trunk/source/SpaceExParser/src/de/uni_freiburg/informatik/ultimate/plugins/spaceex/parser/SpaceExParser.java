@@ -234,7 +234,7 @@ public class SpaceExParser implements ISource {
 			automaton = parallelCompositions.get(1);
 		} else {
 			if (!system.getAutomata().isEmpty()) {
-				automaton = model.mergeAutomata(system, null);
+				automaton = model.mergeAutomataNWay(system, null);
 			} else {
 				throw new IllegalStateException("system does not have any automata");
 			}
