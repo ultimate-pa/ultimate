@@ -31,14 +31,16 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 		return (IConverter<B, ? extends IA>) mapBA.get(typeB);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <B extends IB> IConverter<? extends IA, B> getAB2(Class<B> typeB) {
-		return null;
+		return (IConverter<? extends IA, B>) mapAB2.get(typeB);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <A extends IA> IConverter<? extends IB, A> getBA2(Class<A> typeA) {
-		return null;
+		return (IConverter<? extends IB, A>) mapBA2.get(typeA);
 	}
 
 	@Override
