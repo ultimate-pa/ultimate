@@ -34,13 +34,14 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * Default implementation for objects that store benchmark data.
  *
  * @author Matthias Heizmann
  */
-public class StatisticsData implements IStatisticsDataProvider {
+public class StatisticsData implements IStatisticsDataProvider, ICsvProviderProvider<Object> {
 	private final Map<String, Object> mKey2Value = new HashMap<>();
 	private IStatisticsType mBenchmarkType;
 
@@ -151,6 +152,7 @@ public class StatisticsData implements IStatisticsDataProvider {
 		return result;
 	}
 
+	@Override
 	public ICsvProvider<Object> createCsvProvider() {
 		final LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
 		return CsvUtils.constructCvsProviderFromMap(flatKeyValueMap);
