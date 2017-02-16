@@ -26,6 +26,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mMotzkinTransformations;
 	private String mSatStatus;
 	private int mSumOfTemplateInequalities;
+	private long mConstraintsConstructionTime;
+	private long mConstraintsSolvingTime;
 	
 	public void initializeStatistics() {
 		mNumOfPathProgramLocations = 0;
@@ -43,6 +45,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mSumOfTemplateInequalities = 0;
 		mMotzkinTransformations = 0;
 		mSatStatus = "";
+		mConstraintsConstructionTime = 0;
+		mConstraintsSolvingTime = 0;
 	}
 
 
@@ -69,6 +73,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		case SumNonUnsatCoreLocs: return mNumOfNonUnsatCoreLocs;
 		case SumNonUnsatCoreVars: return mNumOfNonUnsatCoreVars;
 		case MotzkinTransformations: return mMotzkinTransformations;
+		case ConstraintsSolvingTime: return mConstraintsSolvingTime;
+		case ConstraintsConstructionTime : return mConstraintsConstructionTime;
 		case SatStatus: return mSatStatus;
 		default:
 			throw new AssertionError("unknown key");
@@ -89,29 +95,30 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 
-	public void addStatisticsDataBeforeCheckSat(final int numOfTemplateInequalitiesForThisRound, final int maximalTemplateSizeOfThisRound, final int minimalTemplateSizeOfThisRound, final int sumOfVarsPerLoc, final int numfOfNonLiveVariables,
-			Map<LinearInequalityPatternProcessorStatistics, Integer> linearInequalityStats, final int round) {
+	public void addStatisticsDataBeforeCheckSat(final int numOfTemplateInequalitiesForThisRound, final int maximalTemplateSizeOfThisRound, 
+			final int minimalTemplateSizeOfThisRound, final int sumOfVarsPerLoc, final int numfOfNonLiveVariables, final int round) {
 		if (numOfTemplateInequalitiesForThisRound > mMaxNumOfInequalitiesPerRound) {
 			mMaxNumOfInequalitiesPerRound = numOfTemplateInequalitiesForThisRound;
 		}
 		mSumOfTemplateInequalities += numOfTemplateInequalitiesForThisRound;
-		mDAGSizeSumOfConstraints += linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints);
 		mSumOfVarsPerLoc += sumOfVarsPerLoc;
 		mNumOfNonLiveVariables += numfOfNonLiveVariables;
-		
 		if (round > mMaxRound) {
 			mMaxRound  = round;
 		}
-		mProgramSize = linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
 		if (maximalTemplateSizeOfThisRound > mSizeOfLargestTemplate) {
 			mSizeOfLargestTemplate = maximalTemplateSizeOfThisRound;
 		}
 		mSizeOfSmallestTemplate = minimalTemplateSizeOfThisRound;
-		mMotzkinTransformations += linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformations);
-		
 	}
 	
-	public void addStatisticsDataAfterCheckSat(int numOfNonUnsatCoreLocs, int numOfNonUnsatCoreVars, String satResult) {
+	public void addStatisticsDataAfterCheckSat(int numOfNonUnsatCoreLocs, int numOfNonUnsatCoreVars, String satResult,
+			Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStats) {
+		mDAGSizeSumOfConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints);
+		mProgramSize = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
+		mMotzkinTransformations += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformations);
+		mConstraintsSolvingTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
+		mConstraintsConstructionTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
 		mNumOfNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
 		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
 		if (mSatStatus == "") {

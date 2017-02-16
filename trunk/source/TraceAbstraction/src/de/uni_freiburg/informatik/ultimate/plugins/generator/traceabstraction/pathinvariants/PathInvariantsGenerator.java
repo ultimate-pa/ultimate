@@ -882,6 +882,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations
 		MotzkinTransformations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the sum of the time needed per round to solve the constraints
+		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
+		// the sum of the time needed per round to construct the constraints
+		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String)s1 + "; " + (String)s2), AStatisticsType.sKeyBeforeData);
 

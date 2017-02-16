@@ -218,9 +218,8 @@ public final class CFGInvariantsGenerator {
 			final LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
 
 			// Set statistics before check sat
-			final Map<LinearInequalityPatternProcessorStatistics, Integer> stats = ((LinearInequalityInvariantPatternProcessor)processor).getStatistics();
 			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables, 
-					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, stats, round);
+					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, round);
 
 			Set<IcfgLocation> locsInUnsatCore = null;
 			varsFromUnsatCore = new HashSet<>();
@@ -252,8 +251,9 @@ public final class CFGInvariantsGenerator {
 
 			} 
 			// Set statistics after check sat
+			final Map<LinearInequalityPatternProcessorStatistics, Object> stats = ((LinearInequalityInvariantPatternProcessor)processor).getStatistics();			
 			prepareAndSetPathInvariantsStatisticsAfterCheckSat(locationsAsList, locsInUnsatCore, startLocation, errorLocation, allProgramVars, 
-					varsFromUnsatCore,  round, constraintsResult.toString());
+					varsFromUnsatCore,  round, constraintsResult.toString(), stats);
 			
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
@@ -288,7 +288,7 @@ public final class CFGInvariantsGenerator {
 
 	private void prepareAndSetPathInvariantsStatisticsBeforeCheckSat(final List<IcfgLocation> locationsAsList, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars, 
 			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, final int numOfTemplateInequalitiesForThisRound, 
-			final int minimalTemplateSizeOfThisRound, final int maximalTemplateSizeOfThisRound, final Map<LinearInequalityPatternProcessorStatistics, Integer> linearInequalityStatistics, 
+			final int minimalTemplateSizeOfThisRound, final int maximalTemplateSizeOfThisRound,
 			final int round) {
 		final int sumOfVarsPerLoc = allProgramVars.size() * (locationsAsList.size() - 2);
 		int numOfNonLiveVariables = 0;
@@ -302,18 +302,19 @@ public final class CFGInvariantsGenerator {
 			}
 		}
 		mPathInvariantsStatistics.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound, 
-				sumOfVarsPerLoc, numOfNonLiveVariables, linearInequalityStatistics, round);
+				sumOfVarsPerLoc, numOfNonLiveVariables, round);
 		final PathInvariantsStatisticsGenerator pathInvariantsStatisticsForThisRound = new PathInvariantsStatisticsGenerator();
 		pathInvariantsStatisticsForThisRound.initializeStatistics();
 		pathInvariantsStatisticsForThisRound.setNumOfPathProgramLocations(locationsAsList.size());
 		pathInvariantsStatisticsForThisRound.setNumOfVars(allProgramVars.size());
 		pathInvariantsStatisticsForThisRound.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound,
-				sumOfVarsPerLoc, numOfNonLiveVariables, linearInequalityStatistics, round);
+				sumOfVarsPerLoc, numOfNonLiveVariables, round);
 		mRound2PathInvariantsStatistics.put(round, pathInvariantsStatisticsForThisRound);
 	}
 
 	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList, Set<IcfgLocation> locationsInUnsatCore, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars, 
-			final Set<IProgramVar> varsFromUnsatCore,  final int round, final String constraintsResult) {
+			final Set<IProgramVar> varsFromUnsatCore,  final int round, final String constraintsResult,
+			final Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStatistics) {
 		int numOfNonUnsatCoreVars = 0;
 		int numOfNonUnsatCoreLocs = 0;
 		if (locationsInUnsatCore != null && !locationsInUnsatCore.isEmpty()) {
@@ -327,9 +328,11 @@ public final class CFGInvariantsGenerator {
 			}
 		}
 		// Add statistics data to global path invariants statistics
-		mPathInvariantsStatistics.addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs, numOfNonUnsatCoreVars, constraintsResult);
+		mPathInvariantsStatistics.addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs, numOfNonUnsatCoreVars, constraintsResult,
+				linearInequalityStatistics);
 		// Add statistics data to path invariants statistics for the current round
-		mRound2PathInvariantsStatistics.get(round).addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs, numOfNonUnsatCoreVars, constraintsResult);
+		mRound2PathInvariantsStatistics.get(round).addStatisticsDataAfterCheckSat(numOfNonUnsatCoreLocs, numOfNonUnsatCoreVars, constraintsResult,
+				linearInequalityStatistics);
 	}
 
 	private <IPT> void addWP_PredicatesToInvariantPatterns(final IInvariantPatternProcessor<IPT> processor, final Map<IcfgLocation, IPT> patterns,

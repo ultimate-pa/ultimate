@@ -167,11 +167,15 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private int mDAGTreeSizeSumOfConstraints;
 	private int mMotzkinTransformations;
 	private int mProgramSize;
+	private long mConstraintsSolvingTime;
+	private long mConstraintsConstructionTime;
 	
 	public enum LinearInequalityPatternProcessorStatistics {
 		ProgramSize,
 		MotzkinTransformations,
-		DAGTreesizeOfConstraints
+		DAGTreesizeOfConstraints,
+		ConstraintsSolvingTime,
+		ConstraintsConstructionTime
 	}
 
 
@@ -246,6 +250,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mDAGTreeSizeSumOfConstraints = 0;
 		mMotzkinTransformations = 0;
 		mProgramSize = 0;
+		mConstraintsSolvingTime = 0;
+		mConstraintsConstructionTime = 0;
 
 	}
 
@@ -853,11 +859,13 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		return mVarsFromUnsatCore;
 	}
 	
-	public Map<LinearInequalityPatternProcessorStatistics, Integer> getStatistics() {
-		Map<LinearInequalityPatternProcessorStatistics, Integer> stats = new HashMap<>();
+	public Map<LinearInequalityPatternProcessorStatistics, Object> getStatistics() {
+		Map<LinearInequalityPatternProcessorStatistics, Object> stats = new HashMap<>();
 		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSize, mProgramSize);
 		stats.put(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints, mDAGTreeSizeSumOfConstraints);
 		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformations, mMotzkinTransformations);
+		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime, mConstraintsSolvingTime);
+		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime, mConstraintsConstructionTime);
 		return stats;
 	}
 
@@ -869,15 +877,18 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final Collection<InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>>> predicates,
 			final int round) {
 		mLogger.info("[LIIPP] Start generating terms.");
-
+		long startTimeConstraintsConstruction = System.nanoTime();
 		if (!mUseUnsatCoreForLocsAndVars) {
 			generateAndAssertTerms(predicates);
 		} else {
 			generateAndAnnotateAndAssertTerms(predicates);
 		}
-
+		mConstraintsConstructionTime = System.nanoTime() - startTimeConstraintsConstruction;
+		
 		mLogger.info("[LIIPP] Terms generated, checking SAT.");
+		long startTimeConstraintsSolving = System.nanoTime();
 		final LBool smtResult = mSolver.checkSat();
+		mConstraintsSolvingTime = System.nanoTime() - startTimeConstraintsSolving;
 		mLogger.info("Check-sat result: " + smtResult);
 
 		if (smtResult == LBool.UNSAT && mUseUnsatCoreForLocsAndVars) {
