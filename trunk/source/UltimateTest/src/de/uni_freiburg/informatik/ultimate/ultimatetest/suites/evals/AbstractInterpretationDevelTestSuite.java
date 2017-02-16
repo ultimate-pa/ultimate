@@ -147,19 +147,17 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			// ## current fails
 			// non-absint preds
 			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
-			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-			
-			//incompatible matrices
 			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+			
+			//inductivity failed
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 			
-			//inductivity failed
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-
 	};
 	// @formatter:on
 
@@ -204,7 +202,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
+		return new OverapproximatingSafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override
