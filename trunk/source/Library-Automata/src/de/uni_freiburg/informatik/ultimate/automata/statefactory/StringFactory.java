@@ -54,7 +54,7 @@ public class StringFactory
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
 		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
 		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IBuchiIntersectStateFactory<String>,
-		IIntersectionStateFactory<String> {
+		IIntersectionStateFactory<String>, IEmptyStackStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*

@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 /**
@@ -41,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
  * @param <STATE>
  * @param <GS>
  */
-public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>> implements ISinkStateFactory<GS> {
+public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>>
+		implements ISinkStateFactory<GS>, IEmptyStackStateFactory<GS> {
 	
 	private int mMaxNumberOfDoubleDeckerPebbles = 0;
 	protected final GS mSpoilerWinningSink;

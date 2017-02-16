@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -68,7 +69,8 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Intersect(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
+	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
@@ -126,7 +128,7 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
 		correct &= new IsEquivalent<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
 				resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {

@@ -28,18 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 /**
- * Abstract factory for states used in typical automata operations.
+ * This is an empty interface only used to mark other state factories. Every factory for states used in the automata
+ * library must implement this empty interface. The purpose is to allow the automata script interpreter to identify a
+ * constructor argument as a state factory and pass a {@link StringFactory}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
  */
-@SuppressWarnings("squid:S1172")
 public interface IStateFactory<STATE> {
-	/**
-	 * @return The empty stack state/symbol.
-	 */
+	// TODO Christian 2017-02-16 remove this method after all broken places have been fixed
 	default STATE createEmptyStackState() {
 		return null;
 	}

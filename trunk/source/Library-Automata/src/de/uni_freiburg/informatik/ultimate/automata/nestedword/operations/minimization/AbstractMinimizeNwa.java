@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -100,8 +101,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param stateFactory
 	 *            state factory
 	 */
-	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory) {
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractMinimizeNwa(
+			final AutomataLibraryServices services, final FACTORY stateFactory) {
 		super(services);
 		mResult = null;
 		mTemporaryResult = null;
@@ -218,7 +219,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		// call submethod to enable overriding by subclasses
 		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final Pair<Boolean, String> equivalenceResult = checkResultHelper(
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory);
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
@@ -278,8 +279,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), partition, addMapping);
+		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(mServices,
+				(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, getOperandCast(), partition,
+				addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	
@@ -292,8 +295,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), unionFind, addMapping);
+		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(mServices,
+				(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, getOperandCast(), unionFind,
+				addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 	
@@ -556,7 +561,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+	protected <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			Pair<Boolean, String> checkResultHelper(final FACTORY stateFactory) throws AutomataLibraryException {
 		// by default only check finite-word language equivalence
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =

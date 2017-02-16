@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -52,7 +53,6 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Full constructor.
@@ -68,18 +68,17 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersect(final AutomataLibraryServices services, final IBuchiIntersectStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiIntersect(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		mStateFactory = stateFactory;
-		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		doIntersect();
+		doIntersect(stateFactory);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -95,9 +94,10 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
-	private void doIntersect() throws AutomataLibraryException {
+	private <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			doIntersect(final FACTORY stateFactory) throws AutomataLibraryException {
 		final BuchiIntersectNwa<LETTER, STATE> intersect =
-				new BuchiIntersectNwa<>(mFstOperand, mSndOperand, mStateFactory);
+				new BuchiIntersectNwa<>(mFstOperand, mSndOperand, stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
 	}
 	

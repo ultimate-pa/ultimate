@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
@@ -122,8 +123,9 @@ public class InclusionViaDifference<LETTER, STATE>
 		final INestedWordAutomatonSimple<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
 				new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
 		final INestedWordAutomatonSimple<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
+		// TODO Christian 2017-02-16 Cast is temporary workaround until we found a solution
 		final INestedWordAutomatonSimple<LETTER, STATE> difference =
-				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
+				new IntersectNwa<>(mDifference, complemented, (IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {
 			final INestedWordAutomatonSimple<LETTER, STATE> removedDeadEnds =
 					(new RemoveDeadEnds<>(mServices, difference)).getResult();

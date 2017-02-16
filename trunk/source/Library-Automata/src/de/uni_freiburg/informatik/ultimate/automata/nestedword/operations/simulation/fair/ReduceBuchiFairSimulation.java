@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -83,7 +84,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		// instances
 
 		final ToolchainStorage services = new ToolchainStorage();
-		final IMergeStateFactory<String> snf = new StringFactory();
+		final StringFactory snf = new StringFactory();
 
 		// Buechi automaton
 		final Set<String> alphabet = new HashSet<>();
@@ -278,7 +279,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 				logMessage("Start Cross-Simulation without SCC...", logger);
 			}
 
-			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+			// TODO Christian 2017-02-16 Cast is a temporary workaround until we find a solution
+			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices,
+					(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) operation.mStateFactory,
 					operation.mOperand, false);
 			simulationNoSCC = operationNoSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -288,7 +291,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			if (logNoErrorDebug) {
 				logMessage("Start Cross-Simulation with SCC...", logger);
 			}
-			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices,
+					(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) operation.mStateFactory,
 					operation.mOperand, true);
 			simulationSCC = operationSCC.mSimulation;
 			if (logNoErrorDebug) {
@@ -455,8 +459,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairSimulation(
+			final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList(), false);
 	}
@@ -479,8 +484,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairSimulation(
+			final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
 	}
@@ -508,10 +514,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws AutomataOperationCanceledException {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> possibleEquivalentClasses) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
 
@@ -541,10 +547,11 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final boolean checkOperationDeeply) throws AutomataOperationCanceledException {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
+					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
 				new FairSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
@@ -577,9 +584,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>ReduceBuchiFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
+			final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;

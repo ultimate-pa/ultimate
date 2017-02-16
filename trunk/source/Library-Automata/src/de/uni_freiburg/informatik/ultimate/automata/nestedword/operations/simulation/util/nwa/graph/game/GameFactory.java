@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
@@ -14,7 +15,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
-public final class GameFactory implements ISinkStateFactory<IGameState>, IDeterminizeStateFactory<IGameState> {
+public final class GameFactory implements ISinkStateFactory<IGameState>, IDeterminizeStateFactory<IGameState>,
+		IEmptyStackStateFactory<IGameState> {
 	/**
 	 * The state that represents an empty stack.
 	 */

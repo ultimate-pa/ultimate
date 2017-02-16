@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -81,10 +82,10 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectNwa(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> IntersectNwa(
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final IIntersectionStateFactory<STATE> stateFactory,
-			final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
+			final FACTORY stateFactory, final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
@@ -94,7 +95,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		
 		mStateFactory = stateFactory;
 		mAssumeInSndNonFinalIsTrap = assumeInSndNonFinalIsTrap;
-		mEmptyStackState = mStateFactory.createEmptyStackState();
+		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 	
 	public Map<STATE, Map<STATE, ProductState>> getFst2snd2res() {

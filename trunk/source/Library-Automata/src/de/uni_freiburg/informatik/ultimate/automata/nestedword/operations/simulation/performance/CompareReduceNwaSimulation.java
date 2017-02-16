@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -85,9 +86,9 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public CompareReduceNwaSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> CompareReduceNwaSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -193,8 +194,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * INestedWordAutomaton)
 	 */
 	@Override
-	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
-			final AutomataLibraryServices services, final long timeout, final IMergeStateFactory<STATE> stateFactory,
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
+			final AutomataLibraryServices services, final long timeout, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
@@ -282,8 +283,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * reachableStatesAutomaton.NestedWordAutomatonReachableStates)
 	 */
 	@Override
-	protected void measurePerformances(final String automatonName, final long timeOutMillis,
-			final IMergeStateFactory<STATE> stateFactory,
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void measurePerformances(
+			final String automatonName, final long timeOutMillis, final FACTORY stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,

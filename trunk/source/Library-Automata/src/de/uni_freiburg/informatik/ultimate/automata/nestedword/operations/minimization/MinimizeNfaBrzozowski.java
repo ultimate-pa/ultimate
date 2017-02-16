@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
@@ -74,7 +75,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IMergeStateFactory<STATE>> MinimizeNfaBrzozowski(
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNfaBrzozowski(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory);

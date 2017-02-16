@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -47,18 +48,17 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IMergeStateFactory<STATE> mStateFactory;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public Complement(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final FACTORY factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
 		mTreeAutomaton = tree;
-		mStateFactory = factory;
 
-		mResult = computeResult();
+		mResult = computeResult(factory);
 	}
 
 	@Override
@@ -76,11 +76,12 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting complementing";
 	}
 
-	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, mStateFactory, mTreeAutomaton);
+	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
+			computeResult(final FACTORY stateFactory) {
+		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, mStateFactory, res);
+		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
 		return mini.getResult();
 	}
 

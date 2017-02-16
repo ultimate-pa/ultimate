@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementSvwStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -100,8 +101,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiComplementAutomatonSVW(final AutomataLibraryServices services,
-			final IBuchiComplementSvwStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiComplementSvwStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiComplementAutomatonSVW(
+			final AutomataLibraryServices services,
+			final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -111,7 +113,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			throw new IllegalArgumentException("only applicable to Buchi automata (not BuchiNWA)");
 		}
 		mStateFactory = stateFactory;
-		mEmptyStackState = mStateFactory.createEmptyStackState();
+		mEmptyStackState = stateFactory.createEmptyStackState();
 		final MetaState metaInitialState = getMetaState1(mTma.getInitialState(), mTma.getInitialTma());
 		mInitialState = metaInitialState.getOutputState();
 		mInitialStateSet.add(mInitialState);

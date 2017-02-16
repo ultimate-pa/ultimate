@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -74,9 +75,10 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ or operation was canceled
 	 */
-	public BuchiIntersectNwa(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiIntersectNwa(
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final IBuchiIntersectStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+			final FACTORY stateFactory) throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
@@ -85,7 +87,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		}
 		
 		mStateFactory = stateFactory;
-		mEmptyStackState = mStateFactory.createEmptyStackState();
+		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 	
 	private Set<STATE> constructInitialState() {

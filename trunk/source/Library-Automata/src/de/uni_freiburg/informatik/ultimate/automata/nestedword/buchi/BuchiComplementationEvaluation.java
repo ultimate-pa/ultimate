@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -172,7 +173,9 @@ public final class BuchiComplementationEvaluation<LETTER, STATE> extends UnaryNw
 				(new RemoveUnreachable<>(mServices, bc)).getResult();
 		// TODO Christian 2017-01-27 somehow need a state factory here
 		final INestedWordAutomaton<LETTER, STATE> minmized =
-				new MinimizeSevpa<>(mServices, (IMergeStateFactory<STATE>) bcru.getStateFactory(), bcru).getResult();
+				new MinimizeSevpa<>(mServices,
+						(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) bcru.getStateFactory(), bcru)
+								.getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
 	
