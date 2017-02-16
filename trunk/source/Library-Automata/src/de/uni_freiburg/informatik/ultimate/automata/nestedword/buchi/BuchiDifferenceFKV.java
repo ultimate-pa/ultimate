@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
@@ -62,7 +63,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiDifferenceFKV(
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> BuchiDifferenceFKV(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
@@ -90,8 +91,8 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiDifferenceFKV(final AutomataLibraryServices services,
-			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> BuchiDifferenceFKV(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
@@ -107,9 +108,9 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 		}
 	}
 	
-	private void constructResult(final IBuchiComplementFkvStateFactory<STATE> stateFactory,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
+	private <FACTORY extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> void
+			constructResult(final FACTORY stateFactory, final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+					final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
 		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
 				optimization, userDefinedMaxRank);
 		constructDifferenceFromComplement(stateFactory);

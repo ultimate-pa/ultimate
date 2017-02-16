@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -56,7 +56,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstNwa;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER, STATE> mResultNwa;
-	private final IStateFactory<STATE> mContentFactory;
+	private final IBuchiIntersectStateFactory<STATE> mContentFactory;
 	
 	private final boolean mBuchi;
 	
@@ -85,7 +85,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public AbstractIntersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public AbstractIntersect(final AutomataLibraryServices services,
+			final IBuchiIntersectStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean buchiIntersection,
 			final boolean minimizeResult) throws AutomataLibraryException {

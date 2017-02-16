@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -291,7 +292,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<>(mServices, stateFactory, mOperand, mTraversedNwa)).getResult();
+						(new IntersectDD<>(mServices, (IBuchiIntersectStateFactory<STATE>) stateFactory, mOperand,
+								mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 						(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))

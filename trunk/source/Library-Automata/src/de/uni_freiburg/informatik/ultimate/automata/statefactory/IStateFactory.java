@@ -51,21 +51,6 @@ public interface IStateFactory<STATE> {
 	}
 	
 	/**
-	 * Intersection of two states in Buchi automata ("product construction") with a track.
-	 * 
-	 * @param state1
-	 *            first state
-	 * @param state2
-	 *            second state
-	 * @param track
-	 *            track
-	 * @return state representing the intersection
-	 */
-	default STATE intersectBuchi(final STATE state1, final STATE state2, final int track) {
-		return intersection(state1, state2);
-	}
-	
-	/**
 	 * @return The empty stack state/symbol.
 	 */
 	default STATE createEmptyStackState() {

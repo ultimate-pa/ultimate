@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.AbstractIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -38,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
- * @param <STATE> state type
+ * @param <STATE>
+ *            state type
  */
 public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
 	/**
@@ -55,7 +57,8 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiIntersectDD(final AutomataLibraryServices services,
+			final IBuchiIntersectStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, false);
@@ -77,7 +80,8 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiIntersectDD(final AutomataLibraryServices services,
+			final IBuchiIntersectStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {

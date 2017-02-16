@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -51,7 +52,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Full constructor.
@@ -67,7 +68,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public BuchiIntersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public BuchiIntersect(final AutomataLibraryServices services, final IBuchiIntersectStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);

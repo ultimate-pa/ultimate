@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>,
 		IBuchiComplementFkvStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate> {
+		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =

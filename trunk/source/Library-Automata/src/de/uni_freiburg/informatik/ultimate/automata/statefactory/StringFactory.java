@@ -53,7 +53,7 @@ public class StringFactory
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
 		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
-		ISinkStateFactory<String>, IDeterminizeStateFactory<String> {
+		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IBuchiIntersectStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
