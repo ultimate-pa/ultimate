@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -71,12 +72,13 @@ public class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
-		final Set<Track> used = new HashSet<>();
+		final Set<Track> left = new HashSet<>();
+		Arrays.stream(Track.values()).forEach(left::add);
 		return new Iterator<Track>() {
 
 			@Override
 			public boolean hasNext() {
-				if (used.isEmpty())
+				if (left.isEmpty())
 					return false;
 				Future<Boolean> answer = mInteractive.request(Boolean.class);
 				try {
@@ -89,18 +91,20 @@ public class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 			@Override
 			public Track next() {
+				Track result;
 				if (mInteractive == null) {
 					mLogger.info("interactive not yet initialized, returning default interpol Track.");
-					return Track.SMTINTERPOL_FP;
+					result = Track.SMTINTERPOL_FP;
+				} else {
+					Future<Track[]> answer = mInteractive.request(Track[].class, left.stream().toArray(Track[]::new));
+					try {
+						result = answer.get()[0];
+					} catch (InterruptedException | ExecutionException e) {
+						mLogger.error("no client answer.");
+						throw new IllegalStateException(e);
+					}
 				}
-				Track result;
-				Future<Track[]> answer = mInteractive.request(Track[].class);
-				try {
-					result = answer.get()[0];
-				} catch (InterruptedException | ExecutionException e) {
-					mLogger.error("no client answer.");
-					throw new IllegalStateException(e);
-				}
+				left.remove(result);
 				return result;
 			}
 		};
