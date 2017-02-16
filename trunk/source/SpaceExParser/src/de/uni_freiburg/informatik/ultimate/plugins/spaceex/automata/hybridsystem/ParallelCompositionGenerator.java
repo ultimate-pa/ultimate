@@ -65,7 +65,6 @@ public class ParallelCompositionGenerator {
 	private Map<Set<Location>, Integer> mCreatedLocations;
 	private final Stack<List<Location>> mComputationStackNWay;
 	private Set<Set<Location>> mVisitedLocations;
-	private Set<String> mForbiddenLocations;
 	private final SpaceExPreferenceManager mPreferencemanager;
 	
 	public ParallelCompositionGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
@@ -83,10 +82,15 @@ public class ParallelCompositionGenerator {
 		mIdCounter = new AtomicInteger(0);
 		mComputationStackNWay = new Stack<>();
 		mVisitedLocations = new HashSet<>();
-		mForbiddenLocations = new HashSet<>();
 		mPreferencemanager = preferenceManager;
 	}
 	
+	/**
+	 * Function that calculates the parallel composition of N Automata
+	 * 
+	 * @param automataAndInitial
+	 * @return
+	 */
 	public HybridAutomaton computeParallelCompositionNWay(final Map<HybridAutomaton, Location> automataAndInitial) {
 		// name
 		final String nameMerge = generateName(automataAndInitial);
@@ -99,7 +103,9 @@ public class ParallelCompositionGenerator {
 		final List<Location> initialLocations = new ArrayList<>(automataAndInitial.values());
 		mInitialLocationMerge = getLocationNWay(initialLocations);
 		// Add the initial locations to a Stack which holds LocationPair objects
-		mLogger.info("Pushing: " + initialLocations);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Pushing to stack: " + initialLocations);
+		}
 		mComputationStackNWay.push(initialLocations);
 		// compute the parallel composition starting from the initial location
 		createLocationsAndTransitionsNWay();
@@ -123,6 +129,7 @@ public class ParallelCompositionGenerator {
 		return name;
 	}
 	
+	// "main" function of the parallel composition.
 	private void createLocationsAndTransitionsNWay() {
 		while (!mComputationStackNWay.isEmpty()) {
 			final List<Location> currentLocs = mComputationStackNWay.pop();
@@ -184,6 +191,7 @@ public class ParallelCompositionGenerator {
 		}
 	}
 	
+	// helper function that adds source locations of transitions which are not part of the set yet.
 	private List<Location> getMissingLocs(final List<Location> currentLocs, final List<Location> forbiddenSources) {
 		final List<Location> missing = new ArrayList<>();
 		for (final Location loc : currentLocs) {
@@ -194,6 +202,7 @@ public class ParallelCompositionGenerator {
 		return missing;
 	}
 	
+	// function that returns all synchronizations of a given list of Transitions.
 	private List<Transition> getSynchronizations(final List<Transition> allOutgoing) {
 		final List<Transition> syncs = new ArrayList<>();
 		final String synclabel = "";
@@ -206,6 +215,7 @@ public class ParallelCompositionGenerator {
 		return (syncs.size() > 1) ? syncs : new ArrayList<>();
 	}
 	
+	// function that returns the target locations of a non synchronization.
 	private Map<Location, Triple<String, String, String>> calculateTargetsForNonSync(final List<Transition> allOutgoing,
 			final List<Location> currentLocs) {
 		final Map<Location, Triple<String, String, String>> targets = new HashMap<>();
@@ -236,6 +246,7 @@ public class ParallelCompositionGenerator {
 		return targets;
 	}
 	
+	// function that returns the target locations of a synchronization.
 	private Map<Location, Triple<String, String, String>>
 			calculateTargetsForSync(final List<Transition> synchronizations, final List<Location> currentLocs) {
 		final List<Location> targetLocs = new ArrayList<>();
@@ -266,6 +277,7 @@ public class ParallelCompositionGenerator {
 		return targets;
 	}
 	
+	// function that returns all outgoing locations of a list of locations
 	private List<Transition> getAllOutgoingTransitions(final List<Location> currentLocs) {
 		final List<Transition> alloutgoing = new ArrayList<>();
 		for (final Location loc : currentLocs) {
@@ -274,6 +286,7 @@ public class ParallelCompositionGenerator {
 		return alloutgoing;
 	}
 	
+	// fucntion that tries to get a location if it exists, else it creates it.
 	private Location getLocationNWay(final List<Location> mergeList) {
 		final String locString = mergeList.toString();
 		final Set<Location> locset = new HashSet<>(mergeList);
@@ -295,6 +308,7 @@ public class ParallelCompositionGenerator {
 		return loc;
 	}
 	
+	// function that merges N locations and returns the merged one.
 	private Location mergeLocationsNWay(final int incrementAndGet, final List<Location> mergeList) {
 		String name = "loc_";
 		String invariant = "";
@@ -329,6 +343,7 @@ public class ParallelCompositionGenerator {
 		return merged;
 	}
 	
+	// function that merges parameters
 	private void mergeParametersNWay(final Set<HybridAutomaton> automata) {
 		for (final HybridAutomaton aut : automata) {
 			mLocalConstsMerge.addAll(aut.getGlobalConstants());
@@ -372,7 +387,6 @@ public class ParallelCompositionGenerator {
 		mCreatedLocations = new HashMap<>();
 		mIdCounter = new AtomicInteger(0);
 		mVisitedLocations = new HashSet<>();
-		mForbiddenLocations = new HashSet<>();
 	}
 	
 	/**
