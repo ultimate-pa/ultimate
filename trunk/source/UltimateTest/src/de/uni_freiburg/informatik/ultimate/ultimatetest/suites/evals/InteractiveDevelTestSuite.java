@@ -50,16 +50,19 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL
-			new Triple<>("../Interactive/toolchains/AutomizerBpl.xml", BPL, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
+//			new Triple<>("../Interactive/toolchains/AutomizerBpl.xml", BPL, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
 //			new Triple<>("../Interactive/toolchains/AutomizerBpl.xml", BPL, "../Interactive/settings/64bit-Automizer_Parrot.epf"),
 
 			//### C
-			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
+//			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/svcomp-Reach-64bit-Automizer_Default.epf"),
+			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/Untitled.epf"),
 //			new Triple<>("../Interactive/toolchains/AutomizerC.xml", C, "../Interactive/settings/64bit-Automizer_Parrot.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
-			"examples/Interactive/input/",
+//			"examples/Interactive/input/",
+			"examples/Interactive/input/square_1_false-unreach-call.i",
+//			"examples/Interactive/input/float12_true-unreach-call.i",
 
 	};
 	// @formatter:on
