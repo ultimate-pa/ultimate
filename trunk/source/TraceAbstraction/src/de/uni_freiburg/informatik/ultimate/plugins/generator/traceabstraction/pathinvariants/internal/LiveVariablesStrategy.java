@@ -53,4 +53,9 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 		throw new UnsupportedOperationException("LiveVariablesStrategy does not support dynamic setting changes.");
 	}
 
+	@Override
+	public void changePatternSettingForLocation(IcfgLocation location, Set<IcfgLocation> locationsInUnsatCore) {
+		throw new UnsupportedOperationException("LiveVariablesStrategy does not support dynamic setting changes.");
+	}
+
 }

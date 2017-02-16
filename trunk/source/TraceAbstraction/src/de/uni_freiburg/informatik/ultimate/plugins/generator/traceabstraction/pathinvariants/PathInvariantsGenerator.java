@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithBounds;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithGlobalTemplateLevel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
@@ -118,8 +119,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
+	
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
 	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
+	
+	/**
+	 * @see {@link DynamicPatternSettingsStrategyWithGlobalTemplateLevel}
+	 */
+	private static final boolean USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL = false;
+	
 	private static final boolean USE_UNDER_APPROX_FOR_MAX_CONJUNCTS = false;
 	private static final boolean USE_OVER_APPROX_FOR_MIN_DISJUNCTS = false;
 
@@ -140,6 +148,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
+
 
 	private final boolean mUseLiveVariables;
 
@@ -299,6 +308,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
 					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
+							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
+				}
+				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
+					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
 							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}

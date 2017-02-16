@@ -964,7 +964,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				} else {
 					for (final IcfgLocation loc : locsInUnsatCore) {
 						if ((loc != mStartLocation) && (loc != mErrorLocation)) {
-							mStrategy.changePatternSettingForLocation(loc);
+							mStrategy.changePatternSettingForLocation(loc, locsInUnsatCore);
 							mLogger.info("changed setting for loc: " + loc);
 						}
 					}
@@ -987,32 +987,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		return mMaxRounds;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	// @Override
-	// protected Term getTermForPattern(
-	// final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
-	// final Map<IProgramVar, Term> definitionMap = new HashMap<IProgramVar, Term>(
-	// mPatternCoefficients.size());
-	// for (final IProgramVar coefficient : mPatternCoefficients) {
-	// final Term definition = ReplacementVarUtils.getDefinition(coefficient);
-	// definitionMap.put(coefficient, definition);
-	// }
-	//
-	// final Collection<Term> conjunctions = new ArrayList<Term>(
-	// pattern.size());
-	// for (final Collection<AbstractLinearInvariantPattern> conjunct : pattern) {
-	// final Collection<Term> inequalities = new ArrayList<Term>(
-	// conjunct.size());
-	// for (final AbstractLinearInvariantPattern inequality : conjunct) {
-	// inequalities.add(inequality.getLinearInequality(definitionMap)
-	// .asTerm(mSolver));
-	// }
-	// conjunctions.add(SmtUtils.and(mSolver, inequalities));
-	// }
-	// return SmtUtils.or(mSolver, conjunctions);
-	// }
 
 	/**
 	 * Takes a pattern and generates a term with the csToolkit.getScript() script where the variables are valuated with
@@ -1048,16 +1022,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 		return SmtUtils.or(mCsToolkit.getManagedScript().getScript(), conjunctions);
 	}
-
-	// private static Term constructZero(final Script script, final Sort sort) {
-	// if (sort.getRealSort().getName().equals("Int")) {
-	// return script.numeral(BigInteger.ZERO);
-	// } else if (sort.getRealSort().getName().equals("Real")) {
-	// return script.decimal(BigDecimal.ZERO);
-	// } else {
-	// throw new IllegalArgumentException("unsupported sort " + sort);
-	// }
-	// }
 
 	/**
 	 * {@inheritDoc}
