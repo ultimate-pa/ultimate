@@ -151,7 +151,7 @@ public class StatisticsData implements IStatisticsDataProvider {
 		return result;
 	}
 
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		final LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
 		return CsvUtils.constructCvsProviderFromMap(flatKeyValueMap);
 	}
