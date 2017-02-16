@@ -71,12 +71,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER>
- *            letter type
- * @param <STATE>
- *            state type
  */
-public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
+public class AutomatonDeltaDebugger implements IAnalysis {
 	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
@@ -109,11 +105,10 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 		final String creator = graphType.getCreator();
 		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
 			mLogger.info("Preparing to process automaton...");
-			final AbstractTester<LETTER, STATE> tester =
-					new AutomatonDebuggerTesters<LETTER, STATE>(mServices).getTester(mOperationMode, mOperationType);
-			mObservers.add(new AutomatonDeltaDebuggerObserver<>(
-					mServices, tester, getShrinkersLoop(), getShrinkersBridge(),
-					getShrinkersEnd(), mDebugPolicy));
+			final AbstractTester<String, String> tester =
+					new AutomatonDebuggerTesters(mServices).getTester(mOperationMode, mOperationType);
+			mObservers.add(new AutomatonDeltaDebuggerObserver<>(mServices, tester, getShrinkersLoop(),
+					getShrinkersBridge(), getShrinkersEnd(), mDebugPolicy));
 		} else {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
@@ -124,8 +119,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * 
 	 * @return list of shrinkers (i.e., rules to apply) to be applied iteratively
 	 */
-	private List<AbstractShrinker<?, LETTER, STATE>> getShrinkersLoop() {
-		final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop = new ArrayList<>();
+	private List<AbstractShrinker<?, String, String>> getShrinkersLoop() {
+		final List<AbstractShrinker<?, String, String>> shrinkersLoop = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
 		shrinkersLoop.add(new StateShrinker<>(mServices));
@@ -142,8 +137,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * 
 	 * @return list of shrinkers (i.e., rules to apply) to be applied iteratively
 	 */
-	private List<BridgeShrinker<?, LETTER, STATE>> getShrinkersBridge() {
-		final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge = new ArrayList<>();
+	private List<BridgeShrinker<?, String, String>> getShrinkersBridge() {
+		final List<BridgeShrinker<?, String, String>> shrinkersBridge = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
 		shrinkersBridge.add(new ChangeInitialStatesShrinker<>(mServices));
@@ -156,8 +151,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	 * 
 	 * @return list of shrinkers (i.e., rules to apply) to be applied only once
 	 */
-	private List<AbstractShrinker<?, LETTER, STATE>> getShrinkersEnd() {
-		final List<AbstractShrinker<?, LETTER, STATE>> shrinkersEnd = new ArrayList<>();
+	private List<AbstractShrinker<?, String, String>> getShrinkersEnd() {
+		final List<AbstractShrinker<?, String, String>> shrinkersEnd = new ArrayList<>();
 		
 		// examples, use your own shrinkers here
 		shrinkersEnd.add(new UnusedLetterShrinker<>(mServices));

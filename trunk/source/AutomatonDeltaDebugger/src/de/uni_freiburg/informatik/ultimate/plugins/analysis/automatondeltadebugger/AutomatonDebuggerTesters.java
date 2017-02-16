@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.AutomatonDebuggerExamples.EOperationType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AbstractTester;
@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * NOTE: Users may insert their sample code as a new method and leave it here.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER>
+ * @param <String>
  *            letter type
- * @param <STATE>
+ * @param <String>
  *            state type
  */
-public class AutomatonDebuggerTesters<LETTER, STATE> {
+public class AutomatonDebuggerTesters {
 	private final IUltimateServiceProvider mServices;
 	
 	/**
@@ -94,9 +94,9 @@ public class AutomatonDebuggerTesters<LETTER, STATE> {
 	 *            operation to use
 	 * @return operation corresponding to type
 	 */
-	public AbstractTester<LETTER, STATE> getTester(final EAutomatonDeltaDebuggerTestMode testMode,
+	public AbstractTester<String, String> getTester(final EAutomatonDeltaDebuggerTestMode testMode,
 			final EOperationType operationType) {
-		final AbstractTester<LETTER, STATE> tester;
+		final AbstractTester<String, String> tester;
 		switch (testMode) {
 			case GENERAL:
 				tester = getGeneralTester(operationType);
@@ -129,12 +129,9 @@ public class AutomatonDebuggerTesters<LETTER, STATE> {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<LETTER, STATE> getIOperation(final EOperationType operationType,
-			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IMergeStateFactory<STATE> factory) throws Throwable {
-		final AutomatonDebuggerExamples<LETTER, STATE> examples = new AutomatonDebuggerExamples<>(mServices);
-		
-		return examples.getOperation(operationType, automaton, factory);
+	public IOperation<String, String> getIOperation(final EOperationType operationType,
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
+		return new AutomatonDebuggerExamples(mServices).getOperation(operationType, automaton, factory);
 	}
 	
 	/**
@@ -144,14 +141,14 @@ public class AutomatonDebuggerTesters<LETTER, STATE> {
 	 *            operation to use
 	 * @return tester which listens for any throwable
 	 */
-	public AbstractTester<LETTER, STATE> getGeneralTester(final EOperationType operationType) {
+	public AbstractTester<String, String> getGeneralTester(final EOperationType operationType) {
 		// 'null' stands for any exception
 		final Throwable throwable = null;
 		
-		return new AbstractTester<LETTER, STATE>(throwable) {
+		return new AbstractTester<String, String>(throwable) {
 			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
-				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
+			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
+				final StringFactory factory = new StringFactory();
 				
 				getIOperation(operationType, automaton, factory);
 			}
@@ -165,16 +162,16 @@ public class AutomatonDebuggerTesters<LETTER, STATE> {
 	 *            operation to use
 	 * @return tester which debugs the checkResult method
 	 */
-	private AbstractTester<LETTER, STATE> getCheckResultTester(final EOperationType operationType) {
+	private AbstractTester<String, String> getCheckResultTester(final EOperationType operationType) {
 		final String message = "'checkResult' failed";
 		final Throwable throwable = new DebuggerException(message);
 		
-		return new AbstractTester<LETTER, STATE>(throwable) {
+		return new AbstractTester<String, String>(throwable) {
 			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
-				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
+			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
+				final StringFactory factory = new StringFactory();
 				
-				final IOperation<LETTER, STATE> op = getIOperation(operationType, automaton, factory);
+				final IOperation<String, String> op = getIOperation(operationType, automaton, factory);
 				
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
@@ -189,24 +186,25 @@ public class AutomatonDebuggerTesters<LETTER, STATE> {
 	 * 
 	 * @return tester which debugs the checkResult method
 	 */
-	private AbstractTester<LETTER, STATE> getMinimizationResultTester() {
+	private AbstractTester<String, String> getMinimizationResultTester() {
 		final String message = "result size differs";
 		final Throwable throwable = new DebuggerException(message);
+		final IUltimateServiceProvider services2 = mServices;
 		
-		return new AbstractTester<LETTER, STATE>(throwable) {
+		return new AbstractTester<String, String>(throwable) {
 			@Override
-			public void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable {
-				final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
-				final IMergeStateFactory<STATE> factory = (IMergeStateFactory<STATE>) automaton.getStateFactory();
+			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
+				final AutomataLibraryServices services = new AutomataLibraryServices(services2);
+				final StringFactory factory = new StringFactory();
 				
-				final IDoubleDeckerAutomaton<LETTER, STATE> doubleDecker =
+				final IDoubleDeckerAutomaton<String, String> doubleDecker =
 						(automaton instanceof IDoubleDeckerAutomaton<?, ?>)
-								? (IDoubleDeckerAutomaton<LETTER, STATE>) automaton
+								? (IDoubleDeckerAutomaton<String, String>) automaton
 								: new RemoveUnreachable<>(services, automaton).getResult();
 				
-				final INestedWordAutomaton<LETTER, STATE> result1 =
+				final INestedWordAutomaton<String, String> result1 =
 						new MinimizeDfaSimulation<>(services, factory, doubleDecker).getResult();
-				final INestedWordAutomaton<LETTER, STATE> result2 =
+				final INestedWordAutomaton<String, String> result2 =
 						new ReduceNwaDirectSimulationB<>(services, factory, doubleDecker).getResult();
 				
 				// throws a fresh exception iff checkResult() fails
