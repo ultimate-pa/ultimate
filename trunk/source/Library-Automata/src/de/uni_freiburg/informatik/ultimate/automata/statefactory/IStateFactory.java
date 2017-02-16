@@ -71,19 +71,4 @@ public interface IStateFactory<STATE> {
 	default STATE createEmptyStackState() {
 		return null;
 	}
-	
-	/**
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
-	 * 
-	 * @param downState
-	 *            down state
-	 * @param upState
-	 *            up state
-	 * @return state representing the double decker
-	 * @deprecated currently not used
-	 */
-	@Deprecated
-	default STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
-		return null;
-	}
 }

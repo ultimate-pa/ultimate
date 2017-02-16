@@ -301,7 +301,6 @@ public class StringFactory
 		return builder.append(CLOSE_BRACE).toString();
 	}
 	
-	@Override
 	public String createDoubleDeckerContent(final String downState, final String upState) {
 		return '<' + downState + COMMA + upState + '>';
 	}
