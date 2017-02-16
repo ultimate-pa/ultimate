@@ -502,8 +502,9 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		final boolean checkResult =
-				compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2, result);
+		final boolean checkResult = compareInclusionCheckResult(localServiceProvider,
+				(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA, local_mB2,
+				result);
 		return checkResult;
 		// if(((result==null)&&(new IncrementalInclusionCheck2<LETTER,
 		// STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2).getResult()==null))||((result!=null)&&(new

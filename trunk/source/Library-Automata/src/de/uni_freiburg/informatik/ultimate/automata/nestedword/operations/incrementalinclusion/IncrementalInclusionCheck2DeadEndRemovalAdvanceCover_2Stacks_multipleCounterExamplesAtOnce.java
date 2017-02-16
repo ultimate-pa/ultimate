@@ -1070,12 +1070,15 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean checkResult;
+		// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory becomes class parameter
 		if (getCounterexample() != null) {
-			checkResult = compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2,
-					getCounterexample());
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, getCounterexample());
 		} else {
-			checkResult =
-					compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2, null);
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, null);
 		}
 		return checkResult;
 

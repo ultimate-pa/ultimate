@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -550,8 +551,10 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
 		final boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(localServiceProvider,
-				localStateFactory, local_mA, local_mB2, result);
+				(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA, local_mB2,
+				result);
 		return checkResult;
 		// //INestedWordAutomatonSimple<LETTER, STATE> a;
 		// if(getResult().equals((new IncrementalInclusionCheck2<LETTER,

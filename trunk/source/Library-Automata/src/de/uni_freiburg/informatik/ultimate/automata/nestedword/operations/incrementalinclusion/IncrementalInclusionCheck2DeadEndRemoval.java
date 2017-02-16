@@ -381,12 +381,15 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean checkResult;
+		// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory becomes class parameter
 		if (mErrorNodes.peekFirst() != null) {
-			checkResult = compareInclusionCheckResult(mLocalServiceProvider, mLocalStateFactory, mLocalMA, mLocalMB2,
-					mErrorNodes.peekFirst().mWord);
+			checkResult = compareInclusionCheckResult(mLocalServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mLocalMA,
+					mLocalMB2, mErrorNodes.peekFirst().mWord);
 		} else {
-			checkResult =
-					compareInclusionCheckResult(mLocalServiceProvider, mLocalStateFactory, mLocalMA, mLocalMB2, null);
+			checkResult = compareInclusionCheckResult(mLocalServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mLocalMA,
+					mLocalMB2, null);
 		}
 		return checkResult;
 	}

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -771,11 +772,13 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean checkResult;
 		if (getCounterexample() != null) {
-			checkResult = compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2,
-					getCounterexample());
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, getCounterexample());
 		} else {
-			checkResult =
-					compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2, null);
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, null);
 		}
 		return checkResult;
 
@@ -791,10 +794,12 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
+		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
 		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
