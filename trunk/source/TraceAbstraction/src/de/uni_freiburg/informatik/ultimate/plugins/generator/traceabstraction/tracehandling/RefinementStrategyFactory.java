@@ -155,9 +155,18 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 				throw new IllegalArgumentException(
 						"Interactive strategy chosen, but interface available. Please start ultimate in Interactive mode.");
 			}
-			return new ParrotRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mInteractive, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark);
+			return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
+					iteration, benchmark) {
+				@Override
+				protected IInteractive<Object> getInteractive() {
+					// instead of passing the interactive interface via
+					// constructor, it is necessary to have a getter
+					// because .next() is called in the constructor of the superclass.
+					return mInteractive;
+				}
+
+			};
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

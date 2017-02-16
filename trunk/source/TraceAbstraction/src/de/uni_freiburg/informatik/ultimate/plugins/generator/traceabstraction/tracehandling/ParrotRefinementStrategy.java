@@ -54,21 +54,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Julian Jarecki (julian.jarecki@neptun.uni-freiburg.de)
  */
-public class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
+public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	private final IInteractive<Object> mInteractive;
-
 	public ParrotRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final IInteractive<Object> interactive, final PredicateUnifier predicateUnifier,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
 				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
-		mInteractive = interactive;
 	}
+
+	protected abstract IInteractive<Object> getInteractive();
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
@@ -80,7 +78,7 @@ public class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			public boolean hasNext() {
 				if (left.isEmpty())
 					return false;
-				Future<Boolean> answer = mInteractive.request(Boolean.class);
+				Future<Boolean> answer = getInteractive().request(Boolean.class);
 				try {
 					return answer.get();
 				} catch (InterruptedException | ExecutionException e) {
@@ -92,18 +90,13 @@ public class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			@Override
 			public Track next() {
 				Track result;
-				if (mInteractive == null) {
-					mLogger.info("interactive not yet initialized, returning default interpol Track.");
-					result = Track.SMTINTERPOL_FP;
-				} else {
-					Future<Track[]> answer = mInteractive.request(Track[].class, left.stream().toArray(Track[]::new));
+					Future<Track[]> answer = getInteractive().request(Track[].class, left.stream().toArray(Track[]::new));
 					try {
 						result = answer.get()[0];
 					} catch (InterruptedException | ExecutionException e) {
 						mLogger.error("no client answer.");
 						throw new IllegalStateException(e);
 					}
-				}
 				left.remove(result);
 				return result;
 			}
