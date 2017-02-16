@@ -39,16 +39,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 /**
@@ -58,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL>
+public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IIcfgTransition<?>, VARDECL>
 		implements IHoareTripleChecker {
 
 	private final ILogger mLogger;
@@ -72,22 +81,31 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final STATE mTopState;
 	private final STATE mBottomState;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
+	private final IncrementalHoareTripleChecker mDebugHtc;
+	private final IUltimateServiceProvider mServices;
+	private final CfgSmtToolkit mCsToolkit;
+	private final SimplificationTechnique mSimplificationTechnique;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer) {
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer,
+			final CfgSmtToolkit csToolkit) {
+		mServices = services;
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mMergeOp = Objects.requireNonNull(mDomain.getMergeOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mVarProvider = Objects.requireNonNull(varProvider);
+		mCsToolkit = Objects.requireNonNull(csToolkit);
+
+		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = mDomain.createTopState();
 		mBottomState = mDomain.createBottomState();
-
+		mDebugHtc = new IncrementalHoareTripleChecker(mCsToolkit);
 	}
 
 	@Override
@@ -129,6 +147,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final STATE preState = getValidState(origPreState, act);
 		final STATE postState = getValidState(origPostState, act);
 		final Validity result = checkNonReturnTransitionNoLogging(preState, act, postState);
+		assert assertValidity(preState, null, act, postState, result);
+
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(origPreState, preState, "Modified preState");
 			logDebugIfNotEqual(origPostState, postState, "Modified postState");
@@ -147,6 +167,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final STATE preHierState = getValidPreHierstate(origPreHierState, act);
 		final STATE postState = getValidState(origPostState, act);
 		final Validity result = checkReturnTransitionNoLogging(preLinState, preHierState, act, postState);
+		assert assertValidity(preLinState, preHierState, act, postState, result);
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(origPreLinState, preLinState, "Modified preLinState");
 			logDebugIfNotEqual(origPreHierState, preHierState, "Modified preHierState");
@@ -202,7 +223,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final STATE calculatedPost =
 				mPostOp.apply(preLinState, preHierState, act).stream().reduce(mMergeOp::apply).orElse(null);
-
 		if (postState.isBottom()) {
 			if (calculatedPost != null && !calculatedPost.isBottom()) {
 				return trackPost(Validity.INVALID, act);
@@ -280,6 +300,65 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return getValidState(origPreHierState, (ACTION) retAct.getCorrespondingCall());
 		}
 		throw new UnsupportedOperationException("Cannot create hierprestate for non-return action: " + act.getClass());
+	}
+
+	private IPredicate createPredicateFromState(final STATE state) {
+		final ManagedScript managedScript = mCsToolkit.getManagedScript();
+		return mPredicateUnifier.getPredicateFactory().newPredicate(state.getTerm(managedScript.getScript()));
+	}
+
+	private boolean assertValidity(final STATE preLinState, final STATE preHierState, final ACTION transition,
+			final STATE postState, final Validity result) {
+
+		final IPredicate precond = createPredicateFromState(preLinState);
+		final IPredicate postcond = createPredicateFromState(postState);
+		final IPredicate precondHier;
+		if (preHierState == null) {
+			precondHier = null;
+		} else {
+			precondHier = createPredicateFromState(preHierState);
+		}
+
+		final Validity checkedResult = isPostSound(precond, precondHier, transition, postcond);
+		if (checkedResult == result) {
+			return true;
+		}
+		if (result == Validity.UNKNOWN) {
+			return true;
+		}
+		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
+		mLogger.fatal("Failing Hoare triple:");
+		final String simplePre = SmtUtils
+				.simplify(mCsToolkit.getManagedScript(), precond.getFormula(), mServices, mSimplificationTechnique)
+				.toStringDirect();
+		if (precondHier == null) {
+			mLogger.fatal("Pre: {" + simplePre + "}");
+		} else {
+			mLogger.fatal("PreBefore: {" + simplePre + "}");
+			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mCsToolkit.getManagedScript(), precondHier.getFormula(),
+					mServices, mSimplificationTechnique).toStringDirect() + "}");
+		}
+		mLogger.fatal(
+				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
+		mLogger.fatal("Post: {" + SmtUtils
+				.simplify(mCsToolkit.getManagedScript(), postcond.getFormula(), mServices, mSimplificationTechnique)
+				.toStringDirect() + "}");
+		return false;
+
+	}
+
+	private Validity isPostSound(final IPredicate precond, final IPredicate precondHier, final ACTION transition,
+			final IPredicate postcond) {
+		final Validity result;
+		if (transition instanceof Call) {
+			result = mDebugHtc.checkCall(precond, (ICallAction) transition, postcond);
+		} else if (transition instanceof Return) {
+			result = mDebugHtc.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
+		} else {
+			result = mDebugHtc.checkInternal(precond, (IInternalAction) transition, postcond);
+		}
+		mDebugHtc.releaseLock();
+		return result;
 	}
 
 }
