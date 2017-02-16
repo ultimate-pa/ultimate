@@ -202,7 +202,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 				return trackPost(Validity.VALID, act);
 			}
 		}
-
+		assert postState.getVariables().equals(calculatedPost.getVariables()) : "Tracked variables differ";
 		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
 		if (subs != SubsetResult.NONE) {
 			return trackPost(Validity.VALID, act);
@@ -230,7 +230,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 				return trackPost(Validity.VALID, act);
 			}
 		}
-
+		assert postState.getVariables().equals(calculatedPost.getVariables()) : "Tracked variables differ";
 		final SubsetResult subs = calculatedPost.isSubsetOf(postState);
 		if (subs != SubsetResult.NONE) {
 			return trackPost(Validity.VALID, act);
