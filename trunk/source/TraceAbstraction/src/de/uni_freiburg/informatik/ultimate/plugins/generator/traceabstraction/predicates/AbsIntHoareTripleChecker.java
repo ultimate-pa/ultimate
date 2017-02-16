@@ -126,8 +126,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private Validity checkNonReturnTransition(final STATE origPreState, final ACTION act, final STATE origPostState) {
-		final STATE preState = getValidPrestate(origPreState, act);
-		final STATE postState = getValidPoststate(origPostState, act);
+		final STATE preState = getValidState(origPreState, act);
+		final STATE postState = getValidState(origPostState, act);
 		final Validity result = checkNonReturnTransitionNoLogging(preState, act, postState);
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(origPreState, preState, "Modified preState");
@@ -143,9 +143,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 	private Validity checkReturnTransition(final STATE origPreLinState, final STATE origPreHierState, final ACTION act,
 			final STATE origPostState) {
-		final STATE preLinState = getValidPrestate(origPreLinState, act);
+		final STATE preLinState = getValidState(origPreLinState, act);
 		final STATE preHierState = getValidPreHierstate(origPreHierState, act);
-		final STATE postState = getValidPoststate(origPostState, act);
+		final STATE postState = getValidState(origPostState, act);
 		final Validity result = checkReturnTransitionNoLogging(preLinState, preHierState, act, postState);
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(origPreLinState, preLinState, "Modified preLinState");
@@ -267,14 +267,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	private STATE getValidPoststate(final STATE origPostState, final ACTION act) {
-		final STATE rtr = mVarProvider.makeValidPostState(act, origPostState);
-		assert !origPostState.isBottom() || rtr.isBottom() : "Bottom was lost";
-		return rtr;
-	}
-
-	private STATE getValidPrestate(final STATE origPreState, final ACTION act) {
-		final STATE rtr = mVarProvider.makeValidPreState(act, origPreState);
+	private STATE getValidState(final STATE origPreState, final ACTION act) {
+		final STATE rtr = mVarProvider.createValidState(act, origPreState);
 		assert !origPreState.isBottom() || rtr.isBottom() : "Bottom was lost";
 		return rtr;
 	}
@@ -283,7 +277,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private STATE getValidPreHierstate(final STATE origPreHierState, final ACTION act) {
 		if (act instanceof IIcfgReturnTransition<?, ?>) {
 			final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) act;
-			return getValidPrestate(origPreHierState, (ACTION) retAct.getCorrespondingCall());
+			return getValidState(origPreHierState, (ACTION) retAct.getCorrespondingCall());
 		}
 		throw new UnsupportedOperationException("Cannot create hierprestate for non-return action: " + act.getClass());
 	}

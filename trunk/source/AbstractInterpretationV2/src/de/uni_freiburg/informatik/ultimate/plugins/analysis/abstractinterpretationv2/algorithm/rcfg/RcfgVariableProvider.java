@@ -115,15 +115,9 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	}
 
 	@Override
-	public STATE makeValidPreState(final CodeBlock action, final STATE state) {
-		final Set<IBoogieVar> pre = getPreVariables(action);
-		return makeValidState(state, pre);
-	}
-
-	@Override
-	public STATE makeValidPostState(final CodeBlock action, final STATE state) {
-		final Set<IBoogieVar> post = getPostVariables(action);
-		return makeValidState(state, post);
+	public STATE createValidState(final CodeBlock action, final STATE state) {
+		final Set<IBoogieVar> vars = getPostVariables(action);
+		return makeValidState(state, vars);
 	}
 
 	private STATE makeValidState(final STATE state, final Set<IBoogieVar> shouldVars) {

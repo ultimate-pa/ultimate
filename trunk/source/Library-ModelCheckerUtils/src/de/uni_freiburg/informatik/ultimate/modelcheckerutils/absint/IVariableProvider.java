@@ -84,28 +84,16 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	STATE defineVariablesAfter(final ACTION current, final STATE localPreState, final STATE hierachicalPreState);
 
 	/**
-	 * Create a new state by adding or removing variables to <code>state</code> s.t. the new state can act as pre state
-	 * of the action <code>action</code>.
+	 * Create a new state by adding or removing variables to <code>state</code> s.t. an abstract post operator can be
+	 * applied on this state and the action.
 	 * 
 	 * @param action
 	 *            The action for which the created state should be a possible pre state (in terms of defined variables).
 	 * @param state
 	 *            The state that is the basis of the new state.
-	 * @return A new state that is usable as pre state of <code>action</code>
+	 * @return A new state that is usable as an argument together with the action <code>action</code> for an abstract
+	 *         post operator
 	 */
-	STATE makeValidPreState(final ACTION action, final STATE state);
-
-	/**
-	 * Create a new state by adding or removing variables to <code>state</code> s.t. the new state can act as post state
-	 * of the action <code>action</code>.
-	 * 
-	 * @param action
-	 *            The action for which the created state should be a possible post state (in terms of defined
-	 *            variables).
-	 * @param state
-	 *            The state that is the basis of the new state.
-	 * @return A new state that is usable as post state of <code>action</code>
-	 */
-	STATE makeValidPostState(final ACTION action, final STATE state);
+	STATE createValidState(final ACTION action, final STATE state);
 
 }
