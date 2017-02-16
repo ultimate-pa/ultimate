@@ -109,11 +109,6 @@ public class PredicateFactoryForInterpolantAutomata
 	}
 
 	@Override
-	public IPredicate createDoubleDeckerContent(final IPredicate down, final IPredicate up) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public IPredicate merge(final Collection<IPredicate> states) {
 		final Term disjunction = mPredicateFactory.or(false, states);
 		final IPredicate result = mPredicateFactory.newPredicate(disjunction);

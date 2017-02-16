@@ -80,12 +80,6 @@ public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredi
 	}
 
 	@Override
-	public IPredicate createDoubleDeckerContent(final IPredicate down,
-			final IPredicate up) {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
 	public IPredicate merge(final Collection<IPredicate> states) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
