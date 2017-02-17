@@ -114,7 +114,6 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseConfigFile(final File configfile) throws Exception {
-		testPostFixToGroups();
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
@@ -261,8 +260,6 @@ public class SpaceExPreferenceManager {
 				String varString = varMatcher.group(0);
 				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
 				for (final Pair<String, String> pair : renameList) {
-					mLogger.info(pair.getFirst());
-					mLogger.info(pair.getSecond());
 					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
 				}
 				mLogger.info(varString);
@@ -291,12 +288,8 @@ public class SpaceExPreferenceManager {
 		for (final String el : arr) {
 			renameMatcher = pattern.matcher(el);
 			if (renameMatcher.matches()) {
-				mLogger.info("##### HAS TO BE RENAMED: " + el + " #####");
 				final String aut = renameMatcher.group(1);
 				final String var = renameMatcher.group(2);
-				mLogger.info("AUT: " + aut);
-				mLogger.info("VAR: " + var);
-				mLogger.info("#########################################");
 				String newName = generateNewName(var);
 				if (mRequiresRename.containsKey(aut)) {
 					if (!mRequiresRename.get(aut).containsKey(var)) {
@@ -310,6 +303,13 @@ public class SpaceExPreferenceManager {
 					mRequiresRename.put(aut, map);
 				}
 				renameList.add(new Pair<>(renameMatcher.group(0), newName));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("##### HAS TO BE RENAMED: " + el + " #####");
+					mLogger.debug("AUT: " + aut);
+					mLogger.debug("VAR: " + var);
+					mLogger.debug("NEW NAME: " + var);
+					mLogger.debug("#########################################");
+				}
 			}
 		}
 		return renameList;
