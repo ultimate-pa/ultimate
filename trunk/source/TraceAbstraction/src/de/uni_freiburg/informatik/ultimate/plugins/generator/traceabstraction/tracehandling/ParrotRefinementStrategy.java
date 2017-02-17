@@ -73,38 +73,40 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		final Set<Track> left = new HashSet<>();
 		Arrays.stream(Track.values()).forEach(left::add);
 		return new Iterator<Track>() {
+			private Track mNextTrack;
+			private boolean mAsked = false;
 
-			@Override
-			public boolean hasNext() {
-				if (left.isEmpty())
-					return false;
-				Future<Boolean> answer = getInteractive().request(Boolean.class);
+			private void ask() {
+				if (mAsked)
+					return;
+				Future<Track[]> answer = getInteractive().request(Track[].class, left.stream().toArray(Track[]::new));
+				mAsked = true;
+				Track[] results;
 				try {
-					return answer.get();
+					results = answer.get();
 				} catch (InterruptedException | ExecutionException e) {
-					mLogger.error(e);
-					return false;
+					mLogger.error("no client answer.");
+					throw new IllegalStateException(e);
+				}
+				if (results != null && results.length > 0) {
+					mNextTrack = results[0];
+					left.remove(mNextTrack);
 				}
 			}
 
 			@Override
+			public boolean hasNext() {
+				ask();
+				return mNextTrack != null;
+			}
+
+			@Override
 			public Track next() {
-				Track result;
-					Future<Track[]> answer = getInteractive().request(Track[].class, left.stream().toArray(Track[]::new));
-					try {
-						result = answer.get()[0];
-					} catch (InterruptedException | ExecutionException e) {
-						mLogger.error("no client answer.");
-						throw new IllegalStateException(e);
-					}
-				left.remove(result);
-				return result;
+				ask();
+				mAsked = false;
+				return mNextTrack;
 			}
 		};
-		// final List<Track> list = new ArrayList<>(3);
-		// list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
-		// list.add(Track.Z3_FP);
-		// return list.iterator();
 	}
 
 	@Override
