@@ -38,7 +38,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.SpaceExModelBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
  */
 public class Tester {
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		
 		final JAXBContext jc = JAXBContext.newInstance(ObjectFactory.class);
 		
@@ -82,7 +81,7 @@ public class Tester {
 		
 		final HybridModel hs = new HybridModel(sx, new ConsoleLogger());
 		
-		final SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(hs, new ConsoleLogger());
+		// final SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(hs, new ConsoleLogger());
 		
 		final Marshaller marshaller = jc.createMarshaller();
 		
