@@ -666,8 +666,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
 		
-		// Output the benchmarks per round into CSV file
-//		Map<Integer, PathInvariantsStatisticsGenerator> round2PathInvariantsStatistics = generator.getRound2PathInvariantsStatistics();
 		return invariants;
 	}
 
@@ -869,9 +867,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// the maximum of the sum of template inequalities per round
 		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
-		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
-		// the maximum DAG-size of (the sum of template inequalities per location per round)
-		DAGSizeConstraints(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
 		// the sum of variables per location per round
 		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
@@ -880,15 +876,25 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		SumNonUnsatCoreLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		// Number of Motzkin Transformations
-		MotzkinTransformations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
+		DAGTreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under- and/or Overapproximations
+		DAGTreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
+		// Number of Motzkin Transformations for normal constraints
+		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
+		MotzkinTransformationsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Number of Motzkin Coefficients needed for normal constraints
+		MotzkinCoefficientsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),	
+		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
+		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),			
 		// the sum of the time needed per round to solve the constraints
 		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
 		// the sum of the time needed per round to construct the constraints
 		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String)s1 + "; " + (String)s2), AStatisticsType.sKeyBeforeData);
-
+		
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;

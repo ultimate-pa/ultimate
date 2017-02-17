@@ -164,18 +164,32 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 * - the size of largest template
 	 * - the size of smallest template
 	 */
-	private int mDAGTreeSizeSumOfConstraints;
-	private int mMotzkinTransformations;
+	private int mDAGTreeSizeSumOfNormalConstraints;
+	private int mDAGTreeSizeSumOfApproxConstraints;
+	private int mMotzkinTransformationsForNormalConstraints;
+	private int mMotzkinTransformationsForApproxConstraints;
+	private int mMotzkinCoefficientsForNormalConstraints;
+	private int mMotzkinCoefficientsForApproxConstraints;
 	private int mProgramSize;
 	private long mConstraintsSolvingTime;
 	private long mConstraintsConstructionTime;
 	
 	public enum LinearInequalityPatternProcessorStatistics {
 		ProgramSize,
-		MotzkinTransformations,
-		DAGTreesizeOfConstraints,
+		MotzkinTransformationsNormalConstraints,
+		MotzkinTransformationsApproxConstraints,
+		MotzkinCoefficientsNormalConstraints,
+		MotzkinCoefficientsApproxConstraints,
+		DAGTreesizeNormalConstraints,
+		DAGTreesizeApproxConstraints,
 		ConstraintsSolvingTime,
 		ConstraintsConstructionTime
+	}
+	
+	public enum ConstraintsType {
+		Normal, // normal means the constraints for the path program transitions
+		Approximation // Approximation means the constraints SP_i => IT_i and/or IT_i => WP_i 
+					  // (i.e. the constraints for Under-/Overapproximations)
 	}
 
 
@@ -246,14 +260,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mPatternCoefficients2Values = null;
 		mLoc2UnderApproximation = loc2underApprox;
 		mLoc2OverApproximation = loc2overApprox;
-		// Benchmark section
-		mDAGTreeSizeSumOfConstraints = 0;
-		mMotzkinTransformations = 0;
-		mProgramSize = 0;
-		mConstraintsSolvingTime = 0;
-		mConstraintsConstructionTime = 0;
-
+		// Reset statistics
+		resetStatistics();
 	}
+	
+	
 
 	/**
 	 * {@inheritDoc}
@@ -262,6 +273,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	public void startRound(final int round) {
 		mSolver.echo(new QuotedObject("Round " + round));
 		resetSettings();
+		// Reset statistics
+		resetStatistics();
 		mEntryInvariantPattern = null;
 		mExitInvariantPattern = null;
 		mPrefixCounter = 0;
@@ -270,6 +283,20 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mLinearInequalities2Locations = new HashMap<>();
 	}
 	
+	/**
+	 * Reset the linear inequality invariant pattern processor statistics.
+	 */
+	private void resetStatistics() {
+		mDAGTreeSizeSumOfNormalConstraints = 0;
+		mDAGTreeSizeSumOfApproxConstraints = 0;
+		mMotzkinTransformationsForNormalConstraints = 0;
+		mMotzkinTransformationsForApproxConstraints = 0;
+		mMotzkinCoefficientsForNormalConstraints = 0;
+		mMotzkinCoefficientsForApproxConstraints = 0;
+		mProgramSize = 0;
+		mConstraintsSolvingTime = 0;
+		mConstraintsConstructionTime = 0;
+	}
 
 	/**
 	 * Reset the solver and additionally reset the annotation term counter and the map mAnnotTerm2OriginalTerm
@@ -284,10 +311,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mMotzkinCoefficients2LinearInequalities = new HashMap<>();
 		// Reset settings of strategy
 		mStrategy.resetSettings();
-		// Reset statistics
-		mDAGTreeSizeSumOfConstraints = 0;
-		mMotzkinTransformations = 0;
-		mProgramSize = 0;
 	}
 
 	/**
@@ -393,13 +416,14 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 * @return term equivalent to the negated term
 	 */
 	@SafeVarargs
-	private final Term transformNegatedConjunction(final Collection<Collection<LinearInequality>>... dnfs) {
+	private final Term transformNegatedConjunction(ConstraintsType ct, final Collection<Collection<LinearInequality>>... dnfs) {
 		mLogger.info("[LIIPP] About to invoke motzkin:");
 		for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
 			mLogger.info("[LIIPP] DNF to transform: " + dnf);
 		}
 		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(dnfs);
-
+		
+		int numOfMotzkinCoefficientsBeforeTransformation = mMotzkinCoefficients2LinearInequalities.keySet().size();
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<>(conjunctionDNF.size());
 		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR : AnalysisType.LINEAR;
@@ -412,8 +436,16 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 		Term result = SmtUtils.and(mSolver, resultTerms);
 		// Statistics section
-		mDAGTreeSizeSumOfConstraints += new DAGSize().treesize(result);
-		mMotzkinTransformations += conjunctionDNF.size();
+		if (ct == ConstraintsType.Normal) {
+			mDAGTreeSizeSumOfNormalConstraints += new DAGSize().treesize(result);
+			mMotzkinTransformationsForNormalConstraints += conjunctionDNF.size();
+			mMotzkinCoefficientsForNormalConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size() - numOfMotzkinCoefficientsBeforeTransformation);
+		} else if (ct == ConstraintsType.Approximation) {
+			mDAGTreeSizeSumOfApproxConstraints += new DAGSize().treesize(result);
+			mMotzkinTransformationsForApproxConstraints += conjunctionDNF.size();
+			mMotzkinCoefficientsForApproxConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size() - numOfMotzkinCoefficientsBeforeTransformation);
+		}
+
 		return result;
 	}
 
@@ -494,7 +526,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 		mLogger.info("[LIIPP] Got an implication term with " + numberOfInequalities + " conjuncts");
 
-		return transformNegatedConjunction(conditionDNF, negPatternDNF);
+		return transformNegatedConjunction(ConstraintsType.Normal, conditionDNF, negPatternDNF);
 	}
 
 	/**
@@ -536,7 +568,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 		mLogger.info("[LIIPP] Got an implication term with " + numberOfInequalities + " conjuncts");
 
-		return transformNegatedConjunction(newConditionDNF, PatternDNF);
+		return transformNegatedConjunction(ConstraintsType.Normal, newConditionDNF, PatternDNF);
 	}
 
 	private void completePatternVariablesMapping(final Map<IProgramVar, Term> mapToComplete,
@@ -663,7 +695,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				}
 				String transformulaAsString = mLoc2UnderApproximation.get(loc).toString();
 				mSolver.echo(new QuotedObject("Assertion for SP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
-				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(spTemplateDNF, targetLocTemplateNegatedDNF));
+				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation, spTemplateDNF, targetLocTemplateNegatedDNF));
 			}
 		}
 		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT &&  mCurrentRound >= 0) {
@@ -688,7 +720,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				}
 				String transformulaAsString = mLoc2OverApproximation.get(loc).toString();
 				mSolver.echo(new QuotedObject("Assertion for WP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
-				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
+				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation, targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
 			}
 		}
 		if (PRINT_CONSTRAINTS) {
@@ -699,7 +731,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			printConstraintFromStringBuilder(sb);
 		}
 		mSolver.echo(new QuotedObject("Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
-		return transformNegatedConjunction(startInvariantDNF, targetLocTemplateNegatedDNF, transitionDNF);
+		return transformNegatedConjunction(ConstraintsType.Normal, startInvariantDNF, targetLocTemplateNegatedDNF, transitionDNF);
 	}
 	
 	private void printConstraintFromStringBuilder(final StringBuilder sb) {
@@ -862,8 +894,12 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	public Map<LinearInequalityPatternProcessorStatistics, Object> getStatistics() {
 		Map<LinearInequalityPatternProcessorStatistics, Object> stats = new HashMap<>();
 		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSize, mProgramSize);
-		stats.put(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints, mDAGTreeSizeSumOfConstraints);
-		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformations, mMotzkinTransformations);
+		stats.put(LinearInequalityPatternProcessorStatistics.DAGTreesizeNormalConstraints, mDAGTreeSizeSumOfNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.DAGTreesizeApproxConstraints, mDAGTreeSizeSumOfApproxConstraints);		
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints, mMotzkinTransformationsForNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints, mMotzkinTransformationsForApproxConstraints);		
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints, mMotzkinCoefficientsForNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints, mMotzkinCoefficientsForApproxConstraints);
 		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime, mConstraintsSolvingTime);
 		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime, mConstraintsConstructionTime);
 		return stats;

@@ -15,7 +15,10 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mNumOfPathProgramVars;
 
 	private int mMaxRound; 
-	private int mDAGSizeSumOfConstraints;
+	
+	private int mDAGSizeSumOfNormalConstraints;
+	private int mDAGSizeSumOfApproxConstraints;
+	
 	private int mSumOfVarsPerLoc;
 	private int mNumOfNonLiveVariables;
 	private int mNumOfNonUnsatCoreVars;
@@ -23,7 +26,13 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mProgramSize;
 	private int mSizeOfLargestTemplate;
 	private int mSizeOfSmallestTemplate;
-	private int mMotzkinTransformations;
+	
+	private int mMotzkinTransformationsForNormalConstr;
+	private int mMotzkinTransformationsForApproxConstr;
+	
+	private int mMotzkinCoefficientsNormalConstr;
+	private int mMotzkinCoefficientsApproxConstr;
+	
 	private String mSatStatus;
 	private int mSumOfTemplateInequalities;
 	private long mConstraintsConstructionTime;
@@ -35,7 +44,6 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mNumOfPathProgramVars = 0;
 		mNumOfNonUnsatCoreLocs = 0; 
 		mMaxRound = 0;
-		mDAGSizeSumOfConstraints = 0;
 		mSumOfVarsPerLoc = 0;
 		mNumOfNonLiveVariables = 0;
 		mNumOfNonUnsatCoreVars = 0;
@@ -43,7 +51,13 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mSizeOfLargestTemplate = 0;
 		mSizeOfSmallestTemplate = 0;
 		mSumOfTemplateInequalities = 0;
-		mMotzkinTransformations = 0;
+		mDAGSizeSumOfNormalConstraints = 0;
+		mDAGSizeSumOfApproxConstraints = 0;
+		mMotzkinTransformationsForNormalConstr = 0;
+		mMotzkinTransformationsForApproxConstr = 0;
+		mMotzkinCoefficientsNormalConstr = 0;
+		mMotzkinCoefficientsApproxConstr = 0;
+		
 		mSatStatus = "";
 		mConstraintsConstructionTime = 0;
 		mConstraintsSolvingTime = 0;
@@ -67,12 +81,16 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		case SizeOfSmallestTemplate: return mSizeOfSmallestTemplate;
 		case MaxNumOfInequalities: return mMaxNumOfInequalitiesPerRound;
 		case MaxRound : return mMaxRound;
-		case DAGSizeConstraints : return mDAGSizeSumOfConstraints;
+		case DAGTreeSizeNormalConstr : return mDAGSizeSumOfNormalConstraints;
+		case DAGTreeSizeApproxConstr : return mDAGSizeSumOfApproxConstraints;
 		case SumVarsPerLoc: return mSumOfVarsPerLoc;
 		case SumNonLiveVarsPerLoc: return mNumOfNonLiveVariables;
 		case SumNonUnsatCoreLocs: return mNumOfNonUnsatCoreLocs;
 		case SumNonUnsatCoreVars: return mNumOfNonUnsatCoreVars;
-		case MotzkinTransformations: return mMotzkinTransformations;
+		case MotzkinTransformationsNormalConstr: return mMotzkinTransformationsForNormalConstr;
+		case MotzkinTransformationsApproxConstr: return mMotzkinTransformationsForApproxConstr;	
+		case MotzkinCoefficientsNormalConstr: return mMotzkinCoefficientsNormalConstr;
+		case MotzkinCoefficientsApproxConstr : return mMotzkinCoefficientsApproxConstr;
 		case ConstraintsSolvingTime: return mConstraintsSolvingTime;
 		case ConstraintsConstructionTime : return mConstraintsConstructionTime;
 		case SatStatus: return mSatStatus;
@@ -114,9 +132,17 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	
 	public void addStatisticsDataAfterCheckSat(int numOfNonUnsatCoreLocs, int numOfNonUnsatCoreVars, String satResult,
 			Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStats) {
-		mDAGSizeSumOfConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeOfConstraints);
 		mProgramSize = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
-		mMotzkinTransformations += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformations);
+		
+		mDAGSizeSumOfNormalConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeNormalConstraints);
+		mDAGSizeSumOfApproxConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeApproxConstraints);
+		
+		mMotzkinTransformationsForNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints);
+		mMotzkinTransformationsForApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints);
+		
+		mMotzkinCoefficientsNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints);
+		mMotzkinCoefficientsApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints);
+		
 		mConstraintsSolvingTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
 		mConstraintsConstructionTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
 		mNumOfNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
