@@ -213,16 +213,17 @@ public final class CFGInvariantsGenerator {
 				}
 			}
 			mLogger.info("[CFGInvariants] Built " + predicates.size() + " predicates.");
+			
+			// Set statistics before check sat
+			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables, 
+					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, round);
+			
 
 			// Attempt to find a valid configuration
 			final LBool constraintsResult = processor.checkForValidConfiguration(predicates, round);
 
-			// Set statistics before check sat
-			prepareAndSetPathInvariantsStatisticsBeforeCheckSat(locationsAsList, startLocation, errorLocation, allProgramVars, locs2LiveVariables, 
-					sumOfTemplateConjuncts, minimalTemplateSizeOfThisRound, maximalTemplateSizeOfThisRound, round);
-
 			Set<IcfgLocation> locsInUnsatCore = null;
-			varsFromUnsatCore = new HashSet<>();
+			varsFromUnsatCore = null;
 
 			if (constraintsResult == LBool.UNSAT) {
 				if (useUnsatCore) {
