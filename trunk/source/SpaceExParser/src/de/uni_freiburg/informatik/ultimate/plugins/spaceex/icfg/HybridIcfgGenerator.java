@@ -363,7 +363,7 @@ public class HybridIcfgGenerator {
 					for (final SpaceExForbiddenGroup group : forbiddengroup) {
 						if (!group.hasLocations()) {
 							if (!finalInfix.isEmpty()) {
-								finalInfix += "&";
+								finalInfix += "|";
 							}
 							finalInfix += group.getVariableInfix();
 						}

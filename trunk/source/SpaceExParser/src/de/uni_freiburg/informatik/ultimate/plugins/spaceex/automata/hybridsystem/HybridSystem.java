@@ -85,8 +85,8 @@ public class HybridSystem {
 		for (final BindType bind : sysBinds) {
 			final String comp = bind.getComponent();
 			final String as = bind.getAs();
-			final Map<String, String> binds = bind.getMap().stream()
-					.collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey, (s, a) -> s + ", " + a));
+			final Map<String, String> binds =
+					bind.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
 			mBinds.put(as, binds);
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(as,
