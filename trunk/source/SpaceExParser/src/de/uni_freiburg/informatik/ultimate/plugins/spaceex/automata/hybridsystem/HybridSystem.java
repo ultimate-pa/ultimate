@@ -85,8 +85,8 @@ public class HybridSystem {
 		for (final BindType bind : sysBinds) {
 			final String comp = bind.getComponent();
 			final String as = bind.getAs();
-			final Map<String, String> binds =
-					bind.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
+			final Map<String, String> binds = bind.getMap().stream()
+					.collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey, (e1, e2) -> e1));
 			mBinds.put(as, binds);
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(as,
@@ -115,6 +115,7 @@ public class HybridSystem {
 			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
 			mBinds.put(id, newBinds);
 			mLogger.debug("after replace: " + aut);
+			aut.renameConstants();
 		});
 		mLogger.debug("Binds after replacements: " + mBinds);
 	}

@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
@@ -156,6 +157,19 @@ public class HybridAutomaton {
 		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("[" + mName + "]: Added transition: " + newTrans);
+		}
+	}
+	
+	/**
+	 * Function that renames constants according to the replacements the preference manager calculated.
+	 */
+	public void renameConstants() {
+		final Map<String, Map<String, String>> requiresRename = mPreferenceManager.getRequiresRename();
+		if (requiresRename.containsKey(mName)) {
+			// reverse map so we cna use an existing function instead of writing a new one.
+			final Map<String, String> reverse = requiresRename.get(mName).entrySet().stream()
+					.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+			renameAccordingToBinds(reverse);
 		}
 	}
 	
