@@ -39,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
@@ -95,15 +96,16 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Constructor.
 	 */
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean addMapping) {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftArrays(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final boolean addMapping) {
 		this(services, operand, stateFactory, null, addMapping);
 	}
 	
-	public MinimizeDfaHopcroftArrays(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IMergeStateFactory<STATE> stateFactory,
-			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapping) {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftArrays(
+			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
+			final FACTORY stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
+			final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
 

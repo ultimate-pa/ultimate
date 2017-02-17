@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithB
 import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvSummary;
@@ -52,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.KingOfTheHillS
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -142,6 +143,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class),
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
+				new CsvConcatenator(this.getClass(), StatisticsData.class),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				// new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 				 new CsvSummary(getClass(), benchmarks, columnDef),

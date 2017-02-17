@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,8 +61,9 @@ public class HybridSystem {
 	private final Set<String> mLabels;
 	private final Map<String, Map<String, String>> mBinds;
 	
-	protected HybridSystem(ComponentType system, Map<String, ComponentType> automata,
-			Map<String, ComponentType> systems, ILogger logger, SpaceExPreferenceManager preferenceManager) {
+	protected HybridSystem(final ComponentType system, final Map<String, ComponentType> automata,
+			final Map<String, ComponentType> systems, final ILogger logger,
+			final SpaceExPreferenceManager preferenceManager) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
 		
 		mLogger = logger;
@@ -79,38 +81,43 @@ public class HybridSystem {
 		system.getParam().forEach(p -> HybridSystemHelper.addParameter(p, mLocalParameters, mGlobalParameters,
 				mLocalConstants, mGlobalConstants, mLabels, mLogger));
 		
-		system.getBind().stream().forEach(b -> {
-			final String comp = b.getComponent();
-			final Map<String, String> binds =
-					b.getMap().stream().collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey));
-			mBinds.put(comp, binds);
+		final List<BindType> sysBinds = system.getBind();
+		for (final BindType bind : sysBinds) {
+			final String comp = bind.getComponent();
+			final String as = bind.getAs();
+			final Map<String, String> binds = bind.getMap().stream()
+					.collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey, (e1, e2) -> e1));
+			mBinds.put(as, binds);
 			if (systems.containsKey(comp)) {
-				final HybridSystem old = mSubSystems.put(b.getAs(),
+				final HybridSystem old = mSubSystems.put(as,
 						new HybridSystem(systems.get(comp), automata, systems, mLogger, mPreferenceManager));
 				if (old != null) {
-					mLogger.warn("A hybrid system with name " + b.getAs() + " already existed and was replaced.");
+					mLogger.warn("A hybrid system with name " + as + " already existed and was replaced.");
 				}
 			} else if (automata.containsKey(comp)) {
 				final HybridAutomaton old =
-						mAutomata.put(b.getAs(), new HybridAutomaton(automata.get(comp), mLogger, mPreferenceManager));
+						mAutomata.put(as, new HybridAutomaton(automata.get(comp), mLogger, mPreferenceManager));
 				if (old != null) {
-					mLogger.warn("A hybrid automaton with name " + b.getAs() + " already existed and was replaced.");
+					mLogger.warn("A hybrid automaton with name " + as + " already existed and was replaced.");
 				}
 			} else {
 				throw new UnsupportedOperationException(
 						"The component with name " + comp + " is neither a system nor an automaton component.");
 			}
-			
-		});
+			mLogger.info(mBinds);
+		}
 		// rename variables according to binds
 		// TODO: find out how IDS are set, we need autName instead of autName_1
 		mLogger.debug("########## Rename variables according to Binds ###########");
 		mLogger.debug("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
 			mLogger.debug("before replace: " + aut);
-			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id.replaceAll("_1", "")));
-			mBinds.put(id.replaceAll("_1", ""), newBinds);
+			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
+			mBinds.put(id, newBinds);
 			mLogger.debug("after replace: " + aut);
+			if (mPreferenceManager != null) {
+				aut.renameConstants();
+			}
 		});
 		mLogger.debug("Binds after replacements: " + mBinds);
 	}

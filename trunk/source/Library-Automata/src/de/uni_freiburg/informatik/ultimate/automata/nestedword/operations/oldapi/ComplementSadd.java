@@ -34,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -60,7 +63,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled.
 	 */
-	public ComplementSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ComplementSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -112,8 +115,10 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		boolean correct;
-		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-				(new IntersectDD<>(mServices, stateFactory, mOperand, mResult, false)).getResult();
+		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
+		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
+				(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mOperand, mResult,
+				false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {

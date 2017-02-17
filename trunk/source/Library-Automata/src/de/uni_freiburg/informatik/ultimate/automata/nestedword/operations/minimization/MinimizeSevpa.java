@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
@@ -119,7 +120,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false);
 	}
@@ -140,7 +142,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
@@ -166,7 +169,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public MinimizeSevpa(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
 			final IFlag timeout, final boolean initialPartitionSeparatesFinalsAndNonfinals)

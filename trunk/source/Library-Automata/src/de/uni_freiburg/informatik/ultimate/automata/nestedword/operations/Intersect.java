@@ -34,6 +34,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -64,7 +69,8 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Intersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
@@ -114,14 +120,16 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-				(new IntersectDD<>(mServices, stateFactory, mFstOperand, mSndOperand)).getResult();
+		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new IntersectDD<>(mServices,
+				(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mFstOperand,
+				mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
-		correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-		assert correct;
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+		correct &= new IsEquivalent<>(mServices,
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+				resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

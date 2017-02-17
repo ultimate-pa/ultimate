@@ -38,6 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
@@ -71,7 +75,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, new PartitionBackedSetOfPairs<>(Collections.emptyList()));
 	}
@@ -94,7 +99,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
@@ -124,7 +130,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceNwaFairSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaFairSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final PartitionBackedSetOfPairs<STATE> possibleEquivalentClasses)
 					throws AutomataOperationCanceledException {
@@ -149,7 +156,8 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 		getLogger().info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(getServices(),
-				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				getOperand(), getResult())).getResult();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}

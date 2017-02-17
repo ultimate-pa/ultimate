@@ -27,84 +27,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-import java.util.Map;
-import java.util.Set;
-
 /**
- * Abstract factory for states used in typical automata operations.
+ * This is an empty interface only used to mark other state factories. Every factory for states used in the automata
+ * library must implement this empty interface. The purpose is to allow the automata script interpreter to identify a
+ * constructor argument as a state factory and pass a {@link StringFactory}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
  */
-@SuppressWarnings("squid:S1172")
 public interface IStateFactory<STATE> {
-	/**
-	 * Intersection of two states ("product construction").
-	 * 
-	 * @param state1
-	 *            first state
-	 * @param state2
-	 *            second state
-	 * @return state representing the intersection
-	 */
-	default STATE intersection(final STATE state1, final STATE state2) {
-		return null;
-	}
-	
-	/**
-	 * Intersection of two states in Buchi automata ("product construction") with a track.
-	 * 
-	 * @param state1
-	 *            first state
-	 * @param state2
-	 *            second state
-	 * @param track
-	 *            track
-	 * @return state representing the intersection
-	 */
-	default STATE intersectBuchi(final STATE state1, final STATE state2, final int track) {
-		return intersection(state1, state2);
-	}
-	
-	/**
-	 * Determinization of several states.
-	 * 
-	 * @param down2up
-	 *            mapping (down state -> up states)
-	 * @return state representing the determinization
-	 */
-	default STATE determinize(final Map<STATE, Set<STATE>> down2up) {
-		return null;
-	}
-	
-	/**
-	 * @return The sink state.
-	 */
-	default STATE createSinkStateContent() {
-		return null;
-	}
-	
-	/**
-	 * @return The empty stack state/symbol.
-	 */
+	// TODO Christian 2017-02-16 remove this method after all broken places have been fixed
 	default STATE createEmptyStackState() {
-		return null;
-	}
-	
-	/**
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker} of two states.
-	 * 
-	 * @param downState
-	 *            down state
-	 * @param upState
-	 *            up state
-	 * @return state representing the double decker
-	 * @deprecated currently not used
-	 */
-	@Deprecated
-	default STATE createDoubleDeckerContent(final STATE downState, final STATE upState) {
 		return null;
 	}
 }

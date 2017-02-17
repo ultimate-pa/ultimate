@@ -36,6 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -52,7 +57,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	private ComplementDeterministicNwa<LETTER, STATE> mComplement;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Constructor with default values.
@@ -66,7 +71,8 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
@@ -85,7 +91,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Complement(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Complement(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
@@ -176,20 +182,25 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-					(new IntersectDD<>(mServices, stateFactory, mOperand, mResult)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
+					(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mOperand,
+					mResult)).getResult();
 			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-					(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
+					(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
+							.getResult();
 			
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());
 			
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+			correct &= new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+					resultDd, mResult).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());

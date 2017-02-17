@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -59,7 +61,7 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IStateFactory<STATE> localStateFactory;
+	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private ArrayList<STATE> newBnStates;
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
@@ -122,7 +124,7 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 		// run();
 	}
 
-	public IncrementalInclusionCheck3_2(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+	public IncrementalInclusionCheck3_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
 			throws AutomataLibraryException {
 		super(services, a);
@@ -653,8 +655,10 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
 		final boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(localServiceProvider,
-				localStateFactory, local_mA, local_mB2, result);
+				(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA, local_mB2,
+				result);
 		return checkResult;
 		// //INestedWordAutomatonSimple<LETTER, STATE> a;
 		// if(getResult().equals((new IncrementalInclusionCheck2<LETTER,

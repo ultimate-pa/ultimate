@@ -37,6 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
  * Test for language equivalence of two Buchi nested word automata.
@@ -71,7 +74,6 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private static final int NUMBER_OF_ONE_SYMBOL_RANDOM_WORDS = 6;
 	private static final int NUMBER_OF_TWO_SYMBOL_RANDOM_WORDS = 11;
 	
-	private final IBuchiComplementFkvStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
@@ -113,8 +115,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public BuchiIsEquivalent(final AutomataLibraryServices services,
-			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> BuchiIsEquivalent(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, TestMode.DYNAMIC);
@@ -136,13 +138,12 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public BuchiIsEquivalent(final AutomataLibraryServices services,
-			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> BuchiIsEquivalent(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final TestMode mode) throws AutomataLibraryException {
 		super(services);
-		mStateFactory = stateFactory;
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		
@@ -151,7 +152,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		}
 		
 		printStartMessage();
-		mResult = run(mode);
+		mResult = run(stateFactory, mode);
 		printExitMessage();
 	}
 	
@@ -199,12 +200,13 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return mCompleteTestWasApplied;
 	}
 	
-	private boolean run(final TestMode mode) throws AutomataLibraryException {
+	private <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean run(final FACTORY stateFactory, final TestMode mode) throws AutomataLibraryException {
 		switch (mode) {
 			case COMPLETE:
-				return checkEquivalencePrecisely(mServices);
+				return checkEquivalencePrecisely(mServices, stateFactory);
 			case DYNAMIC:
-				return checkEquivalenceDynamically();
+				return checkEquivalenceDynamically(stateFactory);
 			case INCOMPLETE:
 				return checkEquivalenceImprecisely();
 			default:
@@ -212,24 +214,27 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		}
 	}
 	
-	private boolean checkEquivalencePrecisely(final AutomataLibraryServices services) throws AutomataLibraryException {
+	private <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean checkEquivalencePrecisely(final AutomataLibraryServices services, final FACTORY stateFactory)
+					throws AutomataLibraryException {
 		// check inclusion of first operand language in second operand language
-		if (!checkInclusionPrecisely(services, mFstOperand, mSndOperand)) {
+		if (!checkInclusionPrecisely(services, stateFactory, mFstOperand, mSndOperand)) {
 			return false;
 		}
 		// check inclusion of second operand language in first operand language
-		if (!checkInclusionPrecisely(services, mSndOperand, mFstOperand)) {
+		if (!checkInclusionPrecisely(services, stateFactory, mSndOperand, mFstOperand)) {
 			return false;
 		}
 		mCompleteTestWasApplied = true;
 		return true;
 	}
 	
-	private boolean checkInclusionPrecisely(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+	private <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean checkInclusionPrecisely(final AutomataLibraryServices services, final FACTORY stateFactory,
+					final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+					final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		final NestedLassoRun<LETTER, STATE> counterexample =
-				(new BuchiIsIncluded<>(services, mStateFactory, fstOperand, sndOperand)).getCounterexample();
+				(new BuchiIsIncluded<>(services, stateFactory, fstOperand, sndOperand)).getCounterexample();
 		if (counterexample != null) {
 			mCounterexample = counterexample.getNestedLassoWord();
 			return false;
@@ -256,7 +261,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return true;
 	}
 	
-	private boolean checkEquivalenceDynamically() throws AutomataLibraryException {
+	private <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+			boolean checkEquivalenceDynamically(final FACTORY stateFactory) throws AutomataLibraryException {
 		boolean tryCompleteTest = mFstOperand.size() <= MAXIMUM_AUTOMATON_SIZE_FOR_DYNAMIC_TEST
 				&& mSndOperand.size() <= MAXIMUM_AUTOMATON_SIZE_FOR_DYNAMIC_TEST;
 		tryCompleteTest = tryCompleteTest || (new IsDeterministic<>(mServices, mFstOperand).getResult()
@@ -264,7 +270,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		if (tryCompleteTest) {
 			try {
 				return checkEquivalencePrecisely(
-						new AutomataLibraryServices(mServices, TIMEOUT_MILLISECONDS_FOR_DYNAMIC_TEST));
+						new AutomataLibraryServices(mServices, TIMEOUT_MILLISECONDS_FOR_DYNAMIC_TEST), stateFactory);
 			} catch (final AutomataOperationCanceledException e) {
 				// fall back to incomplete test in case of timeout
 			}

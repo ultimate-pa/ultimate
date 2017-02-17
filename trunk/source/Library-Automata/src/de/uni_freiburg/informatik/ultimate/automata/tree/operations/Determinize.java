@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -56,17 +57,20 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IMergeStateFactory<STATE> mStateFactory;
+	private final IMergeStateFactory<STATE> mStateFactoryMerge;
+	private final IEmptyStackStateFactory<STATE> mStateFactoryEmptyStack;
 	private final Map<Set<STATE>, STATE> mReducedStates;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public Determinize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
+			final AutomataLibraryServices services, final FACTORY factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
 		mReducedStates = new HashMap<>();
-		mStateFactory = factory;
+		mStateFactoryMerge = factory;
+		mStateFactoryEmptyStack = factory;
 		mTreeAutomaton = tree;
 
 		mResult = computeResult();
@@ -74,7 +78,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private STATE reduceState(final Set<STATE> key) {
 		if (!mReducedStates.containsKey(key)) {
-			mReducedStates.put(key, mStateFactory.merge(key));
+			mReducedStates.put(key, mStateFactoryMerge.merge(key));
 		}
 		return mReducedStates.get(key);
 	}
@@ -232,7 +236,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 
-		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactory, res);
+		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactoryEmptyStack, res);
 		return op.getResult();
 	}
 

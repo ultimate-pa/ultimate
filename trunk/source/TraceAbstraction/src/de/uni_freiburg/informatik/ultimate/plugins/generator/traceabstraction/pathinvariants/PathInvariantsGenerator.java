@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithBounds;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithGlobalTemplateLevel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
@@ -118,8 +119,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
+	
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
 	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
+	
+	/**
+	 * @see {@link DynamicPatternSettingsStrategyWithGlobalTemplateLevel}
+	 */
+	private static final boolean USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL = false;
+	
 	private static final boolean USE_UNDER_APPROX_FOR_MAX_CONJUNCTS = false;
 	private static final boolean USE_OVER_APPROX_FOR_MIN_DISJUNCTS = false;
 
@@ -140,6 +148,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
+
 
 	private final boolean mUseLiveVariables;
 
@@ -299,6 +308,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
 					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
+							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
+				}
+				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
+					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
 							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
@@ -652,8 +666,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
 		
-		// Output the benchmarks per round into CSV file
-//		Map<Integer, PathInvariantsStatisticsGenerator> round2PathInvariantsStatistics = generator.getRound2PathInvariantsStatistics();
 		return invariants;
 	}
 
@@ -846,9 +858,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
 		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		// the difference of path program locations and the locations extracted from unsat cores
-		DiffOfLocsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		DiffOfVarsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration
 		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the minimum size of all templates occurring in the most recent round
@@ -858,20 +867,34 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// the maximum of the sum of template inequalities per round
 		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
-		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
-		// the maximum DAG-size of (the sum of template inequalities per location per round)
-		DAGSizeConstraints(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
 		// the sum of variables per location per round
 		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
 		SumNonLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
+		SumNonUnsatCoreLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the sum of the difference of all variables and the variables from the unsat core per location per round
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		// Number of Motzkin Transformations
-		MotzkinTransformations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
+		DAGTreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under- and/or Overapproximations
+		DAGTreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
+		// Number of Motzkin Transformations for normal constraints
+		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
+		MotzkinTransformationsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// Number of Motzkin Coefficients needed for normal constraints
+		MotzkinCoefficientsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),	
+		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
+		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),			
+		// the sum of the time needed per round to solve the constraints
+		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
+		// the sum of the time needed per round to construct the constraints
+		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String)s1 + "; " + (String)s2), AStatisticsType.sKeyBeforeData);
-
+		
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;

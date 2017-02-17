@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -66,7 +68,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	private final LinkedList<INestedWordAutomatonSimple<LETTER, STATE>> union_mBs;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IStateFactory<STATE> localStateFactory;
+	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private int counterExampleFlag;
 	public PseudoAutomata workingAutomata;
@@ -873,7 +875,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
-			final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final boolean acc) throws AutomataLibraryException {
 		super(services, a);
@@ -918,7 +920,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce(
-			final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
 			throws AutomataLibraryException {
 		super(services, a);
@@ -1068,12 +1070,15 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean checkResult;
+		// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory becomes class parameter
 		if (getCounterexample() != null) {
-			checkResult = compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2,
-					getCounterexample());
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, getCounterexample());
 		} else {
-			checkResult =
-					compareInclusionCheckResult(localServiceProvider, localStateFactory, local_mA, local_mB2, null);
+			checkResult = compareInclusionCheckResult(localServiceProvider,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
+					local_mB2, null);
 		}
 		return checkResult;
 
@@ -1089,8 +1094,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);

@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
@@ -73,7 +72,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaO
 		mLogger.info(startMessage());
 		
 		// Use operation with random automata
-		final IMergeStateFactory<String> snf = new StringFactory();
+		final StringFactory snf = new StringFactory();
 		
 		final int n = 10;
 		final int k = 3;

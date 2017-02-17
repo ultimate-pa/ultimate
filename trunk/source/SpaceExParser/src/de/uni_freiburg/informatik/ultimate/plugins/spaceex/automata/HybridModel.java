@@ -28,10 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -196,40 +194,23 @@ public class HybridModel {
 		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
 		// for each group create the parallel composition starting in the groups initial locations.
 		for (final SpaceExPreferenceGroup group : groups) {
-			final HybridAutomaton merge = mergeAutomata(configSystem, group);
+			final HybridAutomaton merge = mergeAutomataNWay(configSystem, group);
 			groupIdtoMergedAutomaton.put(group.getId(), merge);
 		}
 		return groupIdtoMergedAutomaton;
 	}
 	
-	public HybridAutomaton mergeAutomata(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
-		final Deque<HybridAutomaton> mergeStack = new LinkedList<>();
+	public HybridAutomaton mergeAutomataNWay(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final Map<String, String> initLocs = (group == null) ? null : group.getInitialLocations();
 		final Map<String, HybridAutomaton> automata = configSystem.getAutomata();
 		if (automata.size() == 1) {
 			return automata.values().iterator().next();
 		}
-		mergeStack.addAll(automata.values());
-		HybridAutomaton merge = null;
-		while (!mergeStack.isEmpty()) {
-			HybridAutomaton aut1;
-			HybridAutomaton aut2;
-			Location init1;
-			Location init2;
-			if (merge == null) {
-				aut1 = mergeStack.pop();
-				aut2 = mergeStack.pop();
-				init1 = getInitLocation(aut1, initLocs);
-				init2 = getInitLocation(aut2, initLocs);
-			} else {
-				aut1 = merge;
-				aut2 = mergeStack.pop();
-				init1 = aut1.getInitialLocation();
-				init2 = getInitLocation(aut2, initLocs);
-			}
-			merge = mParallelCompositionGenerator.computeParallelComposition(aut1, aut2, init1, init2);
+		final Map<HybridAutomaton, Location> automataAndInitial = new HashMap<>();
+		for (final HybridAutomaton aut : automata.values()) {
+			automataAndInitial.put(aut, getInitLocation(aut, initLocs));
 		}
-		return merge;
+		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);
 	}
 	
 	private Location getInitLocation(final HybridAutomaton aut, final Map<String, String> initLocs) {

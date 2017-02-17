@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -52,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IIntersectionStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 	
 	private final Map<STATE, Map<STATE, ProductState>> mFst2snd2res = new HashMap<>();
@@ -75,14 +77,15 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	 *            assume that in the second operand a non-final state is a trap
 	 *            (i.e., whenever we reach a non-final state we can never go
 	 *            back to a final state.
-	 *            2016-11-19 Matthias: I don't know if "trap" is well-known 
+	 *            2016-11-19 Matthias: I don't know if "trap" is well-known
 	 *            terminology or a term that we invented.)
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectNwa(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final IStateFactory<STATE> stateFactory,
-			final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
+	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> IntersectNwa(
+			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
+			final FACTORY stateFactory, final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
@@ -92,7 +95,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		
 		mStateFactory = stateFactory;
 		mAssumeInSndNonFinalIsTrap = assumeInSndNonFinalIsTrap;
-		mEmptyStackState = mStateFactory.createEmptyStackState();
+		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 	
 	public Map<STATE, Map<STATE, ProductState>> getFst2snd2res() {
@@ -224,7 +227,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
-				result.add(new OutgoingInternalTransition<LETTER, STATE>(letter, resSucc));
+				result.add(new OutgoingInternalTransition<>(letter, resSucc));
 			}
 			
 		}
@@ -263,7 +266,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
-				result.add(new OutgoingCallTransition<LETTER, STATE>(letter, resSucc));
+				result.add(new OutgoingCallTransition<>(letter, resSucc));
 			}
 			
 		}
@@ -298,7 +301,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 					continue;
 				}
 				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
-				result.add(new OutgoingReturnTransition<LETTER, STATE>(hier, letter, resSucc));
+				result.add(new OutgoingReturnTransition<>(hier, letter, resSucc));
 			}
 			
 		}

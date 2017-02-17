@@ -142,9 +142,16 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		if (mLoc2PatternSetting.containsKey(location)) {
 			mLoc2PatternSetting.get(location).changeSetting();
 		} else {
-			throw new UnsupportedOperationException("There is no pattern setting for the given location: " + location);
+//			throw new UnsupportedOperationException("There is no pattern setting for the given location: " + location);
 			
 		}
+	}
+	
+
+	@Override
+	public void changePatternSettingForLocation(IcfgLocation location, Set<IcfgLocation> locationsInUnsatCore) {
+		// This strategy doesn't care about the set of locations in unsat core.
+		changePatternSettingForLocation(location);
 	}
 	
 	class PatternSetting {
@@ -168,12 +175,12 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		 * TODO: Heuristic ?
 		 */
 		public void changeSetting() {
-			if (mNumOfConjuncts < 2) {
+			if (mNumOfConjuncts < 3) {
 				mNumOfConjuncts++;
 			} else if (mNumOfDisjuncts < 2) {
 				mNumOfDisjuncts++;
 			} else {
-				if (mNumOfConjuncts < 3) {
+				if (mNumOfConjuncts < 4) {
 					mNumOfConjuncts++;
 				} else {
 					mNumOfDisjuncts++;
@@ -191,6 +198,15 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 //				}
 //			}
 		}
+
+		public int getNumOfDisjuncts() {
+			return mNumOfDisjuncts;
+		}
+
+		public int getNumOfConjuncts() {
+			return mNumOfConjuncts;
+		}
 	}
+
 
 }

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTransition<?>, IPredicate> {
 	private final IHoareTripleChecker mHoareTriplechecker;
 	private final TAPreferences mTaPreferences;
-	private final IStateFactory<IPredicate> mStateFactory;
+	private final IDeterminizeStateFactory<IPredicate> mStateFactory;
 	private final NestedWordAutomaton<IIcfgTransition<?>, IPredicate> mNwa;
 	private int mAnswerInternalSolver;
 	private int mAnswerInternalAutomaton;
@@ -73,7 +73,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<IIcfgTr
 
 	public BestApproximationDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
 			final NestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa,
-			final IStateFactory<IPredicate> stateFactory) {
+			final IDeterminizeStateFactory<IPredicate> stateFactory) {
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
 		mTaPreferences = taPreferences;
 		mStateFactory = stateFactory;

@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IEmptyStackStateFactory<STATE> mStateFactory;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final Map<Integer, List<List<STATE>>> mMemCombinations;
@@ -60,7 +61,7 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final STATE mDummyState;
 	private final Set<STATE> mStates;
 
-	public Totalize(final AutomataLibraryServices services, final IStateFactory<STATE> factory,
+	public Totalize(final AutomataLibraryServices services, final IEmptyStackStateFactory<STATE> factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
 		mStateFactory = factory;

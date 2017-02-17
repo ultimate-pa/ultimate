@@ -40,7 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITran
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -74,7 +75,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final STATE mSinkState;
 	private final HashMap<String, STATE> mContainedStatesHashMap;
-	private final IStateFactory<STATE> mStateFactory;
+	private final IIntersectionStateFactory<STATE> mStateFactory;
 	
 	/**
 	 * Computes the an automaton A' which is the over approximation of the
@@ -103,7 +104,9 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
 		mEpimorphism = automatonEpimorhpism;
-		mStateFactory = minuend.getStateFactory();
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes constructor parameter
+		final ISinkStateFactory<STATE> sinkStateFactory = (ISinkStateFactory<STATE>) minuend.getStateFactory();
+		mStateFactory = (IIntersectionStateFactory<STATE>) minuend.getStateFactory();
 		mContainedStatesHashMap = new HashMap<>();
 		if (minimize && mLogger.isErrorEnabled()) {
 			mLogger.error("Minimization not implemented.");
@@ -116,7 +119,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		// initialize the result with the empty automaton
 		mResult = new NestedWordAutomaton<>(mServices, minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(), mStateFactory);
-		mSinkState = mStateFactory.createSinkStateContent();
+		mSinkState = sinkStateFactory.createSinkStateContent();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Created Sink-State: " + mSinkState.toString());
 		}

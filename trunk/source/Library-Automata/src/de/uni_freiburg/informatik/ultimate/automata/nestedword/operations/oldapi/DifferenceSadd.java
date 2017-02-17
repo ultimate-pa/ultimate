@@ -41,11 +41,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -106,28 +110,7 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 	
 	private final STATE mAuxiliaryEmptyStackState;
 	
-	private final IStateFactory<STATE> mContentFactory;
-	
-	/**
-	 * Constructor with a given state determinizer.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param minuend
-	 *            minuend
-	 * @param subtrahend
-	 *            subtrahend
-	 * @param stateDeterminizer
-	 *            state determinizer
-	 * @throws AutomataLibraryException
-	 *             if alphabets differ
-	 */
-	public DifferenceSadd(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
-		this(services, minuend.getStateFactory(), minuend, subtrahend, stateDeterminizer);
-	}
+	private final IIntersectionStateFactory<STATE> mContentFactory;
 	
 	/**
 	 * Constructor where powerset determinizer is used.
@@ -143,14 +126,31 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * @throws AutomataLibraryException
 	 *             if alphabets are different
 	 */
-	public DifferenceSadd(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSadd(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
-		this(services, minuend.getStateFactory(), minuend, subtrahend,
-				new PowersetDeterminizer<>(subtrahend, true, stateFactory));
+		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory));
 	}
 	
-	private DifferenceSadd(final AutomataLibraryServices services, final IStateFactory<STATE> contentFactory,
+	/**
+	 * Constructor with a given state determinizer.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param contentFactory
+	 *            state factory
+	 * @param minuend
+	 *            minuend
+	 * @param subtrahend
+	 *            subtrahend
+	 * @param stateDeterminizer
+	 *            state determinizer
+	 * @throws AutomataLibraryException
+	 *             if alphabets differ
+	 */
+	public DifferenceSadd(final AutomataLibraryServices services,
+			final IIntersectionStateFactory<STATE> contentFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
@@ -406,10 +406,13 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDD =
-					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
-			correct = new IsIncluded<>(mServices, stateFactory, resultDD, mDifference).getResult();
-			correct = correct && new IsIncluded<>(mServices, stateFactory, mDifference, resultDD).getResult();
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = (new DifferenceDD<>(mServices,
+					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mMinuend,
+					mSubtrahend)).getResult();
+			correct = new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+					resultDD, mDifference).getResult();
 			if (!correct) {
 				mLogger.info("Finished testing correctness of " + operationName());
 			} else {

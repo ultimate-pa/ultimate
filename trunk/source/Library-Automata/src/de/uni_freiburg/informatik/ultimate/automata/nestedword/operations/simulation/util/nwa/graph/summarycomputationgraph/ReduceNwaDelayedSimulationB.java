@@ -33,6 +33,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -45,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class ReduceNwaDelayedSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> {
 	
-	public ReduceNwaDelayedSimulationB(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDelayedSimulationB(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, new DelayedSimulationInfoProvider<>());
 	}
 	
@@ -61,7 +65,8 @@ public class ReduceNwaDelayedSimulationB<LETTER, STATE> extends ReduceNwaSimulat
 		mLogger.info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(mServices,
-				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				getOperand(), getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
@@ -93,8 +94,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	 * @throws AutomataOperationCanceledException
 	 *             if suboperations fail
 	 */
-	public ReduceNwaSimulationBased(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaSimulationBased(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
@@ -234,8 +236,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return computeEquivalenceRelation(simRelation.getRelation(), operand.getStates());
 	}
 	
-	private IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(
-			final IMergeStateFactory<STATE> stateFactory,
+	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(final FACTORY stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
@@ -247,7 +249,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
 	}
 	
-	private IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(final IMergeStateFactory<STATE> stateFactory,
+	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(final FACTORY stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
 			throws AutomataOperationCanceledException {
@@ -262,7 +265,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return maxSatMinimizer.getResult();
 	}
 	
-	private IDoubleDeckerAutomaton<LETTER, STATE> useSimulationBackend(final IMergeStateFactory<STATE> stateFactory,
+	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		IDoubleDeckerAutomaton<LETTER, STATE> useSimulationBackend(final FACTORY stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) throws AutomataOperationCanceledException {

@@ -37,9 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
@@ -55,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
-	extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>>
-	implements IMinimizeNwa<LETTER, STATE> {
+	extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> {
 	
-	public ReduceNwaDelayedFullMultipebbleSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDelayedFullMultipebbleSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, true);
@@ -98,7 +101,8 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 		mLogger.info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(mServices,
-				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				getOperand(), getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

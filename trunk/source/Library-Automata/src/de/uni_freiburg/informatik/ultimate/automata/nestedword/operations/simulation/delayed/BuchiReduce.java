@@ -43,6 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -92,7 +96,8 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public BuchiReduce(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiReduce(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressAwareTimer(),
@@ -119,7 +124,8 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected BuchiReduce(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiReduce(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory);
@@ -154,7 +160,8 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 		mLogger.info("Start testing correctness of " + operationName());
 		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
 		final boolean correct = (new BuchiIsEquivalent<>(mServices,
-				(IBuchiComplementFkvStateFactory<STATE>) stateFactory, getOperand(), getResult())).getResult();
+				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+				getOperand(), getResult())).getResult();
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}

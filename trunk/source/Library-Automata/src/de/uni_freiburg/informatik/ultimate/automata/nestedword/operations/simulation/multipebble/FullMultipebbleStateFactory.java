@@ -32,7 +32,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 /**
  * 
@@ -41,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
  * @param <STATE>
  * @param <GS>
  */
-public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>> implements IStateFactory<GS> {
+public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>>
+		implements ISinkStateFactory<GS>, IEmptyStackStateFactory<GS> {
 	
 	private int mMaxNumberOfDoubleDeckerPebbles = 0;
 	protected final GS mSpoilerWinningSink;
@@ -72,7 +74,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	public abstract <LETTER> GS constructInitialState(STATE q0, STATE q1, INestedWordAutomatonSimple<LETTER, STATE> operand);
 	
 	
-	public final <LETTER> List<GS> computeSuccessorsInternal(final GS gs, 
+	public final <LETTER> List<GS> computeSuccessorsInternal(final GS gs,
 			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
 			return Collections.emptyList();
@@ -89,7 +91,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 
 
-	public final <LETTER> List<GS> computeSuccessorsCall(final GS gs, 
+	public final <LETTER> List<GS> computeSuccessorsCall(final GS gs,
 			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
 			return Collections.emptyList();
@@ -106,7 +108,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 	
 	
-	public final <LETTER> List<GS> computeSuccessorsReturn(final GS gs, 
+	public final <LETTER> List<GS> computeSuccessorsReturn(final GS gs,
 			final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
 			return Collections.emptyList();

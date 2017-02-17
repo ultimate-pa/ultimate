@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
@@ -137,8 +138,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param operand
 	 *            input automaton (DFA)
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, stateFactory, operand, new Interrupt());
 	}
 	
@@ -154,8 +155,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param interrupt
 	 *            interrupt
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -191,8 +192,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * @param interrupt
 	 *            interrupt
 	 */
-	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
+			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state, final HashMap<STATE, Integer> state2int) {
 		super(services, stateFactory);
 		mOperand = operand;

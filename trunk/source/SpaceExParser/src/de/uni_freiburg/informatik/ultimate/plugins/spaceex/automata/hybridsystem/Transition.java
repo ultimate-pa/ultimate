@@ -28,14 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 public class Transition {
-
+	
 	private String mLabel;
 	private String mGuard;
 	private String mUpdate;
-
+	
 	private Location mSource;
 	private Location mTarget;
-
+	
 	/**
 	 * Connects two locations with a transition. The source and target location's transitions are updated accordingly
 	 * 
@@ -44,68 +44,76 @@ public class Transition {
 	 * @param target
 	 *            The target location of the transition.
 	 */
-	protected Transition(Location source, Location target) {
+	protected Transition(final Location source, final Location target) {
 		mSource = source;
 		mTarget = target;
 		mGuard = "";
 		mUpdate = "";
 		mLabel = "";
-
+		
 		source.addOutgoingTransition(this);
 		target.addIncomingTransition(this);
 	}
-
+	
 	public int getSourceId() {
 		return mSource.getId();
 	}
-
+	
 	public int getTargetId() {
 		return mTarget.getId();
 	}
-
-	protected void setLabel(String label) {
+	
+	public Location getSource() {
+		return mSource;
+	}
+	
+	public Location getTarget() {
+		return mTarget;
+	}
+	
+	protected void setLabel(final String label) {
 		mLabel = label;
 	}
-
+	
 	public String getLabel() {
 		return mLabel;
 	}
-
+	
 	protected void setUpdate(final String update) {
 		mUpdate = update;
 	}
-
+	
 	public String getUpdate() {
 		return mUpdate;
 	}
-
+	
 	protected void setGuard(final String guard) {
 		mGuard = guard;
 	}
-
+	
 	public String getGuard() {
 		return mGuard;
 	}
-
+	
 	protected void setSource(final Location location) {
 		mSource = location;
 	}
-
+	
 	protected void setTarget(final Location location) {
 		mTarget = location;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
+		
 		sb.append("(").append(mSource.getId()).append(")").append(" === (").append(mGuard).append("); {")
-		        .append(mUpdate).append("}");
+				.append(mUpdate).append("}");
 		if (mLabel != null && !mLabel.isEmpty()) {
 			sb.append("; Label: ").append(mLabel);
 		}
 		sb.append(" ===> ").append("(").append(mTarget.getId()).append(")");
-
+		
 		return sb.toString();
 	}
 }

@@ -28,16 +28,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Generator that creates a parallel composition from {@link HybridAutomaton} instances.
@@ -59,13 +62,13 @@ public class ParallelCompositionGenerator {
 	private Location mInitialLocationMerge;
 	private List<Transition> mTransitionMerge;
 	private AtomicInteger mIdCounter;
-	private Map<String, Integer> mCreatedLocations;
-	private Stack<LocationPair> mComputationStack;
-	private Set<String> mVisitedLocations;
-	private Set<String> mForbiddenLocations;
+	private Map<Set<Location>, Integer> mCreatedLocations;
+	private final Stack<List<Location>> mComputationStackNWay;
+	private Set<Set<Location>> mVisitedLocations;
 	private final SpaceExPreferenceManager mPreferencemanager;
+	private final AtomicInteger mNameIDCounter;
 	
-	public ParallelCompositionGenerator(ILogger logger, SpaceExPreferenceManager preferenceManager) {
+	public ParallelCompositionGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
 		mLogger = logger;
 		mGlobalConstsMerge = new HashSet<>();
 		mGlobalParamsMerge = new HashSet<>();
@@ -78,54 +81,336 @@ public class ParallelCompositionGenerator {
 		mTransitionMerge = new ArrayList<>();
 		mCreatedLocations = new HashMap<>();
 		mIdCounter = new AtomicInteger(0);
-		mComputationStack = new Stack<>();
+		mComputationStackNWay = new Stack<>();
 		mVisitedLocations = new HashSet<>();
-		mForbiddenLocations = new HashSet<>();
 		mPreferencemanager = preferenceManager;
+		mNameIDCounter = new AtomicInteger(0);
 	}
 	
 	/**
-	 * Function that computes the parallel composition of two hybrid automata
+	 * Function that calculates the parallel composition of N Automata
 	 * 
-	 * @param automaton1
-	 * @param automaton2
-	 * @param mergedLocationToPair
-	 * @param init2
-	 * @param init1
-	 * @param mPreferenceManager
+	 * @param automataAndInitial
 	 * @return
 	 */
-	public HybridAutomaton computeParallelComposition(HybridAutomaton automaton1, HybridAutomaton automaton2,
-			Location init1, Location init2) {
+	public HybridAutomaton computeParallelCompositionNWay(final Map<HybridAutomaton, Location> automataAndInitial) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("####################### STARTING PARALLEL COMPOSITION ###########################");
+		}
 		// name
-		final String nameMerge = automaton1.getName() + "||" + automaton2.getName();
+		final String nameMerge = "MERGE" + mNameIDCounter.getAndIncrement();
 		// labels are merged with union
-		mLabelsMerge.addAll(automaton1.getLabels());
-		mLabelsMerge.addAll(automaton2.getLabels());
-		splitLabels(automaton1.getName(), automaton2.getName(), automaton1.getLabels(), automaton2.getLabels());
-		// merge variables
-		mergeVariables(automaton1, automaton2);
-		// locations
-		final Map<Integer, Location> locations1 = automaton1.getLocations();
-		final Map<Integer, Location> locations2 = automaton2.getLocations();
+		mergeParametersNWay(automataAndInitial.keySet());
 		// 1. get the initial locations, merge them
 		// 2. get the outgoing transitions from the initials
 		// 3. compare and merge the outgoing transitions
 		// 4. Repeat
-		final Location initial1 = init1;
-		final Location initial2 = init2;
-		final LocationPair locpair = new LocationPair(initial1, initial2);
-		mInitialLocationMerge = getLocation(locpair.toString(), initial1, initial2);
+		final List<Location> initialLocations = new ArrayList<>(automataAndInitial.values());
+		mInitialLocationMerge = getLocationNWay(initialLocations);
 		// Add the initial locations to a Stack which holds LocationPair objects
-		mComputationStack.push(new LocationPair(initial1, initial2));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("###################### STACK UPDATE #########################");
+			initialLocations.forEach(loc -> mLogger.debug("*" + loc));
+			mLogger.debug("##################### STACK UPDATE END #######################");
+		}
+		mComputationStackNWay.push(initialLocations);
 		// compute the parallel composition starting from the initial location
-		createLocationsAndTransitions(locations1, locations2);
+		createLocationsAndTransitionsNWay();
 		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
 		// clean up
 		cleanUpMembers();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("####################### PARALLEL COMPOSITION END ###########################");
+		}
 		return hybAut;
+	}
+	
+	// "main" function of the parallel composition.
+	private void createLocationsAndTransitionsNWay() {
+		while (!mComputationStackNWay.isEmpty()) {
+			final List<Location> currentLocs = mComputationStackNWay.pop();
+			final Set<Location> locsSet = new HashSet<>(currentLocs);
+			if (mVisitedLocations.contains(locsSet)) {
+				continue;
+			}
+			final Location source = getLocationNWay(currentLocs);
+			mVisitedLocations.add(locsSet);
+			// get all outgoing transitions and set labels,guards,updates
+			final List<Transition> allOutgoing = getAllOutgoingTransitions(currentLocs);
+			/*
+			 * DEBUG START
+			 */
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("CURRENT NODE:" + source.getName());
+				mLogger.debug("############### ADDING SET TO VISITED ################");
+				currentLocs.forEach(loc -> mLogger.debug("*" + loc));
+				mLogger.debug("###########################################");
+				mLogger.debug("################### VISITED SETS #######################");
+				for (final Set<Location> locs : mVisitedLocations) {
+					mLogger.debug("############### SET ################");
+					locs.forEach(loc -> mLogger.debug("*" + loc));
+					mLogger.debug("####################################");
+				}
+				mLogger.debug("#####################################################");
+				mLogger.debug("############### OUTGOING TRANSITIONS ###############");
+				for (final Transition t : allOutgoing) {
+					mLogger.debug("*" + t);
+				}
+				mLogger.debug("#####################################################");
+			}
+			/*
+			 * DEBUG END
+			 */
+			// if there are no outgoing transitions in either location, we can simply merge them and continue.
+			if (allOutgoing.isEmpty()) {
+				continue;
+			} else {
+				// if there is a transition, get it
+				// if there is no transition, the target is the source.
+				final List<Transition> synchronizations = getSynchronizations(allOutgoing);
+				if (!synchronizations.isEmpty()) {
+					// transitions
+					final Map<Location, Triple<String, String, String>> targetLocs =
+							calculateTargetsForSync(synchronizations, currentLocs);
+					for (final Entry<Location, Triple<String, String, String>> target : targetLocs.entrySet()) {
+						final Location targetLoc = target.getKey();
+						final String label = target.getValue().getFirst();
+						final String guard = target.getValue().getSecond();
+						final String update = target.getValue().getThird();
+						final Transition trans = createTransition(source, targetLoc, label, guard, update);
+						if (!mTransitionMerge.contains(trans)) {
+							source.addOutgoingTransition(trans);
+							targetLoc.addIncomingTransition(trans);
+							mTransitionMerge.add(trans);
+						}
+					}
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("################## CURRENT TARGETS #####################");
+						targetLocs.forEach((tar, info) -> {
+							mLogger.debug("TARGET LOCATION:" + tar.getName());
+							mLogger.debug("TRANSITION INFO: " + info);
+						});
+						mLogger.debug("################## CURRENT TARGETS END #################");
+					}
+				} else {
+					// Create N target locations
+					// if the locations exists, get it, else create a new one from the location pairs
+					final Map<Location, Triple<String, String, String>> targetLocs =
+							calculateTargetsForNonSync(allOutgoing, currentLocs);
+					for (final Entry<Location, Triple<String, String, String>> target : targetLocs.entrySet()) {
+						final Location targetLoc = target.getKey();
+						final String label = target.getValue().getFirst();
+						final String guard = target.getValue().getSecond();
+						final String update = target.getValue().getThird();
+						final Transition trans = createTransition(source, targetLoc, label, guard, update);
+						source.addOutgoingTransition(trans);
+						targetLoc.addIncomingTransition(trans);
+						mTransitionMerge.add(trans);
+					}
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("################## CURRENT TARGETS #####################");
+						targetLocs.forEach((tar, info) -> {
+							mLogger.debug("TARGET LOCATION:" + tar.getName());
+							mLogger.debug("TRANSITION INFO: " + info);
+						});
+						mLogger.debug("################## CURRENT TARGETS END #################");
+					}
+				}
+			}
+		}
+	}
+	
+	// helper function that adds source locations of transitions which are not part of the set yet.
+	private List<Location> getMissingLocs(final List<Location> currentLocs, final List<Location> forbiddenSources) {
+		final List<Location> missing = new ArrayList<>();
+		for (final Location loc : currentLocs) {
+			if (!forbiddenSources.contains(loc)) {
+				missing.add(loc);
+			}
+		}
+		return missing;
+	}
+	
+	// function that returns all synchronizations of a given list of Transitions.
+	private List<Transition> getSynchronizations(final List<Transition> allOutgoing) {
+		final List<Transition> syncs = new ArrayList<>();
+		String synclabel = "";
+		for (final Transition trans : allOutgoing) {
+			String lab;
+			if (synclabel.isEmpty()) {
+				lab = trans.getLabel();
+				if (mGlobalLabels.contains(lab)) {
+					synclabel = lab;
+					syncs.add(trans);
+				}
+			} else {
+				if (synclabel.equals(trans.getLabel())) {
+					syncs.add(trans);
+				}
+			}
+		}
+		return (syncs.size() > 1) ? syncs : new ArrayList<>();
+	}
+	
+	// function that returns the target locations of a non synchronization.
+	private Map<Location, Triple<String, String, String>> calculateTargetsForNonSync(final List<Transition> allOutgoing,
+			final List<Location> currentLocs) {
+		final Map<Location, Triple<String, String, String>> targets = new HashMap<>();
+		final String label = "";
+		String guard = "";
+		String update = "";
+		for (int i = 0; i < allOutgoing.size(); i++) {
+			final List<Location> mergeList = new ArrayList<>();
+			final List<Location> forbiddenSources = new ArrayList<>();
+			final Transition trans = allOutgoing.get(i);
+			if (!mGlobalLabels.contains(trans.getLabel())) {
+				mergeList.add(trans.getTarget());
+				guard = intersectStrings(guard, trans.getGuard());
+				update = intersectStrings(update, trans.getUpdate());
+				forbiddenSources.add(trans.getSource());
+				mergeList.addAll(getMissingLocs(currentLocs, forbiddenSources));
+				final Location target = getLocationNWay(mergeList);
+				if (!mComputationStackNWay.contains(mergeList)) {
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("###################### STACK UPDATE #########################");
+						mergeList.forEach(loc -> mLogger.debug("*" + loc));
+						mLogger.debug("##################### STACK UPDATE END #######################");
+					}
+					mComputationStackNWay.push(mergeList);
+				}
+				final Triple<String, String, String> triple = new Triple<>(label, guard, update);
+				targets.put(target, triple);
+			}
+		}
+		return targets;
+	}
+	
+	// function that returns the target locations of a synchronization.
+	private Map<Location, Triple<String, String, String>>
+			calculateTargetsForSync(final List<Transition> synchronizations, final List<Location> currentLocs) {
+		final List<Location> targetLocs = new ArrayList<>();
+		final List<Location> mergeList = new ArrayList<>();
+		final List<Location> forbiddenSources = new ArrayList<>();
+		final Map<Location, Triple<String, String, String>> targets = new HashMap<>();
+		String label = "";
+		String guard = "";
+		String update = "";
+		for (final Transition trans : synchronizations) {
+			final Location target = trans.getTarget();
+			mergeList.add(target);
+			label = label.isEmpty() ? trans.getLabel() : label;
+			guard = intersectStrings(guard, trans.getGuard());
+			update = intersectStrings(update, trans.getUpdate());
+			forbiddenSources.add(trans.getSource());
+		}
+		mergeList.addAll(getMissingLocs(currentLocs, forbiddenSources));
+		final Location target = getLocationNWay(mergeList);
+		final Triple<String, String, String> triple = new Triple<>(label, guard, update);
+		targets.put(target, triple);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("###################### STACK UPDATE #########################");
+			mergeList.forEach(loc -> mLogger.debug("*" + loc));
+			mLogger.debug("##################### STACK UPDATE END #######################");
+		}
+		mComputationStackNWay.push(mergeList);
+		return targets;
+	}
+	
+	// function that returns all outgoing locations of a list of locations
+	private List<Transition> getAllOutgoingTransitions(final List<Location> currentLocs) {
+		final List<Transition> alloutgoing = new ArrayList<>();
+		for (final Location loc : currentLocs) {
+			alloutgoing.addAll(loc.getOutgoingTransitions());
+		}
+		return alloutgoing;
+	}
+	
+	// fucntion that tries to get a location if it exists, else it creates it.
+	private Location getLocationNWay(final List<Location> mergeList) {
+		final String locString = mergeList.toString();
+		final Set<Location> locset = new HashSet<>(mergeList);
+		Location loc;
+		if (mCreatedLocations.containsKey(locset)) {
+			final int locId = mCreatedLocations.get(locset);
+			loc = mLocationsMerge.get(locId);
+		} else {
+			loc = mergeLocationsNWay(mIdCounter.incrementAndGet(), mergeList);
+			mCreatedLocations.put(locset, mIdCounter.get());
+			mLocationsMerge.put(mIdCounter.get(), loc);
+		}
+		// hack TODO: change this
+		if (loc == null) {
+			loc = mergeLocationsNWay(mIdCounter.incrementAndGet(), mergeList);
+			mCreatedLocations.put(locset, mIdCounter.get());
+			mLocationsMerge.put(mIdCounter.get(), loc);
+		}
+		return loc;
+	}
+	
+	// function that merges N locations and returns the merged one.
+	private Location mergeLocationsNWay(final int incrementAndGet, final List<Location> mergeList) {
+		String name = "loc_";
+		String invariant = "";
+		String flow = "";
+		boolean forbidden = false;
+		final List<String> forbiddenLocNames = new ArrayList<>();
+		mergeList.sort(Comparator.comparing(Location::getInvariant));
+		// merge each locations invariant,flow and name
+		for (final Location loc : mergeList) {
+			name += loc.getName() + "_";
+			invariant = intersectStrings(invariant, loc.getInvariant());
+			flow = intersectStrings(flow, loc.getFlow());
+			if (loc.isForbidden()) {
+				forbidden = true;
+				forbiddenLocNames.add(loc.getName());
+			}
+		}
+		// create locations
+		final Location merged = new Location(incrementAndGet, name);
+		merged.setInvariant(invariant);
+		merged.setFlow(flow);
+		if (forbidden) {
+			merged.setForbidden(true);
+			for (final String locname : forbiddenLocNames) {
+				if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(locname)) {
+					mPreferencemanager.getForbiddenToForbiddenlocs().get(locname).add(name);
+					final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(locname);
+					mPreferencemanager.getForbiddenToForbiddenlocs().put(name, oldloclist);
+				}
+			}
+		}
+		return merged;
+	}
+	
+	// function that merges parameters
+	private void mergeParametersNWay(final Set<HybridAutomaton> automata) {
+		for (final HybridAutomaton aut : automata) {
+			mLocalConstsMerge.addAll(aut.getGlobalConstants());
+			mLocalConstsMerge.addAll(aut.getLocalConstants());
+			mLocalParamsMerge.addAll(aut.getGlobalParameters());
+			mLocalParamsMerge.addAll(aut.getLocalParameters());
+			mLabelsMerge.addAll(aut.getLabels());
+		}
+		anaylseLabels(automata);
+	}
+	
+	// function that determines which labels are globally used.
+	private void anaylseLabels(final Set<HybridAutomaton> automata) {
+		final Map<String, Integer> labelCount = new HashMap<>();
+		for (final HybridAutomaton aut : automata) {
+			final Set<String> labels = aut.getLabels();
+			for (final String label : labels) {
+				final int count = labelCount.containsKey(label) ? labelCount.get(label) : 0;
+				labelCount.put(label, count + 1);
+			}
+		}
+		labelCount.forEach((lab, val) -> {
+			if (val > 1) {
+				mGlobalLabels.add(lab);
+			}
+		});
 	}
 	
 	private void cleanUpMembers() {
@@ -142,152 +427,7 @@ public class ParallelCompositionGenerator {
 		mTransitionMerge = new ArrayList<>();
 		mCreatedLocations = new HashMap<>();
 		mIdCounter = new AtomicInteger(0);
-		mComputationStack = new Stack<>();
 		mVisitedLocations = new HashSet<>();
-		mForbiddenLocations = new HashSet<>();
-	}
-	
-	/**
-	 * "Helper function" that Merges transitions and locations. 1. Pop from ComputationStack and get a location pair 2.
-	 * Look up Outgoing transitions, calculate parallel products of locations/transitions 3. Add merged locations to
-	 * ComputationStack in order to calculate 2. of their successors.
-	 * 
-	 * @param locations1
-	 * @param locations2
-	 * @param groupId
-	 * @param preferenceManager
-	 * @param mergedLocationToPair
-	 * @param automatonName1
-	 * @param automatonName2
-	 */
-	private void createLocationsAndTransitions(Map<Integer, Location> locations1, Map<Integer, Location> locations2) {
-		// TODO: reduce cyclomatic Complexity + make the whole function more understandable + add more seperate
-		// functions
-		while (!mComputationStack.isEmpty()) {
-			final LocationPair locpair = mComputationStack.pop();
-			if (mVisitedLocations.contains(locpair.toString())) {
-				continue;
-			}
-			final Location currentLoc1 = locpair.getLocation1();
-			final Location currentLoc2 = locpair.getLocation2();
-			// get all outgoing transitions and set labels,guards,updates
-			
-			final List<Transition> outgoing1 = new ArrayList<>();
-			outgoing1.addAll(currentLoc1.getOutgoingTransitions());
-			final List<Transition> outgoing2 = new ArrayList<>();
-			outgoing2.addAll(currentLoc2.getOutgoingTransitions());
-			// if there are no outgoing transitions in either location, we can simply merge them and continue.
-			if (outgoing1.isEmpty() && outgoing2.isEmpty()) {
-				final Location source = getLocation(locpair.toString(), currentLoc1, currentLoc2);
-				mLocationsMerge.put(source.getId(), source);
-				continue;
-			}
-			// local vars for the loop
-			Location srcLoc1;
-			Location srcLoc2;
-			Location tarLoc1;
-			Location tarLoc2;
-			String srcLocPair;
-			String tarLocPair;
-			String srcTarLocPair1;
-			String srcTarLocPair2;
-			Transition currentTransition1 = null;
-			Transition currentTransition2 = null;
-			String currentLabel1 = "";
-			String currentGuard1 = "";
-			String currentUpdate1 = "";
-			String currentLabel2 = "";
-			String currentGuard2 = "";
-			String currentUpdate2 = "";
-			while (outgoing1.listIterator().hasNext() || outgoing2.listIterator().hasNext()) {
-				srcLoc1 = currentLoc1;
-				srcLoc2 = currentLoc2;
-				mVisitedLocations.add((new LocationPair(srcLoc1, srcLoc2)).toString());
-				// if there is a transition, get it
-				// if there is no transition, the target is the source.
-				if (outgoing1.listIterator().hasNext()) {
-					currentTransition1 = outgoing1.listIterator().next();
-					tarLoc1 = locations1.get(currentTransition1.getTargetId());
-					currentLabel1 = (currentTransition1.getLabel() != null) ? currentTransition1.getLabel() : "";
-					currentGuard1 = (currentTransition1.getGuard() != null) ? currentTransition1.getGuard() : "";
-					currentUpdate1 = (currentTransition1.getUpdate() != null) ? currentTransition1.getUpdate() : "";
-				} else {
-					tarLoc1 = srcLoc1;
-				}
-				if (outgoing2.listIterator().hasNext()) {
-					currentTransition2 = outgoing2.listIterator().next();
-					tarLoc2 = locations2.get(currentTransition2.getTargetId());
-					currentLabel2 = (currentTransition2.getLabel() != null) ? currentTransition2.getLabel() : "";
-					currentGuard2 = (currentTransition2.getGuard() != null) ? currentTransition2.getGuard() : "";
-					currentUpdate2 = (currentTransition2.getUpdate() != null) ? currentTransition2.getUpdate() : "";
-				} else {
-					tarLoc2 = srcLoc2;
-				}
-				srcLocPair = srcLoc1 + "," + srcLoc2;
-				tarLocPair = tarLoc1 + "," + tarLoc2;
-				final boolean synchronization = isSynchronization(currentLabel1, currentLabel2);
-				// if the labels are equal merge the transition and location right away
-				if (synchronization) {
-					// if the location exists, get it, else create a new one from the source locations
-					final Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
-					final Location target = getLocation(tarLocPair, tarLoc1, tarLoc2);
-					// transition
-					final Transition trans = createTransition(source, target, currentLabel1,
-							intersectStrings(currentGuard1, currentGuard2),
-							intersectStrings(currentUpdate1, currentUpdate2));
-					mTransitionMerge.add(trans);
-					// add incoming/outgoing transitions to locations
-					source.addOutgoingTransition(trans);
-					target.addIncomingTransition(trans);
-					// add to locations
-					mLocationsMerge.put(source.getId(), source);
-					mLocationsMerge.put(target.getId(), target);
-					outgoing1.remove(currentTransition1);
-					outgoing2.remove(currentTransition2);
-					final LocationPair locationPair = new LocationPair(tarLoc1, tarLoc2);
-					mComputationStack.push(locationPair);
-				} else {
-					// if one or both labels are local OR either one of them is empty, we can merge locations.
-					// in order to do that, it is necessary to compute all possible combinations.
-					// from s1,s2 -> s1,t2 AND t1,s2
-					// pairs s1,t2 and t1,s2
-					srcTarLocPair1 = srcLoc1 + "," + tarLoc2;
-					srcTarLocPair2 = tarLoc1 + "," + srcLoc2;
-					if (mGlobalLabels.contains(currentLabel2)) {
-						mForbiddenLocations.add(srcTarLocPair1);
-					}
-					if (mGlobalLabels.contains(currentLabel1)) {
-						mForbiddenLocations.add(srcTarLocPair2);
-					}
-					// if the location exists, get it, else create a new one from the source location pairs
-					final Location source = getLocation(srcLocPair, srcLoc1, srcLoc2);
-					// Create 2 target locations
-					// if the locations exists, get it, else create a new one from the location pairs
-					// s1,t2
-					final Location target1 = getLocation(srcTarLocPair1, srcLoc1, tarLoc2);
-					// t1,s2
-					final Location target2 = getLocation(srcTarLocPair2, tarLoc1, srcLoc2);
-					// Create 2 transitions
-					// s1,s2 ---> s1,t2
-					if (target1 != null && source.getId() != target1.getId()) {
-						final Transition srcTar1 =
-								createTransition(source, target1, currentLabel2, currentGuard2, currentUpdate2);
-						mTransitionMerge.add(srcTar1);
-						final LocationPair srcTarPair = new LocationPair(srcLoc1, tarLoc2);
-						mComputationStack.push(srcTarPair);
-					}
-					// s1,s2 ---> t1,s2
-					if (target2 != null && source.getId() != target2.getId()) {
-						final Transition srcTar2 =
-								createTransition(source, target2, currentLabel1, currentGuard1, currentUpdate1);
-						mTransitionMerge.add(srcTar2);
-						final LocationPair tarSrcPair = new LocationPair(tarLoc1, srcLoc2);
-						mComputationStack.push(tarSrcPair);
-					}
-					break;
-				}
-			}
-		}
 	}
 	
 	/**
@@ -300,7 +440,8 @@ public class ParallelCompositionGenerator {
 	 * @param update
 	 * @return
 	 */
-	private Transition createTransition(Location source, Location target, String label, String guard, String update) {
+	private Transition createTransition(final Location source, final Location target, final String label,
+			final String guard, final String update) {
 		final Transition trans = new Transition(source, target);
 		trans.setLabel(label);
 		trans.setGuard(guard);
@@ -308,111 +449,11 @@ public class ParallelCompositionGenerator {
 		return trans;
 	}
 	
-	/**
-	 * function that returns a location if it exsits, else it creates it
-	 * 
-	 * @param locPair
-	 * @param loc1
-	 * @param loc2
-	 * @return
-	 */
-	private Location getLocation(String locPair, Location loc1, Location loc2) {
-		if (mForbiddenLocations.contains(locPair)) {
-			return null;
-		}
-		Location loc;
-		if (mCreatedLocations.containsKey(locPair)) {
-			final int locId = mCreatedLocations.get(locPair);
-			loc = mLocationsMerge.get(locId);
-		} else {
-			loc = mergeLocations(mIdCounter.incrementAndGet(), loc1, loc2);
-			mCreatedLocations.put(locPair, mIdCounter.get());
-			mLocationsMerge.put(loc.getId(), loc);
-		}
-		// hack TODO: change this
-		if (loc == null) {
-			loc = mergeLocations(mIdCounter.incrementAndGet(), loc1, loc2);
-			mCreatedLocations.put(locPair, mIdCounter.get());
-			mLocationsMerge.put(loc.getId(), loc);
-		}
-		return loc;
-	}
-	
-	private void splitLabels(String automatonName1, String automatonName2, Set<String> labels1, Set<String> labels2) {
-		final Set<String> locLabs1 = new HashSet<>();
-		final Set<String> locLabs2 = new HashSet<>();
-		labels1.forEach(lab1 -> {
-			if (labels2.contains(lab1)) {
-				mGlobalLabels.add(lab1);
-			} else {
-				locLabs1.add(lab1);
-			}
-		});
-		mLocalLabels.put(automatonName1, locLabs1);
-		labels2.forEach(lab1 -> {
-			if (labels1.contains(lab1)) {
-				mGlobalLabels.add(lab1);
-			} else {
-				locLabs2.add(lab1);
-			}
-		});
-		mLocalLabels.put(automatonName2, locLabs2);
-	}
-	
-	/*
-	 * helper function to determine if 2 labels synchronize
-	 */
-	private boolean isSynchronization(String currentLabel1, String currentLabel2) {
-		final boolean bothEmpty = ("".equals(currentLabel1) && "".equals(currentLabel2)) ? true : false;
-		final boolean equalLabels = currentLabel1.equals(currentLabel2) ? true : false;
-		final boolean bothGlobal = mGlobalLabels.contains(currentLabel1) && mGlobalLabels.contains(currentLabel2);
-		return !bothEmpty && equalLabels && bothGlobal;
-	}
-	
-	private void mergeVariables(HybridAutomaton automaton1, HybridAutomaton automaton2) {
-		// All variables in a merged automata are LOCAL.
-		// local params
-		mLocalParamsMerge.addAll(automaton1.getLocalParameters());
-		mLocalParamsMerge.addAll(automaton2.getLocalParameters());
-		mLocalParamsMerge.addAll(automaton1.getGlobalParameters());
-		mLocalParamsMerge.addAll(automaton2.getGlobalParameters());
-		// local consts
-		mLocalConstsMerge.addAll(automaton1.getLocalConstants());
-		mLocalConstsMerge.addAll(automaton2.getLocalConstants());
-		mLocalConstsMerge.addAll(automaton1.getGlobalConstants());
-		mLocalConstsMerge.addAll(automaton2.getGlobalConstants());
-	}
-	
-	/*
-	 * helper function to merge locations
-	 */
-	private Location mergeLocations(int id, Location loc1, Location loc2) {
-		final String locname = "loc_" + loc1.getName() + "_" + loc2.getName();
-		final Location loc = new Location(id, locname);
-		loc.setFlow(intersectStrings(loc1.getFlow(), loc2.getFlow()));
-		loc.setInvariant(intersectStrings(loc1.getInvariant(), loc2.getInvariant()));
-		if (loc1.isForbidden() || loc2.isForbidden()) {
-			loc.setForbidden(true);
-			if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(loc1.getName())) {
-				mPreferencemanager.getForbiddenToForbiddenlocs().get(loc1.getName()).add(loc.getName());
-				final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(loc1.getName());
-				mPreferencemanager.getForbiddenToForbiddenlocs().put(loc.getName(), oldloclist);
-				
-			}
-			if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(loc2.getName())) {
-				mPreferencemanager.getForbiddenToForbiddenlocs().get(loc2.getName()).add(loc.getName());
-				final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(loc2.getName());
-				mPreferencemanager.getForbiddenToForbiddenlocs().put(loc.getName(), oldloclist);
-			}
-		}
-		return loc;
-	}
-	
 	/*
 	 * Helper function to merge two strings into a string of the form "str1 && str2" Used for intersecting guards and
 	 * updates of transitions in this class.
 	 */
-	private String intersectStrings(String str1, String str2) {
+	private String intersectStrings(final String str1, final String str2) {
 		String intersection;
 		final String string1 = (str1 == null) ? "" : str1;
 		final String string2 = (str2 == null) ? "" : str2;

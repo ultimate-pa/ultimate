@@ -52,7 +52,9 @@ public class StringFactory
 		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
-		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String> {
+		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
+		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IBuchiIntersectStateFactory<String>,
+		IIntersectionStateFactory<String>, IEmptyStackStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -300,7 +302,6 @@ public class StringFactory
 		return builder.append(CLOSE_BRACE).toString();
 	}
 	
-	@Override
 	public String createDoubleDeckerContent(final String downState, final String upState) {
 		return '<' + downState + COMMA + upState + '>';
 	}

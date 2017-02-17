@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -58,13 +62,15 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private IntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private DoubleDeckerAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
-	private final IStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
+	private final IIntersectionStateFactory<STATE> mStateFactoryIntersection;
 	
 	// TODO Christian 2016-09-04: These fields are only used locally. Is there some functionality missing?
 	private DeterminizeNwa<LETTER, STATE> mSndDeterminized;
 	private ComplementDeterministicNwa<LETTER, STATE> mSndComplemented;
 	
-	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Difference(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean finalIsTrap)
@@ -73,6 +79,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		mStateFactory = stateFactory;
+		mStateFactoryIntersection = stateFactory;
 		mStateDeterminizer = stateDeterminizer;
 		
 		if (mLogger.isInfoEnabled()) {
@@ -80,7 +87,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		}
 		
 		// TODO Christian 2016-09-04: The parameter finalIsTrap is always 'false'.
-		computeDifference(finalIsTrap);
+		computeDifference(stateFactory, finalIsTrap);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -101,7 +108,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Difference(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand,
@@ -118,13 +126,14 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
-	private void computeDifference(final boolean finalIsTrap) throws AutomataLibraryException {
+	private <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			computeDifference(final FACTORY stateFactory, final boolean finalIsTrap) throws AutomataLibraryException {
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory);
 			final ComplementDeterministicNwa<LETTER, STATE> sndComplemented =
 					new ComplementDeterministicNwa<>(sndTotalized);
 			final IntersectNwa<LETTER, STATE> intersect =
-					new IntersectNwa<>(mFstOperand, sndComplemented, mStateFactory, finalIsTrap);
+					new IntersectNwa<>(mFstOperand, sndComplemented, stateFactory, finalIsTrap);
 			final NestedWordAutomatonReachableStates<LETTER, STATE> result =
 					new NestedWordAutomatonReachableStates<>(mServices, intersect);
 			if (!sndTotalized.nonDeterminismInInputDetected()) {
@@ -146,7 +155,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		mSndDeterminized = new DeterminizeNwa<>(mServices, mSndOperand, mStateDeterminizer, mStateFactory, null,
 				makeAutomatonTotal);
 		mSndComplemented = new ComplementDeterministicNwa<>(mSndDeterminized);
-		mIntersect = new IntersectNwa<>(mFstOperand, mSndComplemented, mStateFactory, finalIsTrap);
+		mIntersect = new IntersectNwa<>(mFstOperand, mSndComplemented, stateFactory, finalIsTrap);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}
 	
@@ -173,17 +182,20 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new DifferenceDD<>(mServices,
-				stateFactory, mFstOperand, mSndOperand, new PowersetDeterminizer<>(mSndOperand, true, stateFactory),
-				false, false)).getResult();
+		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+				(new DifferenceDD<>(mServices, (IIntersectionStateFactory<STATE>) stateFactory, mFstOperand,
+						mSndOperand,
+						new PowersetDeterminizer<>(mSndOperand, true, (IDeterminizeStateFactory<STATE>) stateFactory),
+						false, false)).getResult();
 		boolean correct = true;
 		/*
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
 		*/
-		correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-		assert correct;
-		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+		correct &= new IsEquivalent<>(mServices,
+				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+				resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

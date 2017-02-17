@@ -31,7 +31,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
  * Test for language equivalence of two nested word automata.
@@ -45,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
-	private final IStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
@@ -64,11 +66,11 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 	 * @throws AutomataLibraryException
 	 *             if some operation fails
 	 */
-	public IsEquivalent(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> IsEquivalent(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
-		mStateFactory = stateFactory;
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		
@@ -77,7 +79,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		}
 		
 		printStartMessage();
-		mResult = checkEquivalence();
+		mResult = checkEquivalence(stateFactory);
 		printExitMessage();
 	}
 	
@@ -113,21 +115,24 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		return mMessage;
 	}
 	
-	private boolean checkEquivalence() throws AutomataLibraryException {
-		if (!checkInclusion(mFstOperand, mSndOperand)) {
+	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+			boolean checkEquivalence(final FACTORY stateFactory) throws AutomataLibraryException {
+		if (!checkInclusion(stateFactory, mFstOperand, mSndOperand)) {
 			mMessage = "The first operand recognizes a word not recognized by the second one.";
 			return false;
 		}
-		if (!checkInclusion(mSndOperand, mFstOperand)) {
+		if (!checkInclusion(stateFactory, mSndOperand, mFstOperand)) {
 			mMessage = "The second operand recognizes a word not recognized by the first one.";
 			return false;
 		}
 		return true;
 	}
 	
-	private boolean checkInclusion(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		final IsIncluded<LETTER, STATE> isIncluded = new IsIncluded<>(mServices, mStateFactory, fstOperand, sndOperand);
+	private <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+			boolean checkInclusion(final FACTORY stateFactory,
+					final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+					final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+		final IsIncluded<LETTER, STATE> isIncluded = new IsIncluded<>(mServices, stateFactory, fstOperand, sndOperand);
 		if (!isIncluded.getResult()) {
 			mCounterexample = isIncluded.getCounterexample().getWord();
 			return false;

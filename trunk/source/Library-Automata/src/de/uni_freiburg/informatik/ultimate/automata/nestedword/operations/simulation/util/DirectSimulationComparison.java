@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -68,9 +69,9 @@ public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public DirectSimulationComparison(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> DirectSimulationComparison(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		final IDoubleDeckerAutomaton<LETTER, STATE> dd = new RemoveDeadEnds<>(mServices, mOperand).getResult();

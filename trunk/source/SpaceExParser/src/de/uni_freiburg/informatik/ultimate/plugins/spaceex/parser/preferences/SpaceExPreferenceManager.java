@@ -48,9 +48,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class that shall parse the config file of a SpaceEx model.
+ * Class that shall parse the config file of a SpaceEx model and hold important settings and values.
  * 
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
@@ -61,13 +62,17 @@ public class SpaceExPreferenceManager {
 	private final ILogger mLogger;
 	private String mSystem;
 	private final String mModelFilename;
-	// replacement map for groups
+	// replacement map for variables of the form Literal -> real variable.. e.g A0 -> x<=5
 	private final Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
-	// the forbiddengroup holds the specified locations + variables of the "forbidden" property.
+	// map of the form AUT -> VAR, necessary for Constants in config of the form AUT.VAR == 5
+	private final Map<String, Map<String, String>> mRequiresRename;
+	private final AtomicInteger mRenameID;
+	// the forbiddengroups hold the specified locations + variables of the "forbidden" property.
 	private final List<SpaceExForbiddenGroup> mForbiddenGroups;
 	private final Map<String, List<String>> mForbiddenToForbiddenlocs;
+	// Map that holds the parallel composition of each preference group.
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
@@ -87,6 +92,9 @@ public class SpaceExPreferenceManager {
 		mGroupIdToParallelComposition = new HashMap<>();
 		mForbiddenGroups = new ArrayList<>();
 		mForbiddenToForbiddenlocs = new HashMap<>();
+		mRequiresRename = new HashMap<>();
+		mRenameID = new AtomicInteger(0);
+		
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -106,7 +114,6 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private void parseConfigFile(final File configfile) throws Exception {
-		testPostFixToGroups();
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
 		final Properties prop = new Properties();
@@ -148,7 +155,7 @@ public class SpaceExPreferenceManager {
 	
 	private List<String> infixToGroups(final String infix) {
 		final String infixWithLiterals = replaceAllWithLiterals(infix);
-		final String[] infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
+		final List<String> infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
 		final List<String> postfix = HybridTermBuilder.postfix(infixToArray);
 		final List<String> groups = postfixToGroups(postfix);
 		return replaceLiterals(groups);
@@ -168,11 +175,13 @@ public class SpaceExPreferenceManager {
 							+ preferenceGroup.getInitialVariableInfix());
 				}
 			}
-			if (mPreferenceGroups.isEmpty()) {
-				mHasPreferenceGroups = false;
-			} else {
-				mHasPreferenceGroups = true;
-			}
+		} else {
+			mLogger.info("-Config file has no initially property-");
+		}
+		if (mPreferenceGroups.isEmpty()) {
+			mHasPreferenceGroups = false;
+		} else {
+			mHasPreferenceGroups = true;
 		}
 	}
 	
@@ -206,7 +215,15 @@ public class SpaceExPreferenceManager {
 					initialLocations.get(aut).add(loc);
 				}
 			} else if (varMatcher.matches()) {
-				initialVariableInfix += varMatcher.group(0) + "&";
+				String varString = varMatcher.group(0);
+				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
+				for (final Pair<String, String> pair : renameList) {
+					mLogger.info(pair.getFirst());
+					mLogger.info(pair.getSecond());
+					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
+				}
+				mLogger.info(varString);
+				initialVariableInfix += varString + "&";
 			}
 		}
 		if (!initialVariableInfix.isEmpty()) {
@@ -240,7 +257,13 @@ public class SpaceExPreferenceManager {
 				final String loc = locMatcher.group(2);
 				initialLocations.put(aut, loc);
 			} else if (varMatcher.matches()) {
-				initialVariableInfix += varMatcher.group(0) + "&";
+				String varString = varMatcher.group(0);
+				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
+				for (final Pair<String, String> pair : renameList) {
+					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
+				}
+				mLogger.info(varString);
+				initialVariableInfix += varString + "&";
 			}
 		}
 		if (!initialVariableInfix.isEmpty()) {
@@ -248,6 +271,52 @@ public class SpaceExPreferenceManager {
 		}
 		final int groupid = id;
 		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
+	}
+	
+	/**
+	 * Function that analyses if a variable in the config has to be renamed variables that have to be renamed are of the
+	 * form AUT.VARNAME They are constants
+	 * 
+	 * @param group
+	 * @return
+	 */
+	private List<Pair<String, String>> analyseVariable(final String group) {
+		final List<String> arr = HybridTermBuilder.expressionToArray(group);
+		final Pattern pattern = Pattern.compile("(.*)\\.(.*)");
+		Matcher renameMatcher;
+		final List<Pair<String, String>> renameList = new ArrayList<>();
+		for (final String el : arr) {
+			renameMatcher = pattern.matcher(el);
+			if (renameMatcher.matches()) {
+				final String aut = renameMatcher.group(1);
+				final String var = renameMatcher.group(2);
+				String newName = generateNewName(var);
+				if (mRequiresRename.containsKey(aut)) {
+					if (!mRequiresRename.get(aut).containsKey(var)) {
+						mRequiresRename.get(aut).put(var, newName);
+					} else {
+						newName = mRequiresRename.get(aut).get(var);
+					}
+				} else {
+					final Map<String, String> map = new HashMap<>();
+					map.put(var, newName);
+					mRequiresRename.put(aut, map);
+				}
+				renameList.add(new Pair<>(renameMatcher.group(0), newName));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("##### HAS TO BE RENAMED: " + el + " #####");
+					mLogger.debug("AUT: " + aut);
+					mLogger.debug("VAR: " + var);
+					mLogger.debug("NEW NAME: " + var);
+					mLogger.debug("#########################################");
+				}
+			}
+		}
+		return renameList;
+	}
+	
+	private String generateNewName(final String var) {
+		return var + "_Renamedconst" + mRenameID.getAndIncrement();
 	}
 	
 	// function to replace literals with their saved values
@@ -265,8 +334,8 @@ public class SpaceExPreferenceManager {
 		return res;
 	}
 	
-	// helper function to replace all elements in a string of the form x==2 & loc(x)==wuargh, with single literals.
-	// x==2 & loc(x)==wuargh & y<=4---> A0 & A1 & A2
+	// helper function to replace all elements in a string of the form x==2 & loc(x)==loc1, with single literals.
+	// x==2 & loc(x)==loc1 & y<=4 ---> A0 & A1 & A2
 	private String replaceAllWithLiterals(final String initially) {
 		mReplacement.clear();
 		// regex stuff for initial locations
@@ -315,9 +384,6 @@ public class SpaceExPreferenceManager {
 	 * @return
 	 */
 	public List<String> postfixToGroups(final List<String> postfix) {
-		/*
-		 * TODO: Explain how the hell this algorithm works
-		 */
 		final Deque<String> stack = new LinkedList<>();
 		final List<String> openGroupstack = new ArrayList<>();
 		final List<String> finishedGroups = new ArrayList<>();
@@ -476,7 +542,7 @@ public class SpaceExPreferenceManager {
 			mLogger.info("Original: " + testString);
 			final String test = replaceAllWithLiterals(testString);
 			mLogger.info("replaced: " + test);
-			final String[] testarr = HybridTermBuilder.expressionToArray(test);
+			final List<String> testarr = HybridTermBuilder.expressionToArray(test);
 			final List<String> postfix = HybridTermBuilder.postfix(testarr);
 			mLogger.info("postfix: " + postfix);
 			final List<String> groups = postfixToGroups(postfix);
@@ -513,6 +579,10 @@ public class SpaceExPreferenceManager {
 	
 	public String getFileName() {
 		return mModelFilename;
+	}
+	
+	public Map<String, Map<String, String>> getRequiresRename() {
+		return mRequiresRename;
 	}
 	
 	public Map<Integer, SpaceExPreferenceGroup> getPreferenceGroups() {

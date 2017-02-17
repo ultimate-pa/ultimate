@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
  * Construct deterministic states like in the classical powerset construction.
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            Content
  */
 public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<LETTER, STATE> {
-	private final IStateFactory<STATE> mStateFactory;
+	private final IDeterminizeStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final boolean mUseDoubleDeckers;
 	private int mMaxDegreeOfNondeterminism;
@@ -64,10 +64,10 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 	 *            state factory
 	 */
 	public PowersetDeterminizer(final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean useDoubleDeckers,
-			final IStateFactory<STATE> stateFactory) {
+			final IDeterminizeStateFactory<STATE> stateFactory) {
 		mOperand = operand;
 		mUseDoubleDeckers = useDoubleDeckers;
-		this.mStateFactory = stateFactory;
+		mStateFactory = stateFactory;
 	}
 	
 	@Override

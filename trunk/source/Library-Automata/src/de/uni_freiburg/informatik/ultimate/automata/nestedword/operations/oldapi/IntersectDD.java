@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -55,7 +57,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> IntersectDD(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		this(services, stateFactory, fstNwa, sndNwa, false);
@@ -77,7 +80,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public IntersectDD(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> IntersectDD(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {

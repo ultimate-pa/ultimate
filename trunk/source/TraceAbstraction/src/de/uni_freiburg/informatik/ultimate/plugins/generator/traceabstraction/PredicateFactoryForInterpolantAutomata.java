@@ -38,10 +38,15 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -55,7 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class PredicateFactoryForInterpolantAutomata
 		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
 		IBuchiComplementNcsbStateFactory<IPredicate>, IBuchiComplementFkvStateFactory<IPredicate>,
-		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate> {
+		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
+		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate>,
+		IIntersectionStateFactory<IPredicate>, IEmptyStackStateFactory<IPredicate> {
 
 	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;
@@ -103,11 +110,6 @@ public class PredicateFactoryForInterpolantAutomata
 	@Override
 	public IPredicate createEmptyStackState() {
 		return mEmtpyStack;
-	}
-
-	@Override
-	public IPredicate createDoubleDeckerContent(final IPredicate down, final IPredicate up) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

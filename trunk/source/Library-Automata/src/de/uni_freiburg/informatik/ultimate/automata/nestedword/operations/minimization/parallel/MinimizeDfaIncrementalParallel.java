@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
@@ -175,8 +176,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
@@ -196,8 +197,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, interrupt);
@@ -228,8 +229,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)

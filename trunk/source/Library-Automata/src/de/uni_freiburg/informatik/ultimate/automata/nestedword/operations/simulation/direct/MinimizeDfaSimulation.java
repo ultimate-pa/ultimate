@@ -33,18 +33,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -97,7 +94,8 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public MinimizeDfaSimulation(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DirectSimulation<>(services.getProgressAwareTimer(),
@@ -124,9 +122,10 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected MinimizeDfaSimulation(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final DirectSimulation<LETTER, STATE> simulation) throws AutomataOperationCanceledException {
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaSimulation(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final DirectSimulation<LETTER, STATE> simulation)
+					throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		mLogger.info(startMessage());

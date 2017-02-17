@@ -187,6 +187,11 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	public void changePatternSettingForLocation(final IcfgLocation location) {
 		throw new UnsupportedOperationException("Location independent strategies do not support dynamic setting changes.");
 	}
+	
+	@Override
+	public void changePatternSettingForLocation(IcfgLocation location, Set<IcfgLocation> locationsInUnsatCore) {
+		throw new UnsupportedOperationException("Location independent strategies do not support dynamic setting changes.");
+	}
 
 	/**
 	 * {@inheritDoc}

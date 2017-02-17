@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -113,7 +114,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
+	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaMaxSat2(
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings,
 			final NestedMap2<STATE, STATE, T> statePairs) throws AutomataOperationCanceledException {
 		super(services, stateFactory);

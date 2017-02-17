@@ -43,10 +43,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -167,7 +172,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	}
 	
 	private STATE addSinkState() {
-		final STATE sinkState = mTraversedNwa.getStateFactory().createSinkStateContent();
+		// TODO Christian 2017-02-15 Cast is a temporary workaround, where do we get a sink state factory here?
+		final STATE sinkState = ((ISinkStateFactory<STATE>) mTraversedNwa.getStateFactory()).createSinkStateContent();
 		final boolean isInitial = !mOperand.getInitialStates().iterator().hasNext();
 		final boolean isFinal = mComplement;
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
@@ -282,20 +288,25 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		if (!mRemoveNonLiveStates) {
 			mLogger.info("Start testing correctness of " + operationName());
 			final INestedWordAutomatonSimple<LETTER, STATE> input;
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			if (!mComplement) {
 				input = mOperand;
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<>(mServices, stateFactory, mOperand, mTraversedNwa)).getResult();
+						(new IntersectDD<>(mServices,
+								(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
+								mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-						(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
+						(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
+								.getResult();
 				input = resultSadd;
 			}
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, stateFactory, input, mTraversedNwa).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mTraversedNwa, input).getResult();
+			correct &= new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+					input, mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		if (!correct) {

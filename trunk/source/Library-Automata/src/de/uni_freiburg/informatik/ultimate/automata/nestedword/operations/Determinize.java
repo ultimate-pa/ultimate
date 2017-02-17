@@ -38,6 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -53,6 +57,7 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
+	
 	/**
 	 * Default constructor.
 	 * 
@@ -65,7 +70,7 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public Determinize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Determinize(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
@@ -84,7 +89,7 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public Determinize(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public Determinize(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final Set<STATE> predefinedInitials)
 			throws AutomataOperationCanceledException {
 		super(services);
@@ -137,11 +142,14 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			
+			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-					(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
+					(new DeterminizeDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
+							.getResult();
 			// should recognize same language as old computation
-			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
-			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();
+			correct &= new IsEquivalent<>(mServices,
+					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
+					resultDd, mResult).getResult();
 			
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());
