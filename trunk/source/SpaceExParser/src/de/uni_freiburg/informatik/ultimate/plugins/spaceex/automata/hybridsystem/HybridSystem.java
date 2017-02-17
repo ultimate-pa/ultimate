@@ -115,7 +115,9 @@ public class HybridSystem {
 			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
 			mBinds.put(id, newBinds);
 			mLogger.debug("after replace: " + aut);
-			aut.renameConstants();
+			if (mPreferenceManager != null) {
+				aut.renameConstants();
+			}
 		});
 		mLogger.debug("Binds after replacements: " + mBinds);
 	}

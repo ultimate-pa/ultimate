@@ -66,6 +66,7 @@ public class ParallelCompositionGenerator {
 	private final Stack<List<Location>> mComputationStackNWay;
 	private Set<Set<Location>> mVisitedLocations;
 	private final SpaceExPreferenceManager mPreferencemanager;
+	private final AtomicInteger mNameIDCounter;
 	
 	public ParallelCompositionGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
 		mLogger = logger;
@@ -83,6 +84,7 @@ public class ParallelCompositionGenerator {
 		mComputationStackNWay = new Stack<>();
 		mVisitedLocations = new HashSet<>();
 		mPreferencemanager = preferenceManager;
+		mNameIDCounter = new AtomicInteger(0);
 	}
 	
 	/**
@@ -92,8 +94,11 @@ public class ParallelCompositionGenerator {
 	 * @return
 	 */
 	public HybridAutomaton computeParallelCompositionNWay(final Map<HybridAutomaton, Location> automataAndInitial) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("####################### STARTING PARALLEL COMPOSITION ###########################");
+		}
 		// name
-		final String nameMerge = generateName(automataAndInitial);
+		final String nameMerge = "MERGE" + mNameIDCounter.getAndIncrement();
 		// labels are merged with union
 		mergeParametersNWay(automataAndInitial.keySet());
 		// 1. get the initial locations, merge them
@@ -104,7 +109,9 @@ public class ParallelCompositionGenerator {
 		mInitialLocationMerge = getLocationNWay(initialLocations);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Pushing to stack: " + initialLocations);
+			mLogger.debug("###################### STACK UPDATE #########################");
+			initialLocations.forEach(loc -> mLogger.debug("*" + loc));
+			mLogger.debug("##################### STACK UPDATE END #######################");
 		}
 		mComputationStackNWay.push(initialLocations);
 		// compute the parallel composition starting from the initial location
@@ -114,19 +121,10 @@ public class ParallelCompositionGenerator {
 				mLabelsMerge, mLogger);
 		// clean up
 		cleanUpMembers();
-		return hybAut;
-	}
-	
-	private String generateName(final Map<HybridAutomaton, Location> automataAndInitial) {
-		String name = "";
-		final Set<HybridAutomaton> automata = automataAndInitial.keySet();
-		for (final HybridAutomaton aut : automata) {
-			if (!name.isEmpty()) {
-				name += "||";
-			}
-			name += aut.getName();
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("####################### PARALLEL COMPOSITION END ###########################");
 		}
-		return name;
+		return hybAut;
 	}
 	
 	// "main" function of the parallel composition.
@@ -139,13 +137,32 @@ public class ParallelCompositionGenerator {
 			}
 			final Location source = getLocationNWay(currentLocs);
 			mVisitedLocations.add(locsSet);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("CURRENT NODE:" + source.getName());
-				mLogger.debug("ADDING TO VISITED:" + currentLocs);
-				mLogger.debug("VISITED: " + mVisitedLocations);
-			}
 			// get all outgoing transitions and set labels,guards,updates
 			final List<Transition> allOutgoing = getAllOutgoingTransitions(currentLocs);
+			/*
+			 * DEBUG START
+			 */
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("CURRENT NODE:" + source.getName());
+				mLogger.debug("############### ADDING SET TO VISITED ################");
+				currentLocs.forEach(loc -> mLogger.debug("*" + loc));
+				mLogger.debug("###########################################");
+				mLogger.debug("################### VISITED SETS #######################");
+				for (final Set<Location> locs : mVisitedLocations) {
+					mLogger.debug("############### SET ################");
+					locs.forEach(loc -> mLogger.debug("*" + loc));
+					mLogger.debug("####################################");
+				}
+				mLogger.debug("#####################################################");
+				mLogger.debug("############### OUTGOING TRANSITIONS ###############");
+				for (final Transition t : allOutgoing) {
+					mLogger.debug("*" + t);
+				}
+				mLogger.debug("#####################################################");
+			}
+			/*
+			 * DEBUG END
+			 */
 			// if there are no outgoing transitions in either location, we can simply merge them and continue.
 			if (allOutgoing.isEmpty()) {
 				continue;
@@ -155,7 +172,6 @@ public class ParallelCompositionGenerator {
 				final List<Transition> synchronizations = getSynchronizations(allOutgoing);
 				if (!synchronizations.isEmpty()) {
 					// transitions
-					final List<Location> targets = new ArrayList<>();
 					final Map<Location, Triple<String, String, String>> targetLocs =
 							calculateTargetsForSync(synchronizations, currentLocs);
 					for (final Entry<Location, Triple<String, String, String>> target : targetLocs.entrySet()) {
@@ -168,8 +184,15 @@ public class ParallelCompositionGenerator {
 							source.addOutgoingTransition(trans);
 							targetLoc.addIncomingTransition(trans);
 							mTransitionMerge.add(trans);
-							targets.add(targetLoc);
 						}
+					}
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("################## CURRENT TARGETS #####################");
+						targetLocs.forEach((tar, info) -> {
+							mLogger.debug("TARGET LOCATION:" + tar.getName());
+							mLogger.debug("TRANSITION INFO: " + info);
+						});
+						mLogger.debug("################## CURRENT TARGETS END #################");
 					}
 				} else {
 					// Create N target locations
@@ -185,6 +208,14 @@ public class ParallelCompositionGenerator {
 						source.addOutgoingTransition(trans);
 						targetLoc.addIncomingTransition(trans);
 						mTransitionMerge.add(trans);
+					}
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("################## CURRENT TARGETS #####################");
+						targetLocs.forEach((tar, info) -> {
+							mLogger.debug("TARGET LOCATION:" + tar.getName());
+							mLogger.debug("TRANSITION INFO: " + info);
+						});
+						mLogger.debug("################## CURRENT TARGETS END #################");
 					}
 				}
 			}
@@ -205,11 +236,19 @@ public class ParallelCompositionGenerator {
 	// function that returns all synchronizations of a given list of Transitions.
 	private List<Transition> getSynchronizations(final List<Transition> allOutgoing) {
 		final List<Transition> syncs = new ArrayList<>();
-		final String synclabel = "";
+		String synclabel = "";
 		for (final Transition trans : allOutgoing) {
-			final String lab = (synclabel.isEmpty()) ? trans.getLabel() : synclabel;
-			if (mGlobalLabels.contains(lab)) {
-				syncs.add(trans);
+			String lab;
+			if (synclabel.isEmpty()) {
+				lab = trans.getLabel();
+				if (mGlobalLabels.contains(lab)) {
+					synclabel = lab;
+					syncs.add(trans);
+				}
+			} else {
+				if (synclabel.equals(trans.getLabel())) {
+					syncs.add(trans);
+				}
 			}
 		}
 		return (syncs.size() > 1) ? syncs : new ArrayList<>();
@@ -235,7 +274,9 @@ public class ParallelCompositionGenerator {
 				final Location target = getLocationNWay(mergeList);
 				if (!mComputationStackNWay.contains(mergeList)) {
 					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("Pushing to stack: " + mergeList);
+						mLogger.debug("###################### STACK UPDATE #########################");
+						mergeList.forEach(loc -> mLogger.debug("*" + loc));
+						mLogger.debug("##################### STACK UPDATE END #######################");
 					}
 					mComputationStackNWay.push(mergeList);
 				}
@@ -257,21 +298,21 @@ public class ParallelCompositionGenerator {
 		String guard = "";
 		String update = "";
 		for (final Transition trans : synchronizations) {
-			
 			final Location target = trans.getTarget();
 			mergeList.add(target);
 			label = label.isEmpty() ? trans.getLabel() : label;
 			guard = intersectStrings(guard, trans.getGuard());
 			update = intersectStrings(update, trans.getUpdate());
 			forbiddenSources.add(trans.getSource());
-			
 		}
 		mergeList.addAll(getMissingLocs(currentLocs, forbiddenSources));
 		final Location target = getLocationNWay(mergeList);
 		final Triple<String, String, String> triple = new Triple<>(label, guard, update);
 		targets.put(target, triple);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Pushing to stack: " + mergeList);
+			mLogger.debug("###################### STACK UPDATE #########################");
+			mergeList.forEach(loc -> mLogger.debug("*" + loc));
+			mLogger.debug("##################### STACK UPDATE END #######################");
 		}
 		mComputationStackNWay.push(mergeList);
 		return targets;

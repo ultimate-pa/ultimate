@@ -45,7 +45,7 @@ public class ParallelCompositionGeneratorTest {
 		HybridModel system = new HybridModel(spaceEx, logger);
 		HybridAutomaton merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut1||aut2", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -66,7 +66,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut2||aut1", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -89,7 +89,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut1||aut2", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -104,7 +104,7 @@ public class ParallelCompositionGeneratorTest {
 						+ "5=loc_loc3_loc3_(5), Invariant: x <= 6 & y <= 6, Flow: x'==1 & y'==1, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals(
-				"[(1) === (); {x:=0 && y:=0}; Label: jump1 ===> (2), (2) === (); {} ===> (3), (2) === (); {} ===> (4), (4) === (); {} ===> (5), (3) === (); {} ===> (5)]",
+				"[(1) === (); {x:=0 && y:=0}; Label: jump1 ===> (2), (2) === (); {} ===> (4), (2) === (); {} ===> (3), (4) === (); {} ===> (5), (3) === (); {} ===> (5)]",
 				merge.getTransitions().toString());
 		// @formatter=ON
 		estimatedTime = System.nanoTime() - startTime;
@@ -120,7 +120,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut2||aut1", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -149,7 +149,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut3||aut1||aut2", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -173,7 +173,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut2||aut3||aut1", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -198,7 +198,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut3||aut1||aut2", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -210,7 +210,7 @@ public class ParallelCompositionGeneratorTest {
 						+ "3=loc_loc3_loc2_loc2_(3), Invariant: x <= 9999 & y<=1000 & z<=1000, Flow: , IsForbidden?: false, "
 						+ "4=loc_loc4_loc2_loc2_(4), Invariant: x <= 5000 & y<=1000 & z<=1000, Flow: , IsForbidden?: false}",
 				merge.getLocations().toString());
-		assertEquals("[(1) === (); {}; Label: jump ===> (2), (2) === (); {} ===> (3), (2) === (); {} ===> (4)]",
+		assertEquals("[(1) === (); {}; Label: jump ===> (2), (2) === (); {} ===> (4), (2) === (); {} ===> (3)]",
 				merge.getTransitions().toString());
 		estimatedTime = System.nanoTime() - startTime;
 		System.out.println("Done in " + estimatedTime / (float) 1000000 + " milliseconds");
@@ -226,7 +226,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut1||aut2||aut3", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
@@ -253,7 +253,7 @@ public class ParallelCompositionGeneratorTest {
 		system = new HybridModel(spaceEx, logger);
 		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
-		assertEquals("aut1||aut3||aut2", merge.getName());
+		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
 		assertEquals("[]", merge.getGlobalParameters().toString());
 		assertEquals("[]", merge.getLocalConstants().toString());
