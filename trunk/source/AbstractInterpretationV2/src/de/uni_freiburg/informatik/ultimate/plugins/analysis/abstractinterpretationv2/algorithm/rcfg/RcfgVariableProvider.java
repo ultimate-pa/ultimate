@@ -115,12 +115,35 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	}
 
 	@Override
-	public STATE createValidState(final CodeBlock action, final STATE state) {
-		final Set<IBoogieVar> vars = getPostVariables(action);
-		return makeValidState(state, vars);
+	public STATE synchronizeVariables(final STATE template, final STATE toSynchronize) {
+		if (toSynchronize == null) {
+			return null;
+		}
+		if (template == null) {
+			return toSynchronize;
+		}
+		return synchronizeVariables(toSynchronize, template.getVariables());
 	}
 
-	private STATE makeValidState(final STATE state, final Set<IBoogieVar> shouldVars) {
+	@Override
+	public STATE createValidPostOpArgLinState(final CodeBlock action, final STATE stateLin, final STATE stateHier) {
+		final Set<IBoogieVar> preVars = getPreVariables(action);
+		final STATE synchronizedPreLin = synchronizeVariables(stateLin, preVars);
+		return defineVariablesAfter(action, synchronizedPreLin, stateHier);
+	}
+
+	@Override
+	public STATE createValidPostOpArgHierState(final CodeBlock action, final STATE stateHier) {
+		if (!(action instanceof Return)) {
+			return stateHier;
+		}
+		assert stateHier != null;
+		final Return retAction = (Return) action;
+		final Set<IBoogieVar> preVars = getPreVariables(retAction.getCorrespondingCall());
+		return synchronizeVariables(stateHier, preVars);
+	}
+
+	private STATE synchronizeVariables(final STATE state, final Set<IBoogieVar> shouldVars) {
 		final Set<IBoogieVar> definedVariables = state.getVariables();
 
 		final Set<IBoogieVar> toRemove = AbsIntUtil.difference(definedVariables, shouldVars);
@@ -270,17 +293,6 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 
 		// add locals if applicable, thereby overriding globals
 		final String procedure = current.getPrecedingProcedure();
-		if (procedure != null) {
-			vars.addAll(getLocalVariables(procedure));
-		}
-		return vars;
-	}
-
-	private Set<IBoogieVar> getPostVariables(final CodeBlock current) {
-		final Set<IBoogieVar> vars = getGlobalScopeVarAndConsts();
-
-		// add locals if applicable, thereby overriding globals
-		final String procedure = current.getSucceedingProcedure();
 		if (procedure != null) {
 			vars.addAll(getLocalVariables(procedure));
 		}
