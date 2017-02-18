@@ -124,7 +124,7 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// return 180 * 1000;
-		return 12 * 60 * 1000;
+		return 30 * 60 * 1000;
 	}
 
 	@Override
