@@ -245,7 +245,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		}
 		case DFA_HOPCROFT_ARRAYS: {
 			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftArrays<>(autServices,
-					operand, predicateFactoryRefinement, partition, computeOldState2NewStateMapping));
+					predicateFactoryRefinement, operand, partition, computeOldState2NewStateMapping));
 			break;
 		}
 		case DFA_HOPCROFT_LISTS: {

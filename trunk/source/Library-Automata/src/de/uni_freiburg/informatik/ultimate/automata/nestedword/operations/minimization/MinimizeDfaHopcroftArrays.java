@@ -99,12 +99,12 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftArrays(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean addMapping) {
-		this(services, operand, stateFactory, null, addMapping);
+		this(services, stateFactory, operand, null, addMapping);
 	}
 	
 	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftArrays(
-			final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final FACTORY stateFactory, final PartitionBackedSetOfPairs<STATE> initialPartition,
+			final AutomataLibraryServices services, final FACTORY stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
