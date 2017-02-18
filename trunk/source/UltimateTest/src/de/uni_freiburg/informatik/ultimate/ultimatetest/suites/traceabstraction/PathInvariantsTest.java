@@ -131,28 +131,29 @@ public class PathInvariantsTest extends
 		return 60 * 1000;
 	}
 	
+	private static final String[] mBoogieToolchains = {
+			"AutomizerBplInline.xml",			
+			"AutomizerBplInlineWithBlockEncoding.xml",
+		};
+		
+	private static final String[] mCToolchains = {
+		"AutomizerCInline.xml",
+		"AutomizerCInlineWithBlockEncoding.xml",
+	};
+	
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final String setting : mSettings) {
-			addTestCase("AutomizerCInline.xml", 
-					setting, 
-					mSVCOMP_Examples);
+		for (final String toolchain : mCToolchains) {
+			for (final String setting : mSettings) {
+				addTestCase(toolchain, setting,	mSVCOMP_Examples);
+				addTestCase(toolchain, setting, mUltimateRepository, new String[] {".c", ".i"});
+			}
 		}
-		
-		for (final String setting : mSettings) {
-			addTestCase(
-					"AutomizerBplInline.xml",
-					setting,
-					mUltimateRepository,
-				    new String[] {".bpl"});
-		}
-		for (final String setting : mSettings) {
-			addTestCase(
-					"AutomizerCInline.xml",
-					setting,
-					mUltimateRepository,
-				    new String[] {".c", ".i"});
+		for (final String toolchain : mBoogieToolchains) {
+			for (final String setting : mSettings) {
+				addTestCase(toolchain, setting, mUltimateRepository, new String[] {".bpl"});
+			}
 		}
 		return super.createTestCases();
 	}
