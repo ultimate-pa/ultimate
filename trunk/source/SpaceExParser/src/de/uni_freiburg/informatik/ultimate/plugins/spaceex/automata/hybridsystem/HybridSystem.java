@@ -143,6 +143,10 @@ public class HybridSystem {
 		return mAutomata;
 	}
 	
+	public Map<String, HybridSystem> getSubSystems() {
+		return mSubSystems;
+	}
+	
 	public String getName() {
 		return mName;
 	}

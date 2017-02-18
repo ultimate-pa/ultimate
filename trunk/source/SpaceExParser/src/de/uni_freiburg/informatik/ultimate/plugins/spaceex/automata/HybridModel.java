@@ -202,12 +202,12 @@ public class HybridModel {
 	
 	public HybridAutomaton mergeAutomataNWay(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final Map<String, String> initLocs = (group == null) ? null : group.getInitialLocations();
-		final Map<String, HybridAutomaton> automata = configSystem.getAutomata();
+		final Collection<HybridAutomaton> automata = configSystem.getAutomata().values();
 		if (automata.size() == 1) {
-			return automata.values().iterator().next();
+			return automata.iterator().next();
 		}
 		final Map<HybridAutomaton, Location> automataAndInitial = new HashMap<>();
-		for (final HybridAutomaton aut : automata.values()) {
+		for (final HybridAutomaton aut : automata) {
 			automataAndInitial.put(aut, getInitLocation(aut, initLocs));
 		}
 		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);

@@ -49,28 +49,33 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		variables.addAll(automaton.getLocalParameters());
 		final Set<ILocalProgramVar> progVars = new HashSet<>();
 		for (final String var : variables) {
-			// Termvariables for the transformula.
-			final TermVariable inVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
-			final TermVariable outVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
-			// IProgramVar for the transformula.
-			final HybridProgramVar progVar = variableManager.constructProgramVar(var, procedure);
-			variableManager.addInVarTermVariable(var, inVar);
-			variableManager.addOutVarTermVariable(var, outVar);
-			variableManager.addProgramVar(var, progVar);
-			mTVtoProgVar.put(inVar, progVar);
-			mTVtoProgVar.put(outVar, progVar);
-			progVars.add(progVar);
+			boolean varisNumber = false;
 			if ((automaton.getLocalConstants().contains(var) || automaton.getGlobalConstants().contains(var))) {
+				System.out.println("Constant: " + var);
+				// TODO: implement this case
 				if (varIsNumber(var)) {
 					variableManager.addVarToConstants(var);
+					varisNumber = true;
 				}
+			}
+			if (!varisNumber) {
+				// Termvariables for the transformula.
+				final TermVariable inVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
+				final TermVariable outVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
+				// IProgramVar for the transformula.
+				final HybridProgramVar progVar = variableManager.constructProgramVar(var, procedure);
+				variableManager.addInVarTermVariable(var, inVar);
+				variableManager.addOutVarTermVariable(var, outVar);
+				variableManager.addProgramVar(var, progVar);
+				mTVtoProgVar.put(inVar, progVar);
+				mTVtoProgVar.put(outVar, progVar);
+				progVars.add(progVar);
 			}
 		}
 		mLocals.put(procedure, progVars);
 	}
 	
 	private boolean varIsNumber(final String var) {
-		
 		return false;
 	}
 	

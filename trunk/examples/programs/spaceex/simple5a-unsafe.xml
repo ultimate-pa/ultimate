@@ -16,12 +16,12 @@
       <flow>x'==1</flow>
     </location>
     <transition source="1" target="2">
-      <label>jump1</label>
-      <assignment>x:=0</assignment>
       <labelposition x="-29.0" y="-53.0" />
     </transition>
     <transition source="2" target="3">
-      <labelposition x="0.0" y="0.0" />
+      <label>jump1</label>
+      <assignment>x:=0</assignment>
+      <labelposition x="-23.0" y="-53.0" />
     </transition>
   </component>
   <component id="aut2">

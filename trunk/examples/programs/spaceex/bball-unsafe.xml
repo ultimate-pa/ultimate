@@ -21,8 +21,8 @@
   <component id="system">
     <note>A model of the vertical position x of a bouncing ball.
 
-Note the difference the choice of template directions makes: 
-Try box, octagonal and uniform with at least 10 constraints and watch for termination. 
+Note the difference the choice of template directions makes:
+Try box, octagonal and uniform with at least 10 constraints and watch for termination.
 
 Variables: x,v</note>
     <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
@@ -38,4 +38,3 @@ Variables: x,v</note>
     </bind>
   </component>
 </sspaceex>
-
