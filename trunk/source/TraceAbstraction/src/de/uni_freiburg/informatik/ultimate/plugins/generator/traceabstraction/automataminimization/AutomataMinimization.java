@@ -137,14 +137,9 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 				}
 
 				if (mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwaDd<?, ?>) {
-					/**
-					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
-					 */
 					// DoubleDecker information already present in output
 					newAbstraction = (IDoubleDeckerAutomaton<LETTER, IPredicate>) mMinimizationResult
 							.getRawMinimizationOutput().getResult();
-					// (new RemoveUnreachable<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
-					// newAbstractionRaw.getResult())).getResult();
 				} else {
 					// compute DoubleDecker information
 					newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
