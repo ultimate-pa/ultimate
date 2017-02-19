@@ -75,8 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            checkResult state factory type
  */
 public abstract class AbstractMinimizeNwa<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE, IMinimizationCheckResultStateFactory<STATE>>
-		implements IMinimizeNwa<LETTER, STATE> {
+		extends UnaryNwaOperation<LETTER, STATE, IMinimizationCheckResultStateFactory<STATE>> {
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */

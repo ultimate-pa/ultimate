@@ -19,16 +19,14 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 
 /**
  * General minimization interface which returns an
@@ -39,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
  * @param <LETTER> letter type
  * @param <STATE> state type
  */
-public interface IMinimizeNwaDD<LETTER, STATE>
-		extends IMinimizeNwa<LETTER, STATE> {
+public interface IMinimizeNwaDD<LETTER, STATE> {
 	/**
 	 * Returns a Map from states of the input automaton to states of the output
 	 * automaton. The output results from merging states. The image of a state
@@ -50,7 +47,4 @@ public interface IMinimizeNwaDD<LETTER, STATE>
 	 * @return map from input automaton states to output automaton states
 	 */
 	Map<STATE, STATE> getOldState2newState();
-	
-	@Override
-	IDoubleDeckerAutomaton<LETTER, STATE> getResult();
 }
