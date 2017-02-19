@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -186,8 +185,7 @@ public final class Complement<LETTER, STATE> extends UnaryNwaOperation<LETTER, S
 			
 			// intersection of operand and result should be empty
 			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
-					(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mOperand,
-					mResult)).getResult();
+					(IIntersectionStateFactory<STATE>) stateFactory, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))

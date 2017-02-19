@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -122,8 +121,7 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 		
 		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new IntersectDD<>(mServices,
-				(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mFstOperand,
-				mSndOperand)).getResult();
+				(IIntersectionStateFactory<STATE>) stateFactory, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
