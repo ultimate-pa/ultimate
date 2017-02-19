@@ -64,7 +64,7 @@ public final class CFGInvariantsGenerator {
 	/**
 	 * Report a {@link BenchmarkResult} for every round.
 	 */
-	private static final boolean TEMPLATE_STATISTICS_MODE = false;
+	private static final boolean TEMPLATE_STATISTICS_MODE = true;
 
 
 	private static boolean INIT_USE_EMPTY_PATTERNS = true;
@@ -313,7 +313,7 @@ public final class CFGInvariantsGenerator {
 		mRound2PathInvariantsStatistics.put(round, pathInvariantsStatisticsForThisRound);
 	}
 
-	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList, Set<IcfgLocation> locationsInUnsatCore, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars, 
+	private void prepareAndSetPathInvariantsStatisticsAfterCheckSat(final List<IcfgLocation> locationsAsList, final Set<IcfgLocation> locationsInUnsatCore, final IcfgLocation startLoc, final IcfgLocation errorLoc, final Set<IProgramVar> allProgramVars, 
 			final Set<IProgramVar> varsFromUnsatCore,  final int round, final String constraintsResult,
 			final Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStatistics) {
 		int numOfNonUnsatCoreVars = 0;
