@@ -27,17 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * State factory for checking inclusion of Buchi nested word automata.
  * <p>
- * This interface is only defined for abbreviation purposes. All {@link IOperation}s that check language inclusion or
- * language equivalence in their
+ * This interface is only defined for abbreviation purposes. All {@link IOperation}s that check Buchi inclusion or
+ * Buchi equivalence in their
  * {@link IOperation#checkResult(de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory) checkResult()}
  * method can use this interface to bound the {@link IStateFactory}.
  * 
@@ -46,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public interface IBuchiNwaInclusionStateFactory<STATE>
-		extends ISinkStateFactory<STATE>, IDeterminizeStateFactory<STATE>, IBuchiIntersectStateFactory<STATE>,
-		IEmptyStackStateFactory<STATE> {
+		extends IDeterminizeStateFactory<STATE>, IBuchiIntersectStateFactory<STATE>,
+		IBuchiComplementFkvStateFactory<STATE> {
 	// empty interface
 }
