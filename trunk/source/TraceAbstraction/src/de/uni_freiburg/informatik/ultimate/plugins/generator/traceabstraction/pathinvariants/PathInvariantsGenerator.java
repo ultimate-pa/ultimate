@@ -877,9 +877,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
-		DAGTreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		TreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under- and/or Overapproximations
-		DAGTreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
+		TreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
 		// Number of Motzkin Transformations for normal constraints
 		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
