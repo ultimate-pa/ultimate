@@ -54,6 +54,7 @@ public class HybridSystem {
 	SpaceExPreferenceManager mPreferenceManager;
 	private final Map<String, HybridAutomaton> mAutomata;
 	private final Map<String, HybridSystem> mSubSystems;
+	private final boolean mIsSubSystem;
 	private final Set<String> mLocalParameters;
 	private final Set<String> mGlobalParameters;
 	private final Set<String> mLocalConstants;
@@ -61,16 +62,17 @@ public class HybridSystem {
 	private final Set<String> mLabels;
 	private final Map<String, Map<String, String>> mBinds;
 	
-	protected HybridSystem(final ComponentType system, final Map<String, ComponentType> automata,
-			final Map<String, ComponentType> systems, final ILogger logger,
+	protected HybridSystem(final String parentSystemName, final ComponentType system,
+			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems, final ILogger logger,
 			final SpaceExPreferenceManager preferenceManager) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
 		
 		mLogger = logger;
-		mName = system.getId();
+		mName = (parentSystemName.isEmpty()) ? system.getId() : parentSystemName;
 		mPreferenceManager = preferenceManager;
 		mAutomata = new HashMap<>();
 		mSubSystems = new HashMap<>();
+		mIsSubSystem = !parentSystemName.isEmpty();
 		mLocalParameters = new HashSet<>();
 		mGlobalParameters = new HashSet<>();
 		mLocalConstants = new HashSet<>();
@@ -84,19 +86,19 @@ public class HybridSystem {
 		final List<BindType> sysBinds = system.getBind();
 		for (final BindType bind : sysBinds) {
 			final String comp = bind.getComponent();
-			final String as = bind.getAs();
+			final String as = mIsSubSystem ? mName + "." + bind.getAs() : bind.getAs();
 			final Map<String, String> binds = bind.getMap().stream()
 					.collect(Collectors.toMap(BindType.Map::getValue, BindType.Map::getKey, (e1, e2) -> e1));
 			mBinds.put(as, binds);
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(as,
-						new HybridSystem(systems.get(comp), automata, systems, mLogger, mPreferenceManager));
+						new HybridSystem(as, systems.get(comp), automata, systems, mLogger, mPreferenceManager));
 				if (old != null) {
 					mLogger.warn("A hybrid system with name " + as + " already existed and was replaced.");
 				}
 			} else if (automata.containsKey(comp)) {
 				final HybridAutomaton old =
-						mAutomata.put(as, new HybridAutomaton(automata.get(comp), mLogger, mPreferenceManager));
+						mAutomata.put(as, new HybridAutomaton(as, automata.get(comp), mLogger, mPreferenceManager));
 				if (old != null) {
 					mLogger.warn("A hybrid automaton with name " + as + " already existed and was replaced.");
 				}
@@ -119,6 +121,9 @@ public class HybridSystem {
 				aut.renameConstants();
 			}
 		});
+		mSubSystems.forEach((id, sys) -> {
+			sys.mAutomata.values().forEach(aut -> aut.renameAccordingToBinds(mBinds.get(id)));
+		});
 		mLogger.debug("Binds after replacements: " + mBinds);
 	}
 	
@@ -130,6 +135,7 @@ public class HybridSystem {
 		mName = name;
 		mAutomata = automata;
 		mSubSystems = subsystems;
+		mIsSubSystem = false;
 		mLocalParameters = localVariables;
 		mGlobalParameters = globalVariables;
 		mLocalConstants = localConstants;

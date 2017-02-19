@@ -205,7 +205,7 @@ public class SpaceExPreferenceManager {
 			locMatcher = locPattern.matcher(property);
 			varMatcher = varPattern.matcher(property);
 			if (locMatcher.matches()) {
-				final String aut = locMatcher.group(1).replaceAll("_+.*", "");
+				final String aut = locMatcher.group(1);
 				final String loc = locMatcher.group(2);
 				if (!initialLocations.containsKey(aut)) {
 					final List<String> locList = new ArrayList<>();
@@ -253,7 +253,7 @@ public class SpaceExPreferenceManager {
 			locMatcher = locPattern.matcher(property);
 			varMatcher = varPattern.matcher(property);
 			if (locMatcher.matches()) {
-				final String aut = locMatcher.group(1).replaceAll("_+.*", "");
+				final String aut = locMatcher.group(1);
 				final String loc = locMatcher.group(2);
 				initialLocations.put(aut, loc);
 			} else if (varMatcher.matches()) {

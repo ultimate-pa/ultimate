@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="aut1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump1" type="label" local="false" />
+    <location id="1" name="loc1" x="210.0" y="110.0">
+      <invariant>x &lt;= 4</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="2" name="loc2" x="414.0" y="111.0">
+      <invariant>x &lt;= 5</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <location id="3" name="loc3" x="594.0" y="111.0">
+      <invariant>x &lt;= 6</invariant>
+      <flow>x'==1</flow>
+    </location>
+    <transition source="1" target="2">
+      <label>jump1</label>
+      <assignment>x:=0</assignment>
+      <labelposition x="-29.0" y="-53.0" />
+    </transition>
+    <transition source="2" target="3">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+  </component>
+  <component id="aut2">
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="jump1" type="label" local="false" />
+    <location id="1" name="loc1" x="210.0" y="110.0">
+      <invariant>y &lt;= 4</invariant>
+      <flow>y'==1</flow>
+    </location>
+    <location id="2" name="loc2" x="414.0" y="111.0">
+      <invariant>y &lt;= 5</invariant>
+      <flow>y'==1</flow>
+    </location>
+    <location id="3" name="loc3" x="594.0" y="111.0">
+      <invariant>y &lt;= 6</invariant>
+      <flow>y'==1</flow>
+    </location>
+    <transition source="1" target="2">
+      <label>jump1</label>
+      <assignment>y:=0</assignment>
+      <labelposition x="-29.0" y="-53.0" />
+    </transition>
+    <transition source="2" target="3">
+      <labelposition x="0.0" y="0.0" />
+    </transition>
+  </component>
+  <component id="sys4">
+    <param name="xsub" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump1" type="label" local="false" />
+    <param name="ysub" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut1" as="aut1_1" x="274.0" y="125.0">
+      <map key="x">xsub</map>
+      <map key="jump1">jump1</map>
+    </bind>
+    <bind component="aut2" as="aut2_1" x="272.0" y="224.0">
+      <map key="y">ysub</map>
+      <map key="jump1">jump1</map>
+    </bind>
+  </component>
+  <component id="sys1">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump1" type="label" local="false" />
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut1" as="aut1_1" x="420.0" y="335.0">
+      <map key="x">x</map>
+      <map key="jump1">jump1</map>
+    </bind>
+    <bind component="aut2" as="aut2_1" x="414.0" y="419.0">
+      <map key="y">y</map>
+      <map key="jump1">jump1</map>
+    </bind>
+    <bind component="sys4" as="sys4_1" x="416.0" y="518.0">
+      <map key="xsub">x</map>
+      <map key="jump1">jump1</map>
+      <map key="ysub">y</map>
+    </bind>
+  </component>
+</sspaceex>
+

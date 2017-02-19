@@ -27,9 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -93,14 +95,14 @@ public class HybridModel {
 		}
 		
 		if (systems.isEmpty()) {
-			final HybridSystem hybsys = createDefaultSystem(automata);
+			final HybridSystem hybsys = createDefaultSystem("system", automata);
 			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
 				mLogger.debug("creating hybridsystem for system: " + id);
-				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata,
+				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(id, comp, automata,
 						systems, mPreferenceManager);
 				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
@@ -144,14 +146,14 @@ public class HybridModel {
 		}
 		
 		if (systems.isEmpty()) {
-			final HybridSystem hybsys = createDefaultSystem(automata);
+			final HybridSystem hybsys = createDefaultSystem("system", automata);
 			mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 			mSystems.put(hybsys.getName(), hybsys);
 		} else {
 			// create the systems
 			systems.forEach((id, comp) -> {
 				mLogger.info("creating hybridsystem for system: " + id);
-				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(comp, automata,
+				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent("", comp, automata,
 						systems, mPreferenceManager);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
@@ -159,11 +161,11 @@ public class HybridModel {
 		}
 	}
 	
-	private HybridSystem createDefaultSystem(final Map<String, ComponentType> automata) {
+	private HybridSystem createDefaultSystem(final String as, final Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
 		final HybridAutomaton automaton =
-				mHybridAutomatonFactory.createHybridAutomatonFromComponent(automatonComponent, mPreferenceManager);
+				mHybridAutomatonFactory.createHybridAutomatonFromComponent(as, automatonComponent, mPreferenceManager);
 		// set global parameters
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
 				.map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
@@ -183,7 +185,7 @@ public class HybridModel {
 		globalConstants.forEach(c -> automatonBind.put(c, c));
 		labels.forEach(l -> automatonBind.put(l, l));
 		bindsMap.put(automaton.getName(), automatonBind);
-		return mHybridSystemFactory.createHybridSystem("system", globalParams, new HashSet<String>(), globalConstants,
+		return mHybridSystemFactory.createHybridSystem(as, globalParams, new HashSet<String>(), globalConstants,
 				new HashSet<String>(), labels, autMap, new HashMap<String, HybridSystem>(), bindsMap, mLogger);
 	}
 	
@@ -201,29 +203,35 @@ public class HybridModel {
 	}
 	
 	public HybridAutomaton mergeAutomataNWay(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
-		final Map<String, String> initLocs = (group == null) ? null : group.getInitialLocations();
-		final Collection<HybridAutomaton> automata = configSystem.getAutomata().values();
+		final List<HybridAutomaton> automata = new ArrayList<>(configSystem.getAutomata().values());
+		// if there are subsystems, retrieve all of them recursivly
+		if (!configSystem.getSubSystems().isEmpty()) {
+			final List<HybridAutomaton> subsys = getSubSystems(configSystem);
+			mLogger.info("SUBSYSTEMS: " + subsys);
+			automata.addAll(subsys);
+		}
+		// if there is only one automaton, there is nothing to merge.
 		if (automata.size() == 1) {
 			return automata.iterator().next();
 		}
+		
 		final Map<HybridAutomaton, Location> automataAndInitial = new HashMap<>();
 		for (final HybridAutomaton aut : automata) {
-			automataAndInitial.put(aut, getInitLocation(aut, initLocs));
+			automataAndInitial.put(aut, aut.getInitialLocationForGroup(group.getId()));
 		}
 		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);
 	}
 	
-	private Location getInitLocation(final HybridAutomaton aut, final Map<String, String> initLocs) {
-		if (initLocs == null) {
-			return aut.getInitialLocation();
+	private List<HybridAutomaton> getSubSystems(final HybridSystem configSystem) {
+		final List<HybridAutomaton> automata = new ArrayList<>();
+		for (final HybridSystem sys : configSystem.getSubSystems().values()) {
+			if (!sys.getSubSystems().isEmpty()) {
+				automata.addAll(getSubSystems(sys));
+			} else {
+				automata.addAll(sys.getAutomata().values());
+			}
 		}
-		final String initLocName = initLocs.get(aut.getName());
-		if (aut.getNametoId().containsKey(initLocName)) {
-			final int nameToId = aut.getNametoId().get(initLocName);
-			return aut.getLocations().get(nameToId);
-		} else {
-			return aut.getInitialLocation();
-		}
+		return automata;
 	}
 	
 	public Map<String, HybridSystem> getSystems() {

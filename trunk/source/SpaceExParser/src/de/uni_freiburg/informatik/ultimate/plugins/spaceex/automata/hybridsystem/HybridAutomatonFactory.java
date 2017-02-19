@@ -42,12 +42,12 @@ public class HybridAutomatonFactory {
 	
 	private final ILogger mLogger;
 	
-	public HybridAutomatonFactory(ILogger logger) {
+	public HybridAutomatonFactory(final ILogger logger) {
 		mLogger = logger;
 	}
 	
-	public HybridAutomaton createHybridAutomatonFromComponent(final ComponentType automaton,
-			SpaceExPreferenceManager preferenceManager) {
-		return new HybridAutomaton(automaton, mLogger, preferenceManager);
+	public HybridAutomaton createHybridAutomatonFromComponent(final String as, final ComponentType automaton,
+			final SpaceExPreferenceManager preferenceManager) {
+		return new HybridAutomaton(as, automaton, mLogger, preferenceManager);
 	}
 }
