@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementDeterministicStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -69,7 +68,7 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementDeterministicStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> BuchiComplementRE(
+	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementDeterministicStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> BuchiComplementRE(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		super(services);

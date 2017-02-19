@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -68,8 +67,8 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> BuchiIsIncluded(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> BuchiIsIncluded(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
