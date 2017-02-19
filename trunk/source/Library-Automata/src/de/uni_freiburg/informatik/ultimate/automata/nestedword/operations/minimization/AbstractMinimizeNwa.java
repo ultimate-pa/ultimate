@@ -249,6 +249,10 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		return mOldState2NewState;
 	}
 	
+	public boolean hasOldState2newState() {
+		return mOldState2NewState != null;
+	}
+	
 	/* ------ result construction ------ */
 	
 	/**
