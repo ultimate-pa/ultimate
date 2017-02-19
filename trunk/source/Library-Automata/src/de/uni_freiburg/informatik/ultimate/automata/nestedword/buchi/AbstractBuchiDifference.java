@@ -51,7 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public abstract class AbstractBuchiDifference<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
@@ -88,8 +89,8 @@ public abstract class AbstractBuchiDifference<LETTER, STATE> extends BinaryNwaOp
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	protected <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
-			constructDifferenceFromComplement(final FACTORY stateFactory) throws AutomataLibraryException {
+	protected <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			constructDifferenceFromComplement(final SF stateFactory) throws AutomataLibraryException {
 		mIntersect = new BuchiIntersectNwa<>(mFstOperand, getSndComplemented(), stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}

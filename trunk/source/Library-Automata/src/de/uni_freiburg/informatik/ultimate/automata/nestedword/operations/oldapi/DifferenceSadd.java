@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
@@ -47,10 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -70,7 +68,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            automata. In many cases you want to use String as STATE and your states are
  *            labeled e.g. with "q0", "q1", ...
  */
-public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class DifferenceSadd<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mMinuend;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
 	private final NestedWordAutomaton<LETTER, STATE> mDifference;
@@ -126,8 +125,8 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 * @throws AutomataLibraryException
 	 *             if alphabets are different
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSadd(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSadd(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory));
@@ -401,18 +400,14 @@ public final class DifferenceSadd<LETTER, STATE> extends BinaryNwaOperation<LETT
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDD = (new DifferenceDD<>(mServices,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mMinuend,
-					mSubtrahend)).getResult();
-			correct = new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-					resultDD, mDifference).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
+			correct = new IsEquivalent<>(mServices, stateFactory, resultDd, mDifference).getResult();
 			if (!correct) {
 				mLogger.info("Finished testing correctness of " + operationName());
 			} else {

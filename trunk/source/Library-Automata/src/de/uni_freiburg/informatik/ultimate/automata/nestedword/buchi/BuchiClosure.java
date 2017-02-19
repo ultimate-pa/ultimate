@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 	

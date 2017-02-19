@@ -129,7 +129,7 @@ public class AutomatonDebuggerTesters {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<String, String> getIOperation(final EOperationType operationType,
+	public IOperation<String, String, ? super StringFactory> getIOperation(final EOperationType operationType,
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new AutomatonDebuggerExamples(mServices).getOperation(operationType, automaton, factory);
 	}
@@ -171,7 +171,8 @@ public class AutomatonDebuggerTesters {
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
 				
-				final IOperation<String, String> op = getIOperation(operationType, automaton, factory);
+				final IOperation<String, String, ? super StringFactory> op =
+						getIOperation(operationType, automaton, factory);
 				
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {

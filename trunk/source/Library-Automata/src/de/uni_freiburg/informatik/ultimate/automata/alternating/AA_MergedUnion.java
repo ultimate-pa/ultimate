@@ -30,17 +30,17 @@ package de.uni_freiburg.informatik.ultimate.automata.alternating;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class AA_MergedUnion<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
 	
 	public AA_MergedUnion(final AutomataLibraryServices services, final AlternatingAutomaton<LETTER, STATE> automaton1,
 			final AlternatingAutomaton<LETTER, STATE> automaton2) {
+		super(services);
 		assert IAutomaton.sameAlphabet(automaton1, automaton2);
 		assert automaton1.isReversed() == automaton2.isReversed();
 		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
@@ -90,10 +90,5 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	@Override
 	public AlternatingAutomaton<LETTER, STATE> getResult() {
 		return mResultAutomaton;
-	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return true;
 	}
 }

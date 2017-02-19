@@ -82,10 +82,10 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> IntersectNwa(
+	public <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> IntersectNwa(
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final FACTORY stateFactory, final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
+			final SF stateFactory, final boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {

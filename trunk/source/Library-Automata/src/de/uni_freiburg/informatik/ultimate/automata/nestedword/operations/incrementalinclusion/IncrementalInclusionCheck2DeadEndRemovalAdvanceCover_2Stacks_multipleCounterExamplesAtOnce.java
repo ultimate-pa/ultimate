@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -61,7 +60,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 
 public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<LETTER, STATE>
-		extends AbstractIncrementalInclusionCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
+		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
+		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private INestedWordAutomatonSimple<LETTER, STATE> current_mB;
@@ -77,7 +77,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	public int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0, totalUniqueNodes = 0;
 	private final boolean macc;
 
-	class NfaUnion implements IOperation<LETTER, STATE> {
+	class NfaUnion implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 		INestedWordAutomatonSimple<LETTER, STATE> orgin, target;
 		NestedWordAutomaton<LETTER, STATE> result;
 		Collection<STATE> state1, state2;
@@ -668,7 +668,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 				currentTree.add(key);
 				ACCNodes.get(key.aState).remove(key);
 				if (!completeTree.containsKey(key.aState)) {
-					http: // www.amazon.com/
 					completeTree.put(key.aState, new LinkedList<NodeData>());
 				}
 				completeTree.get(key.aState).add(key);
@@ -1011,7 +1010,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		return "Start " + operationName();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public String exitMessage() {
 		/*
@@ -1068,17 +1066,14 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IIncrementalInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		boolean checkResult;
-		// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory becomes class parameter
 		if (getCounterexample() != null) {
-			checkResult = compareInclusionCheckResult(localServiceProvider,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
-					local_mB2, getCounterexample());
+			checkResult = compareInclusionCheckResult(localServiceProvider,stateFactory, local_mA, local_mB2,
+					getCounterexample());
 		} else {
-			checkResult = compareInclusionCheckResult(localServiceProvider,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA,
-					local_mB2, null);
+			checkResult = compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA, local_mB2, null);
 		}
 		return checkResult;
 
@@ -1094,12 +1089,12 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
-		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
-		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);
+		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			ivd.addSubtrahend(bi);

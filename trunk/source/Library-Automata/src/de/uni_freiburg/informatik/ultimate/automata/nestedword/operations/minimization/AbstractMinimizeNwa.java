@@ -42,44 +42,45 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.IBuchiNwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This is the superclass of most minimization classes.
- * It provides a correctness check for all subclasses and an optional DFA check
- * for subclasses that only work for DFAs.
+ * This is the superclass of most minimization classes. It provides a correctness check for all subclasses and an
+ * optional DFA check for subclasses that only work for DFAs.
  * <p>
- * All subclasses must implement the
- * #{@link de.uni_freiburg.informatik.ultimate.automata.IOperation} interface
- * in order to be found by the <code>AutomataScriptInterpreter</code>.
+ * All subclasses must implement the {@link de.uni_freiburg.informatik.ultimate.automata.IOperation} interface in order
+ * to be found by the <code>AutomataScriptInterpreter</code>.
  * 
  * @author Christian Schilling
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
-public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+public abstract class AbstractMinimizeNwa<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IMinimizationCheckResultStateFactory<STATE>>
 		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * StateFactory for the construction of states of the resulting automaton.
 	 */
-	protected final IMergeStateFactory<STATE> mStateFactory;
+	protected final IMinimizationStateFactory<STATE> mStateFactory;
 	/**
 	 * The result automaton.
 	 */
@@ -101,8 +102,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @param stateFactory
 	 *            state factory
 	 */
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractMinimizeNwa(
-			final AutomataLibraryServices services, final FACTORY stateFactory) {
+	protected AbstractMinimizeNwa(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory) {
 		super(services);
 		mResult = null;
 		mTemporaryResult = null;
@@ -210,16 +211,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
+	public final boolean checkResult(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
 		// call submethod to enable overriding by subclasses
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		final Pair<Boolean, String> equivalenceResult = checkResultHelper(
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory);
+		final Pair<Boolean, String> equivalenceResult = checkResultHelper(stateFactory);
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
@@ -304,8 +303,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	
 	/**
 	 * Passes the result directly from a
-	 * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor}
-	 * .
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor}.
 	 * 
 	 * @param constructor
 	 *            quotient constructor
@@ -551,8 +549,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	/**
 	 * Performs the real {@link #checkResult(IStateFactory) result check}.
 	 * <p>
-	 * Subclasses can override this method for more specific result checks.<br>
-	 * By default finite-word language equivalence between operand and result is checked.
+	 * Subclasses can override this method for more specific result checks, e.g.,
+	 * {@link #checkLanguageEquivalence(INwaInclusionStateFactory)}
 	 * 
 	 * @param stateFactory
 	 *            state factory
@@ -561,11 +559,40 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected <FACTORY extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			Pair<Boolean, String> checkResultHelper(final FACTORY stateFactory) throws AutomataLibraryException {
-		// by default only check finite-word language equivalence
+	protected abstract Pair<Boolean, String> checkResultHelper(
+			final IMinimizationCheckResultStateFactory<STATE> stateFactory) throws AutomataLibraryException;
+	
+	/**
+	 * Checks finite-word language equivalence between operand and result.
+	 * 
+	 * @param stateFactory
+	 *            state factory
+	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
+	 *         error message
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	protected final Pair<Boolean, String> checkLanguageEquivalence(final INwaInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =
 				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
+		return new Pair<>(equivalenceCheck.getResult(), equivalenceCheck.getViolationMessage());
+	}
+	
+	/**
+	 * Checks Buchi language equivalence between operand and result.
+	 * 
+	 * @param stateFactory
+	 *            state factory
+	 * @return pair <tt>(b, m)</tt> where <tt>b = true</tt> iff result check succeeded, otherwise <tt>m</tt> contains an
+	 *         error message
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	protected final Pair<Boolean, String> checkBuchiEquivalence(
+			final IBuchiNwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+		final BuchiIsEquivalent<LETTER, STATE> equivalenceCheck =
+				new BuchiIsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
 		return new Pair<>(equivalenceCheck.getResult(), equivalenceCheck.getViolationMessage());
 	}
 	

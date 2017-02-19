@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Extracts a (nested) word from a nested word automaton.
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
  * @param <STATE>
  *            state type
  */
-public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	private final NestedWord<LETTER> mAcceptedWord;

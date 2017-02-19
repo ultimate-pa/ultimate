@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract operation taking two automata as input.
@@ -38,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
-public abstract class BinaryNwaOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
-	
+public abstract class BinaryNwaOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>>
+		extends GeneralOperation<LETTER, STATE, CRSF> {
 	/**
 	 * Constructor.
 	 * 

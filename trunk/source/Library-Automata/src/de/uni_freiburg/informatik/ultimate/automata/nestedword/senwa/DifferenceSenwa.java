@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -52,11 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Difference operation for {@link Senwa}.
@@ -67,8 +65,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> implements
-		ISuccessorVisitor<LETTER, STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+public final class DifferenceSenwa<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>>
+		implements ISuccessorVisitor<LETTER, STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
@@ -109,8 +108,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public <FACTORY extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
@@ -136,8 +135,8 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public <FACTORY extends ISenwaStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends ISenwaStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEndsImmediately)
@@ -339,18 +338,14 @@ public final class DifferenceSenwa<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 			
-			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd = (new DifferenceSadd<>(mServices,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mMinuend,
-					mSubtrahend)).getResult();
-			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-					resultSadd, mSenwa).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
+			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
 			if (!correct) {
 				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 						"language is different", mMinuend, mSubtrahend);

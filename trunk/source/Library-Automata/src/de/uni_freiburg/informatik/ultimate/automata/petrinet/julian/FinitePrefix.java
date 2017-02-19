@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * A finite prefix.
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfo
  * @param <STATE>
  *            place content type
  */
-public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE> {
+public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mOperand;
 	private final BranchingProcess<LETTER, STATE> mResult;
 	

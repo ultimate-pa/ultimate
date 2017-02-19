@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -69,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @param <STATE>
  *            state type
  */
-class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwars;
 	
 	private final List<Set<StackOfFlaggedStates>> mIterations = new ArrayList<>();
@@ -527,7 +528,7 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			return true;
 		}
 		
-		private ShortestLassoExtractor getOuterType() {
+		private ShortestLassoExtractor<LETTER, STATE> getOuterType() {
 			return ShortestLassoExtractor.this;
 		}
 		

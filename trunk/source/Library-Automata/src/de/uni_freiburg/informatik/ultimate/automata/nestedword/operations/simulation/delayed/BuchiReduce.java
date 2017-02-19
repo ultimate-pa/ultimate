@@ -40,15 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -60,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 10.12.2011
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -79,7 +74,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 * Performance statistics of this operation.
 	 */
 	private final AutomataOperationStatistics mStatistics;
-
+	
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
 	 * automaton.<br/>
@@ -95,17 +90,17 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiReduce(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public BuchiReduce(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
 						new DelayedGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
+								services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
 								operand)));
 	}
-
+	
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
 	 * automaton with a given simulation.<br/>
@@ -123,20 +118,19 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiReduce(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	protected BuchiReduce(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		mLogger.info(startMessage());
-
+		
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
 		mResult = simulation.getResult();
 		super.directResultConstruction(mResult);
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
-
+		
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
 			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
@@ -150,36 +144,31 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 				throw new AssertionError();
 			}
 		}
-
+		
 		mLogger.info(exitMessage());
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		mLogger.info("Start testing correctness of " + operationName());
-		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
-		final boolean correct = (new BuchiIsEquivalent<>(mServices,
-				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>) stateFactory,
-				getOperand(), getResult())).getResult();
-		mLogger.info("Finished testing correctness of " + operationName());
-		return correct;
+	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkBuchiEquivalence(stateFactory);
 	}
-
+	
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}
-
+	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-
+	
 	@Override
 	public String operationName() {
 		return "BuchiReduce";
 	}
-
+	
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
@@ -188,7 +177,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	protected ILogger getLogger() {
 		return mLogger;
 	}
-
+	
 	/**
 	 * Gets the inputed automaton.
 	 * 
@@ -198,7 +187,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-
+	
 	/**
 	 * Gets the service provider of the Ultimate framework.
 	 * 

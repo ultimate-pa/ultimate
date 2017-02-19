@@ -32,19 +32,19 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet> {
+public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, BitSet, IStateFactory<BitSet>> {
 	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
 	
 	public AA_DeterminizeReversed(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
+		super(services);
 		mResultAutomaton = new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(),
 				Collections.<LETTER> emptySet(), Collections.<LETTER> emptySet(),
 				alternatingAutomaton.getStateFactory());
@@ -98,10 +98,5 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	@Override
 	public INestedWordAutomaton<LETTER, BitSet> getResult() {
 		return mResultAutomaton;
-	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<BitSet> stateFactory) throws AutomataLibraryException {
-		return true;
 	}
 }

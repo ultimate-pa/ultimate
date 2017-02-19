@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -44,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mResult;
 	private final boolean mNondeterministicTransitions;
@@ -81,7 +80,7 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 			mLogger.info(exitMessage());
 		}
 	}
-
+	
 	private boolean checkIfOperandhasNondeterministicTransitions() {
 		for (final STATE upState : mOperand.getStates()) {
 			for (final STATE downState : mOperand.getDownStates(upState)) {
@@ -126,13 +125,5 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 	@Override
 	public Boolean getResult() {
 		return mResult;
-	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Do not check correctness of" + operationName() + " no check method available.");
-			}
-		return true;
 	}
 }

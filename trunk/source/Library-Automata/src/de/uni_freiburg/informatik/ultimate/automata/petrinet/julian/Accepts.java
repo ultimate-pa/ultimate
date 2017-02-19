@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Acceptance test for Petri nets.
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <C>
  *            place content type
  */
-public final class Accepts<S, C> extends UnaryNetOperation<S, C> {
+public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
 	private final IPetriNet<S, C> mOperand;
 	private final Word<S> mWord;
 	private final boolean mResult;
@@ -151,18 +150,17 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
+			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of accepts");
 		}
 		
 		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
-		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
-						(new PetriNet2FiniteAutomaton<>(mServices,
-								(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult(),
-						nw)).getResult();
+						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))
+								.getResult();
 		final boolean correct = mResult == resultAutomata;
 		
 		if (mLogger.isInfoEnabled()) {

@@ -32,7 +32,7 @@ import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
-public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate> {
+public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredicate, IStateFactory<IPredicate>> {
 	private final AlternatingAutomaton<LETTER, IPredicate> mAlternatingAutomaton;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateUnifier mPredicateUnifier;
@@ -49,6 +49,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 	public RAFA_Determination(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateUnifier predicateUnifier) {
+		super(services);
 		assert alternatingAutomaton.isReversed();
 		mAlternatingAutomaton = alternatingAutomaton;
 		mCsToolkit = csToolkit;

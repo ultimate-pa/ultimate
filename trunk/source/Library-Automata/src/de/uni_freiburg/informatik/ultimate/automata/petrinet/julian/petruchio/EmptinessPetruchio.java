@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
 import petruchio.interfaces.petrinet.Place;
@@ -61,8 +60,7 @@ import petruchio.interfaces.petrinet.Transition;
  * @param <C>
  *            Type of place labeling
  */
-
-public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
+public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
 	private final PetruchioWrapper<S, C> mPetruchio;
 	
 	private final PetriNetJulian<S, C> mNetJulian;
@@ -186,7 +184,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory)
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + operationName());
@@ -194,12 +192,8 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 		
 		final boolean correct;
 		if (mAcceptedRun == null) {
-			// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
-			final NestedRun<S, C> automataRun =
-					(new IsEmpty<>(mServices,
-							(new PetriNet2FiniteAutomaton<>(mServices,
-									(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mNetJulian)).getResult()))
-											.getNestedRun();
+			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mNetJulian)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
 			correct = mNetJulian.accepts(mAcceptedRun.getWord());

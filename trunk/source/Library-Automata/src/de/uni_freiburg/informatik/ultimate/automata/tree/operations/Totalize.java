@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * @param <LETTER>
  * @param <STATE>
  */
-public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IEmptyStackStateFactory<STATE> mStateFactory;

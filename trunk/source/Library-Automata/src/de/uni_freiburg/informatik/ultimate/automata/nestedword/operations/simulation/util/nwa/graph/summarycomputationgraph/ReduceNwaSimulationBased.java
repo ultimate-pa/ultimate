@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
@@ -53,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
@@ -75,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
 public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final boolean DEFAULT_USE_BISIMULATION = true;
@@ -94,9 +95,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	 * @throws AutomataOperationCanceledException
 	 *             if suboperations fail
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaSimulationBased(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public ReduceNwaSimulationBased(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
@@ -236,9 +236,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return computeEquivalenceRelation(simRelation.getRelation(), operand.getStates());
 	}
 	
-	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-		IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	private IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
 		final UnionFind<STATE> equivalenceRelation =
@@ -249,9 +248,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
 	}
 	
-	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-		IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	private IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
 			throws AutomataOperationCanceledException {
 		final UnionFind<STATE> equivalenceRelation =
@@ -265,8 +263,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return maxSatMinimizer.getResult();
 	}
 	
-	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-		IDoubleDeckerAutomaton<LETTER, STATE> useSimulationBackend(final FACTORY stateFactory,
+	private IDoubleDeckerAutomaton<LETTER, STATE> useSimulationBackend(
+			final IMinimizationStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) throws AutomataOperationCanceledException {

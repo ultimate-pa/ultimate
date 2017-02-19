@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Given a nested word automaton, this class analyzes the automaton to obtain various information.
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            state type
  */
-public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String INVALID_SYMBOL_TYPE = "Invalid symbol type.";
 	
 	private static final int THREE = 3;
@@ -110,8 +111,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	 * @param operand
 	 *            input NWA
 	 */
-	public Analyze(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public Analyze(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, false);
 	}
 	
@@ -126,8 +126,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	 *            true: information is computed at construction time;
 	 *            false: information is computed at access time
 	 */
-	public Analyze(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+	public Analyze(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean computeEverything) {
 		super(services);
 		mOperand = operand;

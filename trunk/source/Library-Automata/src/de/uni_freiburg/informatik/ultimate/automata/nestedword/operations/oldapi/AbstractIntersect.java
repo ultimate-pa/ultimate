@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstNwa;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER, STATE> mResultNwa;

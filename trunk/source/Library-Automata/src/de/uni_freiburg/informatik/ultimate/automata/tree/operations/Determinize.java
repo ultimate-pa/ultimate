@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactoryMerge;
@@ -64,8 +64,8 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
-			final AutomataLibraryServices services, final FACTORY factory,
+	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
+			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
 		mReducedStates = new HashMap<>();

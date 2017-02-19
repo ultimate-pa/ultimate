@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            Content. Type of the labels (the content) of the automata states.
  */
-public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String LOG_SEPARATOR = "########################################";
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;

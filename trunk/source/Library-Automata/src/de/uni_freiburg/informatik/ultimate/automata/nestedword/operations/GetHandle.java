@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Class that computes a handle of an automaton.
@@ -58,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            state type
  */
-public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private NestedRun<LETTER, STATE> mHandle;
 	private final NoHandleReason mNoHandleReason;
@@ -130,9 +131,8 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			final NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
 			if (newSuffix == null) {
 				return null;
-			} else {
-				mHandle = mHandle.concatenate(newSuffix);
 			}
+			mHandle = mHandle.concatenate(newSuffix);
 			if (mHandle.getLength() > mOperand.size()) {
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("automaton has cycle shape");
@@ -217,11 +217,10 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		}
 		if (predecessor == null) {
 			return false;
-		} else {
-			// equality check intended here
-			assert predecessor == knownPredecessor : "wrong state";
-			return true;
 		}
+		// equality check intended here
+		assert predecessor == knownPredecessor : "wrong state";
+		return true;
 	}
 	
 	@Override

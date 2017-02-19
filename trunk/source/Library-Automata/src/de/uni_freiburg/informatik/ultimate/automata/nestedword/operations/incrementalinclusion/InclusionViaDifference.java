@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * @param <STATE>
  *            state type
  */
-public class InclusionViaDifference<LETTER, STATE>
+public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE> {
-	private final IIntersectionStateFactory<STATE> mStateFactoryIntersect;
+	private final SF mStateFactoryIntersect;
 	private final IDeterminizeStateFactory<STATE> mStateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDifference;
 	private NestedRun<LETTER, STATE> mAcceptingRun;
@@ -76,11 +76,11 @@ public class InclusionViaDifference<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> InclusionViaDifference(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, stateFactory, nwaA);
+	@SuppressWarnings("unchecked")
+	public InclusionViaDifference(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+		this(services, (SF) stateFactory, stateFactory, nwaA);
 	}
 	
 	/**
@@ -99,11 +99,9 @@ public class InclusionViaDifference<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public InclusionViaDifference(final AutomataLibraryServices services,
-			final IIntersectionStateFactory<STATE> stateFactoryIntersect,
+	public InclusionViaDifference(final AutomataLibraryServices services, final SF stateFactoryIntersect,
 			final IDeterminizeStateFactory<STATE> stateFactoryDeterminize,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwaA)
-			throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
 		super(services, nwaA);
 		mStateFactoryIntersect = stateFactoryIntersect;
 		mStateFactoryDeterminize = stateFactoryDeterminize;
@@ -123,9 +121,8 @@ public class InclusionViaDifference<LETTER, STATE>
 		final INestedWordAutomatonSimple<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
 				new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
 		final INestedWordAutomatonSimple<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
-		// TODO Christian 2017-02-16 Cast is temporary workaround until we found a solution
 		final INestedWordAutomatonSimple<LETTER, STATE> difference =
-				new IntersectNwa<>(mDifference, complemented, (IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactoryIntersect, false);
+				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {
 			final INestedWordAutomatonSimple<LETTER, STATE> removedDeadEnds =
 					(new RemoveDeadEnds<>(mServices, difference)).getResult();

@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.AbstractAcceptance;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Class that provides the Buchi acceptance check for nested word automata.
@@ -265,13 +264,5 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			configurations.remove(config);
 		}
 		return acceptingConfigurations;
-	}
-	
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("No test for BuchiAccepts available yet");
-		}
-		return true;
 	}
 }

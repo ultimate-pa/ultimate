@@ -29,19 +29,17 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
- * Minimization method which returns an
- * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
- * as result.
+ * Minimization method which returns an #{@link IDoubleDeckerAutomaton} as result.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
 public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimizeNwaDD<LETTER, STATE> {
@@ -53,14 +51,13 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinim
 	 * @param stateFactory
 	 *            state factory
 	 */
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractMinimizeNwaDd(
-			final AutomataLibraryServices services, final FACTORY stateFactory) {
+	protected AbstractMinimizeNwaDd(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory) {
 		super(services, stateFactory);
 	}
 	
 	/**
-	 * @return result as
-	 *         #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton}
+	 * @return Result as {@link IDoubleDeckerAutomaton}.
 	 */
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {

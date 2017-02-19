@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  *            states are labeled e.g. with "q0", "q1", ...
  */
 
-public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String FOLLOW_LABEL = "follow label ";
 	private static final String ADD_TARGET_SINK_STATE_Q2 = "add target (sink) state q2: ";
 	private static final String TRAVERSE_IN_SINK_STATE = "Traverse in sink state ";

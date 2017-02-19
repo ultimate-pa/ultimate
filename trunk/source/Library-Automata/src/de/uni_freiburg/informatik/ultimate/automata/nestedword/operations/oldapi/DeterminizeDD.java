@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
@@ -46,10 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEqui
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Determinizes a nested word automaton.
@@ -61,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	
@@ -228,19 +225,15 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Testing correctness of determinization");
 			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
-			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-					(new DeterminizeSadd<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, operandOld))
-							.getResult();
-			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-					resultSadd, mTraversedNwa).getResult();
+					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();
+			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of determinization");
 		}
 		return correct;

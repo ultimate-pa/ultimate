@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final Tree<LETTER> mExample;
 	private final Boolean mResult;

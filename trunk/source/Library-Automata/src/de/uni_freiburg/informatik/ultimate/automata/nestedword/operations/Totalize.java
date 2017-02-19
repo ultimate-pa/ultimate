@@ -32,13 +32,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Totalizes a nested word automaton, i.e., makes every state have an outgoing transition for every letter.
@@ -49,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	
@@ -102,7 +99,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
@@ -111,10 +108,8 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		final boolean correct;
 		
 		// check language equivalence
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-				getOperand(), getResult());
+		final IsEquivalent<LETTER, STATE> equivalenceCheck =
+				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
 		
 		if (!equivalenceCheck.getResult()) {
 			// language equivalence check failed

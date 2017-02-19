@@ -41,17 +41,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Wrapper of a nested word automaton where reachability information is stored.
@@ -63,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final Map<STATE, STATE> mOld2new = new HashMap<>();
 	private final Map<STATE, STATE> mNew2old = new HashMap<>();
 	
@@ -282,29 +279,24 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (!mRemoveNonLiveStates) {
 			mLogger.info("Start testing correctness of " + operationName());
 			final INestedWordAutomatonSimple<LETTER, STATE> input;
-			// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 			if (!mComplement) {
 				input = mOperand;
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<>(mServices, (IIntersectionStateFactory<STATE>) stateFactory, mOperand,
-								mTraversedNwa)).getResult();
+						(new IntersectDD<>(mServices, stateFactory, mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-						(new ComplementDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand))
-								.getResult();
+						(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
 				input = resultSadd;
 			}
 			// should recognize same language as old computation
-			correct &= new IsEquivalent<>(mServices,
-					(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-					input, mTraversedNwa).getResult();
+			correct &= new IsEquivalent<>(mServices, stateFactory, input, mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		if (!correct) {

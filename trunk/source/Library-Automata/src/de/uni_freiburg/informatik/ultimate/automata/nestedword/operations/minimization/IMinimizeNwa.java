@@ -19,36 +19,27 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * General minimization interface.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE> state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public interface IMinimizeNwa<LETTER, STATE> {
 	/**
-	 * @return the resulting automaton 
+	 * @return the resulting automaton
 	 */
 	INestedWordAutomaton<LETTER, STATE> getResult();
-	
-	/**
-	 * Run some checks to test correctness of the result.
-	 * @param stateFactory state factory
-	 * @return true iff all tests succeeded
-	 * @throws AutomataLibraryException when tests call failing methods
-	 */
-	boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException;
 }

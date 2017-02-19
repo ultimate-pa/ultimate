@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class ConstructRandomAutomata implements IOperation<String, String> {
+public final class ConstructRandomAutomata implements IOperation<String, String, IStateFactory<String>> {
 	private static final int NUMBER_OF_SAMPLES = 100;
 	private static final String AUTOMATON_NAME_PREFIX = "Random";
 	

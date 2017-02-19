@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
@@ -123,8 +123,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	}
 	
 	/**
-	 * @return Size of the input automaton. If input was an automaton for
-	 * on-demand construction. This is the size after the on-demand construction.
+	 * @return Size of the input automaton. If input was an automaton for on-demand construction, this is the size after
+	 *         the on-demand construction.
 	 */
 	public int getInputSize() {
 		return mReach.size();

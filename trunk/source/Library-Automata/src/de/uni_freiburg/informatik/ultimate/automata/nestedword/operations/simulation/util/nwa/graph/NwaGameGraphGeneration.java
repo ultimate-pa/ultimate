@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
@@ -81,8 +82,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -681,7 +680,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		// TODO Christian 2017-01-27 somehow need a state factory here
-		final IMergeStateFactory<STATE> stateFactory = (IMergeStateFactory<STATE>) mNwa.getStateFactory();
+		final IMinimizationStateFactory<STATE> stateFactory = (IMinimizationStateFactory<STATE>) mNwa.getStateFactory();
 		INestedWordAutomaton<LETTER, STATE> result = null;
 
 		// Merge states
@@ -752,8 +751,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
 			// TODO Christian 2017-02-16 Cast is a temporary workaround until we find a solution
 			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer =
-					new MinimizeNwaPmaxSat<>(mServices,
-							(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory, mNwa,
+					new MinimizeNwaPmaxSat<>(mServices, stateFactory, mNwa,
 					new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
 					new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(useFinalStateConstraints));
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
@@ -1522,7 +1520,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					(IDeterminizeStateFactory<IGameState>) gameAutomatonWithSummaries.getStateFactory();
 			// Determinizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			// // TODO Christian 2017-02-15 Cast is temporary workaround until state factory becomes parameter
 			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
 					new Determinize<>(mServices, stateFactory, gameAutomatonWithSummaries, summarySources).getResult();
 			mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,

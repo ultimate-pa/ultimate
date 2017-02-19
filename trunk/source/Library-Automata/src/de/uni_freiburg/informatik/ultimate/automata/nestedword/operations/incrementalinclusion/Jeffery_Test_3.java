@@ -35,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -53,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  */
 
-public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	static long trueSumNodeInTheEnd1 = 0, trueSumNodeInTheEnd2 = 0, trueSumNodeInTheEnd3 = 0, trueSumNodeInTheEnd4 = 0,
 			trueSumNodeInTheEnd5 = 0, trueSumNodeInTheEnd32 = 0, trueSumNodeInTheEnd42 = 0, trueSumNodeInTheEnd52 = 0;
 	static long trueSumTotalNode1 = 0, trueSumTotalNode2 = 0, trueSumTotalNode3 = 0, trueSumTotalNode4 = 0,
@@ -81,8 +79,8 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
 
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> Jeffery_Test_3(
-			final AutomataLibraryServices services, final FACTORY sf,
+	public Jeffery_Test_3(
+			final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final int num) throws AutomataLibraryException {
 
@@ -91,7 +89,7 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 		case 1:
 			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheckDifference<LETTER, STATE> IIC1 =
+			final IncrementalInclusionCheckDifference<LETTER, STATE, ?> IIC1 =
 					new IncrementalInclusionCheckDifference<>(services, sf, a, b.subList(0, 1));
 			for (int i = 1; i < b.size(); i++) {
 				IIC1.addSubtrahend(b.get(i));

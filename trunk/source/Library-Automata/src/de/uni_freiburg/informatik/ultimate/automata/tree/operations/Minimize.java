@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactory;

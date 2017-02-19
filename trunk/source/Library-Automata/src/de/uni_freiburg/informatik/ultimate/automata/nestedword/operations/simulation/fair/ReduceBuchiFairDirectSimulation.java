@@ -34,8 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -67,9 +66,8 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairDirectSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList());
 	}
@@ -92,9 +90,8 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairDirectSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
 	}
@@ -122,9 +119,8 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceBuchiFairDirectSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
@@ -136,12 +132,6 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 								operand)));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * buchiReduction.fair.ReduceBuchiFairSimulation#operationName()
-	 */
 	@Override
 	public String operationName() {
 		return "reduceBuchiFairDirectSimulation";

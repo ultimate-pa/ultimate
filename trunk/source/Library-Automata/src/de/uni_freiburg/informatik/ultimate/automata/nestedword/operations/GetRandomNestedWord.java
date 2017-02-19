@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final int TEMPORARY_PENDING_CALL = -7;
 	
 	private final Random mRandom;
@@ -92,11 +92,6 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 		return MessageFormat.format("Start {0}. Internal alphabet has {1} letters, call alphabet has {2} letters, "
 				+ "return alphabet has {3} letters", operationName(), mInternalAlphabet.size(), mCallAlphabet.size(),
 				mReturnAlphabet.size());
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + '.';
 	}
 	
 	@Override

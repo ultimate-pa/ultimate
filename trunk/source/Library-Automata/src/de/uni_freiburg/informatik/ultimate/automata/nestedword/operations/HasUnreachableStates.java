@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisitor<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final Set<STATE> mVisitedStates = new HashSet<>();
 	private int mUnreachableStates;
 	

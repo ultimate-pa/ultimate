@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Complements a nested word automaton.
@@ -47,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class ComplementDD<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IIntersectionStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
@@ -102,7 +102,7 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IIntersectionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of complement");
 		}
@@ -110,7 +110,7 @@ public final class ComplementDD<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		boolean correct;
 		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
 		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
-				(IIntersectionStateFactory<STATE>) stateFactory, mOperand, mResult, false)).getResult();
+				stateFactory, mOperand, mResult, false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
