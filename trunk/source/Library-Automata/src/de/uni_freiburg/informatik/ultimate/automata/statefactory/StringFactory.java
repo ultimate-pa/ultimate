@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.IBuchiNwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -53,8 +55,7 @@ public class StringFactory
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
 		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
-		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IBuchiIntersectStateFactory<String>,
-		IIntersectionStateFactory<String>, IEmptyStackStateFactory<String> {
+		INwaInclusionStateFactory<String>, IBuchiNwaInclusionStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -302,7 +303,14 @@ public class StringFactory
 		return builder.append(CLOSE_BRACE).toString();
 	}
 	
-	public String createDoubleDeckerContent(final String downState, final String upState) {
+	/**
+	 * @param downState
+	 *            Down state.
+	 * @param upState
+	 *            up state
+	 * @return double decker content
+	 */
+	public static String createDoubleDeckerContent(final String downState, final String upState) {
 		return '<' + downState + COMMA + upState + '>';
 	}
 	
