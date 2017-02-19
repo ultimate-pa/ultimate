@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * @param <CRSF>
  *            checkResult state factory type
  */
-public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
-		implements IMinimizeNwaDD<LETTER, STATE> {
+public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 

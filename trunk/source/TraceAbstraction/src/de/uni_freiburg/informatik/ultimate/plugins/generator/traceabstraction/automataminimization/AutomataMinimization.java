@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwaDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftArrays;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaCombinator;
@@ -64,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -138,7 +136,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					throw new AssertionError(e);
 				}
 
-				if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
+				if (mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwaDd<?, ?>) {
 					/**
 					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
 					 */
@@ -155,7 +153,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 
 				// extract Hoare annotation
 				if (computeOldState2NewStateMapping) {
-					if (!(mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwa)) {
+					if (!mMinimizationResult.getRawMinimizationOutput().hasOldState2newState()) {
 						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 					}
 					final AbstractMinimizeNwa<LETTER, IPredicate> minimizeOpCast =
@@ -219,7 +217,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, iteration);
 			// it can happen that no minimization took place
-			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			final boolean newAutomatonWasBuilt = minNwa != operand;
 			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa);
 			break;
 		}
@@ -228,9 +226,9 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, minimizeEveryKthIteration, iteration);
 			// it can happen that no minimization took place
-			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			final boolean newAutomatonWasBuilt = minNwa != operand;
 			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa);
-			throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
+			throw new UnsupportedOperationException("currently unsupported - check minimizaton attempt");
 		}
 		case NWA_OVERAPPROXIMATION: {
 			assert storedRawInterpolantAutomata != null;
@@ -238,9 +236,9 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final AbstractMinimizeNwa<LETTER, IPredicate> minNwa =
 					new MinimizeNwaOverapproximation<>(autServices, predicateFactoryRefinement, operand, partition,
 							computeOldState2NewStateMapping, minimizationTimeout, storedRawInterpolantAutomata);
-			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			final boolean newAutomatonWasBuilt = minNwa != operand;
 			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa);
-			throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
+			throw new UnsupportedOperationException("currently unsupported - check minimizaton attempt");
 		}
 		case DFA_HOPCROFT_ARRAYS: {
 			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftArrays<>(autServices,
@@ -376,9 +374,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		return minimizationResult;
 	}
 
-	private <SF extends IMergeStateFactory<IPredicate> & IEmptyStackStateFactory<IPredicate>>
-			MinimizationResult constructNoopMinimizationResult(final boolean minimizationAttempt,
-					final INestedWordAutomaton<LETTER, IPredicate> operand) {
+	private MinimizationResult constructNoopMinimizationResult(final boolean minimizationAttempt,
+			final INestedWordAutomaton<LETTER, IPredicate> operand) {
 		final MinimizationResult minimizationResult;
 		minimizationResult = new MinimizationResult(minimizationAttempt, false,
 				new AbstractMinimizeNwa<LETTER, IPredicate>(
