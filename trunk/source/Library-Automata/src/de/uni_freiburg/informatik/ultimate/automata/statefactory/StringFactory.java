@@ -35,10 +35,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.IBuchiNwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -51,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class StringFactory
-		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
+		implements ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
-		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
-		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
-		INwaInclusionStateFactory<String>, IBuchiNwaInclusionStateFactory<String> {
+		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
+		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
+		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
