@@ -122,7 +122,9 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 		if (template == null) {
 			return toSynchronize;
 		}
-		return synchronizeVariables(toSynchronize, template.getVariables());
+		final STATE rtr = synchronizeVariables(toSynchronize, template.getVariables());
+		assert !toSynchronize.isBottom() || rtr.isBottom() : "Bottom is lost";
+		return rtr;
 	}
 
 	@Override
