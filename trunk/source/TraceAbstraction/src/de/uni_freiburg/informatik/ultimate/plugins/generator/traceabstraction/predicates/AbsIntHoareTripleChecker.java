@@ -148,8 +148,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final AbstractMultiState<STATE, ACTION, VARDECL> succ) {
 		final AbstractMultiState<STATE, ACTION, VARDECL> preState = createValidPostOpStateAfterLeaving(act, pre, null);
 		final Validity result = checkNonReturnTransitionNoLogging(preState, act, succ);
-		assert assertValidity(preState, null, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
-
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(pre, preState, "Modified preState");
 			mLogger.debug("Pre : " + preState.toLogString());
@@ -158,6 +156,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			mLogger.debug("Result: " + result);
 			mLogger.debug("--");
 		}
+		assert assertValidity(preState, null, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		return result;
 	}
 
@@ -176,18 +175,19 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving =
 				createValidPostOpStateAfterLeaving(act, validPreLinState, validPreHierState);
 		final Validity result = checkReturnTransitionNoLogging(validPreLinState, stateAfterLeaving, act, succ);
-		assert assertValidity(stateAfterLeaving, validPreLinState, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		if (mLogger.isDebugEnabled()) {
 			logDebugIfNotEqual(preLin, validPreLinState, "Modified preLinState");
 			logDebugIfNotEqual(preHier, validPreHierState, "Modified preHierState");
 			mLogger.debug("Pre : " + validPreLinState.toLogString());
+			mLogger.debug("PreH: " + validPreHierState.toLogString());
 			mLogger.debug("PSAL: " + stateAfterLeaving.toLogString());
-			mLogger.debug("Act : " + act);
+			mLogger.debug(
+					"Act : (" + act.getPrecedingProcedure() + ") " + act + " (" + act.getSucceedingProcedure() + ")");
 			mLogger.debug("Post: " + succ.toLogString());
 			mLogger.debug("Result: " + result);
 			mLogger.debug("--");
 		}
-
+		assert assertValidity(validPreLinState, stateAfterLeaving, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		return result;
 	}
 
@@ -198,13 +198,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost = preState.apply(mPostOp, act);
-		if (postState.isBottom()) {
-			if (calculatedPost != null && !calculatedPost.isBottom()) {
-				return trackPost(Validity.INVALID, act);
-			} else if (calculatedPost == null || calculatedPost.isBottom()) {
-				return trackPost(Validity.VALID, act);
-			}
+		if (calculatedPost.isBottom() && postState.isBottom()) {
+			return trackPost(Validity.VALID, act);
 		}
+
 		final AbstractMultiState<STATE, ACTION, VARDECL> synchronizedCalculatedPost =
 				synchronizeState(postState, calculatedPost);
 		assert postState.getVariables()
@@ -234,13 +231,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost =
 				stateAfterLeaving.apply(mPostOp, validPreLinState, act);
-		if (postState.isBottom()) {
-			if (calculatedPost != null && !calculatedPost.isBottom()) {
-				return trackPost(Validity.INVALID, act);
-			} else if (calculatedPost == null || calculatedPost.isBottom()) {
-				return trackPost(Validity.VALID, act);
-			}
+		if (calculatedPost.isBottom() && postState.isBottom()) {
+			return trackPost(Validity.VALID, act);
 		}
+
 		final AbstractMultiState<STATE, ACTION, VARDECL> synchronizedCalculatedPost =
 				synchronizeState(postState, calculatedPost);
 		assert postState.getVariables()
@@ -251,6 +245,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 		final SubsetResult excluded = postState.isSubsetOf(synchronizedCalculatedPost);
 		if (excluded == SubsetResult.NONE) {
+			assert !synchronizedCalculatedPost.isBottom() : "Nothing is a subsetf of bottom";
 			return trackPost(Validity.INVALID, act);
 		}
 		return Validity.UNKNOWN;
@@ -306,10 +301,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private AbstractMultiState<STATE, ACTION, VARDECL> synchronizeState(
-			final AbstractMultiState<STATE, ACTION, VARDECL> succ,
-			final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost) {
-		final AbstractMultiState<STATE, ACTION, VARDECL> rtr = succ.synchronizeVariables(mVarProvider, calculatedPost);
-		assert !succ.isBottom() || rtr.isBottom() : "Bottom was lost";
+			final AbstractMultiState<STATE, ACTION, VARDECL> template,
+			final AbstractMultiState<STATE, ACTION, VARDECL> toSynchronize) {
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
+				template.synchronizeVariables(mVarProvider, toSynchronize);
+		assert !toSynchronize.isBottom() || rtr.isBottom() : "Bottom was lost";
 		return rtr;
 	}
 
@@ -362,7 +358,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (checkedResult == result) {
 			return true;
 		}
-		if (result == Validity.UNKNOWN) {
+		if (result == Validity.UNKNOWN || result == Validity.NOT_CHECKED) {
 			return true;
 		}
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
