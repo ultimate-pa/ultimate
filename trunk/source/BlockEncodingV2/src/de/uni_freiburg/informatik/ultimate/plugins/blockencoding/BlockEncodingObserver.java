@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -87,10 +88,11 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	public boolean process(final IElement root) throws Exception {
 		if (root instanceof IIcfg<?>) {
 			final IIcfg<?> originalIcfg = (IIcfg<?>) root;
-			final IcfgEdgeBuilder edgeBuilder = new IcfgEdgeBuilder(originalIcfg.getCfgSmtToolkit(), mServices,
-					mSimplificationTechnique, mXnfConversionTechnique);
-			final BasicIcfg<IcfgLocation> copiedIcfg = new IcfgDuplicator(mLogger, mServices, mBacktranslator,
-					mSimplificationTechnique, mXnfConversionTechnique).copy(originalIcfg);
+			final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
+			final IcfgEdgeBuilder edgeBuilder =
+					new IcfgEdgeBuilder(toolkit, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+			final BasicIcfg<IcfgLocation> copiedIcfg =
+					new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator).copy(originalIcfg);
 			mResult = new BlockEncoder(mLogger, mServices, mBacktranslator, edgeBuilder, copiedIcfg).getResult();
 			return false;
 		}

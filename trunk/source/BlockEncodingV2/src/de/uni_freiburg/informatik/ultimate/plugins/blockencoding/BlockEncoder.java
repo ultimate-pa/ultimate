@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -133,11 +134,10 @@ public final class BlockEncoder {
 		mServices = services;
 		mLogger = logger;
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
-		mEdgeBuilder = new IcfgEdgeBuilder(originalIcfg.getCfgSmtToolkit(), mServices, simplificationTechnique,
-				xnfConversionTechnique);
-		final BasicIcfg<IcfgLocation> copiedIcfg =
-				new IcfgDuplicator(mLogger, mServices, mBacktranslator, simplificationTechnique, xnfConversionTechnique)
-						.copy(originalIcfg);
+		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
+		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
+		final BasicIcfg<IcfgLocation> copiedIcfg = new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(),
+				mBacktranslator).copy(originalIcfg);
 		processIcfg(copiedIcfg);
 	}
 

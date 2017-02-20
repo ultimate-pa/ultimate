@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,19 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ActionUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -74,7 +65,6 @@ public class IcfgEdgeBuilder {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final ManagedScript mManagedScript;
 
-	private final Map<IIcfgCallTransition<IcfgLocation>, IIcfgCallTransition<IcfgLocation>> mCallCache;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCfgSmtToolkit;
@@ -88,7 +78,6 @@ public class IcfgEdgeBuilder {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mManagedScript = toolkit.getManagedScript();
 		mCfgSmtToolkit = toolkit;
-		mCallCache = new HashMap<>();
 	}
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
@@ -169,39 +158,6 @@ public class IcfgEdgeBuilder {
 		source.addOutgoing(rtr);
 		target.addIncoming(rtr);
 		ModelUtils.mergeAnnotations(transitions, rtr);
-		return rtr;
-	}
-
-	@SuppressWarnings("unchecked")
-	public IcfgEdge constructCopy(final IcfgLocation source, final IcfgLocation target,
-			final IIcfgTransition<?> oldEdge) {
-		// contains transformula copy
-		final IAction newAction = ActionUtils.constructCopy(mManagedScript, oldEdge);
-
-		final IcfgEdge rtr;
-		if (oldEdge instanceof IIcfgInternalTransition<?>) {
-			rtr = new IcfgInternalTransition(source, target, null, newAction.getTransformula());
-		} else if (oldEdge instanceof IIcfgCallTransition<?>) {
-			final ICallAction cAction = (ICallAction) newAction;
-			rtr = new IcfgCallTransition(source, target, null, cAction.getLocalVarsAssignment());
-			mCallCache.put((IIcfgCallTransition<IcfgLocation>) oldEdge, (IIcfgCallTransition<IcfgLocation>) rtr);
-		} else if (oldEdge instanceof IIcfgReturnTransition<?, ?>) {
-			final IIcfgReturnTransition<?, ?> oldReturn = (IIcfgReturnTransition<?, ?>) oldEdge;
-			final IIcfgCallTransition<IcfgLocation> correspondingCall =
-					mCallCache.get(oldReturn.getCorrespondingCall());
-			if (correspondingCall == null) {
-				throw new AssertionError(
-						"You cannot copy a return transition without previously copying the corresponding call transition");
-			}
-			final IReturnAction rAction = (IReturnAction) newAction;
-			rtr = new IcfgReturnTransition(source, target, correspondingCall, null, rAction.getAssignmentOfReturn(),
-					rAction.getLocalVarsAssignmentOfCall());
-		} else {
-			throw new UnsupportedOperationException("Unknown IcfgEdge subtype: " + oldEdge.getClass());
-		}
-		source.addOutgoing(rtr);
-		target.addIncoming(rtr);
-		ModelUtils.copyAnnotations(oldEdge, rtr);
 		return rtr;
 	}
 
