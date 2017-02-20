@@ -44,17 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalDomainState<VARDECL>
 		extends NonrelationalState<IntervalDomainState<VARDECL>, IntervalDomainValue, VARDECL> {
-	
-	/**
-	 * Default constructor of an {@link IntervalDomainState}.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
-	 */
-	public IntervalDomainState(final ILogger logger, final Class<VARDECL> variableDeclarationType) {
-		super(logger, variableDeclarationType);
-	}
-	
+
 	/**
 	 * Constructor of an {@link IntervalDomainState} that is either &bot;, or &top;.
 	 *
@@ -63,42 +53,27 @@ public class IntervalDomainState<VARDECL>
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
 	 */
-	public IntervalDomainState(final ILogger logger, final boolean isBottom,
-			final Class<VARDECL> variableDeclarationType) {
-		super(logger, isBottom, variableDeclarationType);
+	public IntervalDomainState(final ILogger logger, final boolean isBottom) {
+		super(logger, isBottom);
 	}
 
-	/**
-	 * Creates a new instance of {@link IntervalDomainState} with given logger, variables map, values map and boolean
-	 * values map.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
-	 * @param variablesMap
-	 *            The map with all variable identifiers and their types.
-	 * @param valuesMap
-	 *            The values of all variables.
-	 * @param booleanValuesMap
-	 *            The values of all boolean variables.
-	 * @param variableDeclarationType
-	 *            The type of variables stored by this state.
-	 */
-	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
+	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variables,
 			final Map<VARDECL, IntervalDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final Class<VARDECL> variableDeclarationType) {
-		super(logger, variablesMap, valuesMap, booleanValuesMap, variableDeclarationType);
+			final boolean isBottom) {
+		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
 	protected IntervalDomainState<VARDECL> createCopy() {
-		return new IntervalDomainState<VARDECL>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), mVariablesType);
+		return new IntervalDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
+				new HashMap<>(getVar2ValueBoolean()), isBottom());
 	}
 
 	@Override
 	protected IntervalDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, IntervalDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap) {
-		return new IntervalDomainState<VARDECL>(logger, newVarMap, newValMap, newBooleanValMap, mVariablesType);
+			final Map<VARDECL, IntervalDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
+			final boolean isBottom) {
+		return new IntervalDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override
