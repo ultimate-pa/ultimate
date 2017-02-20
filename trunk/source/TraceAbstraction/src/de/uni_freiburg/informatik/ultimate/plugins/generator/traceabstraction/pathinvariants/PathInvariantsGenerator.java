@@ -28,8 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -39,11 +41,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -56,15 +60,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -97,9 +104,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.VarsInUnsatCoreStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
@@ -213,11 +224,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
-		IIcfg<IcfgLocation> pathProgram = new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final IIcfg<IcfgLocation> pathProgram = new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
 		/**
 		 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
 		 */
 		Map<IcfgLocation, IcfgLocation> lbeBacktranslation = null;
+		final IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
 			final IUltimateServiceProvider beServices =
 					services.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
@@ -229,8 +241,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
 			final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, pathProgram,
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-			pathProgram = blockEncoder.getResult();
+			lbePathProgram = blockEncoder.getResult();
+			assert !lbePathProgram.getInitialNodes().isEmpty() : "LBE ICFG is emtpy";
 			lbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
+		} else {
+			lbePathProgram = pathProgram;
 		}
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
 			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(pathProgram);
@@ -240,17 +255,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
-		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg,
-				pathProgram, simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinearConstraints);
+		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg,
+				lbePathProgram, simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinearConstraints);
 		if (invariants != null) {
+			if (APPLY_LARGE_BLOCK_ENCODING) {
+				invariants = computeIntermediateInvariants(pathProgram, invariants, lbeBacktranslation,
+						predicateUnifier, icfg.getCfgSmtToolkit());
+			}
 			// Populate resulting array
 			mInterpolants = new IPredicate[mRun.getLength()];
-			if (APPLY_LARGE_BLOCK_ENCODING) {
-				// TODO: take invariants from the large block encoded path program
-				// and compute remaining invariants using SP, WP or
-				// (better) interpolation.
-				throw new UnsupportedOperationException("no LBE support yet");
-			}
 			for (int i = 0; i < mRun.getLength(); i++) {
 				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram =
@@ -267,6 +280,179 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mLogger.info("[PathInvariants] No invariants found.");
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
+		}
+	}
+
+	/**
+	 * Given invariants for an LBE encoded {@link Icfg}, compute invariants
+	 * for the original {@link Icfg} by filling the gaps using interpolation or
+	 * an SP-based workaround.
+	 * @param inputIcfg {@link Icfg} for which we want to compute invariants.
+	 * @param lbeInvariants Invariants of an {@link Icfg} that was obtained
+	 * by large block encoding.
+	 * @param lbeBacktranslation Backtranslation from {@link IcfgLocation}s of
+	 * the LBE {@link Icfg} to inputIcfg.
+	 * @return An invariant mapping for input icfg.
+	 */
+	private Map<IcfgLocation, IPredicate> computeIntermediateInvariants(final IIcfg<IcfgLocation> inputIcfg,
+			final Map<IcfgLocation, IPredicate> lbeInvariants, final Map<IcfgLocation, IcfgLocation> lbeBacktranslation,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit) {
+		// add invariants for non-intermedicate locations directly
+		final Map<IcfgLocation, IPredicate> resultInvariantMapping = new HashMap<>();
+		for (final Entry<IcfgLocation, IPredicate> entry : lbeInvariants.entrySet()) {
+			resultInvariantMapping.put(lbeBacktranslation.get(entry.getKey()), entry.getValue());
+		}
+
+		// try to add intermediate invariants using interpolation
+		for (final IcfgLocation lbeLoc : lbeInvariants.keySet()) {
+			final IcfgLocation origLoc = lbeBacktranslation.get(lbeLoc);
+			if (!origLoc.getOutgoingEdges().isEmpty()) {
+				tryToAddInvariantsUsingInterpolation(origLoc, resultInvariantMapping, predicateUnifier, csToolkit);
+			}
+		}
+		final Set<IcfgLocation> inputIcfgLocations = extractAllIcfgLocations(inputIcfg);
+		mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
+		mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
+		mLogger.info((resultInvariantMapping.size() - lbeInvariants.size()) + " invariants obtained by interpolation");
+		int numberSpInvariants = 0;
+		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
+		for (final IcfgLocation loc : inputIcfgLocations) {
+			if (!resultInvariantMapping.keySet().contains(loc)) {
+				inputIcfgLocationsWithoutInvariants.add(loc);
+			}
+		}
+		while (!inputIcfgLocationsWithoutInvariants.isEmpty()) {
+			final IcfgLocation some = inputIcfgLocationsWithoutInvariants.removeFirst();
+			if (allPredecessorsHaveInvariants(some, resultInvariantMapping)) {
+				final IPredicate invar = computeInvariantUsingSp(some, resultInvariantMapping,
+						csToolkit.getManagedScript(), predicateUnifier);
+				resultInvariantMapping.put(some, invar);
+				numberSpInvariants++;
+			} else {
+				inputIcfgLocationsWithoutInvariants.add(some);
+			}
+		}
+		mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
+		return resultInvariantMapping;
+	}
+
+	/**
+	 * Check if loc has an outgoing run of branchless locations compute missing 
+	 * invariants along this runs using interpolation. 
+	 */
+	private void tryToAddInvariantsUsingInterpolation(final IcfgLocation loc,
+			final Map<IcfgLocation, IPredicate> invariants, final IPredicateUnifier predicateUnifier,
+			final CfgSmtToolkit csToolkit) {
+		final NestedRun<IAction, IcfgLocation> run = extractRunOfBranchlessLocs(loc, invariants.keySet());
+		if (run == null) {
+		} else {
+			final IPredicate precondition = invariants.get(run.getStateAtPosition(0));
+			final IPredicate postcondition = invariants.get(run.getStateAtPosition(run.getLength() - 1));
+			final IPredicate[] interpolants = computeInterpolantsAlongRun(run, precondition, postcondition,
+					predicateUnifier, csToolkit);
+			for (int i = 1; i < run.getLength() - 1; i++) {
+				invariants.put(run.getStateAtPosition(i), interpolants[i - 1]);
+			}
+		}
+	}
+
+	/**
+	 * @return set that contains all {@link IcfgLocation}s of an icfg.
+	 */
+	private static Set<IcfgLocation> extractAllIcfgLocations(final IIcfg<IcfgLocation> icfg) {
+		final Set<IcfgLocation> result = new HashSet<>();
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+		while (iter.hasNext()) {
+			result.add(iter.next());
+		}
+		return result;
+	}
+
+	/**
+	 * @return Invariant for {@link IcfgLocation} loc computed as the 
+	 * disjunction of the postconditions of the invariants of all predecessor
+	 * locations
+	 */
+	private IPredicate computeInvariantUsingSp(final IcfgLocation loc, final Map<IcfgLocation, IPredicate> invariants,
+			final ManagedScript mgdScript, final IPredicateUnifier predicateUnifier) {
+		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final PredicateTransformer pt = new PredicateTransformer(mServices, mgdScript, simplificationTechnique,
+				xnfConversionTechnique);
+		final List<Term> disjuncts = new ArrayList<>();
+		for (final IcfgEdge edge : loc.getIncomingEdges()) {
+			final IcfgLocation pred = edge.getSource();
+			final IPredicate predInv = invariants.get(pred);
+			final Term post = pt.strongestPostcondition(predInv, edge.getTransformula());
+			disjuncts.add(post);
+		}
+		final Term disjunction = SmtUtils.or(mgdScript.getScript(), disjuncts);
+		final IPredicate invar = predicateUnifier.getOrConstructPredicate(disjunction);
+		return invar;
+	}
+
+	/**
+	 * @return true iff each predecessors of loc is in the keySet of the
+	 * invariants Map.
+	 */
+	private boolean allPredecessorsHaveInvariants(final IcfgLocation loc, final Map<IcfgLocation, IPredicate> invariants) {
+		for (final IcfgLocation pred : loc.getIncomingNodes()) {
+			if (!invariants.containsKey(pred)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private IPredicate[] computeInterpolantsAlongRun(final NestedRun<IAction, IcfgLocation> run, 
+			final IPredicate precondition, final IPredicate postcondition, final IPredicateUnifier predicateUnifier,
+			final CfgSmtToolkit csToolkit) {
+		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
+		final AssertCodeBlockOrder assertCodeBlocksIncrementally = AssertCodeBlockOrder.NOT_INCREMENTALLY;
+		final UnsatCores unsatCores = UnsatCores.CONJUNCT_LEVEL;
+		final boolean useLiveVariables = true;
+		final boolean computeRcfgProgramExecution = false;
+		final InterpolationTechnique interpolation = InterpolationTechnique.ForwardPredicates;
+		final ManagedScript mgdScriptTc = csToolkit.getManagedScript();
+		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final TraceCheckerSpWp tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
+				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
+				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, predicateUnifier, interpolation,
+				mgdScriptTc, xnfConversionTechnique, simplificationTechnique, run.getStateSequence());
+		return tc.getInterpolants();
+	}
+
+	/**
+	 * Try to construct a run (whose letters are {@link IAction}s and whose
+	 * states are {@link IcfgLocation}) that starts in loc and ends in some
+	 * element of goalLocs. Each intermediate {@link IcfgLocation} of the run
+	 * must have exactly one predecessor and one successor.
+	 * Return null if no such run exists.
+	 */
+	private <T extends IAction> NestedRun<T, IcfgLocation> extractRunOfBranchlessLocs(
+			final IcfgLocation loc, final Set<IcfgLocation> goalLocs) {
+		NestedRun<T, IcfgLocation> run = new NestedRun<>(loc);
+		IcfgLocation currentLoc = loc;
+		while (true) {
+			if (currentLoc.getOutgoingEdges().isEmpty()) {
+				throw new AssertionError("no outgoing edge");
+			} else if (currentLoc.getOutgoingEdges().size() == 1) {
+				final IcfgEdge edge = currentLoc.getOutgoingEdges().get(0);
+				final NestedRun<T, IcfgLocation> suffix = new NestedRun<>(
+						edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
+				run = run.concatenate(suffix);
+				currentLoc = edge.getTarget();
+				if (goalLocs.contains(currentLoc)) {
+					return run;
+				} else {
+					if (currentLoc.getIncomingEdges().size() > 1) {
+						return null;
+					}
+				}
+			} else if (currentLoc.getOutgoingEdges().size() > 1) {
+				return null;
+			}
 		}
 	}
 
