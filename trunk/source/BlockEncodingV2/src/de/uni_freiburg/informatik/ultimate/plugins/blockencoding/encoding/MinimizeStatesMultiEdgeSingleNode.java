@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 
 /**
@@ -112,21 +111,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		int newEdges = 0;
 		for (final IcfgEdge predEdge : predEdges) {
 			final IcfgEdge predCB = predEdge;
-			if (predCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("    already infeasible: " + predCB);
-				}
-				continue;
-			}
 			for (final IcfgEdge succEdge : succEdges) {
 				final IcfgEdge succCB = succEdge;
-
-				if (succCB.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("    already infeasible: " + succCB);
-					}
-					continue;
-				}
 				final IcfgEdge seqComp = getEdgeBuilder().constructSequentialComposition(pred, succ, predCB, succCB);
 				rememberEdgeMapping(seqComp, predCB);
 				rememberEdgeMapping(seqComp, succCB);
