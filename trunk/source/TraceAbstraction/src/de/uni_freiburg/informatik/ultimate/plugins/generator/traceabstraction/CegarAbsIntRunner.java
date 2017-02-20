@@ -173,7 +173,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
-				for (final LETTER trans : pathProgramSet) {
+				mLogger.debug("Trace:");
+				for (final LETTER trans : currentCex.getWord().asList()) {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
