@@ -43,15 +43,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Most aggressive minimization. Tries to remove states no matter what.
+ * Most aggressive minimization. Tries to remove states that have multiple outgoing and incoming edges.
  *
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 	private static final String INDENT = "    ";
 
+	/**
+	 * Default constructor.
+	 * 
+	 * @param edgeBuilder
+	 * @param services
+	 * @param backtranslator
+	 * @param funIsAccepting
+	 * @param logger
+	 */
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting,
 			final ILogger logger) {
@@ -80,7 +89,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			return target.getOutgoingNodes();
 		}
 
-		if (!areCombinableEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
+		if (!isAllCombinableEdgePair(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// do not remove anything if blowup is too large or call/return combination prohibits the removal
 			return target.getOutgoingNodes();
 		}

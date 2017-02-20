@@ -38,7 +38,12 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Iterates all locations of an {@link IIcfg} that are reachable in its graph view, i.e., all locations reachable by
+ * following outgoing edges from initial nodes. "Graph view" means in particular: we may iterate over locations only
+ * reachable via return transitions that had no matching call transition.
  *
+ * @param <LOC>
+ *            The type of location of the {@link IIcfg}.
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -47,18 +52,39 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	private final Deque<LOC> mWorklist;
 	private final Set<LOC> mFinished;
 
+	/**
+	 * Create an Iterator that iterates over all locations reachable by starting from the given location and following
+	 * the outgoing edges.
+	 * 
+	 * @param location
+	 *            The given location.
+	 */
 	public IcfgLocationIterator(final LOC location) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.add(location);
 	}
 
+	/**
+	 * Create an Iterator that iterates over all locations reachable by starting from the given locations and following
+	 * the outgoing edges.
+	 * 
+	 * @param locations
+	 *            the given locations.
+	 */
 	public IcfgLocationIterator(final Collection<LOC> locations) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(locations);
 	}
 
+	/**
+	 * Create an Iterator that iterates over all locations reachable by starting from the locations defined by the given
+	 * {@link IIcfg}s {@link IIcfg#getInitialNodes()} method and following their outgoing edges.
+	 * 
+	 * @param icfg
+	 *            The given {@link IIcfg}.
+	 */
 	public IcfgLocationIterator(final IIcfg<LOC> icfg) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
@@ -79,6 +105,9 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 		return current;
 	}
 
+	/**
+	 * @return A stream that contains all the locations reachable by this iterator.
+	 */
 	public Stream<LOC> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
 	}

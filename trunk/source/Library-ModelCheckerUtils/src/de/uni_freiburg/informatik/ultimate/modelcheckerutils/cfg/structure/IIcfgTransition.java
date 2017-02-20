@@ -29,11 +29,21 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 /**
  * Common interface for ICFG edges.
  *
+ * @param <LOC>
+ *            The type of the source and target location of this transition.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface IIcfgTransition<LOC extends IcfgLocation> extends IIcfgElement, IAction {
+	/**
+	 * @return the source location of this transition
+	 */
 	LOC getSource();
 
+	/**
+	 * 
+	 * @return the target location of this transition
+	 */
 	LOC getTarget();
 }

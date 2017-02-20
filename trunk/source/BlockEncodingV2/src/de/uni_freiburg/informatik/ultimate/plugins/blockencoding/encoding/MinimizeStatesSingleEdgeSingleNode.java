@@ -70,7 +70,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		final IcfgLocation pred = predEdge.getSource();
 		final IcfgLocation succ = succEdge.getTarget();
 
-		if (!isNotNecessary(icfg, target) && !isOneNecessary(icfg, pred, succ)) {
+		if (!isNotNecessary(icfg, target) && !isAnyNecessary(icfg, pred, succ)) {
 			// the nodes do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}
