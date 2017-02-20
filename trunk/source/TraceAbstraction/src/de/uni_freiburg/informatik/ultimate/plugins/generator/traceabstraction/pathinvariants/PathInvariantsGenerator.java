@@ -130,15 +130,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	
+
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
 	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
-	
+
 	/**
 	 * @see {@link DynamicPatternSettingsStrategyWithGlobalTemplateLevel}
 	 */
 	private static final boolean USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL = false;
-	
+
 	private static final boolean USE_UNDER_APPROX_FOR_MAX_CONJUNCTS = false;
 	private static final boolean USE_OVER_APPROX_FOR_MIN_DISJUNCTS = false;
 
@@ -156,10 +156,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = false;
+	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
-
 
 	private final boolean mUseLiveVariables;
 
@@ -224,7 +223,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
-		final IIcfg<IcfgLocation> pathProgram = new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final IIcfg<IcfgLocation> pathProgram =
+				new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
 		/**
 		 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
 		 */
@@ -255,8 +255,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
-		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg,
-				lbePathProgram, simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinearConstraints);
+		Map<IcfgLocation, IPredicate> invariants =
+				generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg, lbePathProgram, simplificationTechnique,
+						xnfConversionTechnique, solverSettings, useNonlinearConstraints);
 		if (invariants != null) {
 			if (APPLY_LARGE_BLOCK_ENCODING) {
 				invariants = computeIntermediateInvariants(pathProgram, invariants, lbeBacktranslation,
@@ -284,14 +285,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	/**
-	 * Given invariants for an LBE encoded {@link Icfg}, compute invariants
-	 * for the original {@link Icfg} by filling the gaps using interpolation or
-	 * an SP-based workaround.
-	 * @param inputIcfg {@link Icfg} for which we want to compute invariants.
-	 * @param lbeInvariants Invariants of an {@link Icfg} that was obtained
-	 * by large block encoding.
-	 * @param lbeBacktranslation Backtranslation from {@link IcfgLocation}s of
-	 * the LBE {@link Icfg} to inputIcfg.
+	 * Given invariants for an LBE encoded {@link Icfg}, compute invariants for the original {@link Icfg} by filling the
+	 * gaps using interpolation or an SP-based workaround.
+	 * 
+	 * @param inputIcfg
+	 *            {@link Icfg} for which we want to compute invariants.
+	 * @param lbeInvariants
+	 *            Invariants of an {@link Icfg} that was obtained by large block encoding.
+	 * @param lbeBacktranslation
+	 *            Backtranslation from {@link IcfgLocation}s of the LBE {@link Icfg} to inputIcfg.
 	 * @return An invariant mapping for input icfg.
 	 */
 	private Map<IcfgLocation, IPredicate> computeIntermediateInvariants(final IIcfg<IcfgLocation> inputIcfg,
@@ -313,7 +315,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Set<IcfgLocation> inputIcfgLocations = extractAllIcfgLocations(inputIcfg);
 		mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
 		mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
-		mLogger.info((resultInvariantMapping.size() - lbeInvariants.size()) + " invariants obtained by interpolation");
+		mLogger.info(resultInvariantMapping.size() - lbeInvariants.size() + " invariants obtained by interpolation");
 		int numberSpInvariants = 0;
 		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
 		for (final IcfgLocation loc : inputIcfgLocations) {
@@ -337,22 +339,22 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	/**
-	 * Check if loc has an outgoing run of branchless locations compute missing 
-	 * invariants along this runs using interpolation. 
+	 * Check if loc has an outgoing run of branchless locations compute missing invariants along this runs using
+	 * interpolation.
 	 */
 	private void tryToAddInvariantsUsingInterpolation(final IcfgLocation loc,
 			final Map<IcfgLocation, IPredicate> invariants, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit) {
 		final NestedRun<IAction, IcfgLocation> run = extractRunOfBranchlessLocs(loc, invariants.keySet());
 		if (run == null) {
-		} else {
-			final IPredicate precondition = invariants.get(run.getStateAtPosition(0));
-			final IPredicate postcondition = invariants.get(run.getStateAtPosition(run.getLength() - 1));
-			final IPredicate[] interpolants = computeInterpolantsAlongRun(run, precondition, postcondition,
-					predicateUnifier, csToolkit);
-			for (int i = 1; i < run.getLength() - 1; i++) {
-				invariants.put(run.getStateAtPosition(i), interpolants[i - 1]);
-			}
+			return;
+		}
+		final IPredicate precondition = invariants.get(run.getStateAtPosition(0));
+		final IPredicate postcondition = invariants.get(run.getStateAtPosition(run.getLength() - 1));
+		final IPredicate[] interpolants =
+				computeInterpolantsAlongRun(run, precondition, postcondition, predicateUnifier, csToolkit);
+		for (int i = 1; i < run.getLength() - 1; i++) {
+			invariants.put(run.getStateAtPosition(i), interpolants[i - 1]);
 		}
 	}
 
@@ -369,16 +371,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	/**
-	 * @return Invariant for {@link IcfgLocation} loc computed as the 
-	 * disjunction of the postconditions of the invariants of all predecessor
-	 * locations
+	 * @return Invariant for {@link IcfgLocation} loc computed as the disjunction of the postconditions of the
+	 *         invariants of all predecessor locations
 	 */
 	private IPredicate computeInvariantUsingSp(final IcfgLocation loc, final Map<IcfgLocation, IPredicate> invariants,
 			final ManagedScript mgdScript, final IPredicateUnifier predicateUnifier) {
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		final PredicateTransformer pt = new PredicateTransformer(mServices, mgdScript, simplificationTechnique,
-				xnfConversionTechnique);
+		final XnfConversionTechnique xnfConversionTechnique =
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final PredicateTransformer pt =
+				new PredicateTransformer(mServices, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final List<Term> disjuncts = new ArrayList<>();
 		for (final IcfgEdge edge : loc.getIncomingEdges()) {
 			final IcfgLocation pred = edge.getSource();
@@ -392,10 +394,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	/**
-	 * @return true iff each predecessors of loc is in the keySet of the
-	 * invariants Map.
+	 * @return true iff each predecessors of loc is in the keySet of the invariants Map.
 	 */
-	private boolean allPredecessorsHaveInvariants(final IcfgLocation loc, final Map<IcfgLocation, IPredicate> invariants) {
+	private static boolean allPredecessorsHaveInvariants(final IcfgLocation loc,
+			final Map<IcfgLocation, IPredicate> invariants) {
 		for (final IcfgLocation pred : loc.getIncomingNodes()) {
 			if (!invariants.containsKey(pred)) {
 				return false;
@@ -404,7 +406,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return true;
 	}
 
-	private IPredicate[] computeInterpolantsAlongRun(final NestedRun<IAction, IcfgLocation> run, 
+	private IPredicate[] computeInterpolantsAlongRun(final NestedRun<IAction, IcfgLocation> run,
 			final IPredicate precondition, final IPredicate postcondition, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit) {
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
@@ -415,7 +417,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final InterpolationTechnique interpolation = InterpolationTechnique.ForwardPredicates;
 		final ManagedScript mgdScriptTc = csToolkit.getManagedScript();
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		final XnfConversionTechnique xnfConversionTechnique =
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		@SuppressWarnings("unchecked")
 		final TraceCheckerSpWp tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
 				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, predicateUnifier, interpolation,
@@ -424,14 +428,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	/**
-	 * Try to construct a run (whose letters are {@link IAction}s and whose
-	 * states are {@link IcfgLocation}) that starts in loc and ends in some
-	 * element of goalLocs. Each intermediate {@link IcfgLocation} of the run
-	 * must have exactly one predecessor and one successor.
-	 * Return null if no such run exists.
+	 * Try to construct a run (whose letters are {@link IAction}s and whose states are {@link IcfgLocation}) that starts
+	 * in loc and ends in some element of goalLocs. Each intermediate {@link IcfgLocation} of the run must have exactly
+	 * one predecessor and one successor. Return null if no such run exists.
 	 */
-	private <T extends IAction> NestedRun<T, IcfgLocation> extractRunOfBranchlessLocs(
-			final IcfgLocation loc, final Set<IcfgLocation> goalLocs) {
+	private static <T extends IAction> NestedRun<T, IcfgLocation> extractRunOfBranchlessLocs(final IcfgLocation loc,
+			final Set<IcfgLocation> goalLocs) {
 		NestedRun<T, IcfgLocation> run = new NestedRun<>(loc);
 		IcfgLocation currentLoc = loc;
 		while (true) {
@@ -439,16 +441,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				throw new AssertionError("no outgoing edge");
 			} else if (currentLoc.getOutgoingEdges().size() == 1) {
 				final IcfgEdge edge = currentLoc.getOutgoingEdges().get(0);
-				final NestedRun<T, IcfgLocation> suffix = new NestedRun<>(
-						edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
+				@SuppressWarnings("unchecked")
+				final NestedRun<T, IcfgLocation> suffix =
+						new NestedRun<>(edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
 				run = run.concatenate(suffix);
 				currentLoc = edge.getTarget();
 				if (goalLocs.contains(currentLoc)) {
 					return run;
-				} else {
-					if (currentLoc.getIncomingEdges().size() > 1) {
-						return null;
-					}
+				}
+				if (currentLoc.getIncomingEdges().size() > 1) {
+					return null;
 				}
 			} else if (currentLoc.getOutgoingEdges().size() > 1) {
 				return null;
@@ -498,8 +500,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
 				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
-					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
-							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
+					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS,
+							allProgramVariables, locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
 				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
@@ -851,7 +853,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
 
 		mLogger.info("[PathInvariants] Generated invariant map.");
-		
+
 		return invariants;
 	}
 
@@ -1037,8 +1039,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	// Benchmarks Section
-	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement { 
-		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall iteration
+	@SuppressWarnings("squid:S00115")
+	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
+		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
+		// iteration
 		ProgramSize(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
@@ -1053,7 +1057,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// the maximum of the sum of template inequalities per round
 		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
-		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
+		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// the sum of variables per location per round
 		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
@@ -1064,23 +1068,29 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
 		TreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
-		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under- and/or Overapproximations
-		TreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),	
+		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under-
+		// and/or Overapproximations
+		TreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations for normal constraints
-		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition,
+				AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
-		MotzkinTransformationsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		MotzkinTransformationsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
+				AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Coefficients needed for normal constraints
-		MotzkinCoefficientsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),	
+		MotzkinCoefficientsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition,
+				AStatisticsType.sKeyBeforeData),
 		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
-		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),			
+		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
+				AStatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
+		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition,  AStatisticsType.sTimeBeforeKey),
+		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 		// Sat status
-		SatStatus(String.class, s1 -> s2 -> new String((String)s1 + "; " + (String)s2), AStatisticsType.sKeyBeforeData);
-		
+		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
+				AStatisticsType.sKeyBeforeData);
+
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
