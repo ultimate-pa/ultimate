@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
@@ -127,7 +128,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
 			// because this is a call, it could also be somewhere in the summary map
 			final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
-					mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates, mVariablesType));
+					mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
 			if (summaryState != null) {
 				states.addAll(summaryState.getStates());
 			}

@@ -52,32 +52,29 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  *
  */
 public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDomainState<VARDECL>, VARDECL> {
-	
+
 	private static int sId;
 	private final Set<VARDECL> mVarDecls;
 	private final int mId;
 	private final boolean mIsBottom;
-	private final Class<VARDECL> mVariablesType;
 
-	protected EmptyDomainState(final Class<VARDECL> variablesType) {
-		this(new HashSet<>(), variablesType);
-	}
-	
-	protected EmptyDomainState(final boolean isBottom, final Class<VARDECL> variablesType) {
-		this(new HashSet<>(), isBottom, variablesType);
+	protected EmptyDomainState() {
+		this(new HashSet<>());
 	}
 
-	protected EmptyDomainState(final Set<VARDECL> varDecls, final Class<VARDECL> variablesType) {
-		this(varDecls, false, variablesType);
+	protected EmptyDomainState(final boolean isBottom) {
+		this(new HashSet<>(), isBottom);
 	}
 
-	protected EmptyDomainState(final Set<VARDECL> varDecls, final boolean isBottom,
-			final Class<VARDECL> variablesType) {
+	protected EmptyDomainState(final Set<VARDECL> varDecls) {
+		this(varDecls, false);
+	}
+
+	protected EmptyDomainState(final Set<VARDECL> varDecls, final boolean isBottom) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
 		mIsBottom = isBottom;
-		mVariablesType = variablesType;
 	}
 
 	@Override
@@ -88,7 +85,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<VARDECL>(newMap, mVariablesType);
+		return new EmptyDomainState<>(newMap);
 	}
 
 	@Override
@@ -97,7 +94,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		final boolean result = newMap.remove(variable);
 		assert result;
-		return new EmptyDomainState<VARDECL>(newMap, mVariablesType);
+		return new EmptyDomainState<>(newMap);
 	}
 
 	@Override
@@ -111,7 +108,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<VARDECL>(newMap, mVariablesType);
+		return new EmptyDomainState<>(newMap);
 	}
 
 	@Override
@@ -123,7 +120,7 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		for (final VARDECL entry : variables) {
 			newMap.remove(entry);
 		}
-		return new EmptyDomainState<VARDECL>(newMap, mVariablesType);
+		return new EmptyDomainState<>(newMap);
 	}
 
 	@Override
@@ -235,17 +232,12 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 			return this;
 		}
 
-		return new EmptyDomainState<VARDECL>(newVarDecls, mVariablesType);
+		return new EmptyDomainState<>(newVarDecls);
 	}
 
 	@Override
 	public SubsetResult isSubsetOf(final EmptyDomainState<VARDECL> other) {
 		assert hasSameVariables(other);
 		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
-	}
-	
-	@Override
-	public Class<VARDECL> getVariablesType() {
-		return mVariablesType;
 	}
 }

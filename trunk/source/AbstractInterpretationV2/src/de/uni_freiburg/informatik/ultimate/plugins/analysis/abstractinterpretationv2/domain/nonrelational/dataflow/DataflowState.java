@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class DataflowState<ACTION extends IAction>
 		implements IAbstractState<DataflowState<ACTION>, IProgramVarOrConst> {
-	
+
 	private static int sId;
 	private final int mId;
 
@@ -324,10 +324,5 @@ public class DataflowState<ACTION extends IAction>
 
 	public Set<ACTION> getReachingDefinitions(final IProgramVar var) {
 		return mReachDef.get(var);
-	}
-	
-	@Override
-	public Class<IProgramVarOrConst> getVariablesType() {
-		return IProgramVarOrConst.class;
 	}
 }

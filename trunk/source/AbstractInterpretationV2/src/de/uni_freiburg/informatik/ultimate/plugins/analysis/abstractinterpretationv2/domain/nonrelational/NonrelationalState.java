@@ -62,6 +62,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
 		implements INonrelationalAbstractState<STATE, VARDECL> {
 
+	private static final String MSG_NULL = "NULL";
+	private static final String MSG_BOT = "BOT";
+	private static final String MSG_TOP = "TOP";
+
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
 	}
@@ -617,9 +621,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	@Override
 	public String toLogString() {
-		final StringBuilder stringBuilder = new StringBuilder();
+		final StringBuilder sbAll = new StringBuilder();
+		final StringBuilder sbTop = new StringBuilder();
+		final StringBuilder sbBot = new StringBuilder();
 		if (isBottom()) {
-			stringBuilder.append("BOTTOM ");
+			sbAll.append("BOTTOM ");
 		}
 		for (final VARDECL entry : mVariables) {
 			final String varName;
@@ -629,22 +635,49 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 				varName = ((IProgramVarOrConst) entry).getGloballyUniqueId();
 			} else {
 				throw new UnsupportedOperationException(
-						"Variable type " + entry.getClass().getSimpleName() + " not implemented.");
+						"Variable type not implemented: " + entry.getClass().getSimpleName());
 			}
 
-			stringBuilder.append(varName).append(" = ");
-
-			final V val = getVar2ValueNonrelational().get(entry);
-
-			if (val != null) {
-				stringBuilder.append(getVar2ValueNonrelational().get(entry).toString());
+			final String val = getValueAsString(entry);
+			if (MSG_TOP.equals(val)) {
+				sbTop.append(varName).append(", ");
+			} else if (MSG_BOT.equals(val)) {
+				sbBot.append(varName).append(", ");
 			} else {
-				stringBuilder.append(getVar2ValueBoolean().get(entry).toString());
+				sbAll.append(varName).append(" = ").append(val).append("; ");
 			}
-
-			stringBuilder.append("; ");
 		}
-		return stringBuilder.toString();
+
+		if (sbTop.length() > 0) {
+			sbAll.append("TOP: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
+		}
+		if (sbBot.length() > 0) {
+			sbAll.append("BOT: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
+		}
+
+		return sbAll.toString();
+	}
+
+	private String getValueAsString(final VARDECL entry) {
+		final V val = getVar2ValueNonrelational().get(entry);
+		if (val != null) {
+			if (val.isTop()) {
+				return MSG_TOP;
+			} else if (val.isBottom()) {
+				return MSG_BOT;
+			}
+			return val.toString();
+		}
+		final BooleanValue bolVal = getVar2ValueBoolean().get(entry);
+		if (bolVal != null) {
+			if (bolVal == BooleanValue.TOP) {
+				return MSG_TOP;
+			} else if (bolVal == BooleanValue.BOTTOM) {
+				return MSG_BOT;
+			}
+			return bolVal.toString();
+		}
+		return MSG_NULL;
 	}
 
 	@Override
@@ -788,11 +821,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		return Util.and(script, acc.toArray(new Term[acc.size()]));
-	}
-
-	@Override
-	public Class<VARDECL> getVariablesType() {
-		return mVariablesType;
 	}
 
 	/**

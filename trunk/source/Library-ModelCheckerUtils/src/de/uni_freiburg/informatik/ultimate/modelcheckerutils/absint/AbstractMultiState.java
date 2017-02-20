@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,16 +32,12 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -61,47 +57,44 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	private final int mMaxSize;
 	private final int mId;
 
-	private final Class<VARDECL> mVariablesType;
-
-	AbstractMultiState(final int maxSize, final Class<VARDECL> variablesType) {
-		this(maxSize, newSet(maxSize), variablesType);
+	public AbstractMultiState(final int maxSize) {
+		this(maxSize, newSet(maxSize));
 	}
 
-	AbstractMultiState(final int maxSize, final STATE state, final Class<VARDECL> variablesType) {
-		this(maxSize, newSet(maxSize), variablesType);
+	public AbstractMultiState(final int maxSize, final STATE state) {
+		this(maxSize, newSet(maxSize));
 		mStates.add(state);
 	}
 
-	AbstractMultiState(final Set<STATE> state, final Class<VARDECL> variablesType) {
-		this(state.size(), state, variablesType);
+	public AbstractMultiState(final Set<STATE> state) {
+		this(state.size(), state);
 	}
 
-	private AbstractMultiState(final int maxSize, final Set<STATE> states, final Class<VARDECL> variablesType) {
+	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
 		mId = sNextFreeId;
-		mVariablesType = variablesType;
 	}
 
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> addVariable(final VARDECL variable) {
-		return applyToAll(a -> a.addVariable(variable));
+		return map(a -> a.addVariable(variable));
 	}
 
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> removeVariable(final VARDECL variable) {
-		return applyToAll(a -> a.removeVariable(variable));
+		return map(a -> a.removeVariable(variable));
 	}
 
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> addVariables(final Collection<VARDECL> variables) {
-		return applyToAll(a -> a.addVariables(variables));
+		return map(a -> a.addVariables(variables));
 	}
 
 	@Override
 	public AbstractMultiState<STATE, ACTION, VARDECL> removeVariables(final Collection<VARDECL> variables) {
-		return applyToAll(a -> a.removeVariables(variables));
+		return map(a -> a.removeVariables(variables));
 	}
 
 	@Override
@@ -128,7 +121,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		while (iter.hasNext() && otherIter.hasNext()) {
 			newSet.add(iter.next().patch(otherIter.next()));
 		}
-		return new AbstractMultiState<>(mMaxSize, newSet, mVariablesType);
+		return new AbstractMultiState<>(mMaxSize, newSet);
 	}
 
 	@Override
@@ -248,48 +241,51 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public AbstractMultiState<STATE, ACTION, VARDECL> defineVariablesAfter(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION transition,
 			final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState) {
+		return crossProduct((a, b) -> varProvider.defineVariablesAfter(transition, a, b), hierachicalPreState,
+				mMaxSize);
+	}
 
-		final Set<STATE> newSet = newSet(mStates.size() * hierachicalPreState.mStates.size());
-		for (final STATE localState : mStates) {
-			for (final STATE hierState : hierachicalPreState.mStates) {
-				newSet.add(varProvider.defineVariablesAfter(transition, localState, hierState));
-			}
+	/**
+	 * Apply the {@link IVariableProvider#createValidPostOpStateAfterLeaving(Object, IAbstractState, IAbstractState)}
+	 * function to all states in this multi-state. This state acts as local pre state, and all states in
+	 * hierachicalPreState are used as hierachical pre states.
+	 */
+	public AbstractMultiState<STATE, ACTION, VARDECL> createValidPostOpStateAfterLeaving(
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act,
+			final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState) {
+		if (hierachicalPreState == null) {
+			return map(a -> varProvider.createValidPostOpStateAfterLeaving(act, a, null));
 		}
-		if (newSet.equals(mStates)) {
-			return this;
-		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
-				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
-		return rtr;
+		return crossProduct((a, b) -> varProvider.createValidPostOpStateAfterLeaving(act, a, b), hierachicalPreState,
+				mStates.size() * hierachicalPreState.mStates.size());
+	}
+
+	public AbstractMultiState<STATE, ACTION, VARDECL> createValidPostOpStateBeforeLeaving(
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act) {
+		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));
+	}
+
+	public AbstractMultiState<STATE, ACTION, VARDECL> synchronizeVariables(
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider,
+			final AbstractMultiState<STATE, ACTION, VARDECL> toSynchronize) {
+		// any state will do:
+		return new AbstractMultiState<STATE, ACTION, VARDECL>(mMaxSize, mStates.iterator().next())
+				.crossProduct(varProvider::synchronizeVariables, toSynchronize, toSynchronize.mStates.size());
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op,
 			final ACTION transition) {
-		return applyToAllCollection(a -> op.apply(a, transition));
+		return mapCollection(a -> op.apply(a, transition));
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,
 			final AbstractMultiState<STATE, ACTION, VARDECL> multiStateBeforeLeaving, final ACTION transition) {
-		final Set<STATE> newSet = newSet(mStates.size() * multiStateBeforeLeaving.mStates.size());
-		for (final STATE stateAfterLeaving : mStates) {
-			for (final STATE stateBeforeLeaving : multiStateBeforeLeaving.mStates) {
-				newSet.addAll(postOp.apply(stateBeforeLeaving, stateAfterLeaving, transition));
-			}
-		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
-				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
-		return rtr;
+		return crossProductCollection((a, b) -> postOp.apply(b, a, transition), multiStateBeforeLeaving, mMaxSize);
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractStateBinaryOperator<STATE> op,
 			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
-		final Set<STATE> newSet = newSet(mStates.size() * other.mStates.size());
-		for (final STATE firstOper : mStates) {
-			for (final STATE secondOper : other.mStates) {
-				newSet.add(op.apply(firstOper, secondOper));
-			}
-		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
+		return crossProduct(op::apply, other, mMaxSize);
 	}
 
 	@Override
@@ -302,7 +298,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
-		return mStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).orElse(null);
+		return mStates.stream().reduce(mergeOp::apply).orElse(null);
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> merge(final IAbstractStateBinaryOperator<STATE> mergeOp,
@@ -311,10 +307,46 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		final Set<STATE> set = newSet();
 		set.addAll(mStates);
 		set.addAll(other.mStates);
-		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set), mVariablesType);
+		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set));
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL> applyToAll(final Function<STATE, STATE> func) {
+	/**
+	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
+	 * {@link AbstractMultiState} and some other {@link AbstractMultiState} (i.e., the first argument is a state from
+	 * this instance). If the resulting set of states does not differ from this state, return this state. If it differs,
+	 * create a new {@link AbstractMultiState} that retains as many as <code>maxSize</code> disjunctive states.
+	 */
+	private AbstractMultiState<STATE, ACTION, VARDECL> crossProduct(
+			final BiFunction<STATE, STATE, STATE> funCreateState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> otherMultiState, final int maxSize) {
+		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
+		for (final STATE localState : mStates) {
+			for (final STATE otherState : otherMultiState.mStates) {
+				newSet.add(funCreateState.apply(localState, otherState));
+			}
+		}
+		if (newSet.equals(mStates)) {
+			return this;
+		}
+		return new AbstractMultiState<>(maxSize, getMaximalElements(newSet));
+	}
+
+	private AbstractMultiState<STATE, ACTION, VARDECL> crossProductCollection(
+			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> otherMultiState, final int maxSize) {
+		final Set<STATE> newSet = newSet(mStates.size() * otherMultiState.mStates.size());
+		for (final STATE localState : mStates) {
+			for (final STATE otherState : otherMultiState.mStates) {
+				newSet.addAll(funCreateState.apply(localState, otherState));
+			}
+		}
+		if (newSet.equals(mStates)) {
+			return this;
+		}
+		return new AbstractMultiState<>(maxSize, getMaximalElements(newSet));
+	}
+
+	private AbstractMultiState<STATE, ACTION, VARDECL> map(final Function<STATE, STATE> func) {
 		final Set<STATE> newSet = newSet(mStates.size());
 		for (final STATE state : mStates) {
 			newSet.add(func.apply(state));
@@ -322,16 +354,15 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (mStates.equals(newSet)) {
 			return this;
 		}
-		return new AbstractMultiState<>(mMaxSize, newSet, mVariablesType);
+		return new AbstractMultiState<>(mMaxSize, newSet);
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL>
-			applyToAllCollection(final Function<STATE, Collection<STATE>> func) {
+	private AbstractMultiState<STATE, ACTION, VARDECL> mapCollection(final Function<STATE, Collection<STATE>> func) {
 		final Set<STATE> newSet = newSet();
 		for (final STATE state : mStates) {
 			newSet.addAll(func.apply(state));
 		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet), mVariablesType);
+		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
 	}
 
 	private Set<STATE> newSet() {
@@ -394,12 +425,8 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 				maximalElements.add(state);
 			}
 		}
-		assert maximalElements.stream().filter(a -> a.isBottom()).count() <= 1 : "There can be only one bottom element";
+		assert maximalElements.stream().filter(STATE::isBottom).count() <= 1 : "There can be only one bottom element";
 		return maximalElements;
 	}
 
-	@Override
-	public Class<VARDECL> getVariablesType() {
-		return mVariablesType;
-	}
 }

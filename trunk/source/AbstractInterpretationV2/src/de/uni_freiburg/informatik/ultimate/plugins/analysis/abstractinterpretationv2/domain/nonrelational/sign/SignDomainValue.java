@@ -232,6 +232,11 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 	}
 
 	@Override
+	public boolean isTop() {
+		return mValue == SignValues.TOP;
+	}
+
+	@Override
 	public SignDomainValue merge(final SignDomainValue other) {
 		throw new UnsupportedOperationException("not implemented");
 	}

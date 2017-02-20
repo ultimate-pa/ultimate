@@ -51,17 +51,17 @@ public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomain
 
 	@Override
 	public EmptyDomainState<VARDECL> createFreshState() {
-		return new EmptyDomainState<>(mVariablesType);
+		return new EmptyDomainState<>();
 	}
 
 	@Override
 	public EmptyDomainState<VARDECL> createTopState() {
-		return new EmptyDomainState<>(false, mVariablesType);
+		return new EmptyDomainState<>(false);
 	}
 
 	@Override
 	public EmptyDomainState<VARDECL> createBottomState() {
-		return new EmptyDomainState<>(true, mVariablesType);
+		return new EmptyDomainState<>(true);
 	}
 
 	@Override

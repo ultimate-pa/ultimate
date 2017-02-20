@@ -36,17 +36,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @param <VARDECL>
  */
 public final class EmptyOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> {
-	
+
 	@Override
 	public EmptyDomainState<VARDECL> apply(final EmptyDomainState<VARDECL> first,
 			final EmptyDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
-		
+
 		if (!first.hasSameVariables(second)) {
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
-		
-		return new EmptyDomainState<>(first.getVariables(), first.getVariablesType());
+
+		return new EmptyDomainState<>(first.getVariables());
 	}
 }

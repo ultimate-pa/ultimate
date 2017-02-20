@@ -90,12 +90,12 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public STATE createValidPostOpArgLinState(final ACTION action, final STATE stateLin, final STATE preHierState) {
+	public STATE createValidPostOpStateAfterLeaving(final ACTION action, final STATE stateLin, final STATE preHierState) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public STATE createValidPostOpArgHierState(final ACTION action, final STATE stateHier) {
+	public STATE createValidPostOpStateBeforeLeaving(final ACTION action, final STATE stateHier) {
 		throw new UnsupportedOperationException();
 	}
 

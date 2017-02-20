@@ -44,6 +44,8 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> extends I
 
 	boolean isBottom();
 
+	boolean isTop();
+
 	V intersect(final V other);
 
 	V merge(final V other);

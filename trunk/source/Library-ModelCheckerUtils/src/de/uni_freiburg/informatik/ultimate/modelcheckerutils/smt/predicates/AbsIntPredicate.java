@@ -28,8 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> implements IPredicate {
 
-	private final STATE mAbstractState;
+	private final Set<STATE> mAbstractStates;
 	private final IPredicate mPredicate;
 
 	/**
@@ -56,13 +58,18 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 	 *
 	 */
 	public AbsIntPredicate(final IPredicate classicPredicate, final STATE abstractState) {
-		mAbstractState = Objects.requireNonNull(abstractState);
+		this(classicPredicate, Collections.singleton(abstractState));
+	}
+
+	public AbsIntPredicate(final IPredicate classicPredicate, final Set<STATE> abstractState) {
+		mAbstractStates = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
+		assert !mAbstractStates.isEmpty();
 	}
 
 	@Visualizable
-	public STATE getAbstractState() {
-		return mAbstractState;
+	public Set<STATE> getAbstractStates() {
+		return mAbstractStates;
 	}
 
 	@Visualizable
@@ -107,9 +114,6 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 		if (obj instanceof IPredicate && !(obj instanceof AbsIntPredicate<?, ?>)) {
 			return mPredicate.equals(obj);
 		}
-		if (obj instanceof IAbstractState<?, ?>) {
-			return mAbstractState.equals(obj);
-		}
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
@@ -121,7 +125,7 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(mPredicate.toString()).append(" (");
-		sb.append(mAbstractState.toLogString()).append(")");
+		sb.append(mAbstractStates.stream().map(STATE::toLogString).collect(Collectors.toSet())).append(")");
 		return sb.toString();
 	}
 }

@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -388,12 +387,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}
-			final IAbstractStateBinaryOperator<STATE> mergeOp = mResult.getUsedDomain().getMergeOperator();
 			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
 					.map(mPredicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
 			final IPredicate disjunction = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicates);
-			final STATE oneState = postStates.stream().reduce(mergeOp::apply).orElseThrow(AssertionError::new);
-			return new AbsIntPredicate<>(disjunction, oneState);
+			return new AbsIntPredicate<>(disjunction, postStates);
 		}
 	}
 

@@ -142,34 +142,34 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
 
 			// Normal regressions
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression",
 
 			/* current fails */
 			
-			// RubberTaipan: AssertionError: result of second trace check is different:
-			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
-			
-			// unexpected var
-			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-			
-			// inductivity failed
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
-			
-			// AssertionError: enhanced interpolant automaton broken
-			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-			
-			// unsound on intervalls
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-			
-			// unexpected timeout on intervals
-			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
+//			// RubberTaipan: AssertionError: result of second trace check is different:
+//			"examples/programs/abstractInterpretation/regression/all/loop-nested-unsafe.bpl",
+//
+//			// unexpected var
+//			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
+//
+//			// inductivity failed
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+//
+//			// AssertionError: enhanced interpolant automaton broken
+//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+//
+//			// unsound on intervalls
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
+//
+//			// unexpected timeout on intervals
+//			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
 			
 	};
 	// @formatter:on

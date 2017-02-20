@@ -126,20 +126,16 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	}
 
 	@Override
-	public STATE createValidPostOpArgLinState(final CodeBlock action, final STATE stateLin, final STATE stateHier) {
+	public STATE createValidPostOpStateAfterLeaving(final CodeBlock action, final STATE stateLin,
+			final STATE stateHier) {
 		final Set<IBoogieVar> preVars = getPreVariables(action);
 		final STATE synchronizedPreLin = synchronizeVariables(stateLin, preVars);
 		return defineVariablesAfter(action, synchronizedPreLin, stateHier);
 	}
 
 	@Override
-	public STATE createValidPostOpArgHierState(final CodeBlock action, final STATE stateHier) {
-		if (!(action instanceof Return)) {
-			return stateHier;
-		}
-		assert stateHier != null;
-		final Return retAction = (Return) action;
-		final Set<IBoogieVar> preVars = getPreVariables(retAction.getCorrespondingCall());
+	public STATE createValidPostOpStateBeforeLeaving(final CodeBlock action, final STATE stateHier) {
+		final Set<IBoogieVar> preVars = getPreVariables(action);
 		return synchronizeVariables(stateHier, preVars);
 	}
 

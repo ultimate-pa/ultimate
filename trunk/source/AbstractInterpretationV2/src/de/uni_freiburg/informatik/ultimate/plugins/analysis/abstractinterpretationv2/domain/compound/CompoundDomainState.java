@@ -275,11 +275,6 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public Class<IBoogieVar> getVariablesType() {
-		return IBoogieVar.class;
-	}
-
-	@Override
 	public String toString() {
 		return toLogString();
 	}
