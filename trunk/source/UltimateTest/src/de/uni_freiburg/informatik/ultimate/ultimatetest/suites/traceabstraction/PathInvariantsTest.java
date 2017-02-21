@@ -112,14 +112,15 @@ public class PathInvariantsTest extends
 	 * 
 	 */
 	private static final String[] mSettings = {
-//		"automizer/pathInvariants/default.epf",
-//		"automizer/pathInvariants/defaultLbe.epf",
-//		"automizer/pathInvariants/pathInvariants.epf",
-//		"automizer/pathInvariants/pathInvariantsLbe.epf",
-		"automizer/pathInvariants/pathInvariants_LinearConstraints_NO_UnsatCores.epf",
+//		"automizer/pathInvariants/pathInvariants_LinearConstraints_NO_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_NO_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_AND_UnsatCores.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_Classical.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_UnsatCores.epf",
+		"automizer/pathInvariants/InvariantSynthesis_UnsatCores_LiveVars.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_UnsatCores_LiveVars_WP.epf",
+			
 	};
 	
 
