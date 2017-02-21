@@ -6,11 +6,11 @@ import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -55,7 +55,7 @@ public interface IRefinementStrategy<LETTER> {
 	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
 	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
 	 * {@link TraceChecker}.
-	 * 
+	 *
 	 * @return {@code true} iff there is another {@link TraceChecker} available and should be used
 	 */
 	boolean hasNextTraceChecker();
@@ -75,7 +75,7 @@ public interface IRefinementStrategy<LETTER> {
 	/**
 	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
 	 * strategy then decides whether it wants to and whether it can use another {@link IInterpolantGenerator}.
-	 * 
+	 *
 	 * @param perfectIpps
 	 *            perfect interpolant sequences constructed so far
 	 * @param imperfectIpps
@@ -113,7 +113,7 @@ public interface IRefinementStrategy<LETTER> {
 	/**
 	 * @return Predicate unifier.
 	 */
-	PredicateUnifier getPredicateUnifier();
+	IPredicateUnifier getPredicateUnifier();
 
 	/**
 	 * @return Object that encapsulates which exceptions are blacklisted.

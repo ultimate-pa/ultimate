@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
@@ -68,5 +68,5 @@ public interface IRefinementEngine<T> {
 	/**
 	 * @return Hoare triple checker.
 	 */
-	CachingHoareTripleChecker getHoareTripleChecker();
+	IHoareTripleChecker getHoareTripleChecker();
 }
