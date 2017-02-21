@@ -1235,9 +1235,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	}
 
 	public int getTotalNumberOfConjunctsInPattern(final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
-		int totalNumOfConjuncts = 1;
+		int totalNumOfConjuncts = 0;
 		for (final Collection<?> conjuncts : pattern) {
-			totalNumOfConjuncts = totalNumOfConjuncts * conjuncts.size();
+			totalNumOfConjuncts = totalNumOfConjuncts + conjuncts.size();
 		}
 
 		return totalNumOfConjuncts;
