@@ -53,20 +53,16 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class WalrusRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public WalrusRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+	public WalrusRefinementStrategy(final StrategyContext<LETTER> context, final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
-				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+		super(context, predicateUnifier, counterexample, abstraction, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord(), mCsToolkit.getAxioms())) {
+		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord(), mContext.getToolkit().getAxioms())) {
 			list.add(Track.MATHSAT_FPBP);
 		} else {
 			list.add(Track.CVC4_FPBP);

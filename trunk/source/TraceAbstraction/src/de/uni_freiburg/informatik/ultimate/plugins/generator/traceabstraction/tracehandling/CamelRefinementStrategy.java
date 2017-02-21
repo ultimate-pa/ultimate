@@ -53,14 +53,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class CamelRefinementStrategy<LETTER extends IIcfgTransition<?>> extends PenguinRefinementStrategy<LETTER> {
-	public CamelRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+	public CamelRefinementStrategy(final StrategyContext<LETTER> context, final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
-				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+		super(context, predicateUnifier, counterexample, abstraction, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override

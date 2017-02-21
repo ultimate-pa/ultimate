@@ -54,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+	public PenguinRefinementStrategy(final StrategyContext<LETTER> context,
+
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
-				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+		super(context, predicateUnifier, counterexample, abstraction, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override

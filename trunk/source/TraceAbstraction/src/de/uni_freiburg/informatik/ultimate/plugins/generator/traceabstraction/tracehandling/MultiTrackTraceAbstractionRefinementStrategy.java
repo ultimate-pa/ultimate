@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
@@ -105,16 +103,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
 
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
-	private final TaCheckAndRefinementPreferences mPrefs;
-	protected final CfgSmtToolkit mCsToolkit;
-	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	protected final StrategyContext<LETTER> mContext;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
-
-	// TODO Christian 2016-11-11: Matthias wants to get rid of this
-	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 
 	private final Iterator<Track> mInterpolationTechniques;
 
@@ -132,47 +123,30 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
 
 	/**
-	 * @param prefs
-	 *            Preferences. pending contexts
-	 * @param services
-	 *            Ultimate services
+	 * @param context
+	 *            context
 	 * @param predicateUnifier
 	 *            predicate unifier
 	 * @param counterexample
 	 *            counterexample trace
-	 * @param logger
-	 *            logger
-	 * @param cfgSmtToolkit
 	 * @param abstraction
 	 *            abstraction
-	 * @param taPrefsForInterpolantConsolidation
-	 *            temporary argument, should be removed
-	 * @param assertionOrderModulation
-	 *            assertion order modulation
 	 * @param iteration
 	 *            current CEGAR loop iteration
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
 	@SuppressWarnings("squid:S1699")
-	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
-			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+	public MultiTrackTraceAbstractionRefinementStrategy(final StrategyContext<LETTER> context,
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		mServices = services;
-		mLogger = logger;
-		mPrefs = prefs;
-		mCsToolkit = cfgSmtToolkit;
-		mAssertionOrderModulation = assertionOrderModulation;
+		mContext = context;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
 		mPredicateUnifier = predicateUnifier;
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
-		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		mNextTechnique = mInterpolationTechniques.next();
@@ -196,7 +170,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mPrevTcConstructor = mTcConstructor;
 		mTcConstructor = null;
 
-		mLogger.info("Switched to mode " + mNextTechnique);
+		mContext.getLogger().info("Switched to mode " + mNextTechnique);
 	}
 
 	@Override
@@ -254,8 +228,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
-			mInterpolantAutomatonBuilder =
-					new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample, allIpps, mAbstraction);
+			mInterpolantAutomatonBuilder = new MultiTrackInterpolantAutomatonBuilder<>(mContext.getServices(),
+					mCounterexample, allIpps, mAbstraction);
 		}
 		return mInterpolantAutomatonBuilder;
 	}
@@ -269,17 +243,19 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
 
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
-		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
+		final ManagedScript managedScript =
+				constructManagedScript(mContext.getServices(), mContext.getPrefs(), mNextTechnique, useTimeout);
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
+				mContext.getAssertionOrderModulation().reportAndGet(mCounterexample, interpolationTechnique);
 
 		mNextTechnique = null;
 
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					assertionOrder, interpolationTechnique, mIteration, mCegarLoopsBenchmark);
+			result = new TraceCheckerConstructor<>(mContext.getPrefs(), managedScript, mContext.getServices(),
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mCegarLoopsBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopsBenchmark);
@@ -395,7 +371,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		if (localTraceChecker instanceof InterpolatingTraceChecker) {
 			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
 
-			if (mPrefs.getUseInterpolantConsolidation()) {
+			if (mContext.getPrefs().getUseInterpolantConsolidation()) {
 				try {
 					return consolidateInterpolants(interpolatingTraceChecker);
 				} catch (final AutomataOperationCanceledException e) {
@@ -412,12 +388,12 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 */
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
-		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
+		final CfgSmtToolkit cfgSmtToolkit = mContext.getPrefs().getCfgSmtToolkit();
 		final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), cfgSmtToolkit,
-				cfgSmtToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier,
-				interpolatingTraceChecker, mTaPrefsForInterpolantConsolidation);
+				cfgSmtToolkit.getModifiableGlobalsTable(), mContext.getServices(), mContext.getLogger(),
+				mPredicateUnifier, interpolatingTraceChecker, mContext.getPrefsConsolidation());
 		// Add benchmark data of interpolant consolidation
 		mCegarLoopsBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		return interpConsoli;
@@ -430,6 +406,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return mPrefs.getExceptionBlacklist();
+		return mContext.getPrefs().getExceptionBlacklist();
 	}
 }

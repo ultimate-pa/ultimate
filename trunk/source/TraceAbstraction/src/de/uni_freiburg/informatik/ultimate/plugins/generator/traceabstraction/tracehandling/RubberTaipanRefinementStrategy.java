@@ -74,21 +74,20 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+	private final StrategyContext<LETTER> mContext;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
-	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 
 	private Mode mCurrentMode;
 
-	// if the first Z3 trace check was unsuccessful, we can skip it the second time
+	// if the first Z3 trace check was unsuccessful, we can skip it the second
+	// time
 	private boolean mZ3TraceCheckUnsuccessful;
 
-	// store if the trace has already been shown to be infeasible in a previous attempt
+	// store if the trace has already been shown to be infeasible in a previous
+	// attempt
 	private boolean mHasShownInfeasibilityBefore;
 
 	private TraceCheckerConstructor<LETTER> mTcConstructor;
@@ -123,18 +122,13 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 	 * @param cegarLoopBenchmark
 	 *            benchmark
 	 */
-	public RubberTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
+	public RubberTaipanRefinementStrategy(final StrategyContext<LETTER> context,
 			final PredicateUnifier predicateUnifier, final CegarAbsIntRunner<LETTER> absIntRunner,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
-		mServices = services;
-		mLogger = logger;
-		mPrefs = prefs;
+		mContext = context;
 		mPredicateUnifier = predicateUnifier;
 		mAbsIntRunner = absIntRunner;
-		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
 		mIteration = iteration;
@@ -239,8 +233,8 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 			mTcConstructor = null;
 		}
 
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Switched to InterpolantGenerator mode " + mCurrentMode);
+		if (mContext.getLogger().isInfoEnabled()) {
+			mContext.getLogger().info("Switched to InterpolantGenerator mode " + mCurrentMode);
 		}
 	}
 
@@ -285,13 +279,13 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 		case CVC4_IG:
 			if (perfectIpps.isEmpty()) {
 				// if we have only imperfect interpolants, we take the first two
-				mLogger.info("Using the first two imperfect interpolant sequences");
-				return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
+				mContext.getLogger().info("Using the first two imperfect interpolant sequences");
+				return new MultiTrackInterpolantAutomatonBuilder<>(mContext.getServices(), mCounterexample,
 						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction);
 			}
 			// if we have some perfect, we take one of those
-			mLogger.info("Using the first perfect interpolant sequence");
-			return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
+			mContext.getLogger().info("Using the first perfect interpolant sequence");
+			return new MultiTrackInterpolantAutomatonBuilder<>(mContext.getServices(), mCounterexample,
 					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
@@ -313,17 +307,18 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 		}
 
 		final ManagedScript managedScript =
-				constructManagedScript(mServices, mPrefs, scriptMode, useTimeout, mIteration);
+				constructManagedScript(mContext.getServices(), mContext.getPrefs(), scriptMode, useTimeout, mIteration);
 
 		final AssertCodeBlockOrder assertionOrder =
-				mAssertionOrderModulation.reportAndGet(mCounterexample, interpolationTechnique);
+				mContext.getAssertionOrderModulation().reportAndGet(mCounterexample, interpolationTechnique);
 
-		mLogger.info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder " + assertionOrder
-				+ " (IT: " + interpolationTechnique + ")");
+		mContext.getLogger().info("Using TraceChecker mode " + mCurrentMode + " with AssertCodeBlockOrder "
+				+ assertionOrder + " (IT: " + interpolationTechnique + ")");
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					assertionOrder, interpolationTechnique, mIteration, mCegarLoopBenchmark);
+			result = new TraceCheckerConstructor<>(mContext.getPrefs(), managedScript, mContext.getServices(),
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mCegarLoopBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);
@@ -345,7 +340,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 			modeHack = mCurrentMode;
 		}
 		if (modeHack != mCurrentMode) {
-			mLogger.warn("Poor windows users use " + modeHack + " instead of " + mCurrentMode);
+			mContext.getLogger().warn("Poor windows users use " + modeHack + " instead of " + mCurrentMode);
 		}
 		return modeHack;
 	}
