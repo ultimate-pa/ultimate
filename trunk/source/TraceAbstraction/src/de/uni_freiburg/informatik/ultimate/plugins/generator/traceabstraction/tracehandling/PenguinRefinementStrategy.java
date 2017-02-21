@@ -32,14 +32,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -54,14 +50,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class PenguinRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public PenguinRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+	public PenguinRefinementStrategy(final StrategyContext<LETTER> context,
+
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
-				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+		super(context, predicateUnifier, counterexample, abstraction, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override

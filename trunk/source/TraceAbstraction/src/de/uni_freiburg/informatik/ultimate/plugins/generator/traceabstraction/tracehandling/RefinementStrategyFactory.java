@@ -54,15 +54,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
-	private final IUltimateServiceProvider mServices;
-	private final TAPreferences mPrefsConsolidation;
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
-	private final ILogger mLogger;
 	private final IIcfg<?> mInitialIcfg;
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
+	private final StrategyContext<LETTER> mContext;
 
 	/**
 	 * @param logger
@@ -86,12 +83,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
 			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory) {
-		mServices = services;
+		mContext = new StrategyContext<>(logger, prefs, taPrefsForInterpolantConsolidation, services,
+				initialIcfg.getCfgSmtToolkit(), new AssertionOrderModulation<>());
 		mStorage = storage;
-		mPrefsConsolidation = taPrefsForInterpolantConsolidation;
-		mPrefs = prefs;
 		mAbsIntRunner = absIntRunner;
-		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation<>();
@@ -113,43 +108,38 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	public IRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
 			final CegarLoopStatisticsGenerator benchmark) {
-		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices,
-				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory, mInitialIcfg.getSymboltable(),
-				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
+		final PredicateUnifier predicateUnifier = new PredicateUnifier(mContext.getServices(),
+				mContext.getPrefs().getCfgSmtToolkit().getManagedScript(), mPredicateFactory,
+				mInitialIcfg.getSymboltable(), mContext.getPrefsConsolidation().getSimplificationTechnique(),
+				mContext.getPrefsConsolidation().getXnfConversionTechnique());
 
-		switch (mPrefs.getRefinementStrategy()) {
+		switch (mContext.getPrefs().getRefinementStrategy()) {
 		case FIXED_PREFERENCES:
-			final ManagedScript managedScript =
-					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
-			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
+			final ManagedScript managedScript = setupManagedScriptFromPreferences(mContext.getServices(), mInitialIcfg,
+					mStorage, iteration, mContext.getPrefs());
+			return new FixedTraceAbstractionRefinementStrategy<>(mContext, managedScript, predicateUnifier,
+					counterexample, abstraction, iteration, benchmark);
 		case PENGUIN:
-			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+			return new PenguinRefinementStrategy<>(mContext, predicateUnifier, counterexample, abstraction, iteration,
+					benchmark);
 		case CAMEL:
-			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+			return new CamelRefinementStrategy<>(mContext, predicateUnifier, counterexample, abstraction, iteration,
+					benchmark);
 		case WALRUS:
-			return new WalrusRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+			return new WalrusRefinementStrategy<>(mContext, predicateUnifier, counterexample, abstraction, iteration,
+					benchmark);
 		case WOLF:
-			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+			return new WolfRefinementStrategy<>(mContext, predicateUnifier, counterexample, abstraction, iteration,
+					benchmark);
 		case RUBBER_TAIPAN:
-			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+			return new RubberTaipanRefinementStrategy<>(mContext, predicateUnifier, mAbsIntRunner, counterexample,
+					abstraction, iteration, benchmark);
 		case TAIPAN:
-			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+			return new TaipanRefinementStrategy<>(mContext, predicateUnifier, mAbsIntRunner, counterexample,
+					abstraction, iteration, benchmark);
 		default:
 			throw new IllegalArgumentException(
-					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
+					"Unknown refinement strategy specified: " + mContext.getPrefs().getRefinementStrategy());
 		}
 	}
 

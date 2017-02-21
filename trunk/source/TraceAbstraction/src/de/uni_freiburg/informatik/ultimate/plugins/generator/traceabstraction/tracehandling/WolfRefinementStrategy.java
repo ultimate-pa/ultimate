@@ -32,14 +32,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -53,20 +49,16 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
-	public WolfRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
-			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+	public WolfRefinementStrategy(final StrategyContext<LETTER> context, final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
-		super(logger, prefs, services, cfgSmtToolkit, predicateUnifier, assertionOrderModulation, counterexample,
-				abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+		super(context, predicateUnifier, counterexample, abstraction, iteration, cegarLoopBenchmarks);
 	}
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord(), mCsToolkit.getAxioms())) {
+		if (RefinementStrategyUtils.containsFloats(mCounterexample.getWord(), mContext.getToolkit().getAxioms())) {
 			list.add(Track.MATHSAT_FP);
 		} else {
 			list.add(Track.CVC4_FP);
