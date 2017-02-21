@@ -207,7 +207,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final boolean useNonlinearConstraints, final boolean useVarsFromUnsatCore, final boolean useLiveVariables,
+			final boolean useNonlinearConstraints, final boolean useUnsatCores, final boolean useLiveVariables,
 			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants,
 			final Settings solverSettings, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -267,7 +267,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
 		Map<IcfgLocation, IPredicate> invariants =
-				generateInvariantsForPathProgram(useVarsFromUnsatCore, icfg, lbePathProgram, simplificationTechnique,
+				generateInvariantsForPathProgram(useUnsatCores, icfg, lbePathProgram, simplificationTechnique,
 						xnfConversionTechnique, solverSettings, useNonlinearConstraints);
 		if (invariants != null) {
 			if (APPLY_LARGE_BLOCK_ENCODING) {
@@ -671,7 +671,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return errorLocs.iterator().next();
 	}
 
-	private Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final boolean useVarsFromUnsatCore,
+	private Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final boolean useUnsatCores,
 			final IIcfg<?> icfg, final IIcfg<IcfgLocation> pathProgram,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Settings solverSettings, final boolean useNonlinearConstraints) {
@@ -710,16 +710,21 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
 			}
 		}
+		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = null;
+		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
+		
+		if (useUnsatCores) {
+			// Compute under-/overapproximation only if we use unsat cores during invariant synthesis
+			final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
+					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
+			final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
+					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
 
-		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
-				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
-		final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
-				mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
-
-		final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox =
-				convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
-		final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox =
-				convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+			loc2underApprox =
+					convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+			loc2overApprox =
+					convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+		}
 		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
 		if (mUseWeakestPrecondition) {
 			pathprogramLocs2Predicates.putAll(loc2overApprox);
@@ -731,7 +736,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(useVarsFromUnsatCore, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
+				getStrategy(useUnsatCores, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
@@ -747,7 +752,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 		}
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useVarsFromUnsatCore,
+				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useUnsatCores,
 				solverSettings, simplificationTechnique, xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(),
 				strategy, loc2underApprox, loc2overApprox);
 
@@ -756,7 +761,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore,
+				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useUnsatCores,
 				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
 		if (DEBUG_OUTPUT_I) {
