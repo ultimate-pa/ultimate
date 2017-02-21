@@ -134,8 +134,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 			Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStats) {
 		mProgramSize = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
 		
-		mTreeSizeSumOfNormalConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeNormalConstraints);
-		mTreeSizeSumOfApproxConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.DAGTreesizeApproxConstraints);
+		mTreeSizeSumOfNormalConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints);
+		mTreeSizeSumOfApproxConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints);
 		
 		mMotzkinTransformationsForNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints);
 		mMotzkinTransformationsForApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints);

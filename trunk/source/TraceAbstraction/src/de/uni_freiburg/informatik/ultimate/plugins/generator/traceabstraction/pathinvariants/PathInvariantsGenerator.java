@@ -158,6 +158,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
 
+	private static final boolean DEBUG_OUTPUT_GENERALLY_ALLOWED = true;
+	// DEBUG_OUTPUT_I is used for status updates, e.g. which part of invariant synthesis is active, what is the sat-result of the constraints
+	private static boolean DEBUG_OUTPUT_I = true;
+	// DEBUG_OUTPUT_II is used for output with higher time complexity, like size of constraints
+	private static boolean DEBUG_OUTPUT_II = true;
+
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
 	private final boolean mUseLiveVariables;
@@ -219,8 +225,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
-
-		mLogger.info("Current run: " + run);
+		if (!DEBUG_OUTPUT_GENERALLY_ALLOWED) {
+			DEBUG_OUTPUT_I = false;
+			DEBUG_OUTPUT_II = false;
+		}
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("Current run: " + run);
+		}
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
 		final IIcfg<IcfgLocation> pathProgram =
@@ -269,16 +280,22 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram =
 						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-								.collect(Collectors.toList()).get(0);
+						.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
-				mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
+				if (DEBUG_OUTPUT_I) {
+					mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
+				}
 			}
-			mLogger.info("[PathInvariants] Invariants found and " + "processed.");
-			mLogger.info("Got a Invariant map of length " + mInterpolants.length);
+			if (DEBUG_OUTPUT_I) {
+				mLogger.info("Invariants found and " + "processed.");
+				mLogger.info("Got a Invariant map of length " + mInterpolants.length);
+			}
 			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		} else {
 			mInterpolants = null;
-			mLogger.info("[PathInvariants] No invariants found.");
+			if (DEBUG_OUTPUT_I) {
+				mLogger.info("No invariants found.");
+			}
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
@@ -313,9 +330,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 		}
 		final Set<IcfgLocation> inputIcfgLocations = extractAllIcfgLocations(inputIcfg);
-		mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
-		mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
-		mLogger.info(resultInvariantMapping.size() - lbeInvariants.size() + " invariants obtained by interpolation");
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
+			mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
+			mLogger.info(resultInvariantMapping.size() - lbeInvariants.size() + " invariants obtained by interpolation");
+		}
 		int numberSpInvariants = 0;
 		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
 		for (final IcfgLocation loc : inputIcfgLocations) {
@@ -334,7 +353,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				inputIcfgLocationsWithoutInvariants.add(some);
 			}
 		}
-		mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
+		}
 		return resultInvariantMapping;
 	}
 
@@ -443,7 +464,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final IcfgEdge edge = currentLoc.getOutgoingEdges().get(0);
 				@SuppressWarnings("unchecked")
 				final NestedRun<T, IcfgLocation> suffix =
-						new NestedRun<>(edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
+				new NestedRun<>(edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
 				run = run.concatenate(suffix);
 				currentLoc = edge.getTarget();
 				if (goalLocs.contains(currentLoc)) {
@@ -484,14 +505,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES,
-				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
 	}
 
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
-			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-					final Set<IProgramVar> allProgramVariables,
-					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
+			final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
@@ -651,128 +671,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return errorLocs.iterator().next();
 	}
 
-	//
-	// private final Map<IcfgLocation, IPredicate> generatePathInvariants(final boolean useVarsFromUnsatCore,
-	// final IIcfg<?> icfg, final SimplificationTechnique simplificationTechnique,
-	// final XnfConversionTechnique xnfConversionTechnique, final Settings solverSettings,
-	// final boolean useNonlinerConstraints) {
-	// mLogger.info("Started with a run of length " + mRun.getLength());
-	//
-	// // Project path to CFG
-	// final int len = mRun.getLength();
-	// // Use LinkedHashSet to iterate in insertion-order afterwards
-	// final LinkedHashSet<IcfgLocation> locations = new LinkedHashSet<>(len);
-	// // final Map<IcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
-	// final LinkedHashSet<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
-	// // final Set<CodeBlock> transitionsForAI = new LinkedHashSet<>(len - 1);
-	// IcfgLocation previousLocation = null;
-	// // The location where the nestedRun starts
-	// final IcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
-	// // The location where the nestedRun ends (i.e. the error location)
-	// final IcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len - 1)).getProgramPoint();
-	//
-	// UnmodifiableTransFormula[] weakestPreconditionOfLastTwoTransitions = null;
-	// for (int i = 0; i < len; i++) {
-	// final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
-	// final IcfgLocation currentLocation = pred.getProgramPoint();
-	//
-	// // IcfgLocation location = locationsForProgramPoint.get(programPoint);
-	// // if (location == null) {
-	// // location = new IcfgLocation(programPoint.getDebugIdentifier(), programPoint.getProcedure(), (Payload)
-	// // programPoint.getPayload());
-	// // locationsForProgramPoint.put(programPoint, location);
-	// // }
-	//
-	// locations.add(currentLocation);
-	//
-	// if (i > 0) {
-	// if (!mRun.getWord().isInternalPosition(i - 1)) {
-	// throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
-	// }
-	// // Add codeblock to transitions needed for live variable analysis
-	// // transitionsForAI.add((CodeBlock) mRun.getSymbol(i-1));
-	//
-	// final UnmodifiableTransFormula transFormula =
-	// ((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
-	// // transitions.add(new Transition(transFormula, locations.get(i - 1), location));
-	// transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
-	// transFormula));
-	// if (USE_WP_FOR_LAST_2_TRANSITIONS && i == len - 1) {
-	// final IPredicate wpFor1stTransition = mPredicateUnifier.getOrConstructPredicate(
-	// mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
-	// final IPredicate wpFor2ndTransition =
-	// mPredicateUnifier.getOrConstructPredicate(mPredicateTransformer.weakestPrecondition(
-	// wpFor1stTransition, ((IInternalAction) mRun.getSymbol(i - 2)).getTransformula()));
-	// // if (mPredicateUnifier.getTruePredicate().equals(wpFor2ndTransition)) {
-	// //
-	// // } else {
-	// weakestPreconditionOfLastTwoTransitions = new UnmodifiableTransFormula[2];
-	// weakestPreconditionOfLastTwoTransitions[0] =
-	// TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor1stTransition,
-	// icfg.getCfgSmtToolkit().getManagedScript());
-	// weakestPreconditionOfLastTwoTransitions[1] =
-	// TransFormulaBuilder.constructTransFormulaFromPredicate(wpFor2ndTransition,
-	// icfg.getCfgSmtToolkit().getManagedScript());
-	//
-	// // transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-	// // currentLocation.getPayload(), wpAsTransformula));
-	// mLogger.info("wp computed: " + weakestPreconditionOfLastTwoTransitions);
-	// // }
-	// }
-	// }
-	// previousLocation = currentLocation;
-	// }
-	//
-	// // final ControlFlowGraph cfg =
-	// // new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
-	// mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
-	// + " transitions.");
-	// Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables = null;
-	//
-	// if (USE_LIVE_VARIABLES) {
-	// // // AI Module
-	// Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = generateLiveVariables(icfg, transitions);
-	// Map<IcfgLocation, List<IcfgLocation>> pathprogramLocs2OriginalLocs =
-	// pathprogramLocs2LiveVars.keySet().stream().collect(
-	// Collectors.toMap(e -> e, e -> locations.stream().filter(loc ->
-	// e.toString().endsWith(loc.toString())).collect(Collectors.toList())));
-	// locs2LiveVariables = pathprogramLocs2LiveVars.entrySet().stream().collect(
-	// Collectors.toMap(entry -> pathprogramLocs2OriginalLocs.get(entry.getKey()).get(0), entry -> entry.getValue()));
-	// // // End AI Module
-	// }
-	//
-	// IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-	// mPredicateUnifier, icfg.getCfgSmtToolkit(),
-	// useNonlinerConstraints, useVarsFromUnsatCore, USE_LIVE_VARIABLES, locs2LiveVariables, solverSettings,
-	// simplificationTechnique,
-	// xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms());
-	//
-	// // Generate invariants
-	// final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices);
-	// final Map<IcfgLocation, IPredicate> invariants;
-	//
-	// // invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
-	// // useVarsFromUnsatCore, false, null);
-	// final List<IcfgLocation> locationsAsList = new ArrayList<>(locations.size());
-	// locationsAsList.addAll(locations);
-	// final List<IcfgInternalAction> transitionsAsList = new ArrayList<>(transitions.size());
-	// transitionsAsList.addAll(transitions);
-	//
-	//
-	// invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-	// mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore, false,
-	// null, weakestPreconditionOfLastTwoTransitions, USE_WP_FOR_LAST_2_TRANSITIONS, ADD_WP_TO_EACH_CONJUNCT);
-	//
-	// mLogger.info("[PathInvariants] Generated invariant map.");
-	// return invariants;
-	// }
-	//
-
 	private Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final boolean useVarsFromUnsatCore,
 			final IIcfg<?> icfg, final IIcfg<IcfgLocation> pathProgram,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Settings solverSettings, final boolean useNonlinearConstraints) {
-		mLogger.info("Started with a run of length " + mRun.getLength());
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("Started with a run of length " + mRun.getLength());
+		}
 
 		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
 		final IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
@@ -782,9 +687,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Get locations, transitions and program variables from the path program
 		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList,
 				allProgramVars);
-
-		mLogger.info("[PathInvariants] Built projected CFG, " + locationsAsList.size() + " states and "
-				+ transitionsAsList.size() + " transitions.");
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and "
+					+ transitionsAsList.size() + " transitions.");
+		}
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
@@ -800,7 +706,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
-			mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
+			if (DEBUG_OUTPUT_II) {
+				mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
+			}
 		}
 
 		final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
@@ -844,15 +752,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				strategy, loc2underApprox, loc2overApprox);
 
 		// Generate invariants
-		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
+		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats, DEBUG_OUTPUT_GENERALLY_ALLOWED);
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useVarsFromUnsatCore,
-				allProgramVars, false, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
+				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
-
-		mLogger.info("[PathInvariants] Generated invariant map.");
+		if (DEBUG_OUTPUT_I) {
+			mLogger.info("Generated invariant map.");
+		}
 
 		return invariants;
 	}
@@ -950,14 +859,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return
 	 */
 	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
+	applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
 	}
 
 	private static Set<? extends IcfgEdge>
-			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
+	extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;
