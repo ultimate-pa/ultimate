@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -110,14 +111,14 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            benchmark
 	 * @return refinement strategy
 	 */
-	public IRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
-			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
-			final CegarLoopStatisticsGenerator benchmark) {
+	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final int iteration, final CegarLoopStatisticsGenerator benchmark) {
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices,
 				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory, mInitialIcfg.getSymboltable(),
 				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
 
-		switch (mPrefs.getRefinementStrategy()) {
+		switch (strategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
