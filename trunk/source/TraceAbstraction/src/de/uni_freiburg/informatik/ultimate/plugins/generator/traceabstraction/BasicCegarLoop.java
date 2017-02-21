@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
@@ -90,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
@@ -312,7 +312,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw tce;
 		}
 
-		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementEngine.getCounterexampleFeasibility();
 
 		if (feasibility != LBool.UNSAT) {
@@ -331,10 +331,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer<LETTER> a = new FlowSensitiveFaultLocalizer<>(
-						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg,
-						mServices, mCsToolkit, mPredicateFactory, mCsToolkit.getModifiableGlobalsTable(),
-						predicateUnifier, mDoFaultLocalizationNonFlowSensitive, mDoFaultLocalizationFlowSensitive,
-						mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getSymboltable());
+						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
+						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
+						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
+						mIcfgContainer.getSymboltable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 		}
@@ -360,12 +360,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final PredicateUnifier predUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
+		final IPredicateUnifier predUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
 	}
 
 	private boolean refineWithGivenAutomaton(final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier)
+			final IPredicateUnifier predicateUnifier)
 			throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 
@@ -496,7 +496,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private INestedWordAutomatonSimple<LETTER, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
 		final AbstractInterpolantAutomaton<LETTER> result;
 		switch (enhanceMode) {
@@ -522,7 +522,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private NondeterministicInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancementEager(
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;

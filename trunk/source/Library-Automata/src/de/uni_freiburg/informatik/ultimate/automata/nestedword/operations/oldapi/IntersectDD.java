@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -43,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
+	private final IIntersectionStateFactory<STATE> mStateFactory;
+	
 	/**
 	 * Short constructor.
 	 * 
@@ -57,8 +58,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> IntersectDD(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public IntersectDD(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		this(services, stateFactory, fstNwa, sndNwa, false);
@@ -80,12 +80,18 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>> IntersectDD(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public IntersectDD(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
-		super(services, stateFactory, fstNwa, sndNwa, false, minimizeResult);
+		super(services, stateFactory, fstNwa, sndNwa, minimizeResult);
+		mStateFactory = stateFactory;
+		
+		run();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
@@ -96,8 +102,23 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("Correctness of result was not tested");
+			mLogger.warn("No result check for " + operationName() + " available yet.");
 		}
 		return true;
+	}
+	
+	@Override
+	protected STATE intersect(final STATE fst, final STATE snd, final int track) {
+		return mStateFactory.intersection(fst, snd);
+	}
+	
+	@Override
+	protected int getSuccTrack(final int stateTrack, final STATE fstState, final STATE sndState) {
+		return 1;
+	}
+	
+	@Override
+	protected boolean isFinal(final STATE fst, final STATE snd) {
+		return mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);
 	}
 }

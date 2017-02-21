@@ -77,17 +77,17 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 
 	@Override
 	public IntervalDomainState<IBoogieVar> createFreshState() {
-		return new IntervalDomainState<>(mLogger, IBoogieVar.class);
+		return createTopState();
 	}
 
 	@Override
 	public IntervalDomainState<IBoogieVar> createTopState() {
-		return new IntervalDomainState<>(mLogger, false, IBoogieVar.class);
+		return new IntervalDomainState<>(mLogger, false);
 	}
 
 	@Override
 	public IntervalDomainState<IBoogieVar> createBottomState() {
-		return new IntervalDomainState<>(mLogger, true, IBoogieVar.class);
+		return new IntervalDomainState<>(mLogger, true);
 	}
 
 	@Override

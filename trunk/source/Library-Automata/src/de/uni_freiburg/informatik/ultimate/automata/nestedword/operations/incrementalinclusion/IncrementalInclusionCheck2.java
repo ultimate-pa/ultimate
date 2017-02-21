@@ -42,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * 
@@ -56,13 +54,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  */
 
-public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+public class IncrementalInclusionCheck2<LETTER, STATE>
+		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
+		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	public HashMap<STATE, HashSet<NodeData<LETTER, STATE>>> completeTree, currentTree, coveredNodes;
 	NestedRun<LETTER, STATE> result;
@@ -144,7 +142,6 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		super(services, a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
-		localStateFactory = sf;
 		mLogger.info(startMessage());
 		local_mA = a;
 		local_mB = new ArrayList<>();
@@ -162,7 +159,6 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		mLogger.info(exitMessage());
 	}
 
-	@SuppressWarnings("unchecked")
 	public void run() throws AutomataLibraryException {
 		/*
 		 * try { local_mA = (new Determinize<LETTER,STATE>
@@ -251,7 +247,6 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	private HashMap<STATE, HashSet<NodeData<LETTER, STATE>>> expand(final LETTER alp) {
 		final HashMap<STATE, HashSet<NodeData<LETTER, STATE>>> nextNodes = new HashMap<>();
 		HashMap<INestedWordAutomatonSimple<LETTER, STATE>, HashSet<STATE>> bStates = null;
-		;
 		NodeData<LETTER, STATE> tempBNodeData = null;
 		int tempHash;
 		if (alp == null) {
@@ -290,7 +285,6 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 					}
 					for (final OutgoingInternalTransition<LETTER, STATE> ATransition : local_mA
 							.internalSuccessors(state, alp)) {
-						@SuppressWarnings("unchecked")
 						final ArrayList<STATE> newStateSequence =
 								(ArrayList<STATE>) currentNodeSet.word.getStateSequence().clone();
 						newStateSequence.add(ATransition.getSucc());
@@ -501,10 +495,10 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		final boolean checkResult = compareInclusionCheckResult(localServiceProvider,
-				(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA, local_mB2,
-				result);
+	public boolean checkResult(final IIncrementalInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		final boolean checkResult = compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA,
+				local_mB2, result);
 		return checkResult;
 		// if(((result==null)&&(new IncrementalInclusionCheck2<LETTER,
 		// STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2).getResult()==null))||((result!=null)&&(new
@@ -527,12 +521,12 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
-		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
-		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);
+		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			ivd.addSubtrahend(bi);

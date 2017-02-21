@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
@@ -55,18 +56,20 @@ public class HybridAutomaton {
 	private final Set<String> mLabels;
 	private final Map<Integer, Location> mLocations;
 	private final Map<String, Integer> mNametoId;
+	// group -> init
+	private final Map<Integer, Location> mGroupToInitialLocation;
 	private final Location mInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
-	protected HybridAutomaton(final ComponentType automaton, final ILogger logger,
+	protected HybridAutomaton(final String nameInSystem, final ComponentType automaton, final ILogger logger,
 			final SpaceExPreferenceManager preferenceManager) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 					"The input automaton must be a hybrid automaton, not a system template.");
 		}
-		mName = automaton.getId();
+		mName = nameInSystem.isEmpty() ? automaton.getId() : nameInSystem;
 		mLocations = new HashMap<>();
 		mTransitions = new ArrayList<>();
 		mGlobalParameters = new HashSet<>();
@@ -77,6 +80,7 @@ public class HybridAutomaton {
 		mLogger = logger;
 		mPreferenceManager = preferenceManager;
 		mNametoId = new HashMap<>();
+		mGroupToInitialLocation = new HashMap<>();
 		
 		for (final ParamType param : automaton.getParam()) {
 			HybridSystemHelper.addParameter(param, mLocalParameters, mGlobalParameters, mLocalConstants,
@@ -91,8 +95,13 @@ public class HybridAutomaton {
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
-		// if initial location is simply the first location.
+		// init location default
 		mInitialLocation = mLocations.values().iterator().next();
+		// init locations for pref groups
+		final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceManager.getPreferenceGroups();
+		prefGroups.forEach((id, group) -> {
+			mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
+		});
 	}
 	
 	protected HybridAutomaton(final String name, final Map<Integer, Location> locations, final Location initialLocation,
@@ -101,6 +110,7 @@ public class HybridAutomaton {
 			final ILogger logger) {
 		mName = name;
 		mLocations = (locations != null) ? locations : Collections.emptyMap();
+		mGroupToInitialLocation = Collections.emptyMap();
 		mInitialLocation = initialLocation;
 		mTransitions = (transitions != null) ? transitions : Collections.emptyList();
 		mGlobalParameters = (globalParameters != null) ? globalParameters : Collections.emptySet();
@@ -112,6 +122,19 @@ public class HybridAutomaton {
 		mNametoId = new HashMap<>();
 		for (final Location location : mLocations.values()) {
 			mNametoId.put(location.getName(), location.getId());
+		}
+	}
+	
+	private Location getInitialLocationFromGroup(final Map<String, String> initLocs) {
+		if (initLocs == null) {
+			return mInitialLocation;
+		}
+		final String initLocName = initLocs.get(mName);
+		if (mNametoId.containsKey(initLocName)) {
+			final int nameToId = mNametoId.get(initLocName);
+			return mLocations.get(nameToId);
+		} else {
+			return mInitialLocation;
 		}
 	}
 	
@@ -301,13 +324,29 @@ public class HybridAutomaton {
 				.append("constants: ").append(mGlobalConstants.toString() + mLocalConstants.toString() + "\n")
 				.append(indent).append("labels: ").append(mLabels.toString() + "\n").append(indent)
 				.append("locations: ").append(mLocations.toString() + "\n").append(indent).append("initial Location: ")
-				.append(mInitialLocation.toString() + "\n").append(indent).append("transitions: ")
+				.append(mGroupToInitialLocation.toString() + "\n").append(indent).append("transitions: ")
 				.append(mTransitions.toString());
 		return sb.toString();
 	}
 	
 	public Location getInitialLocation() {
-		return mInitialLocation;
+		if (mGroupToInitialLocation.size() == 1) {
+			return mGroupToInitialLocation.values().iterator().next();
+		} else {
+			return mInitialLocation;
+		}
+	}
+	
+	public Location getInitialLocationForGroup(final Integer groupID) {
+		if (groupID == null) {
+			return mInitialLocation;
+		}
+		if (mGroupToInitialLocation.containsKey(groupID)) {
+			return mGroupToInitialLocation.get(groupID);
+		} else {
+			mLogger.info("No initial location for group id: " + groupID + " returning default loc");
+			return mInitialLocation;
+		}
 	}
 	
 	public Map<String, Integer> getNametoId() {

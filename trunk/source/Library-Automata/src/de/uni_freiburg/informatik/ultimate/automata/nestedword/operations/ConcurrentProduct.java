@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Product of two automata that is similar to the synchronization operator
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProd
  * @param <STATE>
  *            Content
  */
-public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	

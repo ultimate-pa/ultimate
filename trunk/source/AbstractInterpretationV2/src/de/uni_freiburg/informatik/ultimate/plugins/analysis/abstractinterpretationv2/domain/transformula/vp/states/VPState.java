@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPStateOrTfState<EqNode, IProgramVarOrConst>
 		implements IAbstractState<VPState<ACTION>, IProgramVarOrConst> {
-	
+
 	private static final String TERM_FUNC_NAME_AND = "and";
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
@@ -238,7 +238,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public boolean isEqualTo(final VPState<ACTION> other) {
-		
+
 		if (!mVars.equals(other.mVars)) {
 			return false;
 		}
@@ -306,7 +306,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	private Term constructTerm() {
-		
+
 		mScript.lock(this);
 		final Term trueTerm = mScript.term(this, TERM_TRUE);
 
@@ -448,11 +448,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		mPreAnalysis.getBenchmark().stop(VPSFO.vpStateEqualsClock);
 		return false;
-	}
-
-	@Override
-	public Class<IProgramVarOrConst> getVariablesType() {
-		return IProgramVarOrConst.class;
 	}
 
 	/**

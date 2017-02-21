@@ -67,17 +67,17 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 
 	@Override
 	public SignDomainState<IBoogieVar> createFreshState() {
-		return new SignDomainState<>(mLogger, IBoogieVar.class);
+		return createTopState();
 	}
 
 	@Override
 	public SignDomainState<IBoogieVar> createTopState() {
-		throw new UnsupportedOperationException("Not implemented: createTopState");
+		return new SignDomainState<>(mLogger, false);
 	}
 
 	@Override
 	public SignDomainState<IBoogieVar> createBottomState() {
-		throw new UnsupportedOperationException("Not implemented: createBottomState");
+		return new SignDomainState<>(mLogger, true);
 	}
 
 	@Override

@@ -1165,11 +1165,18 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final StringBuilder realsLog = new StringBuilder("reals: {");
 		int reals = 0;
 		int ints = 0;
+		int top = 0;
+		int bot = 0;
 		String curDelimiter = "";
 		for (final Entry<IBoogieVar, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			final IBoogieVar varName = entry.getKey();
 			final OctInterval interval = OctInterval.fromMatrix(mNumericAbstraction, entry.getValue());
-
+			if (interval.isTop()) {
+				top++;
+				continue;
+			} else if (interval.isBottom()) {
+				bot++;
+			}
 			final StringBuilder curLog;
 			if (mNumericNonIntVars.contains(varName)) {
 				curLog = realsLog;
@@ -1235,9 +1242,16 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		if (reals > 0) {
 			log.append(realsLog).append("}, ");
 		}
+		if (top > 0) {
+			log.append(top).append(" vars top, ");
+		}
+		if (bot > 0) {
+			log.append(bot).append(" vars bot, ");
+		}
 		if (rels > 0) {
 			log.append(relLog).append("}, ");
 		}
+
 		if (!mBooleanAbstraction.isEmpty()) {
 			log.append("bools: ").append(mBooleanAbstraction);
 		}
@@ -1245,10 +1259,4 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 		return log.toString();
 	}
-
-	@Override
-	public Class<IBoogieVar> getVariablesType() {
-		return IBoogieVar.class;
-	}
-
 }

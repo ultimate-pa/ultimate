@@ -51,40 +51,11 @@ public class CongruenceDomainState<VARDECL>
 	 *
 	 * @param logger
 	 *            The current logger object in the current context.
-	 */
-	protected CongruenceDomainState(final ILogger logger, final Class<VARDECL> variablesType) {
-		super(logger, variablesType);
-	}
-
-	/**
-	 * Default constructor of an {@link CongruenceDomainState}.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
 	 * @param isBottom
 	 *            If <code>true</code> the created state corresponds to &bot;, &top; otherwise.
 	 */
-	protected CongruenceDomainState(final ILogger logger, final boolean isBottom, final Class<VARDECL> variablesType) {
-		super(logger, isBottom, variablesType);
-	}
-
-	/**
-	 * Creates a new instance of {@link CongruenceDomainState} with given logger, variables map, values map and boolean
-	 * values map.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
-	 * @param variablesMap
-	 *            The map with all variable identifiers and their types.
-	 * @param valuesMap
-	 *            The values of all variables.
-	 * @param booleanValuesMap
-	 *            The values of all boolean variables.
-	 */
-	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
-			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final Class<VARDECL> variablesType) {
-		super(logger, variablesMap, valuesMap, booleanValuesMap, variablesType);
+	protected CongruenceDomainState(final ILogger logger, final boolean isBottom) {
+		super(logger, isBottom);
 	}
 
 	/**
@@ -104,20 +75,21 @@ public class CongruenceDomainState<VARDECL>
 	 */
 	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
 			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final boolean isBottom, final Class<VARDECL> variablesType) {
-		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom, variablesType);
+			final boolean isBottom) {
+		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
 	protected CongruenceDomainState<VARDECL> createCopy() {
 		return new CongruenceDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), isBottom(), mVariablesType);
+				new HashMap<>(getVar2ValueBoolean()), isBottom());
 	}
 
 	@Override
 	protected CongruenceDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, CongruenceDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap) {
-		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom(), mVariablesType);
+			final Map<VARDECL, CongruenceDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
+			final boolean isBottom) {
+		return new CongruenceDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override

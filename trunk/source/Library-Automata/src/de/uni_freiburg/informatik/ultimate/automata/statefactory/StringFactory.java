@@ -37,6 +37,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.StateWithRankInfo;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -49,12 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class StringFactory
-		implements IMergeStateFactory<String>, ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
+		implements ISenwaStateFactory<String>, IBlackWhiteStateFactory<String>,
 		IFinitePrefix2PetriNetStateFactory<String>, IBuchiComplementDeterministicStateFactory<String>,
-		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementFkvStateFactory<String>,
-		IBuchiComplementSvwStateFactory<String>, IPetriNet2FiniteAutomatonStateFactory<String>,
-		ISinkStateFactory<String>, IDeterminizeStateFactory<String>, IBuchiIntersectStateFactory<String>,
-		IIntersectionStateFactory<String>, IEmptyStackStateFactory<String> {
+		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
+		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
+		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String> {
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	/*
@@ -302,7 +304,14 @@ public class StringFactory
 		return builder.append(CLOSE_BRACE).toString();
 	}
 	
-	public String createDoubleDeckerContent(final String downState, final String upState) {
+	/**
+	 * @param downState
+	 *            Down state.
+	 * @param upState
+	 *            up state
+	 * @return double decker content
+	 */
+	public static String createDoubleDeckerContent(final String downState, final String upState) {
 		return '<' + downState + COMMA + upState + '>';
 	}
 	

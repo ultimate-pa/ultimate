@@ -35,18 +35,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.TimeoutFlag;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Calls another minimization procedure and interrupts it after a certain time.<br>
@@ -62,6 +58,9 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  *            state type
  */
 public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+	private static final String THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE =
+			"The result recognizes less words than before.";
+	
 	/**
 	 * Default timeout: 1 second.
 	 */
@@ -81,8 +80,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaOverapproximation(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IMinimizationStateFactory<STATE> & INwaInclusionStateFactory<STATE>> MinimizeNwaOverapproximation(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, DEFAULT_TIMEOUT);
 	}
@@ -101,8 +100,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaOverapproximation(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IMinimizationStateFactory<STATE> & INwaInclusionStateFactory<STATE>> MinimizeNwaOverapproximation(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final int time)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, time, Collections.emptyList());
@@ -128,8 +127,8 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaOverapproximation(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IMinimizationStateFactory<STATE> & INwaInclusionStateFactory<STATE>> MinimizeNwaOverapproximation(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapOldState2newState, final int time,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
@@ -149,16 +148,13 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
-		boolean correct;
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		correct = new IsIncluded<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-				mOperand, getResult()).getResult();
+		final boolean correct = new IsIncluded<>(mServices, stateFactory, mOperand, getResult()).getResult();
 		assert correct;
 		
 		if (mLogger.isInfoEnabled()) {
@@ -166,16 +162,16 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		}
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
-					"The result recognizes less words than before.", mOperand);
+					THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE, mOperand);
+			return new Pair<>(correct, THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE);
 		}
-		return correct;
+		return new Pair<>(correct, null);
 	}
 	
-	private <FACTORY extends IDeterminizeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			void constructResult(final boolean wasInterrrupted,
-					final INestedWordAutomaton<LETTER, STATE> minimizerResult,
-					final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
-					final FACTORY stateFactoryIntersect) throws AutomataOperationCanceledException {
+	private void constructResult(final boolean wasInterrrupted,
+			final INestedWordAutomaton<LETTER, STATE> minimizerResult,
+			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
+			final INwaInclusionStateFactory<STATE> stateFactoryIntersect) throws AutomataOperationCanceledException {
 		if (!wasInterrrupted || forbiddenLanguages.isEmpty() || mOperand.size() == minimizerResult.size()) {
 			// no special handling necessary
 			directResultConstruction(minimizerResult);
@@ -190,11 +186,10 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * of the result with each of the forbidden automata is empty. If not, the result is refined by taking the
 	 * difference of the two automata.
 	 */
-	private <FACTORY extends IDeterminizeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			void minimizeWithDifferenceRefinement(final INestedWordAutomaton<LETTER, STATE> minimizerResult,
-					final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
-					final FACTORY stateFactoryIntersect)
-					throws AutomataOperationCanceledException, AssertionError {
+	private void minimizeWithDifferenceRefinement(final INestedWordAutomaton<LETTER, STATE> minimizerResult,
+			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
+			final INwaInclusionStateFactory<STATE> stateFactoryIntersect)
+			throws AutomataOperationCanceledException, AssertionError {
 		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
 		
 		for (final INestedWordAutomatonSimple<LETTER, STATE> automaton : forbiddenLanguages) {

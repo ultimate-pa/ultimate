@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
@@ -52,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -86,46 +85,22 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> CompareReduceNwaSimulation(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public CompareReduceNwaSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.performance.CompareReduceBuchiSimulation#operationName()
-	 */
 	@Override
 	public String operationName() {
 		return "compareReduceNwaSimulation";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.performance.CompareReduceBuchiSimulation#
-	 * verifyAutomatonValidity(de.uni_freiburg.informatik.ultimate.automata.
-	 * nwalibrary.INestedWordAutomaton)
-	 */
 	@Override
 	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
-	 * simulation.performance.CompareReduceBuchiSimulation#
-	 * addGeneralAutomataPerformanceForExternalMethod(de.uni_freiburg.informatik
-	 * .ultimate.automata.nestedword.INestedWordAutomaton,
-	 * de.uni_freiburg.informatik.ultimate.automata.nestedword.
-	 * INestedWordAutomaton)
-	 */
 	@Override
 	protected void addGeneralAutomataPerformanceForExternalMethod(final INestedWordAutomaton<LETTER, STATE> input,
 			final INestedWordAutomaton<LETTER, STATE> output) {
@@ -179,24 +154,10 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.performance.CompareReduceBuchiSimulation#
-	 * measureMethodPerformance(java.lang.String,
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.ESimulationType, boolean,
-	 * de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices,
-	 * long,
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory,
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.
-	 * INestedWordAutomaton)
-	 */
 	@Override
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
-			final AutomataLibraryServices services, final long timeout, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operandRaw) {
+	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
+			final AutomataLibraryServices services, final long timeout,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
 		boolean timedOut = false;
@@ -272,19 +233,9 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.performance.CompareReduceBuchiSimulation#measurePerformances(
-	 * java.lang.String, long,
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory,
-	 * de.uni_freiburg.informatik.ultimate.automata.nwalibrary.
-	 * reachableStatesAutomaton.NestedWordAutomatonReachableStates)
-	 */
 	@Override
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void measurePerformances(
-			final String automatonName, final long timeOutMillis, final FACTORY stateFactory,
+	protected void measurePerformances(final String automatonName, final long timeOutMillis,
+			final IMinimizationStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,

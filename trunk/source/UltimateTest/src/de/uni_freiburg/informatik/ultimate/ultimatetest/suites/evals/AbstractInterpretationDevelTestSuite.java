@@ -71,10 +71,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_INT.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 
 
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_FUTURE_Debug.epf"),
@@ -85,7 +86,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
 
@@ -144,22 +145,21 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
 
-			// ## current fails
-			// non-absint preds
-			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
-			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
+			/* current fails */
 			
-			//incompatible matrices
+			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
 			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
 			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
 			
-			//inductivity failed
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-
 	};
 	// @formatter:on
 
@@ -167,7 +167,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
 		// return 15 * 1000;
-		return 30 * 1000;
+		return 60 * 1000;
 		// return 15 * 60 * 1000;
 	}
 
@@ -204,7 +204,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
+		return new OverapproximatingSafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override

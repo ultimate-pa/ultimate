@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
@@ -49,12 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Computes the difference between a {@link PetriNetJulian} and a {@link NestedWordAutomaton}.
@@ -68,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <C>
  *            content type
  */
-public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C> {
+public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
+		extends UnaryNetOperation<S, C, CRSF> {
 	private final PetriNetJulian<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final IBlackWhiteStateFactory<C> mContentFactory;
@@ -384,23 +382,20 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + operationName());
 		}
 		
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
-		final INestedWordAutomatonSimple<S, C> op1AsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> rcResult = (new DifferenceDD<>(mServices,
-				(IDeterminizeStateFactory<C> & IIntersectionStateFactory<C>) stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomatonSimple<S, C> resultAsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mResult)).getResult();
+		final INestedWordAutomatonSimple<S, C> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
+		final INestedWordAutomatonSimple<S, C> rcResult =
+				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+		final INestedWordAutomatonSimple<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 		
 		boolean correct = true;
-		correct &= new IsEquivalent<>(mServices,
-				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C> & IEmptyStackStateFactory<C>) stateFactory,
-				resultAsNwa, rcResult).getResult();
+		correct &= new IsEquivalent<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());

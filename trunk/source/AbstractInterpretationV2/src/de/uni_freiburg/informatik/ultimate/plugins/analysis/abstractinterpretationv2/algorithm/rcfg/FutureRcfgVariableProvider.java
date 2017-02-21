@@ -85,12 +85,17 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public STATE makeValidPreState(final ACTION action, final STATE state) {
+	public STATE synchronizeVariables(final STATE template, final STATE toSynchronize) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public STATE makeValidPostState(final ACTION action, final STATE state) {
+	public STATE createValidPostOpStateAfterLeaving(final ACTION action, final STATE stateLin, final STATE preHierState) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public STATE createValidPostOpStateBeforeLeaving(final ACTION action, final STATE stateHier) {
 		throw new UnsupportedOperationException();
 	}
 

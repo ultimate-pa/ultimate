@@ -51,13 +51,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  */
 
-public class Jeffery_Test_2<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Jeffery_Test_2<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
 	Boolean result1, result2;
 
-	public Jeffery_Test_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
+	public Jeffery_Test_2(
+			final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final int num) throws AutomataLibraryException {
 		switch (num) {

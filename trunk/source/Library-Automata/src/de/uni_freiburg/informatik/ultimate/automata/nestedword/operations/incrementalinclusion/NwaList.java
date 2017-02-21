@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author jefferyyjhsu@iis.sinica.edu.tw
  */
 
-public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
+public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE, IStateFactory<STATE>> {
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
 	private static ILogger mLogger;
@@ -50,7 +50,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	public NwaList(final AutomataLibraryServices services,final INestedWordAutomaton<LETTER,STATE> orginalAutomata, final INestedWordAutomaton<LETTER,STATE> newAutomata){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
-		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
+		automataCollection = new ArrayList<>();
 		automataCollection.add(orginalAutomata);
 		automataCollection.add(newAutomata);
 		mLogger.info(exitMessage());
@@ -77,7 +77,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	public NwaList(final AutomataLibraryServices services,final INestedWordAutomaton<LETTER,STATE> newAutomata){
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mLogger.info(startMessage());
-		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
+		automataCollection = new ArrayList<>();
 		automataCollection.add(newAutomata);
 		mLogger.info(exitMessage());
 	}

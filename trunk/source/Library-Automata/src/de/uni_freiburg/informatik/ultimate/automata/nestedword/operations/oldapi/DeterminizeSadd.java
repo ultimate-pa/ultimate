@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
@@ -46,10 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Determinimization.
@@ -60,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class DeterminizeSadd<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final Map<Macrostate, STATE> mMacrostate2detState = new HashMap<>();
 	private final Map<STATE, Macrostate> mDetState2macrostate = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mSummary = new HashMap<>();
@@ -350,18 +348,15 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of determinization");
 		}
 		
 		boolean correct;
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes class parameter
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-				(new DeterminizeDD<>(mServices, (IDeterminizeStateFactory<STATE>) stateFactory, mOperand)).getResult();
-		correct = (new IsEquivalent<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-				resultDd, mResult)).getResult();
+				(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
+		correct = (new IsEquivalent<>(mServices, stateFactory, resultDd, mResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of determinization");

@@ -37,13 +37,13 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -117,10 +117,9 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
 	 * size of the alphabet.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftLists(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> initialPartition,
-			final boolean addMapping) {
+	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> initialPartition, final boolean addMapping) {
 		super(services, stateFactory);
 		mOperand = operand;
 		
@@ -170,15 +169,20 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * @param operand
 	 *            Automaton to minimize
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftLists(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, stateFactory, operand, null, false);
 	}
 	
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	/**

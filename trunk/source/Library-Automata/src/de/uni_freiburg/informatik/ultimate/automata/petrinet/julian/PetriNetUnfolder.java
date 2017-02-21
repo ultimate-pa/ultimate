@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Petri net unfolder.
@@ -56,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <C>
  *            place content type
  */
-public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
+public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
 	private final IPetriNet<S, C> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
@@ -354,17 +353,14 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataOperationCanceledException {
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
+			throws AutomataOperationCanceledException {
 		mLogger.info("Testing correctness of emptinessCheck");
 		
 		boolean correct;
 		if (mRun == null) {
-			// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
-			final NestedRun<S, C> automataRun =
-					(new IsEmpty<>(mServices,
-							(new PetriNet2FiniteAutomaton<>(mServices,
-									(IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory, mOperand)).getResult()))
-											.getNestedRun();
+			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
 				correct = false;

@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
  */
 public final class EmptyPostOperator<ACTION, VARDECL>
 		implements IAbstractPostOperator<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
-	
+
 	@Override
 	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate, final ACTION concrete) {
 		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables()), oldstate.getVariablesType()));
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
 		return returnList;
 	}
 
@@ -53,8 +53,7 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 	public List<EmptyDomainState<VARDECL>> apply(final EmptyDomainState<VARDECL> oldstate,
 			final EmptyDomainState<VARDECL> oldstateWithFreshVariables, final ACTION transition) {
 		final List<EmptyDomainState<VARDECL>> returnList = new ArrayList<>();
-		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables()),
-				oldstate.getVariablesType()));
+		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstateWithFreshVariables.getVariables())));
 		return returnList;
 	}
 }

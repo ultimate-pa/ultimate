@@ -31,15 +31,10 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -50,10 +45,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  *
  */
-public class PredicateFactoryResultChecking implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>,
-		IBuchiComplementFkvStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate>,
-		IIntersectionStateFactory<IPredicate>, IEmptyStackStateFactory<IPredicate> {
+public class PredicateFactoryResultChecking implements ISenwaStateFactory<IPredicate>,
+		IConcurrentProductStateFactory<IPredicate>, IMinimizationStateFactory<IPredicate>,
+		IMinimizationCheckResultStateFactory<IPredicate> {
 	
 	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =

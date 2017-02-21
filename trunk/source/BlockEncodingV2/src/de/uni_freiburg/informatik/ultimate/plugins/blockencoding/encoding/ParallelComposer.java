@@ -39,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
@@ -76,10 +77,10 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 			}
 
 			final List<IcfgEdge> outEdges = current.getOutgoingEdges();
-			final Map<IcfgLocation, List<IcfgEdge>> map = new HashMap<>();
-			outEdges.stream().forEach(a -> acc(map, a));
+			final Map<IcfgLocation, List<IcfgEdge>> target2edge = new HashMap<>();
+			outEdges.stream().forEach(a -> addToPartition(target2edge, a));
 
-			for (final Entry<IcfgLocation, List<IcfgEdge>> partition : map.entrySet()) {
+			for (final Entry<IcfgLocation, List<IcfgEdge>> partition : target2edge.entrySet()) {
 				final IcfgLocation target = partition.getKey();
 				nodes.add(target);
 				final List<IcfgEdge> edges = partition.getValue();
@@ -95,16 +96,20 @@ public final class ParallelComposer extends BaseBlockEncoder<IcfgLocation> {
 		return icfg;
 	}
 
-	private static Map<IcfgLocation, List<IcfgEdge>> acc(final Map<IcfgLocation, List<IcfgEdge>> map,
-			final IcfgEdge e) {
-		final IcfgLocation target = e.getTarget();
+	private static Map<IcfgLocation, List<IcfgEdge>> addToPartition(final Map<IcfgLocation, List<IcfgEdge>> map,
+			final IcfgEdge edge) {
+		if (!(edge instanceof IIcfgInternalTransition<?>)) {
+			// do not add edges that are not internal
+			return map;
+		}
+		final IcfgLocation target = edge.getTarget();
 		final List<IcfgEdge> set = map.get(target);
 		if (set == null) {
 			final List<IcfgEdge> newSet = new ArrayList<>();
-			newSet.add(e);
+			newSet.add(edge);
 			map.put(target, newSet);
 		} else {
-			set.add(e);
+			set.add(edge);
 		}
 		return map;
 	}

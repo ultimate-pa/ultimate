@@ -26,21 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -75,9 +67,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDelayedSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
@@ -100,9 +91,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDelayedSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
@@ -131,9 +121,8 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDelayedSimulation(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+	public ReduceNwaDelayedSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClasses)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
@@ -145,30 +134,6 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 								operand, possibleEquivalenceClasses.getRelation())));
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.
-	 * simulation.delayed.BuchiReduce#checkResult(de.uni_freiburg.informatik.
-	 * ultimate.automata.statefactory.IStateFactory)
-	 */
-	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		getLogger().info("Start testing correctness of " + operationName());
-		// TODO Christian 2017-02-10 Temporary workaround until state factory becomes class parameter
-		final boolean correct = (new BuchiIsEquivalent<>(getServices(),
-				(IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory,
-				getOperand(), getResult())).getResult();
-		getLogger().info("Finished testing correctness of " + operationName());
-		return correct;
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
-	 * simulation.delayed.BuchiReduce#operationName()
-	 */
 	@Override
 	public String operationName() {
 		return "reduceNwaDelayedSimulation";

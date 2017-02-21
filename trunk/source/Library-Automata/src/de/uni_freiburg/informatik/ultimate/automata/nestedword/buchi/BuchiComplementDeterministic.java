@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDeckerVisitor<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mTotalizedOperand;
 	private final IBuchiComplementDeterministicStateFactory<STATE> mContentFactory;

@@ -35,11 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Minimization of nested word automata which wraps several minimization operations and uses one of them.
@@ -92,9 +90,8 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 	
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaCombinator(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+	protected MinimizeNwaCombinator(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
 		mMode = MinimizationMethods.UNDEFINED;
@@ -114,26 +111,22 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
 		switch (mMode) {
 			case SEVPA:
-				mBackingMinimization = new MinimizeSevpa<>(mServices,
-						(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory,
-						mOperand, (PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false);
+				mBackingMinimization = new MinimizeSevpa<>(mServices, mStateFactory, mOperand,
+						(PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false);
 				break;
 			case SHRINK_NWA:
-				mBackingMinimization = new ShrinkNwa<>(mServices,
-						(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory,
-						mOperand, (PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false,
+				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory, mOperand,
+						(PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false,
 						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
-				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices,
-						(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory,
+				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, (PartitionBackedSetOfPairs<STATE>) partition,
 						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState));
 				break;
 			case NWA_RAQ_DIRECT:
 				checkForNoMapping(addMapOldState2newState);
-				mBackingMinimization = new ReduceNwaDirectSimulation<>(mServices,
-						(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory,
+				mBackingMinimization = new ReduceNwaDirectSimulation<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, false,
 						(PartitionBackedSetOfPairs<STATE>) partition);
 				break;
@@ -191,18 +184,20 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public final boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public final Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		switch (mMode) {
 			case SEVPA:
-				return ((MinimizeSevpa<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+				return ((MinimizeSevpa<LETTER, STATE>) mBackingMinimization).checkResultHelper(stateFactory);
 			case SHRINK_NWA:
-				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+				return ((ShrinkNwa<LETTER, STATE>) mBackingMinimization).checkResultHelper(stateFactory);
 			case NWA_MAX_SAT2:
-				return ((MinimizeNwaPmaxSat<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+				return ((MinimizeNwaPmaxSat<LETTER, STATE>) mBackingMinimization).checkResultHelper(stateFactory);
 			case NWA_RAQ_DIRECT:
-				return ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization).checkResult(stateFactory);
+				return ((ReduceNwaDirectSimulation<LETTER, STATE>) mBackingMinimization)
+						.checkResultHelper(stateFactory);
 			case NONE:
-				return true;
+				return new Pair<>(true, "");
 			default:
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}

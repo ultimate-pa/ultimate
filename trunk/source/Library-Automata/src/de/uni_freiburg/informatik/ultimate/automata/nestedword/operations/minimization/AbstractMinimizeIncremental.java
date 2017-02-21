@@ -27,11 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This is the superclass of all incremental minimization classes.
@@ -65,9 +65,9 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 	 * @param interrupt
 	 *            interrupt
 	 */
-	protected <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractMinimizeIncremental(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Interrupt interrupt) {
+	protected AbstractMinimizeIncremental(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final Interrupt interrupt) {
 		super(services, stateFactory);
 		mOperand = operand;
 		mInterrupt = interrupt;
@@ -80,5 +80,11 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 	@Override
 	protected final INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 }

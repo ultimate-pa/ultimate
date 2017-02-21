@@ -45,78 +45,72 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 	// @formatter:off
 	private static final String[] TOOLCHAINS = new String[] {
 			"LTLAutomizerC.xml",
-//			"LTLAutomizerCInline.xml",
+			// "LTLAutomizerCInline.xml",
 	};
 
-
 	private static final String[] SETTINGS = new String[] {
-//		//no optimizations
-//		"None.epf",
+			// Note: SBE is currently broken
+
+			// no optimizations
+			"None.epf",
+
+			// only small and large block encoding
+//			"None+SBE.epf",
+//			"None+SBE+SASBE.epf",
+			"None+LBE-Multi.epf",
+
+			// only local optimizations (sink states, final states, locally infeasible edges)
+			"Default.epf",
+			"Default-z3.epf",
+
+			// small block encoding + local optimizations
+//			"Default+SBE.epf",
+//			"Default+SBE+SASBE.epf",
+
+			// large block encoding + local optimizations
+			"Default-LBE-Multi.epf",
+			"Default-LBE-Multi+IB.epf",
+			"Default-LBE-Single.epf",
+			"Default-LBE-SNME.epf",
+
+			// different solver modes
+			"Default-LBE-Multi-z3.epf",
+			"Default-LBE-Multi-z3interpol.epf",
+
+			// different buchi automata constructions
+			"Default-LBE-Multi+NondetBuchi.epf",
+
+			// nearly all optimizations
+//			"Default-LBE-Multi+SBE.epf",
+//			"Default-LBE-Multi+SBE+IB.epf",
+//			"Default-LBE-Multi+SBE+SASBE.epf",
+//			"Default-LBE-Multi+SBE+SASBE+IB.epf",
 //
-//		//only small and large block encoding
-//		"None+SBE.epf",
-//		"None+SBE+SASBE.epf",
-//		"None+LBE-Multi.epf",
-//
-//		// only local optimizations (sink states, final states, locally infeasible edges)
-		"Default.epf",
-//
-//		//small block encoding + local optimizations
-//		"Default+SBE.epf",
-//		"Default+SBE+SASBE.epf",
-//
-//		//large block encoding + local optimizations
-//		"Default-LBE-Multi.epf",
-//		"Default-LBE-Multi+IB.epf",
-//		"Default-LBE-Single.epf",
-//		"Default-LBE-SNME.epf",
-//
-//		//different solvers
-//		"Default-LBE-Multi-SMTInterpol.epf",
-//		"Default-LBE-Multi-z3.epf",
-//		"Default-LBE-Multi-z3interpol.epf",
-//
-//		//different buchi automata constructions
-//		"Default-LBE-Multi-StagedBlast.epf",
-//		"Default-LBE-Multi+NondetBuchi.epf",
-//		"None-StagedBlast.epf",
-//
-//		//nearly all optimizations
-//		"Default-LBE-Multi+SBE.epf",
-//		"Default-LBE-Multi+SBE+IB.epf",
-//		"Default-LBE-Multi+SBE+SASBE.epf",
-//		"Default-LBE-Multi+SBE+SASBE+IB.epf",
-//
-//		// nearly all optimizations and staged blast
-//		"Default-LBE-Multi+SBE-StagedBlast.epf",
-//		"Default-LBE-Multi+SBE+IB-StagedBlast.epf",
-//		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf",
-//		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
 	};
 
 	private static final DirectoryFileEndingsPair[] INPUT = new DirectoryFileEndingsPair[] {
-//			getPair("examples/LTL/rers2012/P14/", 1),
-//			getPair("examples/LTL/rers2012/P15/", 1),
-//			getPair("examples/LTL/rers2012/P16/", 1),
-//			getPair("examples/LTL/rers2012/P17/", 1),
-//			getPair("examples/LTL/rers2012/P18/", 1),
-//			getPair("examples/LTL/rers2012/P19/", 1),
+			// getPair("examples/LTL/rers2012/P14/", 1),
+			// getPair("examples/LTL/rers2012/P15/", 1),
+			// getPair("examples/LTL/rers2012/P16/", 1),
+			// getPair("examples/LTL/rers2012/P17/", 1),
+			// getPair("examples/LTL/rers2012/P18/", 1),
+			// getPair("examples/LTL/rers2012/P19/", 1),
 
-//			getPair("examples/LTL/rers2012correctencoding/P15/"),
-//			getPair("examples/LTL/rers2012correctencoding/P16/"),
-//			getPair("examples/LTL/rers2012correctencoding/P17/"),
-//			getPair("examples/LTL/rers2012correctencoding/P18/"),
-//			getPair("examples/LTL/rers2012correctencoding/P19/"),
-//			getPair("examples/LTL/rers2012correctencoding/P14/"),
-//
+			// getPair("examples/LTL/rers2012correctencoding/P15/"),
+			// getPair("examples/LTL/rers2012correctencoding/P16/"),
+			// getPair("examples/LTL/rers2012correctencoding/P17/"),
+			// getPair("examples/LTL/rers2012correctencoding/P18/"),
+			// getPair("examples/LTL/rers2012correctencoding/P19/"),
+			// getPair("examples/LTL/rers2012correctencoding/P14/"),
+			//
 			getPair("examples/LTL/coolant/"),
 			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
 			getPair("examples/LTL/bugs/"),
 			getPair("examples/LTL/simple/"),
-//		getPair("examples/LTL/rers2012correctencoding/P14/Problem14_prop_017.c")
+			// getPair("examples/LTL/rers2012correctencoding/P14/Problem14_prop_017.c")
 
-	// Possible soundness bug
-//	 getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
+			// Possible soundness bug
+			// getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
 
 	};
 	// @formatter:on
@@ -124,7 +118,7 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// return 180 * 1000;
-		return 12 * 60 * 1000;
+		return 15 * 60 * 1000;
 	}
 
 	@Override

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -68,6 +69,11 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 				.getBoolean(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP);
 		mFunHasToBePreserved = funHasToBePreserved;
 		mEdgeBuilder = edgeBuilder;
+	}
+
+	@Override
+	public boolean isGraphStructureChanged() {
+		return mRemovedLocations > 0 || mRemovedEdges > 0;
 	}
 
 	@Override
@@ -115,7 +121,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 	protected abstract Collection<? extends IcfgLocation> processCandidate(IIcfg<?> icfg, IcfgLocation target,
 			Set<IcfgLocation> closed);
 
-	protected boolean areCombinableEdgePairs(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
+	protected boolean isAllCombinableEdgePair(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		if (!mIgnoreBlowup && isLarge(predEdges, succEdges)) {
 			// we would introduce more edges than we remove, we do not want
 			// that
@@ -124,15 +130,6 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 
 		return predEdges.stream().map(pred -> (Predicate<IcfgEdge>) a -> isCombinableEdgePair(pred, a))
 				.allMatch(a -> succEdges.stream().allMatch(a));
-	}
-
-	/**
-	 * @return true iff the cross-product is larger than the sum of elements.
-	 */
-	private static boolean isLarge(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
-		final int predEdgesSize = predEdges.size();
-		final int succEdgesSize = succEdges.size();
-		return predEdgesSize + succEdgesSize < predEdgesSize * succEdgesSize;
 	}
 
 	protected boolean isCombinableEdgePair(final IcfgEdge predEdge, final IcfgEdge succEdge) {
@@ -148,10 +145,11 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		}
 
 		// if one of the edges is a self loop, we cannot use it
-		return predEdge.getTarget() != predEdge.getSource() && succEdge.getTarget() != succEdge.getSource();
+		return Objects.equals(predEdge.getTarget(), predEdge.getSource())
+				&& Objects.equals(succEdge.getTarget(), succEdge.getSource());
 	}
 
-	protected boolean areAllNecessary(final IIcfg<?> icfg, final List<IcfgLocation> nodes) {
+	protected boolean isAllNecessary(final IIcfg<?> icfg, final List<IcfgLocation> nodes) {
 		return nodes.stream().allMatch(a -> mFunHasToBePreserved.test(icfg, a));
 	}
 
@@ -163,7 +161,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		return mFunHasToBePreserved.negate().test(icfg, target);
 	}
 
-	protected boolean isOneNecessary(final IIcfg<?> icfg, final IcfgLocation pred, final IcfgLocation succ) {
+	protected boolean isAnyNecessary(final IIcfg<?> icfg, final IcfgLocation pred, final IcfgLocation succ) {
 		return mFunHasToBePreserved.test(icfg, pred) || mFunHasToBePreserved.test(icfg, succ);
 	}
 
@@ -179,8 +177,13 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		}
 	}
 
-	@Override
-	public boolean isGraphStructureChanged() {
-		return mRemovedLocations > 0 || mRemovedEdges > 0;
+	/**
+	 * @return true iff the cross-product is larger than the sum of elements.
+	 */
+	private static boolean isLarge(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
+		final int predEdgesSize = predEdges.size();
+		final int succEdgesSize = succEdges.size();
+		return predEdgesSize + succEdgesSize < predEdgesSize * succEdgesSize;
 	}
+
 }

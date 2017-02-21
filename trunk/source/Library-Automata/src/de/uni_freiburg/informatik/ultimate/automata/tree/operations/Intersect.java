@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state of the tree automatons.
  */
-public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeA;
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeB;

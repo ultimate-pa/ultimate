@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * 
@@ -56,12 +54,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 
 public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
-		implements IOperation<LETTER, STATE> {
+		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private ArrayList<STATE> newBnStates;
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
@@ -130,7 +127,6 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 		super(services, a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
-		localStateFactory = sf;
 		mLogger.info(startMessage());
 		completeLeafSet = new ArrayList<>();
 		local_mA = a;
@@ -149,7 +145,6 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 		mLogger.info(exitMessage());
 	}
 
-	@SuppressWarnings("unchecked")
 	public void run2(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		if (!local_mA.getAlphabet().containsAll(nwa.getAlphabet())) {
 			mLogger.info("Alphabet inconsistent");
@@ -654,11 +649,10 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
+	public boolean checkResult(final IIncrementalInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		final boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(localServiceProvider,
-				(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, local_mA, local_mB2,
-				result);
+				stateFactory, local_mA, local_mB2, result);
 		return checkResult;
 		// //INestedWordAutomatonSimple<LETTER, STATE> a;
 		// if(getResult().equals((new IncrementalInclusionCheck2<LETTER,

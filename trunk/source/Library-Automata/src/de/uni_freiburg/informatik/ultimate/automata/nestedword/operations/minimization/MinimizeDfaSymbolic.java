@@ -33,18 +33,18 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft - Algorithm.
@@ -89,9 +89,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 * @param operand
 	 *            operand
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaSymbolic(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaSymbolic(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
 		
@@ -109,6 +108,12 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	private void minimizeDfaSymbolic() {

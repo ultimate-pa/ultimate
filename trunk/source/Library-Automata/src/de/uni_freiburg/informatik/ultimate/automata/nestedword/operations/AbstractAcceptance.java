@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Contains methods which are shared by {@link Accepts} and
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            state type
  */
-public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String AT_POSITION = " at position ";
 	private static final String UNABLE_TO_CHECK_ACCEPTANCE_LETTER = "Unable to check acceptance. Letter ";
 	

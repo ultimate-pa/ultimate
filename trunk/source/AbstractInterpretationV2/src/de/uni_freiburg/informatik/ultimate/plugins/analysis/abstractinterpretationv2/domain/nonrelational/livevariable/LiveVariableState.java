@@ -47,67 +47,67 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class LiveVariableState<ACTION extends IAction>
 		implements IAbstractState<LiveVariableState<ACTION>, IProgramVarOrConst> {
-	
+
 	private static int sId;
 	private final int mId;
-	
+
 	private final Set<IProgramVarOrConst> mLive;
-	
+
 	LiveVariableState() {
 		this(new HashSet<>());
 	}
-	
+
 	LiveVariableState(final Set<IProgramVarOrConst> live) {
 		mLive = Objects.requireNonNull(live);
 		mId = getFreshId();
 	}
-	
+
 	@Override
 	public LiveVariableState<ACTION> addVariable(final IProgramVarOrConst variable) {
 		// this domain does not track variables
 		return this;
 	}
-	
+
 	@Override
 	public LiveVariableState<ACTION> removeVariable(final IProgramVarOrConst variable) {
 		// this domain does not track variables
 		return this;
 	}
-	
+
 	@Override
 	public LiveVariableState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
 		// this domain does not track variables
 		return this;
 	}
-	
+
 	@Override
 	public LiveVariableState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		// this domain does not track variables
 		return this;
 	}
-	
+
 	@Override
 	public boolean containsVariable(final IProgramVarOrConst var) {
 		// we contain all the variables ;)
 		return true;
 	}
-	
+
 	@Override
 	public LiveVariableState<ACTION> patch(final LiveVariableState<ACTION> dominator) {
 		return union(dominator);
 	}
-	
+
 	@Override
 	public boolean isEmpty() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean isBottom() {
 		// A live variable state cannot be bottom.
 		return false;
 	}
-	
+
 	@Override
 	public boolean isEqualTo(final LiveVariableState<ACTION> other) {
 		if (other == null) {
@@ -115,7 +115,7 @@ public class LiveVariableState<ACTION extends IAction>
 		}
 		return mLive.equals(other.mLive);
 	}
-	
+
 	@Override
 	public SubsetResult isSubsetOf(final LiveVariableState<ACTION> other) {
 		if (isEqualTo(other)) {
@@ -123,12 +123,12 @@ public class LiveVariableState<ACTION extends IAction>
 		}
 		return SubsetResult.NONE;
 	}
-	
+
 	@Override
 	public Term getTerm(final Script script) {
 		return script.term("true");
 	}
-	
+
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -140,17 +140,17 @@ public class LiveVariableState<ACTION extends IAction>
 		sb.append('}');
 		return sb.toString();
 	}
-	
+
 	@Override
 	public String toString() {
 		return toLogString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -169,7 +169,7 @@ public class LiveVariableState<ACTION extends IAction>
 		}
 		return other.mId == mId;
 	}
-	
+
 	LiveVariableState<ACTION> union(final LiveVariableState<ACTION> other) {
 		final Set<IProgramVarOrConst> newLive = new HashSet<>();
 		newLive.addAll(other.mLive);
@@ -181,7 +181,7 @@ public class LiveVariableState<ACTION extends IAction>
 		}
 		return new LiveVariableState<>(newLive);
 	}
-	
+
 	public Set<IProgramVarOrConst> getLiveVariables() {
 		return Collections.unmodifiableSet(mLive);
 	}
@@ -191,17 +191,12 @@ public class LiveVariableState<ACTION extends IAction>
 				.allMatch(element -> element instanceof IProgramVar) : "Not all live variables are of type IProgramVar";
 		return mLive.stream().map(element -> (IProgramVar) element).collect(Collectors.toSet());
 	}
-	
+
 	private static int getFreshId() {
 		sId++;
 		return sId;
 	}
-	
-	@Override
-	public Class<IProgramVarOrConst> getVariablesType() {
-		return IProgramVarOrConst.class;
-	}
-	
+
 	@Override
 	public Set<IProgramVarOrConst> getVariables() {
 		return Collections.emptySet();

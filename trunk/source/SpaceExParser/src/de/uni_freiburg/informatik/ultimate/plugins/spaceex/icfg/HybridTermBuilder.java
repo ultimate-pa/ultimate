@@ -39,7 +39,10 @@ public class HybridTermBuilder {
 		mOperators.put("=", Operator.EQ);
 		mOperators.put("&&", Operator.DOUBLEAND);
 		mOperators.put("&", Operator.AND);
+		mOperators.put("and", Operator.ANDTEXT);
 		mOperators.put("|", Operator.OR);
+		mOperators.put("||", Operator.DOUBLEOR);
+		mOperators.put("or", Operator.ORTEXT);
 	}
 	
 	public enum BuildScenario {
@@ -48,7 +51,7 @@ public class HybridTermBuilder {
 	
 	public enum Operator {
 		ADD(1), SUBTRACT(1), MULTIPLY(2), DIVIDE(2), LTEQ(5), GTEQ(5), LT(5), GT(5), EQ(5), DOUBLEEQ(5), AND(4),
-		DOUBLEAND(4), OR(3);
+		DOUBLEAND(4), ANDTEXT(4), OR(3), DOUBLEOR(3), ORTEXT(3);
 		final int precedence;
 		
 		Operator(final int p) {
@@ -70,7 +73,26 @@ public class HybridTermBuilder {
 			infixArray = preprocessForUpdate(infixArray);
 		}
 		final List<String> postfix = postfix(infixArray);
-		return postfixToTerm(postfix, scenario);
+		final List<String> postfixSMTConform = preprocessForTermBuilding(postfix);
+		return postfixToTerm(postfixSMTConform, scenario);
+	}
+	
+	private List<String> preprocessForTermBuilding(final List<String> postfix) {
+		final List<String> newPostfix = new ArrayList<>();
+		for (String el : postfix) {
+			// & is "and" in SMT
+			// == is "=" in SMT
+			// | is "or" in SMT
+			if ("&".equals(el) || "&&".equals(el)) {
+				el = "and";
+			} else if ("==".equals(el) || ":=".equals(el)) {
+				el = "=";
+			} else if ("|".equals(el) || "||".equals(el)) {
+				el = "or";
+			}
+			newPostfix.add(el);
+		}
+		return newPostfix;
 	}
 	
 	// update of the form x := x+1 becomes x := (x+1)
@@ -115,17 +137,8 @@ public class HybridTermBuilder {
 		Term term = null;
 		final Deque<String> stack = new LinkedList<>();
 		for (final String el : postfix) {
-			String element = el;
+			final String element = el;
 			if (isOperator(element)) {
-				// & is "and" in SMT
-				// == is "=" in SMT
-				if ("&".equals(el)) {
-					element = "and";
-				} else if ("==".equals(el)) {
-					element = "=";
-				} else if ("|".equals(el)) {
-					element = "or";
-				}
 				final String operand1 = stack.pop();
 				final String operand2 = stack.pop();
 				final String operator = element;
@@ -289,7 +302,7 @@ public class HybridTermBuilder {
 	 */
 	public static List<String> expressionToArray(final String expression) {
 		final List<String> res = new ArrayList<>();
-		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|-|\\*|\\||\\(|\\)| +)");
+		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|-(?!\\w+)|\\*|\\||\\(|\\)| +)");
 		final String s = expression.replaceAll("\\s", "");
 		final Matcher m = p.matcher(s);
 		int pos = 0;

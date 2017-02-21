@@ -45,15 +45,15 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  * @param <STATE>
  *            state of the tree automaton.
  */
-public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
-			final AutomataLibraryServices services, final FACTORY factory,
+	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
 		mTreeAutomaton = tree;

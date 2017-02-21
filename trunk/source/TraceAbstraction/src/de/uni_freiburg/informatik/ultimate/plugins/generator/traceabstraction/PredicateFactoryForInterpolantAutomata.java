@@ -34,19 +34,15 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -58,11 +54,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 public class PredicateFactoryForInterpolantAutomata
-		implements IMergeStateFactory<IPredicate>, ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
-		IBuchiComplementNcsbStateFactory<IPredicate>, IBuchiComplementFkvStateFactory<IPredicate>,
-		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate>, IBuchiIntersectStateFactory<IPredicate>,
-		IIntersectionStateFactory<IPredicate>, IEmptyStackStateFactory<IPredicate> {
+		implements ISenwaStateFactory<IPredicate>, IBlackWhiteStateFactory<IPredicate>,
+		IBuchiComplementNcsbStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
+		IPetriNet2FiniteAutomatonStateFactory<IPredicate>, IIncrementalInclusionStateFactory<IPredicate>,
+		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate> {
 
 	protected final boolean mComputeHoareAnnotation;
 	private final IPredicate mEmtpyStack;

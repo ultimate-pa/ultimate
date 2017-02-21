@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Operation that returns the number of places of a Petri net.
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
  * @param <PLACE>
  *            place type
  */
-public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE> {
+public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
 	
 	/**

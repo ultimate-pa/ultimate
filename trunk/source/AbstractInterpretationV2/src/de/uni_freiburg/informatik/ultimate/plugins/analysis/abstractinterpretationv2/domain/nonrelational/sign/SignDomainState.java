@@ -53,27 +53,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any variable declaration.
  */
 public class SignDomainState<VARDECL> extends NonrelationalState<SignDomainState<VARDECL>, SignDomainValue, VARDECL> {
-	
-	protected SignDomainState(final ILogger logger, final Class<VARDECL> variablesType) {
-		super(logger, variablesType);
+
+	protected SignDomainState(final ILogger logger, final boolean isBottom) {
+		super(logger, isBottom);
 	}
 
 	protected SignDomainState(final ILogger logger, final Set<VARDECL> variables,
 			final Map<VARDECL, SignDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
-			final Class<VARDECL> variablesType) {
-		super(logger, variables, valuesMap, booleanValuesMap, variablesType);
+			final boolean isBottom) {
+		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
 	@Override
 	protected SignDomainState<VARDECL> createCopy() {
 		return new SignDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), mVariablesType);
+				new HashMap<>(getVar2ValueBoolean()), isBottom());
 	}
 
 	@Override
 	protected SignDomainState<VARDECL> createState(final ILogger logger, final Set<VARDECL> newVarMap,
-			final Map<VARDECL, SignDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap) {
-		return new SignDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, mVariablesType);
+			final Map<VARDECL, SignDomainValue> newValMap, final Map<VARDECL, BooleanValue> newBooleanValMap,
+			final boolean isBottom) {
+		return new SignDomainState<>(logger, newVarMap, newValMap, newBooleanValMap, isBottom);
 	}
 
 	@Override

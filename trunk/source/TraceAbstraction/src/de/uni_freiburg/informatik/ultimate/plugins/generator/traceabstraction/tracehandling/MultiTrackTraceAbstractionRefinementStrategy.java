@@ -107,7 +107,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	private final TaCheckAndRefinementPreferences mPrefs;
+	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	protected final CfgSmtToolkit mCsToolkit;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
@@ -240,7 +240,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	public IInterpolantGenerator getInterpolantGenerator() {
 		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
-			mInterpolantGenerator = constructInterpolantGenerator(getTraceChecker());
+			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
+					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateUnifier, mCounterexample,
+					mCegarLoopsBenchmark);
 		}
 		return mInterpolantGenerator;
 	}
@@ -385,43 +387,6 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 * @return Logic string used for {@code CVC4}.
 	 */
 	protected abstract String getCvc4Logic();
-
-	/**
-	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
-	 */
-	private IInterpolantGenerator constructInterpolantGenerator(final TraceChecker tracechecker) {
-		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
-				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceChecker instanceof InterpolatingTraceChecker) {
-			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
-
-			if (mPrefs.getUseInterpolantConsolidation()) {
-				try {
-					return consolidateInterpolants(interpolatingTraceChecker);
-				} catch (final AutomataOperationCanceledException e) {
-					throw new AssertionError("react on timeout, not yet implemented");
-				}
-			}
-			return interpolatingTraceChecker;
-		}
-		throw new AssertionError("Currently only interpolating trace checkers are supported.");
-	}
-
-	/**
-	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
-	 */
-	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
-			throws AutomataOperationCanceledException {
-		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
-		final InterpolantConsolidation<LETTER> interpConsoli = new InterpolantConsolidation<>(
-				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), cfgSmtToolkit,
-				cfgSmtToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier,
-				interpolatingTraceChecker, mTaPrefsForInterpolantConsolidation);
-		// Add benchmark data of interpolant consolidation
-		mCegarLoopsBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-		return interpConsoli;
-	}
 
 	@Override
 	public PredicateUnifier getPredicateUnifier() {

@@ -32,14 +32,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Computes the intersection of two nested word automata.
@@ -50,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class Intersect<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
@@ -69,8 +67,8 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
+			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
@@ -115,21 +113,17 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
-		// TODO Christian 2017-02-15 Temporary workaround until state factory becomes class parameter
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new IntersectDD<>(mServices,
-				(IBuchiIntersectStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mFstOperand,
-				mSndOperand)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+				(new IntersectDD<>(mServices, stateFactory, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;
-		correct &= new IsEquivalent<>(mServices,
-				(ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>) stateFactory,
-				resultDd, mResult).getResult();
+		correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",

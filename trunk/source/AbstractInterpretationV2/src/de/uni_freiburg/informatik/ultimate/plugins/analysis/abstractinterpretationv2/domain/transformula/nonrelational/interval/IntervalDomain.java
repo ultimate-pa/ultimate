@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class IntervalDomain
 		implements IAbstractDomain<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IProgramVarOrConst> {
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> mWideningOperator;
@@ -32,22 +32,22 @@ public class IntervalDomain
 		mLiteralCollection = literalCollection;
 		mServices = services;
 	}
-	
+
 	@Override
 	public IntervalDomainState<IProgramVarOrConst> createFreshState() {
-		return new IntervalDomainState<>(mLogger, IProgramVarOrConst.class);
+		return createTopState();
 	}
-	
+
 	@Override
 	public IntervalDomainState<IProgramVarOrConst> createTopState() {
-		return new IntervalDomainState<>(mLogger, false, IProgramVarOrConst.class);
+		return new IntervalDomainState<>(mLogger, false);
 	}
-	
+
 	@Override
 	public IntervalDomainState<IProgramVarOrConst> createBottomState() {
-		return new IntervalDomainState<>(mLogger, true, IProgramVarOrConst.class);
+		return new IntervalDomainState<>(mLogger, true);
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> getWideningOperator() {
 		if (mWideningOperator == null) {
@@ -71,7 +71,7 @@ public class IntervalDomain
 
 		return mWideningOperator;
 	}
-	
+
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> getMergeOperator() {
 		if (mMergeOperator == null) {

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	
 	/**

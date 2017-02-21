@@ -43,10 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeIncremental;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -176,9 +175,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand)
+	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new Interrupt());
 	}
@@ -197,9 +195,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, interrupt);
 		
@@ -229,9 +226,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaIncrementalParallel(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+	public MinimizeDfaIncrementalParallel(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, final ArrayList<STATE> int2state,
 			final HashMap<STATE, Integer> state2int)
 			throws AutomataOperationCanceledException {

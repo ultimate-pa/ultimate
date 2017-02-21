@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,6 +61,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
 		implements INonrelationalAbstractState<STATE, VARDECL> {
 
+	private static final String MSG_NULL = "NULL";
+	private static final String MSG_BOT = "BOT";
+	private static final String MSG_TOP = "TOP";
+
 	protected enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
 	}
@@ -76,20 +79,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	private final ILogger mLogger;
 
-	protected final Class<VARDECL> mVariablesType;
-
-	/**
-	 * Default constructor of an {@link NonrelationalState}.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
-	 * @param variableType
-	 *            The type of the variables stored by this state.
-	 */
-	protected NonrelationalState(final ILogger logger, final Class<VARDECL> variableType) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), variableType);
-	}
-
 	/**
 	 * Default constructor of an {@link NonrelationalState}.
 	 *
@@ -100,28 +89,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @param variableType
 	 *            The type of the variables stored by this state.
 	 */
-	protected NonrelationalState(final ILogger logger, final boolean isBottom, final Class<VARDECL> variableType) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom, variableType);
-	}
-
-	/**
-	 * Creates a new instance of {@link NonrelationalState} with given logger, variables map, values map and boolean
-	 * values map.
-	 *
-	 * @param logger
-	 *            The current logger object in the current context.
-	 * @param variables
-	 *            The map with all variable identifiers and their types.
-	 * @param valuesMap
-	 *            The values of all variables.
-	 * @param booleanValuesMap
-	 *            The values of all boolean variables.
-	 * @param variableType
-	 *            The type of the variables stored by this state.
-	 */
-	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
-			final Map<VARDECL, BooleanValue> booleanValuesMap, final Class<VARDECL> variableType) {
-		this(logger, variables, valuesMap, booleanValuesMap, false, variableType);
+	protected NonrelationalState(final ILogger logger, final boolean isBottom) {
+		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom);
 	}
 
 	/**
@@ -142,8 +111,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The type of the variables stored by this state.
 	 */
 	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
-			final Map<VARDECL, BooleanValue> booleanValuesMap, final boolean isBottom,
-			final Class<VARDECL> variableType) {
+			final Map<VARDECL, BooleanValue> booleanValuesMap, final boolean isBottom) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
@@ -151,7 +119,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		mId = sId;
 		mLogger = logger;
 		mIsBottom = isBottom;
-		mVariablesType = variableType;
 	}
 
 	@Override
@@ -500,7 +467,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final Map<VARDECL, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 		newBooleanValMap.remove(variable);
 
-		return createState(mLogger, newVarMap, newValMap, newBooleanValMap);
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, isBottom());
 	}
 
 	@Override
@@ -538,7 +505,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
-		return createState(mLogger, newVars, newValMap, newBooleanValMap);
+		return createState(mLogger, newVars, newValMap, newBooleanValMap, isBottom());
 	}
 
 	@Override
@@ -555,7 +522,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			newBooleanValMap.remove(entry);
 		}
 
-		return createState(mLogger, newVarMap, newValMap, newBooleanValMap);
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, isBottom());
 	}
 
 	@Override
@@ -617,9 +584,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	@Override
 	public String toLogString() {
-		final StringBuilder stringBuilder = new StringBuilder();
+		final StringBuilder sbAll = new StringBuilder();
+		final StringBuilder sbTop = new StringBuilder();
+		final StringBuilder sbBot = new StringBuilder();
 		if (isBottom()) {
-			stringBuilder.append("BOTTOM ");
+			sbAll.append("BOTTOM ");
 		}
 		for (final VARDECL entry : mVariables) {
 			final String varName;
@@ -629,22 +598,49 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 				varName = ((IProgramVarOrConst) entry).getGloballyUniqueId();
 			} else {
 				throw new UnsupportedOperationException(
-						"Variable type " + entry.getClass().getSimpleName() + " not implemented.");
+						"Variable type not implemented: " + entry.getClass().getSimpleName());
 			}
 
-			stringBuilder.append(varName).append(" = ");
-
-			final V val = getVar2ValueNonrelational().get(entry);
-
-			if (val != null) {
-				stringBuilder.append(getVar2ValueNonrelational().get(entry).toString());
+			final String val = getValueAsString(entry);
+			if (MSG_TOP.equals(val)) {
+				sbTop.append(varName).append(", ");
+			} else if (MSG_BOT.equals(val)) {
+				sbBot.append(varName).append(", ");
 			} else {
-				stringBuilder.append(getVar2ValueBoolean().get(entry).toString());
+				sbAll.append(varName).append(" = ").append(val).append("; ");
 			}
-
-			stringBuilder.append("; ");
 		}
-		return stringBuilder.toString();
+
+		if (sbTop.length() > 0) {
+			sbAll.append("TOP: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
+		}
+		if (sbBot.length() > 0) {
+			sbAll.append("BOT: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
+		}
+
+		return sbAll.toString();
+	}
+
+	private String getValueAsString(final VARDECL entry) {
+		final V val = getVar2ValueNonrelational().get(entry);
+		if (val != null) {
+			if (val.isTop()) {
+				return MSG_TOP;
+			} else if (val.isBottom()) {
+				return MSG_BOT;
+			}
+			return val.toString();
+		}
+		final BooleanValue bolVal = getVar2ValueBoolean().get(entry);
+		if (bolVal != null) {
+			if (bolVal == BooleanValue.TOP) {
+				return MSG_TOP;
+			} else if (bolVal == BooleanValue.BOTTOM) {
+				return MSG_BOT;
+			}
+			return bolVal.toString();
+		}
+		return MSG_NULL;
 	}
 
 	@Override
@@ -671,7 +667,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	protected abstract STATE createCopy();
 
 	protected abstract STATE createState(ILogger logger, Set<VARDECL> newVarMap, Map<VARDECL, V> newValMap,
-			Map<VARDECL, BooleanValue> newBooleanValMap);
+			Map<VARDECL, BooleanValue> newBooleanValMap, boolean isBottom);
 
 	protected abstract V createBottomValue();
 
@@ -681,7 +677,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	@SuppressWarnings("unchecked")
 	public VARDECL[] getVariableTypeArray(final int size) {
-		return (VARDECL[]) Array.newInstance(mVariablesType, size);
+		return (VARDECL[]) new Object[size];
 	}
 
 	/**
@@ -788,11 +784,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		return Util.and(script, acc.toArray(new Term[acc.size()]));
-	}
-
-	@Override
-	public Class<VARDECL> getVariablesType() {
-		return mVariablesType;
 	}
 
 	/**

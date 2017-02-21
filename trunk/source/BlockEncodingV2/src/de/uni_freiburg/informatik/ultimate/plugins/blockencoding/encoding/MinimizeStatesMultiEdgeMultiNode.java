@@ -38,21 +38,29 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Most aggressive minimization. Tries to remove states no matter what.
+ * Most aggressive minimization. Tries to remove states that have multiple outgoing and incoming edges.
  *
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 	private static final String INDENT = "    ";
 
+	/**
+	 * Default constructor.
+	 * 
+	 * @param edgeBuilder
+	 * @param services
+	 * @param backtranslator
+	 * @param funIsAccepting
+	 * @param logger
+	 */
 	public MinimizeStatesMultiEdgeMultiNode(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final BiPredicate<IIcfg<?>, IcfgLocation> funIsAccepting,
 			final ILogger logger) {
@@ -81,7 +89,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			return target.getOutgoingNodes();
 		}
 
-		if (!areCombinableEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
+		if (!isAllCombinableEdgePair(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// do not remove anything if blowup is too large or call/return combination prohibits the removal
 			return target.getOutgoingNodes();
 		}
@@ -110,15 +118,6 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			final IcfgEdge second = pair.getSecond();
 			toRemove.add(first);
 			toRemove.add(second);
-			if (first.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE
-					|| second.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-				// we will remove these edges but we wont add a new one
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "removing " + first);
-					mLogger.debug(INDENT + "removing " + second);
-				}
-				continue;
-			}
 			constructors.add(new EdgeConstructor(first, second));
 			addE++;
 			// we changed the edges of the predecessor, we have to re-check

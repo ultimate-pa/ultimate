@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String DOWN_STATES_INCONSISTENT = "The down states are inconsistent.";
 	
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;

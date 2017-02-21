@@ -36,11 +36,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft-Algorithm.
@@ -71,9 +71,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private int[] mState2representative;
 	
 	// Constructor.
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaHopcroftWiki(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
 		
@@ -91,6 +90,12 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	/**

@@ -32,8 +32,6 @@ import java.util.Arrays;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -73,9 +71,9 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaPattern(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public MinimizeNwaPattern(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, 0);
 	}
 	
@@ -97,10 +95,10 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaPattern(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
-			final boolean addMapOldState2newState, final int iteration) throws AutomataOperationCanceledException {
+	public MinimizeNwaPattern(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> partition, final boolean addMapOldState2newState,
+			final int iteration) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
 	}
 	
@@ -124,11 +122,10 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaPattern(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
-			final boolean addMapOldState2newState, final int indexForMinimization, final int iteration)
-			throws AutomataOperationCanceledException {
+	public MinimizeNwaPattern(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> partition, final boolean addMapOldState2newState,
+			final int indexForMinimization, final int iteration) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState,
 				getEveryNthPattern(indexForMinimization), iteration);
 	}
@@ -153,11 +150,10 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeNwaPattern(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> partition,
-			final boolean addMapOldState2newState, final MinimizationMethods[] pattern, final int iteration)
-			throws AutomataOperationCanceledException {
+	public MinimizeNwaPattern(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final PartitionBackedSetOfPairs<STATE> partition, final boolean addMapOldState2newState,
+			final MinimizationMethods[] pattern, final int iteration) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 		mPattern = Arrays.copyOf(pattern, pattern.length);
 		final int counter = iteration % mPattern.length;

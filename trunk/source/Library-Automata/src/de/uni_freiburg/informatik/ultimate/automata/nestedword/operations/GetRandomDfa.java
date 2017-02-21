@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
@@ -65,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class GetRandomDfa extends GeneralOperation<String, String> {
+public final class GetRandomDfa extends GeneralOperation<String, String, IStateFactory<String>> {
 	/**
 	 * Constant for no valid state. Valid states are 0, 1, ...
 	 */

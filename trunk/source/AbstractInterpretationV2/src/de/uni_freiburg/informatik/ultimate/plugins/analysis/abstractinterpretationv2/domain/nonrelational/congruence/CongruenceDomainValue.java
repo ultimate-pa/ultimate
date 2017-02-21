@@ -74,6 +74,11 @@ public final class CongruenceDomainValue
 		return mIsBottom;
 	}
 
+	@Override
+	public boolean isTop() {
+		return !mIsBottom && !mNonZero && !mIsConstant && mValue.equals(BigInteger.ONE);
+	}
+
 	protected BigInteger value() {
 		return mValue;
 	}
@@ -561,4 +566,5 @@ public final class CongruenceDomainValue
 		// no difference
 		return complement();
 	}
+
 }

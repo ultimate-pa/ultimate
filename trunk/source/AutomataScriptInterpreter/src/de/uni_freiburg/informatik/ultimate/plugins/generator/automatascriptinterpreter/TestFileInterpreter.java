@@ -662,7 +662,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private Object executeLibraryMethod(final OperationInvocationExpressionAST oe, final ArrayList<Object> arguments,
 			final Object result) throws InterpreterException {
 		final SimpleTimer timer = new SimpleTimer();
-		IOperation<String, String> op = null;
+		IOperation<String, String, ? super StringFactory> op = null;
 		try {
 			op = getAutomataOperation(oe, arguments);
 		} finally {
@@ -1023,8 +1023,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	
 	@SuppressWarnings("unchecked")
-	private IOperation<String, String> getAutomataOperation(final OperationInvocationExpressionAST oe,
-			final List<Object> arguments) throws InterpreterException {
+	private IOperation<String, String, ? super StringFactory> getAutomataOperation(
+			final OperationInvocationExpressionAST oe, final List<Object> arguments) throws InterpreterException {
 		final String operationName = oe.getOperationName().toLowerCase();
 		if (!mExistingOperations.containsKey(operationName)) {
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
@@ -1054,7 +1054,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					continue;
 				}
 				try {
-					return (IOperation<String, String>) c.newInstance(argumentsWithServices);
+					return (IOperation<String, String, ? super StringFactory>) c.newInstance(argumentsWithServices);
 				} catch (final InstantiationException | IllegalAccessException e) {
 					printStackTrace(e);
 					throw new AssertionError(e);

@@ -46,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * @param <STATE>
  *            State class of nwa automaton, not used
  */
-public final class CompareWithRandomNwaAutomata<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class CompareWithRandomNwaAutomata<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final int HUNDRED = 100;
 	/**
 	 * The inputed nwa automaton.

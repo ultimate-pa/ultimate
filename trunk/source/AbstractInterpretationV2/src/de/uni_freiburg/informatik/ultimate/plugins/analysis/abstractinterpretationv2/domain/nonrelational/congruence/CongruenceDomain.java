@@ -42,17 +42,17 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 
 	@Override
 	public CongruenceDomainState<IBoogieVar> createFreshState() {
-		return new CongruenceDomainState<>(mLogger, IBoogieVar.class);
+		return createTopState();
 	}
 
 	@Override
 	public CongruenceDomainState<IBoogieVar> createTopState() {
-		return new CongruenceDomainState<>(mLogger, false, IBoogieVar.class);
+		return new CongruenceDomainState<>(mLogger, false);
 	}
 
 	@Override
 	public CongruenceDomainState<IBoogieVar> createBottomState() {
-		return new CongruenceDomainState<>(mLogger, true, IBoogieVar.class);
+		return new CongruenceDomainState<>(mLogger, true);
 	}
 
 	@Override

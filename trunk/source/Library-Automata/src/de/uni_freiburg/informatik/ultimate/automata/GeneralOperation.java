@@ -37,8 +37,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
-public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>>
+		implements IOperation<LETTER, STATE, CRSF> {
 	/**
 	 * Ultimate services.
 	 */
@@ -87,7 +90,7 @@ public abstract class GeneralOperation<LETTER, STATE> implements IOperation<LETT
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn("No result check for " + operationName() + " available yet.");
 		}

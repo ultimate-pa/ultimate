@@ -61,5 +61,6 @@ public interface IInvariantPatternProcessorFactory<IPT> {
 	
 	public IInvariantPatternProcessor<IPT> produce(final List<IcfgLocation> locations, 
 		final List<IcfgInternalTransition> transitions, final IPredicate precondition,
-		final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation);
+		final IPredicate postcondition, IcfgLocation startLocation, IcfgLocation errorLocation,
+		final boolean debugOutputAllowed);
 }

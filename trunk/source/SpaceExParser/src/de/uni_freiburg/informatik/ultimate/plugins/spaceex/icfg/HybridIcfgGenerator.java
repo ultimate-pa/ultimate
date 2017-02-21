@@ -309,10 +309,6 @@ public class HybridIcfgGenerator {
 			// invariant to term:
 			final String infix = preprocessLocationStatement(loc.getInvariant());
 			final UnmodifiableTransFormula invariantTransformula = buildTransformula(infix, BuildScenario.INVARIANT);
-			if (mLogger.isDebugEnabled()) {
-				final String msg = createTransformulaLoggerMessage(invariantTransformula, infix);
-				mLogger.debug(msg);
-			}
 			final UnmodifiableTransFormula tfStartFlow = invariantTransformula;
 			final IcfgInternalTransition startFlow = new IcfgInternalTransition(start, flow, null, tfStartFlow);
 			start.addOutgoing(startFlow);
@@ -403,7 +399,7 @@ public class HybridIcfgGenerator {
 					for (final String f : list) {
 						if (forbToLocs.get(f).contains(locName)) {
 							if (!finalInfix.isEmpty()) {
-								finalInfix += "&";
+								finalInfix += "|";
 							}
 							finalInfix += forbInfix;
 						}
@@ -411,7 +407,7 @@ public class HybridIcfgGenerator {
 				}
 			} else if (group.hasVariables()) {
 				if (!finalInfix.isEmpty()) {
-					finalInfix += "&";
+					finalInfix += "|";
 				}
 				finalInfix += group.getVariableInfix();
 			}
@@ -443,9 +439,6 @@ public class HybridIcfgGenerator {
 			// invariant to term:
 			final UnmodifiableTransFormula transFormula =
 					buildTransitionTransformula(trans.getUpdate(), trans.getGuard());
-			final String msg =
-					createTransformulaLoggerMessage(transFormula, trans.getUpdate() + " && " + trans.getGuard());
-			mLogger.info(msg);
 			final IcfgInternalTransition transition = new IcfgInternalTransition(source, target, null, transFormula);
 			source.addOutgoing(transition);
 			target.addIncoming(transition);
@@ -481,7 +474,14 @@ public class HybridIcfgGenerator {
 	
 	// logger + debug stuff.
 	private static String createTransformulaLoggerMessage(final UnmodifiableTransFormula transFormula,
-			final String infix) {
+			final String guard, final String update) {
+		String msg = "######## CREATED TRANSFORMULA ######## \n";
+		msg += "created " + transFormula.toString() + "\n";
+		msg += "infix: " + guard + (!update.isEmpty() ? "&&" : "") + update;
+		return msg;
+	}
+	
+	private String createTransformulaLoggerMessage(final UnmodifiableTransFormula transFormula, final String infix) {
 		String msg = "######## CREATED TRANSFORMULA ######## \n";
 		msg += "created " + transFormula.toString() + "\n";
 		msg += "infix: " + infix;
@@ -520,7 +520,7 @@ public class HybridIcfgGenerator {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		mLogger.debug("Transformula: " + transformula);
+		mLogger.debug(createTransformulaLoggerMessage(transformula, update, guard));
 		return transformula;
 	}
 	
@@ -546,7 +546,7 @@ public class HybridIcfgGenerator {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
 		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-		mLogger.debug("Transformula: " + transformula);
+		mLogger.debug(createTransformulaLoggerMessage(transformula, infix));
 		return transformula;
 	}
 	

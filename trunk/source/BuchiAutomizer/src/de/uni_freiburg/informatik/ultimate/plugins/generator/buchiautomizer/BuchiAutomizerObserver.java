@@ -110,13 +110,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		mPref = taPrefs;
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mIcfg.getCfgSmtToolkit());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
-				rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(), 
-				taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
+						rankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable(),
+						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
-
-		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(mIcfg, mIcfg.getCfgSmtToolkit(), rankVarConstructor, 
-						predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop<?> bcl = new BuchiCegarLoop<>(mIcfg, mIcfg.getCfgSmtToolkit(), rankVarConstructor,
+				predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
@@ -258,8 +258,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private void reportLTLPropertyIsViolated(final BuchiCegarLoop<?> bcl, final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
-		final BoogieIcfgLocation position =
-				(BoogieIcfgLocation) ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
+		final IcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
 		final List<? extends IIcfgTransition<?>> stem = counterexample.getStem().getWord().asList();

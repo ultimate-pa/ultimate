@@ -205,7 +205,7 @@ public class SpaceExPreferenceManager {
 			locMatcher = locPattern.matcher(property);
 			varMatcher = varPattern.matcher(property);
 			if (locMatcher.matches()) {
-				final String aut = locMatcher.group(1).replaceAll("(_.*)", "");
+				final String aut = locMatcher.group(1);
 				final String loc = locMatcher.group(2);
 				if (!initialLocations.containsKey(aut)) {
 					final List<String> locList = new ArrayList<>();
@@ -282,13 +282,13 @@ public class SpaceExPreferenceManager {
 	 */
 	private List<Pair<String, String>> analyseVariable(final String group) {
 		final List<String> arr = HybridTermBuilder.expressionToArray(group);
-		final Pattern pattern = Pattern.compile("(.*)\\.(.*)");
+		final Pattern pattern = Pattern.compile("([a-z,A-Z]+)\\.([a-z,A-Z]+)");
 		Matcher renameMatcher;
 		final List<Pair<String, String>> renameList = new ArrayList<>();
 		for (final String el : arr) {
 			renameMatcher = pattern.matcher(el);
 			if (renameMatcher.matches()) {
-				final String aut = renameMatcher.group(1);
+				final String aut = renameMatcher.group(1).replaceAll("_+.*", "");
 				final String var = renameMatcher.group(2);
 				String newName = generateNewName(var);
 				if (mRequiresRename.containsKey(aut)) {
@@ -566,7 +566,10 @@ public class SpaceExPreferenceManager {
 			// if the system specified in the config file is present in the models systems, get it
 			if (systems.containsKey(configSystem)) {
 				return systems.get(configSystem);
+			} else if (systems.containsKey("system")) {
+				return systems.get("system");
 			} else {
+				
 				throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
 						+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
 			}

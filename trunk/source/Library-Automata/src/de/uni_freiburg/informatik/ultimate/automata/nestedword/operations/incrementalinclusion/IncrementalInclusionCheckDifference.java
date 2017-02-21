@@ -32,14 +32,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class IncrementalInclusionCheckDifference<LETTER, STATE> extends InclusionViaDifference<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> IncrementalInclusionCheckDifference(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory,
+public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+		extends InclusionViaDifference<LETTER, STATE, SF> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+	public IncrementalInclusionCheckDifference(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services,stateFactory,a);

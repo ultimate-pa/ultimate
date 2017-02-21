@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract operation taking one Petri net as input.
@@ -38,8 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
  *            letter type
  * @param <PLACE>
  *            place type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
-public abstract class UnaryNetOperation<LETTER, PLACE> extends GeneralOperation<LETTER, PLACE> {
+public abstract class UnaryNetOperation<LETTER, PLACE, CRSF extends IStateFactory<PLACE>>
+		extends GeneralOperation<LETTER, PLACE, CRSF> {
 	/**
 	 * Constructor.
 	 * 

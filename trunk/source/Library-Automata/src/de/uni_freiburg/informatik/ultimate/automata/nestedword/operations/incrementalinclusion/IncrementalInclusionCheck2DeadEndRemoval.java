@@ -44,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  *
@@ -59,13 +57,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 
 public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
-		extends AbstractIncrementalInclusionCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
+		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
+		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	private int mCounterRun = 0;
 	private int mCounterTotalNodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mLocalMA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mLocalMB;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mLocalMB2;
-	private final IDeterminizeStateFactory<STATE> mLocalStateFactory;
 	private final AutomataLibraryServices mLocalServiceProvider;
 	private HashSet<NodeData<LETTER, STATE>> mAllNodes;
 	private LinkedList<NodeData<LETTER, STATE>> mErrorNodes;
@@ -81,7 +79,6 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		super(services, a);
 		IncrementalInclusionCheck2DeadEndRemoval.abortIfContainsCallOrReturn(a);
 		mLocalServiceProvider = services;
-		mLocalStateFactory = sf;
 		mLogger.info(startMessage());
 		mLocalMA = (new RemoveDeadEnds<>(mLocalServiceProvider, a)).getResult();
 		mLocalMB = new ArrayList<>();
@@ -379,17 +376,14 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IIncrementalInclusionStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		boolean checkResult;
-		// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory becomes class parameter
 		if (mErrorNodes.peekFirst() != null) {
-			checkResult = compareInclusionCheckResult(mLocalServiceProvider,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mLocalMA,
-					mLocalMB2, mErrorNodes.peekFirst().mWord);
+			checkResult = compareInclusionCheckResult(mLocalServiceProvider, stateFactory, mLocalMA, mLocalMB2,
+					mErrorNodes.peekFirst().mWord);
 		} else {
-			checkResult = compareInclusionCheckResult(mLocalServiceProvider,
-					(IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>) stateFactory, mLocalMA,
-					mLocalMB2, null);
+			checkResult = compareInclusionCheckResult(mLocalServiceProvider, stateFactory, mLocalMA, mLocalMB2, null);
 		}
 		return checkResult;
 	}
@@ -404,12 +398,12 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	 * may be several counterexamples. Dies method does NOT require that both methods return exactly the same
 	 * counterexample.
 	 */
-	public static <LETTER, STATE, FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>>
-		boolean compareInclusionCheckResult(final AutomataLibraryServices services,
-			final FACTORY stateFactory, final INestedWordAutomatonSimple<LETTER, STATE> a,
+	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
+			final INestedWordAutomatonSimple<LETTER, STATE> a,
 			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
 			throws AutomataLibraryException {
-		final InclusionViaDifference<LETTER, STATE> ivd = new InclusionViaDifference<>(services, stateFactory, a);
+		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			ivd.addSubtrahend(bi);

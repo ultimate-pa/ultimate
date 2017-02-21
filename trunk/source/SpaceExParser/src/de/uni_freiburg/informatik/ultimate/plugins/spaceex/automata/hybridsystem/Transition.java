@@ -72,7 +72,7 @@ public class Transition {
 	}
 	
 	protected void setLabel(final String label) {
-		mLabel = label;
+		mLabel = (label != null) ? label : "";
 	}
 	
 	public String getLabel() {
@@ -80,7 +80,7 @@ public class Transition {
 	}
 	
 	protected void setUpdate(final String update) {
-		mUpdate = update;
+		mUpdate = (update != null) ? update : "";
 	}
 	
 	public String getUpdate() {
@@ -88,7 +88,7 @@ public class Transition {
 	}
 	
 	protected void setGuard(final String guard) {
-		mGuard = guard;
+		mGuard = (guard != null) ? guard : "";
 	}
 	
 	public String getGuard() {

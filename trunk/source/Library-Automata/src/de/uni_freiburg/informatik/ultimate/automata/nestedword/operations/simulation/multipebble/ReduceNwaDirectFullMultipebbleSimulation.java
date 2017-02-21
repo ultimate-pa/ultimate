@@ -26,12 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -44,12 +45,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
-		extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> {
+public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends
+		ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> {
 	
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ReduceNwaDirectFullMultipebbleSimulation(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+	public ReduceNwaDirectFullMultipebbleSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, false);
 	}
@@ -67,5 +67,11 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
 		final RemoveDeadEnds<LETTER, DirectFullMultipebbleGameState<STATE>> rde =
 				new RemoveDeadEnds<>(mServices, gameAutomaton);
 		return new Pair<>(rde.getResult(), rde.getInputSize());
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 }

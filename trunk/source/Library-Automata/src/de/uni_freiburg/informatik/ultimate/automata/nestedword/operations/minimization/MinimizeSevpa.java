@@ -37,6 +37,7 @@ import java.util.ListIterator;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -52,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Minimizer for special type of nested word automata used in Ultimate.
@@ -120,8 +121,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public MinimizeSevpa(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false);
 	}
@@ -142,8 +142,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public MinimizeSevpa(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataOperationCanceledException {
@@ -169,8 +168,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             iff cancel signal is received
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeSevpa(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public MinimizeSevpa(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final PartitionBackedSetOfPairs<STATE> equivalenceClasses, final boolean addMapOldState2newState,
 			final IFlag timeout, final boolean initialPartitionSeparatesFinalsAndNonfinals)
@@ -1043,6 +1041,12 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	 */
 	protected boolean getConstructionInterrupted() {
 		return mConstructionInterrupted;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	/**

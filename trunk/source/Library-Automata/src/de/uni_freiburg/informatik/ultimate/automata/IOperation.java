@@ -66,9 +66,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * @param <STATE>
  *            Type of objects that are used to label states (resp. places
  *            for PetriNet)
+ * @param <CRSF>
+ *            type of {@link IStateFactory} that is used in the {@link #checkResult(IStateFactory)} method
  */
-public interface IOperation<LETTER, STATE> {
-	
+public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	/**
 	 * @return Name of the operation.<br>
 	 *         This name should also be used in the test grammar.
@@ -80,8 +81,8 @@ public interface IOperation<LETTER, STATE> {
 	
 	/**
 	 * @return Message that should be logged when the operation is started.<br>
-	 *         Use some information like:
-	 *         "Started operation intersection. First operand has 2394 states, second operand has 9374 states."
+	 *         Use some information like:<br>
+	 *         "Started operation Intersection. First operand has 2394 states, second operand has 9374 states."
 	 */
 	default String startMessage() {
 		return "Started " + operationName() + '.';
@@ -109,11 +110,10 @@ public interface IOperation<LETTER, STATE> {
 	 * @throws AutomataLibraryException
 	 *             if checks fail or timeout was requested
 	 */
-	boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException;
+	boolean checkResult(CRSF stateFactory) throws AutomataLibraryException;
 	
 	/**
-	 * Get information about the runtime and resource consumption of the
-	 * operation.
+	 * Get information about the runtime and resource consumption of the operation.
 	 * <p>
 	 * Delivering this information is optional.
 	 * 

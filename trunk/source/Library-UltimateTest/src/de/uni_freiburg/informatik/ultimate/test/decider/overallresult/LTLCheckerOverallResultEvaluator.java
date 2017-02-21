@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.test.decider.overallresult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResultEvaluator {
@@ -36,18 +38,22 @@ public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResult
 	private int mAllSaveCounter = 0;
 
 	@Override
-	protected SafetyCheckerOverallResult detectResultCategory(IResult result) {
+	protected SafetyCheckerOverallResult detectResultCategory(final IResult result) {
 		if (result instanceof AllSpecificationsHoldResult) {
 			mAllSaveCounter++;
 			if (mAllSaveCounter < 2) {
 				return SafetyCheckerOverallResult.NO_RESULT;
-			} else {
-				return SafetyCheckerOverallResult.SAFE;
 			}
+			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof LTLInfiniteCounterExampleResult<?, ?, ?>) {
 			return SafetyCheckerOverallResult.UNSAFE;
 		} else if (result instanceof LTLFiniteCounterExampleResult<?, ?, ?>) {
 			return SafetyCheckerOverallResult.UNSAFE;
+		} else if (result instanceof TerminationAnalysisResult) {
+			final TerminationAnalysisResult tar = (TerminationAnalysisResult) result;
+			if (tar.getTermination() == TERMINATION.UNKNOWN) {
+				return SafetyCheckerOverallResult.UNKNOWN;
+			}
 		}
 		return super.detectResultCategory(result);
 	}

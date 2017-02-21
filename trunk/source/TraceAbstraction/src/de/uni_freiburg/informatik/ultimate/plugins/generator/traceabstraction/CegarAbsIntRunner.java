@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -174,7 +173,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
-				for (final LETTER trans : pathProgramSet) {
+				mLogger.debug("Trace:");
+				for (final LETTER trans : currentCex.getWord().asList()) {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
@@ -326,7 +326,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
 				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices,
-						mResult.getUsedDomain(), mResult.getUsedVariableProvider(), mPredicateUnifier);
+						mResult.getUsedDomain(), mResult.getUsedVariableProvider(), mPredicateUnifier, mCsToolkit);
 				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
 			}
 			return mHtc;
@@ -388,12 +388,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}
-			final IAbstractStateBinaryOperator<STATE> mergeOp = mResult.getUsedDomain().getMergeOperator();
 			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
 					.map(mPredicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
 			final IPredicate disjunction = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicates);
-			final STATE oneState = postStates.stream().reduce(mergeOp::apply).orElseThrow(AssertionError::new);
-			return new AbsIntPredicate<>(disjunction, oneState);
+			return new AbsIntPredicate<>(disjunction, postStates);
 		}
 	}
 

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Check if an automaton is
@@ -54,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  * @param <STATE>
  *            state type
  */
-public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final Set<STATE> mNondeterministicSuccessorOfAccepting = new HashSet<>();
 	
 	private final boolean mResult;

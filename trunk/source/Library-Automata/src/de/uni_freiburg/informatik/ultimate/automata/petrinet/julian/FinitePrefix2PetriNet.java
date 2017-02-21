@@ -40,16 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -61,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  * @param <C>
  *            content type
  */
-public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
+public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IStateFactory<C>> {
 	private final BranchingProcess<L, C> mInput;
 	private final PetriNetJulian<L, C> mNet;
 	private final UnionFind<Condition<L, C>> mRepresentatives;
@@ -253,23 +251,20 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 			mLogger.info("Testing Petri net language equivalence");
 		}
 		
-		// TODO Christian 2017-02-15 Casts are temporary workarounds, state factory should become a parameter
+		// TODO Christian 2017-02-15 Cast is temporary workaround, state factory should become a parameter
+		final INwaInclusionStateFactory<C> stateFactory = (INwaInclusionStateFactory<C>) oldNet.getStateFactory();
 		final INestedWordAutomaton<L, C> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), oldNet)).getResult();
 		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), newNet)).getResult();
-		final NestedRun<L, C> subsetCounterex = new IsIncluded<>(mServices,
-				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C> & IEmptyStackStateFactory<C>) oldNet
-						.getStateFactory(),
-				finAuto1, finAuto2).getCounterexample();
+		final NestedRun<L, C> subsetCounterex =
+				new IsIncluded<>(mServices, stateFactory, finAuto1, finAuto2).getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		final NestedRun<L, C> supersetCounterex = new IsIncluded<>(mServices,
-				(ISinkStateFactory<C> & IDeterminizeStateFactory<C> & IIntersectionStateFactory<C> & IEmptyStackStateFactory<C>) oldNet
-						.getStateFactory(),
-				finAuto2, finAuto1).getCounterexample();
+		final NestedRun<L, C> supersetCounterex =
+				new IsIncluded<>(mServices, stateFactory, finAuto2, finAuto1).getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by second: " + supersetCounterex.getWord());

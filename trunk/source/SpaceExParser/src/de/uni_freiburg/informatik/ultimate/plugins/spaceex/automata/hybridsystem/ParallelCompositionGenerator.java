@@ -147,13 +147,13 @@ public class ParallelCompositionGenerator {
 				mLogger.debug("############### ADDING SET TO VISITED ################");
 				currentLocs.forEach(loc -> mLogger.debug("*" + loc));
 				mLogger.debug("###########################################");
-				mLogger.debug("################### VISITED SETS #######################");
-				for (final Set<Location> locs : mVisitedLocations) {
-					mLogger.debug("############### SET ################");
-					locs.forEach(loc -> mLogger.debug("*" + loc));
-					mLogger.debug("####################################");
-				}
-				mLogger.debug("#####################################################");
+				// mLogger.debug("################### VISITED SETS #######################");
+				// for (final Set<Location> locs : mVisitedLocations) {
+				// mLogger.debug("############### SET ################");
+				// locs.forEach(loc -> mLogger.debug("*" + loc));
+				// mLogger.debug("####################################");
+				// }
+				// mLogger.debug("#####################################################");
 				mLogger.debug("############### OUTGOING TRANSITIONS ###############");
 				for (final Transition t : allOutgoing) {
 					mLogger.debug("*" + t);

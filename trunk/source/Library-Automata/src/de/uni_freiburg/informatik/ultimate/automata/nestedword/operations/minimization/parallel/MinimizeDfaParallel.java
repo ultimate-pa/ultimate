@@ -33,13 +33,15 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
@@ -128,9 +130,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            input automaton
 	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> MinimizeDfaParallel(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaParallel(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
 		
@@ -217,6 +218,12 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
+	}
+	
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkLanguageEquivalence(stateFactory);
 	}
 	
 	/**
@@ -430,10 +437,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 			try {
 				if (mChooseAlgorithm.equals(Algorithm.HOPCROFT)) {
 					mLogger.debug("moep1");
-					// TODO Christian 2017-02-16 Cast is a temporary workaround until we find a solution
-					mAlgorithm = new MinimizeDfaHopcroftParallel<>(mServices,
-							(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, mOperand,
-							mInterrupt, mInt2state, mState2int);
+					mAlgorithm = new MinimizeDfaHopcroftParallel<>(mServices, mStateFactory, mOperand, mInterrupt,
+							mInt2state, mState2int);
 					
 					if (isInterrupted()) {
 						return;
@@ -460,10 +465,8 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 					
 				} else {
 					mLogger.debug("miep1");
-					// TODO Christian 2017-02-16 Cast is a temporary workaround until we find a solution
-					mAlgorithm = new MinimizeDfaIncrementalParallel<>(mServices,
-							(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, mOperand,
-							mInterrupt, mInt2state, mState2int);
+					mAlgorithm = new MinimizeDfaIncrementalParallel<>(mServices, mStateFactory, mOperand, mInterrupt,
+							mInt2state, mState2int);
 					
 					if (isInterrupted()) {
 						return;

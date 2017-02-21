@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract operation taking one nested word automaton as input.
@@ -38,8 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <CRSF>
+ *            checkResult state factory type
  */
-public abstract class UnaryNwaOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
+public abstract class UnaryNwaOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>>
+		extends GeneralOperation<LETTER, STATE, CRSF> {
 	/**
 	 * Constructor.
 	 * 

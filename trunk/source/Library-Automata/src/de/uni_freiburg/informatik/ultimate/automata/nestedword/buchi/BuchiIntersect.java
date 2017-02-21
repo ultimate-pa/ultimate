@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE> {
+public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
@@ -94,8 +94,8 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
-	private <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
-			doIntersect(final FACTORY stateFactory) throws AutomataLibraryException {
+	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			doIntersect(final SF stateFactory) throws AutomataLibraryException {
 		final BuchiIntersectNwa<LETTER, STATE> intersect =
 				new BuchiIntersectNwa<>(mFstOperand, mSndOperand, stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);

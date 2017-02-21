@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * 
  * @author Fabian Reiter
  */
-public final class GetRandomNwa extends GeneralOperation<String, String> {
+public final class GetRandomNwa extends GeneralOperation<String, String, IStateFactory<String>> {
 	private final Random mRandom;
 	private final INestedWordAutomaton<String, String> mResult;
 	

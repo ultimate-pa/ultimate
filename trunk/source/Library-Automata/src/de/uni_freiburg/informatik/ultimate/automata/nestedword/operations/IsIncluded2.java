@@ -31,9 +31,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.InclusionViaDifference;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * @param <STATE>
  *            state type
  */
-public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
 	
-	private final InclusionViaDifference<LETTER, STATE> mInclusionViaDifference;
+	private final InclusionViaDifference<LETTER, STATE, ?> mInclusionViaDifference;
 	
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
@@ -74,8 +74,8 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public <FACTORY extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> IsIncluded2(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public IsIncluded2(final AutomataLibraryServices services,
+			final IIncrementalInclusionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandA,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)

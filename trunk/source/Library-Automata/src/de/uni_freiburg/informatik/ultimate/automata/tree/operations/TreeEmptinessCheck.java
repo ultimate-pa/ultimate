@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE>
  *            state class of tree automaton.
  */
-public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	protected final TreeRun<LETTER, STATE> mResult;

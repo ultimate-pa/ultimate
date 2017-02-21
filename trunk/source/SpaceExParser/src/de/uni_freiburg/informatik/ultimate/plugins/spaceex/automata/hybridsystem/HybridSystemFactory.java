@@ -65,10 +65,10 @@ public final class HybridSystemFactory {
 	 *            The parsed systems.
 	 * @return A new {@link HybridSystem} instance.
 	 */
-	public HybridSystem createHybridSystemFromComponent(final ComponentType system,
+	public HybridSystem createHybridSystemFromComponent(final String parentSystemName, final ComponentType system,
 			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems,
-			SpaceExPreferenceManager preferenceManager) {
-		return new HybridSystem(system, automata, systems, mLogger, preferenceManager);
+			final SpaceExPreferenceManager preferenceManager) {
+		return new HybridSystem(parentSystemName, system, automata, systems, mLogger, preferenceManager);
 	}
 	
 	public HybridSystem createHybridSystem(final String name, final Set<String> globalVariables,

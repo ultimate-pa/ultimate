@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * @param <STATE>
  *            State class of buechi automaton, not used
  */
-public final class CompareWithRandomAutomata<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
-	
+public final class CompareWithRandomAutomata<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * The inputed buechi automaton.
 	 */

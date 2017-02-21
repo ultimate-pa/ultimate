@@ -8,27 +8,17 @@ import fnmatch
 import platform
 import argparse
 
-
-version = 'f286451a'
+version = '47e1251f'
+toolname = 'wrong toolname'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
-
-# various settings file strings 
-settingsFileMemSafetyDerefMemtrack = 'DerefFreeMemtrack'
-settingsFileMemSafetyDeref = 'Deref'
-settingsFileOverflow = 'Overflow'
-settingsFileTermination = 'Termination'
-settingsFileReach = 'Reach'
-settingsFileBitprecise = 'Bitvector'
-settingsFileDefault = 'Default'
-settingsFile32 = '32bit'
-settingsFile64 = '64bit'
 
 # special strings in ultimate output
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
 incorrectSyntaxErrorString = 'ShortDescription: Incorrect Syntax'
 typeErrorString = 'Type Error'
+witnessErrorString = 'InvalidWitnessErrorResult'
 exceptionErrorString = 'ExceptionOrErrorResult'
 safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
@@ -44,23 +34,19 @@ terminationPathEnd = 'End of lasso representation.'
 overflowFalseString = 'overflow possible'
 
 
-def setBinary():
+def getBinary():
     currentPlatform = platform.system()
     
     if currentPlatform == 'Windows':
-        ultimateBin = 'eclipsec.exe'
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     else:
-        ultimateBin = "Ultimate"
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     
     # check if ultimate bin is there 
-    if not os.path.isfile(ultimateBin):
-        print("Ultimate binary not found, expected " + ultimateBin)
-        sys.exit(1)
+    # if not os.path.isfile(ultimateBin):
+    #    print("Ultimate binary not found, expected " + ultimateBin)
+    #    sys.exit(1)
     
-    if not currentPlatform == 'Windows':
-        ultimateBin = './' + ultimateBin
-    
-    ultimateBin = ultimateBin + ' --console'
     return ultimateBin
 
 
@@ -74,7 +60,15 @@ def searchCurrentDir(searchstring):
 
 
 def containsOverapproximationResult(line):
-    triggers = ['Reason: overapproximation of bitwiseAnd', 'Reason: overapproximation of bitwiseOr', 'Reason: overapproximation of bitwiseXor', 'Reason: overapproximation of shiftLeft', 'Reason: overapproximation of shiftRight', 'Reason: overapproximation of bitwiseComplement']
+    triggers = [
+                'Reason: overapproximation of',
+                'Reason: overapproximation of bitwiseAnd',
+                'Reason: overapproximation of bitwiseOr',
+                'Reason: overapproximation of bitwiseXor',
+                'Reason: overapproximation of shiftLeft',
+                'Reason: overapproximation of shiftRight',
+                'Reason: overapproximation of bitwiseComplement'
+                ]
     
     for trigger in triggers:
         if line.find(trigger) != -1:
@@ -84,10 +78,10 @@ def containsOverapproximationResult(line):
 
 
 def runUltimate(ultimateCall, terminationMode):
-    print('Calling Ultimate with: ' + ultimateCall)
+    print('Calling Ultimate with: ' + " ".join(ultimateCall))
     
     try:
-        ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     except:
         print('Error trying to open subprocess')
         sys.exit(1)
@@ -95,6 +89,7 @@ def runUltimate(ultimateCall, terminationMode):
     
     safetyResult = 'UNKNOWN'
     memResult = 'NONE'
+    overflow = False
     readingErrorPath = False
     overapprox = False
     
@@ -103,6 +98,15 @@ def runUltimate(ultimateCall, terminationMode):
     errorPath = ''
     while True:
         line = ultimateProcess.stdout.readline().decode('utf-8', 'ignore')
+        
+        ultimateProcess.poll()
+        if (ultimateProcess.returncode != None and not line):
+            if (ultimateProcess.returncode == 0):
+                print('\nExecution finished normally')
+            else: 
+                print('\nExecution finished with exit code ' + str(ultimateProcess.returncode)) 
+            break
+        
         if readingErrorPath:
             errorPath += line
         ultimateOutput += line
@@ -115,9 +119,14 @@ def runUltimate(ultimateCall, terminationMode):
             safetyResult = 'ERROR: INCORRECT SYNTAX'
         elif (line.find(typeErrorString) != -1):
             safetyResult = 'ERROR: TYPE ERROR'
+        elif (line.find(witnessErrorString) != -1):
+            safetyResult = 'ERROR: INVALID WITNESS FILE'
         elif (line.find(exceptionErrorString) != -1):
-            safetyResult = 'ERROR: ' + line            
-        if(not overapprox and containsOverapproximationResult(line)):
+            safetyResult = 'ERROR: ' + line[line.find(exceptionErrorString):]
+            # hack to avoid errors with floats 
+            overapprox = True           
+        if (not overapprox and containsOverapproximationResult(line)):
+            safetyResult = 'UNKNOWN: Overapproximated counterexample'
             overapprox = True
         if (terminationMode):
             if (line.find(terminationTrueString) != -1):
@@ -141,40 +150,69 @@ def runUltimate(ultimateCall, terminationMode):
             if (line.find(memMemtrackFalseString) != -1):
                 memResult = 'valid-memtrack'
             if(line.find(overflowFalseString) != -1):
-                safetyResult = 'FALSE(OVERFLOW)'
+                overflow = True
+                safetyResult = 'FALSE'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
                 readingErrorPath = False
-    
-        if (not readingErrorPath and line == ''):
-            print('\nDid read empty line, but expected closing message. Wrong executable or arguments?')
-            break
-        
-        if (line.find('Preparing to exit Ultimate with return code 0') != -1):
-            print('\nExecution finished normally') 
-            break
-    
-    return safetyResult, memResult, overapprox, ultimateOutput, errorPath
+
+    return safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath
 
 
 def createUltimateCall(call, arguments):
     for arg in arguments:
         if(isinstance (arg, list)):
-            for subarg in arg:
-                call = call + ' "' + subarg + '"'
+            for subarg in flatten(arg):
+                call = call + [subarg]
         else:
-            call = call + ' "' + arg + '"'
-    return call    
-    
+            call = call + [arg]
+    return call 
 
-def getSettingsFile(bitprecise, settingsSearchString):
+def flatten(l):
+    for el in l:
+        if isinstance(el, list) and not isinstance(el, basestring) and not isinstance(el, (str, bytes)):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el   
+
+def createCliSettings(checkTermination, validateWitness, prop, architecture, cFile):
+    if checkTermination:
+        # we can neither validate nor produce witnesses in termination mode, so no additional arguments are required
+        return []
+    
+    ret = []
+    if validateWitness:
+        # we need to disable hoare triple generation as workaround for an internal bug
+        ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
+        ret.append('false')
+    else:
+        # we are neither in termination nor in validation mode, so we should generate a witness and need 
+        # to pass some things to the witness printer
+        ret.append('--witnessprinter.graph.data.specification')
+        ret.append(prop)
+        ret.append('--witnessprinter.graph.data.producer')
+        ret.append(toolname)
+        ret.append('--witnessprinter.graph.data.architecture')
+        ret.append(architecture)
+        ret.append('--witnessprinter.graph.data.programhash')
+        try:
+            sha = subprocess.Popen(['sha1sum', cFile], stdout=subprocess.PIPE).communicate()[0]
+            ret.append(sha.split()[0])
+        except:
+            print('Error trying to start sha1sum')
+            sys.exit(1)
+
+    return ret
+
+def getSettingsPath(bitprecise, settingsSearchString):
     if bitprecise:
         print ('Using bit-precise analysis')
-        settingsSearchString = settingsSearchString + '*_' + settingsFileBitprecise
+        settingsSearchString = settingsSearchString + '*_' + 'Bitvector'
     else:
         print ('Using default analysis')
-        settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
+        settingsSearchString = settingsSearchString + '*_' + 'Default'
     settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
     if settingsArgument == '' or settingsArgument == None:
         print ('No suitable settings file found using ' + settingsSearchString)
@@ -183,6 +221,11 @@ def getSettingsFile(bitprecise, settingsSearchString):
     return settingsArgument
 
 
+def checkFile(f):
+    if not os.path.isfile(f):
+        printErr('Input file ' + f + ' does not exist')
+        sys.exit(1)
+    return file
 
 def parseArgs():
     # parse command line arguments
@@ -192,12 +235,12 @@ def parseArgs():
         sys.exit(0)
     
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
-    parser.add_argument('--version', action='store_true')
-    parser.add_argument('--full-output', action='store_true')
+    parser.add_argument('--version', action='store_true', help='Print Ultimate\'s version and exit')
+    parser.add_argument('--full-output', action='store_true', help='Print Ultimate\'s full output to stderr after verification ends')
+    parser.add_argument('--validate', nargs=1, metavar='<file>', help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
-    parser.add_argument('architecture', choices=['32bit', '64bit'])
-    parser.add_argument('memorymodel', choices=['simple', 'precise'])
-    parser.add_argument('file', nargs='+', help='All the input files')
+    parser.add_argument('architecture', choices=['32bit', '64bit'], help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
+    parser.add_argument('file', metavar='<file>', nargs=1, help='One C file')
     
     args = parser.parse_args()
   
@@ -209,20 +252,10 @@ def parseArgs():
         printErr('You must specify at least one input file')
         sys.exit(1)
     
-    if(len(args.file) > 2):
-        printErr('You cannot specify more than 2 input files')
-        sys.exit(1)
-    
-    cFile = None
-    witness = None   
-    for f in args.file:
-        if not os.path.isfile(f):
-            printErr('Input file ' + f + ' does not exist')
-            sys.exit(1)
-        if f.endswith('.graphml'):
-            witness = f
-        else:
-            cFile = f
+    witness = None
+    cFile = checkFile(args.file[0])
+    if args.validate:
+        witness = args.validate[0]
     
     if(cFile == None and witness != None):
         printErr("You did not specify a C file with your witness")
@@ -232,69 +265,68 @@ def parseArgs():
     if not os.path.isfile(propertyFileName):
         printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
+        
+    if not args.validate and witness != None:
+        printErr("You did specify a witness but not --validate")
+        sys.exit(1)
    
-    return propertyFileName, args.architecture, args.file, args.full_output
-
+    if args.validate and witness == None:
+        printErr("You did specify --validate but no witness")
+        sys.exit(1)
+    if args.validate:
+        return propertyFileName, args.architecture, [args.file[0], witness], args.full_output, args.validate
+    else:
+        return propertyFileName, args.architecture, args.file[0], args.full_output, args.validate
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
     settingsSearchString = ''
     if memDeref and memDerefMemtrack:
         print ('Checking for memory safety (deref-memtrack)')
-        settingsSearchString = settingsFileMemSafetyDerefMemtrack
+        settingsSearchString = 'DerefFreeMemtrack'
     elif memDeref:
         print ('Checking for memory safety (deref)')
-        settingsSearchString = settingsFileMemSafetyDeref
+        settingsSearchString = 'Deref'
     elif terminationMode:
         print ('Checking for termination')
-        settingsSearchString = settingsFileTermination
+        settingsSearchString = 'Termination'
     elif overflowMode:
         print ('Checking for overflows')
-        settingsSearchString = settingsFileOverflow
+        settingsSearchString = 'Overflow'
     else:
         print ('Checking for ERROR reachability')
-        settingsSearchString = settingsFileReach
+        settingsSearchString = 'Reach'
     settingsSearchString = settingsSearchString + '*' + architecture
     return settingsSearchString
 
 
-def createToolchainString(termmode, witnessmode):
+def getToolchainPath(termmode, memDeref, memDerefMemtrack, overflowMode, witnessmode):
+    searchString = None
     if termmode:
-        toolchain = searchCurrentDir('*Termination.xml');
-        if toolchain == '' or toolchain == None:
-            print ('No suitable settings file found using *Termination.xml')
-            sys.exit(1)
-        return toolchain
-    elif witnessmode: 
-        toolchain = searchCurrentDir('*WitnessValidation.xml');
-        if toolchain == '' or toolchain == None:
-            print ('No suitable settings file found using **WitnessValidation.xml')
-            sys.exit(1)
-        return toolchain
+        searchString = '*Termination.xml'
+    elif witnessmode:
+        searchString = '*WitnessValidation.xml'
+    elif memDeref and memDerefMemtrack:
+        searchString = '*MemDerefMemtrack.xml'
     else:
-        for root, dirs, files in os.walk('.'):
-            for name in files:
-                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml') and not fnmatch.fnmatch(name, '*WitnessValidation.xml'):
-                    return os.path.join(root, name)
-            break
-    print('No suitable toolchain file found')
-    sys.exit(1)
-    return 
+        searchString = '*Reach.xml'
+    
+    toolchain = searchCurrentDir(searchString);
+    if toolchain == '' or toolchain == None:
+        print ('No suitable toolchain file found using ' + searchString)
+        sys.exit(1)
+        
+    return toolchain 
+
 
 def printErr(*objs):
     print(*objs, file=sys.stderr)
 
-def main():
-    # different modes 
+
+def determineMode(propertyFileName):
+    terminationMode = False
     memDeref = False
     memDerefMemtrack = False
-    terminationMode = False
-    witnessMode = False
     overflowMode = False
-    
-    ultimateBin = setBinary()
-    
-    propertyFileName, architecture, cFile, verbose = parseArgs()
-    
     propFile = open(propertyFileName, 'r')
     for line in propFile:
         if line.find('valid-deref') != -1:
@@ -306,27 +338,36 @@ def main():
         if line.find('overflow') != -1:
             overflowMode = True
     
-    witnessMode = len(cFile) > 1
-    
+    return terminationMode, memDeref, memDerefMemtrack, overflowMode
+
+def main():
+    ultimateBin = getBinary()
+    propertyFileName, architecture, inputFiles, verbose, validateWitness = parseArgs()
+    terminationMode, memDeref, memDerefMemtrack, overflowMode = determineMode(propertyFileName)
+            
+    propFileStr = open(propertyFileName, 'r').read()
+
+    toolchain = getToolchainPath(terminationMode, memDeref, memDerefMemtrack, overflowMode, validateWitness)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
-    settingsArgument = getSettingsFile(False, settingsSearchString)
+    settingsArgument = getSettingsPath(False, settingsSearchString)
     
-    toolchain = createToolchainString(terminationMode, witnessMode)
+    # create manual settings that override settings files for witness passthrough (collecting various things) and for witness validation
+    manualCliArguments = createCliSettings(terminationMode, validateWitness, propFileStr, architecture, inputFiles)
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, "--settings", settingsArgument])
+    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, manualCliArguments])
  
 
     # actually run Ultimate 
-    safetyResult, memResult, overaprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
+    safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
     
-    if(overaprox):
-        # we did fail because we had to overaproximate. Lets rerun with bit-precision 
+    if(overapprox):
+        # we did fail because we had to overapproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
-        settingsArgument = getSettingsFile(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, '--settings', settingsArgument])
-        safetyResult, memResult, overaprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
+        settingsArgument = getSettingsPath(True, settingsSearchString)
+        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, manualCliArguments])
+        safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
     # summarize results
@@ -334,14 +375,17 @@ def main():
         print('Writing output log to file {}'.format(outputFileName))
         outputFile = open(outputFileName, 'wb')
         outputFile.write(ultimateOutput.encode('utf-8'))
-    
+
     if safetyResult.startswith('FALSE'):
         print('Writing human readable error path to file {}'.format(errorPathFileName))
         errOutputFile = open(errorPathFileName, 'wb')
         errOutputFile.write(errorPath.encode('utf-8'))
-    
-    if memDeref and safetyResult.startswith('FALSE'):
-        result = 'FALSE({})'.format(memResult)
+        if memDeref:
+            result = 'FALSE({})'.format(memResult)
+        elif overflow: 
+            result = 'FALSE(OVERFLOW)'
+        else: 
+            result = safetyResult
     else:
         result = safetyResult
         

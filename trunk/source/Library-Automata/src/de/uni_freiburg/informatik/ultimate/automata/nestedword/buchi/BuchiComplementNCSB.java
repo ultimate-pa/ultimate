@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	
@@ -67,8 +67,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public <FACTORY extends IStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiComplementNCSB(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
+	public BuchiComplementNCSB(final AutomataLibraryServices services,
+			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Checks whether a nested word automaton is total.
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            state type
  */
-public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final boolean mResult;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            Content. Type of the labels (the content) of the automata states.
  */
-public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
