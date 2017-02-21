@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
@@ -45,26 +45,26 @@ public interface IRefinementEngine<T> {
 	 * @return Feasibility status of the counterexample trace.
 	 */
 	LBool getCounterexampleFeasibility();
-	
+
 	/**
 	 * This method must only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
-	 * 
+	 *
 	 * @return Proof of infeasibility.
 	 */
 	T getInfeasibilityProof();
-	
+
 	/**
 	 * @return Predicate unifier.
 	 */
-	PredicateUnifier getPredicateUnifier();
-	
+	IPredicateUnifier getPredicateUnifier();
+
 	boolean providesICfgProgramExecution();
-	
+
 	/**
 	 * @return RCFG program execution.
 	 */
 	IcfgProgramExecution getIcfgProgramExecution();
-	
+
 	/**
 	 * @return Hoare triple checker.
 	 */

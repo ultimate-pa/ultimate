@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
 /**
  * Nondeterministic interpolant automaton with on-demand construction. The set of successor states S for a given state ψ
@@ -77,7 +77,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
+			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
 			final boolean secondChance) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
