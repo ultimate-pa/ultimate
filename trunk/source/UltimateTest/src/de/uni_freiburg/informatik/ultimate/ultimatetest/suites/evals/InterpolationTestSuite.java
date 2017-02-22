@@ -395,6 +395,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(getPair("examples/svcomp/floats-cdfpl/", I));
 		rtr.add(getPair("examples/svcomp/floats-cbmc-regression/", I));
 		rtr.add(getPair("examples/svcomp/float-benchs/", C));
+		rtr.add(getPair("examples/svcomp/floats-esbmc-regression/", I));
 		return rtr;
 	}
 	public List<DirectoryFileEndingsPair> getMemsafetyDerefSet() {
