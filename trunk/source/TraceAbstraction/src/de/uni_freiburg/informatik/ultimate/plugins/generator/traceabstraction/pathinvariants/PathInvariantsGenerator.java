@@ -259,7 +259,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			lbePathProgram = pathProgram;
 		}
 		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
-			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(pathProgram);
+			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(lbePathProgram);
 		} else {
 			mAbstractInterpretationResult = null;
 		}
