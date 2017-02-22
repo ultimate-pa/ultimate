@@ -130,6 +130,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
+	
+	private static final boolean USE_LIVE_VARIABLES = true;
 
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
 	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
@@ -166,7 +168,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
-	private final boolean mUseLiveVariables;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
@@ -207,7 +208,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final boolean useNonlinearConstraints, final boolean useUnsatCores, final boolean useLiveVariables,
+			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants,
 			final Settings solverSettings, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -219,7 +220,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mPredicateUnifier = predicateUnifier;
 		mPredicateTransformer = new PredicateTransformer(services, icfg.getCfgSmtToolkit().getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique);
-		mUseLiveVariables = useLiveVariables;
 		mUseWeakestPrecondition = useWPForPathInvariants;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 
@@ -258,7 +258,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			lbePathProgram = pathProgram;
 		}
-		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
+		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
 			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(lbePathProgram);
 		} else {
 			mAbstractInterpretationResult = null;
@@ -524,7 +524,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 							allProgramVariables, locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
-				return new DynamicPatternSettingsStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+				return new DynamicPatternSettingsStrategy(1, 2, 1, 1, MAX_ROUNDS, allProgramVariables,
 						locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 						USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 			}
@@ -693,7 +693,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
-		if (mUseLiveVariables || mUseAbstractInterpretationPredicates) {
+		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
 			// pathprogramLocs2LiveVars = applyAbstractInterpretationOnPathProgram(pathProgram);
 			assert mAbstractInterpretationResult != null : "Abstract Interpretation has not been applied on path program to"
 					+ " generate live variables";
@@ -736,7 +736,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(useUnsatCores, mUseLiveVariables, allProgramVars, pathprogramLocs2LiveVars);
+				getStrategy(useUnsatCores, USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {

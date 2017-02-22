@@ -63,7 +63,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final IIcfg<?> mIcfg;
-	private final boolean mUseLiveVariables;
 	private final boolean mUseWPForPathInvariants;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
@@ -76,7 +75,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final boolean useLiveVariables, final boolean useAbstractInterpretationPredicates,
+			final boolean useVarsFromUnsatCore, final boolean useAbstractInterpretationPredicates,
 			final boolean useWeakestPrecondition,
 			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer, 
@@ -88,7 +87,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
-		mUseLiveVariables = useLiveVariables;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 		mUseWPForPathInvariants = useWeakestPrecondition;
 		mSolverSettings = solverSettings;
@@ -114,7 +112,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier, mIcfg,
-				mUseNonlinerConstraints, mUseVarsFromUnsatCore, mUseLiveVariables, mUseAbstractInterpretationPredicates, 
+				mUseNonlinerConstraints, mUseVarsFromUnsatCore, mUseAbstractInterpretationPredicates, 
 				mUseWPForPathInvariants,
 				mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
