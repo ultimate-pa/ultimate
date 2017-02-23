@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,6 +38,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
@@ -64,6 +67,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
 	private STATE mEmptyStackState;
+	private final int mNumberOfInitialPairs;
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -138,7 +142,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 *            state factory
 	 * @param operand
 	 *            input nested word automaton
-	 * @param initialStatePairs
+	 * @param initialPairs
 	 *            internal data structure for initial pairs of states
 	 * @param settings
 	 *            settings wrapper
@@ -147,16 +151,45 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 */
 	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings,
+			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings,
 			final boolean libraryMode) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs, libraryMode);
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialPairs, libraryMode);
 		mEmptyStackState = mOperand.getEmptyStackState();
+
+		// statistics
+		int NumberOfInitialPairs = 0;
+		for (final Iterator<Pair<STATE, STATE>> iterator = initialPairs.keys2().iterator(); iterator.hasNext(); iterator
+				.next()) {
+			NumberOfInitialPairs++;
+		}
+		mNumberOfInitialPairs = NumberOfInitialPairs;
 
 		printStartMessage();
 
 		run();
 
 		printExitMessage();
+	}
+
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		addStatistics(statistics, false);
+		return statistics;
+	}
+
+	@Override
+	public void addStatistics(final AutomataOperationStatistics statistics) {
+		addStatistics(statistics, true);
+	}
+
+	private void addStatistics(final AutomataOperationStatistics statistics, final boolean addSuperStatistics) {
+		if (addSuperStatistics) {
+			super.addStatistics(statistics);
+		}
+		statistics.addKeyValuePair(
+				mLibraryMode ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT : StatisticsType.NUMBER_INITIAL_PAIRS,
+				mNumberOfInitialPairs);
 	}
 
 	/**
