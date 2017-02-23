@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator.Approximation;
@@ -147,7 +148,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
-
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
@@ -208,8 +208,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
-		final IIcfg<IcfgLocation> pathProgram =
-				new PathProgram<>("PathInvariantsPathProgram", icfg, allowedTransitions);
+		// DD: Note that getLabel() on a path program location gives you the original location.
+		final PathProgram.PathProgramConstructionResult ppResult =
+				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
+		final Map<IcfgLocation, PathProgramIcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
+
 		LargeBlockEncodingIcfgTransformer lbeTransformer;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
@@ -226,9 +230,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
 		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
-		Map<IcfgLocation, IPredicate> invariants =
-				generateInvariantsForPathProgram(useUnsatCores, icfg, lbePathProgram, simplificationTechnique,
-						xnfConversionTechnique, solverSettings, useNonlinearConstraints);
+		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useUnsatCores, icfg, lbePathProgram,
+				simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinearConstraints);
 		if (invariants != null) {
 			if (APPLY_LARGE_BLOCK_ENCODING) {
 				invariants = lbeTransformer.transform(invariants);
@@ -239,7 +242,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram =
 						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-						.collect(Collectors.toList()).get(0);
+								.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
 				mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
@@ -280,13 +283,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
+				xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
 	}
 
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
-	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-			final Set<IProgramVar> allProgramVariables,
-			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
+					final Set<IProgramVar> allProgramVariables,
+					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
@@ -460,8 +464,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Get locations, transitions and program variables from the path program
 		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList,
 				allProgramVars);
-		mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and "
-				+ transitionsAsList.size() + " transitions.");
+		mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and " + transitionsAsList.size()
+				+ " transitions.");
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
 		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
@@ -491,10 +495,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
 					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
 
-			loc2underApprox =
-					convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
-			loc2overApprox =
-					convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+			loc2underApprox = convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+			loc2overApprox = convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
 		}
 		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
 		if (mUseWeakestPrecondition) {
@@ -523,17 +525,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 		}
 		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useUnsatCores,
-				solverSettings, simplificationTechnique, xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(),
-				strategy, loc2underApprox, loc2overApprox);
+				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useUnsatCores, solverSettings,
+				simplificationTechnique, xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy,
+				loc2underApprox, loc2overApprox);
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useUnsatCores,
-				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
+				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useUnsatCores, allProgramVars,
+				pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
 		mLogger.info("Generated invariant map.");
 
@@ -633,14 +635,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return
 	 */
 	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-	applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
+			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		return AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
 	}
 
 	private static Set<? extends IcfgEdge>
-	extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
+			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;
