@@ -400,16 +400,18 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	public List<DirectoryFileEndingsPair> getMemsafetyDerefSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
-		rtr.add(getPair("examples/svcomp/array-memsafety/", I));
 		return rtr;
 	}
 	
 	public List<DirectoryFileEndingsPair> getMemsafetyDerefFreeMemtrackSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
+		rtr.add(getPair("examples/svcomp/array-memsafety/", I));
+		rtr.add(getPair("examples/svcomp/array-examples/", I));
 		rtr.add(getPair("examples/svcomp/memsafety/", I) );
 		rtr.add(getPair("examples/svcomp/list-ext-properties/", I) );
 		rtr.add(getPair("examples/svcomp/memory-alloca/", I) );
 		rtr.add(getPair("examples/svcomp/ldv-memsafety/", I) );
+		rtr.add(getPair("examples/svcomp/ldv-memsafety-bitfields/", I) );
 		return rtr;
 	}
 	// @formatter:on
