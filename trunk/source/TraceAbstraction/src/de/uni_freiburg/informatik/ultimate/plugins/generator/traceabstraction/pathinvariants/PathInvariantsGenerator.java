@@ -130,7 +130,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	// 1. We add the predicate to each disjunct as an additional conjunct, or
 	// 2. we add the predicate as an additional disjunct.
 	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-	
+
 	private static final boolean USE_LIVE_VARIABLES = true;
 
 	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
@@ -159,12 +159,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
 	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
-
-	private static final boolean DEBUG_OUTPUT_GENERALLY_ALLOWED = true;
-	// DEBUG_OUTPUT_I is used for status updates, e.g. which part of invariant synthesis is active, what is the sat-result of the constraints
-	private static boolean DEBUG_OUTPUT_I = true;
-	// DEBUG_OUTPUT_II is used for output with higher time complexity, like size of constraints
-	private static boolean DEBUG_OUTPUT_II = true;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 
@@ -225,13 +219,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
-		if (!DEBUG_OUTPUT_GENERALLY_ALLOWED) {
-			DEBUG_OUTPUT_I = false;
-			DEBUG_OUTPUT_II = false;
-		}
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("Current run: " + run);
-		}
+
+		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
 		final IIcfg<IcfgLocation> pathProgram =
@@ -282,20 +271,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
 						.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
-				if (DEBUG_OUTPUT_I) {
-					mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
-				}
+				mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
-			if (DEBUG_OUTPUT_I) {
-				mLogger.info("Invariants found and " + "processed.");
-				mLogger.info("Got a Invariant map of length " + mInterpolants.length);
-			}
+			mLogger.info("Invariants found and " + "processed.");
+			mLogger.info("Got a Invariant map of length " + mInterpolants.length);
 			mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
 		} else {
 			mInterpolants = null;
-			if (DEBUG_OUTPUT_I) {
-				mLogger.info("No invariants found.");
-			}
+			mLogger.info("No invariants found.");
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
@@ -330,11 +313,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 		}
 		final Set<IcfgLocation> inputIcfgLocations = extractAllIcfgLocations(inputIcfg);
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
-			mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
-			mLogger.info(resultInvariantMapping.size() - lbeInvariants.size() + " invariants obtained by interpolation");
-		}
+		mLogger.info("path program has " + inputIcfgLocations.size() + " locations");
+		mLogger.info(lbeInvariants.size() + " invariants obtained by synthesis");
+		mLogger.info(resultInvariantMapping.size() - lbeInvariants.size() + " invariants obtained by interpolation");
 		int numberSpInvariants = 0;
 		final ArrayDeque<IcfgLocation> inputIcfgLocationsWithoutInvariants = new ArrayDeque<>();
 		for (final IcfgLocation loc : inputIcfgLocations) {
@@ -353,9 +334,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				inputIcfgLocationsWithoutInvariants.add(some);
 			}
 		}
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
-		}
+		mLogger.info("remaining " + numberSpInvariants + " invariants computed via SP");
 		return resultInvariantMapping;
 	}
 
@@ -675,9 +654,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final IIcfg<?> icfg, final IIcfg<IcfgLocation> pathProgram,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Settings solverSettings, final boolean useNonlinearConstraints) {
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("Started with a run of length " + mRun.getLength());
-		}
+		mLogger.info("Started with a run of length " + mRun.getLength());
 
 		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
 		final IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
@@ -687,10 +664,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Get locations, transitions and program variables from the path program
 		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList,
 				allProgramVars);
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and "
-					+ transitionsAsList.size() + " transitions.");
-		}
+		mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and "
+				+ transitionsAsList.size() + " transitions.");
 		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
 
 		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
@@ -706,13 +681,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 			// At the initial location no variable is live
 			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
-			if (DEBUG_OUTPUT_II) {
-				mLogger.info("Live variables computed: " + pathprogramLocs2LiveVars);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Live variables computed: " + pathprogramLocs2LiveVars);
 			}
 		}
 		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = null;
 		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
-		
+
 		if (useUnsatCores) {
 			// Compute under-/overapproximation only if we use unsat cores during invariant synthesis
 			final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
@@ -757,16 +732,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				strategy, loc2underApprox, loc2overApprox);
 
 		// Generate invariants
-		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats, DEBUG_OUTPUT_GENERALLY_ALLOWED);
+		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
 		final Map<IcfgLocation, IPredicate> invariants;
 
 		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useUnsatCores,
 				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
-		if (DEBUG_OUTPUT_I) {
-			mLogger.info("Generated invariant map.");
-		}
+		mLogger.info("Generated invariant map.");
 
 		return invariants;
 	}

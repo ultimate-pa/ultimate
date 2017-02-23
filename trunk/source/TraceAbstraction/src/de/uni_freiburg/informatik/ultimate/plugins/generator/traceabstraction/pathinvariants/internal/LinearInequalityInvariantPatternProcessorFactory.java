@@ -166,10 +166,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public IInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> produce(
 			final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
 			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
-			final IcfgLocation errorLocation, final boolean debugOutputAllowed) {
+			final IcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(mServices, mStorage, predUnifier, mCsToolkit, mAxioms,
 				produceSmtSolver(), locations, transitions, precondition, postcondition, startLocation, errorLocation,
 				strategy, mUseNonlinearConstraints, mUseUnsatCores, mSimplificationTechnique, mXnfConversionTechnique, 
-				mLoc2underApprox, mLoc2overApprox, debugOutputAllowed);
+				mLoc2underApprox, mLoc2overApprox);
 	}
 }
