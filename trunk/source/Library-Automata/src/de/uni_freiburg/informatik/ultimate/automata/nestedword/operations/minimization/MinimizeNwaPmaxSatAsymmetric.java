@@ -158,8 +158,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 
 		// statistics
 		int NumberOfInitialPairs = 0;
-		for (final Iterator<Pair<STATE, STATE>> iterator = initialPairs.keys2().iterator(); iterator.hasNext(); iterator
-				.next()) {
+		for (final Iterator<Triple<STATE, STATE, Pair<STATE, STATE>>> iterator =
+				initialPairs.entrySet().iterator(); iterator.hasNext(); iterator.next()) {
 			NumberOfInitialPairs++;
 		}
 		mNumberOfInitialPairs = NumberOfInitialPairs;
