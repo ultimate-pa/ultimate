@@ -143,6 +143,21 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
+	 * @param partition
+	 *            A partition of states.
+	 * @param <STATE>
+	 *            state type
+	 * @return the number of pairs of states from within the same blocks
+	 */
+	public static <STATE> long computeNumberOfEquivalentPairs(final Collection<Set<STATE>> partition) {
+		int result = 0;
+		for (final Set<STATE> eqClass : partition) {
+			result += eqClass.size() * eqClass.size();
+		}
+		return result;
+	}
+
+	/**
 	 * Convert binary relation given as partition into binary relation given as {@link HashRelation}.
 	 * 
 	 * @param <STATE>
