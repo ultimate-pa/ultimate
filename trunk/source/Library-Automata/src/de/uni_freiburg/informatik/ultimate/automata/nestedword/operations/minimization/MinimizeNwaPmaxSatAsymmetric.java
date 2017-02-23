@@ -222,6 +222,9 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			final ArrayList<STATE> blockAsArray = new ArrayList<>(block);
 			for (final STATE state1 : blockAsArray) {
 				for (final STATE state2 : blockAsArray) {
+					if (state1 == state2) {
+						continue;
+					}
 					result.add(new Pair<>(state1, state2));
 					result.add(new Pair<>(state2, state1));
 				}
