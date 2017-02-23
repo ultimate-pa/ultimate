@@ -28,15 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,60 +41,32 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator.Approximation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractLinearInvariantPattern;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AllProgramVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithBounds;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DynamicPatternSettingsStrategyWithGlobalTemplateLevel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LiveVariablesStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.VarsInUnsatCoreStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
@@ -110,44 +78,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
-	// Indicates whether the predicates from the weakest precondition are added to the constraints or not.
-	private final boolean mUseWeakestPrecondition;
-	// There are two different ways to add an additional predicate to the invariant templates/patterns.
-	// 1. We add the predicate to each disjunct as an additional conjunct, or
-	// 2. we add the predicate as an additional disjunct.
-	private static final boolean ADD_WP_TO_EACH_CONJUNCT = true;
-
-	private static final boolean USE_LIVE_VARIABLES = true;
-
-	private static final boolean USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES = true;
-	private static final boolean USE_DYNAMIC_PATTERN_WITH_BOUNDS = false;
-
-	/**
-	 * @see {@link DynamicPatternSettingsStrategyWithGlobalTemplateLevel}
-	 */
-	private static final boolean USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL = false;
-
-	private static final boolean USE_UNDER_APPROX_FOR_MAX_CONJUNCTS = false;
-	private static final boolean USE_OVER_APPROX_FOR_MIN_DISJUNCTS = false;
-
-	/**
-	 * If set to true, we always construct two copies of each invariant pattern, one strict inequality and one
-	 * non-strict inequality. If set to false we use only one non-strict inequality.
-	 */
-	private static final boolean ALWAYS_STRICT_AND_NON_STRICT_COPIES = false;
-	/**
-	 * If a template contains more than 1 conjunct, then use alternatingly strict and non-strict inequalities. I.e. the
-	 * even conjuncts are strict whereas the odd conjuncts are non-strict inequalities.
-	 */
-	private static final boolean USE_STRICT_INEQUALITIES_ALTERNATINGLY = false;
-	/**
-	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
-	 * encoded program and use less expensive techniques to obtain the remaining invariants.
-	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
-
-	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
-
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
@@ -155,11 +85,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final PredicateTransformer mPredicateTransformer;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
-	private final IToolchainStorage mStorage;
-	private final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> mAbstractInterpretationResult;
-	private final boolean mUseAbstractInterpretationPredicates;
+	
+
 	private final PathInvariantsStatisticsGenerator mPathInvariantsStats;
 
 	/**
@@ -187,23 +115,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			final boolean useNonlinearConstraints, final boolean useUnsatCores,
-			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants,
-			final Settings solverSettings, final SimplificationTechnique simplificationTechnique,
+			InvariantSynthesisSettings invSynthSettings,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mRun = run;
-		mStorage = storage;
+		
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-		mPredicateTransformer = new PredicateTransformer(services, icfg.getCfgSmtToolkit().getManagedScript(),
-				simplificationTechnique, xnfConversionTechnique);
-		mUseWeakestPrecondition = useWPForPathInvariants;
-		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mPathInvariantsStats = new PathInvariantsStatisticsGenerator();
 
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
@@ -213,36 +135,23 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final Map<IcfgLocation, PathProgramIcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
-
-		LargeBlockEncodingIcfgTransformer lbeTransformer;
-		IIcfg<IcfgLocation> lbePathProgram;
-		if (APPLY_LARGE_BLOCK_ENCODING) {
-			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateUnifier);
-			lbePathProgram = lbeTransformer.transform(pathProgram);
-		} else {
-			lbePathProgram = pathProgram;
-		}
-		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
-			mAbstractInterpretationResult = applyAbstractInterpretationOnPathProgram(lbePathProgram);
-		} else {
-			mAbstractInterpretationResult = null;
-		}
-
-		// Map<IcfgLocation, IPredicate> invariants = generatePathInvariants(useVarsFromUnsatCore, icfg,
-		// simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinerConstraints);
-		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(useUnsatCores, icfg, lbePathProgram,
-				simplificationTechnique, xnfConversionTechnique, solverSettings, useNonlinearConstraints);
+		
+		// Generate invariants
+		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, storage, precondition,
+				postcondition, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit());
+		Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
+		// Get invariant synthesis statistics
+		mPathInvariantsStats = cfgInvGenerator.getInvariantSynthesisStatistics();
+		
+		
 		if (invariants != null) {
-			if (APPLY_LARGE_BLOCK_ENCODING) {
-				invariants = lbeTransformer.transform(invariants);
-			}
 			// Populate resulting array
 			mInterpolants = new IPredicate[mRun.getLength()];
 			for (int i = 0; i < mRun.getLength(); i++) {
 				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram =
 						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-								.collect(Collectors.toList()).get(0);
+						.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
 				mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
@@ -257,133 +166,69 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 	}
 
-	/**
-	 * Creates a default factory.
-	 *
-	 * @param services
-	 *            Service provider to use, for example for logging and timeouts
-	 * @param storage
-	 *            IToolchainstorage of the current Ultimate toolchain.
-	 * @param predicateUnifier
-	 *            the predicate unifier to unify final predicates with
-	 * @param csToolkit
-	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
-	 * @param simplicationTechnique
-	 * @param xnfConversionTechnique
-	 * @param axioms
-	 * @return a default invariant pattern processor factory
-	 */
-	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IPredicate axioms,
-			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 
-		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
-				xnfConversionTechnique, axioms, loc2underApprox, loc2overApprox);
-	}
 
-	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
-			getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
-					final Set<IProgramVar> allProgramVariables,
-					final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
-		if (useVarsFromUnsatCore) {
-			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
-				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
-					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
-							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
-							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-				}
-				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
-					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS,
-							allProgramVariables, locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
-							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-				}
-				return new DynamicPatternSettingsStrategy(1, 2, 1, 1, MAX_ROUNDS, allProgramVariables,
-						locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
-						USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
-					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
-					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, allProgramVariables,
-				ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
-	}
+//	/**
+//	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
+//	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO: If
+//	 * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the
+//	 * error location).
+//	 *
+//	 * @param pathProgram
+//	 * @return
+//	 */
+//	private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation> pathProgram,
+//			final ManagedScript managedScript) {
+//		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
+//		final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
+//		final IcfgLocation errorloc = null;
+////				extractErrorLocationFromPathProgram(pathProgram);
+//		final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
+//		locs2WP.put(errorloc, mPostcondition);
+//		List<IcfgEdge> edges2visit = errorloc.getIncomingEdges();
+//		int levelCounter = 0;
+//		while (true) {
+//			final List<IcfgEdge> newEdges = new ArrayList<>();
+//			for (final IcfgEdge e : edges2visit) {
+//				if (!(e instanceof IInternalAction)) {
+//					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
+//				}
+//				// Compute wp only if the source node is not an initial node
+//				if (!e.getSource().getIncomingEdges().isEmpty()) {
+//					// Compute WP for the formula of the current transition and the predicate at the target location.
+//					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
+//							((IInternalAction) e).getTransformula());
+//					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
+//							mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
+//							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+//					if (new PrenexNormalForm(managedScript)
+//							.transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
+//						throw new UnsupportedOperationException("Quantifier elimination failed.");
+//					}
+//					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
+//					locs2WP.put(e.getSource(), wp);
+//					if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
+//						newEdges.addAll(e.getSource().getIncomingEdges());
+//					}
+//				}
+//			}
+//			if (loopLocations.isEmpty()) {
+//				levelCounter++;
+//			}
+//
+//			if (newEdges.isEmpty() || levelCounter >= 2) {
+//				break;
+//			}
+//			edges2visit = newEdges;
+//
+//		}
+//		// remove the mapping (error-location -> false) from result
+//		locs2WP.remove(errorloc);
+//
+//		return convertMapToPredsToMapToUnmodTrans(locs2WP, managedScript);
+//	}
 
-	/**
-	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
-	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO: If
-	 * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the
-	 * error location).
-	 *
-	 * @param pathProgram
-	 * @return
-	 */
-	private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation> pathProgram,
-			final ManagedScript managedScript) {
-		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
-		final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
-		final IcfgLocation errorloc = extractErrorLocationFromPathProgram(pathProgram);
-		final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
-		locs2WP.put(errorloc, mPostcondition);
-		List<IcfgEdge> edges2visit = errorloc.getIncomingEdges();
-		int levelCounter = 0;
-		while (true) {
-			final List<IcfgEdge> newEdges = new ArrayList<>();
-			for (final IcfgEdge e : edges2visit) {
-				if (!(e instanceof IInternalAction)) {
-					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
-				}
-				// Compute wp only if the source node is not an initial node
-				if (!e.getSource().getIncomingEdges().isEmpty()) {
-					// Compute WP for the formula of the current transition and the predicate at the target location.
-					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
-							((IInternalAction) e).getTransformula());
-					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
-							mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-					if (new PrenexNormalForm(managedScript)
-							.transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
-						throw new UnsupportedOperationException("Quantifier elimination failed.");
-					}
-					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
-					locs2WP.put(e.getSource(), wp);
-					if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
-						newEdges.addAll(e.getSource().getIncomingEdges());
-					}
-				}
-			}
-			if (loopLocations.isEmpty()) {
-				levelCounter++;
-			}
 
-			if (newEdges.isEmpty() || levelCounter >= 2) {
-				break;
-			}
-			edges2visit = newEdges;
-
-		}
-		// remove the mapping (error-location -> false) from result
-		locs2WP.remove(errorloc);
-
-		return convertMapToPredsToMapToUnmodTrans(locs2WP, managedScript);
-	}
-
-	private static Map<IcfgLocation, UnmodifiableTransFormula> convertMapToPredsToMapToUnmodTrans(
-			final Map<IcfgLocation, IPredicate> locs2Preds, final ManagedScript managedScript) {
-
-		final Map<IcfgLocation, UnmodifiableTransFormula> result =
-				locs2Preds.keySet().stream().collect(Collectors.toMap(loc -> loc, loc -> TransFormulaBuilder
-						.constructTransFormulaFromPredicate(locs2Preds.get(loc), managedScript)));
-		return result;
-	}
 
 	/**
 	 * Check for each loop location of the path program if it contains some inner statements.
@@ -426,223 +271,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		return false;
 	}
 
-	private Map<IcfgLocation, UnmodifiableTransFormula> extractAbstractInterpretationPredicates(
-			final IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> abstractInterpretationResult,
-			final ManagedScript managedScript) {
-		final Map<IcfgLocation, UnmodifiableTransFormula> result = new HashMap<>();
-		final Map<IcfgLocation, Term> locs2term = abstractInterpretationResult.getLoc2Term();
-		final ArrayList<Term> termsAsList = new ArrayList<>(abstractInterpretationResult.getTerms());
-		// If the only predicate found by Abstract Interpretation is 'true', then return the empty map, as the predicate
-		// 'true' is not helpful.
-		if (termsAsList.isEmpty() || termsAsList.size() == 1 && "true".equals(termsAsList.get(0).toString())) {
-			return result;
-		}
-		for (final Map.Entry<IcfgLocation, Term> entry : locs2term.entrySet()) {
-			result.put(entry.getKey(), TransFormulaBuilder.constructTransFormulaFromPredicate(
-					mPredicateUnifier.getOrConstructPredicate(entry.getValue()), managedScript));
-		}
-		return result;
-	}
-
-	private static IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {
-		final Set<IcfgLocation> errorLocs = IcfgUtils.getErrorLocations(pathProgram);
-		assert errorLocs.size() == 1 : "There should be only one error location";
-		return errorLocs.iterator().next();
-	}
-
-	private Map<IcfgLocation, IPredicate> generateInvariantsForPathProgram(final boolean useUnsatCores,
-			final IIcfg<?> icfg, final IIcfg<IcfgLocation> pathProgram,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Settings solverSettings, final boolean useNonlinearConstraints) {
-		mLogger.info("Started with a run of length " + mRun.getLength());
-
-		final IcfgLocation startLocation = new ArrayList<>(pathProgram.getInitialNodes()).get(0);
-		final IcfgLocation errorLocation = extractErrorLocationFromPathProgram(pathProgram);
-		final List<IcfgLocation> locationsAsList = new ArrayList<>();
-		final List<IcfgInternalTransition> transitionsAsList = new ArrayList<>();
-		final Set<IProgramVar> allProgramVars = new HashSet<>();
-		// Get locations, transitions and program variables from the path program
-		extractLocationsTransitionsAndVariablesFromPathProgram(pathProgram, locationsAsList, transitionsAsList,
-				allProgramVars);
-		mLogger.info("Built projected CFG, " + locationsAsList.size() + " states and " + transitionsAsList.size()
-				+ " transitions.");
-		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = null;
-
-		if (USE_LIVE_VARIABLES || mUseAbstractInterpretationPredicates) {
-			// pathprogramLocs2LiveVars = applyAbstractInterpretationOnPathProgram(pathProgram);
-			assert mAbstractInterpretationResult != null : "Abstract Interpretation has not been applied on path program to"
-					+ " generate live variables";
-			final Map<IcfgLocation, LiveVariableState<IcfgEdge>> loc2states =
-					mAbstractInterpretationResult.getLoc2SingleStates();
-			pathprogramLocs2LiveVars = new HashMap<>();
-
-			for (final Entry<IcfgLocation, LiveVariableState<IcfgEdge>> entry : loc2states.entrySet()) {
-				pathprogramLocs2LiveVars.put(entry.getKey(), entry.getValue().getLiveVariablesAsProgramVars());
-			}
-			// At the initial location no variable is live
-			pathprogramLocs2LiveVars.put(startLocation, new HashSet<IProgramVar>());
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Live variables computed: " + pathprogramLocs2LiveVars);
-			}
-		}
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox = null;
-		Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox = null;
-
-		if (useUnsatCores) {
-			// Compute under-/overapproximation only if we use unsat cores during invariant synthesis
-			final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
-					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
-			final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
-					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
-
-			loc2underApprox = convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
-			loc2overApprox = convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
-		}
-		final Map<IcfgLocation, UnmodifiableTransFormula> pathprogramLocs2Predicates = new HashMap<>();
-		if (mUseWeakestPrecondition) {
-			pathprogramLocs2Predicates.putAll(loc2overApprox);
-		}
-
-		if (mUseAbstractInterpretationPredicates) {
-			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
-					icfg.getCfgSmtToolkit().getManagedScript()));
-		}
-
-		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(useUnsatCores, USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars);
-
-		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
-			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
-				final List<Integer> maxDisjunctsMaxConjuncts =
-						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
-				strategy.setNumOfConjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(1));
-			}
-		} else if (USE_OVER_APPROX_FOR_MIN_DISJUNCTS) {
-			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
-				final List<Integer> maxDisjunctsMaxConjuncts =
-						getDisjunctsAndConjunctsFromTerm(entry.getValue().getFormula());
-				strategy.setNumOfDisjunctsForLocation(entry.getKey(), maxDisjunctsMaxConjuncts.get(0));
-			}
-		}
-		final IInvariantPatternProcessorFactory<?> invPatternProcFactory = createDefaultFactory(mServices, mStorage,
-				mPredicateUnifier, icfg.getCfgSmtToolkit(), useNonlinearConstraints, useUnsatCores, solverSettings,
-				simplificationTechnique, xnfConversionTechnique, icfg.getCfgSmtToolkit().getAxioms(), strategy,
-				loc2underApprox, loc2overApprox);
-
-		// Generate invariants
-		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(mServices, mPathInvariantsStats);
-		final Map<IcfgLocation, IPredicate> invariants;
-
-		invariants = generator.generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
-				mPostcondition, startLocation, errorLocation, invPatternProcFactory, useUnsatCores, allProgramVars,
-				pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
-				mUseWeakestPrecondition || mUseAbstractInterpretationPredicates, ADD_WP_TO_EACH_CONJUNCT);
-		mLogger.info("Generated invariant map.");
-
-		return invariants;
-	}
-
-	private static Map<IcfgLocation, UnmodifiableTransFormula> convertHashRelation(
-			final HashRelation<IcfgLocation, IPredicate> loc2SetOfPreds, final ManagedScript managedScript) {
-
-		final Map<IcfgLocation, IPredicate> loc2Predicate = new HashMap<>(loc2SetOfPreds.getDomain().size());
-		for (final IcfgLocation loc : loc2SetOfPreds.getDomain()) {
-			final List<IPredicate> preds = new ArrayList<>(loc2SetOfPreds.getImage(loc).size());
-			preds.addAll(loc2SetOfPreds.getImage(loc));
-			// Currently, we use only one predicate
-			loc2Predicate.put(loc, preds.get(0));
-		}
-		return convertMapToPredsToMapToUnmodTrans(loc2Predicate, managedScript);
-	}
-
-	private static void extractLocationsTransitionsAndVariablesFromPathProgram(final IIcfg<IcfgLocation> pathProgram,
-			final List<IcfgLocation> locationsOfPP, final List<IcfgInternalTransition> transitionsOfPP,
-			final Set<IProgramVar> allVariablesFromPP) {
-		final LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
-		locs2visit.addAll(pathProgram.getInitialNodes());
-		final LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
-		final LinkedList<IcfgInternalTransition> edges = new LinkedList<>();
-		while (!locs2visit.isEmpty()) {
-			final IcfgLocation loc = locs2visit.removeFirst();
-			if (visitedLocs.add(loc)) {
-				for (final IcfgEdge e : loc.getOutgoingEdges()) {
-					locs2visit.addLast(e.getTarget());
-					if (!(e instanceof IInternalAction)) {
-						throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
-					}
-					final UnmodifiableTransFormula tf = ((IInternalAction) e).getTransformula();
-					allVariablesFromPP.addAll(tf.getInVars().keySet());
-					allVariablesFromPP.addAll(tf.getOutVars().keySet());
-					edges.addLast(new IcfgInternalTransition(e.getSource(), e.getTarget(), e.getPayload(), tf));
-				}
-			}
-		}
-		locationsOfPP.addAll(visitedLocs);
-		transitionsOfPP.addAll(edges);
-	}
-
-	private static List<Integer> getDisjunctsAndConjunctsFromTerm(final Term term) {
-		final List<Integer> result = new ArrayList<>(2);
-		int maxNumOfConjuncts = 1;
-		int maxNumOfDisjuncts = 1;
-		final ArrayList<Term> termsToCheck = new ArrayList<>();
-		termsToCheck.add(term);
-		while (!termsToCheck.isEmpty()) {
-			final Term t = termsToCheck.remove(0);
-			if (t instanceof ApplicationTerm) {
-				final ApplicationTerm at = (ApplicationTerm) t;
-				if ("and".equals(at.getFunction().getName())) {
-					if (at.getParameters().length > maxNumOfConjuncts) {
-						maxNumOfConjuncts = at.getParameters().length;
-					}
-				} else if ("or".equals(at.getFunction().getName())) {
-					if (at.getParameters().length > maxNumOfDisjuncts) {
-						maxNumOfDisjuncts = at.getParameters().length;
-					}
-				}
-				for (final Term param : at.getParameters()) {
-					termsToCheck.add(param);
-				}
-
-			}
-		}
-		result.add(0, maxNumOfDisjuncts);
-		result.add(1, maxNumOfConjuncts);
-		return result;
-	}
-
-	// private List<IcfgLocation> extractLocationsFromPathProgram(IIcfg<IcfgLocation> pathProgram) {
-	// LinkedList<IcfgLocation> locs2visit = new LinkedList<>();
-	// locs2visit.addAll(pathProgram.getInitialNodes());
-	// LinkedHashSet<IcfgLocation> visitedLocs = new LinkedHashSet<>();
-	// while (!locs2visit.isEmpty()) {
-	// IcfgLocation loc = locs2visit.removeFirst();
-	// if (visitedLocs.add(loc)) {
-	// for (IcfgEdge e : loc.getOutgoingEdges()) {
-	// locs2visit.addLast(e.getTarget());
-	// }
-	// }
-	// }
-	//
-	//
-	// return new ArrayList<IcfgLocation>(visitedLocs);
-	// }
-
-	/**
-	 * Computes for each location of the given path program a set of variables which are <emph> live </emph>.
-	 *
-	 * @param pathProgram
-	 * @return
-	 */
-	private IAbstractInterpretationResult<LiveVariableState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation>
-			applyAbstractInterpretationOnPathProgram(final IIcfg<IcfgLocation> pathProgram) {
-		// allow for 20% of the remaining time
-		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		return AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger);
-	}
-
 	private static Set<? extends IcfgEdge>
-			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
+	extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;

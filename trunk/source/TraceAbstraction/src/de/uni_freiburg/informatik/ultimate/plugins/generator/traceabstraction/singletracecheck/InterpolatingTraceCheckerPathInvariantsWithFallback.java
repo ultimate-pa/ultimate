@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -59,25 +60,19 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 
 	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
-	private final boolean mUseNonlinerConstraints;
-	private final boolean mUseVarsFromUnsatCore;
-	private final Settings mSolverSettings;
 	private final IIcfg<?> mIcfg;
-	private final boolean mUseWPForPathInvariants;
-	private final boolean mUseAbstractInterpretationPredicates;
 	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
 	
 	private InterpolantComputationStatus mInterpolantComputationStatus;
+	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final NestedRun<? extends IIcfgTransition<?>, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
-			final boolean useVarsFromUnsatCore, final boolean useAbstractInterpretationPredicates,
-			final boolean useWeakestPrecondition,
-			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
+			final PredicateUnifier predicateUnifier,
+			final InvariantSynthesisSettings invariantSynthesisSettings, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final IIcfg<?> icfgContainer, 
 			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
@@ -85,11 +80,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
 		mStorage = storage;
 		mNestedRun = run;
-		mUseNonlinerConstraints = useNonlinerConstraints;
-		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
-		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
-		mUseWPForPathInvariants = useWeakestPrecondition;
-		mSolverSettings = solverSettings;
+		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
@@ -112,9 +103,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier, mIcfg,
-				mUseNonlinerConstraints, mUseVarsFromUnsatCore, mUseAbstractInterpretationPredicates, 
-				mUseWPForPathInvariants,
-				mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
