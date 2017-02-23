@@ -53,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDete
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -275,10 +273,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
-		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(mServices,
-				(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, getOperandCast(), partition,
-				addMapping);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), partition, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
@@ -291,10 +287,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 *            true iff mapping 'old state -> new state' is added
 	 */
 	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
-		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(mServices,
-				(IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>) mStateFactory, getOperandCast(), unionFind,
-				addMapping);
+		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
