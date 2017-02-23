@@ -112,8 +112,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 
 		printStartMessage();
 
-		final Collection<Set<STATE>> possibleEquivalentClasses =
-				new LookaheadPartitionConstructor<>(mServices, mOperand, true).getPartition().getRelation();
+		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<>(mServices,
+				mOperand, !simulationInfoProvider.mayMergeFinalAndNonFinalStates(), true).getPartition().getRelation();
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size()

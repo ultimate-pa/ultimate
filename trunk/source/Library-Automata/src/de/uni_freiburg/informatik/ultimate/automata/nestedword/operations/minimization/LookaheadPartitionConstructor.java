@@ -104,8 +104,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 *            input automaton
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSimulationHack) {
-		this(services, operand, false, useSimulationHack);
+			final INestedWordAutomaton<LETTER, STATE> operand) {
+		this(services, operand, false, true);
 	}
 
 	/**

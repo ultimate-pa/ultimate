@@ -167,14 +167,16 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
+		final boolean separateAcceptingStates =
+				type == ESimulationType.DIRECT || type == ESimulationType.DIRECT_FULL_MULTIPEBBLE;
 		final PartitionPairsWrapper<STATE> partitionAndPairs =
-				new LookaheadPartitionConstructor<>(services, operand, true).getResult();
+				new LookaheadPartitionConstructor<>(services, operand, separateAcceptingStates, true).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
 				final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClassesForDirect =
-						new LookaheadPartitionConstructor<>(services, operand, true).getPartition();
+						new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition();
 
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, stateFactory,
 						progressTimer, logger, operand, possibleEquivalenceClassesForDirect.getRelation());

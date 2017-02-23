@@ -94,7 +94,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
+				new LookaheadPartitionConstructor<>(services, operand, false, true).getPartition());
 	}
 
 	/**
