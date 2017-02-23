@@ -52,7 +52,7 @@ public final class Intersect<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -74,50 +74,50 @@ public final class Intersect<LETTER, STATE>
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<>(mFstOperand, mSndOperand, stateFactory, false);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Intersect";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 				(new IntersectDD<>(mServices, stateFactory, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
@@ -129,7 +129,7 @@ public final class Intersect<LETTER, STATE>
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}

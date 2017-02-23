@@ -47,10 +47,10 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 	private static final String STATE_ID_CLOSE = "</StateID>";
 	private static final String STATE_ID_OPEN = "<StateID>";
 	private static final char TAB = '\t';
-	
+
 	private final IConverter<LETTER> mLetterConverter;
 	private final IConverter<STATE> mStateConverter;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -63,7 +63,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 		mStateConverter = new MapBasedConverter<>(mStateMapping);
 		doPrint();
 	}
-	
+
 	private void doPrint() {
 		final StringBuilder builder = new StringBuilder(MINIMUM_SKELETON_SIZE);
 		// @formatter:off
@@ -81,10 +81,10 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 		builder.append("</Structure>")
 				.append(NEW_LINE);
 		// @formatter:on
-		
+
 		print(builder);
 	}
-	
+
 	private void constructAlphabetSection(final StringBuilder builder) {
 		// @formatter:off
 		builder.append(TAB)
@@ -103,7 +103,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 				.append(NEW_LINE);
 		// @formatter:on
 	}
-	
+
 	private void constructStateSection(final StringBuilder builder) {
 		// @formatter:off
 		builder.append(TAB)
@@ -122,7 +122,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 				.append(NEW_LINE);
 		// @formatter:on
 	}
-	
+
 	private void constructInitialStateSection(final StringBuilder builder) {
 		// @formatter:off
 		builder.append(TAB)
@@ -141,7 +141,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 				.append(NEW_LINE);
 		// @formatter:on
 	}
-	
+
 	private void constructTransitionSection(final StringBuilder builder) {
 		int tid = 0;
 		// @formatter:off
@@ -170,7 +170,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 				.append(NEW_LINE);
 		// @formatter:on
 	}
-	
+
 	private void constructAcceptingStateSection(final StringBuilder builder) {
 		// @formatter:off
 		builder.append(TAB)

@@ -58,7 +58,7 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 			final INestedWordAutomaton<LETTER, STATE> nwa) {
 		super(writer, name, nwa);
 	}
-	
+
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
 		int counter = 0;
@@ -69,7 +69,7 @@ public final class NwaWriterUniqueId<LETTER, STATE> extends NwaWriter<LETTER, ST
 		}
 		return alphabetMapping;
 	}
-	
+
 	@Override
 	protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 		int counter = 0;

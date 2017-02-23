@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,41 +60,41 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	public BuchiClosure(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mResult = new BuchiClosureNwa<>(mServices, mOperand);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiClosure";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " thereof "
 				+ mOperand.getFinalStates().size() + " accepting";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Start " + operationName() + " Result " + mResult.sizeInformation() + " thereof "
 				+ mResult.getFinalStates().size() + " accepting";
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		// TODO Christian 2016-09-08: This variable is never read - a bug?
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
@@ -110,18 +110,18 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		boolean correct = true;
 		correct &= (operandEmpty == resultEmpty);
 		assert correct;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		return correct;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;

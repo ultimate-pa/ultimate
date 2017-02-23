@@ -32,24 +32,24 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class TrueClauseCondition implements IClauseCondition {
-	
+
 	@Override
 	public ClauseStatus getClauseStatus() {
 		return ClauseStatus.TRUE;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		// should never be hashed
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public boolean equals(final Object other) {
 		// should never be compared
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public String toString() {
 		return "ClauseCondition [mClauseStatus=" + getClauseStatus() + "]";

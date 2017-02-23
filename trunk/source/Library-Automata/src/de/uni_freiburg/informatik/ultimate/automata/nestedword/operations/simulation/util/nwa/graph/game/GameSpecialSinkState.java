@@ -36,7 +36,7 @@ public final class GameSpecialSinkState implements IGameState {
 	 * The string representation of this sink state.
 	 */
 	private static final String mRepresentation = "∅SpecialSinkState";
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

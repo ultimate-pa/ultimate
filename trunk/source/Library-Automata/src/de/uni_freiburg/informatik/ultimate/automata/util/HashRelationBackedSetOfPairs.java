@@ -41,34 +41,34 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelation<E, E>> {
 	private final HashRelation<E, E> mRelation;
-	
+
 	/**
 	 * Constructor.
 	 */
 	public HashRelationBackedSetOfPairs() {
 		mRelation = new HashRelation<>();
 	}
-	
+
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		return new IteratorFromHashRelation<>(mRelation);
 	}
-	
+
 	@Override
 	public void addPair(final E lhs, final E rhs) {
 		mRelation.addPair(lhs, rhs);
 	}
-	
+
 	@Override
 	public boolean containsPair(final E lhs, final E rhs) {
 		return mRelation.containsPair(lhs, rhs);
 	}
-	
+
 	@Override
 	public HashRelation<E, E> getRelation() {
 		return mRelation;
 	}
-	
+
 	/**
 	 * Iterator wrapper.
 	 * 
@@ -78,16 +78,16 @@ public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelat
 	 */
 	private static final class IteratorFromHashRelation<E> implements Iterator<Pair<E, E>> {
 		private final Iterator<Entry<E, E>> mIt;
-		
+
 		public IteratorFromHashRelation(final HashRelation<E, E> hashRelation) {
 			mIt = hashRelation.entrySet().iterator();
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return mIt.hasNext();
 		}
-		
+
 		@Override
 		public Pair<E, E> next() {
 			final Entry<E, E> next = mIt.next();

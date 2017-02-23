@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, BitSet, IStateFactory<BitSet>> {
 	private final NestedWordAutomaton<LETTER, BitSet> mResultAutomaton;
-	
+
 	public AA_DeterminizeReversed(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		super(services);
-		mResultAutomaton = new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(),
-				Collections.<LETTER> emptySet(), Collections.<LETTER> emptySet(),
-				alternatingAutomaton.getStateFactory());
+		mResultAutomaton =
+				new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(), Collections.<LETTER> emptySet(),
+						Collections.<LETTER> emptySet(), alternatingAutomaton.getStateFactory());
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		final List<Pair<BitSet, Pair<LETTER, BitSet>>> transitionsToAdd = new ArrayList<>();
@@ -89,12 +89,12 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 			mResultAutomaton.addInternalTransition(transition.getFirst(), innerPair.getFirst(), innerPair.getSecond());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "AA_DeterminizeReversed";
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, BitSet> getResult() {
 		return mResultAutomaton;

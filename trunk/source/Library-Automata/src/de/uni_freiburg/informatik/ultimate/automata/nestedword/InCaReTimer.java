@@ -36,9 +36,9 @@ public class InCaReTimer {
 	private long mInternal;
 	private long mCall;
 	private long mReturn;
-	
+
 	private long mStartTime;
-	
+
 	/**
 	 * Constructor.
 	 */
@@ -48,33 +48,33 @@ public class InCaReTimer {
 		mReturn = 0;
 		mStartTime = 0;
 	}
-	
+
 	private void run() {
 		assert mStartTime == 0 : "timer already running";
 		mStartTime = System.nanoTime();
 	}
-	
+
 	/**
 	 * Runs internal stopwatch.
 	 */
 	public void runIn() {
 		run();
 	}
-	
+
 	/**
 	 * Runs call stopwatch.
 	 */
 	public void runCa() {
 		run();
 	}
-	
+
 	/**
 	 * Runs return stopwatch.
 	 */
 	public void runRe() {
 		run();
 	}
-	
+
 	/**
 	 * Stops internal stopwatch.
 	 */
@@ -82,7 +82,7 @@ public class InCaReTimer {
 		mInternal += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
-	
+
 	/**
 	 * Stops call stopwatch.
 	 */
@@ -90,7 +90,7 @@ public class InCaReTimer {
 		mCall += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
-	
+
 	/**
 	 * Stops return stopwatch.
 	 */
@@ -98,19 +98,19 @@ public class InCaReTimer {
 		mReturn += (System.nanoTime() - mStartTime);
 		mStartTime = 0;
 	}
-	
+
 	public long getInternal() {
 		return mInternal;
 	}
-	
+
 	public long getCall() {
 		return mCall;
 	}
-	
+
 	public long getReturn() {
 		return mReturn;
 	}
-	
+
 	/**
 	 * Pretty-prints nano seconds in seconds.
 	 * 
@@ -123,7 +123,7 @@ public class InCaReTimer {
 		final long tenthDigit = (time / 100_000_000) % 10;
 		return Long.toString(seconds) + '.' + Long.toString(tenthDigit) + 's';
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

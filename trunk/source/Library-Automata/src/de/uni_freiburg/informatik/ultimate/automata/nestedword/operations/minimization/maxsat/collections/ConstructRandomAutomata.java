@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class ConstructRandomAutomata implements IOperation<String, String, IStateFactory<String>> {
 	private static final int NUMBER_OF_SAMPLES = 100;
 	private static final String AUTOMATON_NAME_PREFIX = "Random";
-	
+
 	public ConstructRandomAutomata(final AutomataLibraryServices services) {
 		for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
 			final INestedWordAutomaton<String, String> random =
@@ -36,27 +36,27 @@ public final class ConstructRandomAutomata implements IOperation<String, String,
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(services, fileName, "random automaton dump", nwa);
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return null;
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return null;
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return null;
 	}
-	
+
 	@Override
 	public Object getResult() {
 		return null;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<String> stateFactory) throws AutomataLibraryException {
 		return true;

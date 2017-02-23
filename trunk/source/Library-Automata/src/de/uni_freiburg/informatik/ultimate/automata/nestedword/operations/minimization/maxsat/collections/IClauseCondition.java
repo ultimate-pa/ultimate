@@ -40,7 +40,7 @@ public interface IClauseCondition {
 	default ClauseStatus getClauseStatus() {
 		return ClauseStatus.NEITHER;
 	}
-	
+
 	/**
 	 * Returns 'false' by default.
 	 * 
@@ -49,7 +49,7 @@ public interface IClauseCondition {
 	default boolean isPseudoUnit() {
 		return false;
 	}
-	
+
 	/**
 	 * Throws an exception by default.
 	 * 

@@ -43,7 +43,7 @@ public class DoubleDecker<STATE> {
 	private final STATE mDown;
 	private final STATE mUp;
 	private final int mHashCode;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,21 +57,21 @@ public class DoubleDecker<STATE> {
 		mUp = upState;
 		mHashCode = computeHashCode(mDown, mUp);
 	}
-	
+
 	private int computeHashCode(final STATE downState, final STATE upState) {
 		final int prime1 = 3;
 		final int prime2 = 5;
 		return prime1 * downState.hashCode() + prime2 * upState.hashCode();
 	}
-	
+
 	public STATE getDown() {
 		return mDown;
 	}
-	
+
 	public STATE getUp() {
 		return mUp;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
@@ -87,12 +87,12 @@ public class DoubleDecker<STATE> {
 		final DoubleDecker<STATE> other = (DoubleDecker<STATE>) obj;
 		return mUp.equals(other.mUp) && mDown.equals(other.mDown);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Basement: " + mDown + "  Upstairs: " + mUp;

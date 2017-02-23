@@ -63,14 +63,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  *            state type
  */
 public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	
+
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mGraph;
 	private final Integer mResult;
-	
+
 	private final HashMap<Set<STATE>, Integer> mStatesToLc = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -84,26 +84,26 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	public LoopComplexity(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
-		
+
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = operand;
 		} else {
 			mOperand = (new RemoveUnreachable<>(mServices, operand)).getResult();
 		}
-		
+
 		mGraph = constructGraph();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mResult = computeLoopComplexityOfSubgraph(mGraph.getStates());
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(this.exitMessage());
 		}
 	}
-	
+
 	/**
 	 * Construct an automaton that represents the graph structure of the operand.
 	 * 
@@ -116,16 +116,16 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
 		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<>(mServices, singletonAlphabet,
 				singletonAlphabet, singletonAlphabet, mOperand.getStateFactory());
-		
+
 		for (final STATE state : mOperand.getStates()) {
 			graph.addState(true, true, state);
 		}
-		
+
 		addOutgoingTransitions(letter, graph);
-		
+
 		return (new RemoveUnreachable<>(mServices, graph)).getResult();
 	}
-	
+
 	private void addOutgoingTransitions(final LETTER letter, final NestedWordAutomaton<LETTER, STATE> graph) {
 		for (final STATE state1 : mOperand.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mOperand.internalSuccessors(state1)) {
@@ -137,85 +137,85 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			}
 		}
 	}
-	
+
 	/**
 	 * Compute the loop complexity of the subgraph that is obtained by projecting mGraph to a subgraph.
 	 */
 	private Integer computeLoopComplexityOfSubgraph(final Set<STATE> statesOfSubgraph)
 			throws AutomataOperationCanceledException {
-		
+
 		final AutomatonSccComputation<LETTER, STATE> sccComputation =
 				new AutomatonSccComputation<>(mServices, mGraph, statesOfSubgraph, statesOfSubgraph);
 		final Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
-		
+
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
 			return 0;
 		} else if (balls.size() == 1) {
 			// Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
-			
+
 			final Set<STATE> ballStates = balls.iterator().next().getNodes();
-			
+
 			final Collection<STATE> nonchainStates = extractNonchainStates(ballStates);
-			
+
 			// If every state has one predecessor and one successor, the ball is a cycle.
 			if (nonchainStates.isEmpty()) {
 				return 1;
 			}
-			
+
 			final Collection<Integer> subGraphLoopComplexities = new ArrayList<>();
-			
+
 			// Create a copy since 'nonchainStates' itself should not be modified.
 			final Set<STATE> copyStates = new HashSet<>(statesOfSubgraph);
-			
+
 			for (final STATE stateOut : nonchainStates) {
 				// Check for cancel button.
 				if (isCancellationRequested()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
-				
+
 				copyStates.remove(stateOut);
-				
+
 				if (mStatesToLc.containsKey(copyStates)) {
 					subGraphLoopComplexities.add(mStatesToLc.get(copyStates));
 				} else {
 					final Integer i = this.computeLoopComplexityOfSubgraph(copyStates);
-					
+
 					// Create another copy to prevent HashMap from not
 					// recognizing sets of states after they have been modified.
 					final Set<STATE> keyStates = new HashSet<>(copyStates);
 					mStatesToLc.put(keyStates, i);
-					
+
 					subGraphLoopComplexities.add(i);
 				}
-				
+
 				copyStates.add(stateOut);
 			}
-			
+
 			return 1 + Collections.min(subGraphLoopComplexities);
 		} else {
 			// Graph itself is not a ball.
 			final Collection<Integer> ballLoopComplexities = new ArrayList<>();
-			
+
 			// Compute Loop Complexity for each ball.
 			for (final StronglyConnectedComponent<STATE> scc : balls) {
 				if (mStatesToLc.containsKey(scc.getNodes())) {
 					ballLoopComplexities.add(mStatesToLc.get(scc.getNodes()));
 				} else {
 					final Integer i = this.computeLoopComplexityOfSubgraph(scc.getNodes());
-					
+
 					final Set<STATE> keyStates = new HashSet<>(scc.getNodes());
 					mStatesToLc.put(keyStates, i);
-					
+
 					ballLoopComplexities.add(i);
 				}
 			}
-			
+
 			return Collections.max(ballLoopComplexities);
 		}
 	}
-	
+
 	/**
 	 * Returns a new collection that contains only the non-chain states.
 	 * We call a state a non-chain state if it has not
@@ -227,24 +227,24 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		for (final STATE state : states) {
 			int predCount = 0;
 			int succCount = 0;
-			
+
 			final Iterable<IncomingInternalTransition<LETTER, STATE>> preds = mGraph.internalPredecessors(state);
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = mGraph.internalSuccessors(state);
-			
+
 			for (final IncomingInternalTransition<LETTER, STATE> p : preds) {
 				if (!states.contains(p.getPred())) {
 					continue;
 				}
 				++predCount;
 			}
-			
+
 			for (final OutgoingInternalTransition<LETTER, STATE> s : succs) {
 				if (!states.contains(s.getSucc())) {
 					continue;
 				}
 				++succCount;
 			}
-			
+
 			assert predCount > 0 : "must have at least one predecessor";
 			assert succCount > 0 : "must have at least one successor";
 			// Add all those states with the maximum number of edges to peakStates.
@@ -254,23 +254,23 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		return peakStates;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "LoopComplexity";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Operand with " + mOperand.size() + " states has loop complexity "
 				+ mResult;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Integer getResult() {
 		return mResult;

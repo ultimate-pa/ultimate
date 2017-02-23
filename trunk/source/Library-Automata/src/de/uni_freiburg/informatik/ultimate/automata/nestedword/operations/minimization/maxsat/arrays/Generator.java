@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 /**
  * Formulate "merge relation constraints" (as defined in my thesis) as a
  * MAX-SAT instance.
- *
- * <p>A solution to the instance can be converted to a merge relation later.
+ * <p>
+ * A solution to the instance can be converted to a merge relation later.
  *
  * @author stimpflj
  */
 final class Generator {
-	
+
 	private Generator() {
 		// no public constructor
 	}
@@ -76,19 +76,19 @@ final class Generator {
 	}
 
 	/**
-	 * @param services Ultimate services
+	 * @param services
+	 *            Ultimate services
 	 * @param inNwa
 	 *            input NWA.
-	 *
 	 * @param history
 	 *            precalculated history states for <code>inNWA</code>.
-	 *
 	 * @return A (consistent) Partition which represents the minimized
 	 *         automaton.
-	 * @throws AutomataOperationCanceledException if operation was canceled
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
-	static Horn3Array generateClauses(final AutomataLibraryServices services,
-			final NwaWithArrays inNwa, ArrayList<Hist> history) throws AutomataOperationCanceledException {
+	static Horn3Array generateClauses(final AutomataLibraryServices services, final NwaWithArrays inNwa,
+			ArrayList<Hist> history) throws AutomataOperationCanceledException {
 		assert Hist.checkConsistency(inNwa, history);
 
 		// "assert" that there are no transitions which are never taken
@@ -194,7 +194,7 @@ final class Generator {
 				rTop[rTransTop[i].mSrc].add(rTransTop[i].mTop);
 			}
 		}
-		
+
 		{
 			// make the hSet, i.e. those history states except bottom-of-stack
 			// symbol which are not in the outgoing return transitions as
@@ -202,13 +202,11 @@ final class Generator {
 			int i = 0;
 			for (final Hist h : history) {
 				for (; i < numRTrans; i++) {
-					if (h.mLin < rTransTop[i].mSrc
-							|| (h.mLin == rTransTop[i].mSrc && h.mHier <= rTransTop[i].mTop)) {
+					if (h.mLin < rTransTop[i].mSrc || (h.mLin == rTransTop[i].mSrc && h.mHier <= rTransTop[i].mTop)) {
 						break;
 					}
 				}
-				if (i == numRTrans
-						|| h.mLin < rTransTop[i].mSrc
+				if (i == numRTrans || h.mLin < rTransTop[i].mSrc
 						|| (h.mLin == rTransTop[i].mSrc && h.mHier < rTransTop[i].mTop)) {
 					if (h.mHier >= 0) {
 						hSet[h.mLin].add(h.mHier);
@@ -216,7 +214,7 @@ final class Generator {
 				}
 			}
 		}
-		
+
 		for (int i = 0; i < numStates; i++) {
 			for (int j = 0; j < iSet[i].size(); j++) {
 				assert j == 0 || iSet[i].get(j) > iSet[i].get(j - 1);
@@ -273,7 +271,7 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			checkTimeout(services);
-			
+
 			for (int j = i + 1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
 					final int eq1 = calc.eqVar(i, j);
@@ -284,7 +282,7 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			checkTimeout(services);
-			
+
 			for (int j = i; j < numStates; j++) {
 				final int eq1 = calc.eqVar(i, j);
 
@@ -372,7 +370,7 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			checkTimeout(services);
-			
+
 			for (int j = 0; j < numStates; j++) {
 				if (!builder.isAlreadyFalse(calc.eqVar(i, j))) {
 					possible[i].add(j);
@@ -382,7 +380,7 @@ final class Generator {
 
 		for (int i = 0; i < numStates; i++) {
 			checkTimeout(services);
-			
+
 			for (final int j : possible[i]) {
 				final int eq1 = calc.eqVar(i, j);
 				for (final int k : possible[j]) {
@@ -396,7 +394,7 @@ final class Generator {
 		final Horn3Array clauses = builder.extract();
 		return clauses;
 	}
-	
+
 	private static void checkTimeout(final AutomataLibraryServices services) throws AutomataOperationCanceledException {
 		if (!services.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(Generator.class);

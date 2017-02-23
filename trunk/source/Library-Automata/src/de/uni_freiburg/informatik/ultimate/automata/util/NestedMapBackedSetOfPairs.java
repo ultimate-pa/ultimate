@@ -40,29 +40,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class NestedMapBackedSetOfPairs<E> implements ISetOfPairs<E, NestedMap2<E, E, Pair<E, E>>> {
 	private final NestedMap2<E, E, Pair<E, E>> mRelation;
-	
+
 	/**
 	 * Constructor.
 	 */
 	public NestedMapBackedSetOfPairs() {
 		mRelation = new NestedMap2<>();
 	}
-	
+
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		return mRelation.keys2().iterator();
 	}
-	
+
 	@Override
 	public void addPair(final E lhs, final E rhs) {
 		mRelation.put(lhs, rhs, new Pair<>(lhs, rhs));
 	}
-	
+
 	@Override
 	public boolean containsPair(final E lhs, final E rhs) {
 		return mRelation.get(lhs).containsKey(rhs);
 	}
-	
+
 	@Override
 	public NestedMap2<E, E, Pair<E, E>> getRelation() {
 		return mRelation;

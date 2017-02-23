@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * timer and counter to save performance data.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class SimulationPerformance {
 
@@ -234,7 +233,7 @@ public final class SimulationPerformance {
 		exportToExistingAutomataOperationStatistics(stats);
 		return stats;
 	}
-	
+
 	/**
 	 * Exports this simulation performance object to an
 	 * AutomataOperationStatistics object.

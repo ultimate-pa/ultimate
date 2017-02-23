@@ -42,7 +42,7 @@ class Summary<LETTER, STATE> {
 	private final StateContainer<LETTER, STATE> mLinPred;
 	private final LETTER mLetter;
 	private final StateContainer<LETTER, STATE> mSucc;
-	
+
 	public Summary(final StateContainer<LETTER, STATE> hierPred, final StateContainer<LETTER, STATE> linPred,
 			final LETTER letter, final StateContainer<LETTER, STATE> succ) {
 		mHierPred = hierPred;
@@ -50,30 +50,30 @@ class Summary<LETTER, STATE> {
 		mLetter = letter;
 		mSucc = succ;
 	}
-	
+
 	public StateContainer<LETTER, STATE> getHierPred() {
 		return mHierPred;
 	}
-	
+
 	public StateContainer<LETTER, STATE> getLinPred() {
 		return mLinPred;
 	}
-	
+
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	public StateContainer<LETTER, STATE> getSucc() {
 		return mSucc;
 	}
-	
+
 	/**
 	 * @param nwars
 	 *            A nested word automaton with reachable states information.
 	 * @return incoming return transition (if none exists, an exception is thrown)
 	 */
-	public IncomingReturnTransition<LETTER, STATE> obtainIncomingReturnTransition(
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
+	public IncomingReturnTransition<LETTER, STATE>
+			obtainIncomingReturnTransition(final NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
 		for (final IncomingReturnTransition<LETTER, STATE> inTrans : nwars.returnPredecessors(getSucc().getState(),
 				getHierPred().getState(), getLetter())) {
 			if (getLinPred().getState().equals(inTrans.getLinPred())) {
@@ -82,7 +82,7 @@ class Summary<LETTER, STATE> {
 		}
 		throw new AssertionError("no such transition");
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -91,7 +91,7 @@ class Summary<LETTER, STATE> {
 		result = prime * result + ((mSucc == null) ? 0 : mSucc.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -124,7 +124,7 @@ class Summary<LETTER, STATE> {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "(" + mHierPred + ", " + mLinPred + ", " + mSucc + ")";

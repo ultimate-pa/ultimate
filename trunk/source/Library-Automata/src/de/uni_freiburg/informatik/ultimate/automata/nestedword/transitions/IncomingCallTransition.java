@@ -40,7 +40,7 @@ import java.text.MessageFormat;
 public class IncomingCallTransition<LETTER, STATE> implements ITransitionlet<LETTER, STATE> {
 	private final LETTER mLetter;
 	private final STATE mPred;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -53,16 +53,16 @@ public class IncomingCallTransition<LETTER, STATE> implements ITransitionlet<LET
 		mPred = pred;
 		mLetter = letter;
 	}
-	
+
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	public STATE getPred() {
 		return mPred;
 	}
-	
+
 	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , _ )", getPred(), getLetter());

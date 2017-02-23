@@ -34,7 +34,6 @@ import java.util.Comparator;
  * greater values come before smaller ones.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class for vertices
  * @param <STATE>

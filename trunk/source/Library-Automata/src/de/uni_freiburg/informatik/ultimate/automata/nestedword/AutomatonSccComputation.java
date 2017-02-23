@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class AutomatonSccComputation<LETTER, STATE> {
 	// result
 	private final DefaultSccComputation<STATE> mSccComputation;
-	
+
 	/**
 	 * Computes SCCs of an automaton for a given subset of states.
 	 * 
@@ -81,7 +81,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 				new DefaultSccComputation<>(services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
 						new InSumCaSuccessorProvider(operand, stateSubset), stateSubset.size(), startStates);
 	}
-	
+
 	/**
 	 * Returns all balls of the computed SCC.
 	 * 
@@ -90,7 +90,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	public Collection<StronglyConnectedComponent<STATE>> getBalls() {
 		return mSccComputation.getBalls();
 	}
-	
+
 	/**
 	 * Provides - for a given state - all states that are
 	 * <ul>
@@ -104,48 +104,48 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	private class InSumCaSuccessorProvider implements ISuccessorProvider<STATE> {
 		private final INestedWordAutomaton<LETTER, STATE> mOperand;
 		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
-		
+
 		public InSumCaSuccessorProvider(final INestedWordAutomaton<LETTER, STATE> nestedWordAutomatonReachableStates,
 				final Set<STATE> stateSubset) {
 			mOperand = nestedWordAutomatonReachableStates;
 			mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(stateSubset);
 		}
-		
+
 		private <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<STATE>
 				getStateContainerIterator(final Iterator<E> iterator) {
 			return new Iterator<STATE>() {
-				
+
 				@Override
 				public boolean hasNext() {
 					return iterator.hasNext();
 				}
-				
+
 				@Override
 				public STATE next() {
 					return iterator.next().getSucc();
 				}
 			};
 		}
-		
+
 		@Override
 		public IteratorConcatenation<STATE> getSuccessors(final STATE state) {
 			final Iterator<STATE> internalTransitionsIterator =
 					getStateContainerIterator(new FilteredIterable<>(mOperand.internalSuccessors(state),
 							mTransitionFilter.getInternalSuccessorPredicate()).iterator());
-			
+
 			final Iterator<STATE> returnSummaryTransitionsIterator =
 					getStateContainerIterator(new FilteredIterable<>(mOperand.summarySuccessors(state),
 							mTransitionFilter.getReturnSummaryPredicate()).iterator());
-			
+
 			final Iterator<STATE> callTransitionsIterator =
 					getStateContainerIterator(new FilteredIterable<>(mOperand.callSuccessors(state),
 							mTransitionFilter.getCallSuccessorPredicate()).iterator());
-			
+
 			final List<Iterator<STATE>> iteratorList = new ArrayList<>();
 			iteratorList.add(internalTransitionsIterator);
 			iteratorList.add(returnSummaryTransitionsIterator);
 			iteratorList.add(callTransitionsIterator);
-			
+
 			return new IteratorConcatenation<>(iteratorList);
 		}
 	}

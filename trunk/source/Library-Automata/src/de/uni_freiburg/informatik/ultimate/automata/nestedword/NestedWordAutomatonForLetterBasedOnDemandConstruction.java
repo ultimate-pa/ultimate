@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * Supports all methods that are required by
  * {@link NestedWordAutomatonReachableStates} which is able to transform
  * objects of this class into an {@link IDoubleDeckerAutomaton}.
- * Who implements this class must only define outgoing letters and successors 
+ * Who implements this class must only define outgoing letters and successors
  * for letters.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -54,7 +54,7 @@ public abstract class NestedWordAutomatonForLetterBasedOnDemandConstruction<LETT
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		final List<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
 		for (final LETTER letter : lettersInternal(state)) {
-			for(final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(state, letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(state, letter)) {
 				result.add(trans);
 			}
 		}
@@ -65,7 +65,7 @@ public abstract class NestedWordAutomatonForLetterBasedOnDemandConstruction<LETT
 	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		final List<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>();
 		for (final LETTER letter : lettersCall(state)) {
-			for(final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state, letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state, letter)) {
 				result.add(trans);
 			}
 		}
@@ -73,16 +73,15 @@ public abstract class NestedWordAutomatonForLetterBasedOnDemandConstruction<LETT
 	}
 
 	@Override
-	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
+	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		final List<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>();
 		for (final LETTER letter : lettersReturn(state)) {
-			for(final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(state, hier, letter)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(state, hier, letter)) {
 				result.add(trans);
 			}
 		}
 		return result;
 	}
 
-	
-	
 }

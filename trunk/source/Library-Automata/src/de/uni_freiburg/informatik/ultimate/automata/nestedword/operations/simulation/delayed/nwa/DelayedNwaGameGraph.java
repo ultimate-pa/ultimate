@@ -56,14 +56,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * To reflect <i>Duplicator</i>s coverage the delayed game graph uses vertices
  * that have an extra bit.<br/>
  * <br/>
- * 
  * If its impossible for <i>Spoiler</i> to build a word such that
  * <i>Duplicator</i> can not fulfill its condition we say <b>q1 delayed
  * simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of nwa
  * @param <STATE>
@@ -105,12 +103,10 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DelayedNwaGameGraph(final AutomataLibraryServices services,
-			final IMergeStateFactory<STATE> stateFactory,
+	public DelayedNwaGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
-			final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
-			final Collection<Set<STATE>> possibleEquivalenceClasses)
-					throws AutomataOperationCanceledException {
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa, final Collection<Set<STATE>> possibleEquivalenceClasses)
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, progressTimer, logger, nwa);
 		// To derive down states of automaton ensure it
 		// is a double decker automaton
@@ -131,8 +127,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * simulation.delayed.DelayedGameGraph#generateAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
-			throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);

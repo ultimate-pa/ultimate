@@ -67,24 +67,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private final AutomataLibraryServices mServices;
-	
+
 	private final ILogger mLogger;
-	
+
 	private final Set<S> mAlphabet;
 	private final IStateFactory<C> mStateFactory;
-	
+
 	private final Collection<Place<S, C>> mPlaces = new HashSet<>();
 	private final Set<Place<S, C>> mInitialPlaces = new HashSet<>();
 	private final Collection<Place<S, C>> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<S, C>> mTransitions = new HashSet<>();
-	
+
 	/**
 	 * If true the number of tokens in this petri net is constant. Formally:
 	 * There is a natural number n such that every reachable marking consists of
 	 * n places.
 	 */
 	private final boolean mConstantTokenAmount;
-	
+
 	/**
 	 * Private constructor.
 	 * 
@@ -108,7 +108,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		mStateFactory = stateFactory;
 		mConstantTokenAmount = constantTokenAmount;
 	}
-	
+
 	/**
 	 * Standard constructor.
 	 * 
@@ -126,7 +126,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		this(services, alphabet, stateFactory, constantTokenAmount, true);
 		assert !constantTokenAmount() || transitionsPreserveTokenAmount();
 	}
-	
+
 	/**
 	 * Constructor from a nested word automaton.
 	 * 
@@ -159,7 +159,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 				addTransition(trans.getLetter(), predPlace, succPlace);
 			}
 		}
-		
+
 		/*
 		for (NestedWordAutomaton<S, C>.InternalTransition iTrans : nwa.getInternalTransitions()) {
 			predPlace = new ArrayList<Place<S, C>>(1);
@@ -170,29 +170,29 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 			addTransition(symbol, predPlace, succPlace);
 		}
 		*/
-		
+
 		assert !constantTokenAmount() || transitionsPreserveTokenAmount();
 		assert checkResult(nwa);
 	}
-	
+
 	private boolean checkResult(final INestedWordAutomaton<S, C> nwa) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of PetriNetJulian constructor");
 		}
-		
+
 		// TODO Christian 2017-02-15 Casts are temporary workarounds, either get a state factory or drop this check
 		final INestedWordAutomaton<S, C> resultAutomaton = (new PetriNet2FiniteAutomaton<>(mServices,
 				(IPetriNet2FiniteAutomatonStateFactory<C>) nwa.getStateFactory(), this)).getResult();
 		final boolean correct =
 				new IsEquivalent<>(mServices, (INwaInclusionStateFactory<C>) getStateFactory(), resultAutomaton, nwa)
 						.getResult();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of PetriNetJulian constructor");
 		}
 		return correct;
 	}
-	
+
 	/**
 	 * Adds a place.
 	 * 
@@ -216,7 +216,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		}
 		return place;
 	}
-	
+
 	/**
 	 * Adds a transition.
 	 * 
@@ -249,7 +249,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		mTransitions.add(transition);
 		return transition;
 	}
-	
+
 	/**
 	 * Hack to satisfy requirements from IPetriNet. Used by visualization.
 	 */
@@ -259,7 +259,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		list.add(mAcceptingPlaces);
 		return list;
 	}
-	
+
 	/*
 	public Collection<ITransition<S, C>> getEnabledTransitions(Collection<Place<S, C>> marking) {
 		return CollectionExtension.from(transitions).filter(new IPredicate<ITransition<S, C>>() {
@@ -270,7 +270,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		});
 	}
 	*/
-	
+
 	/**
 	 * @param transition
 	 *            A transition.
@@ -281,7 +281,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public boolean isTransitionEnabled(final ITransition<S, C> transition, final Collection<Place<S, C>> marking) {
 		return marking.containsAll(transition.getPredecessors());
 	}
-	
+
 	/**
 	 * Fires a transition.
 	 * 
@@ -295,39 +295,39 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 			final Collection<Place<S, C>> marking) {
 		marking.removeAll(transition.getPredecessors());
 		marking.addAll(transition.getSuccessors());
-		
+
 		return marking;
 	}
-	
+
 	@Override
 	public Set<S> getAlphabet() {
 		return mAlphabet;
 	}
-	
+
 	@Override
 	public IStateFactory<C> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	@Override
 	public Collection<Place<S, C>> getPlaces() {
 		return mPlaces;
 	}
-	
+
 	@Override
 	public Marking<S, C> getInitialMarking() {
 		return new Marking<>(mInitialPlaces);
 	}
-	
+
 	public Collection<Place<S, C>> getAcceptingPlaces() {
 		return mAcceptingPlaces;
 	}
-	
+
 	@Override
 	public Collection<ITransition<S, C>> getTransitions() {
 		return mTransitions;
 	}
-	
+
 	/**
 	 * @return {@code true} if the number of tokens in the net is constant (= size of
 	 *         initial marking) during every run of the net.
@@ -335,7 +335,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public boolean constantTokenAmount() {
 		return mConstantTokenAmount;
 	}
-	
+
 	@Override
 	public boolean isAccepting(final Marking<S, C> marking) {
 		for (final Place<S, C> place : marking) {
@@ -345,7 +345,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @return An accepting run.
 	 * @throws AutomataOperationCanceledException
@@ -357,7 +357,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return (new PetriNetUnfolder<>(mServices, this, PetriNetUnfolder.UnfoldingOrder.ERV, false, true))
 				.getAcceptingRun();
 	}
-	
+
 	/**
 	 * @return An accepting nested run.
 	 */
@@ -366,7 +366,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		// NestedRun<S,C> result = (new PetriNet2FiniteAutomaton<S,C>(this)).getResult().getAcceptingNestedRun();
 		return ep.getResult();
 	}
-	
+
 	boolean transitionsPreserveTokenAmount() {
 		for (final ITransition<S, C> t : getTransitions()) {
 			if (t.getPredecessors().size() != t.getSuccessors().size()) {
@@ -375,17 +375,17 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public int size() {
 		return mPlaces.size();
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		return "has " + mPlaces.size() + "places, " + mTransitions.size() + " transitions";
 	}
-	
+
 	@Override
 	public boolean accepts(final Word<S> word) {
 		throw new UnsupportedOperationException();

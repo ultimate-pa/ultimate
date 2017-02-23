@@ -52,7 +52,7 @@ public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutoma
 	 * @return true iff <tt>(upState, downState)</tt> forms a {@link DoubleDecker}
 	 */
 	boolean isDoubleDecker(STATE upState, STATE downState);
-	
+
 	/**
 	 * Provides all states <tt>downState</tt> such that <tt>(upState, downState)</tt> is a {@link DoubleDecker}.
 	 * 

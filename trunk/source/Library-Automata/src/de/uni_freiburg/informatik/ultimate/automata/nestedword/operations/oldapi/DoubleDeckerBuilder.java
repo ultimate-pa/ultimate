@@ -50,7 +50,7 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 	protected Set<STATE> mSuccessorsConstructedIn = new HashSet<>();
 	protected Set<STATE> mSuccessorsConstructedCa = new HashSet<>();
 	// protected Set<STATE> mSuccessorsConstructedRe = new HashSet<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,7 +60,7 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 	public DoubleDeckerBuilder(final AutomataLibraryServices services) {
 		super(services);
 	}
-	
+
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
@@ -76,7 +76,7 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 		}
 		return succs;
 	}
-	
+
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
@@ -92,7 +92,7 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 		}
 		return succs;
 	}
-	
+
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		/*
@@ -106,13 +106,13 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 		*/
 		return buildReturnSuccessors(doubleDecker);
 	}
-	
+
 	protected abstract Collection<STATE> buildInternalSuccessors(DoubleDecker<STATE> doubleDecker);
-	
+
 	protected abstract Collection<STATE> buildCallSuccessors(DoubleDecker<STATE> doubleDecker);
-	
+
 	protected abstract Collection<STATE> buildReturnSuccessors(DoubleDecker<STATE> doubleDecker);
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;

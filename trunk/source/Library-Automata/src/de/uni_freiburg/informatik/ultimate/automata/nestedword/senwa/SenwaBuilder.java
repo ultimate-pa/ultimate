@@ -55,18 +55,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFact
  * @param <STATE>
  *            state type
  */
-public final class SenwaBuilder<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>>
-		implements ISuccessorVisitor<LETTER, STATE> {
+public final class SenwaBuilder<LETTER, STATE> extends
+		UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> implements ISuccessorVisitor<LETTER, STATE> {
 	private final ISenwaStateFactory<STATE> mStateFactory;
 	private final Senwa<LETTER, STATE> mSenwa;
 	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
 	// private final Set<STATE> mAdded = new HashSet<>();
-	
+
 	private final Map<STATE, STATE> mResult2Operand = new HashMap<>();
 	private final Map<STATE, Map<STATE, STATE>> mEntry2Operand2Result = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -90,17 +89,17 @@ public final class SenwaBuilder<LETTER, STATE>
 		new SenwaWalker<>(mServices, mSenwa, this, true);
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "SenwaBuilder";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mSenwa.sizeInformation();
 	}
-	
+
 	private STATE getOrConstructResultState(final STATE opEntry, final STATE opState, final boolean isInitial) {
 		assert mNwa.getStates().contains(opState);
 		assert mNwa.getStates().contains(opEntry);
@@ -120,14 +119,14 @@ public final class SenwaBuilder<LETTER, STATE>
 		}
 		return resState;
 	}
-	
+
 	private STATE getOperandState(final STATE resState) {
 		assert mSenwa.getStates().contains(resState);
 		final STATE opState = mResult2Operand.get(resState);
 		assert opState != null;
 		return opState;
 	}
-	
+
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		final Set<STATE> resInits = new HashSet<>();
@@ -137,7 +136,7 @@ public final class SenwaBuilder<LETTER, STATE>
 		}
 		return resInits;
 	}
-	
+
 	@Override
 	public Iterable<STATE> visitAndGetInternalSuccessors(final STATE resState) {
 		final STATE resEntry = mSenwa.getEntry(resState);
@@ -154,7 +153,7 @@ public final class SenwaBuilder<LETTER, STATE>
 		}
 		return resSuccs;
 	}
-	
+
 	@Override
 	public Iterable<STATE> visitAndGetCallSuccessors(final STATE resState) {
 		final Set<STATE> resSuccs = new HashSet<>();
@@ -169,7 +168,7 @@ public final class SenwaBuilder<LETTER, STATE>
 		}
 		return resSuccs;
 	}
-	
+
 	@Override
 	public Iterable<STATE> visitAndGetReturnSuccessors(final STATE resState, final STATE resHier) {
 		final STATE opState = getOperandState(resState);
@@ -187,29 +186,29 @@ public final class SenwaBuilder<LETTER, STATE>
 		}
 		return resSuccs;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mNwa;
 	}
-	
+
 	@Override
 	public Senwa<LETTER, STATE> getResult() {
 		return mSenwa;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		boolean correct;
 		correct = new IsEquivalent<>(mServices, stateFactory, mNwa, mSenwa).getResult();
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}

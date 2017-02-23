@@ -33,29 +33,28 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
  * @param <GS>
  */
 public abstract class InitialPartitionProcessor<STATE> {
 
 	private final AutomataLibraryServices mServices;
-	
+
 	public InitialPartitionProcessor(final AutomataLibraryServices services) {
 		mServices = services;
 	}
-	
+
 	public abstract boolean shouldBeProcessed(STATE q0, STATE q1);
+
 	public abstract void doProcess(STATE q0, STATE q1);
-	
+
 	public void process(final Collection<Set<STATE>> equivalenceClasses) throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : equivalenceClasses) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final long initialNodes =
-						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(equivalenceClasses);
+				final long initialNodes = NestedWordAutomataUtils.computeNumberOfEquivalentPairs(equivalenceClasses);
 				final RunningTaskInfo rti =
 						new RunningTaskInfo(getClass(), "constructing " + initialNodes + "initial vertices");
 				throw new AutomataOperationCanceledException(rti);

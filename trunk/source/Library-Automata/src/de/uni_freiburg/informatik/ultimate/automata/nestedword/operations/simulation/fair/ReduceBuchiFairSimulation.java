@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -211,8 +210,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			}
 
 			// Check correctness
-			final ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
-					new AutomataLibraryServices(services), snf, buechi);
+			final ReduceBuchiFairSimulation<String, String> operation =
+					new ReduceBuchiFairSimulation<>(new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
 			/*
 			 * TODO Christian 2017-01-28: There is a NullPointerException because the services object has no "progress
@@ -300,8 +299,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			logMessage("Start comparing results...", logger);
 		}
 		boolean errorOccurred = false;
-		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC
-				.getGameGraph();
+		final FairGameGraph<LETTER, STATE> simNoSCCGraph =
+				(FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
 		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
 		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
 		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
@@ -322,8 +321,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
 			if (simSCCVertex.isSpoilerVertex()) {
 				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
-				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(),
-						asSV.getQ1(), false);
+				final SpoilerVertex<LETTER, STATE> simNoSCCVertex =
+						simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(), false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
 					errorOccurred = true;
@@ -344,8 +343,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 				}
 			} else {
 				final DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
-				final DuplicatorVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
-						asDV.getQ1(), asDV.getLetter(), false);
+				final DuplicatorVertex<LETTER, STATE> simNoSCCVertex =
+						simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(), asDV.getQ1(), asDV.getLetter(), false);
 				if (simNoSCCVertex == null) {
 					logMessage("SCCVertex unknown for nonSCC version: " + asDV, logger);
 					errorOccurred = true;
@@ -370,11 +369,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		// Check operation correctness
 		try {
 			// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory is made a parameter
-			if (!operationSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory).getFirst()) {
+			if (!operationSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory)
+					.getFirst()) {
 				logMessage("OperationSCC is not correct.", logger);
 				errorOccurred = true;
 			}
-			if (!operationNoSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory).getFirst()) {
+			if (!operationNoSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory)
+					.getFirst()) {
 				logMessage("OperationNoSCC is not correct.", logger);
 				errorOccurred = true;
 			}
@@ -454,7 +455,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList(), false);
 	}
 
@@ -508,7 +509,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
 
@@ -546,9 +547,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 				new FairSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand)));
+						new FairGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand)));
 	}
 
 	/**
@@ -577,7 +577,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
 		mUseSCCs = useSCCs;
@@ -605,7 +605,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

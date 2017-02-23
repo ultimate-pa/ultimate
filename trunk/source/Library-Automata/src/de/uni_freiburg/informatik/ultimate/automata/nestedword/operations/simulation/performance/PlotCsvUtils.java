@@ -17,7 +17,6 @@ import java.util.List;
  * tables.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class PlotCsvUtils {
 	/**

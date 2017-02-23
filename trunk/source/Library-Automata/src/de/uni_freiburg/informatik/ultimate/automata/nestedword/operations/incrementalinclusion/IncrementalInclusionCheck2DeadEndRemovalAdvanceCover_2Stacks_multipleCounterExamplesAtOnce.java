@@ -49,12 +49,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
  * We use InclusionViaDIfference to check its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */
@@ -1070,7 +1068,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			throws AutomataLibraryException {
 		boolean checkResult;
 		if (getCounterexample() != null) {
-			checkResult = compareInclusionCheckResult(localServiceProvider,stateFactory, local_mA, local_mB2,
+			checkResult = compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA, local_mB2,
 					getCounterexample());
 		} else {
 			checkResult = compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA, local_mB2, null);
@@ -1091,9 +1089,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a,
-			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
-			throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
+			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {

@@ -31,18 +31,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.GameCallReturnSummary;
 
 /**
- * TODO 
- * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * TODO
  * 
+ * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
  *            State class of nwa automaton
  */
 public final class DuplicatorSubSummaryChoiceVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
-	
+
 	private final GameCallReturnSummary<STATE> mSummary;
-	
+
 	public DuplicatorSubSummaryChoiceVertex(final GameCallReturnSummary<STATE> summary) {
 		// use "neutral" priority two
 		super(2, GameAutomaton.unwrapSpoilerNwaVertex(summary.getSummarySource()).isB(), null, null, null);
@@ -88,7 +88,4 @@ public final class DuplicatorSubSummaryChoiceVertex<LETTER, STATE> extends Dupli
 		return "DuplicatorySubSummaryChoiceVertex [mSummary=" + mSummary + "]";
 	}
 
-
-	
-	
 }

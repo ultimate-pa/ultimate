@@ -57,7 +57,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -77,12 +77,12 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 	}
-	
+
 	/**
 	 * @return The second operand complemented.
 	 */
 	public abstract INestedWordAutomatonSimple<LETTER, STATE> getSndComplemented();
-	
+
 	/**
 	 * Constructs the difference using the complement of the second operand.
 	 * 
@@ -94,31 +94,31 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		mIntersect = new BuchiIntersectNwa<>(mFstOperand, getSndComplemented(), stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
 				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
 				+ getSndComplemented().size() + " states.";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<>(mServices, mFstOperand);
 		final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
@@ -144,7 +144,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		lassoWords.addAll((new LassoExtractor<>(mServices, mFstOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<>(mServices, mSndOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
-		
+
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
 			assert correct;
@@ -158,7 +158,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		}
 		return correct;
 	}
-	
+
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2, final boolean underApproximationOfComplement)

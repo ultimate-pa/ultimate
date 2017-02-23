@@ -44,7 +44,7 @@ public class DnfAsBitSetList {
 	private BitSet mAlpha;
 	private final BitSet mBeta;
 	private DnfAsBitSetList mNext;
-	
+
 	/**
 	 * Standard constructor.
 	 * 
@@ -60,7 +60,7 @@ public class DnfAsBitSetList {
 		mBeta = beta;
 		mNext = next;
 	}
-	
+
 	/**
 	 * Copy constructor ("deep copy").
 	 * 
@@ -80,7 +80,7 @@ public class DnfAsBitSetList {
 			nextEl = nextEl.mNext;
 		}
 	}
-	
+
 	/**
 	 * @param elem
 	 *            Element to insert.
@@ -92,7 +92,7 @@ public class DnfAsBitSetList {
 			mNext.insert(elem);
 		}
 	}
-	
+
 	/**
 	 * "this" is a DNF where the indices refer to the entries of oldStateList. This method
 	 * yields a DNF whose indices refer to the predicates as given by newStateToIndex.
@@ -105,8 +105,7 @@ public class DnfAsBitSetList {
 	 *            state type
 	 * @return new DNF
 	 */
-	public <STATE> DnfAsBitSetList rewriteWithNewStateList(
-			final ArrayList<STATE> oldStateList,
+	public <STATE> DnfAsBitSetList rewriteWithNewStateList(final ArrayList<STATE> oldStateList,
 			final Map<STATE, Integer> newStateToIndex) {
 		DnfAsBitSetList current = new DnfAsBitSetList(this);
 		do {
@@ -115,7 +114,7 @@ public class DnfAsBitSetList {
 		} while (current != null);
 		return null;
 	}
-	
+
 	/**
 	 * Helper method for {@link #rewriteWithNewStateList()}.
 	 */
@@ -129,7 +128,7 @@ public class DnfAsBitSetList {
 		}
 		return newBitSet;
 	}
-	
+
 	/**
 	 * Pretty printer to a provided {@link StringBuilder}.
 	 * 
@@ -144,7 +143,7 @@ public class DnfAsBitSetList {
 		if (builder.length() == 0) {
 			builder.append(" \\/ (");
 		}
-		
+
 		String comma = "";
 		final Iterator<STATE> iterator = stateList.iterator();
 		for (int i = 0; i < stateList.size(); i++) {
@@ -172,7 +171,7 @@ public class DnfAsBitSetList {
 			mNext.prettyPrintDnf(builder, stateList);
 		}
 	}
-	
+
 	/**
 	 * Function application to a {@link BitSet}.
 	 * This is the same as an evaluation under a given assignment.
@@ -188,7 +187,7 @@ public class DnfAsBitSetList {
 		final BitSet alphaAndUxorBeta = (BitSet) mAlpha.clone();
 		alphaAndUxorBeta.and(argumentU);
 		alphaAndUxorBeta.xor(mBeta);
-		
+
 		if (alphaAndUxorBeta.isEmpty()) {
 			return true;
 		} else if (mNext == null) {

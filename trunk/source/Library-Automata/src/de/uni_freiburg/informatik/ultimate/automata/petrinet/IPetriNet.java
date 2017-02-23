@@ -49,36 +49,36 @@ public interface IPetriNet<S, C> extends IAutomaton<S, C> {
 	 * @return The places.
 	 */
 	Collection<Place<S, C>> getPlaces();
-	
+
 	/**
 	 * @return The transitions.
 	 */
 	Collection<ITransition<S, C>> getTransitions();
-	
+
 	/**
 	 * @return The initial marking.
 	 */
 	Marking<S, C> getInitialMarking();
-	
+
 	/**
 	 * @return The accepting markings.
 	 */
 	Collection<Collection<Place<S, C>>> getAcceptingMarkings();
-	
+
 	/**
 	 * @param marking
 	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
 	boolean isAccepting(Marking<S, C> marking);
-	
+
 	/**
 	 * @param word
 	 *            A word.
 	 * @return {@code true} iff the word is accepted.
 	 */
 	boolean accepts(Word<S> word);
-	
+
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {

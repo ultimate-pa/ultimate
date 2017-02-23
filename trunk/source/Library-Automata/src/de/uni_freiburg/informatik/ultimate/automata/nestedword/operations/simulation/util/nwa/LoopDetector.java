@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * Class for detecting special loops in game graphs.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>

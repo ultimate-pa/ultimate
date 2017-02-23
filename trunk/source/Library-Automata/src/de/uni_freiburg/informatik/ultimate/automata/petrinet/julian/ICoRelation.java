@@ -61,7 +61,7 @@ public interface ICoRelation<S, C> {
 	 *            the Event that has been added.
 	 */
 	void update(Event<S, C> event);
-	
+
 	/**
 	 * @param cond1
 	 *            One condition.
@@ -70,12 +70,12 @@ public interface ICoRelation<S, C> {
 	 * @return {@code true} iff 2 Conditions are in co-relation.
 	 */
 	boolean isInCoRelation(Condition<S, C> cond1, Condition<S, C> cond2);
-	
+
 	/**
 	 * @return The number of co-relation queries that have been issued.
 	 */
 	int getCoRelationQueries();
-	
+
 	/**
 	 * All initial Conditions in a branchin process are in co relation. Hence,
 	 * all pairs of Conditions from <code>initialConditions</code> are added.
@@ -84,7 +84,7 @@ public interface ICoRelation<S, C> {
 	 *            set of initial conditions
 	 */
 	void initialize(Set<Condition<S, C>> initialConditions);
-	
+
 	/**
 	 * @param coSet
 	 *            A co-set.

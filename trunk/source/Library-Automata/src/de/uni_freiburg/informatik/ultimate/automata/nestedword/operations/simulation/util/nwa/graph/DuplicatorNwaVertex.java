@@ -36,23 +36,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
  * AGameGraph}.<br/>
  * <br/>
- * 
  * The vertex representation is <b>(q0, q1, a, bit)</b> which means
  * <i>Spoiler</i> is currently at state q0 and made a move using an a-transition
  * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
  * a-transition. The bit encodes extra information if needed.
- * 
  * This object extends regular DuplicatorVertices by giving it extra information
  * that only occur in Nwa Game Graphs, like sinks.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> implements IGameLetter<LETTER, STATE> {
+public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE>
+		implements IGameLetter<LETTER, STATE> {
 
 	/**
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
@@ -102,7 +100,6 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * 
 	 * If the used transition is of type {@link ETransitionType#SINK} one can
 	 * set <tt>sink</tt> to distinguish between similar sinks.
 	 * 
@@ -134,7 +131,6 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * 
 	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
 	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges.
@@ -167,7 +163,6 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * 
 	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
 	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If

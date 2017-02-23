@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  */
 public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
 	private BuchiComplementNCSBNwa<LETTER, STATE> mSndComplemented;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -65,7 +65,7 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services, fstOperand, sndOperand);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -74,23 +74,24 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 			mLogger.info(exitMessage());
 		}
 	}
-	
-	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+
+	private <
+			SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
 		mSndComplemented = new BuchiComplementNCSBNwa<>(mServices, stateFactory, mSndOperand);
 		constructDifferenceFromComplement(stateFactory);
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public BuchiComplementNCSBNwa<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiDifferenceNCBS";

@@ -82,7 +82,6 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 		return new Horn3Iterator(this);
 	}
 
-
 	/**
 	 * Iterate over all clauses of an <code>Horn3Array</code>. For efficiency,
 	 * each iteration returns the same pre-allocated Horn3Clause, modified to
@@ -99,7 +98,7 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 
 		Horn3Iterator(final Horn3Array h3a) {
 			mH3a = h3a;
-			mH3c = new Horn3Clause(-1,-1,-1);
+			mH3c = new Horn3Clause(-1, -1, -1);
 			mIdx = 0;
 		}
 

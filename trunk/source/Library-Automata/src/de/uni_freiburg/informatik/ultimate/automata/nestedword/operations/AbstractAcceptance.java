@@ -55,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String AT_POSITION = " at position ";
 	private static final String UNABLE_TO_CHECK_ACCEPTANCE_LETTER = "Unable to check acceptance. Letter ";
-	
+
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	protected boolean mIsAccepted;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -73,7 +73,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		super(services);
 		mOperand = operand;
 	}
-	
+
 	/**
 	 * @param states
 	 *            states
@@ -89,7 +89,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		}
 		return configurations;
 	}
-	
+
 	/**
 	 * @return true iff the topmost stack element is an accepting state.
 	 */
@@ -98,7 +98,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		final STATE state = configuration.peek();
 		return nwa.isFinal(state);
 	}
-	
+
 	/**
 	 * Compute successor configurations for a set of given configurations and
 	 * one letter of a nested word. A configuration is given as a stack of
@@ -134,7 +134,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 			if (isCancellationRequested()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
-			
+
 			final STATE state = config.pop();
 			final LETTER symbol = nestedWord.getSymbol(position);
 			if (nestedWord.isInternalPosition(position)) {
@@ -150,7 +150,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		}
 		return succConfigs;
 	}
-	
+
 	private void successorConfigurationsInternal(final int position,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final Set<ArrayDeque<STATE>> succConfigs,
 			final ArrayDeque<STATE> config, final STATE state, final LETTER symbol) throws AutomataLibraryException {
@@ -167,7 +167,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 			succConfigs.add(succConfig);
 		}
 	}
-	
+
 	private void successorConfigurationsCall(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
 			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
 			final LETTER symbol) throws AutomataLibraryException {
@@ -175,8 +175,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in call alphabet of automaton.");
 		}
-		final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions =
-				nwa.callSuccessors(state, symbol);
+		final Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = nwa.callSuccessors(state, symbol);
 		for (final OutgoingCallTransition<LETTER, STATE> outRans : outTransitions) {
 			final STATE succ = outRans.getSucc();
 			final ArrayDeque<STATE> succConfig = config.clone();
@@ -185,7 +184,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 			succConfigs.add(succConfig);
 		}
 	}
-	
+
 	private void successorConfigurationsReturn(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
 			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
 			final LETTER symbol) throws AutomataLibraryException {
@@ -210,12 +209,12 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 			config.push(callPred);
 		}
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mIsAccepted;

@@ -52,7 +52,7 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final boolean mUseDoubleDeckers;
 	private int mMaxDegreeOfNondeterminism;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -69,7 +69,7 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 		mUseDoubleDeckers = useDoubleDeckers;
 		mStateFactory = stateFactory;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> initialState() {
 		final DeterminizedState<LETTER, STATE> detState = new DeterminizedState<>(mOperand);
@@ -79,12 +79,11 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 		updateMaxDegreeOfNondeterminism(detState.degreeOfNondeterminism());
 		return detState;
 	}
-	
+
 	@Override
-	public DeterminizedState<LETTER, STATE> internalSuccessor(
-			final DeterminizedState<LETTER, STATE> detState,
+	public DeterminizedState<LETTER, STATE> internalSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final LETTER symbol) {
-		
+
 		final DeterminizedState<LETTER, STATE> succDetState = new DeterminizedState<>(mOperand);
 		for (final STATE downState : detState.getDownStates()) {
 			for (final STATE upState : detState.getUpStates(downState)) {
@@ -97,11 +96,11 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 		updateMaxDegreeOfNondeterminism(succDetState.degreeOfNondeterminism());
 		return succDetState;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> callSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final LETTER symbol) {
-		
+
 		final DeterminizedState<LETTER, STATE> succDetState = new DeterminizedState<>(mOperand);
 		for (final STATE downState : detState.getDownStates()) {
 			for (final STATE upState : detState.getUpStates(downState)) {
@@ -117,13 +116,13 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 		updateMaxDegreeOfNondeterminism(succDetState.degreeOfNondeterminism());
 		return succDetState;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> returnSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final DeterminizedState<LETTER, STATE> detLinPred, final LETTER symbol) {
-		
+
 		final DeterminizedState<LETTER, STATE> succDetState = new DeterminizedState<>(mOperand);
-		
+
 		for (final STATE downLinPred : detLinPred.getDownStates()) {
 			for (final STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
 				returnSuccessorsHelper(detState, symbol, succDetState, downLinPred, upLinPred);
@@ -152,31 +151,31 @@ public class PowersetDeterminizer<LETTER, STATE> implements IStateDeterminizer<L
 			upStates = detState.getUpStates(mOperand.getEmptyStackState());
 		}
 		for (final STATE upState : upStates) {
-			for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mOperand.returnSuccessors(upState,
-					upLinPred, symbol)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> upSucc : mOperand.returnSuccessors(upState, upLinPred,
+					symbol)) {
 				// equality intended here
 				assert mUseDoubleDeckers || downLinPred == mOperand.getEmptyStackState();
 				succDetState.addPair(downLinPred, upSucc.getSucc(), mOperand);
 			}
 		}
 	}
-	
+
 	private void updateMaxDegreeOfNondeterminism(final int newDegree) {
 		if (newDegree > mMaxDegreeOfNondeterminism) {
 			mMaxDegreeOfNondeterminism = newDegree;
 		}
 	}
-	
+
 	@Override
 	public int getMaxDegreeOfNondeterminism() {
 		return mMaxDegreeOfNondeterminism;
 	}
-	
+
 	@Override
 	public boolean useDoubleDeckers() {
 		return mUseDoubleDeckers;
 	}
-	
+
 	@Override
 	public STATE getState(final DeterminizedState<LETTER, STATE> determinizedState) {
 		return determinizedState.getContent(mStateFactory);

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  *            State class of nwa automaton
  */
 public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce<LETTER, STATE> {
-	
+
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -72,7 +72,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
-	
+
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -97,7 +97,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
 	}
-	
+
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -128,12 +128,11 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 		super(services, stateFactory, operand,
 				new DelayedNwaSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DelayedNwaGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand, possibleEquivalenceClasses.getRelation())));
+						new DelayedNwaGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
+								possibleEquivalenceClasses.getRelation())));
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "reduceNwaDelayedSimulation";

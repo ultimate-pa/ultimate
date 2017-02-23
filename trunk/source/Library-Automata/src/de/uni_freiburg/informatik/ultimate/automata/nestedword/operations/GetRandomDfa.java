@@ -93,7 +93,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * where index is the index to a transition in the transition list.
 	 */
 	public static final String PREFIX_TRANSITION = "a";
-	
+
 	/**
 	 * Table that contains the amount of all permutations of different DFA
 	 * classes. Dimensions are [size][size * alphabetSize].
@@ -103,7 +103,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * @see #preCalcPermutationsTable(int)
 	 */
 	private static BigInteger[][] sPermutationsTable;
-	
+
 	/**
 	 * Size of the alphabet.
 	 */
@@ -157,12 +157,12 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * Resulting automaton of generator.
 	 */
 	private final INestedWordAutomaton<String, String> mResult;
-	
+
 	/**
 	 * Size of the automaton also amount of nodes.
 	 */
 	private final int mSize;
-	
+
 	/**
 	 * Generates a uniform distributed random connected total DFA with a
 	 * given amount of nodes, size of alphabet and
@@ -203,7 +203,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			final int numOfAccStates) {
 		this(services, size, alphabetSize, numOfAccStates, PERC_TOTALITY_BOUND_UPPER, true, false, true, true);
 	}
-	
+
 	/**
 	 * Generates a uniform distributed random connected or not-connected total
 	 * or not-total DFA with a given amount of nodes, size of alphabet and
@@ -250,7 +250,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			final int numOfAccStates, final int percOfTotality, final boolean ensureIsConnected) {
 		this(services, size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, false, true, true);
 	}
-	
+
 	/**
 	 * Generates a uniform or non-uniform distributed random connected or
 	 * not-connected total or not-total DFA with a given amount of nodes, size
@@ -306,7 +306,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		this(services, size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, ensureStatesReachFinal,
 				ensureIsUniform, true);
 	}
-	
+
 	/**
 	 * Generates a uniform or non-uniform distributed random connected or
 	 * not-connected total or not-total DFA with a given amount of nodes and
@@ -368,37 +368,39 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		mEnsureIsUniform = ensureIsUniform;
 		mEnableCaching = enableCaching;
 		mFlags = new HashSet<>(mSize - 1);
-		
+
 		mRandom = new Random();
 		final int[] dfa = generatePackedRandomDfa();
 		final Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
 		final Set<Integer> accStates = calcAccStates(dfa, transToDelete);
 		mResult = extractPackedDfa(dfa, accStates, transToDelete);
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<String, String> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "GetRandomDfa";
 	}
-	
+
 	@Override
 	public String startMessage() {
-		return MessageFormat.format("Start {0}. Alphabet size {1} Number of states {2} Number of accepting states {3} "
-				+ "Perc of totality {4} Ensure states reach final {5} Ensure is uniform {6} "
-				+ "Is caching enabled {7}", operationName(), mAlphabetSize, mSize, mNumOfAccStates,
-				mPercOfTotality, mEnsureStatesReachFinal, mEnsureIsUniform, mEnableCaching);
+		return MessageFormat.format(
+				"Start {0}. Alphabet size {1} Number of states {2} Number of accepting states {3} "
+						+ "Perc of totality {4} Ensure states reach final {5} Ensure is uniform {6} "
+						+ "Is caching enabled {7}",
+				operationName(), mAlphabetSize, mSize, mNumOfAccStates, mPercOfTotality, mEnsureStatesReachFinal,
+				mEnsureIsUniform, mEnableCaching);
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation() + '.';
 	}
-	
+
 	/**
 	 * Generates a uniform or non-uniform distributed random connected total
 	 * DFA with a given amount of nodes and size of alphabet.<br />
@@ -424,10 +426,10 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			throw new IllegalArgumentException("'numOfAccStates' must not exceed 'size' or be less than zero.");
 		}
 		final int sequenceLength = mSize * mAlphabetSize;
-		
+
 		final int[] sequence = new int[sequenceLength];
 		int curSequenceIndex = 0;
-		
+
 		// Special case where size == 1
 		if (mSize == 1) {
 			for (int i = 0; i < mAlphabetSize; i++) {
@@ -436,14 +438,14 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			}
 			return sequence;
 		}
-		
+
 		// Case where size >= 2
 		final Random rnd = new Random();
-		
+
 		if (mEnsureIsUniform) {
 			preCalcPermutationsTable(sequenceLength);
 		}
-		
+
 		int lastFlag = -1;
 		// Calculate the flags for each node and generate the sequence from left
 		// to right until all nodes are reached by an edge.
@@ -465,11 +467,11 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			sequence[curSequenceIndex] = rnd.nextInt(mSize);
 			curSequenceIndex++;
 		}
-		
+
 		if (!mEnableCaching) {
 			setTable(null);
 		}
-		
+
 		return sequence;
 	}
 
@@ -477,7 +479,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	private static void setTable(final BigInteger[][] nextPermutationsTable) {
 		sPermutationsTable = nextPermutationsTable;
 	}
-	
+
 	/**
 	 * Generates a uniform distributed random {@link BigInteger} between 0
 	 * (inclusive) and 'upperBound' (exclusive) using a given random generator.<br/>
@@ -493,10 +495,9 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * @return Uniform distributed random {@link BigInteger} between 0
 	 *         (inclusive) and 'upperBound' (exclusive)
 	 */
-	private static BigInteger nextRandomBigInteger(final BigInteger upperBound,
-			final Random rnd) {
+	private static BigInteger nextRandomBigInteger(final BigInteger upperBound, final Random rnd) {
 		BigInteger result = new BigInteger(upperBound.bitLength(), rnd);
-		
+
 		// Converges to one iteration because chance decreases by 0.5 every
 		// step.
 		while (result.compareTo(upperBound) >= 0) {
@@ -504,7 +505,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Calculates which states of a DFA should be accepting using internal
 	 * properties of the object. Can also ensure that all states reach a
@@ -537,7 +538,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		for (int i = 0; i < mNumOfAccStates; i++) {
 			finalStates.add(shuffledStateList.get(i));
 		}
-		
+
 		if (!mEnsureStatesReachFinal) {
 			return finalStates;
 		}
@@ -561,7 +562,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 				statesReachedBy.get(resultingState).add(i);
 			}
 		}
-		
+
 		// Initialize set that will contain remaining states that do not reach a
 		// final state
 		final LinkedHashSet<Integer> remainingStates = new LinkedHashSet<>(mSize);
@@ -592,10 +593,10 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 				}
 			}
 		} while (!remainingStates.isEmpty());
-		
+
 		return finalStates;
 	}
-	
+
 	private static void removeLiveStates(final LinkedHashSet<Integer> finalStates,
 			final List<Set<Integer>> statesReachedBy, final LinkedHashSet<Integer> remainingStates) {
 		// Search all states that reach final states and remove them from
@@ -611,20 +612,19 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			}
 		}
 	}
-	
+
 	private static void removeLiveStatesHelper(final List<Set<Integer>> statesReachedBy,
 			final LinkedHashSet<Integer> remainingStates, final Queue<Integer> statesToProcess) {
 		final int currState = statesToProcess.poll();
 		remainingStates.remove(currState);
-		final Set<Integer> currStateReachedBy = statesReachedBy
-				.get(currState);
+		final Set<Integer> currStateReachedBy = statesReachedBy.get(currState);
 		for (final int state : currStateReachedBy) {
 			if (remainingStates.contains(state)) {
 				statesToProcess.add(state);
 			}
 		}
 	}
-	
+
 	/**
 	 * Calculates the transitions of the DFA that should be deleted.
 	 * Therefore using {@link mpercOfTotality}.
@@ -647,12 +647,12 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			throw new IllegalArgumentException("'percOfTotality' must not exceed '" + PERC_TOTALITY_BOUND_UPPER
 					+ "' or be less than " + PERC_TOTALITY_BOUND_LOWER + '.');
 		}
-		
+
 		//Skip calculation in default case where no transition should be deleted
 		if (mPercOfTotality == PERC_TOTALITY_BOUND_UPPER) {
 			return Collections.emptySet();
 		}
-		
+
 		final int amountOfTrans = dfa.length;
 		int maxAllowedToDelete;
 		if (mEnsureIsConnected) {
@@ -664,15 +664,15 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			//All edges are allowed to delete
 			maxAllowedToDelete = amountOfTrans;
 		}
-		
+
 		final int desiredToDelete = (int) Math.round(((PERC_FULL - mPercOfTotality + 0D) / PERC_FULL) * amountOfTrans);
 		final int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
-		
+
 		final int variantThreshold = dfa.length / 2;
 		final int generationVariantMaxTries = (int) (dfa.length * 2D);
 		boolean useShuffleVariant = amountToDelete > variantThreshold;
 		Set<Integer> transToDelete = null;
-		
+
 		//Variant 1: Generate random indexes until we have enough unique
 		if (!useShuffleVariant) {
 			transToDelete = new HashSet<>(amountToDelete);
@@ -686,7 +686,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		assert transToDelete != null;
 		return transToDelete;
 	}
-	
+
 	private boolean generateRandomIndices(final int[] dfa, final int amountToDelete, final Set<Integer> transToDelete,
 			final int generationVariantMaxTries) {
 		int counter = 0;
@@ -708,7 +708,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Extracts a DFA that is packed into the int[] array format specified by
 	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
@@ -734,15 +734,15 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			num2State.add(PREFIX_NODE + i);
 		}
 		final String initialState = num2State.get(0);
-		
+
 		final List<String> num2Letter = new ArrayList<>(mAlphabetSize);
 		for (int i = 0; i < mAlphabetSize; ++i) {
 			num2Letter.add(PREFIX_TRANSITION + i);
 		}
-		
+
 		final NestedWordAutomaton<String, String> result =
 				new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), null, null, new StringFactory());
-		
+
 		// Create states
 		for (int i = 0; i < mSize; ++i) {
 			final String state = num2State.get(i);
@@ -750,7 +750,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			final boolean isInitial = state.equals(initialState);
 			result.addState(isInitial, isAccepting, state);
 		}
-		
+
 		// Create transitions
 		for (int i = 0; i < dfa.length; i++) {
 			//Skip transition if it should not be contained in the final automata
@@ -765,13 +765,13 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			final String predState = num2State.get(predStateIndex);
 			final String letter = num2Letter.get(letterIndex);
 			final String succState = num2State.get(succStateIndex);
-			
+
 			result.addInternalTransition(predState, letter, succState);
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Generates a flag for a given node using the first possible position at
 	 * where it is allowed to appear.<br />
@@ -804,19 +804,19 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		 * must appear before this to satisfy all rules.
 		 */
 		final int preSequenceLength = node * mAlphabetSize;
-		
+
 		// If a uniform distribution must not be ensured randomly select a
 		// possible position for the flag.
 		if (!mEnsureIsUniform) {
 			return mRandom.nextInt(preSequenceLength - firstPossiblePos) + firstPossiblePos;
 		}
-		
+
 		BigInteger permutations = BigInteger.ZERO;
-		
+
 		// Contains the numbers of DFAs including a probability of it where the
 		// first occurrence of 'node' is at position 'index'.
 		final BigInteger[] permutationsPerStep = new BigInteger[preSequenceLength - firstPossiblePos];
-		
+
 		int counter = 0;
 		// Calculate the number of DFAs including a probability of it where the
 		// first occurrence of 'node' is between 'firstPossiblePos' and
@@ -830,7 +830,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		// Randomly select one of all possible permutations including its
 		// probability
 		BigInteger permutation = nextRandomBigInteger(permutations.add(BigInteger.ONE), mRandom);
-		
+
 		counter = 0;
 		// Calculate the flag using the probability of each DFA setting and the
 		// selected permutation
@@ -843,7 +843,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		}
 		return preSequenceLength - 1;
 	}
-	
+
 	private void permuteListAndSelectFirstValid(final int[] dfa, final int amountToDelete,
 			final Set<Integer> transToDelete) {
 		final List<Integer> transitions = new ArrayList<>(dfa.length - mFlags.size());
@@ -862,7 +862,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 			transToDelete.add(transitions.get(i));
 		}
 	}
-	
+
 	/**
 	 * Pre-calculates the permutations table where permutationsTable[m][j] is
 	 * the number of DFAs that have the first occurrence of node 'm' at position
@@ -883,9 +883,9 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		if (hasUsableCache && sPermutationsTable[0].length == sequenceLength) {
 			return;
 		}
-		
+
 		final BigInteger[][] nextPermutationsTable = new BigInteger[mSize][sequenceLength];
-		
+
 		// Calculate the bottom row of the table.
 		for (int i = (mSize - 1) * mAlphabetSize - 1; i >= mSize - 2; i--) {
 			// If there is a usable cache, the second index is in range and
@@ -905,7 +905,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		for (int curNode = mSize - 2; curNode >= 1; curNode--) {
 			// Length of the sequence before 'curNode's edges are reached.
 			final int preSequenceLength = curNode * mAlphabetSize;
-			
+
 			// Calculate the rightest entry of the current row using the
 			// diagonal right entry of the bottom row.
 			BigInteger permutations = BigInteger.ZERO;
@@ -915,7 +915,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 						.multiply(BigInteger.valueOf(curNodePlusOne).pow(i)));
 			}
 			nextPermutationsTable[curNode][preSequenceLength - 1] = permutations;
-			
+
 			// Calculate the other entries of the current row from right to left
 			// using the righter entry of this row and the diagonal right entry
 			// of the bottom row.
@@ -925,7 +925,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 								.add(nextPermutationsTable[curNodePlusOne][i + 1]);
 			}
 		}
-		
+
 		setTable(nextPermutationsTable);
 	}
 }

@@ -71,7 +71,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
-	
+
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -96,7 +96,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 		this(services, stateFactory, operand, useSCCs,
 				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
 	}
-	
+
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -131,7 +131,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								possibleEquivalenceClasses.getRelation())));
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "ReduceNwaDirectSimulation";

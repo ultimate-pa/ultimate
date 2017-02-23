@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * {@link GameGraphChanges}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public enum EGameGraphChangeType {
 	/**

@@ -55,25 +55,25 @@ public class BranchingProcessToUltimateModel<S, C> {
 	@SuppressWarnings("unchecked")
 	public IElement transformToUltimateModel(final BranchingProcess<S, C> branchingProcess) {
 		final BranchingProcessInitialNode<S, C> graphroot = new BranchingProcessInitialNode<>(branchingProcess);
-		
+
 		final Collection<Condition<S, C>> initialStates = branchingProcess.initialConditions();
 		// Collection<Event<S,C>> cutOffEvents = net.getCutOffEvents();
-		
+
 		final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode = new HashMap<>();
 		final Map<Event<S, C>, EventNode<S, C>> transition2EventNode = new HashMap<>();
-		
+
 		final Queue<Object> queue = new LinkedList<>(initialStates);
-		
+
 		// add all initial states to model - all are successors of the graphroot
 		for (final Condition<S, C> place : initialStates) {
 			final ConditionNode<S, C> conditionNode = new ConditionNode<>(place, branchingProcess);
 			place2ConditionNode.put(place, conditionNode);
 			graphroot.connectOutgoing(conditionNode);
 		}
-		
+
 		while (!queue.isEmpty()) {
 			final Object node = queue.remove();
-			
+
 			if (node instanceof Condition) {
 				conditionHandling(place2ConditionNode, transition2EventNode, queue, (Condition<S, C>) node);
 			} else if (node instanceof Event) {
@@ -82,7 +82,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 		}
 		return graphroot;
 	}
-	
+
 	private void conditionHandling(final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
 			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,
 			final Condition<S, C> place) {
@@ -97,7 +97,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 			conditionNode.connectOutgoing(transNode);
 		}
 	}
-	
+
 	private void eventHandling(final BranchingProcess<S, C> branchingProcess,
 			final Map<Condition<S, C>, ConditionNode<S, C>> place2ConditionNode,
 			final Map<Event<S, C>, EventNode<S, C>> transition2EventNode, final Queue<Object> queue,

@@ -35,7 +35,6 @@ import java.util.Set;
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
  * AGameGraph}.<br/>
  * <br/>
- * 
  * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
  * is currently at state q0 whereas <i>Duplicator</i> now is at q1. The bit
  * encodes extra information if needed.<br/>
@@ -45,7 +44,6 @@ import java.util.Set;
  * ASimulation}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -139,8 +137,7 @@ public class Vertex<LETTER, STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final
-		Vertex<?, ?> other = (Vertex<?, ?>) obj;
+		final Vertex<?, ?> other = (Vertex<?, ?>) obj;
 		if (mB != other.mB) {
 			return false;
 		}

@@ -60,11 +60,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
 	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
-	
+
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
 	private STATE mEmptyStackState;
-	
+
 	/**
 	 * Constructor that should be called by the automata script interpreter.
 	 * 
@@ -82,7 +82,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, createAtsInitialPairs(services, operand), new Settings<>());
 	}
-	
+
 	/**
 	 * Constructor with initial pairs.
 	 * 
@@ -105,7 +105,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings);
 	}
-	
+
 	/**
 	 * Constructor with initial pairs in internal data structure (publicly available for efficiency reasons).
 	 * 
@@ -128,12 +128,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs);
 		mEmptyStackState = mOperand.getEmptyStackState();
-		
+
 		printStartMessage();
-		
+
 		run();
 	}
-	
+
 	/**
 	 * Creates the initial pairs for the automata script interpreter constructor.
 	 * <p>
@@ -147,7 +147,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 		return createPairs(operand.getStates());
 	}
-	
+
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
 			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
 		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
@@ -156,7 +156,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 		return result;
 	}
-	
+
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
 			createNestedMapWithInitialPartition(final Collection<Set<STATE>> partition) {
 		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
@@ -170,27 +170,27 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorPair<>(mSettings.isUsePathCompression());
 		return new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
 	}
-	
+
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
 		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
-		
+
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePairs.entrySet()) {
 			final Pair<STATE, STATE> pair = triple.getThird();
 			final STATE state1 = triple.getFirst();
 			final STATE state2 = triple.getSecond();
-			
+
 			addStateToTransitivityGeneratorIfNotPresent(state1);
 			addStateToTransitivityGeneratorIfNotPresent(state2);
-			
+
 			mSolver.addVariable(pair);
-			
+
 			if (separateFinalAndNonfinalStates) {
 				// separate final first and nonfinal second state ("direct simulation")
 				if (mOperand.isFinal(state1) && !mOperand.isFinal(state2)) {
@@ -204,40 +204,40 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			}
 		}
 	}
-	
+
 	private void generateBuchiConstraints(final STATE state1, final STATE state2, final Pair<STATE, STATE> pair) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("Not implemented yet.");
 	}
-	
+
 	private void addStateToTransitivityGeneratorIfNotPresent(final STATE state) {
 		if (mTransitivityGenerator != null) {
 			mTransitivityGenerator.addContentIfNotPresent(state);
 		}
 	}
-	
+
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePairs.entrySet()) {
 			final Pair<STATE, STATE> pair = triple.getThird();
-			
+
 			// add transition constraints
 			generateTransitionConstraintsHelper(triple.getFirst(), triple.getSecond(), pair);
-			
+
 			// add transitivity constraints
 			if (addTransitivityConstraints) {
 				generateTransitivityConstraints(pair);
 			}
-			
+
 			checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 		}
-		
+
 		for (final STATE state : mOperand.getStates()) {
 			generateTransitionConstraintsHelperReturn2(state, getDownStatesArray(state));
 		}
 	}
-	
+
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
 		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePairs.get(pair12.getSecond());
 		if (state2to3s == null) {
@@ -250,11 +250,11 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			if (pair13 == null) {
 				continue;
 			}
-			
+
 			addTransitivityClausesToSolver(pair12, pair23, pair13);
 		}
 	}
-	
+
 	@Override
 	protected UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError {
 		final Map<STATE, Set<STATE>> positivePairs = new HashMap<>();
@@ -266,7 +266,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			if (!entry.getValue()) {
 				continue;
 			}
-			
+
 			final STATE state1 = entry.getKey().getFirst();
 			final STATE state2 = entry.getKey().getSecond();
 			final Set<STATE> setOfRhs2to1 = positivePairs.get(state2);
@@ -287,18 +287,18 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 		return resultingEquivalenceClasses;
 	}
-	
+
 	@Override
 	protected String createTaskDescription() {
 		return "minimizing NWA with " + mOperand.size() + " states";
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Pair<STATE, STATE>[] getEmptyVariableArray() {
 		return EMPTY_LITERALS;
 	}
-	
+
 	private static <STATE> Iterable<Pair<STATE, STATE>> createPairs(final Set<STATE> states) {
 		final List<Pair<STATE, STATE>> result = new ArrayList<>(states.size() * states.size());
 		for (final STATE state1 : states) {
@@ -308,22 +308,22 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected boolean isInitialPair(final STATE state1, final STATE state2) {
 		if (state1.equals(mEmptyStackState) || state2.equals(mEmptyStackState)) {
 			return false;
 		}
-		
+
 		final Map<STATE, Pair<STATE, STATE>> rhsStates = mStatePairs.get(state1);
 		if (rhsStates == null) {
 			// no state was in relation to state1
 			return false;
 		}
-		
+
 		return rhsStates.containsKey(state2);
 	}
-	
+
 	@Override
 	protected boolean isInitialPair(final Pair<STATE, STATE> pair) {
 		return isInitialPair(pair.getFirst(), pair.getSecond());

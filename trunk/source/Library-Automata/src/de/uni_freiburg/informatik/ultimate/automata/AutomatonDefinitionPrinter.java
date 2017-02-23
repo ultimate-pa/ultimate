@@ -71,10 +71,10 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static final String UNSUPPORTED_LABELING = "Unsupported labeling.";
 	private static final int ONE = 1;
 	private static final String ATS_EXTENSION = "ats";
-	
+
 	// enable writing automata, e.g., when an error occurs
 	private static final boolean DUMP_AUTOMATON = false;
-	
+
 	/**
 	 * Output format types.
 	 */
@@ -107,23 +107,23 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		 * The <tt>Hanoi Omega Automaton</tt> format.
 		 */
 		HOA("hoa");
-		
+
 		private final String mFileEnding;
-		
+
 		Format(final String fileEnding) {
 			mFileEnding = fileEnding;
 		}
-		
+
 		public String getFileEnding() {
 			return mFileEnding;
 		}
 	}
-	
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private PrintWriter mPrintWriter;
 	private StringWriter mStringWriter;
-	
+
 	/**
 	 * Base constructor.
 	 *
@@ -136,7 +136,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		mPrintWriter = null;
 		mStringWriter = null;
 	}
-	
+
 	/**
 	 * Constructor for printing multiple {@link IAutomaton} objects to a file.
 	 *
@@ -165,7 +165,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printAutomataToFileWriter(automatonName, format, message, automata);
 		}
 	}
-	
+
 	/**
 	 * Constructor for printing a single {@link IAutomaton} to a {@link StringWriter}.
 	 *
@@ -185,7 +185,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		mPrintWriter = new PrintWriter(mStringWriter);
 		printAutomaton(automatonName, automaton, format);
 	}
-	
+
 	/**
 	 * Writes the passed {@link IAutomaton} objects to files if the option is enabled. Does nothing otherwise.
 	 * <p>
@@ -203,8 +203,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	@SafeVarargs
 	@SuppressWarnings({ "unused", "findbugs:UC_USELESS_VOID_METHOD" })
-	public static void writeToFileIfPreferred(final AutomataLibraryServices services,
-			final String fileNamePrefix, final String message, final IAutomaton<?, ?>... automata) {
+	public static void writeToFileIfPreferred(final AutomataLibraryServices services, final String fileNamePrefix,
+			final String message, final IAutomaton<?, ?>... automata) {
 		if (!DUMP_AUTOMATON) {
 			return;
 		}
@@ -212,7 +212,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		final String fileName = workingDirectory + File.separator + fileNamePrefix + getDateTimeFileName();
 		new AutomatonDefinitionPrinter<>(services, fileNamePrefix, fileName, Format.ATS_NUMERATE, message, automata);
 	}
-	
+
 	/**
 	 * This method is only available if the
 	 * {@link #AutomatonDefinitionPrinter(AutomataLibraryServices, String, Format, IAutomaton)} constructor was used.
@@ -225,7 +225,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		return mStringWriter.toString();
 	}
-	
+
 	private FileWriter getFileWriter(final String fileName, final Format format) {
 		final File testfile = new File(fileName + '.' + format.getFileEnding());
 		try {
@@ -237,7 +237,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Date/time string used inside files.
 	 *
@@ -246,7 +246,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static String getDateTimeNice() {
 		return getDateTimeFromFormat("yyyy/MM/dd HH:mm:ss");
 	}
-	
+
 	/**
 	 * Date/time string used for file names (no special characters).
 	 *
@@ -255,13 +255,13 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	private static String getDateTimeFileName() {
 		return getDateTimeFromFormat("yyyyMMddHHmmss");
 	}
-	
+
 	private static String getDateTimeFromFormat(final String format) {
 		final DateFormat dateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
 		final Date date = new Date();
 		return dateFormat.format(date);
 	}
-	
+
 	private void printAutomataToFileWriter(final String automatonName, final Format format, final String message,
 			final IAutomaton<?, ?>... automata) {
 		switch (format) {
@@ -286,7 +286,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printAutomaton(automatonName + i, automata[i], format);
 		}
 	}
-	
+
 	/**
 	 * Determines the input automaton type and calls the respective print method.
 	 *
@@ -308,7 +308,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 		mPrintWriter.close();
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void printNestedWordAutomaton(final String name, final INestedWordAutomatonSimple<LETTER, STATE> automaton,
 			final Format format) throws AssertionError {
@@ -322,7 +322,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
 		}
-		
+
 		switch (format) {
 			case ATS:
 				new NwaWriterToString<>(mPrintWriter, name, nwa);
@@ -346,16 +346,16 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net, final Format format)
 			throws AssertionError {
 		if (!(net instanceof PetriNetJulian)) {
 			throw new IllegalArgumentException("Unknown Petri net type. Only 'PetriNetJulian' is supported.");
 		}
-		
+
 		final PetriNetJulian<LETTER, STATE> castNet = (PetriNetJulian<LETTER, STATE>) net;
-		
+
 		switch (format) {
 			case ATS:
 				new NetWriterToString<>(mPrintWriter, name, castNet);
@@ -373,7 +373,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void printAlternatingAutomaton(final String name, final AlternatingAutomaton<LETTER, STATE> alternating,
 			final Format format) {

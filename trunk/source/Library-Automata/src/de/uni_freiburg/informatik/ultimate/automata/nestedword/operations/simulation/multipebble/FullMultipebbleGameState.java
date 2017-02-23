@@ -36,9 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
  */
 public abstract class FullMultipebbleGameState<STATE> {
@@ -52,34 +50,39 @@ public abstract class FullMultipebbleGameState<STATE> {
 	public DoubleDecker<STATE> getSpoilerDoubleDecker() {
 		return mSpoilerDoubleDecker;
 	}
-	
+
 	public abstract boolean isAccepting();
-	
+
 	public abstract int getNumberOfDoubleDeckerPebbles();
-	
-	
-	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsInternal(final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+
+	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsInternal(final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
-		for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa
+				.internalSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
 			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getDown(), trans.getSucc()));
 		}
 		return result;
 	}
-	
-	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsCall(final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+
+	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsCall(final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
-		for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
+		for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(mSpoilerDoubleDecker.getUp(),
+				letter)) {
 			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getUp(), trans.getSucc()));
 		}
 		return result;
 	}
-	
-	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsReturn(final DoubleDecker<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+
+	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsReturn(final DoubleDecker<STATE> hier,
+			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (!hier.getUp().equals(mSpoilerDoubleDecker.getDown())) {
 			throw new IllegalArgumentException("mismatch");
 		}
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
-		for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(mSpoilerDoubleDecker.getUp(), mSpoilerDoubleDecker.getDown(), letter)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(mSpoilerDoubleDecker.getUp(),
+				mSpoilerDoubleDecker.getDown(), letter)) {
 			result.add(new DoubleDecker<STATE>(hier.getDown(), trans.getSucc()));
 		}
 		return result;
@@ -109,9 +112,5 @@ public abstract class FullMultipebbleGameState<STATE> {
 			return false;
 		return true;
 	}
-	
-	
-	
-	
 
 }

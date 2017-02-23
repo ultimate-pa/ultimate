@@ -40,7 +40,7 @@ import java.text.MessageFormat;
 public class OutgoingInternalTransition<LETTER, STATE> implements IOutgoingTransitionlet<LETTER, STATE> {
 	private final LETTER mLetter;
 	private final STATE mSucc;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -53,17 +53,17 @@ public class OutgoingInternalTransition<LETTER, STATE> implements IOutgoingTrans
 		mLetter = letter;
 		mSucc = succ;
 	}
-	
+
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	@Override
 	public STATE getSucc() {
 		return mSucc;
 	}
-	
+
 	@Override
 	public String toString() {
 		return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());

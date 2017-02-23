@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
  */
 public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	private static final char BLANK = ' ';
-	
+
 	private NestedWord<LETTER> mNestedWord;
 	private ArrayList<STATE> mStateSequence;
-	
+
 	/**
 	 * Constructor with a nested word and a sequence of states.
 	 * 
@@ -63,7 +63,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 					"In a run the length of the sequence of states is the length of the word plus 1.");
 		}
 	}
-	
+
 	/**
 	 * Constructor for a run of length 1.
 	 * 
@@ -75,11 +75,11 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 		final LETTER[] word = (LETTER[]) new Object[] {};
 		final int[] nestingRelation = {};
 		mNestedWord = new NestedWord<>(word, nestingRelation);
-		
+
 		mStateSequence = new ArrayList<>(1);
 		mStateSequence.add(state);
 	}
-	
+
 	/**
 	 * Constructor for a run of length 2.
 	 * 
@@ -101,22 +101,22 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 		final LETTER[] word = (LETTER[]) new Object[] { symbol };
 		final int[] nestingRelation = { position };
 		mNestedWord = new NestedWord<>(word, nestingRelation);
-		
+
 		mStateSequence = new ArrayList<>(2);
 		mStateSequence.add(state0);
 		mStateSequence.add(state1);
 	}
-	
+
 	@Override
 	public NestedWord<LETTER> getWord() {
 		return mNestedWord;
 	}
-	
+
 	@Override
 	public ArrayList<STATE> getStateSequence() {
 		return mStateSequence;
 	}
-	
+
 	/**
 	 * @return Length of this run's state sequence.
 	 */
@@ -124,7 +124,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public int getLength() {
 		return mStateSequence.size();
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -135,7 +135,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public boolean isCallPosition(final int position) {
 		return mNestedWord.isCallPosition(position);
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -146,7 +146,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public boolean isInternalPosition(final int position) {
 		return mNestedWord.isInternalPosition(position);
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -157,7 +157,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public boolean isReturnPosition(final int position) {
 		return mNestedWord.isReturnPosition(position);
 	}
-	
+
 	/**
 	 * @param position
 	 *            The position.
@@ -168,7 +168,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public boolean isPendingCall(final int position) {
 		return mNestedWord.isPendingCall(position);
 	}
-	
+
 	/**
 	 * Concatenate another nested run.
 	 * 
@@ -179,7 +179,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public NestedRun<LETTER, STATE> concatenate(final NestedRun<LETTER, STATE> run) {
 		final STATE lastStateOfThis = mStateSequence.get(mStateSequence.size() - 1);
 		final STATE firstStateOfRun = run.mStateSequence.get(0);
-		
+
 		if (lastStateOfThis.equals(firstStateOfRun)) {
 			final NestedWord<LETTER> concatNestedWord = mNestedWord.concatenate(run.getWord());
 			final ArrayList<STATE> concatStateSeq = new ArrayList<>(mStateSequence);
@@ -191,7 +191,7 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 		throw new IllegalArgumentException("Can only concatenate two runs where the last element of the first run's "
 				+ "statement sequence is the same state as the last element of the second run's statement sequence.");
 	}
-	
+
 	/**
 	 * @param position
 	 *            Position.
@@ -200,12 +200,12 @@ public class NestedRun<LETTER, STATE> implements IRun<LETTER, STATE, STATE> {
 	public STATE getStateAtPosition(final int position) {
 		return mStateSequence.get(position);
 	}
-	
+
 	@Override
 	public LETTER getSymbol(final int position) {
 		return mNestedWord.getSymbolAt(position);
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

@@ -45,7 +45,7 @@ public class InCaReAlphabet<LETTER> {
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
-	
+
 	/**
 	 * Constructor with direct passing of alphabets.
 	 * 
@@ -62,7 +62,7 @@ public class InCaReAlphabet<LETTER> {
 		mCallAlphabet = callAlphabet;
 		mReturnAlphabet = returnAlphabet;
 	}
-	
+
 	/**
 	 * Constructor which takes the alphabets from an automaton.
 	 * 
@@ -81,15 +81,15 @@ public class InCaReAlphabet<LETTER> {
 			mReturnAlphabet = Collections.emptySet();
 		}
 	}
-	
+
 	public Set<LETTER> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
-	
+
 	public Set<LETTER> getCallAlphabet() {
 		return mCallAlphabet;
 	}
-	
+
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet;
 	}

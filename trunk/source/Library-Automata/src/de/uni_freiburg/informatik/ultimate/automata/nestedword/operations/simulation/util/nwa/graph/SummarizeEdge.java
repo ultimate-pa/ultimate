@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * else the graph is in an illegal state.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -331,19 +330,19 @@ public final class SummarizeEdge<LETTER, STATE> {
 			final boolean choiceBit = choiceEntry.getSecond();
 
 			// Spoiler auxiliary that holds the priority
-			final SpoilerNwaVertex<LETTER, STATE> spoilerAux = new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY,
-					choiceBit, null, choice, this);
+			final SpoilerNwaVertex<LETTER, STATE> spoilerAux =
+					new SpoilerNwaVertex<LETTER, STATE>(NO_PRIORITY, choiceBit, null, choice, this);
 			mChoiceToSpoilerAux.put(choiceEntry, spoilerAux);
 
 			// Duplicator auxiliary that is the end
-			final DuplicatorNwaVertex<LETTER, STATE> duplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(
-					NwaGameGraphGeneration.DUPLICATOR_PRIORITY, choiceBit, null, choice, null,
-					ETransitionType.SUMMARIZE_EXIT, this);
+			final DuplicatorNwaVertex<LETTER, STATE> duplicatorAux =
+					new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, choiceBit, null,
+							choice, null, ETransitionType.SUMMARIZE_EXIT, this);
 			mChoiceToDuplicatorAux.put(choiceEntry, duplicatorAux);
 
 			// Destination
-			final SpoilerVertex<LETTER, STATE> dest = mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice,
-					choiceBit, null, null);
+			final SpoilerVertex<LETTER, STATE> dest =
+					mGraphGeneration.getSpoilerVertex(mSpoilerChoice, choice, choiceBit, null, null);
 			if (dest instanceof SpoilerNwaVertex<?, ?>) {
 				mChoiceToDestination.put(choiceEntry, (SpoilerNwaVertex<LETTER, STATE>) dest);
 			}
@@ -355,7 +354,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 					throw new IllegalStateException(
 							"Expected cast to be possible, something seems to be wrong with the game graph.");
 				}
-				final DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
+				final DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa =
+						(DuplicatorNwaVertex<LETTER, STATE>) pred;
 				// We are only interested in return-predecessor
 				if (!predAsDuplicatorNwa.getTransitionType().equals(ETransitionType.RETURN)) {
 					continue;
@@ -371,7 +371,8 @@ public final class SummarizeEdge<LETTER, STATE> {
 						throw new IllegalStateException(
 								"Expected cast to be possible, something seems to be wrong with the game graph.");
 					}
-					final SpoilerNwaVertex<LETTER, STATE> spoilerInvokerAsSpoilerNwa = (SpoilerNwaVertex<LETTER, STATE>) possibleSpoilerInvoker;
+					final SpoilerNwaVertex<LETTER, STATE> spoilerInvokerAsSpoilerNwa =
+							(SpoilerNwaVertex<LETTER, STATE>) possibleSpoilerInvoker;
 
 					// Add the invoker to the list
 					Set<SpoilerNwaVertex<LETTER, STATE>> spoilerInvokers = mChoiceToSpoilerInvokers.get(choiceEntry);

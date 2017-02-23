@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Matthias Heizmann
- *
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -45,6 +44,5 @@ public interface IGameLetter<LETTER, STATE> {
 	ETransitionType getTransitionType();
 
 	LETTER getLetter();
-
 
 }

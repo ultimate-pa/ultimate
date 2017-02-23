@@ -44,7 +44,7 @@ public interface IBlackWhiteStateFactory<CONTENT> extends IStateFactory<CONTENT>
 	default CONTENT getWhiteContent(final CONTENT content) {
 		return content;
 	}
-	
+
 	/**
 	 * Black content for "black and white" construction.
 	 * 

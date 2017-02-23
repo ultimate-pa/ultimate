@@ -309,23 +309,23 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		final int numberOfTransitionsPerLetter;
 		final String letterPrefix;
 		switch (mode) {
-		case MODE_INTERNAL:
-			numberOfLetters = mNumberOfInternalLetters;
-			numberOfTransitionsPerLetter = densityToAbsolute(mInternalTransitionDensity, mNumberOfStates);
-			letterPrefix = LETTER_INTERNAL_PREFIX;
-			break;
-		case MODE_CALL:
-			numberOfLetters = mNumberOfCallLetters;
-			numberOfTransitionsPerLetter = densityToAbsolute(mCallTransitionDensity, mNumberOfStates);
-			letterPrefix = LETTER_CALL_PREFIX;
-			break;
-		case MODE_RETURN:
-			numberOfLetters = mNumberOfReturnLetters;
-			numberOfTransitionsPerLetter = densityToAbsolute(mReturnTransitionDensity, mNumberOfStates);
-			letterPrefix = LETTER_RETURN_PREFIX;
-			break;
-		default:
-			throw new IllegalArgumentException();
+			case MODE_INTERNAL:
+				numberOfLetters = mNumberOfInternalLetters;
+				numberOfTransitionsPerLetter = densityToAbsolute(mInternalTransitionDensity, mNumberOfStates);
+				letterPrefix = LETTER_INTERNAL_PREFIX;
+				break;
+			case MODE_CALL:
+				numberOfLetters = mNumberOfCallLetters;
+				numberOfTransitionsPerLetter = densityToAbsolute(mCallTransitionDensity, mNumberOfStates);
+				letterPrefix = LETTER_CALL_PREFIX;
+				break;
+			case MODE_RETURN:
+				numberOfLetters = mNumberOfReturnLetters;
+				numberOfTransitionsPerLetter = densityToAbsolute(mReturnTransitionDensity, mNumberOfStates);
+				letterPrefix = LETTER_RETURN_PREFIX;
+				break;
+			default:
+				throw new IllegalArgumentException();
 		}
 
 		// data structure
@@ -393,19 +393,19 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	private void addTransitionToAutomaton(final NestedWordAutomaton<String, String> result, final String[] int2state,
 			final String letter, final int mode, final int pred, final int succ, final Random rand) {
 		switch (mode) {
-		case MODE_INTERNAL:
-			result.addInternalTransition(int2state[pred], letter, int2state[succ]);
-			break;
-		case MODE_CALL:
-			result.addCallTransition(int2state[pred], letter, int2state[succ]);
-			break;
-		case MODE_RETURN:
-			for (final int hier : getRandomHierarchicalPredecessors(rand)) {
-				result.addReturnTransition(int2state[pred], int2state[hier], letter, int2state[succ]);
-			}
-			break;
-		default:
-			throw new IllegalArgumentException();
+			case MODE_INTERNAL:
+				result.addInternalTransition(int2state[pred], letter, int2state[succ]);
+				break;
+			case MODE_CALL:
+				result.addCallTransition(int2state[pred], letter, int2state[succ]);
+				break;
+			case MODE_RETURN:
+				for (final int hier : getRandomHierarchicalPredecessors(rand)) {
+					result.addReturnTransition(int2state[pred], int2state[hier], letter, int2state[succ]);
+				}
+				break;
+			default:
+				throw new IllegalArgumentException();
 		}
 	}
 

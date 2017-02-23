@@ -62,7 +62,7 @@ public class Candidate<S, C> {
 	 * Places.
 	 */
 	public final ArrayList<Place<S, C>> mPlaces;
-	
+
 	/**
 	 * Constructor from another candidate.
 	 * 
@@ -74,7 +74,7 @@ public class Candidate<S, C> {
 		mChosen = new ArrayList<>(candidate.getValue().values());
 		mPlaces = new ArrayList<>(candidate.getValue().keySet());
 	}
-	
+
 	/**
 	 * Constructor with transition.
 	 * 
@@ -86,7 +86,7 @@ public class Candidate<S, C> {
 		mChosen = new ArrayList<>(mT.getPredecessors().size());
 		mPlaces = new ArrayList<>(mT.getPredecessors());
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -95,7 +95,7 @@ public class Candidate<S, C> {
 		result = prime * result + ((mT == null) ? 0 : mT.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

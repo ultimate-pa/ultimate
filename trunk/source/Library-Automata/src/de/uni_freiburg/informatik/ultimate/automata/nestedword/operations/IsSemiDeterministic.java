@@ -57,10 +57,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final Set<STATE> mNondeterministicSuccessorOfAccepting = new HashSet<>();
-	
+
 	private final boolean mResult;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -79,38 +79,38 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		} else {
 			mOperand = new NestedWordAutomatonReachableStates<>(mServices, operand);
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		iterate();
 		mResult = mNondeterministicSuccessorOfAccepting.isEmpty();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsSemiDeterministic";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand is " + (mResult ? "" : "not") + "semideterministic."
 				+ " There are " + mNondeterministicSuccessorOfAccepting
 				+ "nondeterministic non-strict successors of accepting states.";
 	}
-	
+
 	/**
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
 	public void iterate() {
 		final Set<DoubleDecker<STATE>> visited = new HashSet<>();
 		final ArrayDeque<DoubleDecker<STATE>> worklist = new ArrayDeque<>();
-		
+
 		// step one: start with finals,
 		//           add all non-call successors
 		final Set<DoubleDecker<STATE>> finalDoubleDeckers = getFinalDoubleDeckers();
@@ -129,7 +129,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 				}
 			}
 		}
-		
+
 		// step two: start with yet visited DoubleDeckers,
 		//           add all non-return successors
 		worklist.addAll(visited);
@@ -146,9 +146,9 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 				}
 			}
 		}
-		
+
 	}
-	
+
 	private Set<DoubleDecker<STATE>> getFinalDoubleDeckers() {
 		final Set<DoubleDecker<STATE>> result = new HashSet<>();
 		for (final STATE fin : mOperand.getFinalStates()) {
@@ -158,9 +158,9 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return result;
 	}
-	
-	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonCallSuccessors(
-			final DoubleDecker<STATE> doubleDecker, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
+
+	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonCallSuccessors(final DoubleDecker<STATE> doubleDecker,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 		final Set<DoubleDecker<STATE>> succs = new HashSet<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(doubleDecker.getUp())) {
 			succs.add(new DoubleDecker<>(doubleDecker.getDown(), out.getSucc()));
@@ -176,7 +176,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return succs;
 	}
-	
+
 	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonReturnSuccessors(
 			final DoubleDecker<STATE> doubleDecker, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 		final Set<DoubleDecker<STATE>> succs = new HashSet<>();
@@ -191,10 +191,8 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return succs;
 	}
-	
-	
-	public static <LETTER, STATE> boolean isNondeterministic(
-			final STATE up, final STATE down,
+
+	public static <LETTER, STATE> boolean isNondeterministic(final STATE up, final STATE down,
 			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
 		final boolean isNondeterministicInternal = isNondeterministicInternal(up, nwa);
 		if (isNondeterministicInternal) {
@@ -210,12 +208,11 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return false;
 	}
-	
+
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
-	public static <LETTER, STATE> boolean isNondeterministic(
-			final DoubleDecker<STATE> doubleDecker,
+	public static <LETTER, STATE> boolean isNondeterministic(final DoubleDecker<STATE> doubleDecker,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> traversedNwa) {
 		final boolean isNondeterministicInternal = isNondeterministicInternal(doubleDecker.getUp(), traversedNwa);
 		final boolean isNondeterministicCall = isNondeterministicCall(doubleDecker.getUp(), traversedNwa);
@@ -223,12 +220,12 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 				isNondeterministicReturnGivenHier(doubleDecker.getUp(), doubleDecker.getDown(), traversedNwa);
 		return isNondeterministicInternal || isNondeterministicCall || isNondeterministicReturn;
 	}
-	
+
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
-	public static <LETTER, STATE> boolean isNondeterministicInternal(
-			final STATE state, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersInternal(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
@@ -241,12 +238,12 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return false;
 	}
-	
+
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
-	public static <LETTER, STATE> boolean isNondeterministicCall(
-			final STATE state, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersCall(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
@@ -259,12 +256,12 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return false;
 	}
-	
+
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(
-			final STATE state, final STATE hier, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(final STATE state, final STATE hier,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
@@ -277,12 +274,12 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return false;
 	}
-	
+
 	/*
 	 * TODO Christian 2016-09-04: This method is not used anywhere.
 	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturn(
-			final STATE state, final INestedWordAutomaton<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state,
+			final INestedWordAutomaton<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			for (final STATE hier : nwa.hierarchicalPredecessorsOutgoing(state, letter)) {
 				int numberOfSuccs = 0;
@@ -297,12 +294,12 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return false;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;

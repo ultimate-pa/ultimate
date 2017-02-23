@@ -63,11 +63,11 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private DoubleDeckerAutomatonFilteredStates<LETTER, STATE> mResultWOdeadEnds;
 	private final ISinkStateFactory<STATE> mStateFactory;
 	private final IIntersectionStateFactory<STATE> mStateFactoryIntersection;
-	
+
 	// TODO Christian 2016-09-04: These fields are only used locally. Is there some functionality missing?
 	private DeterminizeNwa<LETTER, STATE> mSndDeterminized;
 	private ComplementDeterministicNwa<LETTER, STATE> mSndComplemented;
-	
+
 	public <SF extends ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Difference(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
@@ -80,19 +80,19 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		mStateFactory = stateFactory;
 		mStateFactoryIntersection = stateFactory;
 		mStateDeterminizer = stateDeterminizer;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		// TODO Christian 2016-09-04: The parameter finalIsTrap is always 'false'.
 		computeDifference(stateFactory, finalIsTrap);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	/**
 	 * Uses a PowersetDeterminizer.
 	 * 
@@ -110,20 +110,20 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	public Difference(final AutomataLibraryServices services, final INwaInclusionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, stateFactory, fstOperand, sndOperand,
-				new PowersetDeterminizer<>(sndOperand, true, stateFactory), false);
+		this(services, stateFactory, fstOperand, sndOperand, new PowersetDeterminizer<>(sndOperand, true, stateFactory),
+				false);
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Difference";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	private <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
 			computeDifference(final SF stateFactory, final boolean finalIsTrap) throws AutomataLibraryException {
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
@@ -138,7 +138,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 				mSndComplemented = sndComplemented;
 				mIntersect = intersect;
 				mResult = result;
-				
+
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Subtrahend was deterministic. Have not used determinization.");
 				}
@@ -156,17 +156,17 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		mIntersect = new IntersectNwa<>(mFstOperand, mSndComplemented, stateFactory, finalIsTrap);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		if (mResultWOdeadEnds == null) {
@@ -174,7 +174,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		}
 		return mResultWOdeadEnds;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
@@ -199,7 +199,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		}
 		return correct;
 	}
-	
+
 	@Override
 	public boolean removeDeadEnds() throws AutomataOperationCanceledException {
 		mResult.computeDeadEnds();
@@ -210,18 +210,18 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		}
 		return mResult.getStates().size() != mResultWOdeadEnds.getStates().size();
 	}
-	
+
 	@Override
 	public long getDeadEndRemovalTime() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	@Override
 	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
 		return mResult.getWithOutDeadEnds().getRemovedUpDownEntry();
 	}
-	
+
 	public Map<STATE, Map<STATE, IntersectNwa<LETTER, STATE>.ProductState>> getFst2snd2res() {
 		return mIntersect.getFst2snd2res();
 	}

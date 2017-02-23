@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex vertices}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class VertexValueContainer {
 

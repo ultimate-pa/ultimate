@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
  * Creates a set of random Nwa automata and saves them as ats-Files.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class RandomNwaBenchmarkCreator {
 
@@ -55,8 +54,8 @@ public final class RandomNwaBenchmarkCreator {
 	 * Default path where the Nwa automata benchmark set gets saved if no other
 	 * path is specified.
 	 */
-	public static final File DEFAULT_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
-			"randomNwaBenchmark");
+	public static final File DEFAULT_PATH =
+			new File(new File(System.getProperty("user.home"), "Desktop"), "randomNwaBenchmark");
 	/**
 	 * Default amount of created Nwa automata after which a logging message gets
 	 * printed.
@@ -295,11 +294,20 @@ public final class RandomNwaBenchmarkCreator {
 			}
 
 		} else {
-			for (float acceptanceInPerc = acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
-				for (float totalityInternalInPerc = totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc += stepSize) {
-					for (float totalityCallInPerc = totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc += stepSize) {
-						for (float totalityReturnInPerc = totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc += stepSize) {
-							for (float totalityHierPredInPerc = totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc += stepSize) {
+			for (float acceptanceInPerc =
+					acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
+				for (float totalityInternalInPerc =
+						totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc +=
+								stepSize) {
+					for (float totalityCallInPerc =
+							totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc +=
+									stepSize) {
+						for (float totalityReturnInPerc =
+								totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc +=
+										stepSize) {
+							for (float totalityHierPredInPerc =
+									totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc +=
+											stepSize) {
 								createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
 										totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
 										useRandomTvModel);
@@ -351,18 +359,18 @@ public final class RandomNwaBenchmarkCreator {
 			final boolean useRandomTvModel) throws IOException {
 		final String operation;
 		switch (operationSwitch) {
-		case 0:
-			operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
-			break;
-		case 1:
-			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
-			break;
-		case 2:
-			operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
-			break;
-		default:
-			operation = "";
-			break;
+			case 0:
+				operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
+				break;
+			case 1:
+				operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
+				break;
+			case 2:
+				operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
+				break;
+			default:
+				operation = "";
+				break;
 		}
 
 		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
@@ -475,7 +483,7 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final float acceptance,
 			final float internalTotality, final float callTotality, final float returnTotality)
-					throws IllegalArgumentException {
+			throws IllegalArgumentException {
 		mSize = size;
 		mAlphabetSize = alphabetSize;
 		mAcceptance = ensureIsPercentage(acceptance);

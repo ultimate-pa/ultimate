@@ -44,18 +44,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
  * We use InclusionViaDIfference to check its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */
 
-public class IncrementalInclusionCheck2<LETTER, STATE>
-		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
+public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
@@ -497,8 +494,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IIncrementalInclusionStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final boolean checkResult = compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA,
-				local_mB2, result);
+		final boolean checkResult =
+				compareInclusionCheckResult(localServiceProvider, stateFactory, local_mA, local_mB2, result);
 		return checkResult;
 		// if(((result==null)&&(new IncrementalInclusionCheck2<LETTER,
 		// STATE>(localServiceProvider,localStateFactory,local_mA,local_mB2).getResult()==null))||((result!=null)&&(new
@@ -523,9 +520,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE>
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a,
-			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
-			throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
+			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {

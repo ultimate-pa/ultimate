@@ -55,9 +55,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String INVALID_SYMBOL_TYPE = "Invalid symbol type.";
-	
+
 	private static final int THREE = 3;
-	
+
 	/**
 	 * Type of symbol.
 	 */
@@ -79,30 +79,30 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		 */
 		TOTAL
 	}
-	
+
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	private boolean mNumberOfStatesComputed;
 	private int mNumberOfStates;
-	
+
 	private boolean mNumberOfSymbolsComputed;
 	private int mNumberOfInternalSymbols;
 	private int mNumberOfCallSymbols;
 	private int mNumberOfReturnSymbols;
-	
+
 	private boolean mNumberOfTransitionsComputed;
 	private int mNumberOfInternalTransitions;
 	private int mNumberOfCallTransitions;
 	private int mNumberOfReturnTransitions;
-	
+
 	private boolean mTransitionDensityComputed;
 	private double mInternalTransitionDensity;
 	private double mCallTransitionDensity;
 	private double mReturnTransitionDensity;
-	
+
 	private boolean mNumberOfNondeterministicStatesComputed;
 	private int mNumberOfNondeterministicStates;
-	
+
 	/**
 	 * Base constructor.
 	 * 
@@ -114,7 +114,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	public Analyze(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, false);
 	}
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -130,27 +130,27 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			final boolean computeEverything) {
 		super(services);
 		mOperand = operand;
-		
+
 		// compute all available information
 		if (computeEverything) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info(startMessage());
 			}
-			
+
 			getNumberOfStates();
 			getNumberOfSymbols(SymbolType.TOTAL);
 			getNumberOfTransitions(SymbolType.TOTAL);
 			getTransitionDensity(SymbolType.TOTAL);
 			getNumberOfNondeterministicStates();
-			
+
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info(exitMessage());
 			}
 		}
 	}
-	
+
 	// --- getter methods ---
-	
+
 	/**
 	 * @return Number of states.
 	 */
@@ -160,7 +160,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		return mNumberOfStates;
 	}
-	
+
 	/**
 	 * @param type
 	 *            The symbol type.
@@ -175,25 +175,25 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			case INTERNAL:
 				result = mNumberOfInternalSymbols;
 				break;
-			
+
 			case CALL:
 				result = mNumberOfCallSymbols;
 				break;
-			
+
 			case RETURN:
 				result = mNumberOfReturnSymbols;
 				break;
-			
+
 			case TOTAL:
 				result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
 				break;
-			
+
 			default:
 				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param type
 	 *            The symbol type.
@@ -208,25 +208,25 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			case INTERNAL:
 				result = mNumberOfInternalTransitions;
 				break;
-			
+
 			case CALL:
 				result = mNumberOfCallTransitions;
 				break;
-			
+
 			case RETURN:
 				result = mNumberOfReturnTransitions;
 				break;
-			
+
 			case TOTAL:
 				result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
 				break;
-			
+
 			default:
 				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * The transition density is defined as the number of transitions
 	 * <code>T</code> divided by the number of states <code>S</code> and the
@@ -250,25 +250,25 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			case INTERNAL:
 				result = mInternalTransitionDensity;
 				break;
-			
+
 			case CALL:
 				result = mCallTransitionDensity;
 				break;
-			
+
 			case RETURN:
 				result = mReturnTransitionDensity;
 				break;
-			
+
 			case TOTAL:
 				result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
 				break;
-			
+
 			default:
 				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * A state is nondeterministic if it contains at least two outgoing
 	 * transitions with the same symbol. <br>
@@ -284,55 +284,55 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		return mNumberOfNondeterministicStates;
 	}
-	
+
 	// --- interface methods ---
-	
+
 	@Override
 	public String operationName() {
 		return "Analyze";
 	}
-	
+
 	@Override
 	public final String startMessage() {
 		return "Started automaton analysis";
 	}
-	
+
 	@Override
 	public final String exitMessage() {
 		return "Finished automaton analysis";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Object getResult() {
 		return "NWA analysis result";
 	}
-	
+
 	// --- computation methods ---
-	
+
 	private final void computeNumberOfStates() {
 		mNumberOfStates = mOperand.size();
-		
+
 		mNumberOfStatesComputed = true;
 	}
-	
+
 	private final void computeNumberOfSymbols() {
 		mNumberOfInternalSymbols = mOperand.getInternalAlphabet().size();
 		mNumberOfCallSymbols = mOperand.getCallAlphabet().size();
 		mNumberOfReturnSymbols = mOperand.getReturnAlphabet().size();
-		
+
 		mNumberOfSymbolsComputed = true;
 	}
-	
+
 	private final void computeNumberOfTransitions() {
 		mNumberOfInternalTransitions = 0;
 		mNumberOfCallTransitions = 0;
 		mNumberOfReturnTransitions = 0;
-		
+
 		for (final STATE state : mOperand.getStates()) {
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> itI =
 					mOperand.internalSuccessors(state).iterator();
@@ -340,67 +340,59 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				itI.next();
 				++mNumberOfInternalTransitions;
 			}
-			
-			final Iterator<OutgoingCallTransition<LETTER, STATE>> itC =
-					mOperand.callSuccessors(state).iterator();
+
+			final Iterator<OutgoingCallTransition<LETTER, STATE>> itC = mOperand.callSuccessors(state).iterator();
 			while (itC.hasNext()) {
 				itC.next();
 				++mNumberOfCallTransitions;
 			}
-			
-			final Iterator<OutgoingReturnTransition<LETTER, STATE>> itR =
-					mOperand.returnSuccessors(state).iterator();
+
+			final Iterator<OutgoingReturnTransition<LETTER, STATE>> itR = mOperand.returnSuccessors(state).iterator();
 			while (itR.hasNext()) {
 				itR.next();
 				++mNumberOfReturnTransitions;
 			}
 		}
-		
+
 		mNumberOfTransitionsComputed = true;
 	}
-	
+
 	@SuppressWarnings({ "squid:S1244", "squid:S2184" })
 	private void computeTransitionDensity() {
 		// make sure the numbers of states, symbols, and transitions exist
 		getNumberOfStates();
 		getNumberOfSymbols(SymbolType.TOTAL);
 		getNumberOfTransitions(SymbolType.TOTAL);
-		
+
 		double denominator;
-		
+
 		denominator = mNumberOfStates * mNumberOfInternalSymbols;
-		mInternalTransitionDensity = denominator == 0D
-				? 0D
-				: (mNumberOfInternalTransitions / denominator);
-		
+		mInternalTransitionDensity = denominator == 0D ? 0D : (mNumberOfInternalTransitions / denominator);
+
 		denominator = mNumberOfStates * mNumberOfCallSymbols;
-		mCallTransitionDensity = denominator == 0D
-				? 0D
-				: (mNumberOfCallTransitions / denominator);
-		
+		mCallTransitionDensity = denominator == 0D ? 0D : (mNumberOfCallTransitions / denominator);
+
 		denominator = mNumberOfStates * mNumberOfStates * mNumberOfReturnSymbols;
-		mReturnTransitionDensity = denominator == 0D
-				? 0D
-				: (mNumberOfReturnTransitions / denominator);
-		
+		mReturnTransitionDensity = denominator == 0D ? 0D : (mNumberOfReturnTransitions / denominator);
+
 		mTransitionDensityComputed = true;
 	}
-	
+
 	private final void computeDegreeOfNondeterminism() {
 		mNumberOfNondeterministicStates = 0;
-		
+
 		final Set<STATE> dummySet = Collections.emptySet();
 		for (final STATE state : mOperand.getStates()) {
 			computeDegreeOfNondeterminismInternal(dummySet, state);
-			
+
 			computeDegreeOfNondeterminismCall(dummySet, state);
-			
+
 			computeDegreeOfNondeterminismReturn(state);
 		}
-		
+
 		mNumberOfNondeterministicStatesComputed = true;
 	}
-	
+
 	private void computeDegreeOfNondeterminismInternal(final Set<STATE> dummySet, final STATE state) {
 		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
@@ -410,7 +402,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			}
 		}
 	}
-	
+
 	private void computeDegreeOfNondeterminismCall(final Set<STATE> dummySet, final STATE state) {
 		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
 		for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(state)) {
@@ -420,7 +412,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			}
 		}
 	}
-	
+
 	private void computeDegreeOfNondeterminismReturn(final STATE state) {
 		/*
 		 * for return transitions check for same symbol AND hierarchical

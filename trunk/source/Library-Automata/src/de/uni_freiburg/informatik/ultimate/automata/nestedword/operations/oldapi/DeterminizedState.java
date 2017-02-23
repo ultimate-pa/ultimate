@@ -61,10 +61,10 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	private final Map<STATE, Set<STATE>> mCaller2presents;
 	private boolean mContainsFinal;
 	private STATE mCachedResultingState;
-	
+
 	private boolean mConstructionFinished;
 	private int mHashCode;
-	
+
 	/**
 	 * Constructor.
 	 * <p>
@@ -76,17 +76,17 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	public DeterminizedState(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		mCaller2presents = new HashMap<>();
 	}
-	
+
 	@Override
 	public Set<STATE> getDownStates() {
 		return mCaller2presents.keySet();
 	}
-	
+
 	@Override
 	public Set<STATE> getUpStates(final STATE caller) {
 		return mCaller2presents.get(caller);
 	}
-	
+
 	/**
 	 * @return true iff for some pair in the set, the first entry is an
 	 *         accepting state.
@@ -94,7 +94,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	public boolean containsFinal() {
 		return mContainsFinal;
 	}
-	
+
 	/**
 	 * @param nwa
 	 *            A nested word automaton.
@@ -114,7 +114,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 		return true;
 	}
-	
+
 	/**
 	 * @param stateFactory
 	 *            A state factory.
@@ -126,7 +126,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 		return mCachedResultingState;
 	}
-	
+
 	/**
 	 * Adds the pair (caller,present) to the nested word automaton.
 	 * 
@@ -151,7 +151,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 		presentStates.add(present);
 	}
-	
+
 	/**
 	 * Two DeterminizedStates are equivalent iff they represent the same set of
 	 * state pairs.
@@ -164,7 +164,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		final DeterminizedState<?, ?> detState = (DeterminizedState<?, ?>) obj;
 		return mCaller2presents.equals(detState.mCaller2presents);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		if (!mConstructionFinished) {
@@ -173,12 +173,12 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 		return mHashCode;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mCaller2presents.toString();
 	}
-	
+
 	/**
 	 * @param superset
 	 *            Another determinized state.
@@ -199,11 +199,11 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 		return true;
 	}
-	
+
 	public boolean isEmpty() {
 		return mCaller2presents.isEmpty();
 	}
-	
+
 	/**
 	 * @return The degree of nondeterminism with respect to outgoing transitions.
 	 */

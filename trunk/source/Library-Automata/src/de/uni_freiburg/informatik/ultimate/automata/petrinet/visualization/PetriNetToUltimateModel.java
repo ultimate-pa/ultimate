@@ -57,14 +57,14 @@ public class PetriNetToUltimateModel<S, C> {
 	public PetriNetInitialNode transformToUltimateModel(final IPetriNet<S, C> net) {
 		final Collection<Collection<Place<S, C>>> acceptingMarkings = net.getAcceptingMarkings();
 		final PetriNetInitialNode graphroot = new PetriNetInitialNode(printAcceptingMarkings(acceptingMarkings));
-		
+
 		final Marking<S, C> initialStates = net.getInitialMarking();
-		
+
 		final Map<Place<S, C>, PlaceNode> place2placeNode = new HashMap<>();
 		final Map<ITransition<S, C>, TransitionNode> transition2transitionNode = new HashMap<>();
-		
+
 		final Queue<Object> queue = new LinkedList<>();
-		
+
 		// add all initial states to model - all are successors of the graphroot
 		for (final Place<S, C> place : initialStates) {
 			queue.add(place);
@@ -72,10 +72,10 @@ public class PetriNetToUltimateModel<S, C> {
 			place2placeNode.put(place, placeNode);
 			graphroot.connectOutgoing(placeNode);
 		}
-		
+
 		while (!queue.isEmpty()) {
 			final Object node = queue.remove();
-			
+
 			if (node instanceof Place) {
 				placeHandling(place2placeNode, transition2transitionNode, queue, (Place<S, C>) node);
 			} else if (node instanceof ITransition) {
@@ -85,7 +85,7 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 		return graphroot;
 	}
-	
+
 	private void placeHandling(final Map<Place<S, C>, PlaceNode> place2placeNode,
 			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final Place<S, C> place) {
@@ -100,7 +100,7 @@ public class PetriNetToUltimateModel<S, C> {
 			placeNode.connectOutgoing(transNode);
 		}
 	}
-	
+
 	private Collection<String> participatedAcceptingMarkings(final Place<S, C> place,
 			final Collection<Collection<Place<S, C>>> acceptingMarkings) {
 		final LinkedList<String> participatedAcceptingMarkings = new LinkedList<>();
@@ -111,7 +111,7 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 		return participatedAcceptingMarkings;
 	}
-	
+
 	private void transitionHandling(final Collection<Collection<Place<S, C>>> acceptingMarkings,
 			final Map<Place<S, C>, PlaceNode> place2placeNode,
 			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
@@ -127,7 +127,7 @@ public class PetriNetToUltimateModel<S, C> {
 			transitionNode.connectOutgoing(placeNode);
 		}
 	}
-	
+
 	private Collection<String> printAcceptingMarkings(final Collection<Collection<Place<S, C>>> acceptingMarkings) {
 		final LinkedList<String> acceptingMarkingsList = new LinkedList<>();
 		for (final Collection<Place<S, C>> acceptingMarking : acceptingMarkings) {
@@ -139,7 +139,7 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 		return acceptingMarkingsList;
 	}
-	
+
 	private void addAcceptingMarkingString(final Collection<String> participatedAcceptingMarkings,
 			final Collection<Place<S, C>> acceptingMarking) {
 		final StringBuilder builder = new StringBuilder();

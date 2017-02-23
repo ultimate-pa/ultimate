@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.automata;
  */
 public class AutomataLibraryException extends Exception {
 	private static final long serialVersionUID = 1643349110083991967L;
-	
+
 	private final String mMessage;
 	private final Class<?> mClassOfThrower;
-	
+
 	/**
 	 * @param thrower
 	 *            Thrower.
@@ -47,12 +47,12 @@ public class AutomataLibraryException extends Exception {
 		mMessage = message;
 		mClassOfThrower = thrower;
 	}
-	
+
 	@Override
 	public String getMessage() {
 		return mMessage;
 	}
-	
+
 	/**
 	 * @return The class of the object that has thrown this exception.
 	 */

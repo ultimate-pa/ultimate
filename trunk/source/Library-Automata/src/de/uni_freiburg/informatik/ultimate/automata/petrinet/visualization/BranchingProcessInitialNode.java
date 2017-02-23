@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  */
 public final class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
-	
+
 	/**
 	 * @param net
 	 *            Branching process (UNUSED!).

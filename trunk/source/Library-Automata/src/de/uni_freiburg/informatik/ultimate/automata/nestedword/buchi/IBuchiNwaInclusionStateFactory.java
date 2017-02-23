@@ -44,8 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public interface IBuchiNwaInclusionStateFactory<STATE>
-		extends IDeterminizeStateFactory<STATE>, IBuchiIntersectStateFactory<STATE>,
-		IBuchiComplementFkvStateFactory<STATE> {
+public interface IBuchiNwaInclusionStateFactory<STATE> extends IDeterminizeStateFactory<STATE>,
+		IBuchiIntersectStateFactory<STATE>, IBuchiComplementFkvStateFactory<STATE> {
 	// empty interface
 }

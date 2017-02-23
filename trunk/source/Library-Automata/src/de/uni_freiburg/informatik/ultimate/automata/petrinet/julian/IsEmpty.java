@@ -50,7 +50,7 @@ public final class IsEmpty<LETTER, STATE>
 		extends UnaryNetOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mOperand;
 	private final boolean mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -72,32 +72,32 @@ public final class IsEmpty<LETTER, STATE>
 		mResult = run == null;
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsEmpty";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " language is " + (mResult ? "empty" : "not empty");
 	}
-	
+
 	@Override
 	protected IPetriNet<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(mServices,
-				stateFactory, mOperand)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final boolean automatonEmpty =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty<>(mServices,
 						finiteAutomaton)).getResult();

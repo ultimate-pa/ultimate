@@ -35,7 +35,6 @@ import java.util.Set;
  * multiply up states to each down state.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class GameDoubleDeckerSet implements IGameState {
 

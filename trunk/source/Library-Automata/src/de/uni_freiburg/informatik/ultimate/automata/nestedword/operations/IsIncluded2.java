@@ -52,12 +52,12 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
-	
+
 	private final InclusionViaDifference<LETTER, STATE, ?> mInclusionViaDifference;
-	
+
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -78,55 +78,54 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandA,
 			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operandB2)
-			throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operandB2) throws AutomataLibraryException {
 		super(services);
 		mOperand = operandA;
 		mB1 = operandB1;
 		mB2 = operandB2;
 		// workaround until Matthias implemented this
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mInclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, operandA);
 		mInclusionViaDifference.addSubtrahend(mB1);
 		mInclusionViaDifference.addSubtrahend(mB2);
 		mCounterexample = mInclusionViaDifference.getCounterexample();
 		mResult = mCounterexample == null;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsIncluded2";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand A " + mOperand.sizeInformation() + ". Operand B_1 "
 				+ mB1.sizeInformation() + ". Operand B_2 " + mB2.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}

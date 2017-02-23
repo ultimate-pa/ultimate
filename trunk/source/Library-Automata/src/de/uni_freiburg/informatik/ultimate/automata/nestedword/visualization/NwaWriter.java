@@ -53,7 +53,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final Map<LETTER, String> mCallAlphabet;
 	private final Map<LETTER, String> mReturnAlphabet;
 	private final Map<STATE, String> mStateMapping;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -70,7 +70,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		mCallAlphabet = getAlphabetMapping(mNwa.getCallAlphabet(), 'c');
 		mReturnAlphabet = getAlphabetMapping(mNwa.getReturnAlphabet(), 'r');
 		mStateMapping = getStateMapping(mNwa.getStates());
-		
+
 		final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();
 		if (isFiniteAutomaton) {
 			// automata script format for FiniteAutomaton
@@ -98,7 +98,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			printAutomatonSuffix();
 		}
 	}
-	
+
 	/**
 	 * Constructs the new alphabet.
 	 *
@@ -109,7 +109,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 * @return mapping (old alphabet -> new alphabet)
 	 */
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol);
-	
+
 	/**
 	 * Constructs the new states.
 	 *
@@ -118,37 +118,37 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 * @return new states
 	 */
 	protected abstract Map<STATE, String> getStateMapping(final Collection<STATE> states);
-	
+
 	private void printLastTransitionSuffix() {
 		println("\t}");
 	}
-	
+
 	private void printAlphabets() {
 		printCollectionPrefix("callAlphabet");
 		printValues(mCallAlphabet);
 		printCollectionSuffix();
-		
+
 		printCollectionPrefix("internalAlphabet");
 		printValues(mInternalAlphabet);
 		printCollectionSuffix();
-		
+
 		printCollectionPrefix("returnAlphabet");
 		printValues(mReturnAlphabet);
 		printCollectionSuffix();
 	}
-	
+
 	private void printAlphabetOfFiniteAutomaton() {
 		printCollectionPrefix("alphabet");
 		printValues(mInternalAlphabet);
 		printCollectionSuffix();
 	}
-	
+
 	private void printStates() {
 		printCollectionPrefix("states");
 		printValues(mStateMapping);
 		printCollectionSuffix();
 	}
-	
+
 	private void printInitialStates(final Collection<STATE> initialStates) {
 		printCollectionPrefix("initialStates");
 		for (final STATE state : initialStates) {
@@ -156,7 +156,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printCollectionSuffix();
 	}
-	
+
 	private void printFinalStates(final Collection<STATE> allStates) {
 		printCollectionPrefix("finalStates");
 		for (final STATE state : allStates) {
@@ -166,7 +166,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printCollectionSuffix();
 	}
-	
+
 	private void printTransitionsOfFiniteAutomaton(final Collection<STATE> allStates) {
 		printlnCollectionPrefix("transitions");
 		for (final STATE state : allStates) {
@@ -182,7 +182,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printLastTransitionSuffix();
 	}
-	
+
 	private void printCallTransitions(final Collection<STATE> allStates) {
 		printlnCollectionPrefix("callTransitions");
 		for (final STATE state : allStates) {
@@ -198,7 +198,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printTransitionsSuffix();
 	}
-	
+
 	private void printInternalTransitions(final Collection<STATE> allStates) {
 		printlnCollectionPrefix("internalTransitions");
 		for (final STATE state : allStates) {
@@ -214,7 +214,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printTransitionsSuffix();
 	}
-	
+
 	private void printReturnTransitions(final Collection<STATE> allStates) {
 		printlnCollectionPrefix("returnTransitions");
 		for (final STATE state : allStates) {

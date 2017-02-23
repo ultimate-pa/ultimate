@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * specified by {@link #getPriority()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>

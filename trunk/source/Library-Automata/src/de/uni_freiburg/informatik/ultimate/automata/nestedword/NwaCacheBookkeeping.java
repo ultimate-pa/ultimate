@@ -50,11 +50,11 @@ import java.util.Set;
  */
 public class NwaCacheBookkeeping<LETTER, STATE> {
 	private static final String ADDED_TO_CACHE_TWICE = "The letter was added to the cache twice.";
-	
+
 	private final Map<STATE, Set<LETTER>> mCachedInternal = new HashMap<>();
 	private final Map<STATE, Set<LETTER>> mCachedCall = new HashMap<>();
 	private final Map<STATE, Map<STATE, Set<LETTER>>> mCachedReturn = new HashMap<>();
-	
+
 	/**
 	 * Checks whether an internal transition has been computed.
 	 * 
@@ -71,7 +71,7 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		}
 		return cbs.contains(letter);
 	}
-	
+
 	/**
 	 * Checks whether a call transition has been computed.
 	 * 
@@ -88,7 +88,7 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		}
 		return cbs.contains(letter);
 	}
-	
+
 	/**
 	 * Checks whether a return transition has been computed.
 	 * 
@@ -111,7 +111,7 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		}
 		return cbs.contains(letter);
 	}
-	
+
 	/**
 	 * Reports that all internal transitions have been computed.
 	 * 
@@ -129,7 +129,7 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		final boolean modified = cbs.add(letter);
 		assert modified : ADDED_TO_CACHE_TWICE;
 	}
-	
+
 	/**
 	 * Reports that all call transitions have been computed.
 	 * 
@@ -147,7 +147,7 @@ public class NwaCacheBookkeeping<LETTER, STATE> {
 		final boolean modified = cbs.add(letter);
 		assert modified : ADDED_TO_CACHE_TWICE;
 	}
-	
+
 	/**
 	 * Reports that all return transitions have been computed.
 	 * 

@@ -53,7 +53,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	 * The inputed nwa automaton.
 	 */
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Compares the different types of nwa simulation methods for nwa reduction
 	 * using random automata. Resulting automaton is the input automaton.
@@ -71,10 +71,10 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		
+
 		// Use operation with random automata
 		final StringFactory snf = new StringFactory();
-		
+
 		final int n = 10;
 		final int k = 3;
 		final int acceptanceInPerc = 100;
@@ -84,12 +84,12 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 		final int logEvery = 50;
 		final int amount = 1000;
 		INestedWordAutomatonSimple<String, String> nwa;
-		
+
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
 				mLogger.info("Worked " + i + " automata");
 			}
-			
+
 			nwa = new GetRandomNwa(services, k, n, (totalityInternalInPerc + 0.0) / HUNDRED,
 					(totalityCallInPerc + 0.0) / HUNDRED, (totalityReturnInPerc + 0.0) / HUNDRED,
 					(acceptanceInPerc + 0.0) / HUNDRED).getResult();
@@ -101,22 +101,22 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 		}
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public String getResult() {
 		return "no result";
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "compareWithRandomNwaAutomata";

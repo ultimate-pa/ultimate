@@ -35,7 +35,6 @@ import java.util.Iterator;
  * Hopcroft algorithm
  * 
  * @author Layla Franke
- *
  */
 public class HelpHopcroft implements Runnable {
 	private final MinimizeDfaIncrementalParallel<?, ?> mIncrementalAlgorithm;
@@ -52,8 +51,7 @@ public class HelpHopcroft implements Runnable {
 	 *            Instance of currently parallel running Hopcroft algorithm
 	 */
 	public HelpHopcroft(final MinimizeDfaIncrementalParallel<?, ?> incremental,
-			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
-			final int state2) {
+			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1, final int state2) {
 		mIncrementalAlgorithm = incremental;
 		mHopcroftAlgorithm = hopcroft;
 		mState1 = state1;

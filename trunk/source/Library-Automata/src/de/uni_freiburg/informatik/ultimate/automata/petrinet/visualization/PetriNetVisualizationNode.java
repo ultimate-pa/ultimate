@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableDirectedGra
 public abstract class PetriNetVisualizationNode extends ModifiableDirectedGraph<PetriNetVisualizationNode> {
 	private static final long serialVersionUID = 8569911796785553004L;
 	protected final String mName;
-	
+
 	protected PetriNetVisualizationNode(final String name) {
 		mName = name;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mName;

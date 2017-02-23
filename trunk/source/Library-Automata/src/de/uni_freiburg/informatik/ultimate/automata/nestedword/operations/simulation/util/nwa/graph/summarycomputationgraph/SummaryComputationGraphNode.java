@@ -34,16 +34,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Node in the graph that we build for computation of summaries.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
  * @param <STATE>
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
-	
+
 	private final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> mSource2Current2Targets;
 	private final Set<IGameState> mSummaryComputationTriggers;
-	
+
 	public SummaryComputationGraphNode(
 			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
 			final Set<IGameState> summaryComputationTriggers) {
@@ -52,33 +52,27 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		mSummaryComputationTriggers = summaryComputationTriggers;
 	}
 
-
 	public Set<IGameState> getSources() {
 		return mSource2Current2Targets.keySet();
 	}
-	
+
 	public Set<IGameState> getCurrent(final IGameState source) {
 		return mSource2Current2Targets.get(source).keySet();
 	}
-	
+
 	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets(final IGameState source) {
 		return mSource2Current2Targets.get(source);
 	}
-	
-	
-	
+
 //	
 //	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
 //		return mCurrent2Targets.get(current);
 //	}
 
-
 	public NestedMap2<IGameState, IGameState, WeightedSummaryTargets> getSource2Current2Targets() {
 		return mSource2Current2Targets;
 	}
 
-	
-	
 //	/**
 //	 * @return the current2Targets
 //	 */
@@ -93,7 +87,6 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		return mSummaryComputationTriggers;
 	}
 
-
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
@@ -105,7 +98,6 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		result = prime * result + ((mSummaryComputationTriggers == null) ? 0 : mSummaryComputationTriggers.hashCode());
 		return result;
 	}
-
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
@@ -132,14 +124,10 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		return true;
 	}
 
-	
 	@Override
 	public String toString() {
-		return mSource2Current2Targets.keySet().size() + " sources " + mSource2Current2Targets.size() + " source-current pairs";
+		return mSource2Current2Targets.keySet().size() + " sources " + mSource2Current2Targets.size()
+				+ " source-current pairs";
 	}
-	
-	
-	
-	
 
 }

@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	public static final String UNDEFINED_ENUM_STATE_MESSAGE = "Undefined enum state.";
-	
+
 	private static final String MAP_NOT_SUPPORTED_MESSAGE = "Map from old to new automaton is not supported with ";
-	
+
 	/**
 	 * Possible minimization methods.
 	 */
@@ -82,32 +82,32 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 		 */
 		UNDEFINED;
 	}
-	
+
 	// current minimization object (input automaton in case of no minimization)
 	protected Object mBackingMinimization;
 	// current minimization method
 	protected MinimizationMethods mMode;
-	
+
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	protected MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
 		mMode = MinimizationMethods.UNDEFINED;
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	/**
 	 * This method must be called by all implementing subclasses at the end of the constructor.
 	 */
 	@SuppressWarnings("unchecked")
-	protected final void run(final ISetOfPairs<STATE, ?> partition,
-			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
+	protected final void run(final ISetOfPairs<STATE, ?> partition, final boolean addMapOldState2newState)
+			throws AutomataOperationCanceledException {
 		// TODO Christian 2017-02-16 Cast is temporary workaround until we find a solution
 		switch (mMode) {
 			case SEVPA:
@@ -116,8 +116,8 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				break;
 			case SHRINK_NWA:
 				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory, mOperand,
-						(PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false,
-						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
+						(PartitionBackedSetOfPairs<STATE>) partition, addMapOldState2newState, false, false,
+						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
 				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices, mStateFactory,
@@ -140,7 +140,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public final IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
@@ -162,7 +162,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public final Map<STATE, STATE> getOldState2newState() {
@@ -181,7 +181,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public final Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
@@ -202,15 +202,15 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	private void checkForNoMapping(final boolean addMapOldState2newState) {
 		if (addMapOldState2newState) {
 			throw new IllegalArgumentException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
 		}
 	}
-	
+
 	public MinimizationMethods getMode() {
 		return mMode;
 	}
-	
+
 }

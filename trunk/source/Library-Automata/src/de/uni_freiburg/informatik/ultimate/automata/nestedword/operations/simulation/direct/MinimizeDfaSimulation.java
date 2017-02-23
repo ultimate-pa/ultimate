@@ -52,14 +52,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For correctness its important that the inputed automaton has <b>no dead
  * ends</b> nor <b>duplicate transitions</b>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author heizmann@informatik.uni-freiburg.de
  * @author schillic@informatik.uni-freiburg.de
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -98,13 +96,12 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 */
 	public MinimizeDfaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
 				new DirectSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
-						new DirectGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand)));
+						new DirectGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand)));
 	}
 
 	/**
@@ -139,11 +136,11 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
-			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices,
-					stateFactory, mServices.getProgressAwareTimer(), mLogger, mOperand);
+			final DirectGameGraph<LETTER, STATE> graph = new DirectGameGraph<>(mServices, stateFactory,
+					mServices.getProgressAwareTimer(), mLogger, mOperand);
 			graph.generateGameGraphFromAutomaton();
-			final DirectSimulation<LETTER, STATE> sccSim = new DirectSimulation<>(
-					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
+			final DirectSimulation<LETTER, STATE> sccSim =
+					new DirectSimulation<>(mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
 			final INestedWordAutomatonSimple<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {
@@ -168,7 +165,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	public String operationName() {
 		return "minimizeDfaSimulation";
 	}
-	
+
 	@Override
 	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

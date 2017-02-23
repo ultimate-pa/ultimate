@@ -42,7 +42,7 @@ public interface IStateDeterminizer<LETTER, STATE> {
 	 * @return The initial state.
 	 */
 	DeterminizedState<LETTER, STATE> initialState();
-	
+
 	/**
 	 * @param detState
 	 *            determinized state
@@ -52,7 +52,7 @@ public interface IStateDeterminizer<LETTER, STATE> {
 	 *         symbol.
 	 */
 	DeterminizedState<LETTER, STATE> internalSuccessor(DeterminizedState<LETTER, STATE> detState, LETTER letter);
-	
+
 	/**
 	 * @param detState
 	 *            determinized state
@@ -61,7 +61,7 @@ public interface IStateDeterminizer<LETTER, STATE> {
 	 * @return The successor detState under call transition of a detState and symbol.
 	 */
 	DeterminizedState<LETTER, STATE> callSuccessor(DeterminizedState<LETTER, STATE> detState, LETTER letter);
-	
+
 	/**
 	 * @param detState
 	 *            determinized state
@@ -74,12 +74,12 @@ public interface IStateDeterminizer<LETTER, STATE> {
 	 */
 	DeterminizedState<LETTER, STATE> returnSuccessor(DeterminizedState<LETTER, STATE> detState,
 			DeterminizedState<LETTER, STATE> linPred, LETTER letter);
-	
+
 	/**
 	 * @return Maximum degree of nondeterminism.
 	 */
 	int getMaxDegreeOfNondeterminism();
-	
+
 	/**
 	 * If {@code true}, the constructed DeterminizedStates are sets of
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker},
@@ -93,7 +93,7 @@ public interface IStateDeterminizer<LETTER, STATE> {
 	 *         DoubleDecker} is used.
 	 */
 	boolean useDoubleDeckers();
-	
+
 	/**
 	 * @param determinizedState
 	 *            A determinized state.

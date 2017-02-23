@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            element type
  */
 public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
-	
+
 	private final UnionFind<E> mUnionFind;
 	/**
 	 * Partition that is returned as result. Constructed on-demand.
@@ -52,7 +52,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	 */
 	private Collection<Set<E>> mPartition = null;
 	private PartitionSizeInformation mPartitionSizeInformation = null;
-	
+
 	/**
 	 * @param partition
 	 *            Partition.
@@ -60,7 +60,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	public UnionFindBackedSetOfPairs() {
 		mUnionFind = new UnionFind<>();
 	}
-	
+
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		if (mPartition == null) {
@@ -72,7 +72,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		}
 		return Collections.emptyIterator();
 	}
-	
+
 	@Override
 	public void addPair(final E lhs, final E rhs) {
 		if (mPartition == null) {
@@ -82,9 +82,9 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		} else {
 			throw new IllegalStateException("final partition already constructed, unable to add new pairs");
 		}
-		
+
 	}
-	
+
 	@Override
 	public boolean containsPair(final E lhs, final E rhs) {
 		// in same equivalence class if both have same representative
@@ -92,7 +92,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		final E rhsRepresentative = mUnionFind.find(rhs);
 		return lhsRepresentative.equals(rhsRepresentative);
 	}
-	
+
 	@Override
 	public Collection<Set<E>> getRelation() {
 		if (mPartition == null) {
@@ -100,7 +100,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		}
 		return mPartition;
 	}
-	
+
 	/**
 	 * @return Size information of the partition.
 	 */

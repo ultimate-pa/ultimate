@@ -43,13 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Rn Algorithm.<br/>
  * Rn sets are always empty when nodes are being created when expanding trees. We use InclusionViaDIfference to check
  * its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */

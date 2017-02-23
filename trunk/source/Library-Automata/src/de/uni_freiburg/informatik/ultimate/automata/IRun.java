@@ -48,7 +48,7 @@ public interface IRun<LETTER, STATE, CC> {
 	 * @return corresponding word
 	 */
 	Word<LETTER> getWord();
-	
+
 	/**
 	 * The symbol of the corresponding word at the given position.<br>
 	 * The result is identical to {@link #getWord()}.{@link Word#getSymbol(int) getSymbol(position)}.
@@ -58,7 +58,7 @@ public interface IRun<LETTER, STATE, CC> {
 	 * @return symbol at the given position
 	 */
 	LETTER getSymbol(int position);
-	
+
 	/**
 	 * The length of the run.<br>
 	 * The result is identical to {@link #getWord()}.{@link Word#length() length()}.
@@ -66,7 +66,7 @@ public interface IRun<LETTER, STATE, CC> {
 	 * @return length of the run
 	 */
 	int getLength();
-	
+
 	/**
 	 * @return The state sequence.
 	 */

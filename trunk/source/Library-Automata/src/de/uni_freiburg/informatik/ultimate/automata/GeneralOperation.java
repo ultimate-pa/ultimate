@@ -46,12 +46,12 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 	 * Ultimate services.
 	 */
 	protected final AutomataLibraryServices mServices;
-	
+
 	/**
 	 * Logger.
 	 */
 	protected final ILogger mLogger;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -62,7 +62,7 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
-	
+
 	/**
 	 * Should be called regularly by subclasses to check for timeouts.
 	 * A subclass which does not do this is a bad subclass!
@@ -76,19 +76,19 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 	protected final boolean isCancellationRequested() {
 		return !mServices.getProgressAwareTimer().continueProcessing();
 	}
-	
+
 	protected final void printStartMessage() {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 	}
-	
+
 	protected final void printExitMessage() {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {

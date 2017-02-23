@@ -34,11 +34,10 @@ import java.util.HashSet;
 /**
  * A Nested Word automaton. There is no distinction between linear and
  * hierarchical states.
- *
- * <p>This is a mostly normalized POD (plain old data) representation of NWAs.
- *
- * <p>The following constraints are useful in most situations:
- *
+ * <p>
+ * This is a mostly normalized POD (plain old data) representation of NWAs.
+ * <p>
+ * The following constraints are useful in most situations:
  * <ul>
  * <li>numStates &ge; 0 && numISyms &ge; 0 && numRSyms &ge; 0
  * <li>isInitial &ne; null && isInitial.length = numStates
@@ -46,8 +45,8 @@ import java.util.HashSet;
  * <li>iTrans, cTrans, rTrans are not null and use only symbols and states from
  * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
- *
- * <p>This class has static methods to verify these constraints, and also methods
+ * <p>
+ * This class has static methods to verify these constraints, and also methods
  * to assert determinism.
  *
  * @author stimpflj
@@ -80,10 +79,9 @@ final class NwaWithArrays implements Cloneable {
 	/** Return Transitions */
 	RTrans[] mRTrans;
 
-
 	/**
-	 * @param nwa readonly <code>NWA</code>
-	 *
+	 * @param nwa
+	 *            readonly <code>NWA</code>
 	 * @return <code>true</code> iff the automaton is consistent
 	 */
 	static boolean checkConsistency(final NwaWithArrays nwa) {
@@ -234,7 +232,6 @@ final class NwaWithArrays implements Cloneable {
 	}
 }
 
-
 /**
  * Call transition for nested word automata (NWA).
  *
@@ -250,8 +247,8 @@ final class ITrans {
 	/** Destination state */
 	int mDst;
 
-
-	ITrans() {}
+	ITrans() {
+	}
 
 	ITrans(final int src, final int sym, final int dst) {
 		mSrc = src;
@@ -285,7 +282,6 @@ final class ITrans {
 	}
 }
 
-
 /**
  * Call transition for nested word automata (NWA)
  *
@@ -301,7 +297,8 @@ final class CTrans {
 	/** Destination state */
 	int mDst;
 
-	CTrans() {}
+	CTrans() {
+	}
 
 	CTrans(final int src, final int sym, final int dst) {
 		mSrc = src;
@@ -336,7 +333,6 @@ final class CTrans {
 	}
 }
 
-
 /**
  * Return transition for nested word automata (NWA).
  *
@@ -355,8 +351,8 @@ final class RTrans {
 	/** Destination state */
 	int mDst;
 
-
-	RTrans() {}
+	RTrans() {
+	}
 
 	RTrans(final int src, final int sym, final int top, final int dst) {
 		mSrc = src;

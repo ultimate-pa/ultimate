@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 public class AutomataLibraryServices {
 	private final ILoggingService mLoggingService;
 	private final IProgressAwareTimer mProgressAwareTimer;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -48,7 +48,7 @@ public class AutomataLibraryServices {
 		mLoggingService = services.getLoggingService();
 		mProgressAwareTimer = services.getProgressMonitorService();
 	}
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -59,7 +59,7 @@ public class AutomataLibraryServices {
 		mLoggingService = services.getLoggingService();
 		mProgressAwareTimer = services.getProgressMonitorService().getChildTimer(timeoutInMilliseconds);
 	}
-	
+
 	/**
 	 * @param services
 	 *            Other automata library services instance.
@@ -71,11 +71,11 @@ public class AutomataLibraryServices {
 		mLoggingService = automataLibraryServices.mLoggingService;
 		mProgressAwareTimer = automataLibraryServices.mProgressAwareTimer.getChildTimer(timeoutInMilliseconds);
 	}
-	
+
 	public ILoggingService getLoggingService() {
 		return mLoggingService;
 	}
-	
+
 	public IProgressAwareTimer getProgressAwareTimer() {
 		return mProgressAwareTimer;
 	}

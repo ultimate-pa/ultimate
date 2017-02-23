@@ -50,7 +50,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	private BooleanExpression mAcceptingFunction;
 	private final BitSet mFinalStatesBitVector = new BitSet();
 	private boolean mIsReversed;
-	
+
 	/**
 	 * @param alphabet
 	 *            alphabet
@@ -61,7 +61,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		mAlphabet = alphabet;
 		mStateFactory = stateFactory;
 	}
-	
+
 	public void addState(final STATE state) {
 		if (!mStates.contains(state)) {
 			final int stateIndex = mStates.size();
@@ -69,9 +69,8 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 			mStatesIndices.put(state, stateIndex);
 		}
 	}
-	
-	public void addTransition(final LETTER letter, final STATE state,
-			final BooleanExpression booleanExpression) {
+
+	public void addTransition(final LETTER letter, final STATE state, final BooleanExpression booleanExpression) {
 		BooleanExpression[] letterTransitions = mTransitionFunction.get(letter);
 		if (letterTransitions == null) {
 			letterTransitions = new BooleanExpression[64];
@@ -84,7 +83,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 			letterTransitions[stateIndex].addConjunction(booleanExpression);
 		}
 	}
-	
+
 	public void addAcceptingConjunction(final BooleanExpression booleanExpression) {
 		if (mAcceptingFunction == null) {
 			mAcceptingFunction = booleanExpression;
@@ -92,7 +91,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 			mAcceptingFunction.addConjunction(booleanExpression);
 		}
 	}
-	
+
 	public BooleanExpression generateCube(final STATE[] resultStates, final STATE[] negatedResultStates) {
 		final BitSet alpha = new BitSet(mStates.size());
 		final BitSet beta = new BitSet(mStates.size());
@@ -107,17 +106,17 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 		return new BooleanExpression(alpha, beta);
 	}
-	
+
 	public void setStateFinal(final STATE state) {
 		final int stateIndex = getStateIndex(state);
 		mFinalStatesBitVector.set(stateIndex);
 	}
-	
+
 	public boolean isStateFinal(final STATE state) {
 		final int stateIndex = getStateIndex(state);
 		return mFinalStatesBitVector.get(stateIndex);
 	}
-	
+
 	public boolean accepts(final Word<LETTER> word) {
 		final BitSet resultingStates = (BitSet) mFinalStatesBitVector.clone();
 		if (mIsReversed) {
@@ -131,70 +130,69 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 		return mAcceptingFunction.getResult(resultingStates);
 	}
-	
+
 	public void resolveLetter(final LETTER letter, final BitSet currentStates) {
 		final BooleanExpression[] letterTransitions = mTransitionFunction.get(letter);
 		if (letterTransitions != null) {
 			final BitSet tmpCurrentStates = (BitSet) currentStates.clone();
 			for (int i = 0; i < mStates.size(); i++) {
-				final boolean result = ((letterTransitions[i] != null)
-						? letterTransitions[i].getResult(tmpCurrentStates)
-						: false);
+				final boolean result =
+						((letterTransitions[i] != null) ? letterTransitions[i].getResult(tmpCurrentStates) : false);
 				currentStates.set(i, result);
 			}
 		} else {
 			currentStates.clear();
 		}
 	}
-	
+
 	public ArrayList<STATE> getStates() {
 		return mStates;
 	}
-	
+
 	public int getStateIndex(final STATE state) {
 		return mStatesIndices.get(state);
 	}
-	
+
 	public HashMap<LETTER, BooleanExpression[]> getTransitionFunction() {
 		return mTransitionFunction;
 	}
-	
+
 	public BooleanExpression getAcceptingFunction() {
 		return mAcceptingFunction;
 	}
-	
+
 	public BitSet getFinalStatesBitVector() {
 		return mFinalStatesBitVector;
 	}
-	
+
 	public void setReversed(final boolean isReversed) {
 		mIsReversed = isReversed;
 	}
-	
+
 	public boolean isReversed() {
 		return mIsReversed;
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	@Override
 	public int size() {
 		return mStates.size();
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		return "Number of states";
 	}
-	
+
 	@Override
 	public String toString() {
 		String text = "[AlternatingAutomaton\n\tAlphabet = {";
@@ -249,7 +247,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		text += "\t}\n]";
 		return text;
 	}
-	
+
 	@Override
 	public IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {

@@ -45,7 +45,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	 * @return Removed up-down entries.
 	 */
 	Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
-	
+
 	/**
 	 * Removes dead ends.
 	 * 
@@ -54,17 +54,17 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	 *             if operation was canceled
 	 */
 	boolean removeDeadEnds() throws AutomataOperationCanceledException;
-	
+
 	/**
 	 * @return The operation result.
 	 */
 	INestedWordAutomaton<LETTER, STATE> getResult();
-	
+
 	/**
 	 * @return The time it took to remove the dead ends.
 	 */
 	long getDeadEndRemovalTime();
-	
+
 	/**
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param <STATE>
@@ -74,7 +74,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		private final STATE mUp;
 		private final STATE mDown;
 		private final STATE mEntry;
-		
+
 		/**
 		 * Constructor.
 		 * 
@@ -90,24 +90,24 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			mDown = downState;
 			mEntry = entry;
 		}
-		
+
 		public STATE getUp() {
 			return mUp;
 		}
-		
+
 		public STATE getDown() {
 			return mDown;
 		}
-		
+
 		public STATE getEntry() {
 			return mEntry;
 		}
-		
+
 		@Override
 		public String toString() {
 			return MessageFormat.format("up: {0} down: {1} entry {2}", mUp, mDown, mEntry);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -116,7 +116,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
 		}
-		
+
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {

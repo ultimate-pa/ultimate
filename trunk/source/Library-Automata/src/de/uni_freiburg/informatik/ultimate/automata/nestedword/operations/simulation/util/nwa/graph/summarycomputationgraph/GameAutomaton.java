@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * Construct game automaton given the input automaton (not a game graph) and the initial partition.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
  * @param <STATE>
  */
@@ -192,9 +191,8 @@ public class GameAutomaton<LETTER, STATE>
 			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> duplicatorSuccIt =
 					lasp.getOutgoingTransitionsForDuplicator(duplicatorState, letter);
 			final Set<STATE> duplicatorSuccs = NestedWordAutomataUtils.constructSuccessorSet(duplicatorSuccIt);
-			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter =
-					computeSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs,
-							spoilerStateNeededInSucc);
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter = computeSuccessorTransitions(
+					vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs, spoilerStateNeededInSucc);
 			succTrans.addAll(succTransForLetter);
 		}
 		return succTrans;
@@ -372,26 +370,28 @@ public class GameAutomaton<LETTER, STATE>
 		private IGameLetter<LETTER, STATE> getGameLetter(final STATE spoilerState, final STATE duplicatorState,
 				final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
 			switch (transitionType) {
-			case CALL:
-				if (delayedbit) {
-					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall.get(spoilerState, duplicatorState, letter);
-				}
-				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.get(spoilerState, duplicatorState, letter);
-			case INTERNAL:
-				if (delayedbit) {
-					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.get(spoilerState, duplicatorState, letter);
-				}
-				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.get(spoilerState, duplicatorState, letter);
-			case RETURN:
-				if (delayedbit) {
-					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn.get(spoilerState, duplicatorState, letter);
-				}
-				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.get(spoilerState, duplicatorState, letter);
-			case SINK:
-			case SUMMARIZE_ENTRY:
-			case SUMMARIZE_EXIT:
-			default:
-				throw new AssertionError("illegal transition type");
+				case CALL:
+					if (delayedbit) {
+						return mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall.get(spoilerState, duplicatorState, letter);
+					}
+					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.get(spoilerState, duplicatorState, letter);
+				case INTERNAL:
+					if (delayedbit) {
+						return mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.get(spoilerState, duplicatorState,
+								letter);
+					}
+					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.get(spoilerState, duplicatorState, letter);
+				case RETURN:
+					if (delayedbit) {
+						return mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn.get(spoilerState, duplicatorState,
+								letter);
+					}
+					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.get(spoilerState, duplicatorState, letter);
+				case SINK:
+				case SUMMARIZE_ENTRY:
+				case SUMMARIZE_EXIT:
+				default:
+					throw new AssertionError("illegal transition type");
 			}
 		}
 
@@ -414,36 +414,40 @@ public class GameAutomaton<LETTER, STATE>
 			final IGameLetter<LETTER, STATE> result =
 					new DuplicatorNwaVertex<>(2, delayedbit, spoilerState, duplicatorState, letter, transitionType);
 			switch (transitionType) {
-			case CALL:
-				if (delayedbit) {
-					mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall.put(spoilerState, duplicatorState, letter, result);
-				} else {
-					mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.put(spoilerState, duplicatorState, letter, result);
-				}
-				mCallAlphabet.add(result);
-				break;
-			case INTERNAL:
-				if (delayedbit) {
-					mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.put(spoilerState, duplicatorState, letter, result);
-				} else {
-					mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.put(spoilerState, duplicatorState, letter,
-							result);
-				}
-				mInternalAlphabet.add(result);
-				break;
-			case RETURN:
-				if (delayedbit) {
-					mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn.put(spoilerState, duplicatorState, letter, result);
-				} else {
-					mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.put(spoilerState, duplicatorState, letter, result);
-				}
-				mReturnAlphabet.add(result);
-				break;
-			case SINK:
-			case SUMMARIZE_ENTRY:
-			case SUMMARIZE_EXIT:
-			default:
-				throw new AssertionError("illegal transition type");
+				case CALL:
+					if (delayedbit) {
+						mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall.put(spoilerState, duplicatorState, letter, result);
+					} else {
+						mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.put(spoilerState, duplicatorState, letter,
+								result);
+					}
+					mCallAlphabet.add(result);
+					break;
+				case INTERNAL:
+					if (delayedbit) {
+						mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.put(spoilerState, duplicatorState, letter,
+								result);
+					} else {
+						mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.put(spoilerState, duplicatorState, letter,
+								result);
+					}
+					mInternalAlphabet.add(result);
+					break;
+				case RETURN:
+					if (delayedbit) {
+						mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn.put(spoilerState, duplicatorState, letter,
+								result);
+					} else {
+						mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.put(spoilerState, duplicatorState, letter,
+								result);
+					}
+					mReturnAlphabet.add(result);
+					break;
+				case SINK:
+				case SUMMARIZE_ENTRY:
+				case SUMMARIZE_EXIT:
+				default:
+					throw new AssertionError("illegal transition type");
 			}
 			return result;
 		}

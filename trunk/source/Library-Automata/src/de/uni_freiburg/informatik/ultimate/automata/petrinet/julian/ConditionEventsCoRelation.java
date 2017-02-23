@@ -44,10 +44,10 @@ import java.util.Set;
  */
 public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	private int mCoRelationQueries;
-	
+
 	private final HashMap<Condition<S, C>, Set<Event<S, C>>> mCoRelation = new HashMap<>();
 	private final BranchingProcess<S, C> mBranchingProcess;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,12 +57,12 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	public ConditionEventsCoRelation(final BranchingProcess<S, C> branchingProcess) {
 		mBranchingProcess = branchingProcess;
 	}
-	
+
 	@Override
 	public int getCoRelationQueries() {
 		return mCoRelationQueries;
 	}
-	
+
 	@Override
 	public void update(final Event<S, C> e) {
 		for (final Condition<S, C> c : e.getSuccessorConditions()) {
@@ -77,21 +77,21 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 				}
 			}
 		}
-		
+
 		// Original plan: insert all siblings of predecessors of e, that are not
 		// predecessors of e.
 		// Problem: there is a situation where this might be incorrect.
-		
+
 		// Solution: only add Conditions that build a CoSet with the new Events
 		// Predecessors.
-		
+
 		// Next Problem: this is incomplete.
 		// There may be nodes, that are in co-relation with
 		// the newly added Event e that are NOT siblings of
 		// the predecessor-conditions of e.
-		
+
 		// Solution: iterate through all ancestors and do this
-		
+
 		// (this is the old code)
 		/*
 		for (Condition<S, C> c : e.getPredecessorConditions()) {
@@ -105,17 +105,17 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 			}
 		}
 		*/
-		
+
 		for (final Condition<S, C> c : e.getConditionMark()) {
 			if (!e.getSuccessorConditions().contains(c)) {
 				assert !e.getSuccessorConditions().contains(c);
-				assert !mBranchingProcess.inCausalRelation(c, e) : c + " , "
-						+ e + " in causal relation, not in co-relation!";
+				assert !mBranchingProcess.inCausalRelation(c, e) : c + " , " + e
+						+ " in causal relation, not in co-relation!";
 				mCoRelation.get(c).add(e);
 			}
 		}
 	}
-	
+
 	/*
 	private void add(Condition<S, C> c, Event<S, C> e) {
 		Set<Event<S, C>> eSet = coRelation.get(c);
@@ -126,7 +126,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		eSet.add(e);
 	}
 	*/
-	
+
 	@Override
 	public boolean isInCoRelation(final Condition<S, C> c1, final Condition<S, C> c2) {
 		mCoRelationQueries++;
@@ -143,7 +143,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * <p>
 	 * true, if both events are in irreflexive co-relation, hereafter "ic".
@@ -197,20 +197,19 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		final Collection<Condition<S, C>> conditions2 = e2.getPredecessorConditions();
 		for (final Condition<S, C> c1 : conditions1) {
 			// e1 and e2 are in conflict
-			if (conditions2.contains(c1)
-					|| !isCoset(conditions2, c1)) {
+			if (conditions2.contains(c1) || !isCoset(conditions2, c1)) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	@Override
 	public void initialize(final Set<Condition<S, C>> initialConditions) {
 		// there are no events the conditions could be in relation with yet.
 		// hence there's nothing to do here
 	}
-	
+
 	@Override
 	public boolean isCoset(final Collection<Condition<S, C>> coSet, final Condition<S, C> c) {
 		for (final Condition<S, C> condition : coSet) {

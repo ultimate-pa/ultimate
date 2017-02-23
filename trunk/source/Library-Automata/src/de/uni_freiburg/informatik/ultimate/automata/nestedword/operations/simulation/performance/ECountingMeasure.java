@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Different types of counting measures.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public enum ECountingMeasure {
 	/**

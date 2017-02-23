@@ -54,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * In direct simulation each time <i>Spoiler</i> visits a final state
  * <i>Duplicator</i> must also visit one at his next turn.<br/>
  * <br/>
- * 
  * If its impossible for <i>Spoiler</i> to build a word such that
  * <i>Duplicator</i> can not fulfill its condition we say <b>q1 direct simulates
  * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -129,8 +127,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
-			throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
 			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
@@ -151,7 +148,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					similarStates.addPair(state1, state2);
 				}
 			}
-			
+
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/filling table");
 				throw new AutomataOperationCanceledException(this.getClass());
@@ -165,7 +162,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					uf.union(state1, state2);
 				}
 			}
-			
+
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/marking table");
 				throw new AutomataOperationCanceledException(this.getClass());
@@ -173,8 +170,8 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Merge states
-		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
-				mBuechi.getInternalAlphabet(), null, null, mStateFactory);
+		final NestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomaton<>(mServices, mBuechi.getInternalAlphabet(), null, null, mStateFactory);
 		final Set<STATE> representativesOfInitials = new HashSet<>();
 		for (final STATE initial : mBuechi.getInitialStates()) {
 			representativesOfInitials.add(uf.find(initial));
@@ -247,8 +244,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					final DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
 					addDuplicatorVertex(v0e);
 					// V1 -> V0 edges [paper ref 11]
-					for (final IncomingInternalTransition<LETTER, STATE> trans :
-							mBuechi.internalPredecessors(q0, s)) {
+					for (final IncomingInternalTransition<LETTER, STATE> trans : mBuechi.internalPredecessors(q0, s)) {
 						final STATE pred0 = trans.getPred();
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(pred0) || mBuechi.isFinal(q1)) {
@@ -257,8 +253,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					}
 
 					// V0 -> V1 edges [paper ref 11]
-					for (final OutgoingInternalTransition<LETTER, STATE> trans :
-							mBuechi.internalSuccessors(q1, s)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> trans : mBuechi.internalSuccessors(q1, s)) {
 						final STATE succ1 = trans.getSucc();
 						// Only add edge if duplicator does not directly loose
 						if (!mBuechi.isFinal(q0) || mBuechi.isFinal(succ1)) {
@@ -266,7 +261,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						}
 					}
 				}
-				
+
 				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 					getLogger().debug("Stopped in generateGameGraphFromBuechi/calculating v0 and edges");
 					throw new AutomataOperationCanceledException(this.getClass());

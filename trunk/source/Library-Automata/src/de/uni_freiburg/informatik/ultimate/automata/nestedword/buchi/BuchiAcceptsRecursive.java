@@ -57,15 +57,15 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
 	private final NestedWord<LETTER> mStem;
-	
+
 	/**
 	 * Loop of the nested lasso word whose acceptance is checked.
 	 */
 	private final NestedWord<LETTER> mLoop;
-	
+
 	private final INestedWordAutomatonSimple<LETTER, STATE> mNwa;
 	private final boolean mAccepted;
-	
+
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * <p>
@@ -84,41 +84,41 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
 		super(services);
 		mNwa = nwa;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mStem = nlw.getStem();
 		mLoop = nlw.getLoop();
-		
+
 		if (!checkInputValidity()) {
 			mAccepted = false;
 			return;
 		}
-		
+
 		mAccepted = computeResult(nwa);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiAcceptsRecursive";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mNwa;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mAccepted;
 	}
-	
+
 	private boolean checkInputValidity() {
 		if (mStem.containsPendingReturns()) {
 			if (mLogger.isWarnEnabled()) {
@@ -133,9 +133,9 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 						+ "pending returns.");
 			}
 			return false;
-			
+
 		}
-		
+
 		if (mLoop.length() == 0) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
@@ -144,7 +144,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		}
 		return true;
 	}
-	
+
 	private boolean computeResult(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		// First compute all states in which the automaton can be after processing the
 		// stem.
@@ -156,7 +156,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<STATE>());
 			hondaStates.addAll(reach);
 		}
-		
+
 		// Compute for each hondaState if processing mLoop can lead to a run that
 		// contains an accepting state and brings the automaton back to the honda state.
 		boolean result = false;
@@ -164,10 +164,10 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			result = result || isCompleteableToAcceptingRun(new HashMap<STATE, Boolean>(), 0, hondaState,
 					new LinkedList<STATE>());
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Recursive computation of reachable states while processing mStem.
 	 * <p>
@@ -190,10 +190,10 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			return Collections.singleton(currentState);
 		}
 		final LETTER currentSymbol = mStem.getSymbolAt(currentPosition);
-		
+
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
 				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mStem, "stem");
-		
+
 		if (!outgoingTransitions.iterator().hasNext()) {
 			return Collections.emptySet();
 		}
@@ -213,13 +213,12 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			} else {
 				callStackcopy = callStack;
 			}
-			final Set<STATE> returnValue =
-					getReachableStates(currentPosition + 1, succStates.get(i), callStackcopy);
+			final Set<STATE> returnValue = getReachableStates(currentPosition + 1, succStates.get(i), callStackcopy);
 			result.addAll(returnValue);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Recursive check for an accepting loop run for the NestedWord mLoop.
 	 * Therefore we process mLoop several times (see
@@ -262,9 +261,9 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 				hondaCandidates2visitedFinal.put(hondaCandidate, Boolean.TRUE);
 			}
 		}
-		
+
 		final LETTER currentSymbol = mLoop.getSymbolAt(currentPosition);
-		
+
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
 				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mLoop, "loop");
 		final List<STATE> succStates = new ArrayList<>();
@@ -274,10 +273,10 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		if (succStates.isEmpty()) {
 			return false;
 		}
-		
+
 		return isCompleteableToAcceptingRunHelper(hondaCandidates2visitedFinal, callStack, currentPosition, succStates);
 	}
-	
+
 	private boolean isCompleteableToAcceptingRunHelper(final Map<STATE, Boolean> hondaCandidates2visitedFinal,
 			final List<STATE> callStack, final int currentPosition, final List<STATE> succStates) {
 		boolean result = false;
@@ -295,13 +294,13 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 				callStackCopy = callStack;
 				hondaCandidatesCopy = hondaCandidates2visitedFinal;
 			}
-			
-			result = result || isCompleteableToAcceptingRun(hondaCandidatesCopy, currentPosition + 1,
-					succStates.get(i), callStackCopy);
+
+			result = result || isCompleteableToAcceptingRun(hondaCandidatesCopy, currentPosition + 1, succStates.get(i),
+					callStackCopy);
 		}
 		return result;
 	}
-	
+
 	private Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> getOutgoingTransitions(final int currentPosition,
 			final STATE currentState, final List<STATE> callStack, final LETTER currentSymbol,
 			final NestedWord<LETTER> word, final String name) {
@@ -321,7 +320,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		}
 		return outgoingTransitions;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

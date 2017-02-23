@@ -35,38 +35,40 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
  * Interface for a general block data structure inside a partition.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <STATE> state type
+ * @param <STATE>
+ *            state type
  */
 public interface IBlock<STATE> {
 	/**
 	 * @return true iff block contains an initial state
 	 */
 	boolean isInitial();
-	
+
 	/**
 	 * @return true iff block contains an final state
 	 */
 	boolean isFinal();
-	
+
 	/**
-	 * @param stateFactory state factory
+	 * @param stateFactory
+	 *            state factory
 	 * @return state constructed by state factory
 	 */
 	STATE minimize(final IMergeStateFactory<STATE> stateFactory);
-	
+
 	/**
 	 * @return iterator over all states
 	 */
 	Iterator<STATE> statesIterator();
-	
+
 	/**
 	 * If a block is independent of the representative, then one must only look
 	 * at one state in the block when interested in the successor blocks.
-	 * 
-	 * <p>Since internal and call transitions are considered similarly by many
+	 * <p>
+	 * Since internal and call transitions are considered similarly by many
 	 * operations, they are handled the same way.
-	 * 
-	 * <p>NOTE: We assume here that return transitions are more complicated and
+	 * <p>
+	 * NOTE: We assume here that return transitions are more complicated and
 	 * cannot be handled in a way independent of the representative.
 	 * 
 	 * @return true iff all states have the same outgoing transitions

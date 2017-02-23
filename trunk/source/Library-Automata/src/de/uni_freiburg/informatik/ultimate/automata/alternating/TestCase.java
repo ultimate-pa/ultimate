@@ -31,19 +31,19 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 public class TestCase<LETTER> {
 	private final Word<LETTER> mWord;
 	private final boolean mIsAccepted;
-	
+
 	public TestCase(final Word<LETTER> word, final boolean isAccepted) {
 		mWord = word;
 		mIsAccepted = isAccepted;
 	}
-	
+
 	public static <LETTER> void test(final AlternatingAutomaton<LETTER, String> automaton,
 			final TestCase<LETTER>[] testCases) {
 		for (int i = 0; i < testCases.length; i++) {
 			System.out.println("Test #" + i + " " + (testCases[i].test(automaton) ? "successful" : "failed"));
 		}
 	}
-	
+
 	public boolean test(final AlternatingAutomaton<LETTER, String> automaton) {
 		return (automaton.accepts(mWord) == mIsAccepted);
 	}

@@ -56,7 +56,7 @@ public class DirectSimulationComparison<LETTER, STATE>
 	private final ReduceNwaDirectSimulation<LETTER, STATE> mOldSimulation;
 	private final ReduceNwaDirectSimulationB<LETTER, STATE> mNewSimulation;
 	private final MinimizeNwaPmaxSat<LETTER, STATE> mMaxSat;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -79,22 +79,22 @@ public class DirectSimulationComparison<LETTER, STATE>
 		mNewSimulation = new ReduceNwaDirectSimulationB<>(mServices, stateFactory, dd);
 		mMaxSat = new MinimizeNwaPmaxSat<>(mServices, stateFactory, dd);
 	}
-	
+
 	@Override
 	public Object getResult() {
 		return mNewSimulation.getResult();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "DirectSimulationComparison";
 	}
-	
+
 	@Override
 	public boolean checkResult(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
@@ -108,13 +108,12 @@ public class DirectSimulationComparison<LETTER, STATE>
 		correct = correctOld && correctNew && correctMaxSat;
 		correct = correct && oldSize == newSize && oldSize == maxSatSize;
 		if (mLogger.isWarnEnabled()) {
-			mLogger.warn(String.format(
-					"old: (%b, %d)  new: (%b, %d)  Max-SAT: (%b, %d)", correctOld, oldSize, correctNew, newSize,
-					correctMaxSat, maxSatSize));
+			mLogger.warn(String.format("old: (%b, %d)  new: (%b, %d)  Max-SAT: (%b, %d)", correctOld, oldSize,
+					correctNew, newSize, correctMaxSat, maxSatSize));
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
-					operationName(), mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", operationName(),
+					mOperand);
 		}
 		return correct;
 	}

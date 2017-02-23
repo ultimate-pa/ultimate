@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  */
 public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
-	
+
 	/**
 	 * @param condition
 	 *            Condition.
@@ -55,7 +55,7 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 	 */
 	public ConditionNode(final Condition<S, C> condition, final BranchingProcess<S, C> branchingProcess) {
 		super(condition.toString());
-		
+
 		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("Condition", mName);
 		annot.put("CorrespondingPlace", condition.getPlace());
@@ -63,15 +63,15 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition, branchingProcess));
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
-		
+
 		final C content = condition.getPlace().getContent();
 		if (content instanceof IAnnotations) {
 			annot.put("Content", content);
-			
+
 		}
 		// super.setPayload(payload);
 	}
-	
+
 	private ArrayList<Condition<S, C>> allConditionsInCoRelation(final Condition<S, C> condition,
 			final BranchingProcess<S, C> bc) {
 		final ArrayList<Condition<S, C>> conditionsInCoRelation = new ArrayList<>();

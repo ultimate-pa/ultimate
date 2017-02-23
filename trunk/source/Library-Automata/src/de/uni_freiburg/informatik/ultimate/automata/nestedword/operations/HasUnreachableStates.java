@@ -57,7 +57,7 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final Set<STATE> mVisitedStates = new HashSet<>();
 	private int mUnreachableStates;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -72,11 +72,11 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mTraversedNwa = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		traverseDoubleDeckerGraph();
 		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mVisitedStates.contains(state)) {
@@ -87,21 +87,20 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 				}
 			}
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	protected Collection<STATE> getInitialStates() {
 		mVisitedStates.addAll(mTraversedNwa.getInitialStates());
 		return mTraversedNwa.getInitialStates();
 	}
-	
+
 	@Override
-	protected Collection<STATE> visitAndGetInternalSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
 		final Set<STATE> succs = new HashSet<>();
 		for (final LETTER letter : mTraversedNwa.lettersInternal(state)) {
@@ -113,10 +112,9 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 		mVisitedStates.addAll(succs);
 		return succs;
 	}
-	
+
 	@Override
-	protected Collection<STATE> visitAndGetCallSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
 		final Set<STATE> succs = new HashSet<>();
 		for (final LETTER letter : mTraversedNwa.lettersCall(state)) {
@@ -127,10 +125,9 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 		mVisitedStates.addAll(succs);
 		return succs;
 	}
-	
+
 	@Override
-	protected Collection<STATE> visitAndGetReturnSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> visitAndGetReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE state = doubleDecker.getUp();
 		final STATE hier = doubleDecker.getDown();
 		final Set<STATE> succs = new HashSet<>();
@@ -143,27 +140,27 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 		mVisitedStates.addAll(succs);
 		return succs;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "HasUnreachableStates";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + mTraversedNwa.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Operand has " + mUnreachableStates + " unreachable states";
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mUnreachableStates != 0;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

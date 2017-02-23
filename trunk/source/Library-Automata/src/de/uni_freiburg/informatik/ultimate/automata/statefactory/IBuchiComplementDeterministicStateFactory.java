@@ -44,7 +44,7 @@ public interface IBuchiComplementDeterministicStateFactory<STATE> extends IState
 	default STATE buchiComplementDeterministicNonFinal(final STATE state) {
 		return null;
 	}
-	
+
 	/**
 	 * Complement state in construction for deterministic Buchi automata.
 	 * 

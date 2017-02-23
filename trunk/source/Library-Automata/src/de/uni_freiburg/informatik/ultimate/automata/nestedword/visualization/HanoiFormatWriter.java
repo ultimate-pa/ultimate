@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormatWriter<LETTER, STATE> {
 	private static final int MINIMUM_HEADER_SIZE = 137;
 	private static final int MINIMUM_STATE_SIZE = 15;
-	
+
 	private static final boolean USE_LABELS = false;
-	
+
 	private final IConverter<LETTER> mLetterConverter;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -61,7 +61,7 @@ public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormat
 		mLetterConverter = USE_LABELS ? new ToStringConverter<>() : new MapBasedConverter<>(mAlphabetMapping);
 		doPrint();
 	}
-	
+
 	private void doPrint() {
 		final StringBuilder header = constructHeader();
 		print(header);
@@ -73,7 +73,7 @@ public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormat
 		final String endToken = "--END--";
 		print(endToken);
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private StringBuilder constructHeader() {
 		final StringBuilder builder = new StringBuilder(MINIMUM_HEADER_SIZE);
@@ -130,13 +130,13 @@ public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormat
 				.append("tool: \"Ultimate Automata Library\"")
 				.append(NEW_LINE);
 		// @formatter:on
-		
+
 		return builder;
 	}
-	
+
 	private StringBuilder constructBody() {
 		final StringBuilder builder = new StringBuilder(MINIMUM_STATE_SIZE * mNwa.size());
-		
+
 		for (final STATE state : mNwa.getStates()) {
 			// @formatter:off
 			builder.append("State: ")

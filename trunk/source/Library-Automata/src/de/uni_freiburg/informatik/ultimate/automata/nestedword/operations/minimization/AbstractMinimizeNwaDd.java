@@ -54,7 +54,7 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinim
 			final IMinimizationStateFactory<STATE> stateFactory) {
 		super(services, stateFactory);
 	}
-	
+
 	/**
 	 * @return Result as {@link IDoubleDeckerAutomaton}.
 	 */

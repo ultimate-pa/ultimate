@@ -45,7 +45,7 @@ public interface IPossibleExtensions<S, C> {
 	 * @return the minimal element
 	 */
 	Event<S, C> remove();
-	
+
 	/**
 	 * Extends set of possible extensions by all possible extensions which are
 	 * successors of e.
@@ -54,12 +54,12 @@ public interface IPossibleExtensions<S, C> {
 	 *            event
 	 */
 	void update(Event<S, C> event);
-	
+
 	/**
 	 * @return The size.
 	 */
 	int size();
-	
+
 	/**
 	 * @return {@code true} iff there is no extension.
 	 */

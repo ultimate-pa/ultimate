@@ -59,21 +59,21 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	private static final String STATE = "State ";
 	private static final String NOT_IN_AUTOMATON = " not in automaton";
 	private static final String UNKNOWN = " unknown";
-	
+
 	protected final IStateFactory<STATE> mStateFactory;
-	
+
 	protected final STATE mEmptyStackState;
-	
+
 	protected Set<LETTER> mEmptySetOfLetters = Collections.unmodifiableSet(new HashSet<LETTER>(0));
 	protected Set<STATE> mEmptySetOfStates = Collections.unmodifiableSet(new HashSet<STATE>(0));
-	
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	
+
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
-	
+
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map
 	 * PREs -> LETTERs -> SUCCs.
@@ -81,22 +81,22 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 * automaton.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut = new HashMap<>();
-	
+
 	/**
 	 * Set of call transitions PREs x LETTERs x SUCCs stored as map
 	 * PREs -> LETTERs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallOut = new HashMap<>();
-	
+
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
 	 * map LinPREs -> LETTERs -> HierPREs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnOut = new HashMap<>();
-	
+
 	private final Set<STATE> mInitialStates = new HashSet<>();
 	private final Set<STATE> mFinalStates = new HashSet<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -127,36 +127,36 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		mStateFactory = stateFactory;
 		mEmptyStackState = mStateFactory.createEmptyStackState();
 	}
-	
+
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
-	
+
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mCallAlphabet == null ? new HashSet<>(0) : mCallAlphabet;
 	}
-	
+
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet == null ? new HashSet<>(0) : mReturnAlphabet;
 	}
-	
+
 	private Collection<STATE> getStates() {
 		return mInternalOut.keySet();
 	}
-	
+
 	@Override
 	public STATE getEmptyStackState() {
 		return mEmptyStackState;
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -165,34 +165,34 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	public boolean contains(final STATE state) {
 		return mInternalOut.containsKey(state);
 	}
-	
+
 	@Override
 	public int size() {
 		return mInternalOut.size();
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Collection<STATE> getInitialStates() {
 		return mInitialStates;
 	}
-	
+
 	@Override
 	public boolean isInitial(final STATE state) {
 		assert contains(state);
 		return mInitialStates.contains(state);
 	}
-	
+
 	@Override
 	public boolean isFinal(final STATE state) {
 		assert contains(state);
 		return mFinalStates.contains(state);
 	}
-	
+
 	/**
 	 * @param isInitial
 	 *            {@code true} iff state is initial.
@@ -208,7 +208,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			throw new IllegalArgumentException("State already exists");
 		}
 		mInternalOut.put(state, null);
-		
+
 		if (isInitial) {
 			mInitialStates.add(state);
 		}
@@ -216,7 +216,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			mFinalStates.add(state);
 		}
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		if (!contains(state)) {
@@ -225,7 +225,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Map<LETTER, Set<STATE>> map = mInternalOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		if (!contains(state)) {
@@ -234,7 +234,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Map<LETTER, Set<STATE>> map = mCallOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		if (!contains(state)) {
@@ -243,7 +243,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut.get(state);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -260,7 +260,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
 		return hier2succs == null ? mEmptySetOfStates : hier2succs.keySet();
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -276,7 +276,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return map.get(letter);
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -292,7 +292,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return map.get(letter);
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -315,13 +315,13 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return hier2succs.get(hier);
 	}
-	
+
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 			private final Iterator<STATE> mIterator = initialize();
-			
+
 			private Iterator<STATE> initialize() {
 				final Map<LETTER, Set<STATE>> letter2succ = mInternalOut.get(state);
 				if (letter2succ != null && letter2succ.get(letter) != null) {
@@ -329,12 +329,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 				}
 				return null;
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mIterator != null && mIterator.hasNext();
 			}
-			
+
 			@Override
 			public OutgoingInternalTransition<LETTER, STATE> next() {
 				if (mIterator == null) {
@@ -345,10 +345,9 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		/**
 		 * Iterates over all OutgoingInternalTransition of state.
 		 * Iterates over all outgoing internal letters and uses the
@@ -358,12 +357,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
-			
+
 			{
 				mLetterIterator = lettersInternal(state).iterator();
 				nextLetter();
 			}
-			
+
 			private void nextLetter() {
 				if (mLetterIterator.hasNext()) {
 					do {
@@ -379,12 +378,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 					mCurrentIterator = null;
 				}
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mCurrentLetter != null;
 			}
-			
+
 			@Override
 			public OutgoingInternalTransition<LETTER, STATE> next() {
 				if (mCurrentLetter == null) {
@@ -398,13 +397,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 			private final Iterator<STATE> mIterator = initialize();
-			
+
 			private Iterator<STATE> initialize() {
 				final Map<LETTER, Set<STATE>> letter2succ = mCallOut.get(state);
 				if (letter2succ != null && letter2succ.get(letter) != null) {
@@ -412,12 +410,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 				}
 				return null;
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mIterator != null && mIterator.hasNext();
 			}
-			
+
 			@Override
 			public OutgoingCallTransition<LETTER, STATE> next() {
 				if (mIterator == null) {
@@ -428,10 +426,9 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		/**
 		 * Iterates over all OutgoingCallTransition of state.
 		 * Iterates over all outgoing call letters and uses the
@@ -441,12 +438,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingCallTransition<LETTER, STATE>> mCurrentIterator;
-			
+
 			{
 				mLetterIterator = lettersCall(state).iterator();
 				nextLetter();
 			}
-			
+
 			private void nextLetter() {
 				if (mLetterIterator.hasNext()) {
 					do {
@@ -462,12 +459,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 					mCurrentIterator = null;
 				}
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mCurrentLetter != null;
 			}
-			
+
 			@Override
 			public OutgoingCallTransition<LETTER, STATE> next() {
 				if (mCurrentLetter == null) {
@@ -481,13 +478,13 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private final Iterator<STATE> mIterator = initialize();
-			
+
 			private Iterator<STATE> initialize() {
 				final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = mReturnOut.get(state);
 				if (letter2hier2succ != null) {
@@ -498,12 +495,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 				}
 				return null;
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mIterator != null && mIterator.hasNext();
 			}
-			
+
 			@Override
 			public OutgoingReturnTransition<LETTER, STATE> next() {
 				if (mIterator == null) {
@@ -514,7 +511,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	/*
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
@@ -566,10 +563,10 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		};
 	}
 	*/
-	
+
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		/**
 		 * Iterates over all OutgoingReturnTransition of state with
 		 * hierarchical successor hier.
@@ -580,12 +577,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
-			
+
 			{
 				mLetterIterator = lettersReturn(state).iterator();
 				nextLetter();
 			}
-			
+
 			private void nextLetter() {
 				if (mLetterIterator.hasNext()) {
 					do {
@@ -601,12 +598,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 					mCurrentIterator = null;
 				}
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mCurrentLetter != null;
 			}
-			
+
 			@Override
 			public OutgoingReturnTransition<LETTER, STATE> next() {
 				if (mCurrentLetter == null) {
@@ -620,7 +617,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			}
 		};
 	}
-	
+
 	/*
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
@@ -674,7 +671,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		};
 	}
 	*/
-	
+
 	/**
 	 * @param state
 	 *            The predecessor state.
@@ -693,7 +690,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Set<STATE> result = map.get(letter);
 		return result == null ? false : result.contains(succ);
 	}
-	
+
 	/**
 	 * @param state
 	 *            The predecessor state.
@@ -712,7 +709,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Set<STATE> result = map.get(letter);
 		return result == null ? false : result.contains(succ);
 	}
-	
+
 	/**
 	 * @param state
 	 *            The predecessor state.
@@ -739,7 +736,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		final Set<STATE> result = hier2succs.get(hier);
 		return result == null ? false : result.contains(succ);
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		final boolean verbose = false;
@@ -794,7 +791,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 				.append(returnSuccessors).append("), ");
 		return sb.toString();
 	}
-	
+
 	private boolean assertThatAllStatesAreInAutomaton(final Collection<STATE> succs) {
 		boolean result = true;
 		for (final STATE state : succs) {
@@ -803,7 +800,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The predecessor state.
@@ -831,7 +828,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		succs.add(succ);
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The predecessor state.
@@ -859,7 +856,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		oldSuccs.addAll(succs);
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The predecessor state.
@@ -884,7 +881,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		succs.add(succ);
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The predecessor state.
@@ -909,7 +906,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		oldSuccs.addAll(succs);
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The linear predecessor state.
@@ -942,7 +939,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		succs.add(succ);
 	}
-	
+
 	/**
 	 * @param pred
 	 *            The linear predecessor state.
@@ -976,7 +973,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		oldSuccs.addAll(succs);
 	}
-	
+
 	/**
 	 * @return {@code true} iff this automaton is deterministic.
 	 */
@@ -991,7 +988,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return true;
 	}
-	
+
 	private boolean isDeterministic(final STATE state) {
 		for (final LETTER symbol : lettersInternal(state)) {
 			if (succInternal(state, symbol).size() > 1) {
@@ -1012,7 +1009,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return true;
 	}
-	
+
 	/**
 	 * @return {@code true} iff this automaton is total.
 	 */
@@ -1027,7 +1024,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return true;
 	}
-	
+
 	private boolean isTotal(final STATE state) {
 		for (final LETTER symbol : getInternalAlphabet()) {
 			if (succInternal(state, symbol).isEmpty()) {
@@ -1048,7 +1045,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return true;
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -1061,7 +1058,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String toString() {
 		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))

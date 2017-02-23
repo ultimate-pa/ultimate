@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Types of time measures.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public enum ETimeMeasure {
 	/**

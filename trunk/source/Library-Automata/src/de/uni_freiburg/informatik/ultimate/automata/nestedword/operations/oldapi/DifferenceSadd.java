@@ -73,44 +73,44 @@ public final class DifferenceSadd<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mMinuend;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
 	private final NestedWordAutomaton<LETTER, STATE> mDifference;
-	
+
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	
+
 	/**
 	 * Maps a DifferenceState to its representative in the resulting automaton.
 	 */
 	private final Map<DifferenceState, STATE> mDiff2res = new HashMap<>();
-	
+
 	/**
 	 * Maps a state in resulting automaton to the DifferenceState for which it
 	 * was created.
 	 */
 	private final Map<STATE, DifferenceState> mRes2diff = new HashMap<>();
-	
+
 	/**
 	 * Summary states of the resulting automaton that have been visited so far.
 	 * If the summary state (<i>caller</i>,<i>present</i>) has been visited,
 	 * <i>present</i> is contained in the range of <i>caller</i>.
 	 */
 	private final Map<STATE, Set<STATE>> mVisited = new HashMap<>();
-	
+
 	/**
 	 * Summary states of the resulting automaton that still have to be
 	 * processed.
 	 */
 	private final List<SummaryState> mWorklist = new LinkedList<>();
-	
+
 	/**
 	 * Pairs of states (q,q') of the resulting automaton such that q' is
 	 * reachable from q via a well-matched nested word in which the first
 	 * position is a call position and the last position is a return position.
 	 */
 	private final Map<STATE, Set<STATE>> mSummary = new HashMap<>();
-	
+
 	private final STATE mAuxiliaryEmptyStackState;
-	
+
 	private final IIntersectionStateFactory<STATE> mContentFactory;
-	
+
 	/**
 	 * Constructor where powerset determinizer is used.
 	 * 
@@ -131,7 +131,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory));
 	}
-	
+
 	/**
 	 * Constructor with a given state determinizer.
 	 * 
@@ -148,68 +148,67 @@ public final class DifferenceSadd<LETTER, STATE>
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ
 	 */
-	public DifferenceSadd(final AutomataLibraryServices services,
-			final IIntersectionStateFactory<STATE> contentFactory,
+	public DifferenceSadd(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> contentFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
 		super(services);
-		
+
 		if (!INestedWordAutomatonSimple.sameAlphabet(minuend, subtrahend)) {
 			throw new AutomataLibraryException(this.getClass(),
 					"Unable to apply operation to automata with different alphabets.");
 		}
-		
+
 		mContentFactory = contentFactory;
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
 		mStateDeterminizer = stateDeterminizer;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mDifference = new NestedWordAutomaton<>(mServices, minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
 		mAuxiliaryEmptyStackState = mDifference.getEmptyStackState();
 		computeDifference();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "differenceSadd";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
 				+ mSubtrahend.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mDifference.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mMinuend;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSubtrahend;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mDifference;
 	}
-	
+
 	/**
 	 * @param callerState
 	 *            A caller state.
@@ -224,7 +223,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 		return callerStates.contains(callerState);
 	}
-	
+
 	/**
 	 * @param callerState
 	 *            A caller state.
@@ -239,7 +238,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 		callerStates.add(callerState);
 	}
-	
+
 	/**
 	 * @param callerState
 	 *            A caller state.
@@ -253,7 +252,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			mWorklist.add(statePair);
 		}
 	}
-	
+
 	/**
 	 * @param summaryPred
 	 *            Summary predecessor.
@@ -268,7 +267,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 		summarySuccessors.add(summarySucc);
 	}
-	
+
 	/**
 	 * Get all states <i>resCaller</i> of the resulting automaton (computed so
 	 * far) such that the summary state (<i>resCaller</i>,<i>resPresent</i>) has
@@ -281,7 +280,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 		return callerStates;
 	}
-	
+
 	/**
 	 * Performs the actual difference computation.
 	 */
@@ -296,7 +295,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			mRes2diff.put(diffState, macrState);
 			enqueueAndMark(mAuxiliaryEmptyStackState, diffState);
 		}
-		
+
 		while (!mWorklist.isEmpty()) {
 			final SummaryState statePair = mWorklist.remove(0);
 			// mLogger.debug("Processing: "+ statePair);
@@ -308,7 +307,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			}
 		}
 	}
-	
+
 	/**
 	 * Let resSummaryState=(<i>caller</i>,<i>present</i>). Extend the
 	 * construction of the resulting automaton at <i>present</i> by outgoing
@@ -321,7 +320,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		final DifferenceState diffState = mRes2diff.get(resState);
 		final STATE minuState = diffState.getMinuendState();
 		final DeterminizedState<LETTER, STATE> detState = diffState.getSubtrahendDeterminizedState();
-		
+
 		for (final LETTER symbol : mMinuend.lettersInternal(minuState)) {
 			if (!mSubtrahend.getInternalAlphabet().contains(symbol)) {
 				continue;
@@ -336,7 +335,7 @@ public final class DifferenceSadd<LETTER, STATE>
 				enqueueAndMark(resSummaryState.getCallerState(), resSucc);
 			}
 		}
-		
+
 		for (final LETTER symbol : mMinuend.lettersCall(minuState)) {
 			if (!mSubtrahend.getCallAlphabet().contains(symbol)) {
 				continue;
@@ -350,7 +349,7 @@ public final class DifferenceSadd<LETTER, STATE>
 				enqueueAndMark(resState, resSucc);
 			}
 		}
-		
+
 		for (final LETTER symbol : mMinuend.lettersReturn(minuState)) {
 			if (!mSubtrahend.getReturnAlphabet().contains(symbol)) {
 				continue;
@@ -363,7 +362,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			final DifferenceState diffLinPred = mRes2diff.get(resLinPred);
 			final STATE minuLinPred = diffLinPred.getMinuendState();
 			final DeterminizedState<LETTER, STATE> detLinPred = diffLinPred.getSubtrahendDeterminizedState();
-			
+
 			final Iterable<OutgoingReturnTransition<LETTER, STATE>> minuTransitions =
 					mMinuend.returnSuccessors(minuState, minuLinPred, symbol);
 			// if (minuSuccs.isEmpty()) continue;
@@ -381,7 +380,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			}
 		}
 	}
-	
+
 	/**
 	 * Get the state in the resulting automaton that represents a
 	 * DifferenceState. If this state in the resulting automaton does not exist
@@ -398,13 +397,13 @@ public final class DifferenceSadd<LETTER, STATE>
 		mRes2diff.put(resState, diffState);
 		return resState;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
-			
+
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct = new IsEquivalent<>(mServices, stateFactory, resultDd, mDifference).getResult();
@@ -418,7 +417,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 		return correct;
 	}
-	
+
 	/**
 	 * State of an NWA that accepts the language difference of two NWAs.
 	 * A DifferenceState is a pair whose first entry is a state of the minuend, the
@@ -430,12 +429,12 @@ public final class DifferenceSadd<LETTER, STATE>
 	private class DifferenceState {
 		private static final int PRIME_1 = 3;
 		private static final int PRIME_2 = 5;
-		
+
 		private final STATE mMinuendState;
 		private final DeterminizedState<LETTER, STATE> mSubtrahendDeterminizedState;
 		private final boolean mIsFinal;
 		private final int mHashCode;
-		
+
 		public DifferenceState(final STATE minuendState,
 				final DeterminizedState<LETTER, STATE> subtrahendDeterminizedState) {
 			mMinuendState = minuendState;
@@ -444,19 +443,19 @@ public final class DifferenceSadd<LETTER, STATE>
 			mHashCode = PRIME_1 * minuendState.hashCode() + PRIME_2 * subtrahendDeterminizedState.hashCode();
 			//FIXME: hashCode of StatePairList may change over time!
 		}
-		
+
 		public STATE getMinuendState() {
 			return mMinuendState;
 		}
-		
+
 		public DeterminizedState<LETTER, STATE> getSubtrahendDeterminizedState() {
 			return mSubtrahendDeterminizedState;
 		}
-		
+
 		public boolean isFinal() {
 			return mIsFinal;
 		}
-		
+
 		/**
 		 * Two DifferenceStates are equivalent iff each, their minuend states
 		 * and their subtrahend states are equivalent.
@@ -471,18 +470,18 @@ public final class DifferenceSadd<LETTER, STATE>
 			return diffState.mMinuendState.equals(mMinuendState)
 					&& mSubtrahendDeterminizedState.equals(diffState.mSubtrahendDeterminizedState);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return mHashCode;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "<[< " + mMinuendState.toString() + " , " + mSubtrahendDeterminizedState.toString() + ">]>";
 		}
 	}
-	
+
 	/**
 	 * A summary state.
 	 * 
@@ -491,25 +490,25 @@ public final class DifferenceSadd<LETTER, STATE>
 	private class SummaryState {
 		private static final int PRIME_1 = 3;
 		private static final int PRIME_2 = 5;
-		
+
 		private final STATE mCallerState;
 		private final STATE mPresentState;
 		private final int mHashCode;
-		
+
 		public SummaryState(final STATE presentState, final STATE callerState) {
 			mCallerState = callerState;
 			mPresentState = presentState;
 			mHashCode = PRIME_1 * callerState.hashCode() + PRIME_2 * presentState.hashCode();
 		}
-		
+
 		public STATE getCallerState() {
 			return mCallerState;
 		}
-		
+
 		public STATE getPresentState() {
 			return mPresentState;
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean equals(final Object obj) {
@@ -519,12 +518,12 @@ public final class DifferenceSadd<LETTER, STATE>
 			final SummaryState summaryState = (SummaryState) obj;
 			return mPresentState.equals(summaryState.mPresentState) && mCallerState.equals(summaryState.mCallerState);
 		}
-		
+
 		@Override
 		public int hashCode() {
 			return mHashCode;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "CallerState: " + mCallerState + "  State: " + mPresentState;

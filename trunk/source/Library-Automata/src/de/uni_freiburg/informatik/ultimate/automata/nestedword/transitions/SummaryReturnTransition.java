@@ -39,7 +39,7 @@ public class SummaryReturnTransition<LETTER, STATE> implements IOutgoingTransiti
 	private final STATE mLinPred;
 	private final LETTER mLetter;
 	private final STATE mSucc;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -55,16 +55,16 @@ public class SummaryReturnTransition<LETTER, STATE> implements IOutgoingTransiti
 		mLetter = letter;
 		mSucc = succ;
 	}
-	
+
 	public STATE getLinPred() {
 		return mLinPred;
 	}
-	
+
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	@Override
 	public STATE getSucc() {
 		return mSucc;

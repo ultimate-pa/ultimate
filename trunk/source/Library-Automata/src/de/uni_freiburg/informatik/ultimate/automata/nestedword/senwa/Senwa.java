@@ -58,13 +58,13 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	private final Map<STATE, STATE> mState2Entry = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mEntry2Module = new HashMap<>();
-	
+
 	/**
 	 * @deprecated Do not use this anymore.
 	 */
 	@Deprecated
 	private final Map<STATE, Set<STATE>> mEntry2CallPredecessors = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -79,14 +79,12 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public Senwa(final AutomataLibraryServices services,
-			final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet,
-			final IStateFactory<STATE> stateFactory) {
+	public Senwa(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
+			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -97,7 +95,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		// equality intended here
 		return getEntry(state) == state;
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -106,7 +104,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	public STATE getEntry(final STATE state) {
 		return mState2Entry.get(state);
 	}
-	
+
 	/**
 	 * @param entry
 	 *            An entry.
@@ -118,7 +116,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		assert mEntry2CallPredecessors.containsKey(entry);
 		return mEntry2CallPredecessors.get(entry);
 	}
-	
+
 	/**
 	 * * Return all states <i>down</i> such that a configuration is reachable,
 	 * where <i>up</i> is the current state and <i>down</i> is the topmost stack
@@ -132,7 +130,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		final STATE entry = getEntry(upState);
 		return getCallPredecessors(entry);
 	}
-	
+
 	/**
 	 * Returns true iff there is a reachable configuration in which the
 	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
@@ -148,7 +146,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 			return downStates.contains(downState);
 		}
 	}
-	
+
 	/**
 	 * @param entry
 	 *            An entry.
@@ -158,7 +156,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		assert mEntry2Module.containsKey(entry);
 		return mEntry2Module.get(entry);
 	}
-	
+
 	/**
 	 * Don't use this for the construction of a Senwa.
 	 */
@@ -166,7 +164,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		throw new IllegalArgumentException("Specify entry");
 	}
-	
+
 	/**
 	 * @param state
 	 *            A state.
@@ -178,8 +176,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	 *            the respective entry
 	 */
 	@SuppressWarnings("squid:S1698")
-	public void addState(final STATE state, final boolean isInitial, final boolean isFinal,
-			final STATE entry) {
+	public void addState(final STATE state, final boolean isInitial, final boolean isFinal, final STATE entry) {
 		mState2Entry.put(state, entry);
 		Set<STATE> module = mEntry2Module.get(entry);
 		if (module == null) {
@@ -203,7 +200,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		}
 		assert isModuleInformationConsistent();
 	}
-	
+
 	@Override
 	public void removeState(final STATE state) {
 		final STATE entry = mState2Entry.get(state);
@@ -211,24 +208,24 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		final Set<STATE> module = mEntry2Module.get(entry);
 		final boolean success = module.remove(state);
 		assert success : "State was not in module";
-		
+
 		for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
 			final STATE succ = trans.getSucc();
 			assert isEntry(succ);
 			final Set<STATE> callPreds = mEntry2CallPredecessors.get(succ);
 			callPreds.remove(state);
 		}
-		
+
 		if (isEntry(state)) {
 			assert module.isEmpty() : "Can only delete entry if it was the last state in module";
 			mEntry2Module.remove(state);
 			mEntry2CallPredecessors.remove(state);
 		}
-		
+
 		super.removeState(state);
 		assert isModuleInformationConsistent();
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	public void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
@@ -243,7 +240,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		super.addInternalTransition(pred, letter, succ);
 		assert isModuleInformationConsistent();
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	public void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
@@ -258,11 +255,10 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		super.addCallTransition(pred, letter, succ);
 		assert isModuleInformationConsistent();
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
-	public void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter,
-			final STATE succ) {
+	public void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		assert mState2Entry.get(pred) != null;
 		final STATE hierEntry = mState2Entry.get(hier);
 		assert hierEntry != null;
@@ -273,14 +269,14 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 		super.addReturnTransition(pred, hier, letter, succ);
 		assert isModuleInformationConsistent();
 	}
-	
+
 	/**
 	 * @return {@code true} iff the module information is consistent.
 	 */
 	@SuppressWarnings("squid:S1698")
 	public boolean isModuleInformationConsistent() {
 		boolean result = true;
-		
+
 		for (final STATE state : getStates()) {
 			final STATE entry = getEntry(state);
 			// equality intended here
@@ -297,8 +293,8 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 			result = result && module.contains(state);
 			assert result;
 		}
-		
+
 		return result;
 	}
-	
+
 }

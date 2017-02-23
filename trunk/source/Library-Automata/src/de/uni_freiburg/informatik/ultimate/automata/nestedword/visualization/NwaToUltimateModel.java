@@ -52,10 +52,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class NwaToUltimateModel<LETTER, STATE> {
 	private static final String CREATING_NODE = "Creating Node: ";
-	
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -66,7 +66,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 	}
-	
+
 	/**
 	 * @param nwaSimple
 	 *            A nested word automaton.
@@ -82,11 +82,10 @@ public class NwaToUltimateModel<LETTER, STATE> {
 		} else {
 			nwa = new NestedWordAutomatonReachableStates<>(mServices, nwaSimple);
 		}
-		final AutomatonState graphroot =
-				new AutomatonState("Sucessors of this node are the initial states", false);
+		final AutomatonState graphroot = new AutomatonState("Sucessors of this node are the initial states", false);
 		final Map<STATE, AutomatonState> constructed = new HashMap<>();
 		final LinkedList<STATE> queue = new LinkedList<>();
-		
+
 		// add all initial states to model - all are successors of the graphroot
 		for (final STATE state : nwa.getInitialStates()) {
 			queue.add(state);
@@ -95,17 +94,17 @@ public class NwaToUltimateModel<LETTER, STATE> {
 			// TODO Christian 2016-09-18: Should it be 'INITIAL'?
 			new AutomatonTransition(graphroot, Transition.INTERNAL, "", null, vsn);
 		}
-		
+
 		while (!queue.isEmpty()) {
 			final STATE state = queue.removeFirst();
 			final AutomatonState vsn = constructed.get(state);
-			
+
 			// internal transitions
 			addTransitions(nwa, constructed, queue, vsn, Transition.INTERNAL, null, nwa.internalSuccessors(state));
-			
+
 			// call transitions
 			addTransitions(nwa, constructed, queue, vsn, Transition.CALL, null, nwa.callSuccessors(state));
-			
+
 			// return transitions
 			for (final STATE hierPredState : nwa.getStates()) {
 				addTransitions(nwa, constructed, queue, vsn, Transition.RETURN, hierPredState.toString(),
@@ -114,7 +113,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 		}
 		return graphroot;
 	}
-	
+
 	private void addTransitions(final INestedWordAutomaton<LETTER, STATE> nwa,
 			final Map<STATE, AutomatonState> constructed, final LinkedList<STATE> queue, final AutomatonState vsn,
 			final Transition transitionType, final String hierPred,

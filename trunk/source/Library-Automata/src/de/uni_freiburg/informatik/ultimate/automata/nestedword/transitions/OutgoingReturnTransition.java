@@ -41,7 +41,7 @@ public class OutgoingReturnTransition<LETTER, STATE> implements IOutgoingTransit
 	private final STATE mHierPred;
 	private final LETTER mLetter;
 	private final STATE mSucc;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,21 +57,21 @@ public class OutgoingReturnTransition<LETTER, STATE> implements IOutgoingTransit
 		mLetter = letter;
 		mSucc = succ;
 	}
-	
+
 	public STATE getHierPred() {
 		return mHierPred;
 	}
-	
+
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	@Override
 	public STATE getSucc() {
 		return mSucc;
 	}
-	
+
 	@Override
 	public String toString() {
 		return MessageFormat.format("( _ , {0} , {1} , {2} )", getHierPred(), getLetter(), getSucc());

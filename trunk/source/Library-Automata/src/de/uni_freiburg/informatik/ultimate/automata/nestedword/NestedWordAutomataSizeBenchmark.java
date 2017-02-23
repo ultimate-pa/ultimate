@@ -37,9 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
 
 /**
- *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
 public class NestedWordAutomataSizeBenchmark<E, V> {
 

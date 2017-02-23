@@ -44,7 +44,8 @@ final class Horn3ArrayBuilder {
 
 	private Horn3Array mArray;
 
-	/** for each equivalence variable, UNSET or SETTRUE or SETFALSE
+	/**
+	 * for each equivalence variable, UNSET or SETTRUE or SETFALSE
 	 */
 	private char[] mSingle;
 

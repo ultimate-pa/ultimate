@@ -34,16 +34,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * Objects of this class represent several sequences of moves in a two player
  * game on an automaton whose states have type STATE.
  * Here we presume that the game graph is given as a game automaton whose
- * states are {@link IGameState}s. 
+ * states are {@link IGameState}s.
  * The sequences of moves that we can represent all start in mSummarySource.
  * The sequences of moves that we can represent all end in an IGameState
- * whose spoiler component is  mSpoilerDestinationState.
+ * whose spoiler component is mSpoilerDestinationState.
  * The sequences of moves that we can represent all end the key set of
  * mDuplicatorResponses. The corresponding value of this keys denote the
  * priority that all these sequences have.
  * (priority of sequence == lowest priority among all spoiler nodesin sequence)
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
  */
 public class GameCallReturnSummary<STATE> {
@@ -82,10 +82,6 @@ public class GameCallReturnSummary<STATE> {
 	public Map<IGameState, Integer> getDuplicatorResponses() {
 		return mDuplicatorResponses;
 	}
-
-
-
-
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -135,16 +131,8 @@ public class GameCallReturnSummary<STATE> {
 	 */
 	@Override
 	public String toString() {
-		return "Source:" + mSummarySource + ", SpoilerDestinationState:"
-				+ mSpoilerDestinationState + ", DuplicatorResponses:" + mDuplicatorResponses + "]";
+		return "Source:" + mSummarySource + ", SpoilerDestinationState:" + mSpoilerDestinationState
+				+ ", DuplicatorResponses:" + mDuplicatorResponses + "]";
 	}
 
-
-
-
-
 }
-
-	
-	
-	

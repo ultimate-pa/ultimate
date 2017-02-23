@@ -61,14 +61,13 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 	 *             if timeout exceeds
 	 */
 	public DoubleDeckerAutomatonFilteredStates(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton,
-			final Set<STATE> remainingStates, final Set<STATE> newInitials, final Set<STATE> newFinals)
-			throws AutomataOperationCanceledException {
+			final NestedWordAutomatonReachableStates<LETTER, STATE> automaton, final Set<STATE> remainingStates,
+			final Set<STATE> newInitials, final Set<STATE> newFinals) throws AutomataOperationCanceledException {
 		super(services, automaton, remainingStates, newInitials, newFinals);
 //		assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<>(services, this)).getResult() : "down states inconsistent";
 	}
-	
+
 	/**
 	 * Short constructor.
 	 * 
@@ -89,7 +88,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 //		assert (successorOfRemovedStatesAreRemoved());
 		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
 	}
-	
+
 	private boolean successorOfRemovedStatesAreRemoved() {
 		final WasStateRemovedChecker f = new WasStateRemovedChecker();
 		for (final STATE s : super.mNwa.getStates()) {
@@ -99,7 +98,7 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 		}
 		return f.doesPropertyHold();
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -113,12 +112,12 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 		}
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
 		return mAncestorComputation.isDownState(upState, downState);
 	}
-	
+
 	/**
 	 * Checks whether a state was removed.
 	 * 
@@ -126,21 +125,21 @@ public class DoubleDeckerAutomatonFilteredStates<LETTER, STATE> extends NestedWo
 	 */
 	private class WasStateRemovedChecker implements Consumer<STATE> {
 		private boolean mPropertyHolds;
-		
+
 		/**
 		 * Constructor.
 		 */
 		public WasStateRemovedChecker() {
 			this.mPropertyHolds = true;
 		}
-		
+
 		@Override
 		public void accept(final STATE state) {
 			final boolean wasRemoved = !mRemainingStates.contains(state);
 			assert wasRemoved : "state " + state + " was not removed but some predecessor was";
 			mPropertyHolds &= wasRemoved;
 		}
-		
+
 		/**
 		 * @return {@code true} iff property holds.
 		 */

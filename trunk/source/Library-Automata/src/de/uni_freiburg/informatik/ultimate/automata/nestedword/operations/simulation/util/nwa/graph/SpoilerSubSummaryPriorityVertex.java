@@ -32,21 +32,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.GameCallReturnSummary;
 
 /**
- * TODO 
- * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * TODO
  * 
+ * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
  *            State class of nwa automaton
  */
 public final class SpoilerSubSummaryPriorityVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
-	
+
 	private final GameCallReturnSummary<STATE> mSummary;
 	private final IGameState mSubSummaryTarget;
-	
-	public SpoilerSubSummaryPriorityVertex(final GameCallReturnSummary<STATE> summary, final IGameState subSummaryTarget) {
-		super(summary.getDuplicatorResponses().get(subSummaryTarget), 
+
+	public SpoilerSubSummaryPriorityVertex(final GameCallReturnSummary<STATE> summary,
+			final IGameState subSummaryTarget) {
+		super(summary.getDuplicatorResponses().get(subSummaryTarget),
 				GameAutomaton.unwrapSpoilerNwaVertex(summary.getSummarySource()).isB(), null, null);
 		mSummary = summary;
 		mSubSummaryTarget = subSummaryTarget;
@@ -97,6 +98,5 @@ public final class SpoilerSubSummaryPriorityVertex<LETTER, STATE> extends Spoile
 		return "SpoilerSubSummaryPriorityVertex [mSummary=" + mSummary + ", mSubSummaryTarget=" + mSubSummaryTarget
 				+ "]";
 	}
-	
-	
+
 }

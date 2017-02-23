@@ -49,19 +49,19 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 * Used to indicate an invalid percentage (if the base is zero).
 	 */
 	private static final int INVALID_PERCENTAGE = -1;
-	
+
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
 	private static final String MUST_BE_OF_INTEGER_TYPE = " has a value stored that is not of integer type.";
-	
+
 	private final TreeMap<StatisticsType, Object> mKeyValueMap;
-	
+
 	/**
 	 * Constructor.
 	 */
 	public AutomataOperationStatistics() {
 		mKeyValueMap = new TreeMap<>();
 	}
-	
+
 	@Override
 	public ICsvProvider<Object> createCsvProvider() {
 		final List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
@@ -74,7 +74,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		result.addRow(firstRow);
 		return result;
 	}
-	
+
 	/**
 	 * @param key
 	 *            Key with which the specified value is to be associated.
@@ -86,7 +86,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	public Object addKeyValuePair(final StatisticsType key, final Object value) {
 		return mKeyValueMap.put(key, value);
 	}
-	
+
 	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
@@ -102,7 +102,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 			final StatisticsType resultKey) {
 		addPercentageDataHelper(fstBaseKey, sndBaseKey, resultKey, false);
 	}
-	
+
 	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
@@ -120,7 +120,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 			final StatisticsType resultKey) {
 		addPercentageDataHelper(fstBaseKey, sndBaseKey, resultKey, true);
 	}
-	
+
 	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
@@ -146,7 +146,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		final Integer percentage = invert ? (100 - percentageRaw) : percentageRaw;
 		addKeyValuePair(resultKey, percentage);
 	}
-	
+
 	/**
 	 * Adds a key-value pair with the content being the difference between the first key <tt>sndBaseKey</tt> wrt. the
 	 * second key <tt>fstBaseKey</tt>.
@@ -163,13 +163,13 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		final int difference = getDifference(fstBaseKey, sndBaseKey);
 		addKeyValuePair(resultKey, difference);
 	}
-	
+
 	private int getDifference(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey) {
 		final int fst = getInteger(fstBaseKey);
 		final int snd = getInteger(sndBaseKey);
 		return fst - snd;
 	}
-	
+
 	private Integer getInteger(final StatisticsType key) {
 		final Object raw = mKeyValueMap.get(key);
 		if (raw == null) {

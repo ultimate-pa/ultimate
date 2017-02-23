@@ -59,7 +59,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -77,7 +77,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
-	
+
 	/**
 	 * Constructor which uses a {@link PowersetDeterminizer}.
 	 * 
@@ -101,7 +101,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory),
 				FkvOptimization.valueOf(optimization), userDefinedMaxRank);
 	}
-	
+
 	/**
 	 * Constructor with a given {@link IStateDeterminizer}.
 	 * 
@@ -120,10 +120,9 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, stateDeterminizer, FkvOptimization.HEIMAT2,
-				Integer.MAX_VALUE);
+		this(services, stateFactory, operand, stateDeterminizer, FkvOptimization.HEIMAT2, Integer.MAX_VALUE);
 	}
-	
+
 	/**
 	 * Full constructor.
 	 * 
@@ -154,20 +153,20 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		super(services);
 		mOperand = operand;
 		mOptimization = optimization;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
-		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory,
-				mOptimization, userDefinedMaxRank);
+
+		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory, mOptimization,
+				userDefinedMaxRank);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mComplemented);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
@@ -214,7 +213,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.addAll((new LassoExtractor<>(mServices, mOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
-		
+
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
 			if (!thistime) {
@@ -223,7 +222,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			correct &= thistime;
 			assert correct;
 		}
-		
+
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 					"language is different", mOperand, mResult);
@@ -231,18 +230,18 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		mLogger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiComplementFKV";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " with optimization " + mOptimization + ". Operand "
 				+ mOperand.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " with optimization " + mOptimization + ". Operand "
@@ -250,21 +249,21 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
 				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
 	}
-	
+
 	public int getHighestRank() {
 		return mComplemented.getHighesRank();
 	}
-	
+
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {

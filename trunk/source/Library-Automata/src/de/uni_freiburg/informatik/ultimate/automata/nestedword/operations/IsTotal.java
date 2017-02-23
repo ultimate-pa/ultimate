@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final boolean mResult;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -69,7 +69,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			mLogger.info("automaton is " + (mResult ? "" : "not ") + "total");
 		}
 	}
-	
+
 	/**
 	 * @return {@code true} iff automaton is total according to contract.
 	 */
@@ -81,7 +81,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		return true;
 	}
-	
+
 	/**
 	 * @param state
 	 *            The state for which totality is tested.
@@ -95,7 +95,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				return false;
 			}
 		}
-		
+
 		// calls
 		for (final LETTER symbol : mOperand.getCallAlphabet()) {
 			final Iterable<OutgoingCallTransition<LETTER, STATE>> it = mOperand.callSuccessors(state, symbol);
@@ -103,7 +103,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				return false;
 			}
 		}
-		
+
 		// returns
 		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
 			for (final STATE hier : mOperand.getStates()) {
@@ -117,17 +117,17 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsTotal";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;

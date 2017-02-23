@@ -42,13 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Rn Algorithm.(trace base version) <br/>
  * Rn sets are always empty when nodes are being created when expanding trees. We use InclusionViaDIfference to check
  * its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */
@@ -121,9 +119,9 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 		// run();
 	}
 
-	public IncrementalInclusionCheck3_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
-			throws AutomataLibraryException {
+	public IncrementalInclusionCheck3_2(final AutomataLibraryServices services,
+			final IDeterminizeStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services, a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;

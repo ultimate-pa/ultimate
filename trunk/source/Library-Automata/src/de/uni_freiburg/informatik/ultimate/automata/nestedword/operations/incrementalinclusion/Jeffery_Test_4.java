@@ -41,14 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * 
  * compare speed between difference and IncrementalInclusionCheck4. If one algorithm is 10 times slower than the other
  * one, the automaton being used will be dumped to a folder which can be assigned by one of the constructor's
  * parameters.
  * 
- * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */

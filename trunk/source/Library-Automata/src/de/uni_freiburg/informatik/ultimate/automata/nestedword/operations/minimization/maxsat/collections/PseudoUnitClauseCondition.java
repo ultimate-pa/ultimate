@@ -29,56 +29,56 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 /**
  * Clause condition for clause with exactly one literal with undetermined truth
- * value. This literal is also called pseudo-unit. 
+ * value. This literal is also called pseudo-unit.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PseudoUnitClauseCondition implements IClauseCondition {
 	private final int mUnitIndex;
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param unitIndex index of the unit literal (only if 'unsetAtoms == 1')
-	 * @param unitIsPositive true iff the unit literal is positive
-	 *     (only if 'unsetAtoms == 1')
+	 * @param unitIndex
+	 *            index of the unit literal (only if 'unsetAtoms == 1')
+	 * @param unitIsPositive
+	 *            true iff the unit literal is positive
+	 *            (only if 'unsetAtoms == 1')
 	 */
-	public PseudoUnitClauseCondition(
-			final int unitIndex,
-			final boolean unitIsPositive) {
+	public PseudoUnitClauseCondition(final int unitIndex, final boolean unitIsPositive) {
 		if (unitIsPositive) {
 			mUnitIndex = unitIndex;
 		} else {
 			mUnitIndex = -unitIndex - 1;
 		}
 	}
-	
+
 	@Override
 	public boolean isPseudoUnit() {
 		return true;
 	}
-	
+
 	@Override
 	public int getUnitIndex() {
 		return mUnitIndex;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		// should never be hashed
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public boolean equals(final Object other) {
 		// should never be compared
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public String toString() {
-		return "ClauseCondition [mClauseStatus=" + getClauseStatus()
-				+ ", mUnsetAtoms=1, propagateeIndex=" + mUnitIndex + "]";
+		return "ClauseCondition [mClauseStatus=" + getClauseStatus() + ", mUnsetAtoms=1, propagateeIndex=" + mUnitIndex
+				+ "]";
 	}
 }

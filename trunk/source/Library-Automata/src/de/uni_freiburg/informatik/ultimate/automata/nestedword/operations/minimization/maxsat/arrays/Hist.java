@@ -34,7 +34,6 @@ import java.util.ArrayList;
  * Utility functions for history states
  *
  * @author stimpflj
- *
  */
 final class Hist {
 	/** linear state */
@@ -43,8 +42,8 @@ final class Hist {
 	/** hierarchical (history) state */
 	int mHier;
 
-
-	Hist() {}
+	Hist() {
+	}
 
 	Hist(final int lin, final int hier) {
 		mLin = lin;

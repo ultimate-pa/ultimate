@@ -57,7 +57,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	private final Set<Event<S, C>> mEvents;
 	private Set<Event<S, C>> mMin;
 	private ArrayList<Transition<S, C>> mPhi;
-	
+
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has
 	 * to be causally closed and conflict-free.
@@ -68,7 +68,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	public Configuration(final Set<Event<S, C>> events) {
 		this(events, null);
 	}
-	
+
 	/**
 	 * Constructor with a minimum set of events.
 	 * 
@@ -82,7 +82,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		mEvents = events;
 		mMin = min;
 	}
-	
+
 	private List<Transition<S, C>> getPhi() {
 		if (mPhi == null) {
 			mPhi = new ArrayList<>(mEvents.size());
@@ -95,14 +95,14 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		// return Collections.unmodifiableList(mPhi);
 		return mPhi;
 	}
-	
+
 	/*
 	 * public Configuration<S, C> getMin() { Set<Event<S, C>> result = new
 	 * HashSet<Event<S, C>>();
 	 * 
 	 * return new Configuration<S, C>(result); }
 	 */
-	
+
 	/**
 	 * Returns the minimum of the Set of Events regarding the causal relation.
 	 * <p>
@@ -121,7 +121,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		} else {
 			result = new HashSet<>(unf.getMinEvents());
 			result.retainAll(mEvents);
-			
+
 			/*
 			for (Event<S, C> event : unf.getMinDot()) {
 				if (mEvents.contains(event))
@@ -132,42 +132,42 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		}
 		return new Configuration<>(result);
 	}
-	
+
 	@Override
 	public Iterator<Event<S, C>> iterator() {
 		return mEvents.iterator();
 	}
-	
+
 	@Override
 	public int size() {
 		return mEvents.size();
 	}
-	
+
 	@Override
 	public boolean add(final Event<S, C> arg0) {
 		return mEvents.add(arg0);
 	}
-	
+
 	@Override
 	public boolean addAll(final Collection<? extends Event<S, C>> arg0) {
 		return mEvents.addAll(arg0);
 	}
-	
+
 	@Override
 	public void clear() {
 		mEvents.clear();
 	}
-	
+
 	@Override
 	public boolean contains(final Object arg0) {
 		return mEvents.contains(arg0);
 	}
-	
+
 	@Override
 	public boolean containsAll(final Collection<?> arg0) {
 		return mEvents.containsAll(arg0);
 	}
-	
+
 	/**
 	 * @param events
 	 *            Some events.
@@ -181,17 +181,17 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		}
 		return false;
 	}
-	
+
 	@Override
 	public boolean isEmpty() {
 		return mEvents.isEmpty();
 	}
-	
+
 	@Override
 	public boolean remove(final Object arg0) {
 		return mEvents.remove(arg0);
 	}
-	
+
 	/**
 	 * @return A new Configuration that contains the set difference between the
 	 *         original configuration and its minimum regarding the casual relation.
@@ -215,27 +215,27 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		}
 		return new Configuration<>(events, newmin);
 	}
-	
+
 	@Override
 	public boolean removeAll(final Collection<?> arg0) {
 		return mEvents.removeAll(arg0);
 	}
-	
+
 	@Override
 	public boolean retainAll(final Collection<?> arg0) {
 		return mEvents.retainAll(arg0);
 	}
-	
+
 	@Override
 	public Object[] toArray() {
 		return mEvents.toArray();
 	}
-	
+
 	@Override
 	public <T> T[] toArray(final T[] arg0) {
 		return mEvents.toArray(arg0);
 	}
-	
+
 	/**
 	 * Compares configurations initially based on size. In case of equal size,
 	 * lexically compares the ordered sequences of events with respect to the
@@ -260,7 +260,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 		assert phi1.equals(phi2);
 		return 0;
 	}
-	
+
 	/**
 	 * TODO Christian 2016-08-16: This does not override the Object.equals()
 	 * method. It may be confusing when using in Collections.
@@ -272,7 +272,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	public boolean equals(final Configuration<S, C> other) {
 		return containsAll(other) && other.containsAll(this);
 	}
-	
+
 	/*
 	@Override
 	public int hashCode() {

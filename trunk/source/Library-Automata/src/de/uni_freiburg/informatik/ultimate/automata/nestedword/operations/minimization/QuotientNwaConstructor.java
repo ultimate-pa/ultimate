@@ -72,12 +72,12 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private GetOnlyMap mOldState2NewState;
-	
+
 	private final STATE mOldEmptyStackState;
 	private final STATE mNewEmptyStackState;
-	
+
 	private final Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
-	
+
 	/**
 	 * Private constructor for common parts.
 	 * 
@@ -96,7 +96,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
-		
+
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			// create a DoubleDeckerAutomaton
 			mResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
@@ -109,11 +109,11 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 					mOperand.getReturnAlphabet(), mStateFactory);
 			mUp2Down = null;
 		}
-		
+
 		mOldEmptyStackState = mOperand.getEmptyStackState();
 		mNewEmptyStackState = stateFactory.createEmptyStackState();
 	}
-	
+
 	/**
 	 * Constructor with partition data structure.
 	 * 
@@ -133,13 +133,13 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> operand, final IPartition<STATE> partition,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, partition.size());
-		
+
 		final ResultStateConstructorFromPartition resStateConstructor =
 				new ResultStateConstructorFromPartition(partition);
 		constructResultPartition(resStateConstructor, partition);
 		mOldState2NewState = addMapOldState2newState ? new GetOnlyMap(resStateConstructor) : null;
 	}
-	
+
 	/**
 	 * Constructor with union-find data structure.
 	 * 
@@ -159,13 +159,13 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> operand, final UnionFind<STATE> unionFind,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, unionFind.size());
-		
+
 		final ResultStateConstructorFromUnionFind resStateConstructor =
 				new ResultStateConstructorFromUnionFind(unionFind);
 		constructResultUnionFind(resStateConstructor);
 		mOldState2NewState = addMapOldState2newState ? new GetOnlyMap(resStateConstructor) : null;
 	}
-	
+
 	/**
 	 * Constructs the result automaton from a union-find data structure.
 	 * 
@@ -177,7 +177,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			constructStateAndSuccessors(resStateConstructor, inputState, false);
 		}
 	}
-	
+
 	/**
 	 * Constructs the result automaton from a partition data structure.
 	 * 
@@ -197,7 +197,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		while (blocksIt.hasNext()) {
 			final IBlock<STATE> block = blocksIt.next();
 			final boolean isRepresentativeIndependent = block.isRepresentativeIndependentInternalsCalls();
-			
+
 			final Iterator<STATE> statesIt = block.statesIterator();
 			assert statesIt.hasNext() : "There must be at least one state.";
 			boolean pastFirst = false;
@@ -210,7 +210,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			} while (statesIt.hasNext());
 		}
 	}
-	
+
 	/**
 	 * Adds a state and all outgoing transitions for an input state.
 	 * 
@@ -226,12 +226,12 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			final STATE inputState, final boolean skipInternalsCalls) {
 		// new state
 		final STATE resultState = resStateConstructor.getOrConstructResultState(inputState);
-		
+
 		// get down state map
 		if (mOperand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			addDownStates(resStateConstructor, inputState, resultState);
 		}
-		
+
 		// new outgoing transitions
 		if (!skipInternalsCalls) {
 			// add internal and call transitions for
@@ -240,24 +240,24 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		}
 		addOutgoingTransitionsReturn(resStateConstructor, inputState, resultState);
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private void addDownStates(final IResultStateConstructor<STATE> resStateConstructor, final STATE inputState,
 			final STATE resultState) {
 		assert mOperand instanceof IDoubleDeckerAutomaton<?, ?>;
 		assert mResult instanceof DoubleDeckerAutomaton<?, ?>;
-		
+
 		Map<STATE, ReachFinal> downStateMap = mUp2Down.get(resultState);
 		if (downStateMap == null) {
 			downStateMap = new HashMap<>();
 			mUp2Down.put(resultState, downStateMap);
 		}
-		
+
 		// add down states
 		for (final STATE oldDownState : ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).getDownStates(inputState)) {
 			// new state
 			final STATE resultDownState;
-			
+
 			// equality intended here
 			if (oldDownState == mOldEmptyStackState) {
 				// empty stack symbol
@@ -266,12 +266,12 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 				// "normal" stack symbol
 				resultDownState = resStateConstructor.getOrConstructResultState(oldDownState);
 			}
-			
+
 			// update map
 			downStateMap.put(resultDownState, ReachFinal.UNKNOWN);
 		}
 	}
-	
+
 	/**
 	 * @param resStateConstructor
 	 *            The state constructor.
@@ -287,7 +287,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			mResult.addInternalTransition(resultState, trans.getLetter(), resultSucc);
 		}
 	}
-	
+
 	/**
 	 * @param resStateConstructor
 	 *            The state constructor.
@@ -303,7 +303,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			mResult.addCallTransition(resultState, trans.getLetter(), resultSucc);
 		}
 	}
-	
+
 	/**
 	 * @param resStateConstructor
 	 *            The state constructor.
@@ -322,27 +322,27 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			assert (!(mOperand instanceof IDoubleDeckerAutomaton<?, ?>))
 					|| ((IDoubleDeckerAutomaton<LETTER, STATE>) mOperand).isDoubleDecker(inputState,
 							trans.getHierPred()) : "Unusable return transitions should not be present.";
-			
+
 			final STATE resultSucc = resStateConstructor.getOrConstructResultState(trans.getSucc());
 			final STATE resultHierPred = resStateConstructor.getOrConstructResultState(trans.getHierPred());
 			mResult.addReturnTransition(resultState, resultHierPred, trans.getLetter(), resultSucc);
 		}
 	}
-	
+
 	/**
 	 * @return The quotient automaton.
 	 */
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * @return A map from input automaton states to output automaton states.
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
 		return mOldState2NewState;
 	}
-	
+
 	/**
 	 * Constructs the states of the resulting automaton (parametric in the data structure).
 	 * 
@@ -356,7 +356,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		 * @return new state in quotient automaton (constructed if not existent)
 		 */
 		STATE getOrConstructResultState(final STATE inputState);
-		
+
 		/**
 		 * @param inputState
 		 *            An state in the input automaton.
@@ -364,7 +364,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 		 */
 		STATE get(final STATE inputState);
 	}
-	
+
 	/**
 	 * Result state constructor from a union-find data structure.
 	 * 
@@ -374,39 +374,38 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	private class ResultStateConstructorFromUnionFind implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<STATE, STATE> mConstructionCache;
 		private final UnionFind<STATE> mUnionFind;
-		
+
 		public ResultStateConstructorFromUnionFind(final UnionFind<STATE> unionFind) {
 			mUnionFind = unionFind;
-			final IValueConstruction<STATE, STATE> valueConstruction =
-					new IValueConstruction<STATE, STATE>() {
-						@Override
-						public STATE constructValue(final STATE inputState) {
-							final STATE representative = mUnionFind.find(inputState);
-							assert (representative == inputState)
-									|| (representative == null) : "must be representative or null";
-							final STATE resultState;
-							final boolean isInitial;
-							final boolean isFinal;
-							if (representative == null) {
-								resultState = mStateFactory.merge(Collections.singleton(inputState));
-								isInitial = mOperand.isInitial(inputState);
-								isFinal = mOperand.isFinal(inputState);
-							} else {
-								final Collection<STATE> equivalenceClass =
-										mUnionFind.getEquivalenceClassMembers(representative);
-								resultState = mStateFactory.merge(equivalenceClass);
-								final Predicate<STATE> pInitial = s -> mOperand.isInitial(s);
-								isInitial = equivalenceClass.stream().anyMatch(pInitial);
-								final Predicate<STATE> pFinal = s -> mOperand.isFinal(s);
-								isFinal = equivalenceClass.stream().anyMatch(pFinal);
-							}
-							mResult.addState(isInitial, isFinal, resultState);
-							return resultState;
-						}
-					};
+			final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
+				@Override
+				public STATE constructValue(final STATE inputState) {
+					final STATE representative = mUnionFind.find(inputState);
+					assert (representative == inputState)
+							|| (representative == null) : "must be representative or null";
+					final STATE resultState;
+					final boolean isInitial;
+					final boolean isFinal;
+					if (representative == null) {
+						resultState = mStateFactory.merge(Collections.singleton(inputState));
+						isInitial = mOperand.isInitial(inputState);
+						isFinal = mOperand.isFinal(inputState);
+					} else {
+						final Collection<STATE> equivalenceClass =
+								mUnionFind.getEquivalenceClassMembers(representative);
+						resultState = mStateFactory.merge(equivalenceClass);
+						final Predicate<STATE> pInitial = s -> mOperand.isInitial(s);
+						isInitial = equivalenceClass.stream().anyMatch(pInitial);
+						final Predicate<STATE> pFinal = s -> mOperand.isFinal(s);
+						isFinal = equivalenceClass.stream().anyMatch(pFinal);
+					}
+					mResult.addState(isInitial, isFinal, resultState);
+					return resultState;
+				}
+			};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
-		
+
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
 			STATE inputRepresentative = mUnionFind.find(inputState);
@@ -415,7 +414,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			}
 			return mConstructionCache.getOrConstruct(inputRepresentative);
 		}
-		
+
 		@Override
 		public STATE get(final STATE inputState) {
 			STATE inputRepresentative = mUnionFind.find(inputState);
@@ -425,7 +424,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			return mConstructionCache.getMap().get(inputRepresentative);
 		}
 	}
-	
+
 	/**
 	 * Result state constructor from a partition data structure.
 	 * 
@@ -434,10 +433,10 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	private class ResultStateConstructorFromPartition implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<IBlock<STATE>, STATE> mConstructionCache;
 		private final IPartition<STATE> mPartition;
-		
+
 		public ResultStateConstructorFromPartition(final IPartition<STATE> partition) {
 			mPartition = partition;
-			
+
 			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction =
 					new IValueConstruction<IBlock<STATE>, STATE>() {
 						@Override
@@ -451,21 +450,21 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 					};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
-		
+
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
 			assert block != null : "Block is not known.";
 			return mConstructionCache.getOrConstruct(block);
 		}
-		
+
 		@Override
 		public STATE get(final STATE inputState) {
 			final IBlock<STATE> block = mPartition.getBlock(inputState);
 			return mConstructionCache.getMap().get(block);
 		}
 	}
-	
+
 	/**
 	 * This map only supports the <code>get()</code> method.
 	 * <p>
@@ -478,67 +477,67 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 */
 	private class GetOnlyMap implements Map<STATE, STATE> {
 		private final IResultStateConstructor<STATE> mResStateConstructor;
-		
+
 		public GetOnlyMap(final IResultStateConstructor<STATE> resCons) {
 			this.mResStateConstructor = resCons;
 		}
-		
+
 		@Override
 		public int size() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public boolean isEmpty() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public boolean containsKey(final Object key) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public boolean containsValue(final Object value) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		@Override
 		public STATE get(final Object key) {
 			return mResStateConstructor.get((STATE) key);
 		}
-		
+
 		@Override
 		public STATE put(final STATE key, final STATE value) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public STATE remove(final Object key) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public void putAll(final Map<? extends STATE, ? extends STATE> map) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public void clear() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public Set<STATE> keySet() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public Collection<STATE> values() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public Set<Entry<STATE, STATE>> entrySet() {
 			throw new UnsupportedOperationException();

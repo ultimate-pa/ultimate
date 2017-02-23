@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 /**
  * A tuple class for integers.
+ * 
  * @author Layla Franke
  */
 public final class Tuple {

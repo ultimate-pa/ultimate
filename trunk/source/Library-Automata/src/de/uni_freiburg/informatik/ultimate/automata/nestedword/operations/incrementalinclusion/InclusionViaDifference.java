@@ -61,9 +61,9 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	private final IDeterminizeStateFactory<STATE> mStateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDifference;
 	private NestedRun<LETTER, STATE> mAcceptingRun;
-	
+
 	private final boolean mRemoveDeadEnds = true;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -82,7 +82,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
 		this(services, (SF) stateFactory, stateFactory, nwaA);
 	}
-	
+
 	/**
 	 * Constructor that uses different stateFactories for intersection and
 	 * determinization. This is currently needed when we use the inclusion
@@ -109,12 +109,12 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 		mDifference = nwaA;
 		mAcceptingRun = (new IsEmpty<>(mServices, mDifference)).getNestedRun();
 	}
-	
+
 	@Override
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mAcceptingRun;
 	}
-	
+
 	@Override
 	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
@@ -132,7 +132,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 		}
 		mAcceptingRun = (new IsEmpty<>(mServices, mDifference)).getNestedRun();
 	}
-	
+
 	/**
 	 * @return The number of states in the difference.
 	 */

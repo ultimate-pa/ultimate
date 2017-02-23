@@ -58,11 +58,11 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 		 */
 		SIMULATION_BASED
 	}
-	
+
 	private static final int DEFAULT_MINIMIZE_MAX_SAT_SIZE = 10_000;
-	
+
 	private static final int SIMULATION_BASED_DIRECT_SIZE = 2_000;
-	
+
 	/**
 	 * Constructor with default strategy.
 	 * 
@@ -84,7 +84,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 			final boolean addMapOldState2newState) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, Strategy.DEFAULT);
 	}
-	
+
 	/**
 	 * Constructor with given strategy.
 	 * 
@@ -110,7 +110,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 		mMode = chooseMinimization(operand, strategy);
 		super.run(partition, addMapOldState2newState);
 	}
-	
+
 	private MinimizationMethods chooseMinimization(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Strategy strategy) {
 		switch (strategy) {
@@ -122,7 +122,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 				throw new IllegalArgumentException(UNDEFINED_ENUM_STATE_MESSAGE);
 		}
 	}
-	
+
 	/**
 	 * Default strategy.
 	 */
@@ -134,7 +134,7 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 		// use no minimization for bigger automata
 		return MinimizationMethods.NONE;
 	}
-	
+
 	/**
 	 * Simulation-based strategy.
 	 */

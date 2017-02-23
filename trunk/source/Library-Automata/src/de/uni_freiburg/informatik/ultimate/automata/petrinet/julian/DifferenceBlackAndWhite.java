@@ -70,18 +70,18 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	private final PetriNetJulian<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final IBlackWhiteStateFactory<C> mContentFactory;
-	
+
 	private PetriNetJulian<S, C> mResult;
-	
+
 	private final Map<Place<S, C>, Place<S, C>> mOldPlace2NewPlace = new HashMap<>();
-	
+
 	private final Map<S, Set<C>> mSelfloop = new HashMap<>();
 	private final Map<S, Set<C>> mStateChanger = new HashMap<>();
-	
+
 	private final Map<C, Place<S, C>> mWhitePlace = new HashMap<>();
-	
+
 	private final Map<C, Place<S, C>> mBlackPlace = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -101,11 +101,11 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		mOperand = net;
 		mNwa = nwa;
 		mContentFactory = factory;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		if (!IAutomaton.sameAlphabet(net, nwa)) {
 			throw new IllegalArgumentException("net and nwa must use same alphabet");
 		}
@@ -127,28 +127,28 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			addBlackAndWhitePlaces();
 			addTransitions();
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "DifferenceBlackAndWhite";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
 				+ mNwa.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-	
+
 	private void classifySymbols() {
 		for (final S symbol : mNwa.getInternalAlphabet()) {
 			final HashSet<C> selfloopStates = new HashSet<>();
@@ -159,7 +159,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 					// do not occur in the result anyway
 					continue;
 				}
-				
+
 				final Iterator<OutgoingInternalTransition<S, C>> successorsIt =
 						mNwa.internalSuccessors(state, symbol).iterator();
 				if (!successorsIt.hasNext()) {
@@ -184,7 +184,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			}
 		}
 	}
-	
+
 	/*
 	private Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> createSymbol2AutomatonTransitionMap() {
 		Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> result =
@@ -215,13 +215,13 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		return result;
 	}
 	*/
-	
+
 	private void copyNetStatesOnly() {
 		// difference black and white preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
 		mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 				constantTokenAmount);
-		
+
 		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
 			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
@@ -230,7 +230,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
-	
+
 	private void addBlackAndWhitePlaces() {
 		for (final C state : mNwa.getStates()) {
 			if (!mNwa.isFinal(state)) {
@@ -245,11 +245,11 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			}
 		}
 	}
-	
+
 	private void addTransitions() {
 		for (final ITransition<S, C> oldTrans : mOperand.getTransitions()) {
 			final S symbol = oldTrans.getSymbol();
-			
+
 			// A copy for each changer
 			for (final C predState : mStateChanger.get(symbol)) {
 				final Iterator<OutgoingInternalTransition<S, C>> succStatesIt =
@@ -257,12 +257,12 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				assert succStatesIt.hasNext();
 				final C succState = succStatesIt.next().getSucc();
 				assert !succStatesIt.hasNext();
-				
+
 				// omit transitions to final states
 				if (mNwa.isFinal(succState)) {
 					continue;
 				}
-				
+
 				final Collection<Place<S, C>> predecessors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
@@ -272,7 +272,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				predecessors.add(mWhitePlace.get(predState));
 				assert mWhitePlace.containsKey(succState);
 				predecessors.add(mBlackPlace.get(succState));
-				
+
 				final Collection<Place<S, C>> successors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
@@ -282,10 +282,10 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				successors.add(mWhitePlace.get(succState));
 				assert mBlackPlace.containsKey(predState);
 				successors.add(mBlackPlace.get(predState));
-				
+
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 			}
-			
+
 			// One copy for the selfloops
 			if (!mSelfloop.isEmpty()) {
 				/*
@@ -302,7 +302,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				predecessors.add(mWhitePlace.get(predState));
 				predecessors.add(mBlackPlace.get(succState));
 				*/
-				
+
 				final Collection<Place<S, C>> successors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
@@ -312,17 +312,17 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				successors.add(mWhitePlace.get(succState));
 				successors.add(mBlackPlace.get(predState));
 				*/
-				
+
 				for (final C state : mStateChanger.get(symbol)) {
 					predecessors.add(mBlackPlace.get(state));
 					successors.add(mBlackPlace.get(state));
 				}
-				
+
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 			}
 		}
 	}
-	
+
 	/*
 	private IState<S, C> getSuccessorState(IState<S, C> state, S symbol) {
 		Collection<IState<S, C>> successors = state.getInternalSucc(symbol);
@@ -336,19 +336,19 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		return null;
 	}
 	*/
-	
+
 	@Override
 	protected IPetriNet<S, C> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public PetriNetJulian<S, C> getResult() {
 		assert isPreSuccPlaceInNet(mResult);
 		assert isPreSuccTransitionInNet(mResult);
 		return mResult;
 	}
-	
+
 	private boolean isPreSuccPlaceInNet(final PetriNetJulian<S, C> net) {
 		for (final ITransition<S, C> trans : net.getTransitions()) {
 			for (final Place<S, C> place : trans.getPredecessors()) {
@@ -364,7 +364,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		}
 		return true;
 	}
-	
+
 	private boolean isPreSuccTransitionInNet(final PetriNetJulian<S, C> net) {
 		for (final Place<S, C> place : net.getPlaces()) {
 			for (final ITransition<S, C> trans : place.getPredecessors()) {
@@ -380,23 +380,23 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		}
 		return true;
 	}
-	
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of " + operationName());
 		}
-		
+
 		final INestedWordAutomatonSimple<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomatonSimple<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
-		
+
 		boolean correct = true;
 		correct &= new IsEquivalent<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}

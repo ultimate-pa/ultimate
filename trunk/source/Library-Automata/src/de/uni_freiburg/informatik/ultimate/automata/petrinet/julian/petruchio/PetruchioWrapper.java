@@ -53,17 +53,17 @@ import petruchio.pn.PetriNet;
 
 public class PetruchioWrapper<S, C> {
 	private final ILogger mLogger;
-	
+
 	private final PetriNetJulian<S, C> mNetJulian;
 	private final PetriNet mNetPetruchio = new PetriNet();
-	
+
 	// Maps each place of mNetJulian to the corresponding place in mNetPetruchio
 	private final Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place> mPJulian2pPetruchio =
 			new IdentityHashMap<>();
-	
+
 	// Maps each transition of mNetPetruchio to the corresponding transition in mNetJulian
 	private final Map<Transition, ITransition<S, C>> mTPetruchio2tJulian = new IdentityHashMap<>();
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -75,7 +75,7 @@ public class PetruchioWrapper<S, C> {
 		mNetJulian = net;
 		constructNetPetruchio();
 	}
-	
+
 	/**
 	 * Given a {@link PetriNetJulian}, construct
 	 * <ul>
@@ -115,7 +115,7 @@ public class PetruchioWrapper<S, C> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Write Petri net to file by using Petruchio. The ending of the filename
 	 * determines how the Petri net is encoded (e.g., .spec, .lola, etc.).
@@ -128,21 +128,21 @@ public class PetruchioWrapper<S, C> {
 		petruchio.pn.Converter.writeNet(mNetPetruchio, filename);
 		mLogger.info("Accepting places: " + mNetJulian.getAcceptingPlaces());
 	}
-	
+
 	/**
 	 * @return Map (place in {@link PetriNetJulian} -> place in Petruchio).
 	 */
 	public Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place> getpJulian2pPetruchio() {
 		return mPJulian2pPetruchio;
 	}
-	
+
 	/**
 	 * @return Map (transition in {@link PetriNetJulian} -> transition in Petruchio).
 	 */
 	public Map<Transition, ITransition<S, C>> gettPetruchio2tJulian() {
 		return mTPetruchio2tJulian;
 	}
-	
+
 	public PetriNet getNet() {
 		return mNetPetruchio;
 	}

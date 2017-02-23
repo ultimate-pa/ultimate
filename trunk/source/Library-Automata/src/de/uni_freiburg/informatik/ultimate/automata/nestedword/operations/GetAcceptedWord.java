@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	private final NestedWord<LETTER> mAcceptedWord;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -63,37 +63,37 @@ public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException("unable to get word from empty language");
 		}
 		mAcceptedWord = isEmpty.getNestedRun().getWord();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public NestedWord<LETTER> getResult() {
 		return mAcceptedWord;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "GetAcceptedWord";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found word of length " + mAcceptedWord.length();

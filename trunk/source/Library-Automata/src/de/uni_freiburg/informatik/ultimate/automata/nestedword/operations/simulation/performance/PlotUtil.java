@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
  * Provides utility methods for plotting performance entry tables.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class PlotUtil {
 	/**
@@ -35,7 +34,7 @@ public final class PlotUtil {
 		writeBenchmarkPlotToTransitionDensityCsv(new File(path, "plot_averagedSimulationPerDirectoryTable.csv"));
 		System.out.println("Terminated");
 	}
-	
+
 	/**
 	 * Reads a given benchmark file in the plot format and writes the benchmark
 	 * data to a CSV file next to it containing the transition densities and

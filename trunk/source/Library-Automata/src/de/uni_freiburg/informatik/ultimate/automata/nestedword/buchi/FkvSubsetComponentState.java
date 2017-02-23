@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER, STATE> {
 	private final DeterminizedState<LETTER, STATE> mDeterminizedState;
 	private final HashRelation<StateWithRankInfo<STATE>, StateWithRankInfo<STATE>> mDown2Up;
-	
+
 	FkvSubsetComponentState(final DeterminizedState<LETTER, STATE> detState) {
 		mDeterminizedState = detState;
 		mDown2Up = new HashRelation<>();
@@ -53,31 +53,31 @@ public class FkvSubsetComponentState<LETTER, STATE> implements IFkvState<LETTER,
 			}
 		}
 	}
-	
+
 	public DeterminizedState<LETTER, STATE> getDeterminizedState() {
 		return mDeterminizedState;
 	}
-	
+
 	@Override
 	public Set<StateWithRankInfo<STATE>> getDownStates() {
 		return mDown2Up.getDomain();
 	}
-	
+
 	@Override
 	public Iterable<StateWithRankInfo<STATE>> getUpStates(final StateWithRankInfo<STATE> downState) {
 		return mDown2Up.getImage(downState);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mDeterminizedState.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mDeterminizedState.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

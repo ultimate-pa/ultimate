@@ -92,7 +92,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * A map 'old state -> new state'.
 	 */
 	private Map<STATE, STATE> mOldState2NewState;
-	
+
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 
@@ -107,22 +107,21 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		mResult = null;
 		mTemporaryResult = null;
 		mOldState2NewState = null;
-		
+
 		mStateFactory = stateFactory;
 	}
-	
+
 	/* ------ interface methods ------ */
-	
+
 	@Override
 	protected abstract INestedWordAutomaton<LETTER, STATE> getOperand();
-	
+
 	@Override
 	public final String exitMessage() {
 		return "Finished " + operationName() + ". Reduced states from " + getOperand().size() + " to "
-				+ getResult().size()
-				+ '.';
+				+ getResult().size() + '.';
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mResult == null) {
@@ -130,24 +129,24 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		}
 		return mResult;
 	}
-	
+
 	/**
 	 * Subclasses which need to add specific data should call this method first and extend the result.
 	 */
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();
-		
+
 		final int inputSize = getOperand().size();
 		final int outputSize = mResult.size();
-		
+
 		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
 		result.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_ABSOLUTE);
 		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE);
-		
+
 		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
 		if (true) {
 			// Input automaton
@@ -174,7 +173,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
 					inputAnalyzer.getNumberOfNondeterministicStates());
-			
+
 			// Output automaton
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
 			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
@@ -194,31 +193,31 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
 					outputAnalyzer.getNumberOfNondeterministicStates());
-			
+
 			// comparisons (can only be computed after relevant data was added)
 			result.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
 					StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE);
 			result.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
 					StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
 		}
-		
+
 		return result;
 	}
-	
+
 	private INestedWordAutomaton<LETTER, STATE> getOperandCast() {
 		return getOperand();
 	}
-	
+
 	@Override
 	public final boolean checkResult(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		// call submethod to enable overriding by subclasses
 		final Pair<Boolean, String> equivalenceResult = checkResultHelper(stateFactory);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
@@ -228,7 +227,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		}
 		return equivalenceResult.getFirst();
 	}
-	
+
 	/**
 	 * Returns a Map from states of the input automaton to states of the output
 	 * automaton. The output results from merging states. The image of a state
@@ -243,18 +242,17 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	public Map<STATE, STATE> getOldState2newState() {
 		if (mOldState2NewState == null) {
-			throw new NoSuchElementException(
-					"No map from old states to new states was added.");
+			throw new NoSuchElementException("No map from old states to new states was added.");
 		}
 		return mOldState2NewState;
 	}
-	
+
 	public boolean hasOldState2newState() {
 		return mOldState2NewState != null;
 	}
-	
+
 	/* ------ result construction ------ */
-	
+
 	/**
 	 * Passes the result directly.
 	 * 
@@ -263,15 +261,13 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void directResultConstruction(final INestedWordAutomaton<LETTER, STATE> result) {
 		if (mResult != null) {
-			throw new AssertionError(
-					"The result has already been constructed.");
+			throw new AssertionError("The result has already been constructed.");
 		} else if (mTemporaryResult != null) {
-			throw new AssertionError(
-					"The result construction has already been started.");
+			throw new AssertionError("The result construction has already been started.");
 		}
 		mResult = result;
 	}
-	
+
 	/**
 	 * Constructs the result from a partition.
 	 * 
@@ -287,7 +283,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 				addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
-	
+
 	/**
 	 * Constructs the result from a partition.
 	 * 
@@ -303,7 +299,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 				addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
-	
+
 	/**
 	 * Passes the result directly from a
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor}.
@@ -311,15 +307,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * @param constructor
 	 *            quotient constructor
 	 */
-	private void constructResultFromQuotientConstructor(
-			final QuotientNwaConstructor<LETTER, STATE> constructor) {
+	private void constructResultFromQuotientConstructor(final QuotientNwaConstructor<LETTER, STATE> constructor) {
 		directResultConstruction(constructor.getResult());
 		final Map<STATE, STATE> map = constructor.getOldState2newState();
 		if (map != null) {
 			setOld2NewStateMap(map);
 		}
 	}
-	
+
 	/**
 	 * Starts construction of result (must be called first).
 	 */
@@ -330,7 +325,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, getOperand().getInternalAlphabet(),
 				getOperand().getCallAlphabet(), getOperand().getReturnAlphabet(), mStateFactory);
 	}
-	
+
 	/**
 	 * Adds a state.
 	 * 
@@ -344,7 +339,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		mTemporaryResult.addState(isInitial, isFinal, state);
 	}
-	
+
 	/**
 	 * Adds a state from a collection of states.
 	 * 
@@ -362,7 +357,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		mTemporaryResult.addState(isInitial, isFinal, newState);
 		return newState;
 	}
-	
+
 	/**
 	 * Adds an internal transition.
 	 * 
@@ -376,7 +371,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		mTemporaryResult.addInternalTransition(pred, letter, succ);
 	}
-	
+
 	/**
 	 * Adds a call transition.
 	 * 
@@ -390,7 +385,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		mTemporaryResult.addCallTransition(pred, letter, succ);
 	}
-	
+
 	/**
 	 * Adds a return transition.
 	 * 
@@ -407,7 +402,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 			final STATE succ) {
 		mTemporaryResult.addReturnTransition(pred, hier, letter, succ);
 	}
-	
+
 	/**
 	 * Finishes construction of result (must be called last).
 	 * 
@@ -418,17 +413,17 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 			final boolean constructDoubleDeckerInformation) {
 		if (oldState2newState != null) {
 			setOld2NewStateMap(oldState2newState);
-			
+
 			// double decker can only be constructed if mapping is provided
 			if (constructDoubleDeckerInformation) {
 				constructDoubleDeckerInformation();
 			}
 		}
-		
+
 		mResult = mTemporaryResult;
 		mTemporaryResult = null;
 	}
-	
+
 	/**
 	 * Adds double decker information to the result.
 	 */
@@ -440,28 +435,28 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) getOperand();
 		assert !result.up2DownIsSet() : "The down state map was already set.";
 		assert mOldState2NewState != null : "Need the mapping for construction.";
-		
+
 		final Map<STATE, Map<STATE, ReachFinal>> up2Down = new HashMap<>();
 		result.setUp2Down(up2Down);
-		
+
 		final STATE oldEmptyStackState = getOperand().getEmptyStackState();
 		final STATE newEmptyStackState = mStateFactory.createEmptyStackState();
-		
+
 		for (final STATE oldState : getOperandCast().getStates()) {
 			final STATE newState = mOldState2NewState.get(oldState);
-			
+
 			// get down state map
 			Map<STATE, ReachFinal> downStateMap = up2Down.get(newState);
 			if (downStateMap == null) {
 				downStateMap = new HashMap<>();
 				up2Down.put(newState, downStateMap);
 			}
-			
+
 			// add down states
 			for (final STATE oldDownState : operand.getDownStates(oldState)) {
 				// new state
 				final STATE resultDownState;
-				
+
 				// equals() not necessary here
 				if (oldDownState == oldEmptyStackState) {
 					// empty stack symbol
@@ -470,13 +465,13 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					// "normal" stack symbol
 					resultDownState = mOldState2NewState.get(oldDownState);
 				}
-				
+
 				// update map
 				downStateMap.put(resultDownState, ReachFinal.UNKNOWN);
 			}
 		}
 	}
-	
+
 	/**
 	 * Setter for map 'old state -> new state'.
 	 * 
@@ -485,16 +480,15 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void setOld2NewStateMap(final Map<STATE, STATE> oldState2newState) {
 		if (oldState2newState == null) {
-			throw new AssertionError(
-					"The map must not be set to null.");
+			throw new AssertionError("The map must not be set to null.");
 		} else if (mOldState2NewState != null) {
 			throw new AssertionError("The map has already been set.");
 		}
 		mOldState2NewState = Collections.unmodifiableMap(oldState2newState);
 	}
-	
+
 	/* ------ other helper methods ------ */
-	
+
 	/**
 	 * This method checks whether the input automaton is a DFA.
 	 * <p>
@@ -508,7 +502,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final boolean isDfa() throws AutomataOperationCanceledException {
 		return isDeterministic() && isFiniteAutomaton();
 	}
-	
+
 	/**
 	 * This method checks whether the input automaton is deterministic.
 	 * 
@@ -519,7 +513,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final boolean isDeterministic() throws AutomataOperationCanceledException {
 		return new IsDeterministic<>(mServices, getOperand()).getResult();
 	}
-	
+
 	/**
 	 * This method checks whether the automaton is a finite automaton.
 	 * That means it must not contain any call and return letter.
@@ -535,20 +529,19 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	protected final boolean isFiniteAutomaton() {
 		return (getOperand().getCallAlphabet().isEmpty()) && (getOperand().getReturnAlphabet().isEmpty());
 	}
-	
+
 	/**
 	 * This method throws an exception iff the operation should be terminated.
 	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             thrown to enforce termination.
 	 */
-	protected final void checkForContinuation()
-			throws AutomataOperationCanceledException {
+	protected final void checkForContinuation() throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
-	
+
 	/**
 	 * Performs the real {@link #checkResult(IStateFactory) result check}.
 	 * <p>
@@ -564,7 +557,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected abstract Pair<Boolean, String> checkResultHelper(
 			final IMinimizationCheckResultStateFactory<STATE> stateFactory) throws AutomataLibraryException;
-	
+
 	/**
 	 * Checks finite-word language equivalence between operand and result.
 	 * 
@@ -581,7 +574,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
 		return new Pair<>(equivalenceCheck.getResult(), equivalenceCheck.getViolationMessage());
 	}
-	
+
 	/**
 	 * Checks Buchi language equivalence between operand and result.
 	 * 
@@ -598,7 +591,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 				new BuchiIsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
 		return new Pair<>(equivalenceCheck.getResult(), equivalenceCheck.getViolationMessage());
 	}
-	
+
 	/**
 	 * This method computes the capacity size for hash sets and hash maps given
 	 * the expected number of elements to avoid resizing.

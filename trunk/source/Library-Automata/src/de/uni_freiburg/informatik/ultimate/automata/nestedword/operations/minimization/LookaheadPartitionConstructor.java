@@ -80,13 +80,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class LookaheadPartitionConstructor<LETTER, STATE> {
 	// fast enable/disable for deterministic lookahead (<0 to deactivate)
 	private static final int LOOKAHEAD = Integer.MAX_VALUE;
-	
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final Set<Set<STATE>> mPartition;
 	private final List<Pair<STATE, STATE>> mPairs;
-	
+
 	/*
 	 * used to split states in a block if they have different successors even if they are nondeterministic
 	 * <p>
@@ -94,7 +94,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 * simulation that require this hack.
 	 */
 	private final boolean mUseSimulationHack;
-	
+
 	/**
 	 * Standard constructor.
 	 * 
@@ -107,7 +107,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean useSimulationHack) {
 		this(services, operand, false, useSimulationHack);
 	}
-	
+
 	/**
 	 * Constructor with more options.
 	 * 
@@ -124,7 +124,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			final boolean useSimulationHack) {
 		this(services, operand, Collections.singleton(operand.getStates()), separateAcceptingStates, useSimulationHack);
 	}
-	
+
 	/**
 	 * Full constructor with initial partition.
 	 * 
@@ -147,44 +147,44 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mUseSimulationHack = useSimulationHack;
-		
+
 		mPartition = createPartition(initialPartition, separateAcceptingStates);
 		mPairs = findDifferentPairs(mPartition);
 	}
-	
+
 	/**
 	 * @return The partition.
 	 */
 	public PartitionPairsWrapper<STATE> getResult() {
 		return new PartitionPairsWrapper<>(mPartition, mPairs);
 	}
-	
+
 	/**
 	 * @return The partition.
 	 */
 	public PartitionBackedSetOfPairs<STATE> getPartition() {
 		return new PartitionBackedSetOfPairs<>(mPartition);
 	}
-	
+
 	/**
 	 * @return The pairs of different states (not including the partition).
 	 */
 	public List<Pair<STATE, STATE>> getDifferencePairs() {
 		return mPairs;
 	}
-	
+
 	private Set<Set<STATE>> createPartition(final Collection<Set<STATE>> initialPartition,
 			final boolean separateAcceptingStates) {
 		// result partition (changed several times)
 		Set<Set<STATE>> partition;
-		
+
 		// split states which do not have the same outgoing symbols
 		partition = splitDifferentSymbols(initialPartition);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Splitting by different symbols, result:");
 			mLogger.debug(partition);
 		}
-		
+
 		// split states which are not both final or both non-final
 		if (separateAcceptingStates) {
 			partition = splitAcceptingStates(partition);
@@ -193,7 +193,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				mLogger.debug(partition);
 			}
 		}
-		
+
 		if (LOOKAHEAD >= 0) {
 			// split states with (unique) split successors wrt. a symbol
 			partition = splitSuccessorsDeterministic(partition);
@@ -202,33 +202,33 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				mLogger.debug(partition);
 			}
 		}
-		
+
 		return partition;
 	}
-	
+
 	private Set<Set<STATE>> splitDifferentSymbols(final Collection<Set<STATE>> oldPartition) {
 		final Set<Set<STATE>> newPartition = new LinkedHashSet<>();
-		
+
 		for (final Set<STATE> block : oldPartition) {
 			final HashRelation<OutgoingInCaSymbols<LETTER>, STATE> symbols2states = new HashRelation<>();
 			for (final STATE inputState : block) {
 				symbols2states.addPair(computeOutgoingSymbols(inputState), inputState);
 			}
-			
+
 			for (final OutgoingInCaSymbols<LETTER> outgoingSymbols : symbols2states.getDomain()) {
 				newPartition.add(symbols2states.getImage(outgoingSymbols));
 			}
 		}
-		
+
 		return newPartition;
 	}
-	
+
 	private OutgoingInCaSymbols<LETTER> computeOutgoingSymbols(final STATE state) {
 		final Set<LETTER> lettersInternal = mOperand.lettersInternal(state);
 		final Set<LETTER> lettersCall = mOperand.lettersCall(state);
 		return new OutgoingInCaSymbols<>(lettersInternal, lettersCall);
 	}
-	
+
 	private Set<Set<STATE>> splitAcceptingStates(final Set<Set<STATE>> oldPartition) {
 		final Set<Set<STATE>> newPartition = new LinkedHashSet<>(2 * oldPartition.size());
 		for (final Set<STATE> block : oldPartition) {
@@ -242,7 +242,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 					nonfinals.add(state);
 				}
 			}
-			
+
 			// add new blocks if non-empty
 			if (finals.isEmpty()) {
 				assert !nonfinals.isEmpty() : "The input sets should not be empty.";
@@ -254,10 +254,10 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				}
 			}
 		}
-		
+
 		return newPartition;
 	}
-	
+
 	/**
 	 * NOTE: The method assumes that all states in the same block have the same outgoing internal and call symbols.
 	 * <p>
@@ -277,17 +277,17 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				state2block.put(state, block);
 			}
 		}
-		
+
 		boolean hasChanged = true;
 		int iterations = 0;
 		while (hasChanged) {
 			hasChanged = false;
-			
+
 			final Set<Set<STATE>> newPartition = new LinkedHashSet<>(partition.size());
 			for (final Set<STATE> block : partition) {
 				newPartition.add(block);
 			}
-			
+
 			for (final Set<STATE> block : partition) {
 				assert !block.isEmpty() : "Blocks should be non-empty.";
 				final STATE firstState = block.iterator().next();
@@ -298,18 +298,18 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 					hasChanged |= splitLetterSuccessors(state2block, block, letter, newPartition, false);
 				}
 			}
-			
+
 			assert (!hasChanged) || (partition.size() < newPartition.size()) : "Inconsistent partition refinement.";
 			assert partitionsConsistency(partition, newPartition);
 			partition = newPartition;
-			
+
 			++iterations;
 			hasChanged &= (LOOKAHEAD < 0) || (iterations < LOOKAHEAD);
 		}
-		
+
 		return partition;
 	}
-	
+
 	private boolean splitLetterSuccessors(final Map<STATE, Set<STATE>> state2block, final Set<STATE> block,
 			final LETTER letter, final Set<Set<STATE>> partition, final boolean isInternal) {
 		final Map<Set<STATE>, Set<STATE>> targetBlock2states = new HashMap<>();
@@ -329,7 +329,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				states.add(state);
 			}
 		}
-		
+
 		// modify the partition since all states are deterministic wrt. letter
 		boolean result = false;
 		for (final Set<STATE> newStates : targetBlock2states.values()) {
@@ -338,7 +338,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				continue;
 			}
 			final Map<Set<STATE>, Set<STATE>> oldBlock2newBlock = new HashMap<>();
-			
+
 			for (final STATE state : newStates) {
 				final Set<STATE> oldBlock = state2block.get(state);
 				Set<STATE> newBlock = oldBlock2newBlock.get(oldBlock);
@@ -348,14 +348,14 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				}
 				newBlock.add(state);
 			}
-			
+
 			splitLetterSuccessorsHelper(state2block, partition, oldBlock2newBlock);
-			
+
 			result = true;
 		}
 		return result;
 	}
-	
+
 	private void splitLetterSuccessorsHelper(final Map<STATE, Set<STATE>> state2block, final Set<Set<STATE>> partition,
 			final Map<Set<STATE>, Set<STATE>> oldBlock2newBlock) {
 		for (final Entry<Set<STATE>, Set<STATE>> entry : oldBlock2newBlock.entrySet()) {
@@ -379,7 +379,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	private Collection<STATE> getSuccessors(final LETTER letter, final STATE state, final boolean isInternal) {
 		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it = isInternal
 				? mOperand.internalSuccessors(state, letter).iterator()
@@ -402,7 +402,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		}
 		return Collections.singletonList(trans.getSucc());
 	}
-	
+
 	private boolean partitionsConsistency(final Set<Set<STATE>> partition1, final Set<Set<STATE>> partition2) {
 		final Set<STATE> states = new LinkedHashSet<>();
 		for (final Set<STATE> block : partition1) {
@@ -418,7 +418,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				}
 			}
 		}
-		
+
 		for (final Set<STATE> block : partition2) {
 			if (block.isEmpty()) {
 				// empty block
@@ -435,28 +435,28 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				}
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	private List<Pair<STATE, STATE>> findDifferentPairs(final Set<Set<STATE>> partition) {
 		final List<Pair<STATE, STATE>> pairsList;
-		
+
 		// split states with (unique) split successors wrt. a symbol
 		pairsList = splitHierarchicalPredecessors(partition);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Splitting by different hierarchical predecessors, result:");
 			mLogger.debug(partition);
 		}
-		
+
 		return pairsList;
 	}
-	
+
 	private List<Pair<STATE, STATE>> splitHierarchicalPredecessors(final Set<Set<STATE>> partition) {
 		// TODO
 		return Collections.emptyList();
 	}
-	
+
 	/**
 	 * Outgoing internal and call symbols container.
 	 * 
@@ -468,19 +468,19 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		private static final int PRIME = 31;
 		private final Set<LETTER> mInternal;
 		private final Set<LETTER> mCall;
-		
+
 		public OutgoingInCaSymbols(final Set<LETTER> internal, final Set<LETTER> call) {
 			mInternal = internal;
 			mCall = call;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			int result = PRIME + ((mCall == null) ? 0 : mCall.hashCode());
 			result = PRIME * result + ((mInternal == null) ? 0 : mInternal.hashCode());
 			return result;
 		}
-		
+
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {
@@ -506,13 +506,13 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			}
 			return true;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" + mCall + "]";
 		}
 	}
-	
+
 	/**
 	 * Wraps the two possible results, namely a partition and a list of pairs.
 	 * 
@@ -522,9 +522,9 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 */
 	public static final class PartitionPairsWrapper<STATE> {
 		private final Set<Set<STATE>> mPartitionInner;
-		
+
 		private final List<Pair<STATE, STATE>> mPairsInner;
-		
+
 		/**
 		 * Constructor.
 		 * 
@@ -537,11 +537,11 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			mPartitionInner = partition;
 			mPairsInner = pairs;
 		}
-		
+
 		public Set<Set<STATE>> getPartition() {
 			return mPartitionInner;
 		}
-		
+
 		public List<Pair<STATE, STATE>> getDifferencePairs() {
 			return mPairsInner;
 		}

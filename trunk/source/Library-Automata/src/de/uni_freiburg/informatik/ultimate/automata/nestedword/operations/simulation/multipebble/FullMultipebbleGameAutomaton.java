@@ -46,23 +46,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
  */
-public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>> extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
-	
+public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
+		extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
+
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
 	private final GS mEmptyStackState;
-	private final ISetOfPairs<STATE,?> mPossibleEquivalenceClasses;
+	private final ISetOfPairs<STATE, ?> mPossibleEquivalenceClasses;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 	private final Set<GS> mInitialStates;
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
-			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final ISetOfPairs<STATE,?> possibleEquivalentClasses,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final FullMultipebbleStateFactory<STATE, GS> gameFactory,
+			final ISetOfPairs<STATE, ?> possibleEquivalentClasses, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		mOperand = operand;
 		mStateFactory = gameFactory;
 		mEmptyStackState = gameFactory.createEmptyStackState();
@@ -83,7 +83,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 			}
 		}
 	}
-	
+
 	public NestedMap2<STATE, STATE, GS> getGameStateMapping() {
 		return mGameStateMapping;
 	}
@@ -190,7 +190,8 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, GS>> returnSuccessors(final GS state, final GS hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, GS>> returnSuccessors(final GS state, final GS hier,
+			final LETTER letter) {
 		final List<OutgoingReturnTransition<LETTER, GS>> result = new ArrayList<>();
 		for (final GS succ : mStateFactory.computeSuccessorsReturn(state, hier, letter, mOperand)) {
 			result.add(new OutgoingReturnTransition<LETTER, GS>(hier, letter, succ));

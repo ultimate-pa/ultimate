@@ -61,10 +61,10 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	\* FIELDS / ATTRIBUTES                                                   */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final boolean mIsDeterministic;
-	
+
 	/*_______________________________________________________________________*\
 	\* CONSTRUCTORS                                                          */
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -79,42 +79,41 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-		
-		assert !new HasUnreachableStates<>(mServices, operand)
-				.getResult() : "No unreachable states allowed";
-		
+
+		assert !new HasUnreachableStates<>(mServices, operand).getResult() : "No unreachable states allowed";
+
 		printStartMessage();
 		mIsDeterministic = isDeterministic();
 		startMessageDebug();
-		
+
 		final ArrayList<STATE> states = new ArrayList<>();
 		states.addAll(mOperand.getStates());
 		final boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
-		
+
 		if (mLogger.isDebugEnabled()) {
 			printTable(states, table);
 		}
 		generateResultAutomaton(states, table);
-		
+
 		exitMessageDebug();
 		printExitMessage();
 	}
-	
+
 	/*_______________________________________________________________________*\
 	\* METHODS                                                               */
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-	
+
 	/**
 	 * Calculate, where in the table to set markers.
 	 * 
@@ -127,8 +126,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	private void calculateTable(final ArrayList<STATE> states,
-			final boolean[][] table)
+	private void calculateTable(final ArrayList<STATE> states, final boolean[][] table)
 			throws AutomataOperationCanceledException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
@@ -164,7 +162,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			}
 		}
 	}
-	
+
 	/**
 	 * Mark the table at (i, j) and (j, i).
 	 * 
@@ -179,7 +177,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		table[i][j] = true;
 		table[j][i] = true;
 	}
-	
+
 	/**
 	 * Get successor for state i and symbol s.
 	 * 
@@ -192,8 +190,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	 * @param k
 	 *            the alphabet counter k
 	 */
-	private ArrayList<STATE> getSuccessors(final ArrayList<STATE> states,
-			final LETTER s, final int i) {
+	private ArrayList<STATE> getSuccessors(final ArrayList<STATE> states, final LETTER s, final int i) {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
 		final ArrayList<STATE> first = new ArrayList<>();
@@ -202,7 +199,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		}
 		return first;
 	}
-	
+
 	/**
 	 * Initialize the table.
 	 * 
@@ -217,15 +214,14 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		// we mark all the states (p,q) such that p in F and q not in F
 		for (int r = 0; r < states.size(); r++) {
 			for (int c = 0; c < r; c++) {
-				if (!table[r][c]
-						&& (mOperand.isFinal(states.get(r)) != mOperand.isFinal(states.get(c)))) {
+				if (!table[r][c] && (mOperand.isFinal(states.get(r)) != mOperand.isFinal(states.get(c)))) {
 					mark(table, r, c);
 				}
 			}
 		}
 		return table;
 	}
-	
+
 	/**
 	 * Generate the resulting automaton.
 	 * 
@@ -269,7 +265,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			addState(isInitial, isFinal, minimizedStateName);
 			marker[i] = true;
 		}
-		
+
 		// add edges
 		for (final STATE c : mOperand.getStates()) {
 			for (final LETTER s : mOperand.getInternalAlphabet()) {
@@ -282,7 +278,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		}
 		finishResultConstruction(null, false);
 	}
-	
+
 	/**
 	 * Print the table.
 	 * 
@@ -308,7 +304,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			sb = new StringBuilder();
 		}
 	}
-	
+
 	/**
 	 * Print transitions of this nwa.
 	 * 
@@ -327,7 +323,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			}
 		}
 	}
-	
+
 	/**
 	 * Set markers in the table.
 	 * 
@@ -345,8 +341,8 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	 *            states list
 	 * @return boolean whether to continue or not ...
 	 */
-	private boolean markTable(final ArrayList<STATE> f, final ArrayList<STATE> s, final boolean[][] t,
-			final int i, final int j, final ArrayList<STATE> st) {
+	private boolean markTable(final ArrayList<STATE> f, final ArrayList<STATE> s, final boolean[][] t, final int i,
+			final int j, final ArrayList<STATE> st) {
 		// if for one symbol k and for one I' it holds, that
 		// all pairs (I', j') are marked, mark (i, j)
 		for (int g = 0; g < f.size(); g++) {
@@ -356,7 +352,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		}
 		return false;
 	}
-	
+
 	private boolean containsUnmarkedPair(final ArrayList<STATE> s, final boolean[][] t, final ArrayList<STATE> st,
 			final ArrayList<STATE> f, final int g) {
 		for (int h = 0; h < s.size(); h++) {
@@ -368,38 +364,36 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		}
 		return false;
 	}
-	
+
 	/*_______________________________________________________________________*\
 	\* OVERRIDDEN METHODS                                                    */
-	
+
 	private void startMessageDebug() {
 		final StringBuilder msg = new StringBuilder("Start ");
-		msg.append(operationName()).append(" Operand ")
-				.append(mOperand.sizeInformation());
+		msg.append(operationName()).append(" Operand ").append(mOperand.sizeInformation());
 		mLogger.info(msg.toString());
-		
+
 		if (mLogger.isDebugEnabled()) {
 			printTransitions(mOperand);
 		}
-		
+
 		if (!mIsDeterministic) {
 			mLogger.info("Given automaton is not deterministic!");
 			mLogger.info("Automaton will not be minimized, but only reduced.");
 		}
-		
+
 		mLogger.info("Starting to minimize...");
 	}
-	
+
 	private void exitMessageDebug() {
 		if (mLogger.isDebugEnabled()) {
 			printTransitions(getResult());
 		}
 		final StringBuilder msg = new StringBuilder();
-		msg.append("Finished ").append(operationName()).append(" Result ")
-				.append(getResult().sizeInformation());
+		msg.append("Finished ").append(operationName()).append(" Result ").append(getResult().sizeInformation());
 		mLogger.info(msg.toString());
 	}
-	
+
 	/*_______________________________________________________________________*\
 	\* GETTERS AND SETTERS                                                   */
 }

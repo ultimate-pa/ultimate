@@ -54,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Abstract class for game graphs which are needed for simulation calculation.
  * <br/>
  * <br/>
- * 
  * A game graph represents a game played by <i>Spoiler</i> and <i>Duplicator</i>
  * on an original buechi automaton.<br/>
  * <i>Spoiler</i> tries to build an accepting word <i>Duplicator</i> can not
  * reproduce. If <i>Spoiler</i> fails we say <b>q1 simulates q0</b> if
  * <i>Spoilers</i> starting state was q0 and <i>Duplicators</i> q1.<br/>
  * <br/>
- * 
  * The exact winning conditions are determined by special instances of graphs
  * which should extend this class.<br/>
  * Given such an instance a game graph needs to generate itself out of a buechi
@@ -71,11 +69,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * {@link #undoChanges(GameGraphChanges) undoChanges} method and maintaining a
  * {@link GameGraphChanges} object.<br/>
  * <br/>
- * 
  * For simulations see {@link ASimulation}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -757,8 +753,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		result.append(lineSeparator + "\t},");
 		result.append(lineSeparator + "\tDuplicatorVertices = {");
 		for (final DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.isB() + ", " + vertex.getQ0() + ", " + vertex.getQ1()
-					+ ", " + vertex.getLetter() + "), p:" + getPriority(vertex) + ">");
+			result.append(lineSeparator + "\t\t<(" + vertex.isB() + ", " + vertex.getQ0() + ", " + vertex.getQ1() + ", "
+					+ vertex.getLetter() + "), p:" + getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 
@@ -768,20 +764,24 @@ public abstract class AGameGraph<LETTER, STATE> {
 			for (final Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
 				result.append(lineSeparator + "\t\t(" + vertex.isB() + ", " + vertex.getQ0() + ", " + vertex.getQ1());
 				if (vertex instanceof DuplicatorVertex) {
-					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
+					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+							(DuplicatorVertex<LETTER, STATE>) vertex;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")");
-				if ((vertex instanceof SpoilerSubSummaryPriorityVertex) || (vertex instanceof DuplicatorSubSummaryChoiceVertex)) {
+				if ((vertex instanceof SpoilerSubSummaryPriorityVertex)
+						|| (vertex instanceof DuplicatorSubSummaryChoiceVertex)) {
 					result.append(vertex.getClass().getSimpleName());
 				}
 				result.append("\t--> (" + succ.isB() + ", " + succ.getQ0() + ", " + succ.getQ1());
 				if (succ instanceof DuplicatorVertex) {
-					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
+					final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+							(DuplicatorVertex<LETTER, STATE>) succ;
 					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")");
-				if ((succ instanceof SpoilerSubSummaryPriorityVertex) || (succ instanceof DuplicatorSubSummaryChoiceVertex)) {
+				if ((succ instanceof SpoilerSubSummaryPriorityVertex)
+						|| (succ instanceof DuplicatorSubSummaryChoiceVertex)) {
 					result.append(succ.getClass().getSimpleName());
 				}
 			}
@@ -807,8 +807,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo edge changes
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
-				.getChangedEdges();
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges =
+				changes.getChangedEdges();
 		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedEdge.getFirst();
@@ -823,8 +823,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo push-over edge changes
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges = changes
-				.getChangedPushOverEdges();
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges =
+				changes.getChangedPushOverEdges();
 		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdge : changedPushOverEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedPushOverEdge.getFirst();
@@ -860,8 +860,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo vertex value changes
-		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues = changes
-				.getRememberedVertexValues();
+		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> changedVertexValues =
+				changes.getRememberedVertexValues();
 		for (final Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues : changedVertexValues.entrySet()) {
 			final Vertex<LETTER, STATE> vertex = changedValues.getKey();
 			final VertexValueContainer values = changedValues.getValue();

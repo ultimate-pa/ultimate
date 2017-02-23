@@ -44,7 +44,7 @@ public interface IFkvState<LETTER, STATE> {
 	 * @return The down states.
 	 */
 	Set<StateWithRankInfo<STATE>> getDownStates();
-	
+
 	/**
 	 * @param downState
 	 *            A down state.

@@ -17,14 +17,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * tool to formats used by Ultimates simulation benchmark framework.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class RabitUtil {
 	/**
 	 * File representing the working environment.
 	 */
-	public static final File ENVIRONMENT = new File(new File(System.getProperty("user.home"), "Desktop"),
-			"RabitTestEnvironment");
+	public static final File ENVIRONMENT =
+			new File(new File(System.getProperty("user.home"), "Desktop"), "RabitTestEnvironment");
 	/**
 	 * File representing the directory containing the automata.
 	 */
@@ -290,7 +289,7 @@ public final class RabitUtil {
 	 * @param fileName
 	 *            File name to strip the extension
 	 * @return
-	 * 		<ul>
+	 *         <ul>
 	 *         <li>[0] - The file name without the extension</li>
 	 *         <li>[1] - The extension itself, empty if there is no</li>
 	 *         </ul>

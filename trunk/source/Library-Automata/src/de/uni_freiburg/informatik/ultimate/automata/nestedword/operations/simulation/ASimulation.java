@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 /**
  * Abstract class for simulations which can be used for <b>reducing buechi automaton</b>.<br/>
  * <br/>
- * 
  * The simulation sets a {@link AGameGraph} object up that is based on the original buechi automaton. It then simulates
  * the game, explained in {@link AGameGraph}, and calculates so called progress measure for every vertex of the graph.
  * <br/>
@@ -73,24 +72,19 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * player is at turn. <i>Duplicator</i> wants to decrease the progress measure, which is done by visiting vertices with
  * priority 0, and <i>Spoiler</i> wants to increase it by visiting odd priorities.<br/>
  * <br/>
- * 
  * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>.
  * <br/>
  * <br/>
- * 
  * The exact conditions are determined by the type of game graph. If, for a vertex (q0, q1), the progress measure does
  * not reach infinity we say q1 simulates q0.<br/>
  * This simulation information can then be used for buechi reduction. In some types of simulation such simulating states
  * can be merged without changing the underlying language.<br/>
  * <br/>
- * 
  * After starting the simulation, its result can be accessed by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For game graphs see {@link AGameGraph}, for information on the magic infinity bound see
  * {@link AGameGraph#getGlobalInfinity()}.<br/>
  * <br/>
- * 
  * The simulation process runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where n is the amount of states and k
  * the amount of transitions from the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity games, and state space reduction for büchi
@@ -99,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -354,7 +347,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Calculates the best neighbor measure for a given vertex based on its local infinity and its containing SCC.<br/>
 	 * <br/>
-	 * 
 	 * If the vertex has no successors the corresponding player looses, <i>infinity</i> is returned for a
 	 * {@link DuplicatorVertex} and 0 for a {@link SpoilerVertex}.<br/>
 	 * For a {@link DuplicatorVertex} the minimal progress measure of its successor is returned, maximal for a

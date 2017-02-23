@@ -84,22 +84,22 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected static final String ADDING_TRANSITION_CONSTRAINTS = "adding transition constraints";
 	protected static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
 	protected static final String SOLVER_TIMEOUT = "solving";
-	
+
 	protected final NestedMap2<STATE, STATE, T> mStatePairs;
 	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
 	protected ScopedTransitivityGenerator<T, STATE> mTransitivityGenerator;
-	
+
 	protected int mNumberClausesAcceptance;
 	protected int mNumberClausesTransitions;
 	protected int mNumberClausesTransitionsNondeterministic;
 	protected int mNumberClausesTransitivity;
-	
+
 	protected long mTimer;
 	protected long mTimePreprocessing;
 	protected long mTimeSolving;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -126,12 +126,12 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mSettings.validate(mOperand);
 		mSolver = createSolver();
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	private AbstractMaxSatSolver<T> createSolver() {
 		switch (mSettings.getSolverMode()) {
 			case EXTERNAL:
@@ -150,23 +150,23 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
 		}
 	}
-	
+
 	protected final void run() throws AutomataOperationCanceledException {
 		feedSolver();
-		
+
 		mTimePreprocessing = mTimer;
 		mTimer = System.currentTimeMillis();
 		mTimePreprocessing = mTimer - mTimePreprocessing;
-		
+
 		constructResult(mSettings.isAddMapOldState2newState());
-		
+
 		mTimeSolving = mTimer;
 		mTimer = System.currentTimeMillis();
 		mTimeSolving = mTimer - mTimeSolving;
-		
+
 		printExitMessage();
 	}
-	
+
 	private void feedSolver() throws AutomataOperationCanceledException {
 		generateVariablesAndAcceptingConstraints();
 		generateTransitionAndTransitivityConstraints(mTransitivityGenerator == null);
@@ -176,7 +176,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 					+ mNumberClausesTransitionsNondeterministic + ", -> transitivity: " + mNumberClausesTransitivity);
 		}
 	}
-	
+
 	private void constructResult(final boolean addMapOldState2newState)
 			throws AutomataOperationCanceledException, AssertionError {
 		final boolean satisfiable;
@@ -193,46 +193,46 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final UnionFind<STATE> resultingEquivalenceClasses = constructResultEquivalenceClasses();
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
-	
+
 	protected abstract AbstractMaxSatSolver<T> createTransitivitySolver();
-	
+
 	protected abstract void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException;
-	
+
 	protected abstract void generateTransitionAndTransitivityConstraints(boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException;
-	
+
 	protected abstract UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError;
-	
+
 	protected abstract boolean isInitialPair(STATE state1, STATE state2);
-	
+
 	protected abstract boolean isInitialPair(T pair);
-	
+
 	protected abstract T[] getEmptyVariableArray();
-	
+
 	protected abstract String createTaskDescription();
-	
+
 	@SuppressWarnings("unchecked")
 	protected final STATE[] constructStateArray(final Collection<STATE> states) {
 		return states.toArray((STATE[]) new Object[states.size()]);
 	}
-	
+
 	protected final void generateTransitionConstraintsHelper(final STATE state1, final STATE state2, final T pair) {
 		if (knownToBeDifferent(state1, state2, pair)) {
 			// all corresponding clauses are trivially true
 			return;
 		}
-		
+
 		if (mSettings.getUseInternalCallConstraints() && !haveSameOutgoingInternalCallSymbols(state1, state2)) {
 			// not known to be different, report to the solver
 			setVariableFalse(pair);
-			
+
 			// all corresponding clauses are trivially true
 			return;
 		}
-		
+
 		final STATE[] downStates1 = getDownStatesArray(state1);
 		final T predPair = knownToBeSimilar(state1, state2, pair) ? null : pair;
-		
+
 		// add transition constraints
 		if (mSettings.getUseTransitionHornClauses()) {
 			generateTransitionConstraintInternalHorn(state1, state2, predPair);
@@ -243,7 +243,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		generateTransitionConstraintsHelperReturn1(state1, downStates1, state2, predPair);
 	}
-	
+
 	private void generateTransitionConstraintInternalHorn(final STATE predState1, final STATE predState2,
 			final T predPair) {
 		for (final OutgoingInternalTransition<LETTER, STATE> trans1 : mOperand.internalSuccessors(predState1)) {
@@ -255,7 +255,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintInternalGeneral(final STATE predState1, final STATE predState2,
 			final T predPair) {
 		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
@@ -273,7 +273,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predPair, succs1, succs2);
 		}
 	}
-	
+
 	private void generateTransitionConstraintCallHorn(final STATE predState1, final STATE predState2,
 			final T predPair) {
 		for (final OutgoingCallTransition<LETTER, STATE> trans1 : mOperand.callSuccessors(predState1)) {
@@ -285,29 +285,27 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintCallGeneral(final STATE predState1, final STATE predState2,
 			final T predPair) {
 		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
 		for (final LETTER letter : mOperand.lettersCall(predState1)) {
 			final Set<STATE> succs1 = new LinkedHashSet<>();
 			final Set<STATE> succs2 = new LinkedHashSet<>();
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState1,
-					letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState1, letter)) {
 				succs1.add(trans.getSucc());
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState2,
-					letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState2, letter)) {
 				succs2.add(trans.getSucc());
 			}
 			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predPair, succs1, succs2);
 		}
 	}
-	
+
 	private void generateTransitionConstraintGeneralInternalCallHelperSymmetric(final T predPair,
 			final Set<STATE> succs1, final Set<STATE> succs2) {
 		final Collection<STATE> succsToRemove = new ArrayList<>();
-		
+
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, succsToRemove);
 		/*
 		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
@@ -315,10 +313,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * similar).
 		 */
 		succs2.removeAll(succsToRemove);
-		
+
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs2, succs1, null);
 	}
-	
+
 	private void generateTransitionConstraintGeneralInternalCallHelperOneSide(final T predPair,
 			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succsToRemove) {
 		boolean ignoreConstraint = false;
@@ -326,10 +324,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			for (final STATE succState2 : succs2) {
 				if (knownToBeSimilar(succState1, succState2, null)) {
 					// clause is trivially true
-					
+
 					// remember this state, it needs not be checked in the other direction
 					addIfNotNull(succsToRemove, succState2);
-					
+
 					// continue with next state
 					ignoreConstraint = true;
 					break;
@@ -343,7 +341,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintsHelperReturn1(final STATE state1, final STATE[] downStates1,
 			final STATE state2, final T predPair) {
 		// NOTE: slower iteration outside
@@ -357,7 +355,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	protected final void generateTransitionConstraintsHelperReturn2(final STATE state, final STATE[] downStates) {
 		for (int k = 0; k < downStates.length; k++) {
 			for (int l = 0; l < k; l++) {
@@ -369,22 +367,22 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintReturnHorn(final STATE linPredState1, final STATE linPredState2,
 			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2) {
 		if (knownToBeDifferent(hierPredState1, hierPredState2, null)) {
 			// all corresponding clauses are trivially true
 			return;
 		}
-		
+
 		final T hierPredPair = getVariableIfNotSimilar(hierPredState1, hierPredState2);
 		if (!haveSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2)) {
 			addThreeLiteralHornClause(linPredPair, hierPredPair, null);
 			return;
 		}
 		// both DoubleDeckers have same outgoing return symbols
-		for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand
-				.returnSuccessorsGivenHier(linPredState1, hierPredState1)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand.returnSuccessorsGivenHier(linPredState1,
+				hierPredState1)) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSuccessors(linPredState2,
 					hierPredState2, trans1.getLetter())) {
 				if (knownToBeSimilar(trans1.getSucc(), trans2.getSucc(), null)) {
@@ -396,14 +394,14 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintReturnGeneral(final STATE linPredState1, final STATE linPredState2,
 			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2) {
 		if (knownToBeDifferent(hierPredState1, hierPredState2, null)) {
 			// all corresponding clauses are trivially true
 			return;
 		}
-		
+
 		final T hierPredPair = getVariableIfNotSimilar(hierPredState1, hierPredState2);
 		final Set<LETTER> sameOutgoingReturnSymbols =
 				getSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2);
@@ -411,7 +409,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			addThreeLiteralHornClause(linPredPair, hierPredPair, null);
 		} else {
 			// both DoubleDeckers have same outgoing return symbols
-			
+
 			// NOTE: We exploit the knowledge that the states have the same outgoing symbols
 			for (final LETTER letter : sameOutgoingReturnSymbols) {
 				final Set<STATE> succs1 = new LinkedHashSet<>();
@@ -428,11 +426,11 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraintGeneralReturnHelperSymmetric(final T linPredPair, final T hierPredPair,
 			final Set<STATE> succs1, final Set<STATE> succs2) {
 		final Collection<STATE> succsToRemove = new ArrayList<>();
-		
+
 		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2,
 				succsToRemove);
 		/*
@@ -441,10 +439,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * similar).
 		 */
 		succs2.removeAll(succsToRemove);
-		
+
 		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs2, succs1, null);
 	}
-	
+
 	private void generateTransitionConstraintGeneralReturnHelperOneSide(final T linPredPair, final T hierPredPair,
 			final Set<STATE> succs1, final Set<STATE> succs2, final Collection<STATE> succsToRemove) {
 		boolean ignore = false;
@@ -452,9 +450,9 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			for (final STATE succState2 : succs2) {
 				if (knownToBeSimilar(succState1, succState2, null)) {
 					// clause is trivially true
-					
+
 					addIfNotNull(succsToRemove, succState2);
-					
+
 					// continue with next state
 					ignore = true;
 					break;
@@ -468,24 +466,23 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			}
 		}
 	}
-	
+
 	private void addIfNotNull(final Collection<STATE> collection, final STATE element) {
 		if (collection != null) {
 			collection.add(element);
 		}
 	}
-	
-	private void generateBinaryTransitionConstraint(final T predpair, final STATE succState1,
-			final STATE succState2) {
+
+	private void generateBinaryTransitionConstraint(final T predpair, final STATE succState1, final STATE succState2) {
 		// first check whether the clause is trivially true
 		if (knownToBeSimilar(succState1, succState2, null)) {
 			return;
 		}
-		
+
 		final T succPair = getVariableIfNotDifferent(succState1, succState2);
 		addTwoLiteralHornClause(predpair, succPair);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void generateNaryTransitionConstraint(final T predpair, final STATE succState1,
 			final Iterable<STATE> succStates2) {
@@ -500,10 +497,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final T[] positiveAtoms = consArr(succPairs);
 		addArbitraryLiteralClause(negativeAtoms, positiveAtoms);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private void generateNaryTransitionConstraint(final T linPredPair, final T hierPredPair,
-			final STATE succState1, final Iterable<STATE> succStates2) {
+	private void generateNaryTransitionConstraint(final T linPredPair, final T hierPredPair, final STATE succState1,
+			final Iterable<STATE> succStates2) {
 		final List<T> succPairs = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
 			if (!knownToBeDifferent(succState1, succState2, null)) {
@@ -511,7 +508,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				succPairs.add(succPair);
 			}
 		}
-		
+
 		final T[] negativeAtoms;
 		if (linPredPair == null) {
 			if (hierPredPair == null) {
@@ -529,16 +526,15 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final T[] positiveAtoms = consArr(succPairs);
 		addArbitraryLiteralClause(negativeAtoms, positiveAtoms);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	protected final void addTransitivityClausesToSolver(final T pair12, final T pair23,
-			final T pair13) {
+	protected final void addTransitivityClausesToSolver(final T pair12, final T pair23, final T pair13) {
 		mSolver.addHornClause((T[]) new Object[] { pair12, pair23 }, pair13);
 		mSolver.addHornClause((T[]) new Object[] { pair23, pair13 }, pair12);
 		mSolver.addHornClause((T[]) new Object[] { pair13, pair12 }, pair23);
 		mNumberClausesTransitivity += THREE;
 	}
-	
+
 	protected final boolean knownToBeSimilar(final STATE state1, final STATE state2, final T pair) {
 		if (state1.equals(state2)) {
 			return true;
@@ -554,7 +550,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		return false;
 	}
-	
+
 	protected final boolean knownToBeDifferent(final STATE state1, final STATE state2, final T pair) {
 		if (state1.equals(state2)) {
 			return false;
@@ -570,26 +566,26 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		return true;
 	}
-	
+
 	protected final STATE[] getDownStatesArray(final STATE state) {
 		return constructStateArray(mOperand.getDownStates(state));
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected final T[] consArr(final Collection<T> pairs) {
 		return (T[]) pairs.toArray(new Object[pairs.size()]);
 	}
-	
+
 	protected final void setStatesDifferent(final T pair) {
 		setVariableFalse(pair);
 		mNumberClausesAcceptance++;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected final void addInverseHornClause(final T negativeAtom, final Collection<T> positiveAtoms) {
 		addArbitraryLiteralClause((T[]) (new Object[] { negativeAtom }), consArr(positiveAtoms));
 	}
-	
+
 	private void addArbitraryLiteralClause(final T[] negativeAtoms, final T[] positiveAtoms) {
 		assert isVoidOfNull(negativeAtoms) && isVoidOfNull(positiveAtoms) : "Array/list must be void of null elements.";
 		assert (negativeAtoms.length == 1) || (negativeAtoms.length == 2) : "Always pass one or two negative atoms.";
@@ -607,7 +603,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			mNumberClausesTransitionsNondeterministic++;
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addTwoLiteralHornClause(final T negativeAtom, final T positiveAtom) {
 		if (negativeAtom == null) {
@@ -620,7 +616,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		mNumberClausesTransitions++;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addThreeLiteralHornClause(final T negativeAtom1, final T negativeAtom2, final T positiveAtom) {
 		if (negativeAtom1 == null) {
@@ -632,7 +628,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			mNumberClausesTransitions++;
 		}
 	}
-	
+
 	/**
 	 * @return {@code true} iff two states have the same outgoing internal and call symbols.
 	 */
@@ -643,13 +639,13 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		if (!letters1.equals(letters2)) {
 			return false;
 		}
-		
+
 		// call symbols
 		letters1 = mOperand.lettersCall(predState1);
 		letters2 = mOperand.lettersCall(predState2);
 		return letters1.equals(letters2);
 	}
-	
+
 	/**
 	 * @return {@code true} iff two states have the same outgoing return symbols with respect to hierarchical
 	 *         predecessors.
@@ -658,7 +654,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			final STATE down2) {
 		return getSameOutgoingReturnSymbols(up1, down1, up2, down2) != null;
 	}
-	
+
 	/**
 	 * @return A set of letters iff the two states have the same outgoing return symbols with respect to the
 	 *         hierarchical predecessors, {@code null} otherwise.
@@ -675,15 +671,15 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		return returnLetters1.equals(returnLetters2) ? returnLetters1 : null;
 	}
-	
+
 	private VariableStatus resultFromSolver(final STATE state1, final STATE state2) {
 		return resultFromSolver(mStatePairs.get(state1, state2));
 	}
-	
+
 	private VariableStatus resultFromSolver(final T pair) {
 		return mSolver.getValue(pair);
 	}
-	
+
 	/**
 	 * Getter for a {@link T}.
 	 * 
@@ -698,21 +694,21 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final T getVariable(final STATE state1, final STATE state2, final boolean flag) {
 		return flag ? null : mStatePairs.get(state1, state2);
 	}
-	
+
 	/**
 	 * @return {@code null} if states are different, pair variable otherwise.
 	 */
 	private T getVariableIfNotDifferent(final STATE state1, final STATE state2) {
 		return getVariable(state1, state2, knownToBeDifferent(state1, state2, null));
 	}
-	
+
 	/**
 	 * @return {@code null} if states are similar, pair variable otherwise.
 	 */
 	private T getVariableIfNotSimilar(final STATE state1, final STATE state2) {
 		return getVariable(state1, state2, knownToBeSimilar(state1, state2, null));
 	}
-	
+
 	/**
 	 * Tells the solver that two states are different.
 	 */
@@ -720,7 +716,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	private void setVariableFalse(final T pair) {
 		mSolver.addHornClause((T[]) new Object[] { pair }, null);
 	}
-	
+
 	private static <T> boolean isVoidOfNull(final T[] positiveAtoms) {
 		for (final T elem : positiveAtoms) {
 			if (elem == null) {
@@ -729,18 +725,18 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 		return true;
 	}
-	
+
 	private static <LETTER, STATE> boolean hasNoReturnTransitions(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		return operand.getReturnAlphabet().isEmpty();
 	}
-	
+
 	protected final void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
 			final RunningTaskInfo rti = getRunningTaskInfo(currentTask);
 			throw new AutomataOperationCanceledException(rti);
 		}
 	}
-	
+
 	private RunningTaskInfo getRunningTaskInfo(final String currentTask) {
 		final StringBuilder builder = new StringBuilder();
 		final String taskDescription = createTaskDescription();
@@ -754,17 +750,17 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				.append(mSolver.getNumberOfClauses())
 				.append(" clauses");
 		// @formatter:on
-		
+
 		if (mTimePreprocessing != 0L) {
 			builder.append(". Preprocessing time ").append(mTimePreprocessing);
 		}
 		if (mTimeSolving != 0L) {
 			builder.append(". Solving time ").append(mTimeSolving);
 		}
-		
+
 		return new RunningTaskInfo(getClass(), builder.toString());
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
@@ -778,13 +774,13 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
 		return statistics;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-	
+
 	/**
 	 * Settings wrapper that allows a lean constructor for the user.
 	 * 
@@ -808,7 +804,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			/** General solver. */
 			GENERAL
 		}
-		
+
 		/**
 		 * Add mapping 'old state -> new state'.
 		 */
@@ -838,11 +834,11 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * Some users already ensure this fact.
 		 */
 		private boolean mUseInternalCallConstraints = true;
-		
+
 		public Settings() {
 			// default constructor
 		}
-		
+
 		/**
 		 * Validates the settings object for inconsistencies.
 		 * 
@@ -862,33 +858,33 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				}
 			}
 		}
-		
+
 		public boolean isAddMapOldState2newState() {
 			return mAddMapOldState2newState;
 		}
-		
+
 		public Settings<STATE> setAddMapOldState2NewState(final boolean value) {
 			mAddMapOldState2newState = value;
 			return this;
 		}
-		
+
 		public boolean getFinalStateConstraints() {
 			return mUseFinalStateConstraints;
 		}
-		
+
 		public Settings<STATE> setFinalStateConstraints(final boolean value) {
 			mUseFinalStateConstraints = value;
 			return this;
 		}
-		
+
 		public boolean getUseTransitionHornClauses() {
 			return mUseTransitionHornClauses;
 		}
-		
+
 		public SolverMode getSolverMode() {
 			return mSolverMode;
 		}
-		
+
 		/**
 		 * Sets the solver mode to {@link SolverMode#EXTERNAL}.
 		 * 
@@ -898,7 +894,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			mSolverMode = SolverMode.EXTERNAL;
 			return this;
 		}
-		
+
 		/**
 		 * Sets the solver mode to {@link SolverMode#TRANSITIVITY}.
 		 * 
@@ -908,7 +904,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			mSolverMode = SolverMode.TRANSITIVITY;
 			return this;
 		}
-		
+
 		/**
 		 * Sets the solver mode to {@link SolverMode#GENERAL}.
 		 * 
@@ -918,16 +914,16 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			mSolverMode = SolverMode.GENERAL;
 			return this;
 		}
-		
+
 		public boolean getUseInternalCallConstraints() {
 			return mUseInternalCallConstraints;
 		}
-		
+
 		public Settings<STATE> setUseInternalCallConstraints(final boolean useInternalCallConstraints) {
 			mUseInternalCallConstraints = useInternalCallConstraints;
 			return this;
 		}
-		
+
 		public boolean isUsePathCompression() {
 			return mUsePathCompression;
 		}

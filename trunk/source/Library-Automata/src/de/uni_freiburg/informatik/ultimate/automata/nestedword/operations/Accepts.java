@@ -47,7 +47,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	private final NestedWord<LETTER> mWord;
 	private final boolean mPrefixOfInputIsAccepted;
 	private final boolean mInputIsSuffixOfAcceptedWord;
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -75,18 +75,18 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 		mWord = word;
 		mPrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
 		mInputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mIsAccepted = isAccepted();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	/**
 	 * Constructor with default settings.
 	 * 
@@ -103,18 +103,18 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 			final NestedWord<LETTER> word) throws AutomataLibraryException {
 		this(services, operand, word, false, false);
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Accepts";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Automaton has " + mOperand.sizeInformation() + " Word has length "
 				+ mWord.length();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		final StringBuilder builder = new StringBuilder();
@@ -155,7 +155,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 		}
 		return builder.toString();
 	}
-	
+
 	private boolean isAccepted() throws AutomataLibraryException {
 		Set<ArrayDeque<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
 		for (int i = 0; i < mWord.length(); i++) {
@@ -166,7 +166,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 		}
 		return containsAcceptingConfiguration(currentConfigs);
 	}
-	
+
 	/**
 	 * Check if set of configurations contains an accepting configuration. We
 	 * say that a configuration is accepting if the topmost stack element is an

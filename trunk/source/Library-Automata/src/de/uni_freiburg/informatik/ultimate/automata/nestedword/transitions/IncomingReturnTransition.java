@@ -41,7 +41,7 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 	private final STATE mLinPred;
 	private final STATE mHierPred;
 	private final LETTER mLetter;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,25 +57,25 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 		mHierPred = hierPred;
 		mLetter = letter;
 	}
-	
+
 	public STATE getLinPred() {
 		return mLinPred;
 	}
-	
+
 	public STATE getHierPred() {
 		return mHierPred;
 	}
-	
+
 	@Override
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	@Override
 	public String toString() {
 		return MessageFormat.format("( {0} , {1} , {2} , _ )", getLinPred(), getHierPred(), getLetter());
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -85,7 +85,7 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 		result = prime * result + ((mLinPred == null) ? 0 : mLinPred.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

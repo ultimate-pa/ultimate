@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -64,110 +64,110 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 			throw new IllegalArgumentException("input not known to be deterministic");
 		}
 	}
-	
+
 	private static boolean isDeterministicTotalNwa(final INestedWordAutomatonSimple<?, ?> operand) {
 		throw new UnsupportedOperationException("this check is currently not supported");
 	}
-	
+
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		return mOperand.getInitialStates();
 	}
-	
+
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mOperand.getStateFactory();
 	}
-	
+
 	@Override
 	public boolean isInitial(final STATE state) {
 		return mOperand.isInitial(state);
 	}
-	
+
 	@Override
 	public boolean isFinal(final STATE state) {
 		return !mOperand.isFinal(state);
 	}
-	
+
 	@Override
 	public STATE getEmptyStackState() {
 		return mOperand.getEmptyStackState();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		return mOperand.internalSuccessors(state, letter);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		return mOperand.internalSuccessors(state);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return mOperand.callSuccessors(state, letter);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		return mOperand.callSuccessors(state);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		return mOperand.returnSuccessors(state, hier, letter);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		return mOperand.returnSuccessorsGivenHier(state, hier);
 	}
-	
+
 	@Override
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mOperand.getAlphabet();
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		// TODO Auto-generated method stub

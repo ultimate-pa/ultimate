@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  */
 public final class Event<S, C> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
-	
+
 	private final int mHashCode;
-	
+
 	private final Set<Condition<S, C>> mPredecessors;
 	private final Set<Condition<S, C>> mSuccessors;
 	private final Configuration<S, C> mLocalConfiguration;
@@ -58,10 +58,10 @@ public final class Event<S, C> implements Serializable {
 	// private final ArrayList<Event<S, C>> mLocalConfiguration;
 	private final Marking<S, C> mMark;
 	private final ConditionMarking<S, C> mConditionMark;
-	
+
 	private Event<S, C> mCompanion;
 	private final Transition<S, C> mTransition;
-	
+
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from
 	 * the net system it is mapped to by the homomorphism. Its successor
@@ -80,11 +80,10 @@ public final class Event<S, C> implements Serializable {
 						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<S, C>> localConfiguration = new HashSet<Event<S, C>>();
-		mLocalConfiguration = new Configuration<>(
-				new HashSet<Event<S, C>>());
+		mLocalConfiguration = new Configuration<>(new HashSet<Event<S, C>>());
 		mTransition = transition;
 		final Set<Condition<S, C>> conditionMarkSet = new HashSet<>();
-		
+
 		final Set<Event<S, C>> predecessorEvents = new HashSet<>();
 		for (final Condition<S, C> c : predecessors) {
 			final Event<S, C> e = c.getPredecessorEvent();
@@ -96,9 +95,9 @@ public final class Event<S, C> implements Serializable {
 			mLocalConfiguration.addAll(e.mLocalConfiguration);
 			e.mConditionMark.addTo(conditionMarkSet);
 		}
-		
+
 		mLocalConfiguration.add(this);
-		
+
 		mSuccessors = new HashSet<>();
 		for (final Place<S, C> p : transition.getSuccessors()) {
 			mSuccessors.add(new Condition<>(this, p));
@@ -111,7 +110,7 @@ public final class Event<S, C> implements Serializable {
 		mMark = mConditionMark.getMarking();
 		mHashCode = computeHashCode();
 	}
-	
+
 	/**
 	 * Creates a dummy event. Used as the root of a {@link BranchingProcess}.
 	 * 
@@ -133,7 +132,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		mHashCode = computeHashCode();
 	}
-	
+
 	/**
 	 * @param events
 	 *            A set of events.
@@ -150,7 +149,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @return The Set of all successor events of all successor conditions of the event.
 	 */
@@ -161,7 +160,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param events
 	 *            A set of events.
@@ -178,7 +177,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param events
 	 *            A set of events.
@@ -195,7 +194,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @return The Set of all predecessor events of all predecessor conditions of the event.
 	 */
@@ -206,7 +205,7 @@ public final class Event<S, C> implements Serializable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * returns true, if the homomorphism h of the corresponding branching
 	 * process reduced to conditions and places is a well defined isomorphism.
@@ -222,26 +221,26 @@ public final class Event<S, C> implements Serializable {
 		}
 		return places.isEmpty();
 	}
-	
+
 	public ConditionMarking<S, C> getConditionMark() {
 		return mConditionMark;
 	}
-	
+
 	public Set<Condition<S, C>> getSuccessorConditions() {
 		return mSuccessors;
 	}
-	
+
 	public Set<Condition<S, C>> getPredecessorConditions() {
 		return mPredecessors;
 	}
-	
+
 	/**
 	 * @return marking of the local configuration of this.
 	 */
 	public Marking<S, C> getMark() {
 		return mMark;
 	}
-	
+
 	/**
 	 * @param event
 	 *            event
@@ -286,7 +285,7 @@ public final class Event<S, C> implements Serializable {
 		setCompanion(event);
 		return true;
 	}
-	
+
 	/**
 	 * set this.companion to e, or, if e is a cut-off event itself to the
 	 * companion of e.
@@ -299,7 +298,7 @@ public final class Event<S, C> implements Serializable {
 			setCompanion(event.getCompanion());
 		}
 	}
-	
+
 	/**
 	 * @return {@code true} iff the event is a cutoff event. requires, that
 	 *         {@link #checkCutOffSetCompanion(Event, Comparator)} was called.
@@ -311,7 +310,7 @@ public final class Event<S, C> implements Serializable {
 	public boolean isCutoffEvent() {
 		return mCompanion != null;
 	}
-	
+
 	/**
 	 * @return The size of the local configuration, that is the number of
 	 *         ancestor events.
@@ -319,38 +318,34 @@ public final class Event<S, C> implements Serializable {
 	public int getAncestors() {
 		return mLocalConfiguration.size();
 	}
-	
+
 	public Configuration<S, C> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
-	
+
 	public Event<S, C> getCompanion() {
 		return mCompanion;
 	}
-	
+
 	public Transition<S, C> getTransition() {
 		return mTransition;
 	}
-	
+
 	@Override
 	public String toString() {
-		return mHashCode + ":" + getTransition() + ","
-				+ mLocalConfiguration.size() + "A";
+		return mHashCode + ":" + getTransition() + "," + mLocalConfiguration.size() + "A";
 	}
-	
+
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((mPredecessors == null) ? 0 : mPredecessors.hashCode());
+		result = prime * result + ((mPredecessors == null) ? 0 : mPredecessors.hashCode());
 		// TODO remove successors from here later since they're not needed.
-		result = prime * result
-				+ ((mSuccessors == null) ? 0 : mSuccessors.hashCode());
-		result = prime * result
-				+ ((mTransition == null) ? 0 : mTransition.hashCode());
+		result = prime * result + ((mSuccessors == null) ? 0 : mSuccessors.hashCode());
+		result = prime * result + ((mTransition == null) ? 0 : mTransition.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHashCode;

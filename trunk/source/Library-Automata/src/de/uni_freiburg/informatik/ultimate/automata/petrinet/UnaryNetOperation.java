@@ -53,12 +53,12 @@ public abstract class UnaryNetOperation<LETTER, PLACE, CRSF extends IStateFactor
 	public UnaryNetOperation(final AutomataLibraryServices services) {
 		super(services);
 	}
-	
+
 	/**
 	 * @return The operand Petri net.
 	 */
 	protected abstract IPetriNet<LETTER, PLACE> getOperand();
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();

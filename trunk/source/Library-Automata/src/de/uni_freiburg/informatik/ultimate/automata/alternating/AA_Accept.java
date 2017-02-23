@@ -33,18 +33,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class AA_Accept<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final boolean mIsAccepted;
-	
+
 	public AA_Accept(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton, final Word<LETTER> word) {
 		super(services);
 		mIsAccepted = alternatingAutomaton.accepts(word);
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "AA_Accept";
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mIsAccepted;

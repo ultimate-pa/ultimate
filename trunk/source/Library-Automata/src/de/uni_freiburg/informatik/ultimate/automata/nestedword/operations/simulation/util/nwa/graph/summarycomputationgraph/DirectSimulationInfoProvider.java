@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * the game graph and for obtaining simulation results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
  * @param <STATE>
  */
@@ -56,17 +55,19 @@ public class DirectSimulationInfoProvider<LETTER, STATE> implements ISimulationI
 	}
 
 	@Override
-	public int computePriority(final boolean bit, final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+	public int computePriority(final boolean bit, final boolean isSpoilerAccepting,
+			final boolean isDuplicatorAccepting) {
 		return 2;
 	}
-	
+
 	@Override
-	public boolean isImmediatelyWinningForSpoiler(final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+	public boolean isImmediatelyWinningForSpoiler(final boolean isSpoilerAccepting,
+			final boolean isDuplicatorAccepting) {
 		return isSpoilerAccepting && !isDuplicatorAccepting;
 	}
 
 	@Override
-	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex, 
+	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex,
 			final INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton) {
 		if (spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null) {
 			throw new UnsupportedOperationException("no states are not supported");
@@ -76,13 +77,10 @@ public class DirectSimulationInfoProvider<LETTER, STATE> implements ISimulationI
 		}
 		return true;
 	}
-	
-	
-	
+
 	@Override
 	public boolean mayMergeFinalAndNonFinalStates() {
 		return false;
 	}
-
 
 }

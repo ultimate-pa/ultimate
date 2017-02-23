@@ -91,7 +91,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		 */
 		DFS
 	}
-	
+
 	/**
 	 * Operand.
 	 */
@@ -100,44 +100,44 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * Set of states in which the run we are searching has to begin.
 	 */
 	private final Collection<STATE> mStartStates;
-	
+
 	/**
 	 * Set of states in which the run we are searching has to end.
 	 */
 	private final Collection<STATE> mGoalStates;
-	
+
 	/**
 	 * If set, the goal states are exactly the accepting states of the automaton,
 	 * the set mGoalStates is null, and we use the automaton to check if a
 	 * state is a goal state.
 	 */
 	private final boolean mGoalStateIsAcceptingState;
-	
+
 	/**
 	 * Set of states in which the run we are searching must not visit.
 	 */
 	private final Collection<STATE> mForbiddenStates;
-	
+
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
-	
+
 	/**
 	 * Pairs of states visited, but possibly not processed, so far.
 	 */
 	private final Map<STATE, Set<STATE>> mVisitedPairs = new HashMap<>();
-	
+
 	/**
 	 * Queue of states that have to be processed and have been visited while
 	 * processing a internal transition, a return transition or a computed
 	 * summary.
 	 */
 	private final Deque<DoubleDecker<STATE>> mQueue = new ArrayDeque<>();
-	
+
 	/**
 	 * Queue of states that have to be processed and have been visited while
 	 * processing a call transition.
 	 */
 	private final Deque<DoubleDecker<STATE>> mQueueCall = new ArrayDeque<>();
-	
+
 	/**
 	 * Assigns to a pair of states (state,stateK) the run of length 2 that is
 	 * labeled to the incoming edge of (state,stateK) in the reachability graph.
@@ -146,7 +146,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * the first state of the run and predK is stateK.
 	 */
 	private final Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> mInternalSubRun = new HashMap<>();
-	
+
 	/**
 	 * Assigns to a triple of states (state,stateK,predK) the run of length 2
 	 * that is labeled to the incoming edge of the state pair (state,stateK)
@@ -155,14 +155,14 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * (pred,predK), where pred is stateK.
 	 */
 	private final Map<STATE, Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>>> mCallSubRun = new HashMap<>();
-	
+
 	/**
 	 * Assigns to a pair of states (state,stateK) a state predK. predK is the
 	 * second component of the state pair (pred,predK) for which (state,stateK)
 	 * was added to the reachability graph (for the first time).
 	 */
 	private final Map<STATE, Map<STATE, STATE>> mCallFirst = new HashMap<>();
-	
+
 	/**
 	 * Assigns to a pair of states (state,stateK) the run of length 2 that is
 	 * labeled to the incoming edge of (state,stateK) in the reachability graph.
@@ -171,35 +171,35 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * the first state of the run. predK can be obtained from mreturnPredStateK
 	 */
 	private final Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> mReturnSubRun = new HashMap<>();
-	
+
 	/**
 	 * Assigns to a pair of states (state,stateK) a state predK. predK is the
 	 * second component of the predecessor (pred,predK) of (state,stateK) in the
 	 * reachability graph.
 	 */
 	private final Map<STATE, Map<STATE, STATE>> mReturnPredStateK = new HashMap<>();
-	
+
 	/**
 	 * If a triple (state,succ,returnPred) is contained in this map, a summary
 	 * from state to succ has been discovered and returnPred is the predecessor
 	 * of the return transition of this summary.
 	 */
 	private final Map<STATE, Map<STATE, STATE>> mSummaryReturnPred = new HashMap<>();
-	
+
 	/**
 	 * If a triple (state,succ,symbol) is contained in this map, a summary
 	 * from state to succ has been discovered and symbol is the label of the
 	 * return transition of this summary.
 	 */
 	private final Map<STATE, Map<STATE, LETTER>> mSummaryReturnSymbol = new HashMap<>();
-	
+
 	/**
 	 * Second Element of the initial state pair. This state indicates that
 	 * nothing is on the stack of the automaton, in other words while processing
 	 * we have taken the same number of calls and returns.
 	 */
 	private final STATE mDummyEmptyStackState;
-	
+
 	/**
 	 * Stack for the constructing a run if non-emptiness was detected. Contains
 	 * an element for every return that was processed and to corresponding call
@@ -208,15 +208,15 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * of the automaton but all elements are shifted by one.
 	 */
 	private final ArrayDeque<STATE> mReconstructionStack = new ArrayDeque<>();
-	
+
 	/**
 	 * Search strategy.
 	 */
 	private final SearchStrategy mStrategy;
-	
+
 	private NestedRun<LETTER, STATE> mReconstructionOneStepRun;
 	private STATE mReconstructionPredK;
-	
+
 	/**
 	 * Default constructor. Here we search a run from the initial states
 	 * of the automaton to the final states of the automaton.
@@ -227,10 +227,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            input NWA
 	 * @throws AutomataOperationCanceledException
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
 	}
-	
+
 	/**
 	 * Default constructor with option to set search strategy.
 	 * 
@@ -248,7 +249,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
 				strategy);
 	}
-	
+
 	/**
 	 * Constructor that is not restricted to emptiness checks.
 	 * The set of startStates defines where the run that we search has to start.
@@ -268,15 +269,17 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * @throws AutomataOperationCanceledException
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates) throws AutomataOperationCanceledException {
+			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates)
+			throws AutomataOperationCanceledException {
 		this(services, operand, startStates, forbiddenStates, goalStates, false, SearchStrategy.BFS);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 	}
-	
+
 	private IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
-			final boolean goalStateIsAcceptingState, final SearchStrategy strategy) throws AutomataOperationCanceledException {
+			final boolean goalStateIsAcceptingState, final SearchStrategy strategy)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -290,18 +293,18 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		mForbiddenStates = forbiddenStates;
 		mStrategy = strategy;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mAcceptingRun = getAcceptingRun();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	/**
 	 * If we use the accepting states of mnwa as goal states (in this case
 	 * mGoalStateIsAcceptingState is set and mGoalStates is null) then we
@@ -314,7 +317,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return mGoalStates.contains(state);
 	}
-	
+
 	/**
 	 * Enqueue a state pair that has been discovered by taking an internal
 	 * transition, a return transition or a summary. Mark the state pair as
@@ -325,7 +328,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		mQueue.addLast(pair);
 		markVisited(state, stateK);
 	}
-	
+
 	/**
 	 * Enqueue a state pair that has been discovered by taking a call
 	 * transition. Mark the state pair as visited afterwards.
@@ -335,7 +338,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		mQueueCall.addLast(pair);
 		markVisited(state, callPred);
 	}
-	
+
 	//  The following implementation of dequeue is faster but leads to unsound
 	//	results. See BugBfsEmptinessLowPriorityCallQueue.fat for details.
 	//  Alternative workaround (where we may still use the low priority call queue):
@@ -358,7 +361,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 	}
 	*/
-	
+
 	/**
 	 * Dequeue a state pair. If available take a state pair that has been
 	 * discovered by taking a
@@ -384,7 +387,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 				throw new IllegalArgumentException("Unknown search strategy.");
 		}
 	}
-	
+
 	/**
 	 * Dequeue a state pair.
 	 */
@@ -395,14 +398,14 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return secondQueue.removeFirst();
 	}
-	
+
 	/**
 	 * @return true iff the queue (is internally represented by two queues) is empty.
 	 */
 	private boolean isQueueEmpty() {
 		return mQueue.isEmpty() && mQueueCall.isEmpty();
 	}
-	
+
 	/**
 	 * Mark a state pair a visited.
 	 */
@@ -414,7 +417,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		callPreds.add(stateK);
 	}
-	
+
 	/**
 	 * @return true iff the state pair (state,stateK) was already visited.
 	 */
@@ -425,10 +428,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return callPreds.contains(stateK);
 	}
-	
+
 	/**
 	 * Get an accepting run of the automaton passed to the constructor. Return
 	 * null if the automaton does not accept any nested word.
+	 * 
 	 * @throws AutomataOperationCanceledException
 	 */
 	@SuppressWarnings("squid:S1698")
@@ -436,38 +440,38 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		for (final STATE state : mStartStates) {
 			enqueueAndMarkVisited(state, mDummyEmptyStackState);
 		}
-		
+
 		while (!isQueueEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
 			final DoubleDecker<STATE> pair = dequeue();
 			final STATE state = pair.getUp();
 			final STATE stateK = pair.getDown();
-			
+
 			if (isGoalState(state)) {
 				return constructRun(state, stateK);
 			}
-			
+
 			processSummaries(state, stateK);
-			
+
 			getAcceptingRunHelperInternal(state, stateK);
-			
+
 			getAcceptingRunHelperCall(state, stateK);
-			
+
 			// equality intended here
 			if (stateK == mOperand.getEmptyStackState()) {
 				// there is no return transition
 				continue;
 			}
-			
+
 			getAcceptingRunHelperReturn(state, stateK);
 		}
 		return null;
 	}
-	
+
 	private void getAcceptingRunHelperInternal(final STATE state, final STATE stateK) {
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
@@ -478,7 +482,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			}
 		}
 	}
-	
+
 	private void getAcceptingRunHelperCall(final STATE state, final STATE stateK) {
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
@@ -492,7 +496,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			}
 		}
 	}
-	
+
 	private void getAcceptingRunHelperReturn(final STATE state, final STATE stateK) {
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
 				stateK)) {
@@ -510,7 +514,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			}
 		}
 	}
-	
+
 	/**
 	 * Compute successor state pairs (succ,succK) of the state pair
 	 * (state,stateK) under an already discovered summary in the reachability
@@ -535,7 +539,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			}
 		}
 	}
-	
+
 	/**
 	 * Store for a state pair (succ,succK) in the reachability graph information
 	 * about the predecessor (state,stateK) under an internal transition and a
@@ -556,7 +560,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.INTERNAL_POSITION, succ);
 		succK2run.put(succK, run);
 	}
-	
+
 	/**
 	 * Store for a state pair (succ,succK) in the reachability graph information
 	 * about the predecessor (state,stateK) under a call transition and a
@@ -594,7 +598,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
 		stateK2Run.put(stateK, run);
 	}
-	
+
 	/**
 	 * Store for a state pair (succ,succK) in the reachability graph information
 	 * about the predecessor (state,stateK) under a return transition and a
@@ -618,7 +622,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		succK2SubRun.put(succK, run);
 		succK2PredStateK.put(succK, stateK);
 	}
-	
+
 	/**
 	 * Get all states which occur as the second component of a state pair
 	 * (callState,*) in the reachability graph, where the first component is
@@ -631,7 +635,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return callStatesOfCallStates;
 	}
-	
+
 	/*
 	private void addCallStatesOfCallState(IState<LETTER, STATE> callState, IState<LETTER, STATE> callStateOfCallState) {
 		Set<IState<LETTER, STATE>> callStatesOfCallStates = mCallStatesOfCallState.get(callState);
@@ -642,7 +646,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		callStatesOfCallStates.add(callStateOfCallState);
 	}
 	*/
-	
+
 	/**
 	 * Store information about a discovered summary.
 	 */
@@ -664,7 +668,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			succ2ReturnSymbol.put(stateAfterReturn, returnSymbol);
 		}
 	}
-	
+
 	/**
 	 * Construct a run for a discovered final state in the reachability
 	 * analysis. The run is constructed backwards using the information of
@@ -691,7 +695,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return run;
 	}
-	
+
 	/**
 	 * Return true iff the run that lead to the accepting state contains an
 	 * internal transition which is succeeded by state and where stateK is the
@@ -709,7 +713,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Return true iff the run that lead to the accepting state contains a
 	 * call transition which is succeeded by state and where stateK is the
@@ -738,7 +742,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Return true iff the run that lead to the accepting state contains a
 	 * return transition which is succeeded by state and where stateK is the
@@ -760,21 +764,21 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return false;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mAcceptingRun == null;
 	}
-	
+
 	public NestedRun<LETTER, STATE> getNestedRun() {
 		return mAcceptingRun;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
@@ -793,12 +797,12 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		}
 		return correct;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsEmpty";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		if (mAcceptingRun == null) {

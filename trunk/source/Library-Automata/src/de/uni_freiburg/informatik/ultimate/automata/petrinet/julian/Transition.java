@@ -47,14 +47,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  */
 public class Transition<S, C> implements ITransition<S, C>, Serializable, Comparable<Transition<S, C>> {
 	private static final long serialVersionUID = 5948089529814334197L;
-	
+
 	private final int mHashCode;
 	private final S mSymbol;
 	private final Collection<Place<S, C>> mPredecessors;
 	private final Collection<Place<S, C>> mSuccessors;
-	
+
 	private final int mTotalOrderId;
-	
+
 	/**
 	 * Constructor.
 	 * <p>
@@ -78,43 +78,43 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
 	}
-	
+
 	@Override
 	public S getSymbol() {
 		return mSymbol;
 	}
-	
+
 	@Override
 	public Collection<Place<S, C>> getPredecessors() {
 		return mPredecessors;
 	}
-	
+
 	@Override
 	public Collection<Place<S, C>> getSuccessors() {
 		return mSuccessors;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	private int computeHashCode() {
 		final int prime1 = 13;
 		final int prime2 = 7;
 		final int prime3 = 3;
 		return prime1 * mPredecessors.hashCode() + prime2 * mSuccessors.hashCode() + prime3 * mSymbol.hashCode();
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSymbol.toString() + "[" + mTotalOrderId + "]";
 	}
-	
+
 	public int getTotalOrderId() {
 		return mTotalOrderId;
 	}
-	
+
 	@Override
 	public int compareTo(final Transition<S, C> other) {
 		return mTotalOrderId - other.mTotalOrderId;

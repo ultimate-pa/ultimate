@@ -30,32 +30,27 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
  */
 public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
 	private final HashRelation<STATE, STATE> mDuplicatorDoubleDeckers;
-	
-	
+
 	public DirectFullMultipebbleGameState(final DoubleDecker<STATE> spoilerDoubleDecker,
 			final HashRelation<STATE, STATE> duplicatorDoubleDeckers) {
 		super(spoilerDoubleDecker);
 		mDuplicatorDoubleDeckers = duplicatorDoubleDeckers;
 	}
-	
+
 	public HashRelation<STATE, STATE> getDuplicatorDoubleDeckers() {
 		return mDuplicatorDoubleDeckers;
 	}
-	
-	
-	
+
 	@Override
 	public boolean isAccepting() {
 		return mDuplicatorDoubleDeckers.isEmpty();
 	}
-	
+
 	@Override
 	public int getNumberOfDoubleDeckerPebbles() {
 		return mDuplicatorDoubleDeckers.size();
@@ -88,14 +83,7 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 
 	@Override
 	public String toString() {
-		return "Spoiler: " + mSpoilerDoubleDecker +	" Duplicator: " + mDuplicatorDoubleDeckers;
+		return "Spoiler: " + mSpoilerDoubleDecker + " Duplicator: " + mDuplicatorDoubleDeckers;
 	}
 
-
-
-
-	
-
-
-	
 }

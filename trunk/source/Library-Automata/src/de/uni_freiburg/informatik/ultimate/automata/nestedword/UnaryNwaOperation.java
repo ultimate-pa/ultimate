@@ -53,12 +53,12 @@ public abstract class UnaryNwaOperation<LETTER, STATE, CRSF extends IStateFactor
 	public UnaryNwaOperation(final AutomataLibraryServices services) {
 		super(services);
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();
 	}
-	
+
 	/**
 	 * @return The operand nested word automaton.
 	 */

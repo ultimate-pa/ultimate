@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE> {
 	private static final String UP2DOWN_NOT_SET = "up2down not set";
-	
+
 	private Map<STATE, Map<STATE, ReachFinal>> mUp2Down;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -67,14 +67,14 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		mUp2Down = null;
 	}
-	
+
 	/**
 	 * @return true iff down state map is set.
 	 */
 	public boolean up2DownIsSet() {
 		return mUp2Down != null;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -88,7 +88,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		}
 		throw new AssertionError(UP2DOWN_NOT_SET);
 	}
-	
+
 	/**
 	 * @param up2Down
 	 *            New map (up state -> down state).
@@ -99,7 +99,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		}
 		mUp2Down = up2Down;
 	}
-	
+
 	@Override
 	public boolean isDoubleDecker(final STATE upState, final STATE downState) {
 		if (!up2DownIsSet()) {

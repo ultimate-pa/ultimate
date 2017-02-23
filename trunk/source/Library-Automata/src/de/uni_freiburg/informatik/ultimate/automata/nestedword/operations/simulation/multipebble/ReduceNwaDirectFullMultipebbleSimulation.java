@@ -45,21 +45,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <STATE>
  *            state type
  */
-public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends
-		ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> {
-	
+public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
+		extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> {
+
 	public ReduceNwaDirectFullMultipebbleSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, false);
 	}
-	
+
 	@Override
 	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>
 			constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		return new DirectFullMultipebbleStateFactory<>(initialPartition);
 	}
-	
+
 	@Override
 	protected Pair<IDoubleDeckerAutomaton<LETTER, DirectFullMultipebbleGameState<STATE>>, Integer> computeSimulation(
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DirectFullMultipebbleGameState<STATE>> gameAutomaton)
@@ -68,7 +68,7 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> extends
 				new RemoveDeadEnds<>(mServices, gameAutomaton);
 		return new Pair<>(rde.getResult(), rde.getInputSize());
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

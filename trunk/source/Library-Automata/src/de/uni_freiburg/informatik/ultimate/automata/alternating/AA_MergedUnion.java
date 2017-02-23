@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 public class AA_MergedUnion<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final AlternatingAutomaton<LETTER, STATE> mResultAutomaton;
-	
+
 	public AA_MergedUnion(final AutomataLibraryServices services, final AlternatingAutomaton<LETTER, STATE> automaton1,
 			final AlternatingAutomaton<LETTER, STATE> automaton2) {
 		super(services);
@@ -81,12 +81,12 @@ public class AA_MergedUnion<LETTER, STATE> extends GeneralOperation<LETTER, STAT
 		mResultAutomaton.addAcceptingConjunction(automaton2.getAcceptingFunction().cloneShifted(shiftMap2, newSize));
 		mResultAutomaton.setReversed(automaton1.isReversed());
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "AA_MergedUnion";
 	}
-	
+
 	@Override
 	public AlternatingAutomaton<LETTER, STATE> getResult() {
 		return mResultAutomaton;

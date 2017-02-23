@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * The resulting automaton is the input automaton.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>

@@ -56,7 +56,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 	private final IPetriNet<S, C> mOperand;
 	private final Word<S> mWord;
 	private final boolean mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -74,60 +74,60 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		super(services);
 		mOperand = operand;
 		mWord = word;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
 		// this.position = 0;
 		mResult = getResultHelper(0, operand.getInitialMarking());
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "acceptsJulian";
 	}
-	
+
 	// private Collection<Place<S, C>> marking;
 	// private int position;
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
-	
+
 	@Override
 	protected IPetriNet<S, C> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	private boolean getResultHelper(final int position, final Marking<S, C> marking)
 			throws AutomataOperationCanceledException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
 		}
-		
+
 		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
-		
+
 		final S symbol = mWord.getSymbol(position);
 		if (!mOperand.getAlphabet().contains(symbol)) {
 			throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
 		}
-		
+
 		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = new HashSet<>();
-		
+
 		// get all active transitions which are labeled with the next symbol
 		for (final Place<S, C> place : marking) {
 			for (final ITransition<S, C> transition : place.getSuccessors()) {
@@ -148,25 +148,25 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		}
 		return result;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of accepts");
 		}
-		
+
 		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
 						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))
 								.getResult();
 		final boolean correct = mResult == resultAutomata;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of accepts");
 		}
-		
+
 		return correct;
 	}
 }

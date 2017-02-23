@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * @param <STATE>
  *            state type
  */
-public interface IIncrementalInclusionStateFactory<STATE> extends IDeterminizeStateFactory<STATE>,
-		IIntersectionStateFactory<STATE>, IEmptyStackStateFactory<STATE> {
+public interface IIncrementalInclusionStateFactory<STATE>
+		extends IDeterminizeStateFactory<STATE>, IIntersectionStateFactory<STATE>, IEmptyStackStateFactory<STATE> {
 	// empty interface
 }

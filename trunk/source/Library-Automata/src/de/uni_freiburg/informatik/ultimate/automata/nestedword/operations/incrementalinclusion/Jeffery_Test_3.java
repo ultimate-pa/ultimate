@@ -39,14 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * 
  * Parameters are the same as IncrementalInclsuionCheck except for an extra integer parameter. The parameter is used to
  * assign which IncrementalInclusionCheck will be tested. Example: Testing IncrementalInclusionCheck2 ->
  * Jeffery_Test_3(Iservices, sf, a, b,2) Testing IncrementalInclusionCheck3 -> Jeffery_Test_3(Iservices, sf, a, b,3)...
  * 
- * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
  * @param <STATE>
  */
@@ -79,300 +76,299 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
 
-	public Jeffery_Test_3(
-			final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
+	public Jeffery_Test_3(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
 			final int num) throws AutomataLibraryException {
 
 		switch (num) {
-		default:
+			default:
 
-		case 1:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheckDifference<LETTER, STATE, ?> IIC1 =
-					new IncrementalInclusionCheckDifference<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC1.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC1.getResult()) {
-				trueTime1 += timeBuffer;
-				trueTestnum1++;
-				trueSumTotalNode1 += IIC1.size();
-				trueSumNodeInTheEnd1 += IIC1.size();
-			} else {
-				falseTime1 += timeBuffer;
-				falseTestnum1++;
-				falseSumTotalNode1 += IIC1.size();
-				falseSumNodeInTheEnd1 += IIC1.size();
-			}
-			if (trueTestnum1 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd1 / trueTestnum1;
-				trueAvgNodeGenerated = trueSumTotalNode1 / trueTestnum1;
-				trueAvgRun = 0;
-				trueTestNum = trueTestnum1;
-				trueAvgTime = trueTime1 / trueTestnum1;
-			}
-			if (falseTestnum1 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd1 / falseTestnum1;
-				falseAvgNodeGenerated = falseSumTotalNode1 / falseTestnum1;
-				falseAvgRun = 0;
-				falseTestNum = falseTestnum1;
-				falseAvgTime = falseTime1 / falseTestnum1;
-			}
-			break;
-		case 2:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck2<LETTER, STATE> IIC2 =
-					new IncrementalInclusionCheck2<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC2.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC2.getResult()) {
-				trueTime2 += timeBuffer;
-				trueTestnum2++;
-				trueSumRun2 += IIC2.counter_run;
-				trueSumTotalNode2 += IIC2.counter_total_nodes;
-				trueSumNodeInTheEnd2 += IIC2.counter_total_nodes;
-			} else {
-				falseTime2 += timeBuffer;
-				falseTestnum2++;
-				falseSumRun2 += IIC2.counter_run;
-				falseSumTotalNode2 += IIC2.counter_total_nodes;
-				falseSumNodeInTheEnd2 += IIC2.counter_total_nodes;
-			}
-			if (trueTestnum2 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd2 / trueTestnum2;
-				trueAvgNodeGenerated = trueSumTotalNode2 / trueTestnum2;
-				trueAvgRun = trueSumRun2 / trueTestnum2;
-				trueTestNum = trueTestnum2;
-				trueAvgTime = trueTime2 / trueTestnum2;
-			}
-			if (falseTestnum2 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd2 / falseTestnum2;
-				falseAvgNodeGenerated = falseSumTotalNode2 / falseTestnum2;
-				falseAvgRun = falseSumRun2 / falseTestnum2;
-				falseTestNum = falseTestnum2;
-				falseAvgTime = falseTime2 / falseTestnum2;
-			}
-			break;
-		case 3:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck3<LETTER, STATE> IIC3 =
-					new IncrementalInclusionCheck3<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC3.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC3.getResult()) {
-				trueTime3 += timeBuffer;
-				trueTestnum3++;
-				trueSumRun3 += IIC3.counter_run;
-				trueSumTotalNode3 += IIC3.counter_total_nodes;
-				trueSumNodeInTheEnd3 += IIC3.completeLeafSet.size();
-			} else {
-				falseTime3 += timeBuffer;
-				falseTestnum3++;
-				falseSumRun3 += IIC3.counter_run;
-				falseSumTotalNode3 += IIC3.counter_total_nodes;
-				falseSumNodeInTheEnd3 += IIC3.completeLeafSet.size();
-			}
-			if (trueTestnum3 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd3 / trueTestnum3;
-				trueAvgNodeGenerated = trueSumTotalNode3 / trueTestnum3;
-				trueAvgRun = trueSumRun3 / trueTestnum3;
-				trueTestNum = trueTestnum3;
-				trueAvgTime = trueTime3 / trueTestnum3;
-			}
-			if (falseTestnum3 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd3 / falseTestnum3;
-				falseAvgNodeGenerated = falseSumTotalNode3 / falseTestnum3;
-				falseAvgRun = falseSumRun3 / falseTestnum3;
-				falseTestNum = falseTestnum3;
-				falseAvgTime = falseTime3 / falseTestnum3;
-			}
-			break;
-		case 4:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck4<LETTER, STATE> IIC4 =
-					new IncrementalInclusionCheck4<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC4.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC4.getResult()) {
-				trueTime4 += timeBuffer;
-				trueTestnum4++;
-				trueSumRun4 += IIC4.counter_run;
-				trueSumTotalNode4 += IIC4.counter_total_nodes;
-				trueSumNodeInTheEnd4 += IIC4.completeLeafSet.size();
-			} else {
-				falseTime4 += timeBuffer;
-				falseTestnum4++;
-				falseSumRun4 += IIC4.counter_run;
-				falseSumTotalNode4 += IIC4.counter_total_nodes;
-				falseSumNodeInTheEnd4 += IIC4.completeLeafSet.size();
-			}
-			if (trueTestnum4 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd4 / trueTestnum4;
-				trueAvgNodeGenerated = trueSumTotalNode4 / trueTestnum4;
-				trueAvgRun = trueSumRun4 / trueTestnum4;
-				trueTestNum = trueTestnum4;
-				trueAvgTime = trueTime4 / trueTestnum4;
-			}
-			if (falseTestnum4 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd4 / falseTestnum4;
-				falseAvgNodeGenerated = falseSumTotalNode4 / falseTestnum4;
-				falseAvgRun = falseSumRun4 / falseTestnum4;
-				falseTestNum = falseTestnum4;
-				falseAvgTime = falseTime4 / falseTestnum4;
-			}
-			break;
-		case 5:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck5<LETTER, STATE> IIC5 =
-					new IncrementalInclusionCheck5<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC5.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC5.getResult()) {
-				trueTime5 += timeBuffer;
-				trueTestnum5++;
-				trueSumRun5 += IIC5.counter_run;
-				trueSumTotalNode5 += IIC5.counter_total_nodes;
-				trueSumNodeInTheEnd5 += IIC5.completeLeafSet.size();
-			} else {
-				falseTime5 += timeBuffer;
-				falseTestnum5++;
-				falseSumRun5 += IIC5.counter_run;
-				falseSumTotalNode5 += IIC5.counter_total_nodes;
-				falseSumNodeInTheEnd5 += IIC5.completeLeafSet.size();
-			}
-			if (trueTestnum5 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd5 / trueTestnum5;
-				trueAvgNodeGenerated = trueSumTotalNode5 / trueTestnum5;
-				trueAvgRun = trueSumRun5 / trueTestnum5;
-				trueTestNum = trueTestnum5;
-				trueAvgTime = trueTime5 / trueTestnum5;
-			}
-			if (falseTestnum5 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd5 / falseTestnum5;
-				falseAvgNodeGenerated = falseSumTotalNode5 / falseTestnum5;
-				falseAvgRun = falseSumRun5 / falseTestnum5;
-				falseTestNum = falseTestnum5;
-				falseAvgTime = falseTime5 / falseTestnum5;
-			}
-			break;
-		case 32:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck3_2<LETTER, STATE> IIC3_2 =
-					new IncrementalInclusionCheck3_2<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC3_2.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC3_2.getResult()) {
-				trueTime32 += timeBuffer;
-				trueTestnum32++;
-				trueSumRun32 += IIC3_2.counter_run;
-				trueSumTotalNode32 += IIC3_2.counter_total_nodes;
-				trueSumNodeInTheEnd32 += IIC3_2.completeLeafSet.size();
-			} else {
-				falseTime32 += timeBuffer;
-				falseTestnum32++;
-				falseSumRun32 += IIC3_2.counter_run;
-				falseSumTotalNode32 += IIC3_2.counter_total_nodes;
-				falseSumNodeInTheEnd32 += IIC3_2.completeLeafSet.size();
-			}
-			if (trueTestnum32 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd32 / trueTestnum32;
-				trueAvgNodeGenerated = trueSumTotalNode32 / trueTestnum32;
-				trueAvgRun = trueSumRun32 / trueTestnum32;
-				trueTestNum = trueTestnum32;
-				trueAvgTime = trueTime32 / trueTestnum32;
-			}
-			if (falseTestnum32 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd32 / falseTestnum32;
-				falseAvgNodeGenerated = falseSumTotalNode32 / falseTestnum32;
-				falseAvgRun = falseSumRun32 / falseTestnum32;
-				falseTestNum = falseTestnum32;
-				falseAvgTime = falseTime32 / falseTestnum32;
-			}
-			break;
-		case 42:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck4_2<LETTER, STATE> IIC4_2 =
-					new IncrementalInclusionCheck4_2<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC4_2.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC4_2.getResult()) {
-				trueTime42 += timeBuffer;
-				trueTestnum42++;
-				trueSumRun42 += IIC4_2.counter_run;
-				trueSumTotalNode42 += IIC4_2.counter_total_nodes;
-				trueSumNodeInTheEnd42 += IIC4_2.completeLeafSet.size();
-			} else {
-				falseTime42 += timeBuffer;
-				falseTestnum42++;
-				falseSumRun42 += IIC4_2.counter_run;
-				falseSumTotalNode42 += IIC4_2.counter_total_nodes;
-				falseSumNodeInTheEnd42 += IIC4_2.completeLeafSet.size();
-			}
-			if (trueTestnum42 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd42 / trueTestnum42;
-				trueAvgNodeGenerated = trueSumTotalNode42 / trueTestnum42;
-				trueAvgRun = trueSumRun42 / trueTestnum42;
-				trueTestNum = trueTestnum42;
-				trueAvgTime = trueTime42 / trueTestnum42;
-			}
-			if (falseTestnum42 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd42 / falseTestnum42;
-				falseAvgNodeGenerated = falseSumTotalNode42 / falseTestnum42;
-				falseAvgRun = falseSumRun42 / falseTestnum42;
-				falseTestNum = falseTestnum42;
-				falseAvgTime = falseTime42 / falseTestnum42;
-			}
-			break;
-		case 52:
-			timeBuffer = new Date().getTime();
-			final IncrementalInclusionCheck5_2<LETTER, STATE> IIC5_2 =
-					new IncrementalInclusionCheck5_2<>(services, sf, a, b.subList(0, 1));
-			for (int i = 1; i < b.size(); i++) {
-				IIC5_2.addSubtrahend(b.get(i));
-			}
-			timeBuffer = new Date().getTime() - timeBuffer;
-			if (IIC5_2.getResult()) {
-				trueTime52 += timeBuffer;
-				trueTestnum52++;
-				trueSumRun52 += IIC5_2.counter_run;
-				trueSumTotalNode52 += IIC5_2.counter_total_nodes;
-				trueSumNodeInTheEnd52 += IIC5_2.completeLeafSet.size();
-			} else {
-				falseTime52 += timeBuffer;
-				falseTestnum52++;
-				falseSumRun52 += IIC5_2.counter_run;
-				falseSumTotalNode52 += IIC5_2.counter_total_nodes;
-				falseSumNodeInTheEnd52 += IIC5_2.completeLeafSet.size();
-			}
-			if (trueTestnum52 != 0) {
-				trueAvgNodeInTheEnd = trueSumNodeInTheEnd52 / trueTestnum52;
-				trueAvgNodeGenerated = trueSumTotalNode52 / trueTestnum52;
-				trueAvgRun = trueSumRun52 / trueTestnum52;
-				trueTestNum = trueTestnum52;
-				trueAvgTime = trueTime52 / trueTestnum52;
-			}
-			if (falseTestnum52 != 0) {
-				falseAvgNodeInTheEnd = falseSumNodeInTheEnd52 / falseTestnum52;
-				falseAvgNodeGenerated = falseSumTotalNode52 / falseTestnum52;
-				falseAvgRun = falseSumRun52 / falseTestnum52;
-				falseTestNum = falseTestnum52;
-				falseAvgTime = falseTime52 / falseTestnum52;
-			}
-			break;
+			case 1:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheckDifference<LETTER, STATE, ?> IIC1 =
+						new IncrementalInclusionCheckDifference<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC1.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC1.getResult()) {
+					trueTime1 += timeBuffer;
+					trueTestnum1++;
+					trueSumTotalNode1 += IIC1.size();
+					trueSumNodeInTheEnd1 += IIC1.size();
+				} else {
+					falseTime1 += timeBuffer;
+					falseTestnum1++;
+					falseSumTotalNode1 += IIC1.size();
+					falseSumNodeInTheEnd1 += IIC1.size();
+				}
+				if (trueTestnum1 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd1 / trueTestnum1;
+					trueAvgNodeGenerated = trueSumTotalNode1 / trueTestnum1;
+					trueAvgRun = 0;
+					trueTestNum = trueTestnum1;
+					trueAvgTime = trueTime1 / trueTestnum1;
+				}
+				if (falseTestnum1 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd1 / falseTestnum1;
+					falseAvgNodeGenerated = falseSumTotalNode1 / falseTestnum1;
+					falseAvgRun = 0;
+					falseTestNum = falseTestnum1;
+					falseAvgTime = falseTime1 / falseTestnum1;
+				}
+				break;
+			case 2:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck2<LETTER, STATE> IIC2 =
+						new IncrementalInclusionCheck2<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC2.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC2.getResult()) {
+					trueTime2 += timeBuffer;
+					trueTestnum2++;
+					trueSumRun2 += IIC2.counter_run;
+					trueSumTotalNode2 += IIC2.counter_total_nodes;
+					trueSumNodeInTheEnd2 += IIC2.counter_total_nodes;
+				} else {
+					falseTime2 += timeBuffer;
+					falseTestnum2++;
+					falseSumRun2 += IIC2.counter_run;
+					falseSumTotalNode2 += IIC2.counter_total_nodes;
+					falseSumNodeInTheEnd2 += IIC2.counter_total_nodes;
+				}
+				if (trueTestnum2 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd2 / trueTestnum2;
+					trueAvgNodeGenerated = trueSumTotalNode2 / trueTestnum2;
+					trueAvgRun = trueSumRun2 / trueTestnum2;
+					trueTestNum = trueTestnum2;
+					trueAvgTime = trueTime2 / trueTestnum2;
+				}
+				if (falseTestnum2 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd2 / falseTestnum2;
+					falseAvgNodeGenerated = falseSumTotalNode2 / falseTestnum2;
+					falseAvgRun = falseSumRun2 / falseTestnum2;
+					falseTestNum = falseTestnum2;
+					falseAvgTime = falseTime2 / falseTestnum2;
+				}
+				break;
+			case 3:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck3<LETTER, STATE> IIC3 =
+						new IncrementalInclusionCheck3<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC3.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC3.getResult()) {
+					trueTime3 += timeBuffer;
+					trueTestnum3++;
+					trueSumRun3 += IIC3.counter_run;
+					trueSumTotalNode3 += IIC3.counter_total_nodes;
+					trueSumNodeInTheEnd3 += IIC3.completeLeafSet.size();
+				} else {
+					falseTime3 += timeBuffer;
+					falseTestnum3++;
+					falseSumRun3 += IIC3.counter_run;
+					falseSumTotalNode3 += IIC3.counter_total_nodes;
+					falseSumNodeInTheEnd3 += IIC3.completeLeafSet.size();
+				}
+				if (trueTestnum3 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd3 / trueTestnum3;
+					trueAvgNodeGenerated = trueSumTotalNode3 / trueTestnum3;
+					trueAvgRun = trueSumRun3 / trueTestnum3;
+					trueTestNum = trueTestnum3;
+					trueAvgTime = trueTime3 / trueTestnum3;
+				}
+				if (falseTestnum3 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd3 / falseTestnum3;
+					falseAvgNodeGenerated = falseSumTotalNode3 / falseTestnum3;
+					falseAvgRun = falseSumRun3 / falseTestnum3;
+					falseTestNum = falseTestnum3;
+					falseAvgTime = falseTime3 / falseTestnum3;
+				}
+				break;
+			case 4:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck4<LETTER, STATE> IIC4 =
+						new IncrementalInclusionCheck4<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC4.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC4.getResult()) {
+					trueTime4 += timeBuffer;
+					trueTestnum4++;
+					trueSumRun4 += IIC4.counter_run;
+					trueSumTotalNode4 += IIC4.counter_total_nodes;
+					trueSumNodeInTheEnd4 += IIC4.completeLeafSet.size();
+				} else {
+					falseTime4 += timeBuffer;
+					falseTestnum4++;
+					falseSumRun4 += IIC4.counter_run;
+					falseSumTotalNode4 += IIC4.counter_total_nodes;
+					falseSumNodeInTheEnd4 += IIC4.completeLeafSet.size();
+				}
+				if (trueTestnum4 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd4 / trueTestnum4;
+					trueAvgNodeGenerated = trueSumTotalNode4 / trueTestnum4;
+					trueAvgRun = trueSumRun4 / trueTestnum4;
+					trueTestNum = trueTestnum4;
+					trueAvgTime = trueTime4 / trueTestnum4;
+				}
+				if (falseTestnum4 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd4 / falseTestnum4;
+					falseAvgNodeGenerated = falseSumTotalNode4 / falseTestnum4;
+					falseAvgRun = falseSumRun4 / falseTestnum4;
+					falseTestNum = falseTestnum4;
+					falseAvgTime = falseTime4 / falseTestnum4;
+				}
+				break;
+			case 5:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck5<LETTER, STATE> IIC5 =
+						new IncrementalInclusionCheck5<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC5.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC5.getResult()) {
+					trueTime5 += timeBuffer;
+					trueTestnum5++;
+					trueSumRun5 += IIC5.counter_run;
+					trueSumTotalNode5 += IIC5.counter_total_nodes;
+					trueSumNodeInTheEnd5 += IIC5.completeLeafSet.size();
+				} else {
+					falseTime5 += timeBuffer;
+					falseTestnum5++;
+					falseSumRun5 += IIC5.counter_run;
+					falseSumTotalNode5 += IIC5.counter_total_nodes;
+					falseSumNodeInTheEnd5 += IIC5.completeLeafSet.size();
+				}
+				if (trueTestnum5 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd5 / trueTestnum5;
+					trueAvgNodeGenerated = trueSumTotalNode5 / trueTestnum5;
+					trueAvgRun = trueSumRun5 / trueTestnum5;
+					trueTestNum = trueTestnum5;
+					trueAvgTime = trueTime5 / trueTestnum5;
+				}
+				if (falseTestnum5 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd5 / falseTestnum5;
+					falseAvgNodeGenerated = falseSumTotalNode5 / falseTestnum5;
+					falseAvgRun = falseSumRun5 / falseTestnum5;
+					falseTestNum = falseTestnum5;
+					falseAvgTime = falseTime5 / falseTestnum5;
+				}
+				break;
+			case 32:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck3_2<LETTER, STATE> IIC3_2 =
+						new IncrementalInclusionCheck3_2<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC3_2.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC3_2.getResult()) {
+					trueTime32 += timeBuffer;
+					trueTestnum32++;
+					trueSumRun32 += IIC3_2.counter_run;
+					trueSumTotalNode32 += IIC3_2.counter_total_nodes;
+					trueSumNodeInTheEnd32 += IIC3_2.completeLeafSet.size();
+				} else {
+					falseTime32 += timeBuffer;
+					falseTestnum32++;
+					falseSumRun32 += IIC3_2.counter_run;
+					falseSumTotalNode32 += IIC3_2.counter_total_nodes;
+					falseSumNodeInTheEnd32 += IIC3_2.completeLeafSet.size();
+				}
+				if (trueTestnum32 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd32 / trueTestnum32;
+					trueAvgNodeGenerated = trueSumTotalNode32 / trueTestnum32;
+					trueAvgRun = trueSumRun32 / trueTestnum32;
+					trueTestNum = trueTestnum32;
+					trueAvgTime = trueTime32 / trueTestnum32;
+				}
+				if (falseTestnum32 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd32 / falseTestnum32;
+					falseAvgNodeGenerated = falseSumTotalNode32 / falseTestnum32;
+					falseAvgRun = falseSumRun32 / falseTestnum32;
+					falseTestNum = falseTestnum32;
+					falseAvgTime = falseTime32 / falseTestnum32;
+				}
+				break;
+			case 42:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck4_2<LETTER, STATE> IIC4_2 =
+						new IncrementalInclusionCheck4_2<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC4_2.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC4_2.getResult()) {
+					trueTime42 += timeBuffer;
+					trueTestnum42++;
+					trueSumRun42 += IIC4_2.counter_run;
+					trueSumTotalNode42 += IIC4_2.counter_total_nodes;
+					trueSumNodeInTheEnd42 += IIC4_2.completeLeafSet.size();
+				} else {
+					falseTime42 += timeBuffer;
+					falseTestnum42++;
+					falseSumRun42 += IIC4_2.counter_run;
+					falseSumTotalNode42 += IIC4_2.counter_total_nodes;
+					falseSumNodeInTheEnd42 += IIC4_2.completeLeafSet.size();
+				}
+				if (trueTestnum42 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd42 / trueTestnum42;
+					trueAvgNodeGenerated = trueSumTotalNode42 / trueTestnum42;
+					trueAvgRun = trueSumRun42 / trueTestnum42;
+					trueTestNum = trueTestnum42;
+					trueAvgTime = trueTime42 / trueTestnum42;
+				}
+				if (falseTestnum42 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd42 / falseTestnum42;
+					falseAvgNodeGenerated = falseSumTotalNode42 / falseTestnum42;
+					falseAvgRun = falseSumRun42 / falseTestnum42;
+					falseTestNum = falseTestnum42;
+					falseAvgTime = falseTime42 / falseTestnum42;
+				}
+				break;
+			case 52:
+				timeBuffer = new Date().getTime();
+				final IncrementalInclusionCheck5_2<LETTER, STATE> IIC5_2 =
+						new IncrementalInclusionCheck5_2<>(services, sf, a, b.subList(0, 1));
+				for (int i = 1; i < b.size(); i++) {
+					IIC5_2.addSubtrahend(b.get(i));
+				}
+				timeBuffer = new Date().getTime() - timeBuffer;
+				if (IIC5_2.getResult()) {
+					trueTime52 += timeBuffer;
+					trueTestnum52++;
+					trueSumRun52 += IIC5_2.counter_run;
+					trueSumTotalNode52 += IIC5_2.counter_total_nodes;
+					trueSumNodeInTheEnd52 += IIC5_2.completeLeafSet.size();
+				} else {
+					falseTime52 += timeBuffer;
+					falseTestnum52++;
+					falseSumRun52 += IIC5_2.counter_run;
+					falseSumTotalNode52 += IIC5_2.counter_total_nodes;
+					falseSumNodeInTheEnd52 += IIC5_2.completeLeafSet.size();
+				}
+				if (trueTestnum52 != 0) {
+					trueAvgNodeInTheEnd = trueSumNodeInTheEnd52 / trueTestnum52;
+					trueAvgNodeGenerated = trueSumTotalNode52 / trueTestnum52;
+					trueAvgRun = trueSumRun52 / trueTestnum52;
+					trueTestNum = trueTestnum52;
+					trueAvgTime = trueTime52 / trueTestnum52;
+				}
+				if (falseTestnum52 != 0) {
+					falseAvgNodeInTheEnd = falseSumNodeInTheEnd52 / falseTestnum52;
+					falseAvgNodeGenerated = falseSumTotalNode52 / falseTestnum52;
+					falseAvgRun = falseSumRun52 / falseTestnum52;
+					falseTestNum = falseTestnum52;
+					falseAvgTime = falseTime52 / falseTestnum52;
+				}
+				break;
 		}
 	}
 
