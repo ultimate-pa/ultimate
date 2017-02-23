@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.PartitionAndMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -158,15 +159,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			sim.getSimulationPerformance();
 			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(), mOperand, result,
 					mServices);
-			mStatistics = super.getAutomataOperationStatistics();
-			sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(mStatistics);
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, sizeOfLargestEquivalenceClass);
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, gameAutomatonSize);
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_GRAPH, graph.getSize());
-			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer = resultPair.getSecond();
-			if (maxSatMinimizer != null) {
-				maxSatMinimizer.addStatistics(mStatistics);
-			}
+
+			mStatistics = writeStatistics(possibleEquivalentClasses, sizeOfLargestEquivalenceClass, gameAutomatonSize,
+					graph, sim, resultPair);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -176,6 +171,26 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			throw aoce;
 		}
 		printExitMessage();
+	}
+
+	private AutomataOperationStatistics writeStatistics(final Collection<Set<STATE>> possibleEquivalentClasses,
+			final int sizeOfLargestEquivalenceClass, final int gameAutomatonSize, final AGameGraph<LETTER, STATE> graph,
+			final ParsimoniousSimulation sim,
+			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair) {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(statistics);
+		statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, possibleEquivalentClasses.size());
+		statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, sizeOfLargestEquivalenceClass);
+		statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS,
+				new PartitionAndMapBackedSetOfPairs<>(possibleEquivalentClasses)
+						.getOrConstructPartitionSizeInformation().getNumberOfPairs());
+		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, gameAutomatonSize);
+		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_GRAPH, graph.getSize());
+		final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer = resultPair.getSecond();
+		if (maxSatMinimizer != null) {
+			maxSatMinimizer.addStatistics(statistics);
+		}
+		return statistics;
 	}
 
 	private static <LETTER, STATE> SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinningSink() {
