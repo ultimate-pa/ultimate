@@ -109,7 +109,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, initialPartition, settings, true, true);
+		this(services, stateFactory, operand, initialPartition, settings, false, true);
 	}
 
 	/**

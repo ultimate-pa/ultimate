@@ -219,7 +219,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaPmaxSat<>(services, stateFactory, operand,
 						new PartitionBackedSetOfPairs<>(possibleEquivalenceClasses),
-						new MinimizeNwaMaxSat2.Settings<>());
+						new MinimizeNwaMaxSat2.Settings<>(), true, false);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

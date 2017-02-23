@@ -122,7 +122,8 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			case NWA_MAX_SAT2:
 				mBackingMinimization = new MinimizeNwaPmaxSat<>(mServices, mStateFactory,
 						(IDoubleDeckerAutomaton<LETTER, STATE>) mOperand, (PartitionBackedSetOfPairs<STATE>) partition,
-						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState));
+						new MinimizeNwaMaxSat2.Settings<STATE>().setAddMapOldState2NewState(addMapOldState2newState),
+						true, false);
 				break;
 			case NWA_RAQ_DIRECT:
 				checkForNoMapping(addMapOldState2newState);
