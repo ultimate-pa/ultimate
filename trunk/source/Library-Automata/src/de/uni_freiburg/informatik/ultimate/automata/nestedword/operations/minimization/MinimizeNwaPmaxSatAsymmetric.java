@@ -132,6 +132,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		printStartMessage();
 
 		run();
+
+		printExitMessage();
 	}
 
 	/**
@@ -181,7 +183,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
 		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
 
-		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePairs.entrySet()) {
+		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
 			final Pair<STATE, STATE> pair = triple.getThird();
 			final STATE state1 = triple.getFirst();
 			final STATE state2 = triple.getSecond();
@@ -219,7 +221,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
-		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePairs.entrySet()) {
+		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
 			final Pair<STATE, STATE> pair = triple.getThird();
 
 			// add transition constraints
@@ -239,14 +241,14 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	}
 
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
-		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePairs.get(pair12.getSecond());
+		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePair2Var.get(pair12.getSecond());
 		if (state2to3s == null) {
 			return;
 		}
 		for (final Entry<STATE, Pair<STATE, STATE>> state3toPair : state2to3s.entrySet()) {
 			final STATE state3 = state3toPair.getKey();
 			final Pair<STATE, STATE> pair23 = state3toPair.getValue();
-			final Pair<STATE, STATE> pair13 = mStatePairs.get(pair12.getFirst(), state3);
+			final Pair<STATE, STATE> pair13 = mStatePair2Var.get(pair12.getFirst(), state3);
 			if (pair13 == null) {
 				continue;
 			}
@@ -315,7 +317,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			return false;
 		}
 
-		final Map<STATE, Pair<STATE, STATE>> rhsStates = mStatePairs.get(state1);
+		final Map<STATE, Pair<STATE, STATE>> rhsStates = mStatePair2Var.get(state1);
 		if (rhsStates == null) {
 			// no state was in relation to state1
 			return false;

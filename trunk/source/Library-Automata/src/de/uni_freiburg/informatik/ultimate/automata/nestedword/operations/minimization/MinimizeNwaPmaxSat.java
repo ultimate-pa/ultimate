@@ -157,6 +157,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				+ largestBlockInitialPartition + " states");
 
 		run();
+
+		printExitMessage();
 	}
 
 	@Override
@@ -203,8 +205,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			for (int j = 0; j < i; j++) {
 				final STATE stateJ = states[j];
 				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
-				mStatePairs.put(stateI, stateJ, doubleton);
-				mStatePairs.put(stateJ, stateI, doubleton);
+				mStatePair2Var.put(stateI, stateJ, doubleton);
+				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 
 				if (separateFinalAndNonfinalStates) {
@@ -242,7 +244,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 * @return {@code true} iff states are different
 	 */
 	private boolean generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
-		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);
+		final Doubleton<STATE> linDoubleton = mStatePair2Var.get(state1, state2);
 		outer: for (final STATE downState1 : getDownStatesArray(state1)) {
 			final STATE[] downStates2 = getDownStatesArray(state2);
 			final ArrayList<Doubleton<STATE>> hierDoubletons = new ArrayList<>(downStates2.length);
@@ -309,9 +311,9 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < i; j++) {
 				for (int k = 0; k < j; k++) {
-					final Doubleton<STATE> doubletonIj = mStatePairs.get(states[i], states[j]);
-					final Doubleton<STATE> doubletonJk = mStatePairs.get(states[j], states[k]);
-					final Doubleton<STATE> doubletonIk = mStatePairs.get(states[i], states[k]);
+					final Doubleton<STATE> doubletonIj = mStatePair2Var.get(states[i], states[j]);
+					final Doubleton<STATE> doubletonJk = mStatePair2Var.get(states[j], states[k]);
+					final Doubleton<STATE> doubletonIk = mStatePair2Var.get(states[i], states[k]);
 
 					addTransitivityClausesToSolver(doubletonIj, doubletonJk, doubletonIk);
 				}

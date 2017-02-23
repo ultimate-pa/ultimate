@@ -85,7 +85,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
 	protected static final String SOLVER_TIMEOUT = "solving";
 
-	protected final NestedMap2<STATE, STATE, T> mStatePairs;
+	protected final NestedMap2<STATE, STATE, T> mStatePair2Var;
 	protected final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
@@ -111,17 +111,19 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 *            result from {@link LookaheadPartitionConstructor}
 	 * @param settings
 	 *            settings wrapper
+	 * @param statePair2Var
+	 *            mapping from two states to solver variable
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePairs)
+			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mTimer = System.currentTimeMillis();
 		mOperand = operand;
-		mStatePairs = statePairs;
+		mStatePair2Var = statePair2Var;
 		mSettings = settings;
 		mSettings.validate(mOperand);
 		mSolver = createSolver();
@@ -163,8 +165,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mTimeSolving = mTimer;
 		mTimer = System.currentTimeMillis();
 		mTimeSolving = mTimer - mTimeSolving;
-
-		printExitMessage();
 	}
 
 	private void feedSolver() throws AutomataOperationCanceledException {
@@ -489,7 +489,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final List<T> succPairs = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
 			if (!knownToBeDifferent(succState1, succState2, null)) {
-				final T succPair = mStatePairs.get(succState1, succState2);
+				final T succPair = getVariable(succState1, succState2, false);
 				succPairs.add(succPair);
 			}
 		}
@@ -504,7 +504,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		final List<T> succPairs = new ArrayList<>();
 		for (final STATE succState2 : succStates2) {
 			if (!knownToBeDifferent(succState1, succState2, null)) {
-				final T succPair = mStatePairs.get(succState1, succState2);
+				final T succPair = getVariable(succState1, succState2, false);
 				succPairs.add(succPair);
 			}
 		}
@@ -673,7 +673,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	}
 
 	private VariableStatus resultFromSolver(final STATE state1, final STATE state2) {
-		return resultFromSolver(mStatePairs.get(state1, state2));
+		return resultFromSolver(getVariable(state1, state2, false));
 	}
 
 	private VariableStatus resultFromSolver(final T pair) {
@@ -692,7 +692,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 * @return pair of two states iff the flag is not {@code true}, {@code null} otherwise
 	 */
 	protected final T getVariable(final STATE state1, final STATE state2, final boolean flag) {
-		return flag ? null : mStatePairs.get(state1, state2);
+		return flag ? null : mStatePair2Var.get(state1, state2);
 	}
 
 	/**
@@ -840,6 +840,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * 
 		 * @param operand
 		 *            operand
+		 * @param <LETTER>
+		 *            letter type
 		 */
 		public <LETTER> void validate(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 			if (mSolverMode == null) {
