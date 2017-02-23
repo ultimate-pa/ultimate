@@ -748,7 +748,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
 			mSimulationPerformance.startTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
-			// TODO Christian 2017-02-16 Cast is a temporary workaround until we find a solution
 			final MinimizeNwaPmaxSat<LETTER, STATE> minimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mNwa,
 					new PartitionBackedSetOfPairs<>(equivalenceClassesAsCollection),
 					new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(useFinalStateConstraints));
