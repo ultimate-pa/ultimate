@@ -46,8 +46,8 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		super(services);
 		mResultAutomaton =
-				new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(), Collections.<LETTER> emptySet(),
-						Collections.<LETTER> emptySet(), alternatingAutomaton.getStateFactory());
+				new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(), Collections.emptySet(),
+						Collections.emptySet(), alternatingAutomaton.getStateFactory());
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		final List<Pair<BitSet, Pair<LETTER, BitSet>>> transitionsToAdd = new ArrayList<>();
